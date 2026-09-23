@@ -1,0 +1,128 @@
+# NOTE: Test for per-loop enabling of the postpipeliner virtual register mode.
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+
+# Virtual register mode is off by default. A loop opts in with
+#   #pragma clang loop hint(aie-postpipeliner-vreg-mode, 1)
+# which lands as !{!"llvm.loop.hint.aie-postpipeliner-vreg-mode", i64 1} on the
+# loop id. This loop also disables physical mode, so the only mode left is the
+# virtual one and the remark reports VregMode: Virtual.
+
+# RUN: llc -verify-machineinstrs --mtriple=aie2ps -O2 \
+# RUN:     --start-before=postmisched %s \
+# RUN:     -pass-remarks-output=- -pass-remarks-filter=pipeliner \
+# RUN:     -o /dev/null 2>/dev/null \
+# RUN:   | FileCheck %s --check-prefix=HINT
+
+# Suppressing all per-loop hints falls back to the global defaults, i.e.
+# physical mode only.
+
+# RUN: llc -verify-machineinstrs --mtriple=aie2ps -O2 \
+# RUN:     --start-before=postmisched %s --aie-ignore-loop-hints=true \
+# RUN:     -pass-remarks-output=- -pass-remarks-filter=pipeliner \
+# RUN:     -o /dev/null 2>/dev/null \
+# RUN:   | FileCheck %s --check-prefix=NOHINT
+
+# An explicit command-line setting takes precedence over the hint.
+
+# RUN: llc -verify-machineinstrs --mtriple=aie2ps -O2 \
+# RUN:     --start-before=postmisched %s --aie-postpipeliner-phys-mode=1 \
+# RUN:     -pass-remarks-output=- -pass-remarks-filter=pipeliner \
+# RUN:     -o /dev/null 2>/dev/null \
+# RUN:   | FileCheck %s --check-prefix=NOHINT
+
+--- |
+  target triple = "aie2ps"
+
+  define void @vreg_mode_hint(ptr addrspace(6) noalias %data, i32 %n) {
+  preheader:
+    call void @llvm.set.loop.iterations.i32(i32 %n)
+    br label %loop_body
+
+  loop_body:
+    %dec = call i1 @llvm.loop.decrement.i32(i32 1)
+    br i1 %dec, label %loop_body, label %exit, !llvm.loop !0
+
+  exit:
+    ret void
+  }
+
+  declare void @llvm.set.loop.iterations.i32(i32)
+  declare i1 @llvm.loop.decrement.i32(i32)
+
+  !0 = distinct !{!0, !1, !2, !3}
+  !1 = !{!"llvm.loop.itercount.range", i64 5}
+  !2 = !{!"llvm.loop.hint.aie-postpipeliner-vreg-mode", i64 1}
+  !3 = !{!"llvm.loop.hint.aie-postpipeliner-phys-mode", i64 0}
+...
+---
+name:            vreg_mode_hint
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  ; HINT: --- !Passed
+  ; HINT-NEXT: Pass:            pipeliner
+  ; HINT-NEXT: Name:            schedule
+  ; HINT-NEXT: Function:        vreg_mode_hint
+  ; HINT-NEXT: Args:
+  ; HINT-NEXT:   - String:          Schedule found
+  ; HINT-NEXT:   - Pipeliner:       postpipeliner
+  ; HINT-NEXT:   - II:              '2'
+  ; HINT-NEXT:   - NS:              '5'
+  ; HINT-NEXT:   - Loop:            bb.1.loop_body
+  ; HINT-NEXT:   - Prologue:        bb.0.preheader
+  ; HINT-NEXT:   - PrologueBundles: '8'
+  ; HINT-NEXT:   - Epilogue:        bb.2.exit
+  ; HINT-NEXT:   - EpilogueBundles: '8'
+  ; HINT-NEXT:   - VregMode:        Virtual
+  ; HINT-NEXT:   - SchedHeuristic:  Config_10_1_0_NodeNum
+  ; HINT-NEXT:   - AllocHeuristic:  scarce register class scoring
+  ; HINT-NEXT: ...
+
+  ; NOHINT: --- !Passed
+  ; NOHINT-NEXT: Pass:            pipeliner
+  ; NOHINT-NEXT: Name:            schedule
+  ; NOHINT-NEXT: Function:        vreg_mode_hint
+  ; NOHINT-NEXT: Args:
+  ; NOHINT-NEXT:   - String:          Schedule found
+  ; NOHINT-NEXT:   - Pipeliner:       postpipeliner
+  ; NOHINT-NEXT:   - II:              '2'
+  ; NOHINT-NEXT:   - NS:              '5'
+  ; NOHINT-NEXT:   - Loop:            bb.1.loop_body
+  ; NOHINT-NEXT:   - Prologue:        bb.0.preheader
+  ; NOHINT-NEXT:   - PrologueBundles: '8'
+  ; NOHINT-NEXT:   - Epilogue:        bb.2.exit
+  ; NOHINT-NEXT:   - EpilogueBundles: '8'
+  ; NOHINT-NEXT:   - VregMode:        Physical
+  ; NOHINT-NEXT:   - SchedHeuristic:  Config_10_1_0_NodeNum
+  ; NOHINT-NEXT: ...
+  bb.0.preheader:
+    successors: %bb.1
+    liveins: $p0, $r1, $x3, $x4
+
+    $lc = ADD_NC_add_lc_ri $r1, 0
+    MOVXM_lng_cg_ls_abs %bb.1, implicit-def $ls
+    MOVXM_lng_cg_le_abs <mcsymbol .L_LEnd0>, implicit-def $le
+
+  bb.1.loop_body (align 16):
+    successors: %bb.1, %bb.2
+    liveins: $p0, $x3, $x4
+
+    ; Load a vector; the output $x1 has a 7-cycle latency.
+    $x1, $p0 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign1 $p0, 32, implicit $crunpacksize, implicit $unpacksign1
+
+    ; Clip to minimum: reads $x1 and bound $x3 independently.
+    dead $x5, dead $r16 = VMIN_GE_16_vaddSign1 $x1, $x3, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+
+    ; Clip to maximum: reads $x1 and bound $x4 independently.
+    dead $x6, dead $r16 = VMAX_LT_16_vaddSign1 $x1, $x4, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+
+  bb.2.exit (align 16):
+    RET implicit $lr
+    DelayedSchedBarrier
+...

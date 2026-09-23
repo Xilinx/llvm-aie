@@ -5,7 +5,7 @@
 #
 # (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 
-# RUN: llc --mtriple=aie2 -O2 --start-before=postmisched %s -pass-remarks-output=- -pass-remarks-filter=pipeliner -o /dev/null | FileCheck %s
+# RUN: llc --aie-postpipeliner-vreg-mode=1 --mtriple=aie2 -O2 --start-before=postmisched %s -pass-remarks-output=- -pass-remarks-filter=pipeliner -o /dev/null | FileCheck %s
 
 
 # derived from conv2d_bf16_0

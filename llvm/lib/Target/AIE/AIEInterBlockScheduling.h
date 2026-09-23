@@ -24,6 +24,7 @@
 #include "AIEPostPipeliner.h"
 #include "AIERegDefUseTracker.h"
 #include "AIESchedulingTypes.h"
+#include "Utils/AIELoopOptionOverrides.h"
 #include "Utils/AIELoopUtils.h"
 #include "llvm/CodeGen/LivePhysRegs.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
@@ -146,6 +147,10 @@ class BlockState {
   // will be loaded in a further iteration.
   bool IsSafeToIgnoreMemDeps = false;
 
+  // The llvm.loop.hint.* overrides attached to this block, if it carries a
+  // loop id. Read-only overlay on the scheduling cl::opt options.
+  LoopOptionOverrides Overrides;
+
   // This holds an instance of the RegLiveRangeTracker for loops.
   std::unique_ptr<llvm::RegLiveRangeTracker> RegTracker;
 
@@ -252,6 +257,10 @@ public:
   }
 
   bool isSafeToIgnoreMemDeps() const { return IsSafeToIgnoreMemDeps; }
+
+  const LoopOptionOverrides &getLoopOptionOverrides() const {
+    return Overrides;
+  }
 
 protected:
   void setBlockProperties();
