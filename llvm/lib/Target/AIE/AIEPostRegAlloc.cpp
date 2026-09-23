@@ -315,10 +315,20 @@ AIEPostRegAlloc::AllocResult AIEPostRegAlloc::tryAllocate(
   };
 
   // Collect all live ranges that have liveness data (VReg and non-VReg).
+  // Non-virtualizable ranges are kept: they hold a register the pool can hand
+  // out, so they must occupy it. A virtualizable range without a VReg was left
+  // physical by virtualizeFilteredPhysRegs() because it is RESERVED or
+  // overlaps a RESERVED base. computeAvailablePhysRegs() excludes such bases,
+  // so the register can never be handed out and the range constrains nothing.
+  // Its AdmissibleRegs still spans its whole class, so keeping it would either
+  // strand it with no candidate or occupy an unrelated register of that class.
   std::vector<LREntry> AllEntries;
   for (const RegLiveRange &LR : RegTracker->getLiveRanges()) {
     const auto It = LiveLanesByLRIndex.find(LR.getIndex());
     if (It == LiveLanesByLRIndex.end())
+      continue;
+    // Exclude reserved ranges (and ranges overlapping a reserved base).
+    if (LR.isVirtualizable() && !LR.getVReg().isValid())
       continue;
     AllEntries.push_back({&LR, LR.getIndex(), &It->second});
   }
