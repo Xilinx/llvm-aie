@@ -73,6 +73,35 @@ exit:
   ret void
 }
 
+; An i64 exit count whose range fits in 32 bits. The trip count is evaluated in
+; i65, but the profitability gate looks at its range, which needs only 10 bits,
+; so versioning applies: the trip count is expanded in i65 and the guard
+; truncates it back to the i32 it compares in, losslessly.
+; CHECK-LABEL: define void @narrow_range_i64_trip_count
+; CHECK: %[[UMAX:.*]] = call i65 @llvm.umax.i65
+; CHECK: %[[THR:.*]] = call i32 @llvm.aie2.loop.version.threshold(i32 -1)
+; CHECK: %[[TC:.*]] = trunc i65 %[[UMAX]] to i32
+; CHECK: icmp ult i32 %[[TC]], %[[THR]]
+; CHECK: loop.lver.high:
+define void @narrow_range_i64_trip_count(ptr noalias %a, ptr noalias %b,
+                                         i64 %n) {
+entry:
+  %n.small = and i64 %n, 1023
+  br label %loop
+loop:
+  %i = phi i64 [ 0, %entry ], [ %i.next, %loop ]
+  %pa = getelementptr i32, ptr %a, i64 %i
+  %x = load i32, ptr %pa, align 4
+  %y = mul i32 %x, 1234
+  %pb = getelementptr i32, ptr %b, i64 %i
+  store i32 %y, ptr %pb, align 4
+  %i.next = add nuw nsw i64 %i, 1
+  %c = icmp ult i64 %i.next, %n.small
+  br i1 %c, label %loop, label %exit, !llvm.loop !9
+exit:
+  ret void
+}
+
 ; The candidate and profitability gates are pure SCEV and LoopInfo reasoning,
 ; so the four cases below are covered for aie2 only.
 ;
@@ -224,3 +253,4 @@ exit:
 !6 = distinct !{!6, !1}
 !7 = distinct !{!7, !1}
 !8 = distinct !{!8, !1}
+!9 = distinct !{!9, !1}
