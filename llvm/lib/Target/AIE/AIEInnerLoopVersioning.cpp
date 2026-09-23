@@ -12,9 +12,9 @@
 //
 // A loop carrying the llvm.loop.hint.aie-loop-versioning hint is split into two
 // copies guarded by a runtime trip-count check. Large trip counts run a
-// specialized copy the postpipeliner may pipeline aggressively, while small
+// specialized copy a pipeliner may schedule aggressively, while small
 // trip counts stay correct on the original loop. The block structure below is
-// what the postpipeliner's guard finder (AIELoopUtils::getGuardBlock)
+// what the pipeliners' guard finder (AIELoopUtils::getGuardBlock)
 // relies on: a guard block with two successors, each a dedicated fallthrough
 // preheader of its copy. (The block names are for humans; the guard finder
 // matches on structure, not names.)
@@ -35,20 +35,22 @@
 // says who owns it:
 //
 //  - A hint of 1 defers: the guard is seeded with the UINT32_MAX (-1)
-//    placeholder, and the postpipeliner overwrites it after scheduling with
-//    the stage count it needs. The compare is unsigned, so until then every
-//    trip count routes to the low-trip-count (verbatim, un-pipelined) copy.
-//    This fails safe -- if the guard is never patched (the high-trip-count
-//    copy is not pipelined, or updateVersionGuard bails on a reshaped
-//    region), the pipelined copy is simply never entered.
+//    placeholder, and whichever pipeliner takes the high-trip-count copy
+//    overwrites it after scheduling with the stage count it needs: the pre-RA
+//    MachinePipeliner from AIEBasePipelinerLoopInfo::adjustTripCount, the
+//    postpipeliner from PostPipeliner::updateVersionGuard. The compare is
+//    unsigned, so until then every trip count routes to the low-trip-count
+//    (verbatim, un-pipelined) copy. This fails safe -- if the guard is never
+//    patched (the high-trip-count copy is not pipelined, or the patcher bails
+//    on a reshaped region), the pipelined copy is simply never entered.
 //  - A hint of N >= 2 states the threshold, and it is authoritative: the
 //    guard is seeded with N and nothing rewrites it. N is restated as the
 //    high copy's llvm.loop.itercount.range minimum, which is what the guard
 //    proves, so any later pass reads it as an ordinary declared minimum.
 //    The versioned marker is deliberately left off that copy: it exists to
-//    tell the postpipeliner a placeholder is waiting, and there is none.
-//    Without it the postpipeliner treats the copy as any other loop of known
-//    minimum trip count, which also keeps its stage count within N.
+//    tell a pipeliner a placeholder is waiting, and there is none. Without it
+//    the pipeliners treat the copy as any other loop of known minimum trip
+//    count, which also keeps its stage count within N.
 //
 // A stated threshold above MaxStatedThreshold falls back to the placeholder,
 // so an out-of-range hint degrades to the deferred case instead of truncating
@@ -177,7 +179,7 @@ private:
   /// subtarget's field changes, and is far beyond any useful stage count.
   static constexpr int64_t MaxStatedThreshold = 100;
 
-  /// The threshold the postpipeliner patches
+  /// The threshold a pipeliner patches
   int32_t Threshold = DeferredThreshold;
 
   /// A trip count the runtime guard can hold, or the reason it cannot.
@@ -214,7 +216,7 @@ private:
   /// deriving both from \p ExitBlock, the block they merge into.
   void nameDedicatedExits(const BasicBlock &ExitBlock, Loop &HighLoop) const;
   /// Consume the request hint on \p LowLoop and \p HighLoop and mark
-  /// \p HighLoop as the versioned one, so the postpipeliner can tell the
+  /// \p HighLoop as the versioned one, so the pipeliners can tell the
   /// copies apart.
   void updateLoopsMetadata(Loop &LowLoop, Loop &HighLoop);
 };
@@ -477,7 +479,7 @@ bool AIELoopVersioner::tryVersionLoop() {
     return OptimizationRemark(DEBUG_TYPE, "Versioned", L.getStartLoc(),
                               L.getHeader())
            << "loop versioned: a runtime trip-count guard selects a copy the "
-              "post-pipeliner may pipeline";
+              "pipeliner may pipeline";
   });
   return true;
 }
@@ -488,7 +490,7 @@ Value *AIELoopVersioner::emitGuardCondition(BasicBlock &GuardBB,
          "trip count must be expanded in the type the guard compares in");
 
   // The threshold comes from the thin intrinsic, either stated by the hint or
-  // left as the placeholder the postpipeliner patches (see the file header).
+  // left as the placeholder a pipeliner patches (see the file header).
   // The deferred value of -1 (UINT32_MAX) besides failing safe fits the narrow
   // scalar-move immediate the pseudo materializes into, unlike a literal
   // INT32_MAX, so the fallback move is emitted intact.
@@ -553,10 +555,10 @@ void AIELoopVersioner::updateLoopsMetadata(Loop &LowLoop, Loop &HighLoop) {
 
   if (Threshold < 2) {
     // A deferred threshold leaves a placeholder in the guard. The versioned
-    // marker is what tells the postpipeliner to go find it, and it also lifts
+    // marker is what tells a pipeliner to go find it, and it also lifts
     // the minimum trip-count gate, which only the guard makes safe. No
     // iteration-count range goes with it: a minimum of 1 would make the
-    // hardware-loop profitability gate reject the ZOL the postpipeliner needs.
+    // hardware-loop profitability gate reject the ZOL the pipeliners need.
     addStringMetadataToLoop(
         &HighLoop, AIELoopUtils::LoopVersionedHintKey.data(), HintValue);
     return;
