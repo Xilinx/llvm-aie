@@ -666,7 +666,72 @@ always executes at least N times, set `AIE_LOOP_RANGE(N,)` and avoid
 versioning entirely. Loop versioning should only be used when the trip
 count genuinely varies below the pipelining threshold at runtime.
 
-### The solution: VERSIONED_LOOP
+### Automatic versioning: the aie-loop-versioning hint
+
+`AIE_LOOP_HINT(aie-loop-versioning, 1)` asks the compiler to version the
+loop for you, leaving it written as an ordinary `for`:
+
+```cpp
+AIE_LOOP_HINT(aie-loop-versioning, 1)
+AIE_PREPARE_FOR_POSTPIPELINING
+for (int i = 0; i < param.inner_loop_count; i++) {
+    // loop body
+}
+```
+
+The backend splits the loop into a pipelined copy and a verbatim fallback
+behind a runtime trip-count guard, and the post-pipeliner then sets the
+guard threshold to the stage count it actually achieved. There is no
+`MinIters` to choose: the split lands exactly where pipelining starts
+paying off.
+
+If the compiler cannot version the loop it reports why under
+`-Rpass-missed=aie-inner-loop-versioning`, and the loop is left untouched.
+Use `VERSIONED_LOOP` below in that case.
+
+### Limitations of the aie-loop-versioning hint
+
+The guard compares trip counts in a 32-bit register, which is also what a
+zero-overhead loop counts with. Three consequences are worth knowing
+before reaching for the hint.
+
+**64-bit loop counters are never versioned**, even when the trip count is
+obviously small:
+
+```cpp
+AIE_LOOP_HINT(aie-loop-versioning, 1)
+for (int64_t i = 0; i < n; i++) { ... }   // n is known to be tiny
+```
+
+```
+remark: loop not versioned because its trip count does not fit 32 bits
+```
+
+The check is on the counter's type, not its value range, because a
+64-bit counter cannot drive a zero-overhead loop anyway. Use `int` or
+`int32_t` for the loop counter to make the loop eligible.
+
+**A loop that runs exactly 2^32 times is versioned but never pipelined.**
+An unsigned `i != n` loop with `n == 0` has a trip count of 2^32, which
+wraps to 0 in the 32-bit guard, lands below every threshold, and so
+selects the unpipelined fallback copy. The result is correct, just slow,
+and there is no diagnostic: the loop was versioned. Only the one input
+`n == 0` is affected; every other value takes the pipelined copy as
+expected.
+
+**A loop whose trip count is always 2^32 is refused outright**, since the
+pipelined copy could never be selected:
+
+```cpp
+AIE_LOOP_HINT(aie-loop-versioning, 1)
+do { ... } while (++i != 0);   // i is a uint32_t
+```
+
+```
+remark: loop not versioned because its trip count of 2^32 wraps to zero in the 32-bit guard
+```
+
+### Manual versioning: VERSIONED_LOOP
 Split the loop into two runtime paths:
 - **High-count path**: The trip count is >= MinIters, so pipelining is
   enabled with appropriate `AIE_LOOP_RANGE` and pipelining pragmas.
