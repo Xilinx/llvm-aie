@@ -17,83 +17,83 @@
 # CHECK: FINAL LIVE RANGES
 # CHECK: ================================
 # CHECK: Total live ranges: 14
-# CHECK: Live Range #33 for dm4:
+# CHECK: Live Range #41 for dm4:
 # CHECK:   Definitions (2):
 # CHECK:     [0] Register: cmh4 (SubRegIdx: 9) renamable $cmh4 = VLDA_CONV_fp32_bf16_dmx_lda_ups_bf_idx_imm renamable $p3, 64 :: (load (<32 x s16>))
 # CHECK:     [1] Register: cml4 (SubRegIdx: 10) $cml4, $p7, $dc1, $dc5 = VLDA_3D_CONV_fp32_bf16_dmx_lda_ups_bf killed $p7(tied-def 1), $d1_3d :: (load (<32 x s16>))
 # CHECK:   Uses (1):
 # CHECK:     [0] Register: dm4 renamable $ex2 = VCONV_bfp16ebs8_fp32 killed renamable $dm4, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
-# CHECK: Live Range #27 for dm4:
+# CHECK: Live Range #33 for dm4:
 # CHECK:   Definitions (1):
 # CHECK:     [0] Register: dm4 renamable $dm4 = VMUL_f_vmul_bf_vmul_bf_core_Y_Y killed renamable $y5, renamable $y0, renamable $r2, implicit-def dead $srfpflags, implicit $crfpmask
 # CHECK:   Uses (1):
 # CHECK:     [0] Register: dm4 renamable $ex6 = VCONV_bfp16ebs8_fp32 killed renamable $dm4, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
-# CHECK: Live Range #21 for dm4:
+# CHECK: Live Range #25 for dm4:
 # CHECK:   Definitions (1):
 # CHECK:     [0] Register: dm4 renamable $dm4 = VMUL_f_vmul_bf_vmul_bf_core_Y_Y killed renamable $y2, renamable $y0, renamable $r2, implicit-def dead $srfpflags, implicit $crfpmask
 # CHECK:   Uses (1):
 # CHECK:     [0] Register: dm4 renamable $ex4 = VCONV_bfp16ebs8_fp32 killed renamable $dm4, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
-# CHECK: Live Range #15 for dm4:
+# CHECK: Live Range #19 for dm4:
 # CHECK:   Definitions (2):
 # CHECK:     [0] Register: cmh4 (SubRegIdx: 9) renamable $cmh4 = VLDA_CONV_fp32_bf16_dmx_lda_ups_bf_idx_imm killed renamable $p3, 0 :: (load (<32 x s16>))
 # CHECK:     [1] Register: cml4 (SubRegIdx: 10) renamable $cml4, renamable $p3 = VLDA_CONV_fp32_bf16_dmx_lda_ups_bf_pstm_nrm_imm killed renamable $p3(tied-def 1), 64 :: (load (<32 x s16>))
 # CHECK:   Uses (1):
 # CHECK:     [0] Register: dm4 renamable $ex8 = VCONV_bfp16ebs8_fp32 killed renamable $dm4, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
-# CHECK: Live Range #12 for ex2:
+# CHECK: Live Range #14 for ex2:
 # CHECK:   Definitions (1):
 # CHECK:     [0] Register: ex2 renamable $ex2 = VCONV_bfp16ebs8_fp32 killed renamable $dm4, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
 # CHECK:   Uses (2):
 # CHECK:     [0] Register: ex2 renamable $dm2 = VMAC_f_vmac_bfp_vmul_bfp_core_EX_EX killed renamable $dm2, killed renamable $ex2, renamable $ex4, renamable $r3, implicit-def dead $srfpflags, implicit $crfpmask
 # CHECK:     [1] Register: ex2 renamable $dm3 = VMAC_f_vmac_bfp_vmul_bfp_core_EX_EX killed renamable $dm3, renamable $ex2, renamable $ex6, renamable $r3, implicit-def dead $srfpflags, implicit $crfpmask
-# CHECK: Live Range #3 for ex4:
+# CHECK: Live Range #4 for ex4:
 # CHECK:   Definitions (1):
 # CHECK:     [0] Register: ex4 renamable $ex4 = VCONV_bfp16ebs8_fp32 killed renamable $dm4, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
 # CHECK:   Uses (2):
 # CHECK:     [0] Register: ex4 renamable $dm0 = VMAC_f_vmac_bfp_vmul_bfp_core_EX_EX killed renamable $dm0, killed renamable $ex8, killed renamable $ex4, renamable $r3, implicit-def dead $srfpflags, implicit $crfpmask
 # CHECK:     [1] Register: ex4 renamable $dm2 = VMAC_f_vmac_bfp_vmul_bfp_core_EX_EX killed renamable $dm2, killed renamable $ex2, renamable $ex4, renamable $r3, implicit-def dead $srfpflags, implicit $crfpmask
-# CHECK: Live Range #9 for ex6:
+# CHECK: Live Range #10 for ex6:
 # CHECK:   Definitions (1):
 # CHECK:     [0] Register: ex6 renamable $ex6 = VCONV_bfp16ebs8_fp32 killed renamable $dm4, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
 # CHECK:   Uses (2):
 # CHECK:     [0] Register: ex6 renamable $dm1 = VMAC_f_vmac_bfp_vmul_bfp_core_EX_EX killed renamable $dm1, renamable $ex8, killed renamable $ex6, renamable $r3, implicit-def dead $srfpflags, implicit $crfpmask
 # CHECK:     [1] Register: ex6 renamable $dm3 = VMAC_f_vmac_bfp_vmul_bfp_core_EX_EX killed renamable $dm3, renamable $ex2, renamable $ex6, renamable $r3, implicit-def dead $srfpflags, implicit $crfpmask
-# CHECK: Live Range #2 for ex8:
+# CHECK: Live Range #3 for ex8:
 # CHECK:   Definitions (1):
 # CHECK:     [0] Register: ex8 renamable $ex8 = VCONV_bfp16ebs8_fp32 killed renamable $dm4, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
 # CHECK:   Uses (2):
 # CHECK:     [0] Register: ex8 renamable $dm0 = VMAC_f_vmac_bfp_vmul_bfp_core_EX_EX killed renamable $dm0, killed renamable $ex8, killed renamable $ex4, renamable $r3, implicit-def dead $srfpflags, implicit $crfpmask
 # CHECK:     [1] Register: ex8 renamable $dm1 = VMAC_f_vmac_bfp_vmul_bfp_core_EX_EX killed renamable $dm1, renamable $ex8, killed renamable $ex6, renamable $r3, implicit-def dead $srfpflags, implicit $crfpmask
-# CHECK: Live Range #34 for x2:
+# CHECK: Live Range #42 for x2:
 # CHECK:   Definitions (1):
 # CHECK:     [0] Register: x2 $x2, $p6, $dc0, $dc4 = VLDB_3D_dmx_ldb_x killed $p6(tied-def 1), $d0_3d :: (load (<16 x s32>))
 # CHECK:   Uses (2):
 # CHECK:     [0] Register: x2 renamable $x11 = VSHUFFLE_vec_shuffle_x killed renamable $x2, killed renamable $x4, renamable $r1
 # CHECK:     [1] Register: x2 renamable $x10 = VSHUFFLE_vec_shuffle_x renamable $x2, renamable $x4, renamable $r0
-# CHECK: Live Range #35 for x4:
+# CHECK: Live Range #43 for x4:
 # CHECK:   Definitions (1):
 # CHECK:     [0] Register: x4 renamable $x4 = VLDB_dmx_ldb_x_idx_imm renamable $p5, 64 :: (load (<16 x s32>))
 # CHECK:   Uses (2):
 # CHECK:     [0] Register: x4 renamable $x11 = VSHUFFLE_vec_shuffle_x killed renamable $x2, killed renamable $x4, renamable $r1
 # CHECK:     [1] Register: x4 renamable $x10 = VSHUFFLE_vec_shuffle_x renamable $x2, renamable $x4, renamable $r0
-# CHECK: Live Range #28 for x6:
+# CHECK: Live Range #34 for x6:
 # CHECK:   Definitions (1):
 # CHECK:     [0] Register: x6 renamable $x6, renamable $p5 = VLDB_dmx_ldb_x_pstm_nrm_imm killed renamable $p5(tied-def 1), 64 :: (load (<16 x s32>))
 # CHECK:   Uses (2):
 # CHECK:     [0] Register: x6 renamable $x5 = VSHUFFLE_vec_shuffle_x killed renamable $x6, killed renamable $x8, renamable $r1
 # CHECK:     [1] Register: x6 renamable $x4 = VSHUFFLE_vec_shuffle_x renamable $x6, renamable $x8, renamable $r0
-# CHECK: Live Range #29 for x8:
+# CHECK: Live Range #35 for x8:
 # CHECK:   Definitions (1):
 # CHECK:     [0] Register: x8 renamable $x8 = VLDB_dmx_ldb_x_idx_imm killed renamable $p5, 0 :: (load (<16 x s32>))
 # CHECK:   Uses (2):
 # CHECK:     [0] Register: x8 renamable $x5 = VSHUFFLE_vec_shuffle_x killed renamable $x6, killed renamable $x8, renamable $r1
 # CHECK:     [1] Register: x8 renamable $x4 = VSHUFFLE_vec_shuffle_x renamable $x6, renamable $x8, renamable $r0
-# CHECK: Live Range #24 for y2:
+# CHECK: Live Range #29 for y2:
 # CHECK:   Definitions (2):
 # CHECK:     [0] Register: x5 (SubRegIdx: 5) renamable $x5 = VSHUFFLE_vec_shuffle_x killed renamable $x6, killed renamable $x8, renamable $r1
 # CHECK:     [1] Register: x4 (SubRegIdx: 8) renamable $x4 = VSHUFFLE_vec_shuffle_x renamable $x6, renamable $x8, renamable $r0
 # CHECK:   Uses (1):
 # CHECK:     [0] Register: y2 renamable $dm4 = VMUL_f_vmul_bf_vmul_bf_core_Y_Y killed renamable $y2, renamable $y0, renamable $r2, implicit-def dead $srfpflags, implicit $crfpmask
-# CHECK: Live Range #32 for y5:
+# CHECK: Live Range #39 for y5:
 # CHECK:   Definitions (2):
 # CHECK:     [0] Register: x11 (SubRegIdx: 5) renamable $x11 = VSHUFFLE_vec_shuffle_x killed renamable $x2, killed renamable $x4, renamable $r1
 # CHECK:     [1] Register: x10 (SubRegIdx: 8) renamable $x10 = VSHUFFLE_vec_shuffle_x renamable $x2, renamable $x4, renamable $r0
