@@ -108,6 +108,23 @@ MachineBasicBlock *getGuardBlock(const MachineBasicBlock &Preheader) {
   return Guard->succ_size() == 2 ? Guard : nullptr;
 }
 
+MachineInstr *findVersionThreshold(MachineBasicBlock &GuardBlock,
+                                   const AIEBaseInstrInfo &TII) {
+  MachineInstr *ThresholdMI = nullptr;
+  for (MachineInstr &MI : GuardBlock.instrs()) {
+    if (!TII.isLoopVersionThresholdDef(MI))
+      continue;
+    if (ThresholdMI) {
+      LLVM_DEBUG(dbgs() << "AIE loop versioning: multiple threshold pseudos in "
+                        << printMBBReference(GuardBlock) << "\n");
+      assert(false && "at most one threshold pseudo per guard block");
+      return nullptr;
+    }
+    ThresholdMI = &MI;
+  }
+  return ThresholdMI;
+}
+
 SmallVector<const MachineBasicBlock *, 4>
 getSingleBlockLoopMBBs(const MachineFunction &MF) {
   SmallVector<const MachineBasicBlock *, 4> LoopMBBs;
