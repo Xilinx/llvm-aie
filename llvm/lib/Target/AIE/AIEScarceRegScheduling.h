@@ -65,10 +65,14 @@ class BurstMostUrgentStrategy : public PostPipelinerStrategy {
   // correct (order-specified) sequence rather than the original array order.
   SmallVector<int, 4> CurrentOrder;
 
+  // The initiation interval for the current pipelining attempt.
+  // Used in simulateAntiDependences to apply the correct iteration offset.
+  int II;
+
 public:
   BurstMostUrgentStrategy(ScheduleDAGInstrs &DAG, ScheduleInfo &Info,
                           const std::vector<ScarceRange> &ScarceRanges,
-                          int LatestBias);
+                          int LatestBias, int II);
 
   // Initialize OrderedMembers based on the given range order.
   void init(const SmallVector<int, 4> &RangeOrder);
@@ -90,7 +94,12 @@ private:
   void skipEmptySets();
 
   // Simulate anti-dependences from the burst at position BurstPos in
-  // CurrentOrder to every range that follows it in that order.
+  // CurrentOrder to every other range. For each (use in burst, def in other
+  // range) pair, the constraint applied depends on topological order:
+  //   - Intra-iteration (def.NodeNum > use.NodeNum):
+  //       Earliest[def] = max(Earliest[def], Cycle[use] + antiLat)
+  //   - Loop-carried (def.NodeNum < use.NodeNum):
+  //       Earliest[def] = max(Earliest[def], Cycle[use] + antiLat - II)
   void simulateAntiDependences(size_t BurstPos);
 };
 

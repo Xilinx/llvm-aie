@@ -102,9 +102,9 @@ ScarceRange::ScarceRange(const RegLiveRange &LR, const ScheduleDAGInstrs &DAG)
 
 BurstMostUrgentStrategy::BurstMostUrgentStrategy(
     ScheduleDAGInstrs &DAG, ScheduleInfo &Info,
-    const std::vector<ScarceRange> &ScarceRanges, int LatestBias)
+    const std::vector<ScarceRange> &ScarceRanges, int LatestBias, int II)
     : PostPipelinerStrategy(DAG, Info, LatestBias), ScarceRanges(ScarceRanges),
-      CurrentSet(0) {
+      CurrentSet(0), II(II) {
 
   assert(!ScarceRanges.empty() &&
          "BurstMostUrgentStrategy requires at least one scarce range");
@@ -324,15 +324,20 @@ void BurstMostUrgentStrategy::simulateAntiDependences(size_t BurstPos) {
 
     const int UseCycle = Info[UseSUIdx].Cycle;
 
-    // Iterate over ranges that follow BurstPos in the specified order.
-    // Iterating over ScarceRanges[CompletedRangeIdx+1 ..] would use the
-    // original array order rather than the caller-specified ordering.
-    for (size_t J = BurstPos + 1; J < CurrentOrder.size(); ++J) {
-      const int LaterRangeIdx = CurrentOrder[J];
-      const auto &LaterRange = ScarceRanges[LaterRangeIdx];
+    // Iterate over every other range and push each def's Earliest.
+    // The iteration offset depends on topological order:
+    //   - Intra-iteration (DefSUIdx > UseSUIdx, def is topologically later):
+    //       offset = 0 (no iteration wrap)
+    //   - Loop-carried (DefSUIdx < UseSUIdx, def wraps across the back-edge):
+    //       offset = -II (def appears in the next iteration)
+    for (size_t J = 0; J < CurrentOrder.size(); ++J) {
+      if (J == BurstPos)
+        continue;
+      const int OtherRangeIdx = CurrentOrder[J];
+      const auto &OtherRange = ScarceRanges[OtherRangeIdx];
 
-      // For each Def in the later range's LiveRange.
-      for (const auto &DefInfo : LaterRange.LiveRange.defs()) {
+      // For each Def in the other range's LiveRange.
+      for (const auto &DefInfo : OtherRange.LiveRange.defs()) {
         MachineOperand *const DefOp = DefInfo.getOperand();
         assert(DefOp && "DefOp should be valid");
         MachineInstr *const DefMI = DefOp->getParent();
@@ -342,13 +347,13 @@ void BurstMostUrgentStrategy::simulateAntiDependences(size_t BurstPos) {
 
         // Find the corresponding SUnit index.
         int DefSUIdx = -1;
-        for (const int MemberIdx : LaterRange.Members) {
+        for (const int MemberIdx : OtherRange.Members) {
           if (DAG.SUnits[MemberIdx].getInstr() == DefMI) {
             DefSUIdx = MemberIdx;
             break;
           }
         }
-        assert(DefSUIdx >= 0 && "Def instruction should be in later range");
+        assert(DefSUIdx >= 0 && "Def instruction should be in other range");
 
         // Compute the anti-dependence latency using the signed variant to
         // support negative latencies.
@@ -357,8 +362,13 @@ void BurstMostUrgentStrategy::simulateAntiDependences(size_t BurstPos) {
         if (!Latency)
           continue;
 
-        // Update Earliest[Def] = max(Earliest[Def], Cycle[Use] + L).
-        const int NewEarliest = UseCycle + *Latency;
+        // Determine whether this anti-dep is intra-iteration or loop-carried
+        // based on topological order. If DefSUIdx < UseSUIdx, the def is
+        // scheduled before the use in the same iteration, so the anti-dep
+        // wraps across the back-edge and we subtract II to get the correct
+        // first-iteration constraint.
+        const int IterOffset = (DefSUIdx < UseSUIdx) ? -II : 0;
+        const int NewEarliest = UseCycle + *Latency + IterOffset;
         Info[DefSUIdx].Earliest =
             std::max(Info[DefSUIdx].Earliest, NewEarliest);
       }
