@@ -38,40 +38,37 @@
   define void @test(ptr addrspace(5) noalias %p0, ptr addrspace(6) noalias %p1,
   ; CHECK-LABEL: test:
   ; CHECK:       // %bb.0: // %entry
-  ; CHECK-NEXT:    nopa ; nopb ; add.nc lc, r0, #-3; nopm ; nops
+  ; CHECK-NEXT:    nopa ; add.nc lc, r0, #-3; nopm
+  ; CHECK-NEXT:    movxm ls, #.LBB0_1
+  ; CHECK-NEXT:    movxm le, #.L_LEnd0
   ; CHECK-NEXT:    lshl r28, r4, r24
-  ; CHECK-NEXT:    movs dj3, r28; add r30, r28, r26
-  ; CHECK-NEXT:    lda.s16 r30, [p3, dj3]; add r4, r4, #-1; mov dj3, r30
-  ; CHECK-NEXT:    lda.s16 r28, [p6, dj3]; movxm ls, #.LBB0_1
-  ; CHECK-NEXT:    lshl r28, r4, r24
-  ; CHECK-NEXT:    movs dj3, r28; add r30, r28, r26
-  ; CHECK-NEXT:    lda.s16 r30, [p3, dj3]; add r4, r4, #-1; mov dj3, r30
-  ; CHECK-NEXT:    lda.s16 r28, [p6, dj3]; nopb ; nops ; movxm le, #.L_LEnd0; nopv
-  ; CHECK-NEXT:    nopa ; nopb ; nops ; lshl r28, r4, r24; nopm ; nopv
-  ; CHECK-NEXT:    nopa ; nopb ; movs dj3, r28; add r30, r28, r26; vbcst.16 x2, r30; nopv
-  ; CHECK-NEXT:    lda.s16 r30, [p3, dj3]; nopb ; nops ; add r4, r4, #-1; mov dj3, r30; nopv
-  ; CHECK-NEXT:    lda.s16 r28, [p6, dj3]; nopb ; vst x2, [p2], #64; nopx ; vbcst.16 x0, r28; nopv
+  ; CHECK-NEXT:    movs dj3, r28; add r28, r28, r26
+  ; CHECK-NEXT:    lda.s16 r28, [p3, dj3]; add r4, r4, #-1; mov dj3, r28
+  ; CHECK-NEXT:    lda.s16 r30, [p6, dj3]; lshl r28, r4, r24
+  ; CHECK-NEXT:    movs dj3, r28; add r28, r28, r26
+  ; CHECK-NEXT:    lda.s16 r28, [p3, dj3]; add r4, r4, #-1; mov dj3, r28
+  ; CHECK-NEXT:    lda.s16 r30, [p6, dj3]; lshl r28, r4, r24
+  ; CHECK-NEXT:    movs dj3, r28; add r28, r28, r26
+  ; CHECK-NEXT:    lda.s16 r28, [p3, dj3]; add r4, r4, #-1; mov dj3, r28
+  ; CHECK-NEXT:    lda.s16 r30, [p6, dj3]; lshl r28, r4, r24; vbcst.16 x0, r28
   ; CHECK-NEXT:    .p2align 4
   ; CHECK-NEXT:  .LBB0_1: // %loop
   ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
-  ; CHECK-NEXT:    nopa ; lshl r28, r4, r24; nopm
-  ; CHECK-NEXT:    movs dj3, r28; add r30, r28, r26; vbcst.16 x2, r30
-  ; CHECK-NEXT:    lda.s16 r30, [p3, dj3]; vst x0, [p1], #64; add r4, r4, #-1; mov dj3, r30
+  ; CHECK-NEXT:    nopa ; nopb ; movs dj3, r28; add r28, r28, r26; vbcst.16 x2, r30; nopv
+  ; CHECK-NEXT:    lda.s16 r28, [p3, dj3]; nopb ; vst x0, [p2], #64; add r4, r4, #-1; mov dj3, r28; nopv
   ; CHECK-NEXT:  .L_LEnd0:
-  ; CHECK-NEXT:    lda.s16 r28, [p6, dj3]; nopb ; vst x2, [p2], #64; nopx ; vbcst.16 x0, r28; nopv
+  ; CHECK-NEXT:    lda.s16 r30, [p6, dj3]; nopb ; vst x2, [p1], #64; lshl r28, r4, r24; vbcst.16 x0, r28; nopv
   ; CHECK-NEXT:    .p2align 4
   ; CHECK-NEXT:  // %bb.2: // %exit
-  ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    vbcst.16 x2, r30
-  ; CHECK-NEXT:    vst x0, [p1], #64
-  ; CHECK-NEXT:    vst x2, [p2], #64; vbcst.16 x0, r28
-  ; CHECK-NEXT:    nop
+  ; CHECK-NEXT:    vst x0, [p2], #64
+  ; CHECK-NEXT:    vst x2, [p1], #64; vbcst.16 x0, r28
   ; CHECK-NEXT:    vbcst.16 x2, r30
-  ; CHECK-NEXT:    vst x0, [p1], #64; ret lr
-  ; CHECK-NEXT:    vst x2, [p2], #64; vbcst.16 x0, r28 // Delay Slot 5
-  ; CHECK-NEXT:    nop // Delay Slot 4
-  ; CHECK-NEXT:    nop // Delay Slot 3
-  ; CHECK-NEXT:    vst x0, [p1], #64 // Delay Slot 2
+  ; CHECK-NEXT:    vst x0, [p2], #64; ret lr
+  ; CHECK-NEXT:    vst x2, [p1], #64; vbcst.16 x0, r28 // Delay Slot 5
+  ; CHECK-NEXT:    vbcst.16 x2, r30 // Delay Slot 4
+  ; CHECK-NEXT:    vst x0, [p2], #64 // Delay Slot 3
+  ; CHECK-NEXT:    vst x2, [p1], #64 // Delay Slot 2
   ; CHECK-NEXT:    nop // Delay Slot 1
                     i32 %n) {
   entry:
