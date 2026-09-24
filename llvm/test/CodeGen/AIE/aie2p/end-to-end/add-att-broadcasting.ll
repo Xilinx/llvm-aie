@@ -22,9 +22,8 @@ declare <32 x bfloat> @llvm.aie2p.v32accfloat.to.v32bf16(<32 x float>) #1
 define dso_local void @add_attribute_bcast(ptr noalias %ifm2, ptr noalias %ifm1, ptr noalias %params, i32 %div16, ptr noalias %ofm) {
 ; CHECK-LABEL: add_attribute_bcast:
 ; CHECK:       // %bb.0: // %newFuncRoot
-; CHECK-NEXT:    mova dj0, #32; nopxm
-; CHECK-NEXT:    lda m0, [p2, dj0]
-; CHECK-NEXT:    mova dj0, #36
+; CHECK-NEXT:    mova dj0, #32; nopb ; nopxm
+; CHECK-NEXT:    lda m0, [p2, dj0]; mov dj0, #36
 ; CHECK-NEXT:    lda m1, [p2, dj0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop

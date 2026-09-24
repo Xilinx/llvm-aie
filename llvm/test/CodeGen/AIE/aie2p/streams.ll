@@ -4,7 +4,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc < %s -verify-machineinstrs -mtriple=aie2p | FileCheck %s
 
 define dso_local void @_Z12test_put_mcdDv64_DB8_i(<64 x i8> noundef %a, i32 noundef %en)  {
@@ -71,9 +71,9 @@ define dso_local noundef i32 @_Z14test_get_ss_nbRbS_(ptr nocapture nonnull write
 ; CHECK-NEXT:    and r3, r1, r2
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    st.s8 r1, [p0, #0]
-; CHECK-NEXT:    nop
+; CHECK-NEXT:    extend.u8 r1, r1
 ; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    mova r3, #-1; extend.u8 r1, r1 // Delay Slot 5
+; CHECK-NEXT:    movx r3, #-1 // Delay Slot 5
 ; CHECK-NEXT:    lshl r1, r1, r3 // Delay Slot 4
 ; CHECK-NEXT:    and r1, r1, r2 // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2

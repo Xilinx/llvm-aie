@@ -91,8 +91,8 @@ define dso_local void @loop_2_biased_conv_mx6x6_ebs16_unroll_impl_accumulate(i32
 ; REMARKS-NEXT: ...
 ; ASM-LABEL: loop_2_biased_conv_mx6x6_ebs16_unroll_impl_accumulate:
 ; ASM:       // %bb.0: // %newFuncRoot
-; ASM-NEXT:    movs dc6, r6; mov r6, p5
-; ASM-NEXT:    paddxm [sp], #64; mov p5, p1
+; ASM-NEXT:    mov dc6, r6
+; ASM-NEXT:    paddxm [sp], #64; movs p5, p1; mov r6, p5
 ; ASM-NEXT:    mova m0, #-68; st p6, [sp, #-64] // 4-byte Folded Spill
 ; ASM-NEXT:    vlda.conv.fp32.bf16 cml3, [p5], #64; movs dc1, r4; movx r4, #6; mov p6, sp
 ; ASM-NEXT:    padda [p6], m0; lshl r6, r6, r4
@@ -115,10 +115,10 @@ define dso_local void @loop_2_biased_conv_mx6x6_ebs16_unroll_impl_accumulate(i32
 ; ASM-NEXT:    lda dj2, [p6], #-4
 ; ASM-NEXT:    lda dj6, [p6], #-4
 ; ASM-NEXT:    lda dn2, [p6, #0]
-; ASM-NEXT:    lda dn6, [p6, #-4]; movs dc5, r3; mov r17, r8
-; ASM-NEXT:    vlda.conv.fp32.bf16 cml2, [p2], #64; movs dc4, r1; movx r8, #772; mov p6, p2
-; ASM-NEXT:    vlda.conv.fp32.bf16 cmh2, [p2], m3; st p7, [sp, #-60]; movx r25, #0; mov r1, #0 // 4-byte Folded Spill
-; ASM-NEXT:    vlda.conv.fp32.bf16 cml0, [p2], #64; movs dc2, r5; movx r4, #1; mov p7, p1
+; ASM-NEXT:    lda dn6, [p6, #-4]; or r17, r8, r8; mov dc4, r1
+; ASM-NEXT:    vlda.conv.fp32.bf16 cml2, [p2], #64; movs dc5, r3; movx r8, #772; mov p6, p2
+; ASM-NEXT:    vlda.conv.fp32.bf16 cmh2, [p2], m3; st p7, [sp, #-60]; movx r1, #0; mov dc2, r5 // 4-byte Folded Spill
+; ASM-NEXT:    vlda.conv.fp32.bf16 cml0, [p2], #64; movs p7, p1; movx r25, #0; mov r4, #1
 ; ASM-NEXT:    vlda.conv.fp32.bf16 cmh0, [p2], #64; movs p1, p4; or r24, r1, r1; mov p4, p0
 ; ASM-NEXT:  .LBB0_1: // %steady.stage1.top
 ; ASM-NEXT:    // =>This Loop Header: Depth=1

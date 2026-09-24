@@ -96,7 +96,7 @@ define dso_local void @gemm.if.else(ptr %add.ptr, ptr %tdm1) #5 {
 ; ASM:       // %bb.0: // %newFuncRoot
 ; ASM-NEXT:    movxm p5, ##(Param+24)
 ; ASM-NEXT:    paddxm [sp], #64; mov p4, p1
-; ASM-NEXT:    mova m0, #92; st p6, [sp, #-64]; movxm p2, #475136 // 4-byte Folded Spill
+; ASM-NEXT:    mova m0, #92; nopb ; movxm p2, #475136; st p6, [sp, #-64] // 4-byte Folded Spill
 ; ASM-NEXT:    vlda.conv.fp32.bf16 cml3, [p2, #0]; movs p6, p1; movxm p1, #475200
 ; ASM-NEXT:    vlda.conv.fp32.bf16 cmh3, [p1, #0]; paddb [p5], m0
 ; ASM-NEXT:    lda r2, [p5], #-4
@@ -119,8 +119,7 @@ define dso_local void @gemm.if.else(ptr %add.ptr, ptr %tdm1) #5 {
 ; ASM-NEXT:    vlda.conv.fp32.bf16 cmh0, [p1, #0]
 ; ASM-NEXT:    lda dn4, [p5], #4
 ; ASM-NEXT:    vlda.conv.fp32.bf16 cml4, [p6], #64; mov m1, #104
-; ASM-NEXT:    lda dj4, [p5], m1
-; ASM-NEXT:    mova m1, #-72
+; ASM-NEXT:    lda dj4, [p5], m1; mov m1, #-72
 ; ASM-NEXT:    lda m3, [p5], m1
 ; ASM-NEXT:    lda m1, [p5], #-16
 ; ASM-NEXT:    lda dn1, [p5], #4

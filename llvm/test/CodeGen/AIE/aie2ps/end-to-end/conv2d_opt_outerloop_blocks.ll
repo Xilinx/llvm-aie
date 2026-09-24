@@ -256,7 +256,7 @@ define dso_local void @conv2d(i32 %0, ptr %add.ptr3, ptr %ofm, ptr %psum_0_tdm, 
 ; NO-PROLOGUE-SPLIT-NEXT:    vlda.128 wl2, [p5, #0]
 ; NO-PROLOGUE-SPLIT-NEXT:    vldb.128 wl8, [p5, #16]
 ; NO-PROLOGUE-SPLIT-NEXT:    vlda.ups.2x cml0, s0, upssign1, [p3], #64; vldb x1, [p0, #64]
-; NO-PROLOGUE-SPLIT-NEXT:    vlda.ups.2x cmh1, s0, upssign1, [p2], #64; or r19, r8, r8; mov r8, r7
+; NO-PROLOGUE-SPLIT-NEXT:    vlda.ups.2x cmh1, s0, upssign1, [p2], #64; or r8, r7, r7; mov r19, r8
 ; NO-PROLOGUE-SPLIT-NEXT:    vlda.ups.2x cmh0, s0, upssign1, [p3], #64; or r21, r10, r10; mov s0, r1
 ; NO-PROLOGUE-SPLIT-NEXT:    movx crupsmode, #0; mov s1, r5
 ; NO-PROLOGUE-SPLIT-NEXT:    mova r12, #264; movs dc3, dc7; or r22, r12, r12; mov dc6, dc7

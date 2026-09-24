@@ -54,6 +54,13 @@ static cl::opt<bool>
                              cl::init(true),
                              cl::desc("Recognize pointer hazards"));
 
+static cl::opt<bool> WARSlotAvoidance(
+    "aie-war-slot-avoidance", cl::Hidden, cl::init(true),
+    cl::desc("When selecting a slot for a multi-slot pseudo instruction, "
+             "prefer slots that do not conflict with WAR (Anti) predecessor "
+             "slots, increasing the chance of co-issuing them in the same "
+             "VLIW bundle (bottom-up scheduling only)."));
+
 const AIEBaseMCFormats *FuncUnitWrapper::FormatInterface = nullptr;
 void FuncUnitWrapper::setFormatInterface(const AIEBaseMCFormats *Formats) {
   FormatInterface = Formats;
@@ -365,6 +372,57 @@ void AIEHazardRecognizer::Reset() {
   SelectedAltDescs.clear();
 }
 
+/// Compute a bitmask of slots to avoid when selecting an alternate opcode for
+/// a multi-slot pseudo instruction. In bottom-up scheduling, the Write (W)
+/// part of a WAR (Anti) dependency is scheduled before the Read (R) part. If
+/// W is assigned the same slot as R, they cannot be co-issued in the same VLIW
+/// bundle. This function returns the union of slot sets used by all unscheduled
+/// Anti predecessors of \p SU that have a statically known slot, so that the
+/// caller can prefer alternatives that avoid those slots.
+static SlotBits computeWARAvoidSlots(const SUnit *SU,
+                                     const AIEAlternateDescriptors &AltDescs,
+                                     const AIEBaseMCFormats *Formats) {
+  // Returns true if all data (RAW) successors of PredSU are already scheduled.
+  // Only when this holds is the predecessor's slot considered "committed" and
+  // worth avoiding. This is the most expensive check, so it is applied last.
+  auto AllDataSuccsScheduled = [](const SUnit *PredSU) {
+    return all_of(PredSU->Succs, [](const SDep &Succ) {
+      return Succ.getKind() != SDep::Data || Succ.getSUnit()->isScheduled;
+    });
+  };
+
+  SlotBits AvoidSlots = 0;
+  for (const SDep &Pred : SU->Preds) {
+    // Only consider WAR (Anti) dependencies.
+    if (Pred.getKind() != SDep::Anti)
+      continue;
+    const SUnit *const PredSU = Pred.getSUnit();
+    if (!PredSU || !PredSU->getInstr())
+      continue;
+    // Bottom-up only: R (predecessor) must not yet be scheduled.
+    if (PredSU->isScheduled)
+      continue;
+    // Skip multi-slot pseudos with unresolved slot.
+    MachineInstr *PredMI = PredSU->getInstr();
+    const unsigned PredOpcode = AltDescs.getOpcode(PredMI);
+    if (Formats->getAlternateInstsOpcode(PredOpcode))
+      continue;
+    // Early skip: if the predecessor has no known slot, nothing to avoid.
+    const MCSlotKind PredSlotKind = Formats->getSlotKind(PredOpcode);
+    if (PredSlotKind == MCSlotKind())
+      continue;
+    const MCSlotInfo *const PredSlotInfo = Formats->getSlotInfo(PredSlotKind);
+    if (!PredSlotInfo)
+      continue;
+    // Most expensive check last: only constrain if R's slot is committed
+    // (all its data successors are already scheduled).
+    if (!AllDataSuccsScheduled(PredSU))
+      continue;
+    AvoidSlots |= PredSlotInfo->getSlotSet();
+  }
+  return AvoidSlots;
+}
+
 ScheduleHazardRecognizer::HazardType
 AIEHazardRecognizer::getHazardType(SUnit *SU, int DeltaCycles) {
   MachineInstr *MI = SU->getInstr();
@@ -388,19 +446,35 @@ AIEHazardRecognizer::getHazardType(SUnit *SU, int DeltaCycles) {
   const std::vector<unsigned int> *AlternateInsts =
       TII->getFormatInterface()->getAlternateInstsOpcode(MI->getOpcode());
   if (AlternateInsts) {
-    for (const auto AltInstOpcode : *AlternateInsts) {
-      ScheduleHazardRecognizer::HazardType Haz =
-          getHazardType(Scoreboard, MI, TII->get(AltInstOpcode), DeltaCycles);
-      // Check if there is NoHazard, If there is a Hazard or NoopHazard check
-      // for the next possible Opcode.
-      if (Haz == NoHazard) {
-        SelectedAltDescs.setAlternateDescriptor(MI, AltInstOpcode);
-        return NoHazard;
+    const AIEBaseMCFormats *Formats = TII->getFormatInterface();
+    // Compute slots to avoid based on WAR (Anti) predecessors with a known
+    // static slot assignment. This steers the alternate opcode selection away
+    // from slots that would prevent co-issuing W and R in the same bundle.
+    const SlotBits AvoidSlots =
+        WARSlotAvoidance ? computeWARAvoidSlots(SU, SelectedAltDescs, Formats)
+                         : SlotBits(0);
+
+    // Two passes over the alternates:
+    //   1. Prefer slots not in AvoidSlots (WAR-aware, most restrictive).
+    //   2. Accept any slot (original fallback, no restriction).
+    // When AvoidSlots == 0 both passes are identical; the first pass will
+    // always find a winner (if one exists) and we return before the second.
+    for (const SlotBits Mask : {AvoidSlots, SlotBits(0)}) {
+      for (const unsigned AltInstOpcode : *AlternateInsts) {
+        const MCSlotKind AltSlotKind = Formats->getSlotKind(AltInstOpcode);
+        if (AltSlotKind != MCSlotKind()) {
+          const MCSlotInfo *const AltSlotInfo =
+              Formats->getSlotInfo(AltSlotKind);
+          if (AltSlotInfo && (AltSlotInfo->getSlotSet() & Mask))
+            continue; // This slot conflicts with a WAR predecessor's slot
+        }
+        if (getHazardType(Scoreboard, MI, TII->get(AltInstOpcode),
+                          DeltaCycles) == NoHazard) {
+          SelectedAltDescs.setAlternateDescriptor(MI, AltInstOpcode);
+          return NoHazard;
+        }
       }
     }
-    // In the above loop we are trying to find the best one where there is
-    // NoHazard, if the loop is not able to find such case it will be a
-    // NoopHazard only.
     return NoopHazard;
   }
 

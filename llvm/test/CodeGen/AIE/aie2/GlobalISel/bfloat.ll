@@ -4,7 +4,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc -O2 -mtriple=aie2 --issue-limit=1 %s -o - | FileCheck %s
 %class.bfloat16 = type { bfloat }
 
@@ -30,11 +30,11 @@ define dso_local %class.bfloat16 @_Z13test_ext_elemf(float noundef %x) {
 ; CHECK-NEXT:    vinsert.32 x0, x0, r29, r1
 ; CHECK-NEXT:    vmov bmh0, x0
 ; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    vconv.bf16.fp32 wl0, bmh0 // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    vextract.s16 r0, x0, r16 // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov r16, r2 // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    vconv.bf16.fp32 wl0, bmh0 // Delay Slot 4
+; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    vextract.s16 r0, x0, r16 // Delay Slot 2
+; CHECK-NEXT:    or r16, r2, r2 // Delay Slot 1
 entry:
   %0 = tail call <8 x i64> @llvm.aie2.v16accfloat()
   %1 = tail call <8 x i64> @llvm.aie2.vinsert32.accfloat(<8 x i64> %0, i32 0, float %x)
