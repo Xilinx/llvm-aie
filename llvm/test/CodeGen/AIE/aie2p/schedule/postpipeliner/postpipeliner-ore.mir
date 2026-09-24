@@ -158,7 +158,7 @@ body:             |
   ; CHECK-NEXT: Args:
   ; CHECK-NEXT:   - String:          Schedule found
   ; CHECK-NEXT:   - Pipeliner:       postpipeliner
-  ; CHECK-NEXT:   - II:              '14'
+  ; CHECK-NEXT:   - II:              '13'
   ; CHECK-NEXT:   - NS:              '2'
   ; CHECK-NEXT:   - Loop:            bb.1.for.body
   ; CHECK-NEXT:   - Prologue:        bb.0.entry

@@ -1154,7 +1154,8 @@ bool PostPipeliner::tryScarceRangePacking() {
          "Scarce-only DAG must be acyclic by construction");
 
   // Create the strategy once (precomputes predecessors and members).
-  BurstMostUrgentStrategy Strategy(*DAG, Info, ScarceRanges, MinLength + II);
+  BurstMostUrgentStrategy Strategy(*DAG, Info, ScarceRanges, MinLength + II,
+                                   II);
 
   // Enumerate orders and try scheduling with different orderings.
   return enumerateRangeOrders(
