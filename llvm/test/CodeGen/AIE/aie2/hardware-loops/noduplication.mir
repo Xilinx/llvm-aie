@@ -102,14 +102,14 @@ body:             |
   ; CHECK-NEXT:   successors: %bb.3(0x80000000)
   ; CHECK-NEXT:   liveins: $r17
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   BUNDLE implicit-def $lc, implicit killed $r17 {
-  ; CHECK-NEXT:     $lc = ADD_NC killed $r17, 0
-  ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def $ls {
   ; CHECK-NEXT:     $ls = MOVXM_lng_cg %bb.3
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def $le {
   ; CHECK-NEXT:     $le = MOVXM_lng_cg <mcsymbol .L_1120>
+  ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   BUNDLE implicit-def $lc, implicit killed $r17 {
+  ; CHECK-NEXT:     $lc = ADD_NC killed $r17, 0
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
   ; CHECK-NEXT:     NOP

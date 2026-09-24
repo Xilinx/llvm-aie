@@ -23,6 +23,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineScheduler.h"
 #include "llvm/CodeGen/ResourceScoreboard.h"
+#include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/Support/Debug.h"
 #include <memory>
 
@@ -95,6 +96,11 @@ static cl::opt<bool> PreSchedFollowsSkipPipeliner(
     "aie-presched-follows-skip-pipeliner", cl::init(true),
     cl::desc("Don't run the prescheduler if the pipeliner is skipped"));
 
+static cl::opt<bool> IncomingLatencyBias(
+    "aie-incoming-latency-bias", cl::init(true),
+    cl::desc("[AIE] Account for the latency produced in predecessor blocks "
+             "when ranking bottom-zone scheduling candidates"));
+
 namespace {
 // A sentinel value to represent an unknown SUnit.
 const constexpr unsigned UnknownSUNum = ~0;
@@ -122,6 +128,23 @@ const AIEBaseInstrInfo *getTII(MachineBasicBlock *MBB) {
 }
 const AIEBaseInstrInfo *getTII(const ScheduleDAGMI &DAG) {
   return static_cast<const AIEBaseInstrInfo *>(DAG.TII);
+}
+
+/// Latency of the last definition of \p Reg in \p MBB, or 0 if there is none.
+unsigned getOutgoingDefLatency(const MachineBasicBlock &MBB, Register Reg,
+                               const AIEBaseInstrInfo &TII,
+                               const InstrItineraryData &Itineraries,
+                               const TargetRegisterInfo &TRI) {
+  for (const MachineInstr &MI : reverse(MBB.instrs())) {
+    // Bundle headers duplicate the operands of their members.
+    if (MI.isBundle() || MI.isDebugInstr() || MI.isPosition())
+      continue;
+    if (!MI.definesRegister(Reg, &TRI))
+      continue;
+    return std::max(
+        0, AIE::maxLatency(&MI, TII, Itineraries, /*IncludeStages=*/false));
+  }
+  return 0;
 }
 
 void bumpCycleForBundles(unsigned ToCycle,
@@ -461,9 +484,68 @@ static MachineInstr *getDelaySlotInstr(MachineBasicBlock::iterator RegionBegin,
   return &(*It);
 }
 
+void AIEPostRASchedStrategy::computeIncomingInterBlockLatencies() {
+  IncomingInterBlockLatency.clear();
+  if (!IncomingLatencyBias || !CurMBB || CurMBB->pred_empty())
+    return;
+
+  const InstrItineraryData *Itineraries =
+      DAG->getSchedModel()->getInstrItineraries();
+  if (!Itineraries || Itineraries->isEmpty())
+    return;
+
+  const AIEBaseInstrInfo *TII = getTII(CurMBB);
+  const TargetRegisterInfo &TRI = *DAG->MF.getSubtarget().getRegisterInfo();
+
+  // Several entry nodes usually read the same registers, so memoize the walk
+  // over the predecessors.
+  DenseMap<Register, unsigned> PerRegLatency;
+  auto IncomingLatency = [&](Register Reg) {
+    auto [It, Inserted] = PerRegLatency.try_emplace(Reg, 0);
+    if (Inserted) {
+      for (const MachineBasicBlock *Pred : CurMBB->predecessors())
+        It->second =
+            std::max(It->second, getOutgoingDefLatency(*Pred, Reg, *TII,
+                                                       *Itineraries, TRI));
+    }
+    return It->second;
+  };
+
+  for (const SUnit &SU : DAG->SUnits) {
+    // A node with a predecessor in the region already carries that chain in
+    // its depth; adding the incoming latency would double-count it.
+    if (any_of(SU.Preds,
+               [](const SDep &D) { return !D.getSUnit()->isBoundaryNode(); }))
+      continue;
+    const MachineInstr *MI = SU.getInstr();
+    if (!MI)
+      continue;
+    unsigned Latency = 0;
+    for (const MachineOperand &MO : MI->uses())
+      if (MO.isReg() && MO.getReg().isPhysical())
+        Latency = std::max(Latency, IncomingLatency(MO.getReg()));
+    if (Latency) {
+      IncomingInterBlockLatency[MI] = Latency;
+      LLVM_DEBUG(dbgs() << "  Incoming interblock latency " << Latency
+                        << " for SU(" << SU.NodeNum << "): " << *MI);
+    }
+  }
+}
+
+unsigned AIEPostRASchedStrategy::getInterBlockDepth(const SUnit &SU) const {
+  const MachineInstr *MI = SU.getInstr();
+  if (!MI)
+    return SU.getDepth();
+  auto It = IncomingInterBlockLatency.find(MI);
+  return It == IncomingInterBlockLatency.end() ? SU.getDepth()
+                                               : SU.getDepth() + It->second;
+}
+
 void AIEPostRASchedStrategy::initialize(ScheduleDAGMI *Dag) {
   PostGenericScheduler::initialize(Dag);
   assert(PostRADirection == MISched::Direction::Unspecified);
+
+  computeIncomingInterBlockLatencies();
 
   // Update Bot scoreboard from the scheduled top regions of successor blocks.
   // Conservativeness (whether to replay bundles or block all cycles) is
@@ -1297,6 +1379,15 @@ bool AIEPostRASchedStrategy::tryCandidate(SchedCandidate &Cand,
           return TryCand.Reason != NoCand;
         }
       }
+    }
+
+    // Same, for the part of the chain that getDepth() misses because it lies
+    // in a predecessor block. That block is not scheduled yet, but placing
+    // such a node low gives it more freedom.
+    if (tryGreater(getInterBlockDepth(*TryCand.SU),
+                   getInterBlockDepth(*Cand.SU), TryCand, Cand,
+                   BotPathReduce)) {
+      return TryCand.Reason != NoCand;
     }
 
     // Prefer the instruction whose dependent chain is estimated to

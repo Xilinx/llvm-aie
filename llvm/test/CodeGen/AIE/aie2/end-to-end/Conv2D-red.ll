@@ -86,9 +86,9 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; ASM-NEXT:    vlda.ups.s32.s16 bmh3, s0, [p2, #32]
 ; ASM-NEXT:    vlda.ups.s32.s16 bml3, s0, [p2], m7
 ; ASM-NEXT:    vlda.ups.s32.s16 bmh2, s0, [p2, #32]
-; ASM-NEXT:    vlda.ups.s32.s16 bml2, s0, [p2], m4; mov r0, p0
-; ASM-NEXT:    vlda.ups.s32.s16 bmh1, s0, [p2, #32]; movxm ls, #.LBB0_2
-; ASM-NEXT:    vlda.ups.s32.s16 bml1, s0, [p2], m7; movxm le, #.L_LEnd0
+; ASM-NEXT:    vlda.ups.s32.s16 bml2, s0, [p2], m4; movxm ls, #.LBB0_2
+; ASM-NEXT:    vlda.ups.s32.s16 bmh1, s0, [p2, #32]; movxm le, #.L_LEnd0
+; ASM-NEXT:    vlda.ups.s32.s16 bml1, s0, [p2], m7; mov r0, p0
 ; ASM-NEXT:    vlda.ups.s32.s16 bmh0, s0, [p2, #32]; and r0, r0, r9; mov m1, r11
 ; ASM-NEXT:    nopb ; vlda.ups.s32.s16 bml0, s0, [p2], m1; nops ; add r0, r0, #33; add.nc lc, r5, #0; nopv
 ; ASM-NEXT:  .LBB0_2: // %inner.loop

@@ -18,6 +18,7 @@
 #include "AIEHazardRecognizer.h"
 #include "AIEInterBlockScheduling.h"
 #include "AIEPostPipeliner.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineScheduler.h"
 
@@ -202,6 +203,26 @@ protected:
   // Verify whether a Scheduling Unit (SU) can be scheduled in a particular
   // zone.
   bool doesNotProgressInZone(const SchedBoundary &Zone, const SUnit &SU) const;
+
+  /// Latency of the dependence chain that reaches a region entry node from a
+  /// predecessor block, keyed by instruction. Rebuilt for every region by
+  /// computeIncomingInterBlockLatencies().
+  DenseMap<const MachineInstr *, unsigned> IncomingInterBlockLatency;
+
+  /// Populate IncomingInterBlockLatency for the current region.
+  ///
+  /// A node whose operands are all produced outside the region has depth 0,
+  /// so the bottom-zone heuristics rank it as pure slack and schedule it last,
+  /// which pushes it to the top of the block. That placement is not free: the
+  /// predecessor then has to pad the producer's latency with NOPs. Recording
+  /// the incoming latency lets getInterBlockDepth() measure the whole chain
+  /// instead of truncating it at the block boundary.
+  void computeIncomingInterBlockLatencies();
+
+  /// Depth of \p SU extended with the part of its dependence chain that lies
+  /// in a predecessor block. Equal to SU.getDepth() for every node that has a
+  /// predecessor inside the region.
+  unsigned getInterBlockDepth(const SUnit &SU) const;
 
 private:
   /// This flag is set for the first processed region of a basic block. We force

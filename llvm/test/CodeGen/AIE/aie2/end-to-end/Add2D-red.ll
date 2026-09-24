@@ -78,9 +78,9 @@ define void @add2d(ptr noalias %params, ptr noalias %ifm1_data, ptr noalias %ifm
 ; ASM-NEXT:  .LBB0_2: // %entry.new
 ; ASM-NEXT:    vlda.ups.s32.d8 cm2, s1, [p1], m1; mov dc0, #0
 ; ASM-NEXT:    vlda.ups.s32.d8 cm1, s1, [p1], m1; mov dc4, dc0
-; ASM-NEXT:    vlda.3d.ups.s32.d8 cm7, s1, [p2], d0; movx r0, #-4; mov crUPSSign, r4
-; ASM-NEXT:    vlda.ups.s32.d8 cm0, s1, [p1], m1; movxm ls, #.LBB0_3
-; ASM-NEXT:    vlda.3d.ups.s32.d8 cm6, s1, [p2], d0; movxm le, #.L_LEnd0
+; ASM-NEXT:    vlda.3d.ups.s32.d8 cm7, s1, [p2], d0; movxm ls, #.LBB0_3
+; ASM-NEXT:    vlda.ups.s32.d8 cm0, s1, [p1], m1; movxm le, #.L_LEnd0
+; ASM-NEXT:    vlda.3d.ups.s32.d8 cm6, s1, [p2], d0; movx r0, #-4; mov crUPSSign, r4
 ; ASM-NEXT:    vlda.ups.s32.d8 cm4, s1, [p1], m1; and r0, r2, r0; mov s1, r3
 ; ASM-NEXT:    vlda.3d.ups.s32.d8 cm5, s1, [p2], d0; add r0, r0, #-4; mov r2, #-2
 ; ASM-NEXT:    vlda.3d.ups.s32.d8 cm3, s1, [p2], d0; lshl r0, r0, r2; mov crSRSSign, r6
@@ -111,8 +111,8 @@ define void @add2d(ptr noalias %params, ptr noalias %ifm1_data, ptr noalias %ifm
 ; ASM-NEXT:    nop
 ; ASM-NEXT:    vst.srs.d8.s32 cm2, s0, [p3], #32
 ; ASM-NEXT:    vst.srs.d8.s32 cm1, s0, [p3], #32; mov crUPSSign, #0
-; ASM-NEXT:    vst.srs.d8.s32 cm0, s0, [p3], #32; mov r0, dc0
-; ASM-NEXT:    mov r1, dc4
+; ASM-NEXT:    vst.srs.d8.s32 cm0, s0, [p3], #32; mov r1, dc4
+; ASM-NEXT:    mov r0, dc0
 ; ASM-NEXT:    vst.srs.d8.s32 cm3, s0, [p3], #32; mov crSRSSign, #0
 ; ASM-NEXT:  .LBB0_5: // %for.cond.cleanup.unr-lcssa.split
 ; ASM-NEXT:    st r1, [p7, #0]; nopx
