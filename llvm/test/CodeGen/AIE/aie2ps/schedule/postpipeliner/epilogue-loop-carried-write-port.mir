@@ -64,11 +64,11 @@ body:             |
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   liveins: $r0, $r26, $r28
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   BUNDLE implicit-def $r24, implicit $lr {
+  ; CHECK-NEXT:   RET implicit $lr
+  ; CHECK-NEXT:   BUNDLE implicit-def $r24, implicit-def $r28, implicit-def dead $srcarry, implicit killed $r20, implicit $r0 {
   ; CHECK-NEXT:     renamable $r24 = MOVA -31
-  ; CHECK-NEXT:     RET implicit $lr
+  ; CHECK-NEXT:     renamable $r28 = ADD_alu_r_rr killed renamable $r20, renamable $r0, implicit-def dead $srcarry
   ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   renamable $r28 = ADD_alu_r_rr killed renamable $r20, renamable $r0, implicit-def dead $srcarry
   ; CHECK-NEXT:   renamable $r24 = ASHL killed renamable $r0, killed renamable $r24
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
