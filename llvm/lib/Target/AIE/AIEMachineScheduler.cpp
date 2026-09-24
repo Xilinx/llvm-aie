@@ -424,16 +424,20 @@ void AIEPostRASchedStrategy::initializeTopScoreBoard() {
     TopHazardRec->emitInScoreboard(MI, MI.getDesc(), 0);
   };
 
-  const unsigned ConflictHorizon = TopHazardRec->getConflictHorizon();
+  const int ConflictHorizon = TopHazardRec->getConflictHorizon();
   ArrayRef<MachineBundle> LoopBundles = *LoopBundlesOpt;
-  const unsigned LoopSize = LoopBundles.size();
+  const int LoopSize = LoopBundles.size();
 
-  // ceil(LoopSize / ConflictHorizon)
-  const int LoopReplayTimes =
-      (LoopSize + ConflictHorizon - 1) / ConflictHorizon;
+  // Replay the SWP body N times immediately before the epilogue so the top
+  // scoreboard holds every reservation that can still affect cycle 0.
+  // One iteration contributes L = LoopSize (II) cycles of history, while
+  // instructions up to H = ConflictHorizon cycles back can still conflict:
+  //   N * L >= H  =>  N = ceil(H / L)
+  const int LoopReplayTimes = (ConflictHorizon + LoopSize - 1) / LoopSize;
 
-  // Replay SWP loop enough times (right before the epilogue) until the
-  // scoreboard reaches a steady state.
+  DEBUG_BLOCKS(dbgs() << "Replaying " << LoopReplayTimes << " iterations of "
+                      << LoopSize << " bundles into the top scoreboard\n");
+
   for (int I = 0; I < LoopReplayTimes; I++) {
     for (auto &Bundle : LoopBundles) {
       for (MachineInstr *MI : Bundle.getInstrs()) {
