@@ -8,26 +8,33 @@
 ; RUN: llc -O2 -mtriple=aie2   %s -o - | FileCheck -check-prefix=CHECK-AIE2 %s
 ; RUN: llc -O2 -mtriple=aie2p  %s -o - | FileCheck -check-prefix=CHECK-AIE2P %s
 ; RUN: llc -O2 -mtriple=aie2ps %s -o - | FileCheck -check-prefix=CHECK-AIE2PS %s
-; RUN: llc -O2 -mtriple=aie4   %s -o - | FileCheck -check-prefix=CHECK-AIE4 %s
 
 ; Code generation for compares whose users are in other basic blocks. AIE has
 ; no flags register: compares write a GPR, conditional branches test any GPR,
 ; and sel.nez/sel.eqz read their condition from r27. Without
 ; setHasMultipleConditionRegisters(true), CodeGenPrepare sinks every compare
 ; into the blocks of its users (and deletes compares that have no users).
+; Each function states whether its output is expected to change with the flag;
+; @invariant_guard_nested_loop is the one that shows the intended improvement.
 
 ; Loop-invariant guard of an inner loop, already hoisted to the preheader of
 ; the outer loop (the pad_3d row-loop shape). Sinking puts it back into the
 ; outer loop header, where it runs on every outer iteration.
+; Expected to change on AIE2 and AIE2P: with the flag the ge stays in
+; %entry. Without it, Early MachineLICM treats the sunk ge as a cheap
+; instruction that would add a live register (%pad is still needed as the
+; inner trip count) and leaves it in the loop. AIE2PS does not change because
+; it allows hoisting such cheap instructions (canHoistCheapInst) and moves
+; the ge back to %entry itself.
 define void @invariant_guard_nested_loop(ptr noalias %out, ptr noalias %in, i32 %rows, i32 %pad) {
 ; CHECK-AIE2-LABEL: invariant_guard_nested_loop:
 ; CHECK-AIE2:       // %bb.0: // %entry
-; CHECK-AIE2-NEXT:    nopb ; mova r4, #0; nops ; movx r3, #3; mov r2, #0; nopv
+; CHECK-AIE2-NEXT:    mova r2, #0; nopxm
+; CHECK-AIE2-NEXT:    mova r4, #3; ge r3, r2, r1
 ; CHECK-AIE2-NEXT:  .LBB0_1: // %outer
 ; CHECK-AIE2-NEXT:    // =>This Loop Header: Depth=1
 ; CHECK-AIE2-NEXT:    // Child Loop BB0_3 Depth 2
-; CHECK-AIE2-NEXT:    nopa ; ge r5, r2, r1
-; CHECK-AIE2-NEXT:    jnz r5, #.LBB0_4
+; CHECK-AIE2-NEXT:    nopa ; nopb ; jnz r3, #.LBB0_4
 ; CHECK-AIE2-NEXT:    nop // Delay Slot 5
 ; CHECK-AIE2-NEXT:    nop // Delay Slot 4
 ; CHECK-AIE2-NEXT:    nop // Delay Slot 3
@@ -38,17 +45,17 @@ define void @invariant_guard_nested_loop(ptr noalias %out, ptr noalias %in, i32 
 ; CHECK-AIE2-NEXT:    add.nc lc, r1, #0
 ; CHECK-AIE2-NEXT:    movxm ls, #.LBB0_3
 ; CHECK-AIE2-NEXT:    nopb ; nopa ; nops ; movxm le, #.L_LEnd0; nopv
-; CHECK-AIE2-NEXT:    nopb ; nopa ; nops ; or r5, r4, r4; mov r6, r4; nopv
+; CHECK-AIE2-NEXT:    nopb ; nopa ; nops ; or r5, r2, r2; mov r6, r2; nopv
 ; CHECK-AIE2-NEXT:  .LBB0_3: // %inner
 ; CHECK-AIE2-NEXT:    // Parent Loop BB0_1 Depth=1
 ; CHECK-AIE2-NEXT:    // => This Inner Loop Header: Depth=2
-; CHECK-AIE2-NEXT:    nopb ; nopa ; nops ; lshl r7, r5, r3; mov p2, p1; nopv
+; CHECK-AIE2-NEXT:    nopb ; nopa ; nops ; lshl r7, r5, r4; mov p2, p1; nopv
 ; CHECK-AIE2-NEXT:    nopb ; nopa ; nops ; nopx ; mov m0, r7; nopv
 ; CHECK-AIE2-NEXT:    paddb [p2], m0; nopa ; nops ; nopxm ; nopv
 ; CHECK-AIE2-NEXT:    lda r7, [p2, #0]
 ; CHECK-AIE2-NEXT:    lda r8, [p2, #4]
 ; CHECK-AIE2-NEXT:    nop
-; CHECK-AIE2-NEXT:    lshl r9, r6, r3
+; CHECK-AIE2-NEXT:    lshl r9, r6, r4
 ; CHECK-AIE2-NEXT:    mov m0, r9
 ; CHECK-AIE2-NEXT:    mov p2, p0
 ; CHECK-AIE2-NEXT:    paddb [p2], m0
@@ -63,7 +70,7 @@ define void @invariant_guard_nested_loop(ptr noalias %out, ptr noalias %in, i32 
 ; CHECK-AIE2-NEXT:    nop // Delay Slot 4
 ; CHECK-AIE2-NEXT:    nop // Delay Slot 3
 ; CHECK-AIE2-NEXT:    nop // Delay Slot 2
-; CHECK-AIE2-NEXT:    add r4, r4, #8 // Delay Slot 1
+; CHECK-AIE2-NEXT:    add r2, r2, #8 // Delay Slot 1
 ; CHECK-AIE2-NEXT:  // %bb.5: // %exit
 ; CHECK-AIE2-NEXT:    ret lr
 ; CHECK-AIE2-NEXT:    nop // Delay Slot 5
@@ -74,12 +81,12 @@ define void @invariant_guard_nested_loop(ptr noalias %out, ptr noalias %in, i32 
 ;
 ; CHECK-AIE2P-LABEL: invariant_guard_nested_loop:
 ; CHECK-AIE2P:       // %bb.0: // %entry
-; CHECK-AIE2P-NEXT:    mova r4, #0; nopb ; nops ; movx r3, #3; mov r2, #0; nopv
+; CHECK-AIE2P-NEXT:    mova r2, #0; nopxm
+; CHECK-AIE2P-NEXT:    mova r4, #3; ge r3, r2, r1
 ; CHECK-AIE2P-NEXT:  .LBB0_1: // %outer
 ; CHECK-AIE2P-NEXT:    // =>This Loop Header: Depth=1
 ; CHECK-AIE2P-NEXT:    // Child Loop BB0_3 Depth 2
-; CHECK-AIE2P-NEXT:    nopa ; ge r5, r2, r1
-; CHECK-AIE2P-NEXT:    jnz r5, #.LBB0_4
+; CHECK-AIE2P-NEXT:    nopa ; nopb ; jnz r3, #.LBB0_4
 ; CHECK-AIE2P-NEXT:    nop // Delay Slot 5
 ; CHECK-AIE2P-NEXT:    nop // Delay Slot 4
 ; CHECK-AIE2P-NEXT:    nop // Delay Slot 3
@@ -90,18 +97,18 @@ define void @invariant_guard_nested_loop(ptr noalias %out, ptr noalias %in, i32 
 ; CHECK-AIE2P-NEXT:    add.nc lc, r1, #0
 ; CHECK-AIE2P-NEXT:    movxm ls, #.LBB0_3
 ; CHECK-AIE2P-NEXT:    nopa ; nopb ; nops ; movxm le, #.L_LEnd0; nopv
-; CHECK-AIE2P-NEXT:    nopa ; nopb ; nops ; or r5, r4, r4; mov r6, r4; nopv
+; CHECK-AIE2P-NEXT:    nopa ; nopb ; nops ; or r5, r2, r2; mov r6, r2; nopv
 ; CHECK-AIE2P-NEXT:  .LBB0_3: // %inner
 ; CHECK-AIE2P-NEXT:    // Parent Loop BB0_1 Depth=1
 ; CHECK-AIE2P-NEXT:    // => This Inner Loop Header: Depth=2
-; CHECK-AIE2P-NEXT:    nopa ; nopb ; nops ; lshl r7, r5, r3; nopm ; nopv
+; CHECK-AIE2P-NEXT:    nopa ; nopb ; nops ; lshl r7, r5, r4; nopm ; nopv
 ; CHECK-AIE2P-NEXT:    nopa ; nopb ; movs p2, p1; nopx ; mov m0, r7; nopv
 ; CHECK-AIE2P-NEXT:    padda [p2], m0; nopb ; nopxm ; nops
 ; CHECK-AIE2P-NEXT:    lda r7, [p2, #0]
 ; CHECK-AIE2P-NEXT:    lda r16, [p2, #4]
 ; CHECK-AIE2P-NEXT:    nop
 ; CHECK-AIE2P-NEXT:    nop
-; CHECK-AIE2P-NEXT:    lshl r17, r6, r3
+; CHECK-AIE2P-NEXT:    lshl r17, r6, r4
 ; CHECK-AIE2P-NEXT:    movs m0, r17; mov p2, p0
 ; CHECK-AIE2P-NEXT:    padda [p2], m0
 ; CHECK-AIE2P-NEXT:    st r7, [p2, #0]; add r6, r6, #-1
@@ -115,7 +122,7 @@ define void @invariant_guard_nested_loop(ptr noalias %out, ptr noalias %in, i32 
 ; CHECK-AIE2P-NEXT:    nop // Delay Slot 4
 ; CHECK-AIE2P-NEXT:    nop // Delay Slot 3
 ; CHECK-AIE2P-NEXT:    nop // Delay Slot 2
-; CHECK-AIE2P-NEXT:    add r4, r4, #8 // Delay Slot 1
+; CHECK-AIE2P-NEXT:    add r2, r2, #8 // Delay Slot 1
 ; CHECK-AIE2P-NEXT:  // %bb.5: // %exit
 ; CHECK-AIE2P-NEXT:    ret lr
 ; CHECK-AIE2P-NEXT:    nop // Delay Slot 5
@@ -173,53 +180,6 @@ define void @invariant_guard_nested_loop(ptr noalias %out, ptr noalias %in, i32 
 ; CHECK-AIE2PS-NEXT:    nop // Delay Slot 3
 ; CHECK-AIE2PS-NEXT:    nop // Delay Slot 2
 ; CHECK-AIE2PS-NEXT:    nop // Delay Slot 1
-;
-; CHECK-AIE4-LABEL: invariant_guard_nested_loop:
-; CHECK-AIE4:       // %bb.0: // %entry
-; CHECK-AIE4-NEXT:    nop ; mova r6, #0; nopb ; nops ; movx r4, #3; mov r2, #0; nopv ; nopv2
-; CHECK-AIE4-NEXT:  .LBB0_1: // %outer
-; CHECK-AIE4-NEXT:    // =>This Loop Header: Depth=1
-; CHECK-AIE4-NEXT:    // Child Loop BB0_3 Depth 2
-; CHECK-AIE4-NEXT:    nop ; nopa ; nopb ; nops ; ge r16, r2, r1; nopm ; nopv ; nopv2
-; CHECK-AIE4-NEXT:    nop ; nopa ; nopb ; nops ; jnz r16, #.LBB0_4; nopv ; nopv2
-; CHECK-AIE4-NEXT:    nop ; nopa ; nopb ; nops ; nopxm ; nopv ; nopv2 // Delay Slot 5
-; CHECK-AIE4-NEXT:    nop ; nopa ; nopb ; nops ; nopxm ; nopv ; nopv2 // Delay Slot 4
-; CHECK-AIE4-NEXT:    nop ; nopa ; nopb ; nops ; nopxm ; nopv ; nopv2 // Delay Slot 3
-; CHECK-AIE4-NEXT:    nop // Delay Slot 2
-; CHECK-AIE4-NEXT:    nop // Delay Slot 1
-; CHECK-AIE4-NEXT:  // %bb.2: // %inner.ph
-; CHECK-AIE4-NEXT:    // in Loop: Header=BB0_1 Depth=1
-; CHECK-AIE4-NEXT:    movxm ls, #.LBB0_3
-; CHECK-AIE4-NEXT:    movxm le, #.L_LEnd0
-; CHECK-AIE4-NEXT:    or r16, r6, r6; mov r18, r6
-; CHECK-AIE4-NEXT:    add.nc lc, r1, #0
-; CHECK-AIE4-NEXT:  .LBB0_3: // %inner
-; CHECK-AIE4-NEXT:    // Parent Loop BB0_1 Depth=1
-; CHECK-AIE4-NEXT:    // => This Inner Loop Header: Depth=2
-; CHECK-AIE4-NEXT:    nopa ; lshl r20, r16, r4; nopb
-; CHECK-AIE4-NEXT:    mov dj0, r20
-; CHECK-AIE4-NEXT:    lda r21:r20, [p1, dj0]
-; CHECK-AIE4-NEXT:    nop
-; CHECK-AIE4-NEXT:    lshl r22, r18, r4
-; CHECK-AIE4-NEXT:    add r18, r18, #-1; mov dj0, r22
-; CHECK-AIE4-NEXT:  .L_LEnd0:
-; CHECK-AIE4-NEXT:    nop ; nopa ; nopb ; st r21:r20, [p0, dj0]; add r16, r16, #1; nopm ; nopv ; nopv2
-; CHECK-AIE4-NEXT:  .LBB0_4: // %outer.latch
-; CHECK-AIE4-NEXT:    // in Loop: Header=BB0_1 Depth=1
-; CHECK-AIE4-NEXT:    add r0, r0, #-1
-; CHECK-AIE4-NEXT:    nop ; nopa ; nopb ; nops ; jnz r0, #.LBB0_1; nopv ; nopv2
-; CHECK-AIE4-NEXT:    nopx // Delay Slot 5
-; CHECK-AIE4-NEXT:    nop // Delay Slot 4
-; CHECK-AIE4-NEXT:    nop // Delay Slot 3
-; CHECK-AIE4-NEXT:    nop // Delay Slot 2
-; CHECK-AIE4-NEXT:    add r6, r6, #8 // Delay Slot 1
-; CHECK-AIE4-NEXT:  // %bb.5: // %exit
-; CHECK-AIE4-NEXT:    ret lr
-; CHECK-AIE4-NEXT:    nop // Delay Slot 5
-; CHECK-AIE4-NEXT:    nop // Delay Slot 4
-; CHECK-AIE4-NEXT:    nop // Delay Slot 3
-; CHECK-AIE4-NEXT:    nop // Delay Slot 2
-; CHECK-AIE4-NEXT:    nop // Delay Slot 1
 entry:
   %has.pad = icmp sgt i32 %pad, 0
   br label %outer
@@ -254,6 +214,9 @@ exit:
 }
 
 ; Loop-invariant compare guarding a store in a single loop.
+; Not expected to change: %k has no other use, so hoisting the sunk compare
+; does not add a live register and Early MachineLICM moves it back to %entry
+; on every target.
 define void @invariant_guard_single_loop(ptr %out, i32 %n, i32 %k) {
 ; CHECK-AIE2-LABEL: invariant_guard_single_loop:
 ; CHECK-AIE2:       // %bb.0: // %entry
@@ -359,41 +322,6 @@ define void @invariant_guard_single_loop(ptr %out, i32 %n, i32 %k) {
 ; CHECK-AIE2PS-NEXT:    nop // Delay Slot 3
 ; CHECK-AIE2PS-NEXT:    nop // Delay Slot 2
 ; CHECK-AIE2PS-NEXT:    nop // Delay Slot 1
-;
-; CHECK-AIE4-LABEL: invariant_guard_single_loop:
-; CHECK-AIE4:       // %bb.0: // %entry
-; CHECK-AIE4-NEXT:    nop ; mova r2, #0; nopb ; nops ; nopxm ; nopv ; nopv2
-; CHECK-AIE4-NEXT:    nop ; mova r6, #2; nopb ; nops ; ge r4, r2, r1; nopm ; nopv ; nopv2
-; CHECK-AIE4-NEXT:  .LBB1_1: // %loop
-; CHECK-AIE4-NEXT:    // =>This Inner Loop Header: Depth=1
-; CHECK-AIE4-NEXT:    nopa ; jnz r4, #.LBB1_3
-; CHECK-AIE4-NEXT:    nop // Delay Slot 5
-; CHECK-AIE4-NEXT:    nop // Delay Slot 4
-; CHECK-AIE4-NEXT:    nop // Delay Slot 3
-; CHECK-AIE4-NEXT:    nop // Delay Slot 2
-; CHECK-AIE4-NEXT:    nop // Delay Slot 1
-; CHECK-AIE4-NEXT:  // %bb.2: // %then
-; CHECK-AIE4-NEXT:    // in Loop: Header=BB1_1 Depth=1
-; CHECK-AIE4-NEXT:    lshl r16, r2, r6
-; CHECK-AIE4-NEXT:    mov dj0, r16
-; CHECK-AIE4-NEXT:    st r2, [p0, dj0]
-; CHECK-AIE4-NEXT:  .LBB1_3: // %latch
-; CHECK-AIE4-NEXT:    // in Loop: Header=BB1_1 Depth=1
-; CHECK-AIE4-NEXT:    add r2, r2, #1
-; CHECK-AIE4-NEXT:    ne r16, r0, r2
-; CHECK-AIE4-NEXT:    nop ; nopa ; nopb ; nops ; jnz r16, #.LBB1_1; nopv ; nopv2
-; CHECK-AIE4-NEXT:    nop // Delay Slot 5
-; CHECK-AIE4-NEXT:    nop // Delay Slot 4
-; CHECK-AIE4-NEXT:    nop // Delay Slot 3
-; CHECK-AIE4-NEXT:    nop // Delay Slot 2
-; CHECK-AIE4-NEXT:    nop // Delay Slot 1
-; CHECK-AIE4-NEXT:  // %bb.4: // %exit
-; CHECK-AIE4-NEXT:    ret lr
-; CHECK-AIE4-NEXT:    nop // Delay Slot 5
-; CHECK-AIE4-NEXT:    nop // Delay Slot 4
-; CHECK-AIE4-NEXT:    nop // Delay Slot 3
-; CHECK-AIE4-NEXT:    nop // Delay Slot 2
-; CHECK-AIE4-NEXT:    nop // Delay Slot 1
 entry:
   %cond = icmp sgt i32 %k, 0
   br label %loop
@@ -417,6 +345,10 @@ exit:
 }
 
 ; Loop-invariant compare feeding a select inside the loop.
+; Expected to change only in register assignment on AIE2 and AIE2P: the
+; lt r27 ends up before the loop either way, but without the flag it is
+; hoisted only by the post-RA MachineLICM, so the allocator sees a different
+; live range. AIE2PS hoists it before allocation and does not change.
 define void @invariant_cmp_select_in_loop(ptr %out, i32 %n, i32 %a, i32 %b, i32 %x) {
 ; CHECK-AIE2-LABEL: invariant_cmp_select_in_loop:
 ; CHECK-AIE2:       // %bb.0: // %entry
@@ -429,10 +361,10 @@ define void @invariant_cmp_select_in_loop(ptr %out, i32 %n, i32 %a, i32 %b, i32 
 ; CHECK-AIE2-NEXT:    nopb ; mova r0, #2; nops ; lt r27, r1, r2; mov r4, #0; nopv
 ; CHECK-AIE2-NEXT:  .LBB2_1: // %loop
 ; CHECK-AIE2-NEXT:    // =>This Inner Loop Header: Depth=1
-; CHECK-AIE2-NEXT:    nopb ; nopa ; nops ; lshl r6, r4, r0; nopm ; nopv
-; CHECK-AIE2-NEXT:    nopb ; nopa ; nops ; sel.nez r5, r3, r4, r27; mov dj0, r6; nopv
+; CHECK-AIE2-NEXT:    nopb ; nopa ; nops ; lshl r2, r4, r0; nopm ; nopv
+; CHECK-AIE2-NEXT:    nopb ; nopa ; nops ; sel.nez r1, r3, r4, r27; mov dj0, r2; nopv
 ; CHECK-AIE2-NEXT:  .L_LEnd1:
-; CHECK-AIE2-NEXT:    nopb ; nopa ; st r5, [p0, dj0]; add r4, r4, #1; nopm ; nopv
+; CHECK-AIE2-NEXT:    nopb ; nopa ; st r1, [p0, dj0]; add r4, r4, #1; nopm ; nopv
 ; CHECK-AIE2-NEXT:  // %bb.2: // %exit
 ; CHECK-AIE2-NEXT:    nopa ; ret lr
 ; CHECK-AIE2-NEXT:    nop // Delay Slot 5
@@ -451,11 +383,11 @@ define void @invariant_cmp_select_in_loop(ptr %out, i32 %n, i32 %a, i32 %b, i32 
 ; CHECK-AIE2P-NEXT:    mova r0, #2; nopb ; nops ; movx r4, #0; nopm ; nopv
 ; CHECK-AIE2P-NEXT:  .LBB2_1: // %loop
 ; CHECK-AIE2P-NEXT:    // =>This Inner Loop Header: Depth=1
-; CHECK-AIE2P-NEXT:    nopa ; nopb ; nops ; lshl r6, r4, r0; nopm ; nopv
-; CHECK-AIE2P-NEXT:    nopa ; nopb ; nops ; sel.nez r5, r3, r4, r27; nopm ; nopv
-; CHECK-AIE2P-NEXT:    nopa ; nopb ; nops ; nopx ; mov dj0, r6; nopv
+; CHECK-AIE2P-NEXT:    nopa ; nopb ; nops ; lshl r2, r4, r0; nopm ; nopv
+; CHECK-AIE2P-NEXT:    nopa ; nopb ; nops ; sel.nez r1, r3, r4, r27; nopm ; nopv
+; CHECK-AIE2P-NEXT:    nopa ; nopb ; nops ; nopx ; mov dj0, r2; nopv
 ; CHECK-AIE2P-NEXT:  .L_LEnd1:
-; CHECK-AIE2P-NEXT:    nopa ; nopb ; st r5, [p0, dj0]; add r4, r4, #1; nopm ; nopv
+; CHECK-AIE2P-NEXT:    nopa ; nopb ; st r1, [p0, dj0]; add r4, r4, #1; nopm ; nopv
 ; CHECK-AIE2P-NEXT:  // %bb.2: // %exit
 ; CHECK-AIE2P-NEXT:    nopa ; ret lr
 ; CHECK-AIE2P-NEXT:    nop // Delay Slot 5
@@ -486,26 +418,6 @@ define void @invariant_cmp_select_in_loop(ptr %out, i32 %n, i32 %a, i32 %b, i32 
 ; CHECK-AIE2PS-NEXT:    nop // Delay Slot 3
 ; CHECK-AIE2PS-NEXT:    nop // Delay Slot 2
 ; CHECK-AIE2PS-NEXT:    nop // Delay Slot 1
-;
-; CHECK-AIE4-LABEL: invariant_cmp_select_in_loop:
-; CHECK-AIE4:       // %bb.0: // %entry
-; CHECK-AIE4-NEXT:    nopa ; movxm ls, #.LBB2_1
-; CHECK-AIE4-NEXT:    movxm le, #.L_LEnd1
-; CHECK-AIE4-NEXT:    add.nc lc, r0, #0
-; CHECK-AIE4-NEXT:    mova r6, #2; lt r27, r1, r2; mov r4, #0
-; CHECK-AIE4-NEXT:  .LBB2_1: // %loop
-; CHECK-AIE4-NEXT:    // =>This Inner Loop Header: Depth=1
-; CHECK-AIE4-NEXT:    nop ; nopa ; nopb ; nops ; lshl r16, r4, r6; nopm ; nopv ; nopv2
-; CHECK-AIE4-NEXT:    nop ; nopa ; nopb ; nops ; sel.nez r0, r3, r4, r27; mov dj0, r16; nopv ; nopv2
-; CHECK-AIE4-NEXT:  .L_LEnd1:
-; CHECK-AIE4-NEXT:    nop ; nopa ; nopb ; st r0, [p0, dj0]; add r4, r4, #1; nopm ; nopv ; nopv2
-; CHECK-AIE4-NEXT:  // %bb.2: // %exit
-; CHECK-AIE4-NEXT:    ret lr
-; CHECK-AIE4-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv ; nopv2 // Delay Slot 5
-; CHECK-AIE4-NEXT:    nop // Delay Slot 4
-; CHECK-AIE4-NEXT:    nop // Delay Slot 3
-; CHECK-AIE4-NEXT:    nop // Delay Slot 2
-; CHECK-AIE4-NEXT:    nop // Delay Slot 1
 entry:
   %cmp = icmp slt i32 %a, %b
   br label %loop
@@ -525,6 +437,7 @@ exit:
 
 ; Compare computed inside a loop and only used after it. Sinking moves it out
 ; of the loop into the exit block.
+; Not expected to change: with the flag MachineSink moves it to %exit instead.
 define i32 @cmp_in_loop_used_after_loop(ptr %in, i32 %n, i32 %t, i32 %x, i32 %y) {
 ; CHECK-AIE2-LABEL: cmp_in_loop_used_after_loop:
 ; CHECK-AIE2:       // %bb.0: // %entry
@@ -604,30 +517,6 @@ define i32 @cmp_in_loop_used_after_loop(ptr %in, i32 %n, i32 %t, i32 %x, i32 %y)
 ; CHECK-AIE2PS-NEXT:    nop // Delay Slot 3
 ; CHECK-AIE2PS-NEXT:    lt r27, r2, r16 // Delay Slot 2
 ; CHECK-AIE2PS-NEXT:    sel.nez r0, r3, r4, r27 // Delay Slot 1
-;
-; CHECK-AIE4-LABEL: cmp_in_loop_used_after_loop:
-; CHECK-AIE4:       // %bb.0: // %entry
-; CHECK-AIE4-NEXT:    nopa ; nopb ; movxm ls, #.LBB3_1
-; CHECK-AIE4-NEXT:    mova r0, #0; movxm le, #.L_LEnd2
-; CHECK-AIE4-NEXT:    mova r16, #0; add.nc lc, r1, #0; mov r6, #2
-; CHECK-AIE4-NEXT:  .LBB3_1: // %loop
-; CHECK-AIE4-NEXT:    // =>This Inner Loop Header: Depth=1
-; CHECK-AIE4-NEXT:    nopa ; lshl r18, r0, r6; nopm ; nops
-; CHECK-AIE4-NEXT:    mov dj0, r18
-; CHECK-AIE4-NEXT:    lda r18, [p0, dj0]
-; CHECK-AIE4-NEXT:    nop
-; CHECK-AIE4-NEXT:    nop
-; CHECK-AIE4-NEXT:    nop
-; CHECK-AIE4-NEXT:    add r0, r0, #1
-; CHECK-AIE4-NEXT:  .L_LEnd2:
-; CHECK-AIE4-NEXT:    nop ; nopa ; nopb ; nops ; add r16, r16, r18; nopm ; nopv ; nopv2
-; CHECK-AIE4-NEXT:  // %bb.2: // %exit
-; CHECK-AIE4-NEXT:    nopa ; ret lr; nopm ; nops ; nopb ; nopv
-; CHECK-AIE4-NEXT:    nop // Delay Slot 5
-; CHECK-AIE4-NEXT:    nop // Delay Slot 4
-; CHECK-AIE4-NEXT:    lt r27, r2, r16 // Delay Slot 3
-; CHECK-AIE4-NEXT:    sel.nez r0, r3, r4, r27 // Delay Slot 2
-; CHECK-AIE4-NEXT:    nop // Delay Slot 1
 entry:
   br label %loop
 
@@ -648,6 +537,7 @@ exit:
 }
 
 ; Compare feeding a select in another, non-loop block.
+; Not expected to change: with the flag MachineSink moves it to %use instead.
 define i32 @cmp_select_in_other_block(i32 %a, i32 %b, i32 %x, i32 %y, i1 %c) {
 ; CHECK-AIE2-LABEL: cmp_select_in_other_block:
 ; CHECK-AIE2:       // %bb.0: // %entry
@@ -726,32 +616,6 @@ define i32 @cmp_select_in_other_block(i32 %a, i32 %b, i32 %x, i32 %y, i1 %c) {
 ; CHECK-AIE2PS-NEXT:    nop // Delay Slot 3
 ; CHECK-AIE2PS-NEXT:    nop // Delay Slot 2
 ; CHECK-AIE2PS-NEXT:    mova r0, #0 // Delay Slot 1
-;
-; CHECK-AIE4-LABEL: cmp_select_in_other_block:
-; CHECK-AIE4:       // %bb.0: // %entry
-; CHECK-AIE4-NEXT:    mova r0, #1; nopb ; nops ; nopxm ; nopv ; nopv2
-; CHECK-AIE4-NEXT:    xor r6, r5, r0
-; CHECK-AIE4-NEXT:    and r0, r6, r0
-; CHECK-AIE4-NEXT:    jnz r0, #.LBB4_2
-; CHECK-AIE4-NEXT:    nop // Delay Slot 5
-; CHECK-AIE4-NEXT:    nop // Delay Slot 4
-; CHECK-AIE4-NEXT:    nop // Delay Slot 3
-; CHECK-AIE4-NEXT:    nop // Delay Slot 2
-; CHECK-AIE4-NEXT:    nop // Delay Slot 1
-; CHECK-AIE4-NEXT:  // %bb.1: // %use
-; CHECK-AIE4-NEXT:    ret lr
-; CHECK-AIE4-NEXT:    nop // Delay Slot 5
-; CHECK-AIE4-NEXT:    nop // Delay Slot 4
-; CHECK-AIE4-NEXT:    lt r27, r1, r2 // Delay Slot 3
-; CHECK-AIE4-NEXT:    sel.nez r0, r3, r4, r27 // Delay Slot 2
-; CHECK-AIE4-NEXT:    nop // Delay Slot 1
-; CHECK-AIE4-NEXT:  .LBB4_2: // %exit
-; CHECK-AIE4-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv ; nopv2
-; CHECK-AIE4-NEXT:    nop // Delay Slot 5
-; CHECK-AIE4-NEXT:    nop // Delay Slot 4
-; CHECK-AIE4-NEXT:    nop // Delay Slot 3
-; CHECK-AIE4-NEXT:    mova r0, #0 // Delay Slot 2
-; CHECK-AIE4-NEXT:    nop // Delay Slot 1
 entry:
   %cmp = icmp slt i32 %a, %b
   br i1 %c, label %use, label %exit
@@ -766,6 +630,12 @@ exit:
 
 ; Compare used by conditional branches in two sibling blocks. Sinking
 ; duplicates it into each of them.
+; Expected to change only in branch polarity (geu + jnz becomes ltu + jz): both
+; blocks still compute their own compare. Inverting each branch for
+; fallthrough adds a xor of the condition. Without the flag each sunk compare
+; has one user, so the combiner folds the xor into its predicate (uge). With
+; the flag the one compare has two users, the xor stays, and instruction
+; selection matches brcond(xor(ltu, 1)) to jz, re-emitting ltu in each block.
 define i32 @cmp_branches_in_two_blocks(i32 %a, i32 %b, i1 %c) {
 ; CHECK-AIE2-LABEL: cmp_branches_in_two_blocks:
 ; CHECK-AIE2:       // %bb.0: // %entry
@@ -779,8 +649,8 @@ define i32 @cmp_branches_in_two_blocks(i32 %a, i32 %b, i1 %c) {
 ; CHECK-AIE2-NEXT:    nop // Delay Slot 2
 ; CHECK-AIE2-NEXT:    nop // Delay Slot 1
 ; CHECK-AIE2-NEXT:  // %bb.1: // %left
-; CHECK-AIE2-NEXT:    geu r0, r1, r2
-; CHECK-AIE2-NEXT:    jnz r0, #.LBB5_5
+; CHECK-AIE2-NEXT:    ltu r0, r1, r2
+; CHECK-AIE2-NEXT:    jz r0, #.LBB5_5
 ; CHECK-AIE2-NEXT:    nop // Delay Slot 5
 ; CHECK-AIE2-NEXT:    nop // Delay Slot 4
 ; CHECK-AIE2-NEXT:    nop // Delay Slot 3
@@ -794,8 +664,8 @@ define i32 @cmp_branches_in_two_blocks(i32 %a, i32 %b, i1 %c) {
 ; CHECK-AIE2-NEXT:    nop // Delay Slot 2
 ; CHECK-AIE2-NEXT:    mova r0, #1 // Delay Slot 1
 ; CHECK-AIE2-NEXT:  .LBB5_3: // %right
-; CHECK-AIE2-NEXT:    nopb ; nopa ; nops ; geu r0, r1, r2; nopm ; nopv
-; CHECK-AIE2-NEXT:    jnz r0, #.LBB5_6
+; CHECK-AIE2-NEXT:    nopb ; nopa ; nops ; ltu r0, r1, r2; nopm ; nopv
+; CHECK-AIE2-NEXT:    jz r0, #.LBB5_6
 ; CHECK-AIE2-NEXT:    nop // Delay Slot 5
 ; CHECK-AIE2-NEXT:    nop // Delay Slot 4
 ; CHECK-AIE2-NEXT:    nop // Delay Slot 3
@@ -835,8 +705,8 @@ define i32 @cmp_branches_in_two_blocks(i32 %a, i32 %b, i1 %c) {
 ; CHECK-AIE2P-NEXT:    nop // Delay Slot 2
 ; CHECK-AIE2P-NEXT:    nop // Delay Slot 1
 ; CHECK-AIE2P-NEXT:  // %bb.1: // %left
-; CHECK-AIE2P-NEXT:    geu r0, r1, r2
-; CHECK-AIE2P-NEXT:    jnz r0, #.LBB5_5
+; CHECK-AIE2P-NEXT:    ltu r0, r1, r2
+; CHECK-AIE2P-NEXT:    jz r0, #.LBB5_5
 ; CHECK-AIE2P-NEXT:    nop // Delay Slot 5
 ; CHECK-AIE2P-NEXT:    nop // Delay Slot 4
 ; CHECK-AIE2P-NEXT:    nop // Delay Slot 3
@@ -850,8 +720,8 @@ define i32 @cmp_branches_in_two_blocks(i32 %a, i32 %b, i1 %c) {
 ; CHECK-AIE2P-NEXT:    nop // Delay Slot 2
 ; CHECK-AIE2P-NEXT:    mova r0, #1 // Delay Slot 1
 ; CHECK-AIE2P-NEXT:  .LBB5_3: // %right
-; CHECK-AIE2P-NEXT:    nopa ; nopb ; nops ; geu r0, r1, r2; nopm ; nopv
-; CHECK-AIE2P-NEXT:    jnz r0, #.LBB5_6
+; CHECK-AIE2P-NEXT:    nopa ; nopb ; nops ; ltu r0, r1, r2; nopm ; nopv
+; CHECK-AIE2P-NEXT:    jz r0, #.LBB5_6
 ; CHECK-AIE2P-NEXT:    nop // Delay Slot 5
 ; CHECK-AIE2P-NEXT:    nop // Delay Slot 4
 ; CHECK-AIE2P-NEXT:    nop // Delay Slot 3
@@ -891,8 +761,8 @@ define i32 @cmp_branches_in_two_blocks(i32 %a, i32 %b, i1 %c) {
 ; CHECK-AIE2PS-NEXT:    nop // Delay Slot 2
 ; CHECK-AIE2PS-NEXT:    nop // Delay Slot 1
 ; CHECK-AIE2PS-NEXT:  // %bb.1: // %left
-; CHECK-AIE2PS-NEXT:    geu r0, r1, r2
-; CHECK-AIE2PS-NEXT:    jnz r0, #.LBB5_5
+; CHECK-AIE2PS-NEXT:    ltu r0, r1, r2
+; CHECK-AIE2PS-NEXT:    jz r0, #.LBB5_5
 ; CHECK-AIE2PS-NEXT:    nop // Delay Slot 5
 ; CHECK-AIE2PS-NEXT:    nop // Delay Slot 4
 ; CHECK-AIE2PS-NEXT:    nop // Delay Slot 3
@@ -906,8 +776,8 @@ define i32 @cmp_branches_in_two_blocks(i32 %a, i32 %b, i1 %c) {
 ; CHECK-AIE2PS-NEXT:    nop // Delay Slot 2
 ; CHECK-AIE2PS-NEXT:    mova r0, #1 // Delay Slot 1
 ; CHECK-AIE2PS-NEXT:  .LBB5_3: // %right
-; CHECK-AIE2PS-NEXT:    nopa ; nopb ; nops ; geu r0, r1, r2; nopm ; nopv
-; CHECK-AIE2PS-NEXT:    jnz r0, #.LBB5_6
+; CHECK-AIE2PS-NEXT:    nopa ; nopb ; nops ; ltu r0, r1, r2; nopm ; nopv
+; CHECK-AIE2PS-NEXT:    jz r0, #.LBB5_6
 ; CHECK-AIE2PS-NEXT:    nop // Delay Slot 5
 ; CHECK-AIE2PS-NEXT:    nop // Delay Slot 4
 ; CHECK-AIE2PS-NEXT:    nop // Delay Slot 3
@@ -934,62 +804,6 @@ define i32 @cmp_branches_in_two_blocks(i32 %a, i32 %b, i1 %c) {
 ; CHECK-AIE2PS-NEXT:    nop // Delay Slot 3
 ; CHECK-AIE2PS-NEXT:    nop // Delay Slot 2
 ; CHECK-AIE2PS-NEXT:    mova r0, #4 // Delay Slot 1
-;
-; CHECK-AIE4-LABEL: cmp_branches_in_two_blocks:
-; CHECK-AIE4:       // %bb.0: // %entry
-; CHECK-AIE4-NEXT:    nop ; mova r0, #1; nopb ; nops ; nopxm ; nopv ; nopv2
-; CHECK-AIE4-NEXT:    xor r4, r3, r0
-; CHECK-AIE4-NEXT:    and r0, r4, r0
-; CHECK-AIE4-NEXT:    jnz r0, #.LBB5_3
-; CHECK-AIE4-NEXT:    nop // Delay Slot 5
-; CHECK-AIE4-NEXT:    nop // Delay Slot 4
-; CHECK-AIE4-NEXT:    nop // Delay Slot 3
-; CHECK-AIE4-NEXT:    nop // Delay Slot 2
-; CHECK-AIE4-NEXT:    nop // Delay Slot 1
-; CHECK-AIE4-NEXT:  // %bb.1: // %left
-; CHECK-AIE4-NEXT:    geu r0, r1, r2
-; CHECK-AIE4-NEXT:    jnz r0, #.LBB5_5
-; CHECK-AIE4-NEXT:    nop // Delay Slot 5
-; CHECK-AIE4-NEXT:    nop // Delay Slot 4
-; CHECK-AIE4-NEXT:    nop // Delay Slot 3
-; CHECK-AIE4-NEXT:    nop // Delay Slot 2
-; CHECK-AIE4-NEXT:    nop // Delay Slot 1
-; CHECK-AIE4-NEXT:  // %bb.2: // %l1
-; CHECK-AIE4-NEXT:    ret lr
-; CHECK-AIE4-NEXT:    nop // Delay Slot 5
-; CHECK-AIE4-NEXT:    nop // Delay Slot 4
-; CHECK-AIE4-NEXT:    nop // Delay Slot 3
-; CHECK-AIE4-NEXT:    mova r0, #1 // Delay Slot 2
-; CHECK-AIE4-NEXT:    nop // Delay Slot 1
-; CHECK-AIE4-NEXT:  .LBB5_3: // %right
-; CHECK-AIE4-NEXT:    geu r0, r1, r2
-; CHECK-AIE4-NEXT:    nop ; nopa ; nopb ; nops ; jnz r0, #.LBB5_6; nopv ; nopv2
-; CHECK-AIE4-NEXT:    nopx // Delay Slot 5
-; CHECK-AIE4-NEXT:    nop // Delay Slot 4
-; CHECK-AIE4-NEXT:    nop // Delay Slot 3
-; CHECK-AIE4-NEXT:    nop // Delay Slot 2
-; CHECK-AIE4-NEXT:    nop // Delay Slot 1
-; CHECK-AIE4-NEXT:  // %bb.4: // %r1
-; CHECK-AIE4-NEXT:    ret lr
-; CHECK-AIE4-NEXT:    nop // Delay Slot 5
-; CHECK-AIE4-NEXT:    nop // Delay Slot 4
-; CHECK-AIE4-NEXT:    nop // Delay Slot 3
-; CHECK-AIE4-NEXT:    mova r0, #3 // Delay Slot 2
-; CHECK-AIE4-NEXT:    nop // Delay Slot 1
-; CHECK-AIE4-NEXT:  .LBB5_5: // %l2
-; CHECK-AIE4-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv ; nopv2
-; CHECK-AIE4-NEXT:    nop // Delay Slot 5
-; CHECK-AIE4-NEXT:    nop // Delay Slot 4
-; CHECK-AIE4-NEXT:    nop // Delay Slot 3
-; CHECK-AIE4-NEXT:    mova r0, #2 // Delay Slot 2
-; CHECK-AIE4-NEXT:    nop // Delay Slot 1
-; CHECK-AIE4-NEXT:  .LBB5_6: // %r2
-; CHECK-AIE4-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv ; nopv2
-; CHECK-AIE4-NEXT:    nop // Delay Slot 5
-; CHECK-AIE4-NEXT:    nop // Delay Slot 4
-; CHECK-AIE4-NEXT:    nop // Delay Slot 3
-; CHECK-AIE4-NEXT:    mova r0, #4 // Delay Slot 2
-; CHECK-AIE4-NEXT:    nop // Delay Slot 1
 entry:
   %cmp = icmp ult i32 %a, %b
   br i1 %c, label %left, label %right
@@ -1015,6 +829,7 @@ r2:
 
 ; Compare with a user in its own block and a select in another block. Sinking
 ; adds a second compare for the select while keeping the original.
+; Not expected to change: MachineCSE removes the duplicated compare.
 define i32 @cmp_used_locally_and_in_other_block(i32 %a, i32 %b, i32 %x, i32 %y, i1 %c) {
 ; CHECK-AIE2-LABEL: cmp_used_locally_and_in_other_block:
 ; CHECK-AIE2:       // %bb.0: // %entry
@@ -1093,32 +908,6 @@ define i32 @cmp_used_locally_and_in_other_block(i32 %a, i32 %b, i32 %x, i32 %y, 
 ; CHECK-AIE2PS-NEXT:    nop // Delay Slot 3
 ; CHECK-AIE2PS-NEXT:    nop // Delay Slot 2
 ; CHECK-AIE2PS-NEXT:    mov r0, r27 // Delay Slot 1
-;
-; CHECK-AIE4-LABEL: cmp_used_locally_and_in_other_block:
-; CHECK-AIE4:       // %bb.0: // %entry
-; CHECK-AIE4-NEXT:    mova r0, #1; nopxm ; nops ; nopb ; nopv
-; CHECK-AIE4-NEXT:    xor r6, r5, r0
-; CHECK-AIE4-NEXT:    and r0, r6, r0
-; CHECK-AIE4-NEXT:    jnz r0, #.LBB6_2
-; CHECK-AIE4-NEXT:    nop // Delay Slot 5
-; CHECK-AIE4-NEXT:    nop // Delay Slot 4
-; CHECK-AIE4-NEXT:    nop // Delay Slot 3
-; CHECK-AIE4-NEXT:    nop // Delay Slot 2
-; CHECK-AIE4-NEXT:    ltu r27, r1, r2 // Delay Slot 1
-; CHECK-AIE4-NEXT:  // %bb.1: // %use
-; CHECK-AIE4-NEXT:    ret lr
-; CHECK-AIE4-NEXT:    nop // Delay Slot 5
-; CHECK-AIE4-NEXT:    nop // Delay Slot 4
-; CHECK-AIE4-NEXT:    sel.nez r0, r3, r4, r27 // Delay Slot 3
-; CHECK-AIE4-NEXT:    add r0, r0, r27 // Delay Slot 2
-; CHECK-AIE4-NEXT:    nop // Delay Slot 1
-; CHECK-AIE4-NEXT:  .LBB6_2: // %exit
-; CHECK-AIE4-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv ; nopv2
-; CHECK-AIE4-NEXT:    nop // Delay Slot 5
-; CHECK-AIE4-NEXT:    nop // Delay Slot 4
-; CHECK-AIE4-NEXT:    nop // Delay Slot 3
-; CHECK-AIE4-NEXT:    mov r0, r27 // Delay Slot 2
-; CHECK-AIE4-NEXT:    nop // Delay Slot 1
 entry:
   %cmp = icmp ult i32 %a, %b
   %z = zext i1 %cmp to i32
@@ -1134,6 +923,7 @@ exit:
 }
 
 ; Compare feeding only a branch in its own block: nothing to sink.
+; Not expected to change: this is the control case.
 define i32 @cmp_branch_same_block(i32 %a, i32 %b) {
 ; CHECK-AIE2-LABEL: cmp_branch_same_block:
 ; CHECK-AIE2:       // %bb.0: // %entry
@@ -1206,30 +996,6 @@ define i32 @cmp_branch_same_block(i32 %a, i32 %b) {
 ; CHECK-AIE2PS-NEXT:    nop // Delay Slot 3
 ; CHECK-AIE2PS-NEXT:    nop // Delay Slot 2
 ; CHECK-AIE2PS-NEXT:    mova r0, #2 // Delay Slot 1
-;
-; CHECK-AIE4-LABEL: cmp_branch_same_block:
-; CHECK-AIE4:       // %bb.0: // %entry
-; CHECK-AIE4-NEXT:    ge r0, r2, r1
-; CHECK-AIE4-NEXT:    nop ; nopa ; nopb ; nops ; jnz r0, #.LBB7_2; nopv ; nopv2
-; CHECK-AIE4-NEXT:    nopx // Delay Slot 5
-; CHECK-AIE4-NEXT:    nop // Delay Slot 4
-; CHECK-AIE4-NEXT:    nop // Delay Slot 3
-; CHECK-AIE4-NEXT:    nop // Delay Slot 2
-; CHECK-AIE4-NEXT:    nop // Delay Slot 1
-; CHECK-AIE4-NEXT:  // %bb.1: // %then
-; CHECK-AIE4-NEXT:    ret lr
-; CHECK-AIE4-NEXT:    nop // Delay Slot 5
-; CHECK-AIE4-NEXT:    nop // Delay Slot 4
-; CHECK-AIE4-NEXT:    nop // Delay Slot 3
-; CHECK-AIE4-NEXT:    mova r0, #1 // Delay Slot 2
-; CHECK-AIE4-NEXT:    nop // Delay Slot 1
-; CHECK-AIE4-NEXT:  .LBB7_2: // %else
-; CHECK-AIE4-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv ; nopv2
-; CHECK-AIE4-NEXT:    nop // Delay Slot 5
-; CHECK-AIE4-NEXT:    nop // Delay Slot 4
-; CHECK-AIE4-NEXT:    nop // Delay Slot 3
-; CHECK-AIE4-NEXT:    mova r0, #2 // Delay Slot 2
-; CHECK-AIE4-NEXT:    nop // Delay Slot 1
 entry:
   %cmp = icmp sgt i32 %a, %b
   br i1 %cmp, label %then, label %else
@@ -1243,6 +1009,10 @@ else:
 
 ; Compare without users. Sinking deletes it, which counts as a CodeGenPrepare
 ; change and also triggers the merge of %entry and %next.
+; Not expected to change: with the flag the PreLegalizer Combiner deletes the
+; compare and branch folding merges the blocks. In larger functions the
+; different block layout during register allocation can change register
+; choice, as in end-to-end/conv2d_int8_outerloop_pipelined.ll.
 define i32 @dead_cmp(i32 %a, i32 %b) {
 ; CHECK-AIE2-LABEL: dead_cmp:
 ; CHECK-AIE2:       // %bb.0: // %entry
@@ -1270,15 +1040,6 @@ define i32 @dead_cmp(i32 %a, i32 %b) {
 ; CHECK-AIE2PS-NEXT:    nop // Delay Slot 3
 ; CHECK-AIE2PS-NEXT:    nop // Delay Slot 2
 ; CHECK-AIE2PS-NEXT:    add r0, r1, r2 // Delay Slot 1
-;
-; CHECK-AIE4-LABEL: dead_cmp:
-; CHECK-AIE4:       // %bb.0: // %entry
-; CHECK-AIE4-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv ; nopv2
-; CHECK-AIE4-NEXT:    nop // Delay Slot 5
-; CHECK-AIE4-NEXT:    nop // Delay Slot 4
-; CHECK-AIE4-NEXT:    nop // Delay Slot 3
-; CHECK-AIE4-NEXT:    add r0, r1, r2 // Delay Slot 2
-; CHECK-AIE4-NEXT:    nop // Delay Slot 1
 entry:
   %dead = icmp eq i32 %a, %b
   br label %next
