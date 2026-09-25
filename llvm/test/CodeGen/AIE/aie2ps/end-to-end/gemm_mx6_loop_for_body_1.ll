@@ -128,7 +128,7 @@ define dso_local void @gemm.if.then5(ptr %add.ptr, ptr %tdm1, i32 %cond3) #5 {
 ; ASM-NEXT:  .LBB0_1: // %steady.stage1.top
 ; ASM-NEXT:    // =>This Loop Header: Depth=1
 ; ASM-NEXT:    // Child Loop BB0_2 Depth 2
-; ASM-NEXT:    vlda.fill [p0, lf0, r24]; vldb.fill [p1, lf1, r25]; nopxm ; nops
+; ASM-NEXT:    vlda.fill [p0, lf0, r24]; vldb.fill [p1, lf1, r25]; nopxm
 ; ASM-NEXT:    vlda.pop fex0, [p0, lf0, r24]; vldb.pop fex4, [p1, lf1, r25]
 ; ASM-NEXT:    vlda.pop fex1, [p0, lf0, r24, m4]; vldb.pop fex2, [p1, lf1, r25, m3]
 ; ASM-NEXT:    vlda.fill [p0, lf0, r24]; vldb.fill [p1, lf1, r25]; vmov.d dm2, dm0
@@ -138,12 +138,12 @@ define dso_local void @gemm.if.then5(ptr %add.ptr, ptr %tdm1, i32 %cond3) #5 {
 ; ASM-NEXT:    vmov.d dm6, dm1
 ; ASM-NEXT:    vlda.fill [p0, lf0, r24]; vldb.fill [p1, lf1, r25]; vmov.d dm5, dm1
 ; ASM-NEXT:    vlda.pop fex0, [p0, lf0, r24]; vldb.pop fex4, [p1, lf1, r25]; or r10, r8, r8; vmov fewl4, fewh4
-; ASM-NEXT:    vlda.pop fex1, [p0, lf0, r24, m4]; vldb.pop fex2, [p1, lf1, r25, m3]; vmac.f dm7, dm7, fex4, fey0, r10
+; ASM-NEXT:    vlda.pop fex1, [p0, lf0, r24, m4]; vldb.pop fex2, [p1, lf1, r25, m3]; movxm ls, #.LBB0_2; vmac.f dm7, dm7, fex4, fey0, r10
 ; ASM-NEXT:    vlda.fill [p0, lf0, r24]; vldb.fill [p1, lf1, r25]; vmov fewl2, fewh2; vmac.f dm6, dm6, fex4, fey0, r10
 ; ASM-NEXT:    vlda.pop fex6, [p0, lf0, r24]; vldb.pop fex10, [p1, lf1, r25]; vmov fewl0, fewh10; vmac.f dm5, dm5, fex2, fey0, r10
-; ASM-NEXT:    vlda.pop.3d fex7, [p0, lf0, r24, d1]; vldb.pop.3d fex8, [p1, lf1, r25, d0]; movxm ls, #.LBB0_2; vmac.f dm1, dm1, fex2, fey0, r10
-; ASM-NEXT:    add.nc lc, r1, #-2; vmov fewl0, fewh8; vmac.f dm4, dm4, fex10, fey3, r10
-; ASM-NEXT:    nopa ; paddb.2d [p6], d2; nops ; movxm le, #.L_LEnd1; vmac.f dm3, dm3, fex0, fey3, r10
+; ASM-NEXT:    vlda.pop.3d fex7, [p0, lf0, r24, d1]; vldb.pop.3d fex8, [p1, lf1, r25, d0]; movxm le, #.L_LEnd1; vmac.f dm1, dm1, fex2, fey0, r10
+; ASM-NEXT:    vmov fewl0, fewh8; vmac.f dm4, dm4, fex10, fey3, r10
+; ASM-NEXT:    nopa ; paddb.2d [p6], d2; nops ; add.nc lc, r1, #-2; nopm ; vmac.f dm3, dm3, fex0, fey3, r10
 ; ASM-NEXT:  .LBB0_2: // %steady.stage1.inner.for.body18.i
 ; ASM-NEXT:    // Parent Loop BB0_1 Depth=1
 ; ASM-NEXT:    // => This Inner Loop Header: Depth=2

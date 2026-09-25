@@ -186,13 +186,13 @@ define void @conv2d_opt_outerloop_out_mode_1(
 ; ASM-NEXT:  .LBB0_5: // %steady.stage1.top
 ; ASM-NEXT:    // =>This Loop Header: Depth=1
 ; ASM-NEXT:    // Child Loop BB0_6 Depth 2
-; ASM-NEXT:    nopa ; vldb.popx x10, [p0, lf0, r24]; nops ; nopxm ; nopv
+; ASM-NEXT:    nopa ; vldb.popx x10, [p0, lf0, r24]; nopxm ; nops
 ; ASM-NEXT:    vldb.pop.3d x8, [p0, lf0, r24, d0]
 ; ASM-NEXT:    vldb.popx x10, [p0, lf0, r24]; mov p7, p2
 ; ASM-NEXT:    vlda x6, [p7, #128]; vldb.pop.3d x8, [p0, lf0, r24, d0]; vmul dm2, x0, x2, r12
-; ASM-NEXT:    vlda x4, [p7, #192]; vldb.popx x10, [p0, lf0, r24]; add.nc lc, r22, #-6; padds [p7], #128; vmul dm3, x0, x4, r12
-; ASM-NEXT:    vlda x6, [p7, #128]; vldb.pop.3d x8, [p0, lf0, r24, d0]; movxm ls, #.LBB0_6; vaddmac dm1, dm1, dm2, x10, x8, r10
-; ASM-NEXT:    vlda x4, [p7, #192]; vldb.popx x10, [p0, lf0, r24]; padds [p7], #128; movxm le, #.L_LEnd1; vaddmac dm0, dm0, dm3, x10, x6, r10
+; ASM-NEXT:    vlda x4, [p7, #192]; vldb.popx x10, [p0, lf0, r24]; padds [p7], #128; movxm ls, #.LBB0_6; vmul dm3, x0, x4, r12
+; ASM-NEXT:    vlda x6, [p7, #128]; vldb.pop.3d x8, [p0, lf0, r24, d0]; movxm le, #.L_LEnd1; vaddmac dm1, dm1, dm2, x10, x8, r10
+; ASM-NEXT:    vlda x4, [p7, #192]; vldb.popx x10, [p0, lf0, r24]; padds [p7], #128; add.nc lc, r22, #-6; nopm ; vaddmac dm0, dm0, dm3, x10, x6, r10
 ; ASM-NEXT:    vlda x6, [p7, #128]; vldb.pop.3d x8, [p0, lf0, r24, d0]; nops ; nopxm ; nopv
 ; ASM-NEXT:    vlda x4, [p7, #192]; vldb.popx x10, [p0, lf0, r24]; padds [p7], #128; nopxm ; nopv
 ; ASM-NEXT:    vlda x6, [p7, #128]; vldb.pop.3d x8, [p0, lf0, r24, d0]; nops ; nopx ; vshuffle x2, x10, x8, r6; nopv

@@ -126,11 +126,11 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; DCL-NEXT:    vlda wl0, [sp, #-160]; vst wl11, [sp, #-96] // 32-byte Folded Reload32-byte Folded Spill
 ; DCL-NEXT:    vlda wl11, [sp, #-96]; vst wh11, [sp, #-64] // 32-byte Folded Reload32-byte Folded Spill
 ; DCL-NEXT:    vlda wh11, [sp, #-64] // 32-byte Folded Reload
-; DCL-NEXT:    vlda wl6, [sp, #-96]; vmac cm1, cm1, x4, x6, r4 // 32-byte Folded Reload
-; DCL-NEXT:    vlda wh6, [sp, #-64]; vmac cm8, cm4, x7, x8, r4 // 32-byte Folded Reload
+; DCL-NEXT:    vlda wl6, [sp, #-96]; vmac cm8, cm4, x7, x8, r4 // 32-byte Folded Reload
+; DCL-NEXT:    vlda wh6, [sp, #-64]; vmac cm4, cm7, x4, x8, r4 // 32-byte Folded Reload
 ; DCL-NEXT:    vlda wh0, [sp, #-128]; vmac cm2, cm2, x0, x6, r4 // 32-byte Folded Reload
 ; DCL-NEXT:    lda dn7, [sp, #-28]; vmac cm5, cm5, x0, x8, r4 // 4-byte Folded Reload
-; DCL-NEXT:    vmac cm4, cm7, x4, x8, r4
+; DCL-NEXT:    vmac cm1, cm1, x4, x6, r4
 ; DCL-NEXT:    lda dj7, [sp, #-24]; vshift.align x4, x5, s1, x10, r0; vmac cm0, cm0, x7, x6, r4 // 4-byte Folded Reload
 ; DCL-NEXT:    vshift.align x2, x2, s1, x3, r0; vmac cm3, cm3, x11, x6, r4
 ; DCL-NEXT:    vshuffle x6, x4, x2, r2
