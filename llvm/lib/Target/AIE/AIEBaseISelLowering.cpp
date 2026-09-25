@@ -64,6 +64,12 @@ AIEBaseTargetLowering::AIEBaseTargetLowering(const TargetMachine &TM,
     MaxStoresPerMemmoveOptSize = 16;
   }
   setJumpIsExpensive(true);
+
+  // There is no flags register: compares write any GPR and conditional
+  // branches test any GPR, so a compare result can stay live across blocks.
+  // This stops CodeGenPrepare from sinking compares next to their users, which
+  // would otherwise pull LICM-hoisted loop-invariant compares back into loops.
+  setHasMultipleConditionRegisters(true);
 }
 
 static bool AllocateSplitArg(CCState &State, ArrayRef<MCPhysReg> RegList) {
