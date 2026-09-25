@@ -1017,7 +1017,8 @@ unsigned RegLiveRangeTracker::getOrCreateLiveRangeForOperand(
   // the registers.  This is critical for separating live ranges: after
   // x10 is defined, any y5 (containing x10) should only have x11's lanes
   // live, and a subsequent x10 access should NOT merge into that y5 range.
-  auto It = llvm::find_if(State.LiveRegs, [Reg, TRI = TRI](const auto &Entry) {
+  const bool IsUse = !MO->isDef();
+  auto It = llvm::find_if(State.LiveRegs, [Reg, IsUse, this](const auto &Entry) {
     if (!TRI->regsOverlap(Reg, Entry.first))
       return false;
 
@@ -1026,8 +1027,22 @@ unsigned RegLiveRangeTracker::getOrCreateLiveRangeForOperand(
     const LaneBitmask LiveLanes = Entry.second.second;
 
     // If LiveReg equals Reg, check if any lanes are live.
-    if (LiveReg == Reg)
+    if (LiveReg == Reg) {
+      // A read consumes every lane of Reg. Lanes already redefined below
+      // carry the value of that later def, not the one this read observes,
+      // so the read belongs to an earlier range. Joining here would glue two
+      // distinct values into one range and orphan the earlier producer.
+      if (IsUse) {
+        LaneBitmask Cover = LaneBitmask::getNone();
+        for (MCSubRegIndexIterator SubIdxIt(Reg, TRI); SubIdxIt.isValid();
+             ++SubIdxIt)
+          Cover |= TRI->getSubRegIndexLaneMask(SubIdxIt.getSubRegIndex());
+        if (Cover.none())
+          Cover = LaneBitmask::getAll();
+        return (Cover & ~LiveLanes).none();
+      }
       return LiveLanes.any();
+    }
 
     // Check if Reg is a subreg of LiveReg.
     for (MCSubRegIndexIterator SubIdxIt(LiveReg, TRI); SubIdxIt.isValid();
