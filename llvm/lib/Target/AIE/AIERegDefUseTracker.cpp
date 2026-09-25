@@ -1017,43 +1017,59 @@ unsigned RegLiveRangeTracker::getOrCreateLiveRangeForOperand(
   // the registers.  This is critical for separating live ranges: after
   // x10 is defined, any y5 (containing x10) should only have x11's lanes
   // live, and a subsequent x10 access should NOT merge into that y5 range.
-  auto It = llvm::find_if(State.LiveRegs, [Reg, TRI = TRI](const auto &Entry) {
-    if (!TRI->regsOverlap(Reg, Entry.first))
-      return false;
+  const bool IsUse = !MO->isDef();
+  auto It =
+      llvm::find_if(State.LiveRegs, [Reg, IsUse, this](const auto &Entry) {
+        if (!TRI->regsOverlap(Reg, Entry.first))
+          return false;
 
-    // Registers overlap - now check if lanes overlap.
-    const MCRegister LiveReg = Entry.first;
-    const LaneBitmask LiveLanes = Entry.second.second;
+        // Registers overlap - now check if lanes overlap.
+        const MCRegister LiveReg = Entry.first;
+        const LaneBitmask LiveLanes = Entry.second.second;
 
-    // If LiveReg equals Reg, check if any lanes are live.
-    if (LiveReg == Reg)
-      return LiveLanes.any();
+        // If LiveReg equals Reg, check if any lanes are live.
+        if (LiveReg == Reg) {
+          // A read consumes every lane of Reg. Lanes already redefined below
+          // carry the value of that later def, not the one this read observes,
+          // so the read belongs to an earlier range. Joining here would glue
+          // two distinct values into one range and orphan the earlier producer.
+          if (IsUse) {
+            LaneBitmask Cover = LaneBitmask::getNone();
+            for (MCSubRegIndexIterator SubIdxIt(Reg, TRI); SubIdxIt.isValid();
+                 ++SubIdxIt)
+              Cover |= TRI->getSubRegIndexLaneMask(SubIdxIt.getSubRegIndex());
+            if (Cover.none())
+              Cover = LaneBitmask::getAll();
+            return (Cover & ~LiveLanes).none();
+          }
+          return LiveLanes.any();
+        }
 
-    // Check if Reg is a subreg of LiveReg.
-    for (MCSubRegIndexIterator SubIdxIt(LiveReg, TRI); SubIdxIt.isValid();
-         ++SubIdxIt) {
-      if (SubIdxIt.getSubReg() == Reg) {
-        // Reg is a subreg of LiveReg - check if Reg's lanes are live.
-        const LaneBitmask RegLanes =
-            TRI->getSubRegIndexLaneMask(SubIdxIt.getSubRegIndex());
-        return (LiveLanes & RegLanes).any();
-      }
-    }
+        // Check if Reg is a subreg of LiveReg.
+        for (MCSubRegIndexIterator SubIdxIt(LiveReg, TRI); SubIdxIt.isValid();
+             ++SubIdxIt) {
+          if (SubIdxIt.getSubReg() == Reg) {
+            // Reg is a subreg of LiveReg - check if Reg's lanes are live.
+            const LaneBitmask RegLanes =
+                TRI->getSubRegIndexLaneMask(SubIdxIt.getSubRegIndex());
+            return (LiveLanes & RegLanes).any();
+          }
+        }
 
-    // Check if LiveReg is a subreg of Reg.
-    for (MCSubRegIndexIterator SubIdxIt(Reg, TRI); SubIdxIt.isValid();
-         ++SubIdxIt) {
-      if (SubIdxIt.getSubReg() == LiveReg) {
-        // LiveReg is a subreg of Reg - if any lanes of LiveReg are live,
-        // they overlap with Reg.
+        // Check if LiveReg is a subreg of Reg.
+        for (MCSubRegIndexIterator SubIdxIt(Reg, TRI); SubIdxIt.isValid();
+             ++SubIdxIt) {
+          if (SubIdxIt.getSubReg() == LiveReg) {
+            // LiveReg is a subreg of Reg - if any lanes of LiveReg are live,
+            // they overlap with Reg.
+            return LiveLanes.any();
+          }
+        }
+
+        // Registers overlap but no subreg relationship - conservatively treat
+        // as overlapping if any lanes are live.
         return LiveLanes.any();
-      }
-    }
-
-    // Registers overlap but no subreg relationship - conservatively treat
-    // as overlapping if any lanes are live.
-    return LiveLanes.any();
-  });
+      });
 
   if (It != State.LiveRegs.end()) {
     const int LRIdx = It->second.first;
