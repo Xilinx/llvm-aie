@@ -21,7 +21,7 @@
   ; RUN:     -debug-only=aie-reg-liverange -o /dev/null %s 2>&1 | FileCheck %s
   ; REQUIRES: asserts
   ;
-  ; CHECK: Keep:{{.*}}LR#1 Base=dm0
+  ; CHECK: Keep:{{.*}}LR#2 Base=dm0
   ; CHECK: Reject: pruned by full coverage (uncovered alias dm0)
   ;
   ; ModuleID = 'red.ll'
