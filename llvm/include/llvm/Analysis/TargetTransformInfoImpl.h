@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 /// \file
 /// This file provides helpers for the implementation of
@@ -310,6 +313,18 @@ public:
   virtual TTI::AddressingModeKind
   getPreferredAddressingMode(const Loop *L, ScalarEvolution *SE) const {
     return TTI::AMK_None;
+  }
+
+  virtual SmallVector<GetElementPtrInst *>
+  getIVUsersLookThroughCandidates(Instruction *I, const Loop *L) const {
+    return {};
+  }
+
+  virtual bool isValidIVUserType(Type *Ty) const {
+    // LSR is not APInt clean and avoids non-native IV types.
+    uint64_t Width = Ty->isPointerTy() ? DL.getIndexTypeSizeInBits(Ty)
+                                       : DL.getTypeSizeInBits(Ty);
+    return Width <= 64 && DL.isLegalInteger(Width);
   }
 
   virtual bool isLegalMaskedStore(Type *DataType, Align Alignment,

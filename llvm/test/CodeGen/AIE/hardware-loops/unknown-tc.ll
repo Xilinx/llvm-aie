@@ -4,7 +4,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 
 ; RUN: llc -O2 -mtriple=aie2 --issue-limit=1 %s -o - | FileCheck %s
 ; RUN: llc -O2 -mtriple=aie2p --issue-limit=1 %s -o - | FileCheck %s
@@ -16,7 +16,7 @@ define void @cbz_exit(ptr %in, ptr %res) {
 ; CHECK-NEXT:    mova r1, #2
 ; CHECK-NEXT:  .LBB0_1: // %loop
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
-; CHECK-NEXT:    add r0, r0, #1
+; CHECK-NEXT:    nopa ; nopb ; add r0, r0, #1
 ; CHECK-NEXT:    lshl r2, r0, r1
 ; CHECK-NEXT:    mov dj0, r2
 ; CHECK-NEXT:    lda r2, [p0, dj0]
@@ -62,7 +62,7 @@ define void @cbnz_exit(ptr %in, ptr %res) {
 ; CHECK-NEXT:    mova r1, #2
 ; CHECK-NEXT:  .LBB1_1: // %loop
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
-; CHECK-NEXT:    add r0, r0, #1
+; CHECK-NEXT:    nopa ; nopb ; add r0, r0, #1
 ; CHECK-NEXT:    lshl r2, r0, r1
 ; CHECK-NEXT:    mov dj0, r2
 ; CHECK-NEXT:    lda r2, [p0, dj0]

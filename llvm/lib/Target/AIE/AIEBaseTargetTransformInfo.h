@@ -78,6 +78,51 @@ private:
   /// Helper function to access this as a T.
   T *thisT() { return static_cast<T *>(this); }
 
+  static bool isIndexSizedInteger(Type *Ty, const DataLayout &DL) {
+    return Ty->isIntegerTy() &&
+           Ty->getIntegerBitWidth() == DL.getIndexSizeInBits(0);
+  }
+
+  static GetElementPtrInst *getGEPIndexUser(const Use &U) {
+    auto *GEP = dyn_cast<GetElementPtrInst>(U.getUser());
+    return GEP && U.getOperandNo() != 0 ? GEP : nullptr;
+  }
+
+  static bool isConstantIndexShift(const Use &U, Type *IndexTy) {
+    const auto *Shl = dyn_cast<BinaryOperator>(U.getUser());
+    if (!Shl || Shl->getOpcode() != Instruction::Shl || U.getOperandNo() != 0 ||
+        Shl->getType() != IndexTy)
+      return false;
+
+    const auto *ShiftAmount = dyn_cast<ConstantInt>(Shl->getOperand(1));
+    return ShiftAmount &&
+           ShiftAmount->getValue().ult(IndexTy->getIntegerBitWidth());
+  }
+
+  static SmallVector<GetElementPtrInst *>
+  collectGEPIndicesThroughTrunc(const TruncInst *Trunc) {
+    SmallVector<GetElementPtrInst *> GEPs;
+    SmallVector<const Use *> Worklist(make_pointer_range(Trunc->uses()));
+    // Indexed, so shifted uses are appended and visited in discovery order.
+    for (unsigned I = 0; I != Worklist.size(); ++I) {
+      const Use &U = *Worklist[I];
+      if (GetElementPtrInst *GEP = getGEPIndexUser(U)) {
+        GEPs.push_back(GEP);
+        continue;
+      }
+      if (!isConstantIndexShift(U, Trunc->getType()))
+        return {};
+      append_range(Worklist,
+                   make_pointer_range(cast<Instruction>(U.getUser())->uses()));
+    }
+    return GEPs;
+  }
+
+  bool isLegalPostIncIndex(TTI::MemIndexedMode Mode, Type *Ty) const {
+    return Mode == TTI::MIM_PostInc &&
+           isIndexSizedInteger(Ty, BaseT::getDataLayout());
+  }
+
 protected:
   explicit AIEBaseTTIImpl(const TargetMachine *TM, const DataLayout &DL,
                           const AIESubtarget *Subtarget)
@@ -198,6 +243,46 @@ public:
   bool shouldMergeCongruentIVs(const PHINode *IV1,
                                const PHINode *IV2) const override {
     return shouldMergeCongruentIVsImpl(IV1, IV2);
+  }
+
+  /// Any index-sized recurrence is valid, not just GEP indices: that width is
+  /// the AIE address register width, for which getIndexSizeInBits() is only a
+  /// proxy. Narrowing this to pointer-arithmetic users would reject the
+  /// non-GEP i20 IV in llvm/test/CodeGen/AIE/opt/lsr-i20-mixed-use.ll.
+  bool isValidIVUserType(Type *Ty) const override {
+    return BaseT::isValidIVUserType(Ty) ||
+           isIndexSizedInteger(Ty, BaseT::getDataLayout());
+  }
+
+  SmallVector<GetElementPtrInst *>
+  getIVUsersLookThroughCandidates(Instruction *I,
+                                  const Loop *L) const override {
+    auto *Trunc = dyn_cast<TruncInst>(I);
+    if (!Trunc)
+      return {};
+    return collectGEPIndicesThroughTrunc(Trunc);
+  }
+
+  TTI::AddressingModeKind
+  getPreferredAddressingMode(const Loop *L,
+                             ScalarEvolution *SE) const override {
+    return TTI::AMK_PostIndexed;
+  }
+
+  bool isIndexedLoadLegal(TTI::MemIndexedMode Mode, Type *Ty) const override {
+    return isLegalPostIncIndex(Mode, Ty);
+  }
+
+  bool isIndexedStoreLegal(TTI::MemIndexedMode Mode, Type *Ty) const override {
+    return isLegalPostIncIndex(Mode, Ty);
+  }
+
+  bool isLSRCostLess(const TTI::LSRCost &C1,
+                     const TTI::LSRCost &C2) const override {
+    return std::tie(C1.NumRegs, C1.Insns, C1.NumBaseAdds, C1.AddRecCost,
+                    C1.NumIVMuls, C1.ScaleCost, C1.ImmCost, C1.SetupCost) <
+           std::tie(C2.NumRegs, C2.Insns, C2.NumBaseAdds, C2.AddRecCost,
+                    C2.NumIVMuls, C2.ScaleCost, C2.ImmCost, C2.SetupCost);
   }
 };
 
