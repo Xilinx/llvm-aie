@@ -11,11 +11,10 @@
 # the SWP epilogue in %bb.2 consists of three empty fixed bundles followed by
 # the drained VSHIFT at cycle 3. %bb.2 also ends with a conditional branch, so
 # the region is scheduled top-down and the branch is moved afterwards by
-# fixupDelaySlotPosition. The branch has to move to bundle 2, but bundles 0-2
-# contain no instruction to anchor it to, and it is spliced to the end of the
-# block, past its DelayedSchedBarrier. The JNZ then has no delay slots within
-# %bb.2: the code of the fall-through block %bb.3 executes in them, and the
-# fixed VSHIFT is emitted at cycle 2 instead of cycle 3.
+# fixupDelaySlotPosition to bundle 2. Bundles 0-2 contain no instruction to
+# anchor the branch to, so it must be placed before the fixed VSHIFT. Check that
+# the JNZ stays before its DelayedSchedBarrier with five delay slot bundles in
+# %bb.2, and that the fixed VSHIFT is still emitted at cycle 3.
 
 --- |
   target triple = "aie2ps"
@@ -78,13 +77,13 @@ body:             |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   JNZ killed $r0, %bb.4
   ; CHECK-NEXT:   renamable $x1 = VSHIFT killed $x3, renamable $x0, renamable $r1
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   renamable $x2 = VSHIFT killed renamable $x1, killed renamable $x0, killed renamable $r1
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   renamable $p6 = VST_dmx_sts_x_st_pstm_nrm_imm killed renamable $x2, killed renamable $p6, 64 :: (store (<16 x s32>), addrspace 6)
   ; CHECK-NEXT:   DelayedSchedBarrier
-  ; CHECK-NEXT:   JNZ killed $r0, %bb.4
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3:
   ; CHECK-NEXT:   successors: %bb.4(0x80000000)
