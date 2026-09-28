@@ -24,6 +24,7 @@
 #include "Utils/AIELoopUtils.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/PostOrderIterator.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Analysis/OptimizationRemarkEmitter.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineOptimizationRemarkEmitter.h"
@@ -1156,6 +1157,20 @@ void InterBlockScheduling::buildPerSuccEdges(MachineBasicBlock *BB) {
         std::make_unique<InterBlockEdges>(C, SafeToIgnoreMemDeps, BB, SuccBB));
     buildGraph(SE);
   }
+}
+
+std::vector<InterBlockEdges *>
+InterBlockScheduling::getPerPredEdges(MachineBasicBlock *BB) const {
+  std::vector<InterBlockEdges *> PerPredEdges;
+  for (MachineBasicBlock *PredBB : BB->predecessors()) {
+    auto It = Blocks.find(PredBB);
+    if (It == Blocks.end())
+      continue;
+    for (const auto &SEPtr : It->second.getPerSuccEdges())
+      if (SEPtr->getSucc() == BB)
+        PerPredEdges.push_back(SEPtr.get());
+  }
+  return PerPredEdges;
 }
 
 void InterBlockScheduling::updatePerSuccEdges(MachineBasicBlock *BB,
