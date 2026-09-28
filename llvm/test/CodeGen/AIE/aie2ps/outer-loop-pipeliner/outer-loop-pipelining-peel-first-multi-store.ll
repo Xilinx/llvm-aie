@@ -5,7 +5,8 @@
 ;
 ; (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
 ;
-; RUN: llc -mtriple=aie2ps -O2 -aie-enable-outer-loop-pipelining=false \
+; RUN: llc -mtriple=aie2ps -O2 -aie-enable-outer-loop-pipelining \
+; RUN:     -aie-outer-loop-pipelining-mode=first \
 ; RUN:     -stop-after=aie-outer-loop-pipeliner \
 ; RUN:     -o - %s | sed 's/^  //' | FileCheck %s
 ;
@@ -32,7 +33,7 @@ define void @peel_first_multi_store(ptr noalias %src, ptr noalias %dst, i32 %N, 
 ; CHECK:       [[OUTER_HEADER]]:
 ; CHECK-NEXT:    [[LSR_IV:%.*]] = phi i32 [ [[N]], %[[OUTER_HEADER_PREHEADER]] ], [ [[LSR_IV_NEXT:%.*]], %[[OUTER_LATCH:.*]] ]
 ; CHECK-NEXT:    [[SRC_PTR_STEADY:%.*]] = phi ptr [ [[SRC_NEXT2:%.*]], %[[OUTER_LATCH]] ], [ [[SRC]], %[[OUTER_HEADER_PREHEADER]] ]
-; CHECK-NEXT:    [[DST_NEXT3_CHAINED_STEADY:%.*]] = phi ptr [ [[DST_NEXT3_CHAINED:%.*]], %[[OUTER_LATCH]] ], [ [[DST]], %[[OUTER_HEADER_PREHEADER]] ]
+; CHECK-NEXT:    [[DST_MID1_EPILOGUE:%.*]] = phi ptr [ [[DST_NEXT3_CHAINED1:%.*]], %[[OUTER_LATCH]] ], [ [[DST]], %[[OUTER_HEADER_PREHEADER]] ]
 ; CHECK-NEXT:    [[VAL_STEADY:%.*]] = load i32, ptr [[SRC_PTR_STEADY]], align 4
 ; CHECK-NEXT:    call void @llvm.set.loop.iterations.i32(i32 [[M]])
 ; CHECK-NEXT:    br label %[[INNER_HEADER:.*]]
@@ -41,14 +42,14 @@ define void @peel_first_multi_store(ptr noalias %src, ptr noalias %dst, i32 %N, 
 ; CHECK-NEXT:    [[ACC_B_STEADY:%.*]] = phi i32 [ 1, %[[OUTER_HEADER]] ], [ [[ACC_B_NEXT_STEADY:%.*]], %[[INNER_HEADER]] ]
 ; CHECK-NEXT:    [[ACC_A_NEXT_STEADY]] = add i32 [[ACC_A_STEADY]], [[VAL_STEADY]]
 ; CHECK-NEXT:    [[ACC_B_NEXT_STEADY]] = mul i32 [[ACC_B_STEADY]], [[VAL_STEADY]]
-; CHECK-NEXT:    [[INNER_COND_FIRSTITER:%.*]] = call i1 @llvm.loop.decrement.i32(i32 1)
-; CHECK-NEXT:    br i1 [[INNER_COND_FIRSTITER]], label %[[INNER_HEADER]], label %[[OUTER_LATCH]], !llvm.loop [[LOOP0:![0-9]+]]
+; CHECK-NEXT:    [[INNER_COND_FIRSTITER1:%.*]] = call i1 @llvm.loop.decrement.i32(i32 1)
+; CHECK-NEXT:    br i1 [[INNER_COND_FIRSTITER1]], label %[[INNER_HEADER]], label %[[OUTER_LATCH]], !llvm.loop [[LOOP0:![0-9]+]]
 ; CHECK:       [[OUTER_LATCH]]:
-; CHECK-NEXT:    store i32 [[ACC_A_NEXT_STEADY]], ptr [[DST_NEXT3_CHAINED_STEADY]], align 4
-; CHECK-NEXT:    [[DST_MID1_EPILOGUE:%.*]] = getelementptr inbounds i8, ptr [[DST_NEXT3_CHAINED_STEADY]], i32 4
-; CHECK-NEXT:    store i32 [[ACC_B_NEXT_STEADY]], ptr [[DST_MID1_EPILOGUE]], align 4
+; CHECK-NEXT:    store i32 [[ACC_A_NEXT_STEADY]], ptr [[DST_MID1_EPILOGUE]], align 4
+; CHECK-NEXT:    [[DST_NEXT3_CHAINED:%.*]] = getelementptr inbounds i8, ptr [[DST_MID1_EPILOGUE]], i32 4
+; CHECK-NEXT:    store i32 [[ACC_B_NEXT_STEADY]], ptr [[DST_NEXT3_CHAINED]], align 4
 ; CHECK-NEXT:    [[SRC_NEXT2]] = getelementptr inbounds i8, ptr [[SRC_PTR_STEADY]], i32 4
-; CHECK-NEXT:    [[DST_NEXT3_CHAINED]] = getelementptr inbounds i8, ptr [[DST_MID1_EPILOGUE]], i32 4
+; CHECK-NEXT:    [[DST_NEXT3_CHAINED1]] = getelementptr inbounds i8, ptr [[DST_NEXT3_CHAINED]], i32 4
 ; CHECK-NEXT:    [[LSR_IV_NEXT]] = add i32 [[LSR_IV]], -1
 ; CHECK-NEXT:    [[OUTER_COND:%.*]] = icmp eq i32 [[LSR_IV_NEXT]], 0
 ; CHECK-NEXT:    br i1 [[OUTER_COND]], label %[[EXIT]], label %[[OUTER_HEADER]], !llvm.loop [[LOOP2:![0-9]+]]

@@ -5,7 +5,8 @@
 ;
 ; (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
 ;
-; RUN: llc -mtriple=aie2ps -O2 -aie-enable-outer-loop-pipelining=false \
+; RUN: llc -mtriple=aie2ps -O2 -aie-enable-outer-loop-pipelining \
+; RUN:     -aie-outer-loop-pipelining-mode=first \
 ; RUN:     -stop-after=aie-outer-loop-pipeliner \
 ; RUN:     -o - %s | sed 's/^  //' | FileCheck %s
 ;
@@ -38,8 +39,8 @@ define void @peel_first_hwloop(ptr noalias %src, ptr noalias %dst, i32 %N, i32 %
 ; CHECK:       [[INNER_HEADER]]:
 ; CHECK-NEXT:    [[ACC_STEADY:%.*]] = phi i32 [ 0, %[[OUTER_HEADER]] ], [ [[ACC_NEXT_STEADY:%.*]], %[[INNER_HEADER]] ]
 ; CHECK-NEXT:    [[ACC_NEXT_STEADY]] = add i32 [[ACC_STEADY]], [[VAL_STEADY]]
-; CHECK-NEXT:    [[INNER_COND_FIRSTITER:%.*]] = call i1 @llvm.loop.decrement.i32(i32 1)
-; CHECK-NEXT:    br i1 [[INNER_COND_FIRSTITER]], label %[[INNER_HEADER]], label %[[OUTER_LATCH]], !llvm.loop [[LOOP0:![0-9]+]]
+; CHECK-NEXT:    [[INNER_COND_FIRSTITER1:%.*]] = call i1 @llvm.loop.decrement.i32(i32 1)
+; CHECK-NEXT:    br i1 [[INNER_COND_FIRSTITER1]], label %[[INNER_HEADER]], label %[[OUTER_LATCH]], !llvm.loop [[LOOP0:![0-9]+]]
 ; CHECK:       [[OUTER_LATCH]]:
 ; CHECK-NEXT:    store i32 [[ACC_NEXT_STEADY]], ptr [[DST_PTR_STEADY]], align 4
 ; CHECK-NEXT:    [[SRC_NEXT1_STEADY]] = getelementptr inbounds i8, ptr [[SRC_PTR_STEADY]], i32 4
