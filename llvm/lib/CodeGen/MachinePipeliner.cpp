@@ -62,6 +62,7 @@
 #include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/ModuloSchedule.h"
+#include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/CodeGen/Register.h"
 #include "llvm/CodeGen/RegisterClassInfo.h"
 #include "llvm/CodeGen/RegisterPressure.h"
@@ -975,6 +976,29 @@ bool SUnitWithMemInfo::getUnderlyingObjects() {
   return true;
 }
 
+/// Return true if every pair of memory operands of \p MIa and \p MIb pairs a
+/// PseudoSourceValue that cannot alias IR memory with an IR value. Such
+/// accesses are disjoint in every iteration. This mirrors the PSV rule in
+/// MachineInstr::mayAlias.
+static bool haveDisjointPseudoSourceValues(const MachineInstr &MIa,
+                                           const MachineInstr &MIb) {
+  if (MIa.memoperands_empty() || MIb.memoperands_empty())
+    return false;
+  const MachineFrameInfo &MFI = MIa.getMF()->getFrameInfo();
+  auto AreDisjoint = [&](const MachineMemOperand *MMOa,
+                         const MachineMemOperand *MMOb) {
+    const PseudoSourceValue *PSVa = MMOa->getPseudoValue();
+    const PseudoSourceValue *PSVb = MMOb->getPseudoValue();
+    return (PSVa && MMOb->getValue() && !PSVa->mayAlias(&MFI)) ||
+           (PSVb && MMOa->getValue() && !PSVb->mayAlias(&MFI));
+  };
+  return all_of(MIa.memoperands(), [&](const MachineMemOperand *MMOa) {
+    return all_of(MIb.memoperands(), [&](const MachineMemOperand *MMOb) {
+      return AreDisjoint(MMOa, MMOb);
+    });
+  });
+}
+
 /// Returns true if there is a loop-carried order dependency from \p Src to \p
 /// Dst.
 static bool
@@ -989,6 +1013,9 @@ hasLoopCarriedMemDep(const SUnitWithMemInfo &Src, const SUnitWithMemInfo &Dst,
 
   MachineInstr &SrcMI = *Src.SU->getInstr();
   MachineInstr &DstMI = *Dst.SU->getInstr();
+  if (haveDisjointPseudoSourceValues(SrcMI, DstMI))
+    return false;
+
   if (PerformCheapCheck) {
     // First, perform the cheaper check that compares the base register.
     // If they are the same and the load offset is less than the store
