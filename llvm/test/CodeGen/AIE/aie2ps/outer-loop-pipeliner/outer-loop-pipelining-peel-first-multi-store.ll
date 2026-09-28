@@ -5,7 +5,8 @@
 ;
 ; (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
 ;
-; RUN: llc -mtriple=aie2ps -O2 -aie-enable-outer-loop-pipelining=false \
+; RUN: llc -mtriple=aie2ps -O2 -aie-enable-outer-loop-pipelining \
+; RUN:     -aie-outer-loop-pipelining-mode=first \
 ; RUN:     -stop-after=aie-outer-loop-pipeliner \
 ; RUN:     -o - %s | sed 's/^  //' | FileCheck %s
 ;
@@ -44,9 +45,11 @@ define void @peel_first_multi_store(ptr noalias %src, ptr noalias %dst, i32 %N, 
 ; CHECK-NEXT:    [[INNER_COND:%.*]] = call i1 @llvm.loop.decrement.i32(i32 1)
 ; CHECK-NEXT:    br i1 [[INNER_COND]], label %[[INNER_HEADER]], label %[[OUTER_LATCH]], !llvm.loop [[LOOP0:![0-9]+]]
 ; CHECK:       [[OUTER_LATCH]]:
-; CHECK-NEXT:    store i32 [[ACC_A_NEXT]], ptr [[DST_PTR]], align 4
+; CHECK-NEXT:    [[ACC_A_NEXT_LCSSA:%.*]] = phi i32 [ [[ACC_A_NEXT]], %[[INNER_HEADER]] ]
+; CHECK-NEXT:    [[ACC_B_NEXT_LCSSA:%.*]] = phi i32 [ [[ACC_B_NEXT]], %[[INNER_HEADER]] ]
+; CHECK-NEXT:    store i32 [[ACC_A_NEXT_LCSSA]], ptr [[DST_PTR]], align 4
 ; CHECK-NEXT:    [[DST_MID1:%.*]] = getelementptr inbounds i8, ptr [[DST_PTR]], i32 4
-; CHECK-NEXT:    store i32 [[ACC_B_NEXT]], ptr [[DST_MID1]], align 4
+; CHECK-NEXT:    store i32 [[ACC_B_NEXT_LCSSA]], ptr [[DST_MID1]], align 4
 ; CHECK-NEXT:    [[SRC_NEXT2]] = getelementptr inbounds i8, ptr [[SRC_PTR]], i32 4
 ; CHECK-NEXT:    [[DST_NEXT3_CHAINED]] = getelementptr inbounds i8, ptr [[DST_MID1]], i32 4
 ; CHECK-NEXT:    [[LSR_IV_NEXT]] = add i32 [[LSR_IV]], -1

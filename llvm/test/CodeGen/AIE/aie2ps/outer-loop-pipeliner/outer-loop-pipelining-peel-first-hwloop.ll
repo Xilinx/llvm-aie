@@ -5,7 +5,8 @@
 ;
 ; (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
 ;
-; RUN: llc -mtriple=aie2ps -O2 -aie-enable-outer-loop-pipelining=false \
+; RUN: llc -mtriple=aie2ps -O2 -aie-enable-outer-loop-pipelining \
+; RUN:     -aie-outer-loop-pipelining-mode=first \
 ; RUN:     -stop-after=aie-outer-loop-pipeliner \
 ; RUN:     -o - %s | sed 's/^  //' | FileCheck %s
 ;
@@ -41,7 +42,8 @@ define void @peel_first_hwloop(ptr noalias %src, ptr noalias %dst, i32 %N, i32 %
 ; CHECK-NEXT:    [[INNER_COND:%.*]] = call i1 @llvm.loop.decrement.i32(i32 1)
 ; CHECK-NEXT:    br i1 [[INNER_COND]], label %[[INNER_HEADER]], label %[[OUTER_LATCH]], !llvm.loop [[LOOP0:![0-9]+]]
 ; CHECK:       [[OUTER_LATCH]]:
-; CHECK-NEXT:    store i32 [[ACC_NEXT]], ptr [[DST_PTR]], align 4
+; CHECK-NEXT:    [[ACC_NEXT_LCSSA:%.*]] = phi i32 [ [[ACC_NEXT]], %[[INNER_HEADER]] ]
+; CHECK-NEXT:    store i32 [[ACC_NEXT_LCSSA]], ptr [[DST_PTR]], align 4
 ; CHECK-NEXT:    [[SRC_NEXT1]] = getelementptr inbounds i8, ptr [[SRC_PTR]], i32 4
 ; CHECK-NEXT:    [[DST_NEXT2]] = getelementptr inbounds i8, ptr [[DST_PTR]], i32 4
 ; CHECK-NEXT:    [[IV_NEXT]] = add i32 [[IV]], -1
