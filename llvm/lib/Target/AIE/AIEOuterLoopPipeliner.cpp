@@ -403,11 +403,17 @@ class OrigLoopStructure : public LoopStructure {
 
   // True if I lives in the top and is a plain instruction or a
   // region-internal PHI; loop-carried PHIs are excluded.
-  bool isPipelineableValue(const Instruction *I) const;
+  // When IncludeBottom is true, non-terminator bottom-block instructions are
+  // also accepted (used for peel-first stage-1 collection).
+  bool isPipelineableValue(const Instruction *I,
+                           bool IncludeBottom = false) const;
 
   // A pipelineable value also clonable into the prefetch/last-iteration sites;
   // excludes terminators and hardware-loop setup.
-  bool isPipelineCandidate(const Instruction *I) const;
+  // When IncludeBottom is true, bottom-block instructions are also accepted
+  // (used for peel-first stage collection).
+  bool isPipelineCandidate(const Instruction *I,
+                           bool IncludeBottom = false) const;
 
   // Returns true if the inner loop is a hardware (JNZD) loop, i.e. its latch is
   // controlled by an @llvm.loop.decrement intrinsic.
@@ -421,8 +427,9 @@ class OrigLoopStructure : public LoopStructure {
 
   // Returns the pipelineable closure of Seeds: users if TraverseUsers,
   // otherwise operands.
-  SmallPtrSet<Instruction *, 32> collectClosure(ArrayRef<Instruction *> Seeds,
-                                                bool TraverseUsers) const;
+  SmallPtrSet<Instruction *, 32>
+  collectClosure(ArrayRef<Instruction *> Seeds, bool TraverseUsers,
+                 bool IncludeBottom = false) const;
 
   // The stage-1 set: the split points (IsSplitPoint, reachable from the
   // top-block loads) and their top-block descendants. Empty if none is found.
@@ -433,6 +440,12 @@ class OrigLoopStructure : public LoopStructure {
   void seedFromInnerLoop(SmallVectorImpl<Instruction *> &Seeds);
   void seedFromLoads(SmallVectorImpl<Instruction *> &Seeds,
                      const AIEOLPTargetConfig &Config);
+  
+  // Peel-first: collect the bottom-block stage-0 (consumer) seed set from the
+  // forward closure of LCSSA PHI users in the bottom block. After
+  // formLCSSARecursively every PHI in the bottom block is an LCSSA PHI.
+  // Only users that have no use outside the bottom block are seeded.
+  SmallPtrSet<Instruction *, 32> seedFromLCSSAPHIs() const;
 
   // Unified stage-0 collection via backward closure from seeds.
   // PopulateStage1 controls whether remaining candidates go to Stage1Insts.
@@ -451,6 +464,11 @@ class OrigLoopStructure : public LoopStructure {
                              SmallPtrSetImpl<Instruction *> &ToPromote) const;
 
 public:
+  // Peel-first: partition the bottom-block pipeline candidates into stage-1
+  // (forward+backward closure seeded from LCSSA PHI users) and stage-0
+  // (everything else), populating Stage1Insts and Stage0Insts in program order.
+  void collectFirstIterStages();
+
   // Build and validate the LS for L; nullptr if L is not a supported candidate.
   static std::unique_ptr<OrigLoopStructure> tryBuildFrom(Loop *L);
 
@@ -972,13 +990,14 @@ bool OrigLoopStructure::isSafeToReorderMemoryOps() const {
 
 SmallPtrSet<Instruction *, 32>
 OrigLoopStructure::collectClosure(ArrayRef<Instruction *> Seeds,
-                                  bool TraverseUsers) const {
+                                  bool TraverseUsers,
+                                  bool IncludeBottom) const {
   SmallPtrSet<Instruction *, 32> Closure;
   SmallVector<Instruction *, 32> Worklist;
   auto Enqueue = [&](Instruction *I) {
     if (!I)
       return;
-    if (!isPipelineableValue(I))
+    if (!isPipelineableValue(I, IncludeBottom))
       return;
     if (Closure.insert(I).second)
       Worklist.push_back(I);
@@ -1058,6 +1077,29 @@ void OrigLoopStructure::seedFromLoads(SmallVectorImpl<Instruction *> &Seeds,
         Seeds.push_back(User);
     }
   });
+}
+
+SmallPtrSet<Instruction *, 32> OrigLoopStructure::seedFromLCSSAPHIs() const {
+  // An instruction qualifies as a seed only if all of its uses are in the
+  // bottom block (i.e., it has no use outside the bottom block).
+  auto HasUseOutsideBottom = [this](const Instruction *I) -> bool {
+    return llvm::any_of(I->users(), [this](const User *U) {
+      const auto *UI = dyn_cast<Instruction>(U);
+      return UI && !isInBottom(UI);
+    });
+  };
+
+  SmallVector<Instruction *, 16> Seeds;
+  for (PHINode &PHI : getBottom()->phis()) {
+    for (User *U : PHI.users()) {
+      auto *UI = dyn_cast<Instruction>(U);
+      if (UI && isInBottom(UI) && !HasUseOutsideBottom(UI))
+        Seeds.push_back(UI);
+    }
+  }
+  // Forward closure: stores and any other bottom-block consumers of the
+  // inner-loop live-outs. The LCSSA PHIs themselves are not stage-1.
+  return collectClosure(Seeds, /*TraverseUsers=*/true, /*IncludeBottom=*/true);
 }
 
 void OrigLoopStructure::collectStage0(
@@ -1227,6 +1269,37 @@ void OrigLoopStructure::collectStages(
 void OrigLoopStructure::collectLeanStage0(const AIEOLPTargetConfig &Config) {
   collectStage0([this, &Config](auto &S) { seedFromLoads(S, Config); },
                 /*PopulateStage1=*/true);
+}
+
+void OrigLoopStructure::collectFirstIterStages() {
+  // Forward closure: bottom-block consumers of LCSSA PHIs (stores etc.).
+  const SmallPtrSet<Instruction *, 32> FwdSet = seedFromLCSSAPHIs();
+
+  // Backward closure: pulls in address computations (GEPs etc.) that feed
+  // the stores but are not reachable forward from the LCSSA PHIs.
+  SmallVector<Instruction *, 32> BwdSeeds(FwdSet.begin(), FwdSet.end());
+  // ConsumerSet: instructions displaced one iteration forward (stage-0).
+  const SmallPtrSet<Instruction *, 32> ConsumerSet =
+      collectClosure(BwdSeeds, /*TraverseUsers=*/false, /*IncludeBottom=*/true);
+
+  // Emit stage-0 (consumers, displaced forward) and stage-1 (ptr-updates,
+  // stationary) candidates from the bottom region in program order.
+  // Symmetric with peel-last: stage-0 = the displaced set, stage-1 = the rest.
+  bottomRegion().forEachInstruction([&](Instruction *I) {
+    if (!isPipelineCandidate(I, /*IncludeBottom=*/true))
+      return;
+    (ConsumerSet.count(I) ? Stage0Insts : Stage1Insts).push_back(I);
+  });
+
+  LLVM_DEBUG({
+    dbgs() << "    Peel-first: " << stage0Insts().size()
+           << " stage-0 (consumers), " << stage1Insts().size()
+           << " stage-1 (ptr-updates) in bottom\n";
+    for (Instruction *I : stage0Insts())
+      dbgs() << "      [stage-0/consumer] " << *I << "\n";
+    for (Instruction *I : stage1Insts())
+      dbgs() << "      [stage-1/ptr-update] " << *I << "\n";
+  });
 }
 
 SmallVector<Instruction *, 16>
@@ -1712,18 +1785,23 @@ bool OrigLoopStructure::isRegionInternalPhi(const PHINode *PHI) const {
   return true;
 }
 
-bool OrigLoopStructure::isPipelineableValue(const Instruction *I) const {
-  if (!isInTop(I))
-    return false;
-  if (const auto *PHI = dyn_cast<PHINode>(I))
-    return isRegionInternalPhi(PHI);
-  return true;
+bool OrigLoopStructure::isPipelineableValue(const Instruction *I,
+                                            bool IncludeBottom) const {
+  if (isInTop(I)) {
+    if (const auto *PHI = dyn_cast<PHINode>(I))
+      return isRegionInternalPhi(PHI);
+    return true;
+  }
+  if (IncludeBottom && isInBottom(I) && !I->isTerminator())
+    return true;
+  return false;
 }
 
-bool OrigLoopStructure::isPipelineCandidate(const Instruction *I) const {
+bool OrigLoopStructure::isPipelineCandidate(const Instruction *I,
+                                            bool IncludeBottom) const {
   if (I->isTerminator() || AIEIRUtils::isHardwareLoopSetup(I))
     return false;
-  return isPipelineableValue(I);
+  return isPipelineableValue(I, IncludeBottom);
 }
 
 BasicBlock *LoopStructure::getInnerLatch() const {
@@ -2042,14 +2120,17 @@ bool AIEOuterLoopPipeliner::liftBottomPointerUpdatesToTop(
 
 bool AIEOuterLoopPipeliner::performTransformation(OrigLoopStructure &OrigLS,
                                                   const OLPOpts &Opts) {
-  // Peel-first mode is not yet implemented; fall back gracefully.
+  /// Restore LCSSA if this property was invalidated.
+  formLCSSARecursively(*OrigLS.getOuterLoop(), *DT, LI, SE);
+
+  // Peel-first mode: partition the bottom instructions into stage-1/stage-0
+  // and dump them for debugging, then fall back gracefully until the transform
+  // is implemented.
   if (Opts.Mode == PipeliningMode::PeelFirst) {
+    OrigLS.collectFirstIterStages();
     LLVM_DEBUG(dbgs() << "    Peel-first mode not yet implemented; skipping\n");
     return false;
   }
-
-  /// Restore LCSSA if this property was invalidated.
-  formLCSSARecursively(*OrigLS.getOuterLoop(), *DT, LI, SE);
 
   liftBottomPointerUpdatesToTop(OrigLS);
 
