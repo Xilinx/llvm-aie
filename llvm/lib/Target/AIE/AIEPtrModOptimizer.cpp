@@ -21,6 +21,7 @@
 #include "AIEGlobalCombinerPtrMods.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/CodeGen/GlobalISel/CSEInfo.h"
+#include "llvm/CodeGen/GlobalISel/GenericMachineInstrs.h"
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -121,6 +122,14 @@ void FoundCombiners::append(const AIE::Combiner &CombineResult) {
   assert(CombineResult.CombineRoot);
   InstrCombines[CombineResult.CombineRoot] = CombineResult;
   LLVM_DEBUG(dbgs() << "[Solution] "; CombineResult.dumpFull());
+
+  if (!GeneratedFromAnalysisPass)
+    return;
+  const MachineInstr *PtrMod = CombineResult.CombineInstrs[0];
+  const Register Addr =
+      cast<GLoadStore>(CombineResult.CombineRoot)->getPointerReg();
+  if (PtrMod->readsRegister(Addr, /*TRI=*/nullptr))
+    PostIncPtrMods.insert(PtrMod);
 }
 
 AIE::Combiner *FoundCombiners::getCombine(MachineInstr *CombineRoot) {

@@ -576,6 +576,14 @@ def combine_global_load_store_increment : GICombineRule <
           [{ return matchGlobalPtrModOptimizer(*${root}, MRI, Helper, B.getTII(), GlobalCombiners); }]),
   (apply [{ applyLdStInc(*${root}, MRI, Helper, B, Observer, GlobalCombiners); }] )>;
 
+// ptr_add_immed_chain, keeping the pointer modifiers of the post-increment
+// combines found by aie-ptr-mod-opt.
+def aie_ptr_add_immed_chain : GICombineRule<
+  (defs root:$d, ptr_add_immed_matchdata:$matchinfo),
+  (match (wip_match_opcode G_PTR_ADD):$d,
+         [{ return !GlobalCombiners->isPostIncPtrMod(*${d}) &&
+                   Helper.matchPtrAddImmedChain(*${d}, ${matchinfo}); }]),
+  (apply [{ Helper.applyPtrAddImmedChain(*${d}, ${matchinfo}); }])>;
 
 
 // Post-legalizer custom combines: shared base plus per-target additions.
@@ -583,7 +591,7 @@ def aie_postlegalizer_custom_shared_combines : GICombineGroup<[
   combine_broadcast_extract_to_copy,
   combine_global_load_store_increment,
   combine_load_store_increment,
-  ptr_add_immed_chain,
+  aie_ptr_add_immed_chain,
   combine_offset_load_store_ptradd,
   combine_offset_load_store_share_ptradd,
   combine_add_vector_elt_undef,

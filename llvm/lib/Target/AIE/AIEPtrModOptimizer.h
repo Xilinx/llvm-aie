@@ -19,6 +19,7 @@
 
 #include "AIE.h"
 #include "AIEGlobalCombiner.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -37,6 +38,9 @@ class FoundCombiners {
 
   /// Keep track for which MBB Combiners were found
   std::set<MachineBasicBlock *> MBBWithSolution;
+
+  /// Pointer modifiers of the post-increment Combiners found by the Analysis
+  SmallPtrSet<const MachineInstr *, 16> PostIncPtrMods;
 
   /// The keys are to be replaced MachineInstructions, and the values the newly
   /// inserted Instructions.
@@ -78,6 +82,12 @@ public:
 
   /// \return whether Analysis Pass generated this Object
   bool hasAnalysis() const { return GeneratedFromAnalysisPass; }
+
+  /// \return whether \p MI is the pointer modifier of a post-increment
+  /// Combiner found by the Analysis
+  bool isPostIncPtrMod(const MachineInstr &MI) const {
+    return PostIncPtrMods.contains(&MI);
+  }
 
   /// Add an instruction to be deleted at the end of the combining pass.
   /// Has to be called *after* removeFromParent()

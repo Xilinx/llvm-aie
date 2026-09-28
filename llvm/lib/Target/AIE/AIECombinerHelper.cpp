@@ -1067,6 +1067,12 @@ bool llvm::matchGlobalPtrModOptimizer(MachineInstr &MemI,
     return false;
   }
   assert(CombineRule->CombineInstrs.size() >= 2);
+  assert([&] {
+    const MachineInstr &PtrMod = *CombineRule->CombineInstrs[0];
+    const Register Addr = cast<GLoadStore>(MemI).getPointerReg();
+    return PtrMod.readsRegister(Addr, /*TRI=*/nullptr) ||
+           PtrMod.definesRegister(Addr, /*TRI=*/nullptr);
+  }() && "Pointer modifier was rewritten after the analysis");
   LLVM_DEBUG(dbgs() << "[Global Ptr Inc] Found\n" << *CombineRule);
 
   return true;
