@@ -942,12 +942,15 @@ static int findInBundles(ArrayRef<AIE::MachineBundle> Bundles,
   return static_cast<unsigned>(std::distance(Bundles.begin(), It));
 }
 
-/// Return the MBB iterator at which \p BranchMI should be spliced: just after
-/// the last non-BranchMI instruction in bundles[0..\p PlacedIdx], searching
-/// backward from \p PlacedIdx.
+/// Return the MBB iterator at which \p BranchMI should be spliced so that the
+/// instructions of \p Bundles appear in bundle order: just after the last
+/// non-BranchMI instruction in bundles[0..\p PlacedIdx], or, if those bundles
+/// hold none (e.g. only empty top-fixed bundles), just before the first
+/// instruction of the following bundles.
+/// \pre \p Bundles hold an instruction other than \p BranchMI.
 static MachineBasicBlock::iterator
 computeSplicePoint(ArrayRef<AIE::MachineBundle> Bundles, unsigned PlacedIdx,
-                   MachineInstr *BranchMI, MachineBasicBlock *MBB) {
+                   MachineInstr *BranchMI) {
   for (int I = static_cast<int>(PlacedIdx); I >= 0; --I) {
     const auto &Instrs = Bundles[I].getInstrs();
     auto It =
@@ -956,7 +959,14 @@ computeSplicePoint(ArrayRef<AIE::MachineBundle> Bundles, unsigned PlacedIdx,
     if (It != Instrs.rend())
       return getBundleEnd((*It)->getIterator());
   }
-  return MBB->end();
+  // Anchor before the next instruction so the branch stays before the region's
+  // DelayedSchedBarrier.
+  for (const AIE::MachineBundle &Bundle : drop_begin(Bundles, PlacedIdx + 1))
+    if (!Bundle.empty())
+      return getBundleStart(Bundle.getInstrs().front()->getIterator());
+  // Region::setTopFixedBundles asserts that the last top-fixed bundle is not
+  // empty.
+  llvm_unreachable("No instruction to anchor the branch to");
 }
 
 /// Remove \p MI from \p Bundle, keeping Instrs, SlotMap and OccupiedSlots
@@ -1067,8 +1077,8 @@ void AIEPostRASchedStrategy::fixupDelaySlotPosition(
   TopHR->emitInScoreboard(*BranchMI, BranchMI->getDesc(), Delta);
 
   // Physically move BranchMI to its correct position in the MBB.
-  CurMBB->splice(computeSplicePoint(TopBundles, PlacedIdx, BranchMI, CurMBB),
-                 CurMBB, BranchMI->getIterator());
+  CurMBB->splice(computeSplicePoint(TopBundles, PlacedIdx, BranchMI), CurMBB,
+                 BranchMI->getIterator());
 
   // Now that the branch's resource bookings are in the Top scoreboard,
   // re-check for inter-zone conflicts caused by the branch itself. If one is

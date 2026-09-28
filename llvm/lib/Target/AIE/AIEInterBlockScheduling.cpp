@@ -1580,6 +1580,9 @@ Region::Region(MachineBasicBlock *BB, MachineBasicBlock::iterator Begin,
 
 void Region::setTopFixedBundles(ArrayRef<MachineBundle> Bundles) {
   assert(TopFixedBundles.empty() && "TopFixedBundles already set.");
+  // computeSplicePoint (AIEMachineScheduler.cpp) relies on this.
+  assert(!Bundles.empty() && !Bundles.back().empty() &&
+         "Trailing empty bundles must be trimmed from the SWP epilogue");
   // Verify the fixed instructions are physically at the top of the block.
   const auto FreeBegin = std::next(BB->begin(), Bundles.size());
   assert(all_of(Bundles.back().Instrs, [FreeBegin](const MachineInstr *MI) {
