@@ -352,6 +352,12 @@ public:
   const BlockState &getBlockState(MachineBasicBlock *BB) const;
   BlockState &getBlockState(MachineBasicBlock *BB);
 
+  /// Collect the inter-block DDG edges that end in \p BB, i.e. the entries of
+  /// each predecessor's PerSuccEdges that name BB as their successor. The
+  /// graphs stay owned by the predecessors; computing the list on demand keeps
+  /// it in step with the CFG and with any rebuild done by buildPerSuccEdges().
+  std::vector<InterBlockEdges *> getPerPredEdges(MachineBasicBlock *BB) const;
+
   /// Return the maximum interblock latency we need to account for
   /// the given successor. This represents the latency margin we assume for
   /// an unscheduled successor.
