@@ -5,7 +5,8 @@
 ;
 ; (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
 ;
-; RUN: llc -mtriple=aie2ps -O2 -aie-enable-outer-loop-pipelining=false \
+; RUN: llc -mtriple=aie2ps -O2 -aie-enable-outer-loop-pipelining \
+; RUN:     -aie-outer-loop-pipelining-mode=first \
 ; RUN:     -stop-after=aie-outer-loop-pipeliner \
 ; RUN:     -o - %s | sed 's/^  //' | FileCheck %s
 ;
@@ -26,19 +27,18 @@ define void @peel_first_no_stage0(ptr noalias %src, ptr noalias %dst, i32 %N, i3
 ; CHECK-NEXT:    [[CMP:%.*]] = icmp sgt i32 [[N]], 1
 ; CHECK-NEXT:    br i1 [[CMP]], label %[[OUTER_HEADER_PREHEADER:.*]], label %[[EXIT:.*]]
 ; CHECK:       [[OUTER_HEADER_PREHEADER]]:
-; CHECK-NEXT:    [[TMP0:%.*]] = call i32 @llvm.start.loop.iterations.i32(i32 [[N]])
 ; CHECK-NEXT:    br label %[[OUTER_HEADER:.*]]
 ; CHECK:       [[OUTER_HEADER]]:
-; CHECK-NEXT:    [[TMP1:%.*]] = phi i32 [ [[TMP0]], %[[OUTER_HEADER_PREHEADER]] ], [ [[TMP2:%.*]], %[[OUTER_LATCH:.*]] ]
+; CHECK-NEXT:    [[LSR_IV:%.*]] = phi i32 [ [[N]], %[[OUTER_HEADER_PREHEADER]] ], [ [[LSR_IV_NEXT:%.*]], %[[OUTER_LATCH:.*]] ]
 ; CHECK-NEXT:    call void @llvm.set.loop.iterations.i32(i32 [[M]])
 ; CHECK-NEXT:    br label %[[INNER_HEADER:.*]]
 ; CHECK:       [[INNER_HEADER]]:
 ; CHECK-NEXT:    [[INNER_COND:%.*]] = call i1 @llvm.loop.decrement.i32(i32 1)
 ; CHECK-NEXT:    br i1 [[INNER_COND]], label %[[INNER_HEADER]], label %[[OUTER_LATCH]], !llvm.loop [[LOOP0:![0-9]+]]
 ; CHECK:       [[OUTER_LATCH]]:
-; CHECK-NEXT:    [[TMP2]] = call i32 @llvm.loop.decrement.reg.i32(i32 [[TMP1]], i32 1)
-; CHECK-NEXT:    [[TMP3:%.*]] = icmp ne i32 [[TMP2]], 0
-; CHECK-NEXT:    br i1 [[TMP3]], label %[[OUTER_HEADER]], label %[[EXIT]], !llvm.loop [[LOOP2:![0-9]+]]
+; CHECK-NEXT:    [[LSR_IV_NEXT]] = add i32 [[LSR_IV]], -1
+; CHECK-NEXT:    [[OUTER_COND:%.*]] = icmp eq i32 [[LSR_IV_NEXT]], 0
+; CHECK-NEXT:    br i1 [[OUTER_COND]], label %[[EXIT]], label %[[OUTER_HEADER]], !llvm.loop [[LOOP2:![0-9]+]]
 ; CHECK:       [[EXIT]]:
 ; CHECK-NEXT:    ret void
 ;
