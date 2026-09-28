@@ -123,6 +123,25 @@ static cl::opt<bool> LeanStage0Mode(
              "intrinsics selected for lean stage 0"),
     cl::init(false), cl::Hidden);
 
+/// Pipelining algorithm: which iteration gets peeled out of the steady loop.
+enum class PipeliningMode {
+  // Stage-0 seeds the inner loop (prefetch loads); peel the last iteration
+  // (stores-only exiting block) — default.
+  PeelLast,
+  // Stage-1 is seeded from the inner loop (stores); peel the first iteration
+  // (loads-only preheader).
+  PeelFirst,
+};
+
+static cl::opt<PipeliningMode> PipeliningModeOpt(
+    "aie-outer-loop-pipelining-mode",
+    cl::desc("Select the outer-loop pipelining algorithm"),
+    cl::values(clEnumValN(PipeliningMode::PeelLast, "last",
+                          "Peel the last iteration (default)"),
+               clEnumValN(PipeliningMode::PeelFirst, "first",
+                          "Peel the first iteration")),
+    cl::init(PipeliningMode::PeelLast), cl::Hidden);
+
 /// Outer loop type selection after pipelining.
 enum class OuterLoopType { Soft, HW, Auto };
 
@@ -152,6 +171,7 @@ struct OLPOpts {
   bool SplitStagesEnabled;
   bool UseLeanStage0;
   bool EnableSpeculativeLastIteration;
+  PipeliningMode Mode;
   OuterLoopType LoopType;
 
   explicit OLPOpts(const AIE::LoopOptionOverrides &Overrides)
@@ -163,6 +183,7 @@ struct OLPOpts {
             Overrides.hasOverride(SpeculativeLastIteration)
                 ? Overrides.get(SpeculativeLastIteration)
                 : UseLeanStage0),
+        Mode(Overrides.get(PipeliningModeOpt)),
         LoopType(Overrides.get(OuterLoopTypeOpt)) {}
 
   /// Determine whether to use hardware loop based on loop type and pointer
@@ -2021,6 +2042,11 @@ bool AIEOuterLoopPipeliner::liftBottomPointerUpdatesToTop(
 
 bool AIEOuterLoopPipeliner::performTransformation(OrigLoopStructure &OrigLS,
                                                   const OLPOpts &Opts) {
+  // Peel-first mode is not yet implemented; fall back gracefully.
+  if (Opts.Mode == PipeliningMode::PeelFirst) {
+    LLVM_DEBUG(dbgs() << "    Peel-first mode not yet implemented; skipping\n");
+    return false;
+  }
 
   /// Restore LCSSA if this property was invalidated.
   formLCSSARecursively(*OrigLS.getOuterLoop(), *DT, LI, SE);
