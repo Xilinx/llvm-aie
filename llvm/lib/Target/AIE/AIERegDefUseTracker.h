@@ -393,6 +393,13 @@ class RegLiveRangeTracker {
                   DenseMap<MCRegister, std::pair<int, LaneBitmask>> &LiveRegs,
                   DenseMap<MachineOperand *, unsigned> &OperandToLiveRange);
 
+  /// Drop a live range that could not be merged with an overlapping one,
+  /// together with every reference to it.
+  void
+  discardLiveRange(unsigned LRIdx,
+                   DenseMap<MCRegister, std::pair<int, LaneBitmask>> &LiveRegs,
+                   DenseMap<MachineOperand *, unsigned> &OperandToLiveRange);
+
   /// Merge the per-sub-register live ranges of a composite physical register
   /// into a single LR.  Called at the end of use processing for each
   /// instruction: any use-use tied operand group (DstOps empty in

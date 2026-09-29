@@ -531,6 +531,24 @@ bool RegLiveRangeTracker::absorbLiveRange(
   return true;
 }
 
+void RegLiveRangeTracker::discardLiveRange(
+    unsigned LRIdx, DenseMap<MCRegister, std::pair<int, LaneBitmask>> &LiveRegs,
+    DenseMap<MachineOperand *, unsigned> &OperandToLiveRange) {
+  LLVM_DEBUG(dbgs() << "Discard LR#" << LiveRanges[LRIdx].getID()
+                    << " (no common base register)\n");
+
+  // Collect the operands before clear() empties the range.
+  for (const auto &OpInfo : LiveRanges[LRIdx].operands())
+    OperandToLiveRange.erase(OpInfo.getOperand());
+
+  for (auto &[LiveReg, Info] : LiveRegs) {
+    if (Info.first == static_cast<int>(LRIdx))
+      Info.first = RegLiveRange::NoLiveRange;
+  }
+
+  LiveRanges[LRIdx].clear();
+}
+
 void RegLiveRangeTracker::mergeAliasingLiveRanges(
     unsigned DefLRIdx, MCRegister DefReg,
     DenseMap<MCRegister, std::pair<int, LaneBitmask>> &LiveRegs,
@@ -633,7 +651,7 @@ void RegLiveRangeTracker::mergeAliasingLiveRanges(
   for (const auto &[LiveReg, LRIdx] : AliasingLiveRegs) {
     if (LRIdx == RegLiveRange::NoLiveRange) {
       if (!TargetLR.expandBaseToInclude(LiveReg, TRI)) {
-        TargetLR.clear();
+        discardLiveRange(DefLRIdx, LiveRegs, OperandToLiveRange);
         return;
       }
     }
@@ -647,8 +665,8 @@ void RegLiveRangeTracker::mergeAliasingLiveRanges(
                       << LiveRanges[LRIdx].getID() << " -> LR#"
                       << TargetLR.getID() << "\n");
     if (!absorbLiveRange(DefLRIdx, LRIdx, LiveRegs, OperandToLiveRange)) {
-      TargetLR.clear();
-      LiveRanges[LRIdx].clear();
+      discardLiveRange(DefLRIdx, LiveRegs, OperandToLiveRange);
+      discardLiveRange(LRIdx, LiveRegs, OperandToLiveRange);
       return;
     }
   }
@@ -1081,6 +1099,8 @@ unsigned RegLiveRangeTracker::getOrCreateLiveRangeForOperand(
     } else {
       // Found an aliasing live register with an actual live range.
       assert(LRIdx >= 0 && "LRIdx must be valid");
+      assert(LiveRanges[LRIdx].isValid() &&
+             "LiveRegs must not reference a discarded live range");
       State.OperandToLiveRange[MO] = LRIdx;
 
       // Update base register for this live range if needed.
@@ -1219,7 +1239,7 @@ void RegLiveRangeTracker::mergeCompositeSubregLRs(MachineInstr &MI,
     }
 
     if (MergeFailed) {
-      LiveRanges[TargetIdx].clear();
+      discardLiveRange(TargetIdx, State.LiveRegs, State.OperandToLiveRange);
       continue;
     }
 
