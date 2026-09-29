@@ -1173,6 +1173,42 @@ InterBlockScheduling::getPerPredEdges(MachineBasicBlock *BB) const {
   return PerPredEdges;
 }
 
+DenseMap<const MachineInstr *, int>
+InterBlockScheduling::getIncomingLatencies(MachineBasicBlock *BB) const {
+  DenseMap<const MachineInstr *, int> EdgeLatency;
+  if (BB->pred_empty())
+    return EdgeLatency;
+
+  const BlockState &BS = getBlockState(BB);
+  if (&BS.getCurrentRegion() != &BS.getTop())
+    return EdgeLatency;
+
+  for (InterBlockEdges *PredEdges : getPerPredEdges(BB)) {
+    // Skip the self edge of a single-block loop.
+    if (PredEdges->getPred() == BB)
+      continue;
+    for (SUnit &SuccSU : *PredEdges) {
+      if (!PredEdges->isPostBoundaryNode(&SuccSU))
+        continue;
+      const MachineInstr *SuccMI = SuccSU.getInstr();
+      assert(SuccMI && "Post-boundary node without an instruction");
+      // Seeded at zero: a negative latency imposes no delay on the successor.
+      int PredLatency = 0;
+      for (const SDep &Dep : SuccSU.Preds) {
+        SUnit *PredSU = Dep.getSUnit();
+        // Skip the region's own chain. What remains is an edge from the
+        // predecessor, of any kind.
+        if (PredEdges->isPostBoundaryNode(PredSU))
+          continue;
+        PredLatency = std::max(PredLatency, Dep.getSignedLatency());
+      }
+      int &BestLatency = EdgeLatency[SuccMI];
+      BestLatency = std::max(BestLatency, PredLatency);
+    }
+  }
+  return EdgeLatency;
+}
+
 void InterBlockScheduling::updatePerSuccEdges(MachineBasicBlock *BB,
                                               MachineBasicBlock *For) {
   BlockState &BS = getBlockState(BB);
