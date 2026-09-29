@@ -138,7 +138,7 @@ define void @split_prologue_basic(ptr noalias %a_ptr_init,
 ; ASM-NEXT:    nop
 ; ASM-NEXT:    nop
 ; ASM-NEXT:    mova m0, #4; add r0, r0, #-1; mov p4, p2
-; ASM-NEXT:    padda [p4], m0; movx r3, #0; mov r4, #0
+; ASM-NEXT:    padda [p4], m0; movx r4, #0; mov r3, #0
 ; ASM-NEXT:  .LBB0_2: // %steady.stage1.top
 ; ASM-NEXT:    // =>This Loop Header: Depth=1
 ; ASM-NEXT:    // Child Loop BB0_3 Depth 2

@@ -157,6 +157,19 @@ public:
   /// Clear all recorded post-boundary depths.  Call before repopulating.
   void clearPostDepths();
 
+  /// Pre-boundary height interface.
+  /// Return the longest dependence chain that leads from each pre-boundary
+  /// node to the end of the predecessor block, keyed by NodeNum. This is the
+  /// mirror of PostDepths: a producer with height H has H cycles of its
+  /// latency already covered by the predecessor before control reaches the
+  /// successor.
+  ///
+  /// Chains are cut at the boundary, so a node whose only consumers are in
+  /// the successor has no entry, which is equivalent to a height of zero.
+  /// The values are static lower bounds derived from the DDG alone; they do
+  /// not depend on the predecessor being scheduled.
+  std::map<unsigned, int> computePreHeights() const;
+
   // Post-boundary maximum depth. This is one less than the 'depth'
   // of the next region.
   int getPostRegionMaxDepth() const { return PostRegionMaxDepth; }
