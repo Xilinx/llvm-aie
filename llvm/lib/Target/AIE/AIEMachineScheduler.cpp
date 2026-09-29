@@ -99,6 +99,11 @@ static cl::opt<bool> PreSchedFollowsSkipPipeliner(
     "aie-presched-follows-skip-pipeliner", cl::init(true),
     cl::desc("Don't run the prescheduler if the pipeliner is skipped"));
 
+static cl::opt<bool> IncomingLatencyBias(
+    "aie-incoming-latency-bias", cl::init(true),
+    cl::desc("[AIE] Account for the latency produced in predecessor blocks "
+             "when ranking bottom-zone scheduling candidates"));
+
 // Declared in AIEInterBlockScheduling.cpp, which owns the option since
 // the option is primarily a scheduling-phase configuration.
 extern cl::opt<bool> SimplifyReservedRegs;
@@ -469,9 +474,47 @@ static MachineInstr *getDelaySlotInstr(MachineBasicBlock::iterator RegionBegin,
   return &(*It);
 }
 
+void AIEPostRASchedStrategy::computeIncomingInterBlockLatencies() {
+  assert(CurMBB && "Scheduling a region outside of a block");
+  IncomingInterBlockLatency.clear();
+  if (!IncomingLatencyBias)
+    return;
+
+  const DenseMap<const MachineInstr *, int> EdgeLatency =
+      InterBlock.getIncomingLatencies(CurMBB);
+
+  for (const SUnit &SU : DAG->SUnits) {
+    const MachineInstr *MI = SU.getInstr();
+    if (!MI)
+      continue;
+    auto EdgeIt = EdgeLatency.find(MI);
+    if (EdgeIt == EdgeLatency.end() || EdgeIt->second <= 0)
+      continue;
+    // A node with a predecessor in the region already carries that chain in
+    // its depth; adding the incoming latency would double-count it.
+    if (any_of(SU.Preds,
+               [](const SDep &D) { return !D.getSUnit()->isBoundaryNode(); }))
+      continue;
+    IncomingInterBlockLatency[MI] = EdgeIt->second;
+    LLVM_DEBUG(dbgs() << "  Incoming interblock latency " << EdgeIt->second
+                      << " for SU(" << SU.NodeNum << "): " << *MI);
+  }
+}
+
+int AIEPostRASchedStrategy::getInterBlockDepth(const SUnit &SU) const {
+  const int Depth = SU.getDepth();
+  const MachineInstr *MI = SU.getInstr();
+  if (!MI)
+    return Depth;
+  auto It = IncomingInterBlockLatency.find(MI);
+  return It == IncomingInterBlockLatency.end() ? Depth : Depth + It->second;
+}
+
 void AIEPostRASchedStrategy::initialize(ScheduleDAGMI *Dag) {
   PostGenericScheduler::initialize(Dag);
   assert(PostRADirection == MISched::Direction::Unspecified);
+
+  computeIncomingInterBlockLatencies();
 
   // Update Bot scoreboard from the scheduled top regions of successor blocks.
   // Conservativeness (whether to replay bundles or block all cycles) is
@@ -1315,6 +1358,16 @@ bool AIEPostRASchedStrategy::tryCandidate(SchedCandidate &Cand,
           return TryCand.Reason != NoCand;
         }
       }
+    }
+
+    // Break depth ties using the part of the chain that lies in a predecessor
+    // block, which getDepth() truncates at the region boundary. Sinking such a
+    // node lets the predecessor cover the producer's latency with its own
+    // instructions instead of padding it with NOPs.
+    if (tryGreater(getInterBlockDepth(*TryCand.SU),
+                   getInterBlockDepth(*Cand.SU), TryCand, Cand,
+                   BotPathReduce)) {
+      return TryCand.Reason != NoCand;
     }
 
     // Prefer the instruction whose dependent chain is estimated to

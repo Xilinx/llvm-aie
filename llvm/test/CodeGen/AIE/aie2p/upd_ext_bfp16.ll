@@ -352,19 +352,19 @@ define dso_local %struct.v128bfp16ebs8 @_Z11test_insert13v128bfp16ebs8i12v64bfp1
 ; CHECK-NEXT:    mov r3, eh4 // Delay Slot 1
 ; CHECK-NEXT:  .LBB15_2:
 ; CHECK-NEXT:    vmov x0, x1
-; CHECK-NEXT:    mov r2, r4
-; CHECK-NEXT:    mov r3, r5
 ; CHECK-NEXT:    mov r6, el5
 ; CHECK-NEXT:    mov r7, eh5
 ; CHECK-NEXT:    vmov x1, x5
+; CHECK-NEXT:    mov r2, r4
+; CHECK-NEXT:    mov r3, r5
 ; CHECK-NEXT:    mov r4, r6
 ; CHECK-NEXT:    mov r5, r7
 ; CHECK-NEXT:  .LBB15_3: // %_ZL6insert13v128bfp16ebs8i12v64bfp16ebs8.exit
 ; CHECK-NEXT:    nopa ; nopb ; ret lr; nopm ; nops
-; CHECK-NEXT:    mov el0, r2 // Delay Slot 5
-; CHECK-NEXT:    mov eh0, r3 // Delay Slot 4
-; CHECK-NEXT:    mov el1, r4 // Delay Slot 3
-; CHECK-NEXT:    mov eh1, r5 // Delay Slot 2
+; CHECK-NEXT:    mov el1, r4 // Delay Slot 5
+; CHECK-NEXT:    mov eh1, r5 // Delay Slot 4
+; CHECK-NEXT:    mov el0, r2 // Delay Slot 3
+; CHECK-NEXT:    mov eh0, r3 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %vsub.coerce.fca.0.extract.i = extractvalue %struct.v64bfp16ebs8 %vsub.coerce, 0
@@ -634,19 +634,19 @@ define dso_local %struct.v128bfp16ebs16 @_Z11test_insert14v128bfp16ebs16i13v64bf
 ; CHECK-NEXT:    mov r3, eh4 // Delay Slot 1
 ; CHECK-NEXT:  .LBB22_2:
 ; CHECK-NEXT:    vmov x0, x1
-; CHECK-NEXT:    mov r2, r4
-; CHECK-NEXT:    mov r3, r5
 ; CHECK-NEXT:    mov r6, el5
 ; CHECK-NEXT:    mov r7, eh5
 ; CHECK-NEXT:    vmov x1, x5
+; CHECK-NEXT:    mov r2, r4
+; CHECK-NEXT:    mov r3, r5
 ; CHECK-NEXT:    mov r4, r6
 ; CHECK-NEXT:    mov r5, r7
 ; CHECK-NEXT:  .LBB22_3: // %_ZL6insert14v128bfp16ebs16i13v64bfp16ebs16.exit
 ; CHECK-NEXT:    nopa ; nopb ; ret lr; nopm ; nops
-; CHECK-NEXT:    mov el0, r2 // Delay Slot 5
-; CHECK-NEXT:    mov eh0, r3 // Delay Slot 4
-; CHECK-NEXT:    mov el1, r4 // Delay Slot 3
-; CHECK-NEXT:    mov eh1, r5 // Delay Slot 2
+; CHECK-NEXT:    mov el1, r4 // Delay Slot 5
+; CHECK-NEXT:    mov eh1, r5 // Delay Slot 4
+; CHECK-NEXT:    mov el0, r2 // Delay Slot 3
+; CHECK-NEXT:    mov eh0, r3 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %vsub.coerce.fca.0.extract.i = extractvalue %struct.v64bfp16ebs16 %vsub.coerce, 0
