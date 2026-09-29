@@ -395,6 +395,82 @@ body:             |
 ...
 
 ---
+
+name:            pred_height_discounts_latency
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  ; BIAS-LABEL: name: pred_height_discounts_latency
+  ; BIAS: bb.0:
+  ; BIAS-NEXT:   successors: %bb.1(0x80000000)
+  ; BIAS-NEXT:   liveins: $p1, $p2
+  ; BIAS-NEXT: {{  $}}
+  ; BIAS-NEXT:   $r6 = LDA_dms_lda_scalar_ld_idx_imm killed $p1, 4
+  ; BIAS-NEXT:   NOP
+  ; BIAS-NEXT:   NOP
+  ; BIAS-NEXT:   NOP
+  ; BIAS-NEXT:   NOP
+  ; BIAS-NEXT:   NOP
+  ; BIAS-NEXT:   $r7 = LDA_dms_lda_scalar_ld_idx_imm killed $p2, 4
+  ; BIAS-NEXT:   $r8 = ADD_add_r_ri $r6, 1, implicit-def $srcarry
+  ; BIAS-NEXT:   DelayedSchedBarrier
+  ; BIAS-NEXT: {{  $}}
+  ; BIAS-NEXT: bb.1:
+  ; BIAS-NEXT:   liveins: $r6, $r7, $r8, $r1, $r2, $r3
+  ; BIAS-NEXT: {{  $}}
+  ; BIAS-NEXT:   RET implicit $lr
+  ; BIAS-NEXT:   $r11 = ADD_add_r_ri killed $r1, 1, implicit-def $srcarry
+  ; BIAS-NEXT:   $r12 = ADD_add_r_ri killed $r2, 1, implicit-def $srcarry
+  ; BIAS-NEXT:   $r13 = ADD_add_r_ri killed $r3, 1, implicit-def $srcarry
+  ; BIAS-NEXT:   $r10 = ADD_add_r_ri killed $r6, 4, implicit-def $srcarry
+  ; BIAS-NEXT:   $r15 = ADD_add_r_ri killed $r7, 4, implicit-def $srcarry
+  ; BIAS-NEXT:   DelayedSchedBarrier
+  ;
+  ; NOBIAS-LABEL: name: pred_height_discounts_latency
+  ; NOBIAS: bb.0:
+  ; NOBIAS-NEXT:   successors: %bb.1(0x80000000)
+  ; NOBIAS-NEXT:   liveins: $p1, $p2
+  ; NOBIAS-NEXT: {{  $}}
+  ; NOBIAS-NEXT:   $r6 = LDA_dms_lda_scalar_ld_idx_imm killed $p1, 4
+  ; NOBIAS-NEXT:   NOP
+  ; NOBIAS-NEXT:   NOP
+  ; NOBIAS-NEXT:   $r7 = LDA_dms_lda_scalar_ld_idx_imm killed $p2, 4
+  ; NOBIAS-NEXT:   NOP
+  ; NOBIAS-NEXT:   NOP
+  ; NOBIAS-NEXT:   NOP
+  ; NOBIAS-NEXT:   $r8 = ADD_add_r_ri $r6, 1, implicit-def $srcarry
+  ; NOBIAS-NEXT:   DelayedSchedBarrier
+  ; NOBIAS-NEXT: {{  $}}
+  ; NOBIAS-NEXT: bb.1:
+  ; NOBIAS-NEXT:   liveins: $r6, $r7, $r8, $r1, $r2, $r3
+  ; NOBIAS-NEXT: {{  $}}
+  ; NOBIAS-NEXT:   RET implicit $lr
+  ; NOBIAS-NEXT:   $r10 = ADD_add_r_ri killed $r6, 4, implicit-def $srcarry
+  ; NOBIAS-NEXT:   $r15 = ADD_add_r_ri killed $r7, 4, implicit-def $srcarry
+  ; NOBIAS-NEXT:   $r11 = ADD_add_r_ri killed $r1, 1, implicit-def $srcarry
+  ; NOBIAS-NEXT:   $r12 = ADD_add_r_ri killed $r2, 1, implicit-def $srcarry
+  ; NOBIAS-NEXT:   $r13 = ADD_add_r_ri killed $r3, 1, implicit-def $srcarry
+  ; NOBIAS-NEXT:   DelayedSchedBarrier
+  bb.0:
+    successors: %bb.1
+    liveins: $p1, $p2
+    $r6 = LDA_dms_lda_scalar_ld_idx_imm $p1, 4
+    $r7 = LDA_dms_lda_scalar_ld_idx_imm $p2, 4
+    $r8 = ADD_add_r_ri $r6, 1, implicit-def $srcarry
+    DelayedSchedBarrier
+
+  bb.1:
+    liveins: $r6, $r7, $r8, $r1, $r2, $r3
+    $r10 = ADD_add_r_ri $r6, 4, implicit-def $srcarry
+    $r15 = ADD_add_r_ri $r7, 4, implicit-def $srcarry
+    $r11 = ADD_add_r_ri $r1, 1, implicit-def $srcarry
+    $r12 = ADD_add_r_ri $r2, 1, implicit-def $srcarry
+    $r13 = ADD_add_r_ri $r3, 1, implicit-def $srcarry
+    RET implicit $lr
+    DelayedSchedBarrier
+...
+
+---
 # Negative control: the load is in the same block as its use, so the dependence
 # is an ordinary edge that already gives the use a non-zero depth. The bias must
 # not apply and both runs must agree.
