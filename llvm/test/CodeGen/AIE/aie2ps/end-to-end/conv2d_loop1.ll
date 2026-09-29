@@ -181,9 +181,9 @@ define dso_local void @conv2d.for.body.i(i32 %0, ptr %add.ptr.i.i, ptr %add.ptr4
 ; ASM-NEXT:    jnzd r3, r3, p5
 ; ASM-NEXT:    nop // Delay Slot 5
 ; ASM-NEXT:    nop // Delay Slot 4
-; ASM-NEXT:    vshift.align x7, x7, s1, x3, r30 // Delay Slot 3
-; ASM-NEXT:    vshift.align x9, x9, s1, x5, r30 // Delay Slot 2
-; ASM-NEXT:    nop // Delay Slot 1
+; ASM-NEXT:    nop // Delay Slot 3
+; ASM-NEXT:    vshift.align x7, x7, s1, x3, r30 // Delay Slot 2
+; ASM-NEXT:    vshift.align x9, x9, s1, x5, r30 // Delay Slot 1
 ; ASM-NEXT:  // %bb.4: // %lastiter.stage1.top
 ; ASM-NEXT:    mova r0, #63; vldb x6, [p0], m5; mov r2, p0
 ; ASM-NEXT:    vlda.3d x4, [p0], d0; and r2, r2, r0

@@ -186,11 +186,15 @@ protected:
   /// instruction, fix up its position in the bundle sequence so that exactly
   /// NumDelaySlots bundles follow it.
   ///
-  /// If the branch ended up too early (too many bundles after it), we try to
-  /// move it down toward the end, checking for resource hazards at each step.
-  /// If moving is not possible, we fall back to appending empty (NOP) bundles
-  /// at the end.  If the branch ended up too late (too few bundles after it),
-  /// we simply append the missing empty bundles.
+  /// If the branch ended up too early (too many bundles after it), we move it
+  /// down to the one bundle that leaves exactly NumDelaySlots behind it. When
+  /// it does not fit there, we give it a bundle of its own just below, which
+  /// costs the same single bundle as one step of sliding. While that is not
+  /// legal, because the shift would break a latency or cause a resource
+  /// conflict, we slide down, appending a NOP at the end per conflict, and try
+  /// both again one bundle lower.
+  /// If the branch ended up too late (too few bundles after it), we simply
+  /// append the missing empty bundles.
   void fixupDelaySlotPosition(std::vector<AIE::MachineBundle> &TopBundles,
                               std::vector<AIE::MachineBundle> &BotBundles,
                               MachineInstr *BranchMI, unsigned NumDelaySlots);
@@ -212,6 +216,13 @@ protected:
                             MachineInstr *BranchMI, unsigned BundleIdx,
                             int Delta);
 
+  /// Give \p BranchMI a bundle of its own at \p InsertIdx, pushing the bundles
+  /// from there on one cycle later. Costs one bundle, but is refused when the
+  /// shift would break a latency or cause a resource conflict. Returns whether
+  /// it was done.
+  bool tryInsertBundleForBranch(std::vector<AIE::MachineBundle> &TopBundles,
+                                MachineInstr *BranchMI, unsigned InsertIdx);
+
   /// Place \p BranchMI so that it leaves exactly the delay slots behind it,
   /// starting from bundle \p TargetIdx. Each round tries the placement
   /// strategies in order of cost; when all of them fail, an empty bundle is
@@ -221,6 +232,20 @@ protected:
                             const std::vector<AIE::MachineBundle> &BotBundles,
                             MachineInstr *BranchMI, unsigned TargetIdx,
                             int Delta);
+
+  /// Rebuild the Top scoreboard from \p TopBundles. Needed whenever a bundle
+  /// changes cycle, since bookings can only be added, never retracted. The
+  /// instructions from bundle \p CheckFromIdx on are checked for resource
+  /// conflicts first; on a conflict, returns false and leaves the scoreboard
+  /// partially rebuilt.
+  bool replayTopScoreBoard(
+      ArrayRef<AIE::MachineBundle> TopBundles,
+      unsigned CheckFromIdx = std::numeric_limits<unsigned>::max());
+
+  /// Whether an empty bundle can be inserted at \p InsertIdx, pushing the
+  /// bundles from there on one cycle later.
+  bool canInsertBundleAt(ArrayRef<AIE::MachineBundle> TopBundles,
+                         unsigned InsertIdx) const;
 
   // This function returns true when it is impossible to continue with top-down
   // without entering an infinite loop because the only remaining instructions

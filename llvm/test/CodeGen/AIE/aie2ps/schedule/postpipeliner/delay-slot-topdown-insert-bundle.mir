@@ -88,6 +88,10 @@
   !0 = distinct !{!0, !1}
   !1 = !{!"llvm.loop.itercount.range", i64 16}
 ...
+
+# A chain of ten ADDs puts the target bundle past the fixed epilogue. The JNZ
+# does not fit next to the ADD there, so it gets a bundle of its own and the
+# ADDs behind it become its delay slots.
 ---
 name:            insert_bundle
 alignment:       16
@@ -138,6 +142,7 @@ body:             |
   ; CHECK-NEXT:     renamable $r5 = ADD_add_r_ri killed renamable $r5, 1, implicit-def dead $srcarry
   ; CHECK-NEXT:     renamable $x2 = VSHIFT killed renamable $x1, killed renamable $x0, killed renamable $r1
   ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   JNZ killed $r0, %bb.4
   ; CHECK-NEXT:   renamable $r5 = ADD_add_r_ri killed renamable $r5, 1, implicit-def dead $srcarry
   ; CHECK-NEXT:   BUNDLE implicit-def $p6, implicit-def $r5, implicit-def dead $srcarry, implicit killed $x2, implicit killed $p6, implicit killed $r5 {
   ; CHECK-NEXT:     renamable $p6 = VST_dmx_sts_x_st_pstm_nrm_imm killed renamable $x2, killed renamable $p6, 64 :: (store (<16 x s32>), addrspace 6)
@@ -146,12 +151,6 @@ body:             |
   ; CHECK-NEXT:   renamable $r5 = ADD_add_r_ri killed renamable $r5, 1, implicit-def dead $srcarry
   ; CHECK-NEXT:   renamable $r5 = ADD_add_r_ri killed renamable $r5, 1, implicit-def dead $srcarry
   ; CHECK-NEXT:   renamable $r5 = ADD_add_r_ri killed renamable $r5, 1, implicit-def dead $srcarry
-  ; CHECK-NEXT:   JNZ killed $r0, %bb.4
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   DelayedSchedBarrier
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3:
@@ -226,6 +225,10 @@ body:             |
     RET implicit $lr
     DelayedSchedBarrier
 ...
+
+# A chain of three ADDs puts the conflicting bundle inside the fixed epilogue,
+# which cannot be shifted. The JNZ slides down one bundle, appending an empty
+# one, and then gets a bundle of its own just below the fixed epilogue.
 ---
 name:            insert_refused_fixed
 alignment:       16
@@ -272,10 +275,10 @@ body:             |
   ; CHECK-NEXT:     renamable $x1 = VSHIFT killed $x3, renamable $x0, renamable $r1
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   JNZ killed $r0, %bb.4
+  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   renamable $x2 = VSHIFT killed renamable $x1, killed renamable $x0, killed renamable $r1
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   renamable $p6 = VST_dmx_sts_x_st_pstm_nrm_imm killed renamable $x2, killed renamable $p6, 64 :: (store (<16 x s32>), addrspace 6)
-  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   DelayedSchedBarrier
   ; CHECK-NEXT: {{  $}}
@@ -344,6 +347,9 @@ body:             |
     RET implicit $lr
     DelayedSchedBarrier
 ...
+
+# A chain of eleven MOVs occupies every bundle from the target on. The JNZ gets
+# a bundle of its own and all five of its delay slots hold a MOV.
 ---
 name:            moves_fill_delay_slots
 alignment:       16
@@ -390,17 +396,12 @@ body:             |
   ; CHECK-NEXT:   renamable $r5 = MOV_alu_mv_mv_mv_scl killed renamable $r4
   ; CHECK-NEXT:   renamable $r6 = MOV_alu_mv_mv_mv_scl killed renamable $r5
   ; CHECK-NEXT:   renamable $r8 = MOV_alu_mv_mv_mv_scl killed renamable $r6
+  ; CHECK-NEXT:   JNZ killed $r0, %bb.4
   ; CHECK-NEXT:   renamable $r9 = MOV_alu_mv_mv_mv_scl killed renamable $r8
   ; CHECK-NEXT:   renamable $r10 = MOV_alu_mv_mv_mv_scl killed renamable $r9
   ; CHECK-NEXT:   renamable $r11 = MOV_alu_mv_mv_mv_scl killed renamable $r10
   ; CHECK-NEXT:   renamable $r12 = MOV_alu_mv_mv_mv_scl killed renamable $r11
   ; CHECK-NEXT:   renamable $r13 = MOV_alu_mv_mv_mv_scl killed renamable $r12
-  ; CHECK-NEXT:   JNZ killed $r0, %bb.4
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   DelayedSchedBarrier
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3:
@@ -474,6 +475,14 @@ body:             |
     RET implicit $lr
     DelayedSchedBarrier
 ...
+
+# The LDA rewrites $r5 late, so the last ADD of the $r5 chain (bundle 9)
+# reaches it with a negative latency of -5 and the LDA is issued above it, at
+# bundle 4, exactly where that edge allows. Pushing the bundles from the target
+# on one cycle later would move the ADD but not the LDA and break the edge, so
+# the JNZ slides down, appending four empty bundles, until the bundle below it
+# is past the ADD. There it gets a bundle of its own, one bundle cheaper than
+# sliding all the way.
 ---
 name:            neg_latency_tight
 alignment:       16
@@ -550,11 +559,9 @@ body:             |
   ; CHECK-NEXT:     renamable $r5 = ADD_add_r_ri killed renamable $r5, 1, implicit-def dead $srcarry
   ; CHECK-NEXT:     renamable $r13 = MOV_alu_mv_mv_mv_scl killed renamable $r12
   ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   JNZ killed $r0, %bb.4
   ; CHECK-NEXT:   renamable $r14 = MOV_alu_mv_mv_mv_scl killed renamable $r13
   ; CHECK-NEXT:   renamable $r15 = MOV_alu_mv_mv_mv_scl killed renamable $r14
-  ; CHECK-NEXT:   JNZ killed $r0, %bb.4
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
@@ -640,6 +647,11 @@ body:             |
     RET implicit $lr
     DelayedSchedBarrier
 ...
+
+# The same as neg_latency_tight, except the LDA address comes from a MOV in the
+# middle of the $r5 chain, which holds the LDA at bundle 7 while the edge from
+# the last ADD (bundle 11) only asks for bundle 6. That slack lets the bundles
+# from the target on move one cycle later, so the JNZ gets a bundle of its own.
 ---
 name:            neg_latency_slack
 alignment:       16
@@ -702,6 +714,7 @@ body:             |
   ; CHECK-NEXT:     renamable $r5 = ADD_add_r_ri internal renamable $r5, 1, implicit-def dead $srcarry
   ; CHECK-NEXT:     renamable $r10 = MOV_alu_mv_mv_mv_scl killed renamable $r9
   ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   JNZ killed $r0, %bb.4
   ; CHECK-NEXT:   BUNDLE implicit-def $r5, implicit-def dead $srcarry, implicit-def $r11, implicit killed $r5, implicit killed $r10 {
   ; CHECK-NEXT:     renamable $r5 = ADD_add_r_ri killed renamable $r5, 1, implicit-def dead $srcarry
   ; CHECK-NEXT:     renamable $r11 = MOV_alu_mv_mv_mv_scl killed renamable $r10
@@ -719,12 +732,6 @@ body:             |
   ; CHECK-NEXT:     renamable $r14 = MOV_alu_mv_mv_mv_scl killed renamable $r13
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   renamable $r15 = MOV_alu_mv_mv_mv_scl killed renamable $r14
-  ; CHECK-NEXT:   JNZ killed $r0, %bb.4
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   DelayedSchedBarrier
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3:
@@ -809,6 +816,10 @@ body:             |
     DelayedSchedBarrier
 ...
 
+# The LDA writes $p4 through P_WM_PORT six cycles after it issues, in bundle 6,
+# and the MOV to $p2 uses the same port in bundle 5. Giving the JNZ its own
+# bundle at 5 would push the MOV into bundle 6, onto the LDA's write, so the
+# JNZ slides down one bundle and gets a bundle of its own at 6 instead.
 ---
 name:            insert_refused_resource
 alignment:       16
@@ -853,15 +864,11 @@ body:             |
   ; CHECK-NEXT:   $x1 = VSHIFT killed $x3, killed renamable $x0, killed renamable $r1
   ; CHECK-NEXT:   renamable $r4 = MOV_alu_mv_mv_mv_scl killed renamable $r3
   ; CHECK-NEXT:   renamable $p2 = MOV_alu_mv_mv_mv_scl killed renamable $r4
+  ; CHECK-NEXT:   JNZ killed $r0, %bb.4
   ; CHECK-NEXT:   renamable $r6 = MOV_alu_mv_mv_mv_scl killed renamable $p2
   ; CHECK-NEXT:   renamable $r7 = MOV_alu_mv_mv_mv_scl killed renamable $r6
   ; CHECK-NEXT:   renamable $r8 = MOV_alu_mv_mv_mv_scl killed renamable $r7
   ; CHECK-NEXT:   renamable $r11 = MOV_alu_mv_mv_mv_scl killed renamable $r8
-  ; CHECK-NEXT:   JNZ killed $r0, %bb.4
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   DelayedSchedBarrier
   ; CHECK-NEXT: {{  $}}

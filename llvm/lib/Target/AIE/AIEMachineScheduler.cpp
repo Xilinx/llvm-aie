@@ -84,6 +84,12 @@ static cl::opt<bool> EnableDelaySlotTopDown(
              "branch position in leaveRegion() instead of forcing bottom-up "
              "cycles"));
 
+static cl::opt<bool> EnableDelaySlotBundleInsertion(
+    "aie-delay-slot-insert-bundle", cl::init(true),
+    cl::desc("[AIE] Give the delay slot instruction a bundle of its own when "
+             "it does not fit in the one it has to occupy, instead of "
+             "repeatedly appending empty bundles at the end of the region"));
+
 /// This is a testing option. Resetting it prevents inter-block conflicts from
 /// the scoreboard, so that all interblock scheduling effects can be blamed on
 /// the latencies.
@@ -1027,6 +1033,68 @@ static void removeFromBundle(AIE::MachineBundle &Bundle, MachineInstr *MI) {
   Bundle.SlotMap.erase(MapIt);
 }
 
+bool AIEPostRASchedStrategy::replayTopScoreBoard(
+    ArrayRef<AIE::MachineBundle> TopBundles, unsigned CheckFromIdx) {
+  AIEHazardRecognizer *TopHR = getAIEHazardRecognizer(Top);
+  // A booking can never be retracted, so the only way to account for a bundle
+  // that moved is to build the scoreboard again from scratch.
+  TopHR->Reset();
+  // Reset() also drops what lives before the first bundle: the software
+  // pipelined loop whose instructions are still in flight when an epilogue
+  // region starts.
+  initializeTopScoreBoard();
+  for (unsigned I = 0, E = TopBundles.size(); I != E; ++I) {
+    for (MachineInstr *MI : TopBundles[I].getInstrs()) {
+      if (I >= CheckFromIdx &&
+          !AIE::MachineBundle::isNoHazardMetaInstruction(MI->getOpcode()) &&
+          TopHR->checkConflict(*MI, 0)) {
+        LLVM_DEBUG(dbgs() << "fixupDelaySlotPosition: resource conflict in "
+                             "bundle "
+                          << I << " on " << *MI);
+        return false;
+      }
+      TopHR->emitInScoreboard(*MI, MI->getDesc(), 0);
+    }
+    TopHR->AdvanceCycle();
+  }
+  return true;
+}
+
+bool AIEPostRASchedStrategy::canInsertBundleAt(
+    ArrayRef<AIE::MachineBundle> TopBundles, unsigned InsertIdx) const {
+  // Fixed bundles form a prefix and have to stay at their exact cycle, so the
+  // insertion point must lie below all of them.
+  if (RegionTopDownCycles > InsertIdx)
+    return false;
+
+  DenseMap<const MachineInstr *, unsigned> BundleOf;
+  for (unsigned I = 0, E = TopBundles.size(); I != E; ++I)
+    for (const MachineInstr *MI : TopBundles[I].getInstrs())
+      BundleOf.try_emplace(MI, I);
+
+  // Bundles from InsertIdx on move one cycle later. That preserves their
+  // distance to the end of the region and only grows their distance to
+  // everything above, which is harmless for a minimum latency. A negative
+  // latency is the one case where a successor can sit above the insertion
+  // point while its predecessor moves away from it.
+  for (const SUnit &SU : DAG->SUnits) {
+    auto PredIt = BundleOf.find(SU.getInstr());
+    if (PredIt == BundleOf.end() || PredIt->second < InsertIdx)
+      continue;
+    for (const SDep &Dep : SU.Succs) {
+      const int Latency = Dep.getSignedLatency();
+      if (Latency >= 0 || Dep.getSUnit()->isBoundaryNode())
+        continue;
+      auto SuccIt = BundleOf.find(Dep.getSUnit()->getInstr());
+      if (SuccIt == BundleOf.end() || SuccIt->second >= InsertIdx)
+        continue;
+      if (int(SuccIt->second) < int(PredIt->second) + 1 + Latency)
+        return false;
+    }
+  }
+  return true;
+}
+
 void AIEPostRASchedStrategy::appendEmptyBundle(
     std::vector<AIE::MachineBundle> &TopBundles) {
   LLVM_DEBUG(dbgs() << "fixupDelaySlotPosition: appending empty bundle\n");
@@ -1059,6 +1127,38 @@ bool AIEPostRASchedStrategy::tryFitBranchInBundle(
   return true;
 }
 
+bool AIEPostRASchedStrategy::tryInsertBundleForBranch(
+    std::vector<AIE::MachineBundle> &TopBundles, MachineInstr *BranchMI,
+    unsigned InsertIdx) {
+  if (!EnableDelaySlotBundleInsertion ||
+      !canInsertBundleAt(TopBundles, InsertIdx))
+    return false;
+
+  TopBundles.emplace(TopBundles.begin() + InsertIdx,
+                     getTII(CurMBB)->getFormatInterface());
+  TopBundles[InsertIdx].add(BranchMI);
+  // Everything from InsertIdx on moves one cycle away from what stays above,
+  // which can make it collide with bookings reaching down from there. This
+  // has to be checked before bumping the cycle, which cannot be undone.
+  if (!replayTopScoreBoard(TopBundles, InsertIdx)) {
+    TopBundles.erase(TopBundles.begin() + InsertIdx);
+    replayTopScoreBoard(TopBundles);
+    return false;
+  }
+
+  LLVM_DEBUG(dbgs() << "fixupDelaySlotPosition: giving the branch its own "
+                       "bundle at index "
+                    << InsertIdx << "\n");
+  // The region grew by a cycle and everything from InsertIdx on moved, which
+  // the scoreboard can only follow by being rebuilt. That also books the
+  // branch itself.
+  Top.bumpCycle(Top.getCurrCycle() + 1);
+  replayTopScoreBoard(TopBundles);
+  CurMBB->splice(computeSplicePoint(TopBundles, InsertIdx, BranchMI), CurMBB,
+                 BranchMI->getIterator());
+  return true;
+}
+
 void AIEPostRASchedStrategy::placeDelaySlotBranch(
     std::vector<AIE::MachineBundle> &TopBundles,
     const std::vector<AIE::MachineBundle> &BotBundles, MachineInstr *BranchMI,
@@ -1067,8 +1167,18 @@ void AIEPostRASchedStrategy::placeDelaySlotBranch(
   // the bundle the branch has to occupy one further down. Delta stays constant
   // because appending also recedes the scoreboard ring by one.
   for (unsigned PlacedIdx = TargetIdx;; ++PlacedIdx) {
+    // Cheapest first. After k appended bundles, fitting costs k in total and
+    // inserting k + 1, which sliding on can never beat, so every strategy is
+    // retried each round: the bundles they need move down with PlacedIdx,
+    // past fixed bundles and negative-latency edges that blocked them before.
+    // TODO: Add an eviction strategy: move the instructions the branch
+    // conflicts with in bundle PlacedIdx to a later bundle with room (e.g. a
+    // delay slot) when their dependences allow it, and put the branch in the
+    // freed slot. It costs no bundle, so it belongs between fitting and
+    // inserting.
     if (tryFitBranchInBundle(TopBundles, BotBundles, BranchMI, PlacedIdx,
-                             Delta))
+                             Delta) ||
+        tryInsertBundleForBranch(TopBundles, BranchMI, PlacedIdx + 1))
       return;
 
     LLVM_DEBUG(dbgs() << "fixupDelaySlotPosition: conflict at bundle "
