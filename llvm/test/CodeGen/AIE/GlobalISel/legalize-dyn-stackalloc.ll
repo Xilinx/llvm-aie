@@ -202,9 +202,9 @@ define void @test_loop_dyn_alloca(i32 noundef %n) {
 ; AIE2P-NEXT:    padda [p7], #-64
 ; AIE2P-NEXT:  .LBB1_1: // %for.body
 ; AIE2P-NEXT:    // =>This Inner Loop Header: Depth=1
-; AIE2P-NEXT:    nopa ; lshl r0, r9, r11; nopm
-; AIE2P-NEXT:    mov p6, sp
+; AIE2P-NEXT:    nopa ; nopx ; mov p6, sp
 ; AIE2P-NEXT:    mov p1, sp
+; AIE2P-NEXT:    lshl r0, r9, r11
 ; AIE2P-NEXT:    add r0, r0, #63
 ; AIE2P-NEXT:    jl #extern_call
 ; AIE2P-NEXT:    mov p0, p1 // Delay Slot 5
@@ -261,9 +261,9 @@ define void @test_loop_dyn_alloca(i32 noundef %n) {
 ; AIE2PS-NEXT:    padda [p7], #-64
 ; AIE2PS-NEXT:  .LBB1_1: // %for.body
 ; AIE2PS-NEXT:    // =>This Inner Loop Header: Depth=1
-; AIE2PS-NEXT:    nopa ; lshl r0, r10, r14; nopm
-; AIE2PS-NEXT:    mov p6, sp
+; AIE2PS-NEXT:    nopa ; nopx ; mov p6, sp
 ; AIE2PS-NEXT:    mov p1, sp
+; AIE2PS-NEXT:    lshl r0, r10, r14
 ; AIE2PS-NEXT:    add r0, r0, #63
 ; AIE2PS-NEXT:    jl #extern_call
 ; AIE2PS-NEXT:    mov p0, p1 // Delay Slot 5

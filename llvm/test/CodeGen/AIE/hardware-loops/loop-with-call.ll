@@ -186,9 +186,9 @@ define dso_local void @_Z5test4i(i32 noundef %n) {
 ; AIE2-NEXT:    nop
 ; AIE2-NEXT:    nop
 ; AIE2-NEXT:    nop
+; AIE2-NEXT:    lda r16, [sp, #-28] // 4-byte Folded Reload
 ; AIE2-NEXT:    lda p7, [sp, #-20] // 4-byte Folded Reload
 ; AIE2-NEXT:    lda p6, [sp, #-24] // 4-byte Folded Reload
-; AIE2-NEXT:    lda r16, [sp, #-28] // 4-byte Folded Reload
 ; AIE2-NEXT:    ret lr
 ; AIE2-NEXT:    nop // Delay Slot 5
 ; AIE2-NEXT:    nop // Delay Slot 4
@@ -292,10 +292,10 @@ define dso_local void @memcpy_lowered_to_call(ptr nocapture writeonly %a, ptr no
 ; AIE2-NEXT:    lda lr, [sp, #-32]; nopb ; nopxm // 4-byte Folded Reload
 ; AIE2-NEXT:    nop
 ; AIE2-NEXT:    nop
+; AIE2-NEXT:    lda r16, [sp, #-28] // 4-byte Folded Reload
 ; AIE2-NEXT:    lda p7, [sp, #-16] // 4-byte Folded Reload
 ; AIE2-NEXT:    lda p6, [sp, #-20] // 4-byte Folded Reload
 ; AIE2-NEXT:    lda r17, [sp, #-24] // 4-byte Folded Reload
-; AIE2-NEXT:    lda r16, [sp, #-28] // 4-byte Folded Reload
 ; AIE2-NEXT:    ret lr
 ; AIE2-NEXT:    nop // Delay Slot 5
 ; AIE2-NEXT:    nop // Delay Slot 4
@@ -335,9 +335,9 @@ define dso_local void @memcpy_lowered_to_call(ptr nocapture writeonly %a, ptr no
 ; AIE2P-NEXT:    nop
 ; AIE2P-NEXT:    nop
 ; AIE2P-NEXT:    nop
+; AIE2P-NEXT:    lda r8, [sp, #-60] // 4-byte Folded Reload
 ; AIE2P-NEXT:    lda p7, [sp, #-52] // 4-byte Folded Reload
 ; AIE2P-NEXT:    lda p6, [sp, #-56] // 4-byte Folded Reload
-; AIE2P-NEXT:    lda r8, [sp, #-60] // 4-byte Folded Reload
 ; AIE2P-NEXT:    ret lr
 ; AIE2P-NEXT:    nop // Delay Slot 5
 ; AIE2P-NEXT:    nop // Delay Slot 4

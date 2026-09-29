@@ -150,4 +150,34 @@ int InterBlockEdges::getPostDepthOr(const SUnit *SU, int Default) const {
   return It != PostDepths.end() ? It->second : Default;
 }
 
+std::map<unsigned, int> InterBlockEdges::computePreHeights() const {
+  std::map<unsigned, int> PreHeights;
+  if (!Boundary)
+    return PreHeights;
+
+  auto HeightOf = [&PreHeights](unsigned NodeNum) {
+    const auto It = PreHeights.find(NodeNum);
+    return It != PreHeights.end() ? It->second : 0;
+  };
+
+  // NodeNum is topological, so a reverse walk settles every successor before
+  // the node that depends on it.
+  for (const SUnit &SU : reverse(SUnits)) {
+    if (SU.NodeNum >= *Boundary)
+      continue;
+    int Height = 0;
+    for (const SDep &Dep : SU.Succs) {
+      // Cut the chain at the boundary. ExitSU is covered as well, its NodeNum
+      // being larger than any real node's.
+      const unsigned SuccNum = Dep.getSUnit()->NodeNum;
+      if (SuccNum >= *Boundary)
+        continue;
+      Height = std::max(Height, Dep.getSignedLatency() + HeightOf(SuccNum));
+    }
+    if (Height > 0)
+      PreHeights[SU.NodeNum] = Height;
+  }
+  return PreHeights;
+}
+
 } // end namespace llvm::AIE

@@ -101,8 +101,8 @@ define dso_local void @add2d.for.body(i32 %unroll_iter, ptr addrspace(5) %0, ptr
 ; ASM-NEXT:    nop // Delay Slot 5
 ; ASM-NEXT:    nop // Delay Slot 4
 ; ASM-NEXT:    nop // Delay Slot 3
-; ASM-NEXT:    movx srssign0, #0 // Delay Slot 2
-; ASM-NEXT:    paddxm [sp], #-64; movx upssign0, #0; mov r8, r5 // Delay Slot 1
+; ASM-NEXT:    movx upssign0, #0 // Delay Slot 2
+; ASM-NEXT:    paddxm [sp], #-64; movx srssign0, #0; mov r8, r5 // Delay Slot 1
 newFuncRoot:
   br label %for.body
 

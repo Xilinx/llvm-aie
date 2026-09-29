@@ -1187,6 +1187,7 @@ InterBlockScheduling::getIncomingLatencies(MachineBasicBlock *BB) const {
     // Skip the self edge of a single-block loop.
     if (PredEdges->getPred() == BB)
       continue;
+    const std::map<unsigned, int> PreHeights = PredEdges->computePreHeights();
     for (SUnit &SuccSU : *PredEdges) {
       if (!PredEdges->isPostBoundaryNode(&SuccSU))
         continue;
@@ -1200,7 +1201,11 @@ InterBlockScheduling::getIncomingLatencies(MachineBasicBlock *BB) const {
         // predecessor, of any kind.
         if (PredEdges->isPostBoundaryNode(PredSU))
           continue;
-        PredLatency = std::max(PredLatency, Dep.getSignedLatency());
+        // Discount the part of the latency the predecessor already covers
+        // with its own chain below the producer.
+        const auto HIt = PreHeights.find(PredSU->NodeNum);
+        const int Height = HIt != PreHeights.end() ? HIt->second : 0;
+        PredLatency = std::max(PredLatency, Dep.getSignedLatency() - Height);
       }
       int &BestLatency = EdgeLatency[SuccMI];
       BestLatency = std::max(BestLatency, PredLatency);

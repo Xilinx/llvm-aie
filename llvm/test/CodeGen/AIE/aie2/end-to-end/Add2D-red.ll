@@ -101,11 +101,9 @@ define void @add2d(ptr noalias %params, ptr noalias %ifm1_data, ptr noalias %ifm
 ; ASM-NEXT:  .L_LEnd0:
 ; ASM-NEXT:    nopb ; nopa ; vst.srs.d8.s32 cm8, s0, [p3], #32; nopxm ; nopv
 ; ASM-NEXT:  // %bb.4:
-; ASM-NEXT:    nopa ; nopxm
-; ASM-NEXT:    nop
-; ASM-NEXT:    vadd cm0, cm5, cm0, r1
-; ASM-NEXT:    vadd cm2, cm7, cm2, r1
+; ASM-NEXT:    nopb ; nopa ; nops ; nopxm ; vadd cm2, cm7, cm2, r1
 ; ASM-NEXT:    vadd cm1, cm6, cm1, r1
+; ASM-NEXT:    vadd cm0, cm5, cm0, r1
 ; ASM-NEXT:    vadd cm3, cm3, cm4, r1
 ; ASM-NEXT:    nop
 ; ASM-NEXT:    nop

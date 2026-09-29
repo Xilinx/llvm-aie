@@ -395,7 +395,12 @@ body:             |
 ...
 
 ---
-
+# The load of $r6 feeds an ADD inside bb.0, so it cannot be issued at the end
+# of the block and part of its latency is already covered there. The load of
+# $r7 has no consumer in bb.0 and can go last, so its full latency reaches
+# bb.1. Discounting each latency by the height of its producer leaves only the
+# use of $r7 biased: it sinks to the end of bb.1, while the use of $r6 ranks
+# with the independent ADDs.
 name:            pred_height_discounts_latency
 alignment:       16
 tracksRegLiveness: true
@@ -419,10 +424,10 @@ body:             |
   ; BIAS-NEXT:   liveins: $r6, $r7, $r8, $r1, $r2, $r3
   ; BIAS-NEXT: {{  $}}
   ; BIAS-NEXT:   RET implicit $lr
+  ; BIAS-NEXT:   $r10 = ADD_add_r_ri killed $r6, 4, implicit-def $srcarry
   ; BIAS-NEXT:   $r11 = ADD_add_r_ri killed $r1, 1, implicit-def $srcarry
   ; BIAS-NEXT:   $r12 = ADD_add_r_ri killed $r2, 1, implicit-def $srcarry
   ; BIAS-NEXT:   $r13 = ADD_add_r_ri killed $r3, 1, implicit-def $srcarry
-  ; BIAS-NEXT:   $r10 = ADD_add_r_ri killed $r6, 4, implicit-def $srcarry
   ; BIAS-NEXT:   $r15 = ADD_add_r_ri killed $r7, 4, implicit-def $srcarry
   ; BIAS-NEXT:   DelayedSchedBarrier
   ;

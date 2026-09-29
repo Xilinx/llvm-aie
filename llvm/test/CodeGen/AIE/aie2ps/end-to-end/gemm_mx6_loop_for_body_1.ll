@@ -146,8 +146,8 @@ define dso_local void @gemm.if.then5(ptr %add.ptr, ptr %tdm1, i32 %cond3) #5 {
 ; ASM-NEXT:    vlda.fill [p0, lf0, r24]; vldb.fill [p1, lf1, r25]; vmov fewl2, fewh2; vmac.f dm6, dm6, fex4, fey0, r10
 ; ASM-NEXT:    vlda.pop fex6, [p0, lf0, r24]; vldb.pop fex10, [p1, lf1, r25]; vmov fewl0, fewh10; vmac.f dm5, dm5, fex2, fey0, r10
 ; ASM-NEXT:    vlda.pop.3d fex7, [p0, lf0, r24, d1]; vldb.pop.3d fex8, [p1, lf1, r25, d0]; vmac.f dm1, dm1, fex2, fey0, r10
-; ASM-NEXT:    add.nc ls, pc, #.LBB0_2; vmov fewl0, fewh8; vmac.f dm4, dm4, fex10, fey3, r10
-; ASM-NEXT:    nopa ; paddb.2d [p6], d2; nops ; add.nc lc, r1, #-2; addm.nc le, pc, #.L_LEnd1; vmac.f dm3, dm3, fex0, fey3, r10
+; ASM-NEXT:    add.nc lc, r1, #-2; vmov fewl0, fewh8; vmac.f dm4, dm4, fex10, fey3, r10
+; ASM-NEXT:    nopa ; paddb.2d [p6], d2; nops ; add.nc le, pc, #.L_LEnd1; addm.nc ls, pc, #.LBB0_2; vmac.f dm3, dm3, fex0, fey3, r10
 ; ASM-NEXT:  .LBB0_2: // %steady.stage1.inner.for.body18.i
 ; ASM-NEXT:    // Parent Loop BB0_1 Depth=1
 ; ASM-NEXT:    // => This Inner Loop Header: Depth=2
