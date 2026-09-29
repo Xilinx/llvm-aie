@@ -1,6 +1,6 @@
-# NOTE: Baseline test for AIERegDefUseTracker - two overlapping live ranges
-#       with no common base register. This currently crashes; the RUN line is
-#       updated when the crash is fixed.
+# NOTE: Test for AIERegDefUseTracker - two overlapping live ranges with no
+#       common base register must be discarded without leaving stale LiveRegs
+#       entries behind.
 #
 # This file is licensed under the Apache License v2.0 with LLVM Exceptions.
 # See https://llvm.org/LICENSE.txt for license information.
@@ -8,7 +8,7 @@
 #
 # (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
 
-# RUN: not --crash llc -verify-machineinstrs --mtriple=aie2ps -O2 \
+# RUN: llc -verify-machineinstrs --mtriple=aie2ps -O2 \
 # RUN:   --start-before=postmisched %s \
 # RUN:   --aie-postpipeliner-vreg-mode=1 \
 # RUN:   --aie-postpipeliner-phys-mode=0 \
@@ -23,15 +23,19 @@
 # then cannot absorb the l12 range, because no single base register can express
 # both.
 #
-# Both ranges are cleared, which resets their base register to NoRegister, but
-# LiveRegs keeps pointing at them. r25 is only reachable through the cleared
-# l12 range, so the read of r25 above the def attaches to a range that no
-# longer has a base register.
+# Both ranges are dropped. r25 is only reachable through the dropped l12
+# range, so the read of r25 above the def has to start a fresh range. Leaving
+# the dropped ranges in LiveRegs instead makes that read attach to a range
+# that no longer has a base register.
 
 # CHECK: LR#[[L12:[0-9]+]] Use l12
 # CHECK: LR#[[R24:[0-9]+]] Def r24
 # CHECK-NEXT: LR#[[R24]] + LR#[[L12]] -> LR#[[R24]]
-# CHECK: Assertion {{.*}}CurrentBase must be physical{{.*}} failed
+# CHECK-NEXT: Discard LR#[[R24]] (no common base register)
+# CHECK-NEXT: Discard LR#[[L12]] (no common base register)
+# CHECK: LR#{{[0-9]+}} Use r25
+# CHECK: Base=r25 defs=0 uses=1 [RESERVED]
+# CHECK: FINAL LIVE RANGES
 
 --- |
   define void @unmergeable_alias_ranges() {
