@@ -25,6 +25,7 @@
 #include "AIERegDefUseTracker.h"
 #include "AIESchedulingTypes.h"
 #include "Utils/AIELoopUtils.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/CodeGen/LivePhysRegs.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineScheduler.h"
@@ -357,6 +358,19 @@ public:
   /// graphs stay owned by the predecessors; computing the list on demand keeps
   /// it in step with the CFG and with any rebuild done by buildPerSuccEdges().
   std::vector<InterBlockEdges *> getPerPredEdges(MachineBasicBlock *BB) const;
+
+  /// Return the largest positive latency that each instruction in the top
+  /// region of \p BB inherits from an edge out of a predecessor block, keyed
+  /// by instruction. Latencies of any dependence kind are considered; zero and
+  /// negative ones do not increase depth and are dropped.
+  ///
+  /// A pred edge graph only spans the bottom region of the predecessor and the
+  /// top region of BB, so the result is empty unless BB is currently
+  /// scheduling its top region. The self edge of a single-block loop is
+  /// excluded as well: its predecessor is BB itself, so there is no separate
+  /// schedule that could absorb the latency.
+  DenseMap<const MachineInstr *, int>
+  getIncomingLatencies(MachineBasicBlock *BB) const;
 
   /// Return the maximum interblock latency we need to account for
   /// the given successor. This represents the latency margin we assume for
