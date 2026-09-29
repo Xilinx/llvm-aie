@@ -195,6 +195,33 @@ protected:
                               std::vector<AIE::MachineBundle> &BotBundles,
                               MachineInstr *BranchMI, unsigned NumDelaySlots);
 
+  /// Append an empty bundle at the end of the region, growing it by a cycle.
+  void appendEmptyBundle(std::vector<AIE::MachineBundle> &TopBundles);
+
+  /// Whether \p BranchMI can be issued \p Delta cycles from the Top
+  /// scoreboard's head without conflicting with the region or its successors.
+  bool branchFitsAtDelta(MachineInstr &BranchMI,
+                         const std::vector<AIE::MachineBundle> &BotBundles,
+                         int Delta) const;
+
+  /// If \p BranchMI fits at \p Delta, put it in bundle \p BundleIdx, book its
+  /// resources and move it to the matching position in the MBB. Free, but can
+  /// fail on resources. Returns whether it was done.
+  bool tryFitBranchInBundle(std::vector<AIE::MachineBundle> &TopBundles,
+                            const std::vector<AIE::MachineBundle> &BotBundles,
+                            MachineInstr *BranchMI, unsigned BundleIdx,
+                            int Delta);
+
+  /// Place \p BranchMI so that it leaves exactly the delay slots behind it,
+  /// starting from bundle \p TargetIdx. Each round tries the placement
+  /// strategies in order of cost; when all of them fail, an empty bundle is
+  /// appended at the end of the region and the next round tries one bundle
+  /// lower. Sliding always succeeds eventually.
+  void placeDelaySlotBranch(std::vector<AIE::MachineBundle> &TopBundles,
+                            const std::vector<AIE::MachineBundle> &BotBundles,
+                            MachineInstr *BranchMI, unsigned TargetIdx,
+                            int Delta);
+
   // This function returns true when it is impossible to continue with top-down
   // without entering an infinite loop because the only remaining instructions
   // cannot be scheduled in the top zone.

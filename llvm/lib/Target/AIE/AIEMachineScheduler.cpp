@@ -1027,6 +1027,56 @@ static void removeFromBundle(AIE::MachineBundle &Bundle, MachineInstr *MI) {
   Bundle.SlotMap.erase(MapIt);
 }
 
+void AIEPostRASchedStrategy::appendEmptyBundle(
+    std::vector<AIE::MachineBundle> &TopBundles) {
+  LLVM_DEBUG(dbgs() << "fixupDelaySlotPosition: appending empty bundle\n");
+  Top.bumpCycle(Top.getCurrCycle() + 1);
+  TopBundles.emplace_back(getTII(CurMBB)->getFormatInterface());
+}
+
+bool AIEPostRASchedStrategy::branchFitsAtDelta(
+    MachineInstr &BranchMI, const std::vector<AIE::MachineBundle> &BotBundles,
+    int Delta) const {
+  return !getAIEHazardRecognizer(Top)->checkConflict(BranchMI, Delta) &&
+         !checkInterZoneConflicts(BotBundles);
+}
+
+bool AIEPostRASchedStrategy::tryFitBranchInBundle(
+    std::vector<AIE::MachineBundle> &TopBundles,
+    const std::vector<AIE::MachineBundle> &BotBundles, MachineInstr *BranchMI,
+    unsigned BundleIdx, int Delta) {
+  if (!branchFitsAtDelta(*BranchMI, BotBundles, Delta))
+    return false;
+
+  LLVM_DEBUG(dbgs() << "fixupDelaySlotPosition: placing branch at bundle "
+                    << BundleIdx << "\n");
+  TopBundles[BundleIdx].add(BranchMI);
+  // Record the bookings so that later inter-zone checks see the branch.
+  getAIEHazardRecognizer(Top)->emitInScoreboard(*BranchMI, BranchMI->getDesc(),
+                                                Delta);
+  CurMBB->splice(computeSplicePoint(TopBundles, BundleIdx, BranchMI), CurMBB,
+                 BranchMI->getIterator());
+  return true;
+}
+
+void AIEPostRASchedStrategy::placeDelaySlotBranch(
+    std::vector<AIE::MachineBundle> &TopBundles,
+    const std::vector<AIE::MachineBundle> &BotBundles, MachineInstr *BranchMI,
+    unsigned TargetIdx, int Delta) {
+  // Each appended bundle pushes the end of the region out by one, which moves
+  // the bundle the branch has to occupy one further down. Delta stays constant
+  // because appending also recedes the scoreboard ring by one.
+  for (unsigned PlacedIdx = TargetIdx;; ++PlacedIdx) {
+    if (tryFitBranchInBundle(TopBundles, BotBundles, BranchMI, PlacedIdx,
+                             Delta))
+      return;
+
+    LLVM_DEBUG(dbgs() << "fixupDelaySlotPosition: conflict at bundle "
+                      << PlacedIdx << ", sliding down\n");
+    appendEmptyBundle(TopBundles);
+  }
+}
+
 void AIEPostRASchedStrategy::fixupDelaySlotPosition(
     std::vector<AIE::MachineBundle> &TopBundles,
     std::vector<AIE::MachineBundle> &BotBundles, MachineInstr *BranchMI,
@@ -1038,19 +1088,9 @@ void AIEPostRASchedStrategy::fixupDelaySlotPosition(
   assert(BotBundles.empty() &&
          "fixupDelaySlotPosition: BotBundles must be empty on entry");
 
-  const AIEBaseMCFormats *FmtIface = getTII(CurMBB)->getFormatInterface();
-  AIEHazardRecognizer *TopHR = getAIEHazardRecognizer(Top);
-  // Appends one empty NOP to TopBundles and advances Top's scoreboard.
-  auto AppendNop = [&]() {
-    Top.bumpCycle(Top.getCurrCycle() + 1);
-    TopBundles.emplace_back(FmtIface);
-  };
-
-  const int BranchIdx = findInBundles(TopBundles, BranchMI);
-
-  // May increase as NOPs are appended or before the re-placement runs.
-  unsigned BundlesAfterBranch =
-      TopBundles.size() - static_cast<unsigned>(BranchIdx) - 1;
+  const unsigned BranchIdx =
+      static_cast<unsigned>(findInBundles(TopBundles, BranchMI));
+  unsigned BundlesAfterBranch = TopBundles.size() - BranchIdx - 1;
 
   LLVM_DEBUG({
     dbgs() << "fixupDelaySlotPosition: BranchIdx=" << BranchIdx
@@ -1066,15 +1106,16 @@ void AIEPostRASchedStrategy::fixupDelaySlotPosition(
     }
   });
 
-  // Append NOPs until exactly NumDelaySlots bundles follow the branch.
-  // If the inter-zone scoreboard is also clean afterwards, we are done.
-  // Otherwise fall through to resolve the conflict by moving the branch
-  // forward.
+  // The branch ended up too late: the missing delay slots simply do not exist
+  // yet, so create them.
   while (BundlesAfterBranch < NumDelaySlots) {
-    LLVM_DEBUG(dbgs() << "fixupDelaySlotPosition: appending empty bundle\n");
-    AppendNop();
-    BundlesAfterBranch++;
+    appendEmptyBundle(TopBundles);
+    ++BundlesAfterBranch;
   }
+
+  // Probing the scoreboard NumDelaySlots + 1 cycles before its head addresses
+  // the one bundle that leaves exactly NumDelaySlots bundles behind it.
+  const int Delta = -(static_cast<int>(NumDelaySlots) + 1);
 
   if (BundlesAfterBranch == NumDelaySlots &&
       !checkInterZoneConflicts(BotBundles)) {
@@ -1083,54 +1124,22 @@ void AIEPostRASchedStrategy::fixupDelaySlotPosition(
     return;
   }
 
-  // Branch too early (or inter-zone conflict after NOP padding) – extract it
-  // and re-place at a conflict-free slot. Each conflict appends a NOP
-  // (advancing Top's scoreboard), maintaining exactly NumDelaySlots bundles
-  // after the final placement.
-  const unsigned MoveDown = BundlesAfterBranch - NumDelaySlots;
-  const unsigned TargetIdx = static_cast<unsigned>(BranchIdx) + MoveDown;
-
+  // The branch ended up too early (or padding introduced an inter-zone
+  // conflict). Take it out of its bundle and put it in the one it belongs in.
+  const unsigned TargetIdx = BranchIdx + (BundlesAfterBranch - NumDelaySlots);
   LLVM_DEBUG(dbgs() << "fixupDelaySlotPosition: extracting branch from bundle "
                     << BranchIdx << " and placing at/after bundle " << TargetIdx
                     << "\n");
-
-  // Remove BranchMI from its current bundle.
   removeFromBundle(TopBundles[BranchIdx], BranchMI);
+  placeDelaySlotBranch(TopBundles, BotBundles, BranchMI, TargetIdx, Delta);
 
-  // Scan forward from TargetIdx. Delta = -(NumDelaySlots + 1) is constant:
-  // each AppendNop advances the Top scoreboard ring by one slot, so successive
-  // checks probe cycles TargetIdx, TargetIdx+1, ... The branch never conflicts
-  // with its own old booking at a later cycle.
-  const int Delta = -(static_cast<int>(NumDelaySlots) + 1);
-  unsigned PlacedIdx = TargetIdx;
-  while (TopHR->checkConflict(*BranchMI, Delta) ||
-         checkInterZoneConflicts(BotBundles)) {
-    LLVM_DEBUG(dbgs() << "fixupDelaySlotPosition: conflict at bundle "
-                      << PlacedIdx << ", appending empty bundle\n");
-    AppendNop();
-    ++PlacedIdx;
-  }
-
-  LLVM_DEBUG(dbgs() << "fixupDelaySlotPosition: placing branch at bundle "
-                    << PlacedIdx << "\n");
-
-  // Add BranchMI to the chosen bundle and record its resource bookings in the
-  // Top scoreboard so subsequent inter-zone checks are accurate.
-  TopBundles[PlacedIdx].add(BranchMI);
-  TopHR->emitInScoreboard(*BranchMI, BranchMI->getDesc(), Delta);
-
-  // Physically move BranchMI to its correct position in the MBB.
-  CurMBB->splice(computeSplicePoint(TopBundles, PlacedIdx, BranchMI), CurMBB,
-                 BranchMI->getIterator());
-
-  // Now that the branch's resource bookings are in the Top scoreboard,
-  // re-check for inter-zone conflicts caused by the branch itself. If one is
-  // found, append a NOP and recurse (MoveDown = 1). Terminates because the
-  // scoreboard has finite depth.
+  // The branch's own bookings are in the scoreboard now, and they can reach
+  // into the successor block. Terminates because the scoreboard has finite
+  // depth.
   if (checkInterZoneConflicts(BotBundles)) {
     LLVM_DEBUG(dbgs() << "fixupDelaySlotPosition: post-placement inter-zone "
                          "conflict, appending NOP and retrying\n");
-    AppendNop();
+    appendEmptyBundle(TopBundles);
     fixupDelaySlotPosition(TopBundles, BotBundles, BranchMI, NumDelaySlots);
   }
 }
