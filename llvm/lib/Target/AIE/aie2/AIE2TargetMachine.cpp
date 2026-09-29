@@ -42,6 +42,11 @@ static cl::opt<bool> EnableOutlineMemoryGEP(
     "enable-outline-memory-gep", cl::Hidden, cl::init(true),
     cl::desc("Enable Outlining GEPs in Memory Instructions."));
 
+static cl::opt<bool> EnableCanonicalizeGEPOffsets(
+    "aie-canonicalize-gep-offsets", cl::Hidden, cl::init(true),
+    cl::desc("Hoist constant offsets out of the GEP index expressions of "
+             "memory instructions into a single constant-offset GEP"));
+
 static cl::opt<bool> EnableStackMinimization(
     "aie-stack-minimize", cl::Hidden, cl::init(true),
     cl::desc("Enable spill decomposition and stack slot minimization"));
@@ -156,6 +161,8 @@ void AIE2PassConfig::addPreRegAlloc() {
 void AIE2PassConfig::addISelPrepare() {
   if (EnableOutlineMemoryGEP)
     addPass(createAIEOutlineMemoryGEP());
+  if (EnableCanonicalizeGEPOffsets)
+    addPass(createAIECanonicalizeGEPOffsetsPass());
   TargetPassConfig::addISelPrepare();
 }
 

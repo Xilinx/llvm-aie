@@ -40,6 +40,7 @@
 ; AIE-O0-NEXT:      Lower invoke and unwind, for unwindless code generators
 ; AIE-O0-NEXT:      Remove unreachable blocks from the CFG
 ; AIE-O0-NEXT:      AIE outline Memory GEP
+; AIE-O0-NEXT:      AIE canonicalize GEP offsets
 ; AIE-O0-NEXT:      Prepare callbr
 ; AIE-O0-NEXT:      Safe Stack instrumentation pass
 ; AIE-O0-NEXT:      Insert stack protectors
@@ -157,6 +158,7 @@
 ; AIE-O1-NEXT:      Lower invoke and unwind, for unwindless code generators
 ; AIE-O1-NEXT:      Remove unreachable blocks from the CFG
 ; AIE-O1-NEXT:      AIE outline Memory GEP
+; AIE-O1-NEXT:      AIE canonicalize GEP offsets
 ; AIE-O1-NEXT:      Dominator Tree Construction
 ; AIE-O1-NEXT:      Natural Loop Information
 ; AIE-O1-NEXT:      Scalar Evolution Analysis
@@ -393,6 +395,7 @@
 ; AIE-O23-NEXT:      Lower invoke and unwind, for unwindless code generators
 ; AIE-O23-NEXT:      Remove unreachable blocks from the CFG
 ; AIE-O23-NEXT:      AIE outline Memory GEP
+; AIE-O23-NEXT:      AIE canonicalize GEP offsets
 ; AIE-O23-NEXT:      Dominator Tree Construction
 ; AIE-O23-NEXT:      Natural Loop Information
 ; AIE-O23-NEXT:      Scalar Evolution Analysis

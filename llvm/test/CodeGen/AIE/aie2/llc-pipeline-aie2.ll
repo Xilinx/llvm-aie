@@ -96,6 +96,7 @@
 ; AIE-O0123-NEXT:      Lower invoke and unwind, for unwindless code generators
 ; AIE-O0123-NEXT:      Remove unreachable blocks from the CFG
 ; AIE-O0123-NEXT:      AIE outline Memory GEP
+; AIE-O0123-NEXT:      AIE canonicalize GEP offsets
 ; AIE-O123-NEXT:      Dominator Tree Construction
 ; AIE-O123-NEXT:      Natural Loop Information
 ; AIE-O123-NEXT:      Scalar Evolution Analysis
