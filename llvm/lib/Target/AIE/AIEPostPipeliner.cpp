@@ -1552,15 +1552,28 @@ static const ConfigStrategy::Configuration Heuristics[] = {
     {1, false, false, 1, {Prio::NodeNum}, {}}, // pure bottom up
 };
 
-/// Spreads independent instructions apart by deferring one instruction per
-/// run to first-fit+1, cycling through all NodeNums in scheduling order.
-/// Construction initializes state for the first run (DeferAt=0). nextRun()
-/// increments the deferred node index and returns true until all instructions
-/// have been tried. Lone-root nodes (sole Depth=0 entry point) are skipped.
-class DeferNthNodeStrategy : public MultiRunPostPipelinerStrategy {
-  unsigned DeferAt = 0;
-  const unsigned NInstr;
-  unsigned NumRoots = 0;
+/// Base class for strategies that defer a selected subset of nodes from their
+/// first-fit slot to first-fit+1 in order to create resource-layout diversity.
+///
+/// The base class holds:
+/// - \p Candidates: the pre-filtered list of NodeNums eligible for deferral,
+///   built once at construction time by buildCandidates(). Lone-root nodes
+///   (the unique node with getDepth()==0 when NumRoots==1) are excluded here,
+///   so subclasses are free of per-call lone-root guards.
+/// - \p CurrentDeferred: the subset of NodeNums being deferred in the current
+///   run. Subclasses populate this in their constructor (run 0) and update it
+///   in nextRun() (subsequent runs).
+///
+/// Candidate selection (which nodes enter Candidates) and subset enumeration
+/// (how CurrentDeferred advances through Candidates) are both
+/// subclass-specific.
+class DeferSelectionStrategyBase : public MultiRunPostPipelinerStrategy {
+protected:
+  /// NodeNums eligible for deferral. Populated once by buildCandidates().
+  SmallVector<unsigned, 16> Candidates;
+
+  /// NodeNums being deferred in the current run. Updated by nextRun().
+  SmallVector<unsigned, 4> CurrentDeferred;
 
   bool fromTop() override { return true; }
 
@@ -1568,45 +1581,123 @@ class DeferNthNodeStrategy : public MultiRunPostPipelinerStrategy {
     return A.NodeNum < B.NodeNum;
   }
 
+  /// Populate Candidates with all non-lone-root nodes from [0, NInstr).
+  /// Subclasses may call this as their starting point, then further filter.
+  void buildCandidates(unsigned NInstr) {
+    unsigned NumRoots = 0;
+    for (unsigned K = 0; K < NInstr; ++K)
+      if (DAG.SUnits[K].getDepth() == 0)
+        ++NumRoots;
+    const bool HasLoneRoot = (NumRoots == 1);
+    for (unsigned K = 0; K < NInstr; ++K) {
+      if (HasLoneRoot && DAG.SUnits[K].getDepth() == 0)
+        continue;
+      Candidates.push_back(K);
+    }
+  }
+
 public:
-  std::string name() override { return "DeferNth_" + std::to_string(DeferAt); }
+  DeferSelectionStrategyBase(ScheduleDAGInstrs &DAG, ScheduleInfo &Info,
+                             int Length)
+      : MultiRunPostPipelinerStrategy(DAG, Info, Length) {}
 
-  DeferNthNodeStrategy(ScheduleDAGInstrs &DAG, ScheduleInfo &Info, int Length,
-                       unsigned NInstr)
-      : MultiRunPostPipelinerStrategy(DAG, Info, Length), NInstr(NInstr) {
-    for (const SUnit &SU : DAG.SUnits)
-      if (SU.getDepth() == 0)
-        NumRoots++;
-  }
-
-  bool nextRun() override {
-    ++DeferAt;
-    return DeferAt < NInstr;
-  }
+  /// Return true if there is at least one node to defer in the first run.
+  bool isApplicable() const { return !CurrentDeferred.empty(); }
 
   std::optional<int>
   fitInInterval(const SUnit &SU, int Earliest, int Latest, int II,
                 const AIEHazardRecognizer &HR,
                 ResourceScoreboard<FuncUnitWrapper> &Scoreboard) override {
-    const bool IsLoneRoot = (SU.getDepth() == 0 && NumRoots == 1);
-    if (SU.NodeNum == DeferAt && !IsLoneRoot) {
-      // Find the first admissible cycle, then try to place the node after
-      // that first fit. The intention is to leave a gap in the resource usage
-      // that can be exploited by later stages of the pipeline.
-      // nextRun() ensures DeferAt changes only between
-      // runs, never mid-run. Falls back to the first-fit if Latest is exceeded.
+    if (llvm::is_contained(CurrentDeferred, SU.NodeNum)) {
+      // Find the first admissible cycle, then try to place the node one cycle
+      // later to leave a gap in the resource usage that later pipeline stages
+      // can exploit. Falls back to first-fit if Latest is exceeded.
       auto FirstFit = PostPipelinerStrategy::fitInInterval(SU, Earliest, Latest,
                                                            II, HR, Scoreboard);
       if (!FirstFit)
         return std::nullopt;
-      std::optional<int> LaterFit;
-      if (*FirstFit + 1 <= Latest)
-        LaterFit = PostPipelinerStrategy::fitInInterval(
+      if (*FirstFit + 1 <= Latest) {
+        auto LaterFit = PostPipelinerStrategy::fitInInterval(
             SU, *FirstFit + 1, Latest, II, HR, Scoreboard);
-      return LaterFit ? LaterFit : FirstFit;
+        if (LaterFit)
+          return LaterFit;
+      }
+      return FirstFit;
     }
     return PostPipelinerStrategy::fitInInterval(SU, Earliest, Latest, II, HR,
                                                 Scoreboard);
+  }
+};
+
+/// Defers K-tuples of candidate nodes per run to first-fit+1. Starts with
+/// K=1 (single-node deferral) and automatically grows K when the current
+/// K-simplex (all C(|Candidates|,K) combinations) has been exhausted.
+///
+/// The run budget is shared across all K values. With enough budget, the
+/// strategy moves from single-node deferral (K=1) through pairs (K=2),
+/// triples (K=3), etc. For small loops whose K=1 simplex fits within the
+/// budget, this naturally progresses into tuple deferral at no extra cost.
+///
+/// K=1 names use the "DeferNth_N" convention for compatibility with existing
+/// debug output. K>=2 names use "DeferTuple_K_N1_N2_..." to indicate the
+/// active tuple size and the NodeNums being deferred.
+class DeferTupleStrategy : public DeferSelectionStrategyBase {
+  unsigned K = 1;
+  SmallVector<unsigned, 8> Indices; // K indices into Candidates
+
+  void updateCurrentDeferred() {
+    CurrentDeferred.clear();
+    for (unsigned Idx : Indices)
+      CurrentDeferred.push_back(Candidates[Idx]);
+  }
+
+public:
+  std::string name() override {
+    // K==1: use DeferNth naming for backward compatibility with debug output.
+    if (K == 1)
+      return "DeferNth_" + std::to_string(Candidates[Indices[0]]);
+    std::string N = "DeferTuple_" + std::to_string(K);
+    for (unsigned Idx : Indices)
+      N += "_" + std::to_string(Candidates[Idx]);
+    return N;
+  }
+
+  DeferTupleStrategy(ScheduleDAGInstrs &DAG, ScheduleInfo &Info, int Length,
+                     unsigned NInstr)
+      : DeferSelectionStrategyBase(DAG, Info, Length) {
+    buildCandidates(NInstr);
+    if (!Candidates.empty()) {
+      Indices = {0};
+      updateCurrentDeferred();
+    }
+  }
+
+  /// Advance to the next K-tuple. When the current K-simplex is exhausted,
+  /// K grows by one and enumeration restarts from the first (K+1)-tuple.
+  /// Returns false only when K exceeds the number of candidates.
+  bool nextRun() override {
+    // Find the rightmost index that can be incremented within the current K.
+    int I = static_cast<int>(K) - 1;
+    while (I >= 0 &&
+           Indices[I] == static_cast<unsigned>(Candidates.size() - K + I))
+      --I;
+
+    if (I >= 0) {
+      // Advance within the current K-simplex.
+      ++Indices[I];
+      for (unsigned J = I + 1; J < K; ++J)
+        Indices[J] = Indices[J - 1] + 1;
+    } else {
+      // All C(|Candidates|, K) tuples exhausted: grow K.
+      ++K;
+      if (Candidates.size() < K)
+        return false;
+      Indices.resize(K);
+      for (unsigned J = 0; J < K; ++J)
+        Indices[J] = J;
+    }
+    updateCurrentDeferred();
+    return true;
   }
 };
 
@@ -1688,12 +1779,14 @@ bool PostPipeliner::tryApproaches() {
     }
   }
 
-  // DeferNthNode: try deferring each instruction one cycle after its first-fit
-  // slot, one instruction per run. Runs after all standard heuristics and
-  // IterCountSlackStrategy to avoid short-circuiting them.
+  // DeferTuple: starts at K=1 (single-node deferral, named DeferNth_N) and
+  // automatically progresses to K=2, K=3, ... as each K-simplex is exhausted.
+  // The doubled budget gives more coverage of the K=1 space for typical loops
+  // and lets small loops reach pair/tuple deferral within the same call.
   {
-    DeferNthNodeStrategy S(*DAG, Info, MinLength + II, NInstr);
-    if (S.isEnabled() && S.scheduleAllRuns(*this, HeuristicRuns))
+    DeferTupleStrategy S(*DAG, Info, MinLength + II, NInstr);
+    if (S.isEnabled() && S.isApplicable() &&
+        S.scheduleAllRuns(*this, 2 * HeuristicRuns))
       return true;
   }
 
