@@ -42,6 +42,7 @@ public:
       : BaseT(TM, F.getParent()->getDataLayout(),
               (const AIESubtarget *)TM->getSubtargetImpl(F)) {}
 
+  bool isLeanStage0LoadIntrinsic(const Instruction &I) const override;
   void getUnrollingPreferences(Loop *L, ScalarEvolution &SE,
                                TTI::UnrollingPreferences &UP,
                                OptimizationRemarkEmitter *ORE) const override;

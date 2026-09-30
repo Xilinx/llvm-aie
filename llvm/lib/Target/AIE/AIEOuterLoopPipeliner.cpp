@@ -1010,6 +1010,12 @@ void OrigLoopStructure::seedFromInnerLoop(
 void OrigLoopStructure::seedFromLoads(SmallVectorImpl<Instruction *> &Seeds,
                                       const TargetTransformInfo &TTI) {
   topRegion().forEachInstruction([&](Instruction *I) {
+    // Target load intrinsics seed the chain the way a plain load does.
+    if (TTI.isLeanStage0LoadIntrinsic(*I)) {
+      Seeds.push_back(I);
+      return;
+    }
+
     if (!isa<LoadInst>(I))
       return;
     Seeds.push_back(I);
