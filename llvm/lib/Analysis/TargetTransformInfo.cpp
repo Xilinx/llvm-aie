@@ -632,6 +632,11 @@ bool TargetTransformInfo::isLeanStage0Intrinsic(const Instruction &I) const {
   return TTIImpl->isLeanStage0Intrinsic(I);
 }
 
+bool TargetTransformInfo::isLeanStage0LoadIntrinsic(
+    const Instruction &I) const {
+  return TTIImpl->isLeanStage0LoadIntrinsic(I);
+}
+
 bool TargetTransformInfo::isTargetIntrinsicWithScalarOpAtArg(
     Intrinsic::ID ID, unsigned ScalarOpdIdx) const {
   return TTIImpl->isTargetIntrinsicWithScalarOpAtArg(ID, ScalarOpdIdx);

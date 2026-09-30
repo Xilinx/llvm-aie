@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 /// \file
 /// This pass exposes codegen information to IR-level passes. Every
@@ -947,6 +950,10 @@ public:
   /// Returns true when \p I should be included in a target's lean stage-0
   /// prefetch chain.
   bool isLeanStage0Intrinsic(const Instruction &I) const;
+
+  /// Returns true when \p I is a target load intrinsic that seeds a lean
+  /// stage-0 prefetch chain on its own, the way a plain load does.
+  bool isLeanStage0LoadIntrinsic(const Instruction &I) const;
 
   /// Identifies if the vector form of the intrinsic has a scalar operand.
   LLVM_ABI bool isTargetIntrinsicWithScalarOpAtArg(Intrinsic::ID ID,
