@@ -17,7 +17,31 @@
 #ifndef LLVM_LIB_TARGET_AIE_AIESCHEDULINGTYPES_H
 #define LLVM_LIB_TARGET_AIE_AIESCHEDULINGTYPES_H
 
+#include <vector>
+
 namespace llvm::AIE {
+
+/// Cycle assignment for a software-pipelined schedule, indexed by NodeNum.
+/// NodeSchedule[k] holds the linear cycle in which instruction k is placed.
+/// An empty NodeSchedule indicates that no cycle assignment exists yet.
+/// Wrapping std::vector<int> in a named class enables adding query methods
+/// without changing the storage layout.
+class NodeSchedule {
+  std::vector<int> Cycles;
+
+public:
+  NodeSchedule() = default;
+  explicit NodeSchedule(std::vector<int> Cycles) : Cycles(std::move(Cycles)) {}
+
+  bool empty() const { return Cycles.empty(); }
+  int size() const { return static_cast<int>(Cycles.size()); }
+
+  // Cycle assigned to node NodeNum.
+  int operator[](int NodeNum) const { return Cycles[NodeNum]; }
+
+  // Access the underlying vector for interoperability with existing code.
+  const std::vector<int> &getCycles() const { return Cycles; }
+};
 
 /// BlockType determines scheduling priority, direction and safety margin
 /// handling.

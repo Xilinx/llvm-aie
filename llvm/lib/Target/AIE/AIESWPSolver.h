@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -16,6 +16,7 @@
 #include "z3++.h"
 #endif
 
+#include "AIESchedulingTypes.h"
 #include <cassert>
 #include <cstdint>
 #include <map>
@@ -160,9 +161,9 @@ public:
   // cycle
   virtual void genConflict(int M, int N) = 0;
 
-  // Return the vector of instruction cycles
-  // \pre genModel() has returned true
-  virtual std::vector<int> getSUCycles() { return {}; };
+  // Return the per-instruction cycle assignment.
+  // \pre solveModel() returned true
+  virtual NodeSchedule getSUCycles() { return NodeSchedule(); }
 
   // Add an instruction to the problem. It returns a unique Id
   int addInsn(int Slot, uint64_t MemoryBanks, bool HasSideEffect);
@@ -229,7 +230,7 @@ public:
   Z3Solver();
   void genModel(const SolverData &Data, bool SEFStage) override;
   bool solveModel() override;
-  std::vector<int> getSUCycles() override;
+  NodeSchedule getSUCycles() override;
 };
 
 // In the binary formulation, we have a lot of binary variables,
