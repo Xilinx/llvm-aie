@@ -1161,9 +1161,24 @@ void llvm::applyLdStInc(MachineInstr &MemI, MachineRegisterInfo &MRI,
         NewInstr.addDef(Def.getReg());
   if (MemI.getOpcode() == TargetOpcode::G_STORE)
     NewInstr.addUse(MemI.getOperand(0).getReg() /* Stored value */);
-  for (auto Use : PtrMod->uses())
-    if (Use.isReg())
-      NewInstr.addUse(Use.getReg());
+  for (auto Use : PtrMod->uses()) {
+    if (!Use.isReg())
+      continue;
+    NewInstr.addUse(Use.getReg());
+    if (!Use.getReg().isVirtual())
+      continue;
+    // ptr_add_immed_chain can give PtrMod a new G_CONSTANT offset after the
+    // analysis computed MoveUpInstrsToInsertionPoint, so hoist it here.
+    MachineInstr *Def = MRI.getVRegDef(Use.getReg());
+    if (!Def || Def->getParent() != NewInstr->getParent() ||
+        Helper.dominates(*Def, *NewInstr))
+      continue;
+    assert(Def->getOpcode() == TargetOpcode::G_CONSTANT &&
+           "Combined instruction would use a register before its def");
+    Observer.changingInstr(*Def);
+    Def->moveBefore(NewInstr);
+    Observer.changedInstr(*Def);
+  }
   for (auto *Mem : MemI.memoperands())
     NewInstr.addMemOperand(Mem);
 
