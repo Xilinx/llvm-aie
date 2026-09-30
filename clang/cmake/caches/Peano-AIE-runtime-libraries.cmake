@@ -21,6 +21,9 @@ set(LLVM_ENABLE_PER_TARGET_RUNTIME_DIR ON CACHE BOOL "")
 
 set(LLVM_BUILTIN_TARGETS "aie-none-unknown-elf;aie2-none-unknown-elf;aie2p-none-unknown-elf;aie2ps-none-unknown-elf" CACHE STRING "")
 set(LLVM_RUNTIME_TARGETS "${LLVM_BUILTIN_TARGETS}" CACHE STRING "")
+# The per-target builtins/runtimes configure steps are independent; run them in
+# parallel.
+set(LLVM_EXTERNAL_PROJECT_CONFIGURE_USES_TERMINAL OFF CACHE BOOL "")
 
 foreach(target ${LLVM_BUILTIN_TARGETS})
   # Set the per-target cmake options.
