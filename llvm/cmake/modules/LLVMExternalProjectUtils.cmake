@@ -11,6 +11,12 @@
 
 include(ExternalProject)
 
+# Ninja's console pool serializes the configure steps of all external projects.
+# Builds whose configure steps are independent can turn this off to run them in
+# parallel.
+option(LLVM_EXTERNAL_PROJECT_CONFIGURE_USES_TERMINAL
+  "Run external project configure steps in the console pool" ON)
+
 # llvm_ExternalProject_BuildCmd(out_var target)
 #   Utility function for constructing command lines for external project targets
 function(llvm_ExternalProject_BuildCmd out_var target bin_dir stamp_dir)
@@ -423,7 +429,9 @@ function(llvm_ExternalProject_Add name source_dir)
     STEP_TARGETS configure build
     BUILD_ALWAYS 1
     CONFIGURE_HANDLED_BY_BUILD 1
-    USES_TERMINAL_CONFIGURE 1
+    USES_TERMINAL_CONFIGURE ${LLVM_EXTERNAL_PROJECT_CONFIGURE_USES_TERMINAL}
+    # Build stays serial: per-target runtimes builds write the same generic
+    # headers (e.g. include/c++/v1).
     USES_TERMINAL_BUILD 1
     USES_TERMINAL_INSTALL 1
     LIST_SEPARATOR |
