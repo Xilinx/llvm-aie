@@ -4,10 +4,11 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
-add_llvm_component_library(LLVMAIESim
+add_llvm_component_library(LLVMAIETargetSim
   AIECoreState.cpp
   AIEExecutor.cpp
   AIE2PSemantics.cpp
+  AIESimulator.cpp
 
   PARTIAL_SOURCES_INTENDED
 
@@ -24,8 +25,8 @@ add_llvm_component_library(LLVMAIESim
   )
 
 # The loadable engine an embedder without LLVM headers dlopens. Kept out of
-# LLVMAIESim so that linking the executor statically does not also drag in the
-# C ABI's process-wide target registration.
+# LLVMAIETargetSim so that linking the executor statically does not also drag
+# in the C ABI's process-wide target registration.
 add_llvm_library(aie-iss SHARED
   AIEISSCAbi.cpp
 
@@ -35,7 +36,7 @@ add_llvm_library(aie-iss SHARED
   AIEDesc
   AIEDisassembler
   AIEInfo
-  AIESim
+  AIETargetSim
   MC
   MCDisassembler
   Support

@@ -12,7 +12,7 @@ set(LLVM_LINK_COMPONENTS
   AIEDesc
   AIEDisassembler
   AIEInfo
-  AIESim
+  AIETargetSim
   MC
   MCDisassembler
   Object
