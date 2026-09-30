@@ -1662,14 +1662,29 @@ public:
     return N;
   }
 
-  DeferTupleStrategy(ScheduleDAGInstrs &DAG, ScheduleInfo &Info, int Length,
-                     unsigned NInstr)
-      : DeferSelectionStrategyBase(DAG, Info, Length) {
-    buildCandidates(NInstr);
+protected:
+  // Initialize the K-tuple state from the already-populated Candidates vector.
+  // Subclasses that build their own Candidates list must call this after
+  // filling Candidates.
+  void initFromCandidates() {
     if (!Candidates.empty()) {
       Indices = {0};
       updateCurrentDeferred();
     }
+  }
+
+  // Protected constructor for subclasses that build their own candidate list.
+  // The subclass is responsible for populating Candidates and calling
+  // initFromCandidates() before the object is used.
+  DeferTupleStrategy(ScheduleDAGInstrs &DAG, ScheduleInfo &Info, int Length)
+      : DeferSelectionStrategyBase(DAG, Info, Length) {}
+
+public:
+  DeferTupleStrategy(ScheduleDAGInstrs &DAG, ScheduleInfo &Info, int Length,
+                     unsigned NInstr)
+      : DeferSelectionStrategyBase(DAG, Info, Length) {
+    buildCandidates(NInstr);
+    initFromCandidates();
   }
 
   /// Advance to the next K-tuple. When the current K-simplex is exhausted,
@@ -1698,6 +1713,118 @@ public:
     }
     updateCurrentDeferred();
     return true;
+  }
+};
+
+/// Derives from DeferTupleStrategy, reusing its full K-tuple enumeration and
+/// deferral mechanics. The only difference is candidate ordering: instead of
+/// trying nodes in NodeNum order, nodes are ranked by a two-factor score:
+///
+///   score = contention + leverage
+///
+/// Contention measures competitive pressure on K's slots from the rest of the
+/// loop. For each slot type that K uses, it counts how many slot-uses other
+/// nodes contribute to that type. This is computed by first summing all nodes'
+/// SlotCounts into a TotalSlots vector (mirroring SlotStatistics::Fixed), then
+/// reading off TotalSlots[s] - KSlots[s] for each slot s that K occupies.
+///
+/// Leverage counts nodes reachable from K via latency-1, same-slot data edges
+/// (detected with SlotCounts::overlaps). Because a top-down schedule places a
+/// latency-1 successor exactly one cycle after its predecessor, deferring K by
+/// one cycle implicitly shifts the entire downstream chain.
+///
+/// With ranked candidates, nextRun() from DeferTupleStrategy naturally
+/// progresses from the highest-scored singleton to the highest-scored pair,
+/// triple, and so on — focusing the tuple search on the most impactful nodes.
+class DeferContendedStrategy : public DeferTupleStrategy {
+
+  // For each slot s that K uses, count slot-uses of that type by other nodes.
+  static int computeContention(unsigned K, const ScheduleInfo &Info,
+                               const SlotCounts &TotalSlots) {
+    const SlotCounts &KSlots = Info[K].Slots;
+    int Score = 0;
+    const int N = std::max(KSlots.size(), TotalSlots.size());
+    for (int S = 0; S < N; ++S) {
+      const int Mine = KSlots.at(S);
+      if (Mine > 0)
+        Score += TotalSlots.at(S) - Mine;
+    }
+    return Score;
+  }
+
+  // Count nodes reachable from K via tight, latency-1, same-slot data edges.
+  // A latency-1 edge A->B is tight when Depth(B) == Depth(A) + 1: B has no
+  // other predecessor providing a longer path, so deferring A by one cycle
+  // necessarily shifts B by one cycle as well. If Depth(B) > Depth(A) + 1, B
+  // is already driven later by another predecessor and a scheduling gap may
+  // exist anyway, so deferring A need not move B.
+  static int computeLeverage(unsigned K, unsigned NInstr,
+                             const ScheduleDAGInstrs &DAG,
+                             const ScheduleInfo &Info) {
+    const SlotCounts &KSlots = Info[K].Slots;
+    SmallSet<unsigned, 8> Visited;
+    SmallVector<unsigned, 8> WorkList;
+    WorkList.push_back(K);
+    while (!WorkList.empty()) {
+      const unsigned N = WorkList.pop_back_val();
+      for (const SDep &Dep : DAG.SUnits[N].Succs) {
+        if (Dep.getKind() != SDep::Data || Dep.getSignedLatency() != 1)
+          continue;
+        const unsigned S = Dep.getSUnit()->NodeNum;
+        if (S >= NInstr || !Visited.insert(S).second)
+          continue;
+        if (DAG.SUnits[S].getDepth() != DAG.SUnits[N].getDepth() + 1)
+          continue;
+        if (KSlots.overlaps(Info[S].Slots))
+          WorkList.push_back(S);
+      }
+    }
+    return static_cast<int>(Visited.size());
+  }
+
+public:
+  DeferContendedStrategy(ScheduleDAGInstrs &DAG, ScheduleInfo &Info, int Length,
+                         unsigned NInstr)
+      : DeferTupleStrategy(DAG, Info, Length) {
+    buildCandidates(NInstr);
+
+    // Aggregate slot usage across all nodes once, mirroring how
+    // SlotStatistics::Fixed accumulates per-MBB slot counts.
+    SlotCounts TotalSlots;
+    for (unsigned K = 0; K < NInstr; ++K)
+      TotalSlots += Info[K].Slots;
+
+    // Compute scores, sort Candidates highest-score-first, then truncate to
+    // the largest N for which the K=1, K=2, and K=3 tuple phases each
+    // complete within the run budget. Lower-K tuples of the highest-scored
+    // candidates are the most impactful; K>=4 phases may receive only partial
+    // coverage.
+    SmallVector<int, 16> Score(NInstr, 0);
+    for (const unsigned K : Candidates)
+      Score[K] = computeContention(K, Info, TotalSlots) +
+                 computeLeverage(K, NInstr, DAG, Info);
+    llvm::sort(Candidates, [&Score](unsigned A, unsigned B) {
+      return Score[A] > Score[B];
+    });
+    // Runs consumed by the K=1, K=2, and K=3 phases for N candidates:
+    // C(N,1) + C(N,2) + C(N,3).
+    auto RunsForK123 = [](unsigned N) {
+      return N + N * (N - 1) / 2 + N * (N - 1) * (N - 2) / 6;
+    };
+    const unsigned Budget = static_cast<unsigned>(2 * HeuristicRuns);
+    unsigned Cap = 2;
+    while (RunsForK123(Cap + 1) <= Budget)
+      ++Cap;
+    if (Candidates.size() > Cap)
+      Candidates.resize(Cap);
+
+    initFromCandidates();
+  }
+
+  std::string name() override {
+    // Prefix with "Contended_" to distinguish from plain DeferTuple runs,
+    // while still encoding the active K-tuple via the parent's naming.
+    return "Contended_" + DeferTupleStrategy::name();
   }
 };
 
@@ -1785,6 +1912,19 @@ bool PostPipeliner::tryApproaches() {
   // and lets small loops reach pair/tuple deferral within the same call.
   {
     DeferTupleStrategy S(*DAG, Info, MinLength + II, NInstr);
+    if (S.isEnabled() && S.isApplicable() &&
+        S.scheduleAllRuns(*this, 2 * HeuristicRuns))
+      return true;
+  }
+
+  // DeferContended: like DeferTuple but ranks candidates by slot contention
+  // and latency-1 chain leverage, so the most impactful tuples are explored
+  // first. Placed after DeferTuple so that it only fires when all preceding
+  // strategies have failed for the current II — at that point, a success here
+  // means a schedule was found at a lower II than any earlier strategy could
+  // achieve.
+  {
+    DeferContendedStrategy S(*DAG, Info, MinLength + II, NInstr);
     if (S.isEnabled() && S.isApplicable() &&
         S.scheduleAllRuns(*this, 2 * HeuristicRuns))
       return true;

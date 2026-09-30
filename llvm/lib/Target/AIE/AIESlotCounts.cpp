@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -74,6 +74,14 @@ int SlotCounts::distance(const SlotCounts &Other) const {
     Sum += abs(at(I) - Other.at(I));
   }
   return Sum;
+}
+
+bool SlotCounts::overlaps(const SlotCounts &Other) const {
+  const int N = std::max(Size, Other.Size);
+  for (int I = 0; I < N; ++I)
+    if (at(I) > 0 && Other.at(I) > 0)
+      return true;
+  return false;
 }
 
 SlotCounts &SlotCounts::operator+=(const SlotCounts &Other) {
