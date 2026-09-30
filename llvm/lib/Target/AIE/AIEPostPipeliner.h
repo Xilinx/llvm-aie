@@ -15,6 +15,7 @@
 #define LLVM_LIB_TARGET_AIE_AIEPOSTPIPELINER_H
 
 #include "AIEHazardRecognizer.h"
+#include "AIEPostRegAlloc.h"
 #include "AIERegDefUseTracker.h"
 #include "AIEScheduleInterpreter.h"
 #include "AIESchedulingTypes.h"
@@ -31,6 +32,38 @@ class RegLiveRangeTracker;
 } // namespace llvm
 
 namespace llvm::AIE {
+
+/// Result of a scheduleWithStrategy() call. Always carries a success flag.
+/// On success it also holds the cycle assignment (NodeSchedule) and the
+/// register-allocation result. On scheduling failure both are empty/trivial.
+/// On register-allocation failure the NodeSchedule is still populated so
+/// the caller can reconstruct and resubmit the same instruction placement.
+class ScheduleResult {
+  bool Succeeded = false;
+  NodeSchedule Schedule;
+  PostRegAllocResult RegAlloc;
+
+public:
+  ScheduleResult() = default;
+  explicit ScheduleResult(bool Succeeded) : Succeeded(Succeeded) {}
+  // Used internally by tryAllocateRegisters (schedule added by caller).
+  ScheduleResult(bool Succeeded, PostRegAllocResult RegAlloc)
+      : Succeeded(Succeeded), RegAlloc(std::move(RegAlloc)) {}
+  // Full result with both cycle assignment and register allocation.
+  ScheduleResult(bool Succeeded, NodeSchedule Schedule,
+                 PostRegAllocResult RegAlloc)
+      : Succeeded(Succeeded), Schedule(std::move(Schedule)),
+        RegAlloc(std::move(RegAlloc)) {}
+
+  bool succeeded() const { return Succeeded; }
+  explicit operator bool() const { return Succeeded; }
+
+  // Cycle assignment; non-empty whenever instruction placement succeeded,
+  // even if register allocation subsequently failed.
+  const NodeSchedule &getSchedule() const { return Schedule; }
+
+  const PostRegAllocResult &getRegAllocResult() const { return RegAlloc; }
+};
 
 namespace Solver {
 class SolverData;
@@ -145,6 +178,15 @@ public:
     Node.Scheduled = true;
     Length = std::max(Length, Node.Cycle + 1);
   }
+
+  // Extract the cycle assignment for the first NInstr nodes as a NodeSchedule.
+  NodeSchedule toSchedule(int NInstr) const {
+    std::vector<int> Cycles;
+    Cycles.reserve(NInstr);
+    for (int K = 0; K < NInstr; ++K)
+      Cycles.push_back(Nodes[K].Cycle);
+    return NodeSchedule(std::move(Cycles));
+  }
   // Set the pending rotation. The actual rotation will be applied after
   // scheduleOtherIterations() succeeds, to ensure validation uses consistent
   // pre-rotation cycle values.
@@ -234,9 +276,9 @@ public:
   virtual bool nextRun() { return false; }
 
   // Execute all runs against \p PP, up to \p MaxRuns. Resets the schedule
-  // before the first run and between subsequent runs. Returns true on the
-  // first successful schedule, false if all runs fail.
-  bool scheduleAllRuns(PostPipeliner &PP, int MaxRuns);
+  // before the first run and between subsequent runs. Returns the result of
+  // the first successful schedule, or a failed result if all runs fail.
+  ScheduleResult scheduleAllRuns(PostPipeliner &PP, int MaxRuns);
 };
 
 class PipelineScheduleVisitor {
@@ -381,9 +423,6 @@ class PostPipeliner {
   /// Check that all copied instructions can run in the same modulo cycle
   bool scheduleOtherIterations(PostPipelinerStrategy &Strategy);
 
-  /// Top level strategy scheduler
-  bool scheduleWithStrategy(PostPipelinerStrategy &Strategy);
-
   /// Try to schedule scarce ranges by enumerating orders and using
   /// BurstMostUrgentStrategy.
   /// Checks applicability, finds scarce ranges, and attempts scheduling.
@@ -395,9 +434,13 @@ class PostPipeliner {
   /// data mining scheduling rounds.
   void resetSchedule(bool FullReset);
 
-  /// Try to allocate registers for the current schedule
-  /// Returns true if register allocation succeeds
-  bool tryAllocateRegisters();
+  /// Perform register allocation for the current schedule and return the
+  /// result. In PhysMode returns a trivial success result; in VirtMode returns
+  /// the full allocation result including strategy name and VReg assignments.
+  ScheduleResult tryAllocateRegisters();
+
+  /// Schedule using the given strategy and return a detailed result.
+  ScheduleResult scheduleWithStrategy(PostPipelinerStrategy &Strategy);
 
 public:
   PostPipeliner(const AIEHazardRecognizer &HR, int NInstr,

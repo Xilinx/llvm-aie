@@ -1160,28 +1160,22 @@ bool PostPipeliner::tryScarceRangePacking() {
   // Enumerate orders and try scheduling with different orderings.
   return enumerateRangeOrders(
       ScarceRanges, [this, &Strategy](const SmallVector<int, 4> &Order) {
-        // Reset before each attempt.
         resetSchedule(/*FullReset=*/false);
-
-        // Initialize the strategy with this order.
         Strategy.init(Order);
-
-        // Try scheduling with this strategy.
-        return scheduleWithStrategy(Strategy);
+        return scheduleWithStrategy(Strategy).succeeded();
       });
 }
 
-bool PostPipeliner::scheduleWithStrategy(PostPipelinerStrategy &S) {
-  // Always update so the name is correct on the first successful return.
+ScheduleResult PostPipeliner::scheduleWithStrategy(PostPipelinerStrategy &S) {
   CurrentStrategyName = S.name();
   DEBUG_SUMMARY(dbgs() << "Starting " << CurrentStrategyName << "\n");
   if (!scheduleFirstIteration(S)) {
-    return false;
+    return ScheduleResult(false);
   }
   DEBUG_SUMMARY(dbgs() << "   First iteration successful\n");
   if (!scheduleOtherIterations(S)) {
     Info.resetRotation();
-    return false;
+    return ScheduleResult(false);
   }
   DEBUG_SUMMARY(dbgs() << "   Other iterations successful\n");
 
@@ -1191,12 +1185,16 @@ bool PostPipeliner::scheduleWithStrategy(PostPipelinerStrategy &S) {
   Info.applyRotation(II);
   Info.resetRotation();
 
-  if (!tryAllocateRegisters()) {
-    DEBUG_SUMMARY(dbgs() << "   Register allocation failed\n");
-    return false;
-  }
-  DEBUG_SUMMARY(dbgs() << "   Register allocation successful\n");
-  return true;
+  // Capture the cycle assignment before attempting register allocation.
+  // On allocation failure the caller can use this to reconstruct the
+  // same instruction placement with a different allocation strategy.
+  NodeSchedule Schedule = Info.toSchedule(NInstr);
+
+  const ScheduleResult AllocResult = tryAllocateRegisters();
+  DEBUG_SUMMARY(dbgs() << (AllocResult ? "   Register allocation successful\n"
+                                       : "   Register allocation failed\n"));
+  return ScheduleResult(AllocResult.succeeded(), std::move(Schedule),
+                        AllocResult.getRegAllocResult());
 }
 
 namespace {
@@ -1225,7 +1223,7 @@ public:
 // latest so as to have no slack.
 // It still checks latencies and resources
 class CheckFixedSchedule : public PostPipelinerStrategy {
-  std::vector<int> Schedule;
+  NodeSchedule Schedule;
   std::string Name;
 
   // We schedule in strict top-down order, and we leave only one cycle
@@ -1235,7 +1233,7 @@ class CheckFixedSchedule : public PostPipelinerStrategy {
   }
   int earliest(const SUnit &N) override {
     int Result = PostPipelinerStrategy::earliest(N);
-    unsigned NodeNum = N.NodeNum;
+    const int NodeNum = static_cast<int>(N.NodeNum);
     if (NodeNum < Schedule.size()) {
       Result = std::max(Result, Schedule[NodeNum]);
     }
@@ -1243,7 +1241,7 @@ class CheckFixedSchedule : public PostPipelinerStrategy {
   }
   int latest(const SUnit &N) override {
     int Result = PostPipelinerStrategy::latest(N);
-    unsigned NodeNum = N.NodeNum;
+    const int NodeNum = static_cast<int>(N.NodeNum);
     if (NodeNum < Schedule.size()) {
       Result = std::min(Result, Schedule[NodeNum]);
     }
@@ -1252,9 +1250,9 @@ class CheckFixedSchedule : public PostPipelinerStrategy {
 
 public:
   CheckFixedSchedule(ScheduleDAGInstrs &DAG, ScheduleInfo &Info, int Length,
-                     std::vector<int> Schedule,
+                     NodeSchedule Schedule,
                      std::string Name = "CheckFixedSchedule")
-      : PostPipelinerStrategy(DAG, Info, Length), Schedule(Schedule),
+      : PostPipelinerStrategy(DAG, Info, Length), Schedule(std::move(Schedule)),
         Name(std::move(Name)) {}
   std::string name() override { return Name; }
 };
@@ -1828,24 +1826,25 @@ public:
   }
 };
 
-bool MultiRunPostPipelinerStrategy::scheduleAllRuns(PostPipeliner &PP,
-                                                    int MaxRuns) {
+ScheduleResult MultiRunPostPipelinerStrategy::scheduleAllRuns(PostPipeliner &PP,
+                                                              int MaxRuns) {
   PP.resetSchedule(/*FullReset=*/true);
   for (int Run = 0; Run < MaxRuns; ++Run) {
     DEBUG_SUMMARY(dbgs() << "--- Strategy " << name() << " run=" << Run
                          << " trying II=" << PP.II << "\n");
-    if (PP.scheduleWithStrategy(*this)) {
+    const ScheduleResult R = PP.scheduleWithStrategy(*this);
+    if (R) {
       DEBUG_SUMMARY(dbgs() << "    Strategy " << PP.CurrentStrategyName
                            << " found NS=" << PP.NStages << " II=" << PP.II
                            << "\n");
-      return true;
+      return R;
     }
     if (!nextRun())
       break;
     PP.resetSchedule(/*FullReset=*/false);
   }
   DEBUG_SUMMARY(dbgs() << "    Strategy " << name() << " failed\n");
-  return false;
+  return ScheduleResult(false);
 }
 
 bool PostPipelinerStrategy::isEnabled() {
@@ -2012,12 +2011,11 @@ bool PostPipeliner::applySolver(const SolverData &Data, SWPSolver &Solver,
   // We have a solution of our model, but this is missing some constraints, in
   // order to save solver time. We extract the cycles, and make a final check
   // for all constraints using a dedicated strategy.
-  auto Schedule = Solver.getSUCycles();
-  DEBUG_SUMMARY(dbgs() << "Solver found "; for (auto C
-                                                : Schedule) dbgs()
-                                           << C << ", ";
+  NodeSchedule Schedule = Solver.getSUCycles();
+  DEBUG_SUMMARY(dbgs() << "Solver found ";
+                for (int C : Schedule.getCycles()) dbgs() << C << ", ";
                 dbgs() << "\n";);
-  CheckFixedSchedule S{*DAG, Info, II * NS, Schedule, "Solver"};
+  CheckFixedSchedule S{*DAG, Info, II * NS, std::move(Schedule), "Solver"};
   resetSchedule(/*FullReset=*/true);
   DEBUG_SUMMARY(dbgs() << "--- Strategy " << S.name() << "\n");
   if (scheduleWithStrategy(S)) {
@@ -2078,17 +2076,18 @@ bool PostPipeliner::schedule(ScheduleDAGMI &TheDAG, int InitiationInterval,
   return true;
 }
 
-bool PostPipeliner::tryAllocateRegisters() {
+ScheduleResult PostPipeliner::tryAllocateRegisters() {
   // Clear the alloc strategy name so a stale name from a previous VirtReg
   // attempt does not bleed into a subsequent physical-mode success.
   CurrentAllocStrategyName.clear();
 
-  // In physical mode, registers are not virtualized and no allocation is
-  // needed.
+  // In physical mode, registers are not virtualized; return a trivial success.
   if (!RegTracker.areRegistersVirtualized()) {
     LLVM_DEBUG(
         dbgs() << "PostPipeliner: Physical mode - no allocation needed\n");
-    return true;
+    DenseMap<Register, MCRegister> Empty;
+    return ScheduleResult(true,
+                          PostRegAllocResult("Physical", std::move(Empty)));
   }
 
   const auto *TRI = DAG->MF.getSubtarget().getRegisterInfo();
@@ -2108,26 +2107,26 @@ bool PostPipeliner::tryAllocateRegisters() {
   });
 
   // Perform register allocation.
-  DenseMap<Register, MCRegister> VRegToPhysReg;
-  const bool Success =
-      AIEPostRegAlloc::allocate(LiveLanesByLRIndex, II, RegTracker, *TRI,
-                                VRegToPhysReg, CurrentAllocStrategyName);
+  PostRegAllocResult Result =
+      AIEPostRegAlloc::allocate(LiveLanesByLRIndex, II, RegTracker, *TRI);
 
-  if (!Success) {
+  if (!Result) {
     LLVM_DEBUG(dbgs() << "PostPipeliner: Register allocation failed\n");
-    return false;
+    return ScheduleResult(false);
   }
 
   LLVM_DEBUG(dbgs() << "PostPipeliner: Register allocation succeeded with "
-                    << VRegToPhysReg.size() << " assignments\n");
+                    << Result.getAssignments().size() << " assignments\n");
+
+  CurrentAllocStrategyName = Result.getWinningStrategyName();
 
   // Apply the register assignments through RegTracker.
-  RegTracker.rewriteToPhysRegs(VRegToPhysReg);
+  RegTracker.rewriteToPhysRegs(Result.getAssignments());
 
   LLVM_DEBUG(dbgs() << "PostPipeliner: Applied register allocation through "
                        "RegTracker\n");
 
-  return true;
+  return ScheduleResult(true, std::move(Result));
 }
 
 // Pipelining reduces the iteration count by NS - 1

@@ -25,6 +25,7 @@
 #include "llvm/MC/LaneBitmask.h"
 #include "llvm/MC/MCRegister.h"
 #include <functional>
+#include <string>
 #include <vector>
 
 namespace llvm {
@@ -35,6 +36,34 @@ class RegLiveRangeTracker;
 class RegLiveRange;
 
 namespace AIE {
+
+/// Result of a post-scheduling register allocation attempt.
+/// On failure the object evaluates to false and holds no useful data.
+/// On success it holds the winning scoring strategy name and the
+/// virtual-to-physical register assignment.
+class PostRegAllocResult {
+  bool Succeeded = false;
+  std::string WinningStrategyName;
+  DenseMap<Register, MCRegister> Assignments;
+
+public:
+  PostRegAllocResult() = default;
+  PostRegAllocResult(std::string WinningStrategyName,
+                     DenseMap<Register, MCRegister> Assignments)
+      : Succeeded(true), WinningStrategyName(std::move(WinningStrategyName)),
+        Assignments(std::move(Assignments)) {}
+
+  bool succeeded() const { return Succeeded; }
+  explicit operator bool() const { return Succeeded; }
+
+  const std::string &getWinningStrategyName() const {
+    return WinningStrategyName;
+  }
+  const DenseMap<Register, MCRegister> &getAssignments() const {
+    return Assignments;
+  }
+  DenseMap<Register, MCRegister> &getAssignments() { return Assignments; }
+};
 
 /// Post-scheduling register allocator for AIE targets.
 ///
@@ -192,16 +221,12 @@ public:
   /// \param II Initiation interval for pipelined loops (>= 1).
   /// \param RegTracker RegLiveRangeTracker providing register information.
   /// \param TRI Target register info.
-  /// \param OutAssign Output map from virtual to physical registers.
-  /// \param OutWinningStrategyName Updated before each scoring attempt; holds
-  ///        the name of the scoring strategy that succeeded on return.
-  /// \return True if allocation succeeded, false if no solution found.
-  static bool
+  /// \return PostRegAllocResult holding the assignment and winning strategy
+  ///         name on success, or an empty (false) result on failure.
+  static PostRegAllocResult
   allocate(const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex,
            int II, const RegLiveRangeTracker &RegTracker,
-           const TargetRegisterInfo &TRI,
-           DenseMap<Register /*VReg*/, MCRegister /*Phys*/> &OutAssign,
-           std::string &OutWinningStrategyName);
+           const TargetRegisterInfo &TRI);
 
 private:
   /// Try to allocate using a specific scoring function for ordering.
