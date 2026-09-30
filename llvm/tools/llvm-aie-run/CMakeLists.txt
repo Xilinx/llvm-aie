@@ -9,21 +9,15 @@ if(NOT "AIE" IN_LIST LLVM_TARGETS_TO_BUILD)
 endif()
 
 set(LLVM_LINK_COMPONENTS
-  AIEDesc
-  AIEDisassembler
-  AIEInfo
-  AIETargetSim
+  AllTargetsDescs
+  AllTargetsDisassemblers
+  AllTargetsInfos
+  AllTargetsSims
   MC
   MCDisassembler
   Object
   Support
   TargetParser
-  )
-
-# The simulator is a target-internal library, as the instruction semantics are.
-include_directories(
-  ${LLVM_MAIN_SRC_DIR}/lib/Target/AIE
-  ${LLVM_BINARY_DIR}/lib/Target/AIE
   )
 
 add_llvm_tool(llvm-aie-run

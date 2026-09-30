@@ -9,18 +9,16 @@
 //===----------------------------------------------------------------------===//
 //
 /// \file
-/// Loads an AIE object file into flat memory, executes it, and reports
-/// registers, memory and instruction coverage. The ports that a real tile
-/// provides - locks, streams, cascade - are absent here and refuse access, so
-/// a design that needs them says so instead of appearing to run.
+/// Loads an AIE object file into the target's MCSimulator, executes it, and
+/// reports registers, memory and instruction coverage.
 //
 //===----------------------------------------------------------------------===//
 
-#include "Sim/AIEExecutor.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCDisassembler/MCDisassembler.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
+#include "llvm/MC/MCSimulator.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/TargetRegistry.h"
 #include "llvm/Object/ObjectFile.h"
@@ -35,7 +33,6 @@
 #include <map>
 
 using namespace llvm;
-using namespace llvm::AIESim;
 
 static cl::OptionCategory Cat("llvm-aie-run options");
 
@@ -64,72 +61,6 @@ static cl::opt<bool> Coverage("coverage",
 
 namespace {
 
-/// Flat memory with no locks, streams or cascade.
-class FlatMemory : public AIEHostInterface {
-public:
-  void map(uint64_t Addr, ArrayRef<uint8_t> Data) {
-    if (Bytes.size() < Addr + Data.size())
-      Bytes.resize(Addr + Data.size(), 0);
-    Mapped.resize(Bytes.size(), false);
-    llvm::copy(Data, Bytes.begin() + Addr);
-    std::fill(Mapped.begin() + Addr, Mapped.begin() + Addr + Data.size(), true);
-  }
-
-  /// Data memory a program may use beyond what the object file defines.
-  void mapZeroed(uint64_t Addr, uint64_t Size) {
-    if (Bytes.size() < Addr + Size) {
-      Bytes.resize(Addr + Size, 0);
-      Mapped.resize(Bytes.size(), false);
-    }
-    std::fill(Mapped.begin() + Addr, Mapped.begin() + Addr + Size, true);
-  }
-
-  ArrayRef<uint8_t> fetch(uint64_t Addr) override {
-    if (Addr >= Bytes.size() || !Mapped[Addr])
-      return {};
-    return ArrayRef(Bytes).drop_front(Addr);
-  }
-
-  PortStatus load(uint64_t Addr, unsigned NumBytes, APInt &Out) override {
-    if (!isMapped(Addr, NumBytes))
-      return PortStatus::Fault;
-    Out = APInt(NumBytes * 8, 0);
-    for (unsigned I = 0; I != NumBytes; ++I)
-      Out |= APInt(NumBytes * 8, Bytes[Addr + I]) << (8 * I);
-    return PortStatus::Ok;
-  }
-
-  PortStatus store(uint64_t Addr, unsigned NumBytes,
-                   const APInt &Value) override {
-    if (!isMapped(Addr, NumBytes))
-      return PortStatus::Fault;
-    for (unsigned I = 0; I != NumBytes; ++I)
-      Bytes[Addr + I] = Value.extractBitsAsZExtValue(8, 8 * I);
-    return PortStatus::Ok;
-  }
-
-  void putChar(char C) override { outs() << C; }
-
-  void raiseEvent(unsigned Id) override { outs() << "event " << Id << "\n"; }
-
-  ArrayRef<uint8_t> range(uint64_t Addr, uint64_t Size) const {
-    if (Addr + Size > Bytes.size())
-      return {};
-    return ArrayRef(Bytes).slice(Addr, Size);
-  }
-
-private:
-  bool isMapped(uint64_t Addr, uint64_t Size) const {
-    if (Addr + Size > Mapped.size())
-      return false;
-    return std::all_of(Mapped.begin() + Addr, Mapped.begin() + Addr + Size,
-                       [](bool B) { return B; });
-  }
-
-  std::vector<uint8_t> Bytes;
-  std::vector<bool> Mapped;
-};
-
 [[noreturn]] void fail(const Twine &Msg) {
   WithColor::error(errs(), "llvm-aie-run") << Msg << '\n';
   exit(1);
@@ -150,6 +81,7 @@ int main(int argc, char **argv) {
   InitializeAllTargetInfos();
   InitializeAllTargetMCs();
   InitializeAllDisassemblers();
+  InitializeAllTargetSims();
   cl::HideUnrelatedOptions(Cat);
   cl::ParseCommandLineOptions(argc, argv, "AIE instruction simulator\n");
 
@@ -163,8 +95,11 @@ int main(int argc, char **argv) {
   std::unique_ptr<const MCRegisterInfo> MRI(
       TheTarget->createMCRegInfo(TripleStr));
   std::unique_ptr<const MCInstrInfo> MII(TheTarget->createMCInstrInfo());
+  // AIE names each processor after its architecture. An empty CPU would leave
+  // the subtarget without a scheduling model, hence without latencies.
+  StringRef CPU = Triple::getArchTypeName(TT.getArch());
   std::unique_ptr<const MCSubtargetInfo> STI(
-      TheTarget->createMCSubtargetInfo(TripleStr, cpuForTriple(TT), ""));
+      TheTarget->createMCSubtargetInfo(TripleStr, CPU, ""));
   if (!MRI || !MII || !STI)
     fail("no MC layer for " + TT.str());
 
@@ -174,9 +109,10 @@ int main(int argc, char **argv) {
   if (!DisAsm)
     fail("no disassembler for " + TT.str());
 
-  std::unique_ptr<AIESemantics> Sem = createSemantics(*STI, *MII, *MRI);
-  if (!Sem)
-    fail("no instruction semantics for " + TT.str());
+  std::unique_ptr<MCSimulator> Sim(
+      TheTarget->createMCSimulator(*STI, *MII, *MRI, *DisAsm, outs()));
+  if (!Sim)
+    fail("no instruction simulator for " + TT.str());
 
   ErrorOr<std::unique_ptr<MemoryBuffer>> Buf = MemoryBuffer::getFile(InputFile);
   if (!Buf)
@@ -211,22 +147,22 @@ int main(int argc, char **argv) {
          ": link this object before running it");
   }
 
-  FlatMemory Mem;
   for (const object::SectionRef &Sec : Obj.sections()) {
     Expected<StringRef> Contents = Sec.getContents();
     if (!Contents)
       fail(toString(Contents.takeError()));
     if (Sec.isBSS())
-      Mem.mapZeroed(Sec.getAddress(), Sec.getSize());
+      Sim->mapZeroedMemory(Sec.getAddress(), Sec.getSize());
     else if (Sec.isText() || Sec.isData())
-      Mem.map(Sec.getAddress(),
-              ArrayRef(reinterpret_cast<const uint8_t *>(Contents->data()),
-                       Contents->size()));
+      Sim->mapMemory(
+          Sec.getAddress(),
+          ArrayRef(reinterpret_cast<const uint8_t *>(Contents->data()),
+                   Contents->size()));
   }
 
   for (StringRef Spec : Scratch) {
     auto [Addr, Size] = parseRange(Spec, "scratch");
-    Mem.mapZeroed(Addr, Size);
+    Sim->mapZeroedMemory(Addr, Size);
   }
 
   std::optional<uint64_t> Entry;
@@ -239,50 +175,37 @@ int main(int argc, char **argv) {
   if (!Entry)
     fail("no symbol named " + EntrySymbol);
 
-  AIEExecutor Exec(*DisAsm, *MII, *MRI, *Sem, Mem, *Entry);
-
-  StepResult R = StepResult::Retired;
-  uint64_t Steps = 0;
-  for (; Steps != MaxBundles; ++Steps) {
-    R = Exec.step();
-    if (R == StepResult::Done || R == StepResult::Fault)
-      break;
-    if (R == StepResult::Stalled) {
-      fail("stalled with no way to make progress: this embedder has no ports");
-    }
-  }
-
-  const AIECoreState &State = Exec.getState();
-  if (R == StepResult::Fault) {
+  MCSimulator::Status R = Sim->run(*Entry, MaxBundles);
+  if (R == MCSimulator::Status::Stalled)
+    fail("stalled with no way to make progress: this embedder has no ports");
+  if (R == MCSimulator::Status::Fault) {
     WithColor::error(errs(), "llvm-aie-run")
-        << "fault at 0x" << Twine::utohexstr(State.PC) << ": "
-        << Exec.getFaultMessage() << '\n';
-  } else if (R != StepResult::Done) {
+        << "fault at 0x" << Twine::utohexstr(Sim->getPC()) << ": "
+        << Sim->getFaultMessage() << '\n';
+  } else if (R != MCSimulator::Status::Done) {
     WithColor::error(errs(), "llvm-aie-run")
         << "did not finish within " << MaxBundles << " bundles\n";
   }
 
-  outs() << "bundles: " << State.RetiredBundles << '\n';
-  // Cycles exceed bundles by exactly what structural hazards cost, which is the
-  // per-op occupancy a bundle count cannot show.
-  outs() << "cycles: " << State.Cycle << '\n';
-  outs() << "stall-cycles: " << State.StallCycles << '\n';
+  Sim->printStatistics(outs());
   if (PrintRegs)
-    State.Regs.print(outs());
+    Sim->printRegisters(outs());
   for (StringRef Spec : DumpMem) {
     auto [Addr, Size] = parseRange(Spec, "dump-mem");
     outs() << "mem[0x" << Twine::utohexstr(Addr) << "] =";
-    for (uint8_t B : Mem.range(Addr, Size))
+    for (uint8_t B : Sim->readMemory(Addr, Size))
       outs() << format(" %02x", B);
     outs() << '\n';
   }
   if (Coverage) {
-    std::map<StringRef, bool> Reached;
-    for (unsigned Opc : Exec.getExecutedOpcodes())
-      Reached[MII->getName(Opc)] = !Exec.getUnmodelledOpcodes().count(Opc);
-    for (const auto &[Name, Modelled] : Reached)
+    SmallVector<std::pair<unsigned, bool>> Reached;
+    Sim->getCoverage(Reached);
+    std::map<StringRef, bool> ByName;
+    for (auto [Opc, Modelled] : Reached)
+      ByName[MII->getName(Opc)] = Modelled;
+    for (const auto &[Name, Modelled] : ByName)
       outs() << (Modelled ? "modelled   " : "unmodelled ") << Name << '\n';
   }
 
-  return R == StepResult::Done ? 0 : 1;
+  return R == MCSimulator::Status::Done ? 0 : 1;
 }
