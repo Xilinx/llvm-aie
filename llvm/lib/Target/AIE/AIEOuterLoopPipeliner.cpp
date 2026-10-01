@@ -419,6 +419,16 @@ class OrigLoopStructure : public LoopStructure {
       function_ref<void(SmallVectorImpl<Instruction *> &)> SeedCollector,
       bool PopulateStage1);
 
+  // Promote \p PtrUpdateInst and the pointer-update chain under it into
+  // \p ToPromote when that chain is rooted at a stage-0 value.
+  // \p AllowOuterPhiBase is for an inner-loop start step: its base may be an
+  // outer header PHI rather than a stage-0 instruction. Outer backedge updates
+  // do not use that root, or the loop-carried stride would be pipelined too.
+  void considerPointerUpdate(Instruction *PtrUpdateInst, bool AllowOuterPhiBase,
+                             const AIEOLPTargetConfig &Config,
+                             const SmallPtrSetImpl<Instruction *> &Stage0Set,
+                             SmallPtrSetImpl<Instruction *> &ToPromote) const;
+
 public:
   // Build and validate the LS for L; nullptr if L is not a supported candidate.
   static std::unique_ptr<OrigLoopStructure> tryBuildFrom(Loop *L);
@@ -1040,18 +1050,12 @@ void OrigLoopStructure::collectStage0(
                     << stage1Insts().size() << " stage-1 instructions\n");
 }
 
-void OrigLoopStructure::collectDerivedPointerUpdates(
-    const AIEOLPTargetConfig &Config) {
-  // Build a set of current stage-0 instructions for fast lookup.
-  SmallPtrSet<Instruction *, 32> Stage0Set(Stage0Insts.begin(),
-                                           Stage0Insts.end());
-
-  // Track instructions to move from stage-1 to stage-0.
-  SmallPtrSet<Instruction *, 8> ToPromote;
-
-  // Helper to extract the base pointer from a pointer update instruction.
-  // Returns the pointer operand for GEPs and add.2d/add.3d intrinsics,
-  // or nullptr if the instruction is not a recognized pointer update.
+void OrigLoopStructure::considerPointerUpdate(
+    Instruction *PtrUpdateInst, bool AllowOuterPhiBase,
+    const AIEOLPTargetConfig &Config,
+    const SmallPtrSetImpl<Instruction *> &Stage0Set,
+    SmallPtrSetImpl<Instruction *> &ToPromote) const {
+  // The pointer operand of a GEP or add.2d/add.3d, or nullptr otherwise.
   auto GetPointerBase = [&](Instruction *I) -> Value * {
     if (auto *GEP = dyn_cast<GetElementPtrInst>(I))
       return GEP->getPointerOperand();
@@ -1062,65 +1066,72 @@ void OrigLoopStructure::collectDerivedPointerUpdates(
     return nullptr;
   };
 
-  // Helper to check if an instruction is a pointer update (GEP or add.2d/3d).
   auto IsPointerUpdate = [&](Instruction *I) -> bool {
     return GetPointerBase(I) != nullptr;
   };
 
-  // Iterate over outer loop header PHIs to find pointer update instructions.
-  for (PHINode &PHI : getTop()->phis()) {
-    // Get the backedge value (incoming from bottom block).
-    int BottomIdx = PHI.getBasicBlockIndex(getBottom());
-    if (BottomIdx < 0)
+  if (!PtrUpdateInst || !isInTop(PtrUpdateInst) ||
+      !IsPointerUpdate(PtrUpdateInst) || Stage0Set.count(PtrUpdateInst))
+    return;
+
+  SmallVector<Instruction *, 4> PtrUpdateChain;
+  Instruction *Current = PtrUpdateInst;
+  bool Promote = false;
+  while (Current) {
+    PtrUpdateChain.push_back(Current);
+    auto *BaseInst = dyn_cast<Instruction>(GetPointerBase(Current));
+    if (!BaseInst) {
+      Current = nullptr;
       continue;
-
-    Value *BackedgeVal = PHI.getIncomingValue(BottomIdx);
-
-    // Check if the backedge value is a pointer update instruction in top block.
-    auto *PtrUpdateInst = dyn_cast<Instruction>(BackedgeVal);
-    if (!PtrUpdateInst || !isInTop(PtrUpdateInst) ||
-        !IsPointerUpdate(PtrUpdateInst))
-      continue;
-
-    // Check if this instruction is already in stage-0.
-    if (Stage0Set.count(PtrUpdateInst))
-      continue;
-
-    // Check if the instruction's base pointer (or its transitive base) is in
-    // stage-0. Walk the chain to find if any base is in stage-0.
-    SmallVector<Instruction *, 4> PtrUpdateChain;
-    Instruction *Current = PtrUpdateInst;
-    bool BasedOnStage0 = false;
-
-    while (Current) {
-      PtrUpdateChain.push_back(Current);
-      Value *Base = GetPointerBase(Current);
-
-      // If the base is a stage-0 instruction, we found a connection.
-      if (auto *BaseInst = dyn_cast<Instruction>(Base)) {
-        if (Stage0Set.count(BaseInst)) {
-          BasedOnStage0 = true;
-          break;
-        }
-        // Continue walking if the base is also a pointer update in top block.
-        if (isInTop(BaseInst) && IsPointerUpdate(BaseInst)) {
-          Current = BaseInst;
-        } else {
-          Current = nullptr;
-        }
-      } else {
-        Current = nullptr;
-      }
     }
-
-    if (BasedOnStage0) {
-      // Add all instructions in the chain to be promoted.
-      for (Instruction *I : PtrUpdateChain) {
-        if (!Stage0Set.count(I))
-          ToPromote.insert(I);
-      }
+    const bool OuterPhiBase =
+        AllowOuterPhiBase && isa<PHINode>(BaseInst) && isInTop(BaseInst);
+    if (Stage0Set.count(BaseInst) || OuterPhiBase) {
+      Promote = true;
+      break;
     }
+    // Keep walking while the base is itself a pointer update in the top.
+    if (isInTop(BaseInst) && IsPointerUpdate(BaseInst))
+      Current = BaseInst;
+    else
+      Current = nullptr;
   }
+  if (!Promote)
+    return;
+  for (Instruction *I : PtrUpdateChain)
+    if (!Stage0Set.count(I))
+      ToPromote.insert(I);
+}
+
+void OrigLoopStructure::collectDerivedPointerUpdates(
+    const AIEOLPTargetConfig &Config) {
+  // Build a set of current stage-0 instructions for fast lookup.
+  SmallPtrSet<Instruction *, 32> Stage0Set(Stage0Insts.begin(),
+                                           Stage0Insts.end());
+
+  // Track instructions to move from stage-1 to stage-0.
+  SmallPtrSet<Instruction *, 8> ToPromote;
+
+  // Consider pointer updates arriving on the edge from Pred into Block.
+  auto ConsiderIncoming = [&](BasicBlock *Block, BasicBlock *Pred,
+                              bool AllowOuterPhiBase) {
+    for (PHINode &PHI : Block->phis()) {
+      int Idx = PHI.getBasicBlockIndex(Pred);
+      if (Idx < 0)
+        continue;
+      if (auto *I = dyn_cast<Instruction>(PHI.getIncomingValue(Idx)))
+        considerPointerUpdate(I, AllowOuterPhiBase, Config, Stage0Set,
+                              ToPromote);
+    }
+  };
+
+  // Outer-header backedge updates whose base is already in stage 0.
+  ConsiderIncoming(getTop(), getBottom(), /*AllowOuterPhiBase=*/false);
+
+  // Inner-loop start steps. They sit in the header with no load beside them,
+  // so the address combiner leaves them as standalone padds. The inner header
+  // reads them through the stage-0 merge PHI instead.
+  ConsiderIncoming(getInnerHeader(), getTop(), /*AllowOuterPhiBase=*/true);
 
   if (ToPromote.empty())
     return;
@@ -1985,9 +1996,9 @@ bool AIEOuterLoopPipeliner::performTransformation(OrigLoopStructure &OrigLS,
   else
     OrigLS.collectStages(IsSplitPoint);
 
-  // Extend stage-0 with pointer update instructions (GEPs and add.2d/add.3d)
-  // that derive from stage-0 values and feed outer loop PHI backedges. These
-  // should be pipelined along with the loads they enable.
+  // Extend stage-0 with pointer updates (GEPs and add.2d/add.3d) that feed an
+  // outer PHI backedge from a stage-0 base, and with inner-loop start steps
+  // whose base is a stage-0 pointer or an outer pointer PHI.
   OrigLS.collectDerivedPointerUpdates(*TargetConfig);
 
   if (OrigLS.stage0Insts().empty()) {
