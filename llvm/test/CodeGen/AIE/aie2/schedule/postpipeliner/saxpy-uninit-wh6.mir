@@ -27,18 +27,20 @@
 # them into one x10 range with three defs and two uses (= 20 total ranges).
 #
 # CHECK: FINAL LIVE RANGES
-# CHECK: Total live ranges: 21
+# CHECK: Total live ranges: 20
 # CHECK: Live Range #{{[0-9]+}} for wh6:
 # CHECK-NEXT:   Definitions (1):
 # CHECK-NEXT:     [0] Register: wh6 {{.*}} = VLDB_dmw_ldb_ag_idx_imm
 # CHECK-NEXT:   Uses (1):
 # CHECK-NEXT:     [0] Register: wh6 {{.*}} = VCONV_FP32_BF16
 # CHECK: Live Range #{{[0-9]+}} for x10:
-# CHECK-NEXT:   Definitions (2):
-# CHECK-NEXT:     [0] Register: wh10 {{.*}} = VMOV_mv_w
-# CHECK-NEXT:     [1] Register: wl10 {{.*}} = VLDB_dmw_ldb_ag_idx_imm
-# CHECK-NEXT:   Uses (1):
+# CHECK-NEXT:   Definitions (3):
+# CHECK-NEXT:     [0] Register: wl10 {{.*}} = VLDB_dmw_ldb_ag_idx_imm
+# CHECK-NEXT:     [1] Register: wh10 {{.*}} = VMOV_mv_w
+# CHECK-NEXT:     [2] Register: wl10 {{.*}} = VLDB_dmw_ldb_ag_idx_imm
+# CHECK-NEXT:   Uses (2):
 # CHECK-NEXT:     [0] Register: x10 {{.*}} = VMUL_F_vmac_bm_core_dense
+# CHECK-NEXT:     [1] Register: x10 {{.*}} = VMUL_F_vmac_bm_core_dense
 
 --- |
   define dso_local void @saxpy(ptr addrspace(5) noalias nocapture writeonly %d, ptr addrspace(6) noalias nocapture readonly %s, i32 noundef %n) local_unnamed_addr {

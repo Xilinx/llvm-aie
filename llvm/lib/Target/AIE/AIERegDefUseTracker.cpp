@@ -707,9 +707,17 @@ void RegLiveRangeTracker::mergeAliasingLiveRanges(
   // LiveRegs.
   const MCRegister MergedBaseReg = TargetLR.getBaseReg();
 
-  // Collect all defined sub-registers.
+  // Collect all defined sub-registers. Only defs above the earliest use of the
+  // range count: a def below that use was consumed by it and does not cover the
+  // value that is live here.
+  unsigned Frontier = std::numeric_limits<unsigned>::max();
+  for (const auto &UseInfo : TargetLR.uses())
+    Frontier = std::min(Frontier,
+                        InstrOrder.lookup(UseInfo.getOperand()->getParent()));
   DenseSet<MCRegister> AllDefinedRegs;
   for (const auto &DefInfo : TargetLR.defs()) {
+    if (InstrOrder.lookup(DefInfo.getOperand()->getParent()) >= Frontier)
+      continue;
     const MCRegister DefRegister = DefInfo.getOperand()->getReg().asMCReg();
     AllDefinedRegs.insert(DefRegister);
     // Also add all sub-registers of this defined register.
@@ -1036,8 +1044,13 @@ unsigned RegLiveRangeTracker::getOrCreateLiveRangeForOperand(
   // x10 is defined, any y5 (containing x10) should only have x11's lanes
   // live, and a subsequent x10 access should NOT merge into that y5 range.
   const bool IsUse = !MO->isDef();
-  auto It =
-      llvm::find_if(State.LiveRegs, [Reg, IsUse, this](const auto &Entry) {
+  LaneBitmask Cover = LaneBitmask::getNone();
+  for (MCSubRegIndexIterator SubIdxIt(Reg, TRI); SubIdxIt.isValid(); ++SubIdxIt)
+    Cover |= TRI->getSubRegIndexLaneMask(SubIdxIt.getSubRegIndex());
+  if (Cover.none())
+    Cover = LaneBitmask::getAll();
+  auto It = llvm::find_if(
+      State.LiveRegs, [Reg, IsUse, Cover, MO, &State, this](const auto &Entry) {
         if (!TRI->regsOverlap(Reg, Entry.first))
           return false;
 
@@ -1051,15 +1064,13 @@ unsigned RegLiveRangeTracker::getOrCreateLiveRangeForOperand(
           // carry the value of that later def, not the one this read observes,
           // so the read belongs to an earlier range. Joining here would glue
           // two distinct values into one range and orphan the earlier producer.
-          if (IsUse) {
-            LaneBitmask Cover = LaneBitmask::getNone();
-            for (MCSubRegIndexIterator SubIdxIt(Reg, TRI); SubIdxIt.isValid();
-                 ++SubIdxIt)
-              Cover |= TRI->getSubRegIndexLaneMask(SubIdxIt.getSubRegIndex());
-            if (Cover.none())
-              Cover = LaneBitmask::getAll();
-            return (Cover & ~LiveLanes).none();
-          }
+          // Splitting is only safe when the still-live lanes have no producer
+          // above: otherwise both reads share that producer, and the split
+          // would drop the earlier range's pending lanes from LiveRegs.
+          if (IsUse)
+            return (Cover & ~LiveLanes).none() ||
+                   areLanesDefinedBefore(Reg, LiveLanes, *MO->getParent(),
+                                         State);
           return LiveLanes.any();
         }
 
@@ -1103,6 +1114,11 @@ unsigned RegLiveRangeTracker::getOrCreateLiveRangeForOperand(
              "LiveRegs must not reference a discarded live range");
       State.OperandToLiveRange[MO] = LRIdx;
 
+      // A read makes every lane of Reg live again, including lanes that a
+      // later def in this range already killed.
+      if (IsUse && It->first == Reg)
+        It->second.second |= Cover;
+
       // Update base register for this live range if needed.
       const MCRegister CurrentBase = LiveRanges[LRIdx].getBaseReg();
       assert(CurrentBase.isPhysical() && "CurrentBase must be physical");
@@ -1141,6 +1157,32 @@ unsigned RegLiveRangeTracker::getOrCreateLiveRangeForOperand(
   State.LiveRegs[Reg] = {static_cast<int>(NewLRIdx), LaneBitmask::getAll()};
   State.OperandToLiveRange[MO] = NewLRIdx;
   return NewLRIdx;
+}
+
+bool RegLiveRangeTracker::areLanesDefinedBefore(
+    MCRegister Reg, LaneBitmask Lanes, const MachineInstr &MI,
+    const LivenessScanState &State) const {
+  SmallVector<MCRegister, 4> LiveSubRegs;
+  bool HasSubRegs = false;
+  for (MCSubRegIndexIterator SubIdxIt(Reg, TRI); SubIdxIt.isValid();
+       ++SubIdxIt) {
+    HasSubRegs = true;
+    if ((TRI->getSubRegIndexLaneMask(SubIdxIt.getSubRegIndex()) & ~Lanes)
+            .none())
+      LiveSubRegs.push_back(SubIdxIt.getSubReg());
+  }
+  if (!HasSubRegs && Lanes.any())
+    LiveSubRegs.push_back(Reg);
+
+  for (const MachineInstr *Prev :
+       State.SemanticOrder.take_front(InstrOrder.lookup(&MI)))
+    for (const MachineOperand &PrevMO : Prev->operands())
+      if (PrevMO.isReg() && PrevMO.isDef() && PrevMO.getReg().isPhysical() &&
+          llvm::any_of(LiveSubRegs, [&](MCRegister SubReg) {
+            return TRI->regsOverlap(PrevMO.getReg(), SubReg);
+          }))
+        return true;
+  return false;
 }
 
 void RegLiveRangeTracker::processDefsInInstruction(MachineInstr &MI,
@@ -1586,6 +1628,7 @@ void RegLiveRangeTracker::analyze(MachineBasicBlock &MBB,
 
   // Initialize state for liveness scan.
   LivenessScanState State;
+  State.SemanticOrder = SemanticOrder;
 
   // Build instruction order map and collect operands.
   buildInstructionOrderAndCollectOperands(SemanticOrder, State);
