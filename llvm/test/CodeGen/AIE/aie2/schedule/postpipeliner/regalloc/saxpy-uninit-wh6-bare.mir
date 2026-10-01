@@ -1,0 +1,83 @@
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+
+# RUN: llc --mtriple=aie2 -O2 \
+# RUN:   --start-before=postmisched \
+# RUN:   --aie-postpipeliner-vreg-mode=1 \
+# RUN:   --aie-postpipeliner-phys-mode=0 \
+# RUN:   --debug-only=aie-reg-liverange \
+# RUN:   --aie-test-regdefuse-tracker \
+# RUN:   %s -o /dev/null 2>&1 | FileCheck %s
+# REQUIRES: asserts
+
+# Bare-bones reproducer for https://github.com/Xilinx/llvm-aie/issues/1318.
+#
+# The loop loads wl10 (lower half of x10) twice via VLD_idx, zero-initialises
+# wh10 (upper half of x10) via VMOV from wl2 between the two loads, and uses
+# the composite x10 in two VMUL instructions.
+#
+# The bug: when processing the VMOV that defines wh10, the old code incorrectly
+# detaches the second VMUL's x10 use from the existing x10 live range, creating
+# a spurious second x10 live range that couples wh10 (VMOV) with wl10 (VLD),
+# rather than keeping all x10 uses unified in one range.
+#
+# This baseline (pre-fix) test checks for the spurious x10 range:
+
+# CHECK: FINAL LIVE RANGES
+# CHECK: Live Range #{{[0-9]+}} for x10:
+# CHECK-NEXT:   Definitions (2):
+# CHECK-NEXT:     [0] Register: wh10 {{.*}} = VMOV_mv_w
+# CHECK-NEXT:     [1] Register: wl10 {{.*}} = VLDB_dmw_ldb_ag_idx_imm
+# CHECK-NEXT:   Uses (1):
+# CHECK-NEXT:     [0] Register: x10 {{.*}} = VMUL_F_vmac_bm_core_dense
+
+--- |
+  define void @saxpy_bare(ptr %p) {
+  entry:
+    call void @llvm.set.loop.iterations.i32(i32 4)
+    br label %for.body
+  for.body:
+    %pp = phi ptr [ %p, %entry ], [ %pp, %for.body ]
+    %1 = call i1 @llvm.loop.decrement.i32(i32 1)
+    br i1 %1, label %for.body, label %exit, !llvm.loop !0
+  exit:
+    ret void
+  }
+
+  declare void @llvm.set.loop.iterations.i32(i32)
+  declare i1 @llvm.loop.decrement.i32(i32)
+
+  !0 = distinct !{!0, !1}
+  !1 = !{!"llvm.loop.itercount.range", i64 4}
+...
+---
+name:            saxpy_bare
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  bb.0.entry (align 16):
+    successors: %bb.1
+    liveins: $p0, $r0, $x2:0x0000000000000002, $x4
+
+    $lc = ADD_NC $r0, 0
+    $ls = MOVXM_lng_cg %bb.1
+    $le = MOVXM_lng_cg <mcsymbol .L_LEnd0>
+
+  bb.1.for.body:
+    successors: %bb.1, %bb.2
+    liveins: $p0, $r0, $x2:0x0000000000000002, $x4
+
+    $wl10 = VLD_idx_imm_3x32_pseudo $p0, 32 :: (load (<16 x s16>) from %ir.pp)
+    $wh10 = VMOV_mv_w $wl2
+    $bmh0 = VMUL_F_vmac_bm_core_dense $x10, $x4, $r0, implicit-def $srfpflags, implicit $crfpmask
+    $wl10 = VLD_idx_imm_3x32_pseudo $p0, 32 :: (load (<16 x s16>) from %ir.pp)
+    $bmh1 = VMUL_F_vmac_bm_core_dense $x10, $x4, $r0, implicit-def $srfpflags, implicit $crfpmask
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+
+  bb.2.exit:
+    RET implicit $lr
+    DelayedSchedBarrier
+...
