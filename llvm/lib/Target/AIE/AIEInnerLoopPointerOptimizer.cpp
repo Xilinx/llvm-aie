@@ -127,6 +127,25 @@ bool collectValidUsers(Value *V, GetElementPtrInst *ExcludeGEP,
   return true;
 }
 
+/// Returns true if any user of \p V appears strictly between \p From
+/// (exclusive) and \p To (inclusive) in the basic block instruction list.
+/// This is used to check whether moving \p V past \p To would break a
+/// def-use chain.
+bool hasUserBetween(Value *V, Instruction *From, Instruction *To) {
+  SmallPtrSet<Instruction *, 8> Users;
+  for (User *U : V->users())
+    if (auto *I = dyn_cast<Instruction>(U))
+      Users.insert(I);
+  // Walk instructions after From up to and including To.
+  for (auto It = std::next(From->getIterator()),
+            End = std::next(To->getIterator());
+       It != End; ++It) {
+    if (Users.contains(&*It))
+      return true;
+  }
+  return false;
+}
+
 /// Returns the unique constant-stride i8 GEP in \p Body that uses \p Node as
 /// its pointer operand, or nullptr if no such GEP exists.
 GetElementPtrInst *findNextChainGEP(Value *Node, BasicBlock *Body) {
@@ -491,11 +510,21 @@ bool AIEInnerLoopPointerOptimizer::buildPostIncChain(InnerLoopStructure &ILS) {
         break;
 
       if (NextGEP->comesBefore(LastLoad)) {
-        LLVM_DEBUG(dbgs() << "ILPO:   Moving GEP after last load:\n"
-                          << "         GEP:   " << *NextGEP << "\n"
-                          << "         After: " << *LastLoad << "\n");
-        NextGEP->moveAfter(LastLoad);
-        Changed = true;
+        // Safety: do not move the GEP past any instruction that uses it.
+        // E.g. if a load between the GEP and LastLoad uses the GEP result,
+        // moving the GEP would place the definition after its use.
+        if (hasUserBetween(NextGEP, NextGEP, LastLoad)) {
+          LLVM_DEBUG(dbgs() << "ILPO:   Skip move (user between GEP and "
+                               "insertion point):\n"
+                            << "         GEP:   " << *NextGEP << "\n"
+                            << "         After: " << *LastLoad << "\n");
+        } else {
+          LLVM_DEBUG(dbgs() << "ILPO:   Moving GEP after last load:\n"
+                            << "         GEP:   " << *NextGEP << "\n"
+                            << "         After: " << *LastLoad << "\n");
+          NextGEP->moveAfter(LastLoad);
+          Changed = true;
+        }
       }
 
       Node = NextGEP;
