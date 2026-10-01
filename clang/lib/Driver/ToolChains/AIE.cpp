@@ -33,6 +33,23 @@ void aie::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   ArgStringList CmdArgs;
   // We should not use the default page alignment.
   CmdArgs.push_back(Args.MakeArgString("--nmagic"));
+
+  // On AIE, address 0 is a valid address. When --gc-sections discards a
+  // function, LLD tombstones the dead function's address in .debug_info. For
+  // DWARF < 5 (AIE caps DWARF at v4) the default tombstone is 0, which is
+  // indistinguishable from a valid code address and leaves GC'd
+  // DW_TAG_subprogram DIEs claiming the range [0, size), colliding with live
+  // functions and corrupting downstream consumers.
+  //
+  // Use a non-colliding tombstone for .debug_info. The AIE backend writes debug
+  // address fields through a 20-bit field (addr[19:0]), so the widest
+  // well-defined, non-colliding value is 0xFFFFF (top of the program-address
+  // space). This is emitted early so that a user-supplied
+  // -Wl,-z,dead-reloc-in-nonalloc=... (added after the linker inputs) still
+  // overrides it: LLD uses the last matching entry.
+  CmdArgs.push_back("-z");
+  CmdArgs.push_back("dead-reloc-in-nonalloc=.debug_info=0xfffff");
+
   AddLinkerInputs(ToolChain, Inputs, Args, CmdArgs, JA);
   // CmdArgs.push_back("-shared");
   ToolChain.AddFilePathLibArgs(Args, CmdArgs);
