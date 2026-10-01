@@ -111,7 +111,8 @@ bool collectValidUsers(Value *V, GetElementPtrInst *ExcludeGEP,
     if (auto *GEP = dyn_cast<GetElementPtrInst>(U)) {
       if (GEP == ExcludeGEP)
         continue;
-      if (GEP->getParent() != Body || !getConstantGEPLastIndex(GEP))
+      if (GEP->getParent() != Body || !AIEIRUtils::isSimpleI8GEP(GEP) ||
+          !getConstantGEPLastIndex(GEP))
         return false;
       SiblingGEPs.push_back(GEP);
       if (!collectValidUsers(GEP, ExcludeGEP, Body, SiblingGEPs))
