@@ -47,10 +47,12 @@
 ; CHECK:   %v1.steady.top = load i32, ptr %b, align 4
 ; CHECK:   br label %steady.stage1.top
 
-; Steady-state header must have pipelined PHIs.
+; Steady-state header must have a pipelined PHI for the value stage 1 reads.
+; The load PHIs are dead, because the multiply consuming them is in stage 0 too.
 ; CHECK: steady.stage1.top:
-; CHECK:   %v0.steady.phi = phi i32 [ %v0.steady.top, %stage0.top ], [ %v0.steady.bottom, %steady.stage1.bottom.and.stage0.top ]
-; CHECK:   %v1.steady.phi = phi i32 [ %v1.steady.top, %stage0.top ], [ %v1.steady.bottom, %steady.stage1.bottom.and.stage0.top ]
+; CHECK-NOT:   %v0.steady.phi
+; CHECK-NOT:   %v1.steady.phi
+; CHECK:   %.phi = phi i32 [ %.top, %stage0.top ], [ %.bottom, %steady.stage1.bottom.and.stage0.top ]
 
 define void @metadata_opt_in(ptr noalias %a, ptr noalias %b, ptr noalias %c,
                               i32 %N, i32 %M) {

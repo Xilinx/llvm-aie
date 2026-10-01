@@ -26,6 +26,10 @@
 ;
 ; A loop-carried stride whose base is only the outer header PHI is not an
 ; inner start step, and stays in stage 1.
+;
+; The steady header keeps a merge PHI only when stage 1 reads the value.
+; %b.mid, %a.addr, and the unused %v0 load are consumed only by stage-0
+; clones, so their PHIs are dropped.
 
 define void @inner_start_from_outer_phi(ptr noalias %a, ptr noalias %b, ptr noalias %c, i32 %N, i32 %M) {
 ; CHECK-LABEL: define void @inner_start_from_outer_phi(
@@ -46,7 +50,6 @@ define void @inner_start_from_outer_phi(ptr noalias %a, ptr noalias %b, ptr noal
 ; CHECK-NEXT:    [[B_PTR_STEADY:%.*]] = phi ptr [ [[B_PTR_NEXT_STEADY:%.*]], %[[STEADY_STAGE1_BOTTOM_AND_STAGE0_TOP]] ], [ [[B]], %[[STAGE0_TOP]] ]
 ; CHECK-NEXT:    [[C_PTR_STEADY:%.*]] = phi ptr [ [[C_PTR_NEXT_STEADY:%.*]], %[[STEADY_STAGE1_BOTTOM_AND_STAGE0_TOP]] ], [ [[C]], %[[STAGE0_TOP]] ]
 ; CHECK-NEXT:    [[V0_STEADY_PHI:%.*]] = phi i32 [ [[V0_STEADY_TOP]], %[[STAGE0_TOP]] ], [ [[V0_STEADY_BOTTOM:%.*]], %[[STEADY_STAGE1_BOTTOM_AND_STAGE0_TOP]] ]
-; CHECK-NEXT:    [[B_MID_STEADY_PHI:%.*]] = phi ptr [ [[B_MID_STEADY_TOP]], %[[STAGE0_TOP]] ], [ [[B_MID_STEADY_BOTTOM:%.*]], %[[STEADY_STAGE1_BOTTOM_AND_STAGE0_TOP]] ]
 ; CHECK-NEXT:    [[B_START_STEADY_PHI:%.*]] = phi ptr [ [[B_START_STEADY_TOP]], %[[STAGE0_TOP]] ], [ [[B_START_STEADY_BOTTOM:%.*]], %[[STEADY_STAGE1_BOTTOM_AND_STAGE0_TOP]] ]
 ; CHECK-NEXT:    call void @llvm.set.loop.iterations.i32(i32 [[M]])
 ; CHECK-NEXT:    [[A_PTR_NEXT_STEADY]] = getelementptr inbounds i32, ptr [[A_PTR_STEADY]], i32 8
@@ -66,7 +69,7 @@ define void @inner_start_from_outer_phi(ptr noalias %a, ptr noalias %b, ptr noal
 ; CHECK-NEXT:    [[I_NEXT_STEADY]] = add i32 [[I_STEADY]], 1
 ; CHECK-NEXT:    [[OUTER_COND_STEADY:%.*]] = icmp slt i32 [[I_NEXT_STEADY]], [[N]]
 ; CHECK-NEXT:    [[V0_STEADY_BOTTOM]] = load i32, ptr [[A_PTR_NEXT_STEADY]], align 4
-; CHECK-NEXT:    [[B_MID_STEADY_BOTTOM]] = getelementptr inbounds i32, ptr [[B_PTR_NEXT_STEADY]], i32 1
+; CHECK-NEXT:    [[B_MID_STEADY_BOTTOM:%.*]] = getelementptr inbounds i32, ptr [[B_PTR_NEXT_STEADY]], i32 1
 ; CHECK-NEXT:    [[B_START_STEADY_BOTTOM]] = getelementptr inbounds i32, ptr [[B_MID_STEADY_BOTTOM]], i32 2
 ; CHECK-NEXT:    br i1 [[OUTER_COND_STEADY]], label %[[STEADY_STAGE1_TOP]], label %[[EXIT]], !llvm.loop [[LOOP2:![0-9]+]]
 ; CHECK:       [[EXIT]]:
@@ -134,8 +137,6 @@ define void @inner_start_from_stage0_addr(ptr noalias %a, ptr noalias %c, i32 %N
 ; CHECK-NEXT:    [[I_STEADY:%.*]] = phi i32 [ [[I_NEXT_STEADY:%.*]], %[[STEADY_STAGE1_BOTTOM_AND_STAGE0_TOP:.*]] ], [ 0, %[[STAGE0_TOP]] ]
 ; CHECK-NEXT:    [[A_PTR_STEADY:%.*]] = phi ptr [ [[A_PTR_NEXT_STEADY:%.*]], %[[STEADY_STAGE1_BOTTOM_AND_STAGE0_TOP]] ], [ [[A]], %[[STAGE0_TOP]] ]
 ; CHECK-NEXT:    [[C_PTR_STEADY:%.*]] = phi ptr [ [[C_PTR_NEXT_STEADY:%.*]], %[[STEADY_STAGE1_BOTTOM_AND_STAGE0_TOP]] ], [ [[C]], %[[STAGE0_TOP]] ]
-; CHECK-NEXT:    [[A_ADDR_STEADY_PHI:%.*]] = phi ptr [ [[A_ADDR_STEADY_TOP]], %[[STAGE0_TOP]] ], [ [[A_ADDR_STEADY_BOTTOM:%.*]], %[[STEADY_STAGE1_BOTTOM_AND_STAGE0_TOP]] ]
-; CHECK-NEXT:    [[V0_STEADY_PHI:%.*]] = phi i32 [ [[V0_STEADY_TOP]], %[[STAGE0_TOP]] ], [ [[V0_STEADY_BOTTOM:%.*]], %[[STEADY_STAGE1_BOTTOM_AND_STAGE0_TOP]] ]
 ; CHECK-NEXT:    [[A_START_STEADY_PHI:%.*]] = phi ptr [ [[A_START_STEADY_TOP]], %[[STAGE0_TOP]] ], [ [[A_START_STEADY_BOTTOM:%.*]], %[[STEADY_STAGE1_BOTTOM_AND_STAGE0_TOP]] ]
 ; CHECK-NEXT:    call void @llvm.set.loop.iterations.i32(i32 [[M]])
 ; CHECK-NEXT:    [[A_PTR_NEXT_STEADY]] = getelementptr inbounds i32, ptr [[A_PTR_STEADY]], i32 8
@@ -153,8 +154,8 @@ define void @inner_start_from_stage0_addr(ptr noalias %a, ptr noalias %c, i32 %N
 ; CHECK-NEXT:    store i32 [[ACC_NEXT_STEADY]], ptr [[C_PTR_STEADY]], align 4
 ; CHECK-NEXT:    [[I_NEXT_STEADY]] = add i32 [[I_STEADY]], 1
 ; CHECK-NEXT:    [[OUTER_COND_STEADY:%.*]] = icmp slt i32 [[I_NEXT_STEADY]], [[N]]
-; CHECK-NEXT:    [[A_ADDR_STEADY_BOTTOM]] = getelementptr inbounds i32, ptr [[A_PTR_NEXT_STEADY]], i32 [[OFFSET]]
-; CHECK-NEXT:    [[V0_STEADY_BOTTOM]] = load i32, ptr [[A_ADDR_STEADY_BOTTOM]], align 4
+; CHECK-NEXT:    [[A_ADDR_STEADY_BOTTOM:%.*]] = getelementptr inbounds i32, ptr [[A_PTR_NEXT_STEADY]], i32 [[OFFSET]]
+; CHECK-NEXT:    [[V0_STEADY_BOTTOM:%.*]] = load i32, ptr [[A_ADDR_STEADY_BOTTOM]], align 4
 ; CHECK-NEXT:    [[A_START_STEADY_BOTTOM]] = getelementptr inbounds i32, ptr [[A_ADDR_STEADY_BOTTOM]], i32 4
 ; CHECK-NEXT:    br i1 [[OUTER_COND_STEADY]], label %[[STEADY_STAGE1_TOP]], label %[[EXIT]], !llvm.loop [[LOOP6:![0-9]+]]
 ; CHECK:       [[EXIT]]:

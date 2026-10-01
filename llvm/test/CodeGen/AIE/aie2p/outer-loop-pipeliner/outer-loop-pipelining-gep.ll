@@ -26,7 +26,7 @@
 ;
 ; Expected after transformation:
 ;   - Stage-0 top: GEP cloned with initial PHI values, load uses cloned GEP
-;   - Steady-state header: pipelined PHIs for both GEPs and loads
+;   - Steady-state header: a pipelined PHI for the one value stage 1 reads
 ;   - Steady-state bottom: GEP cloned with next-iteration pointers, load uses cloned GEP
 ;
 ; Note: The -O2 optimization level runs LSR which transforms the inner loop,
@@ -43,12 +43,15 @@
 ; CHECK-NOT:  call void @llvm.set.loop.iterations
 ; CHECK:      br label %steady.stage1.top
 
-; Steady-state header: pipelined PHIs for GEPs and loads
+; Steady-state header: the GEPs and loads are read only by the multiply, which
+; is in stage 0 too and uses the top/bottom clones directly, so their merge PHIs
+; are dead and only the multiply's survives.
 ; CHECK: steady.stage1.top:
-; CHECK-DAG:   %a.gep.steady.phi = phi ptr [ %a.gep.steady.top, %stage0.top ], [ %a.gep.steady.bottom, %steady.stage1.bottom.and.stage0.top ]
-; CHECK-DAG:   %b.gep.steady.phi = phi ptr [ %b.gep.steady.top, %stage0.top ], [ %b.gep.steady.bottom, %steady.stage1.bottom.and.stage0.top ]
-; CHECK-DAG:   %v0.steady.phi = phi i32 [ %v0.steady.top, %stage0.top ], [ %v0.steady.bottom, %steady.stage1.bottom.and.stage0.top ]
-; CHECK-DAG:   %v1.steady.phi = phi i32 [ %v1.steady.top, %stage0.top ], [ %v1.steady.bottom, %steady.stage1.bottom.and.stage0.top ]
+; CHECK-NOT:   %a.gep.steady.phi
+; CHECK-NOT:   %b.gep.steady.phi
+; CHECK-NOT:   %v0.steady.phi
+; CHECK-NOT:   %v1.steady.phi
+; CHECK:   %.phi = phi i32 [ %.top, %stage0.top ], [ %.bottom, %steady.stage1.bottom.and.stage0.top ]
 ; CHECK:   call void @llvm.set.loop.iterations.i32(i32 %M)
 ; CHECK:   br label %steady.stage1.inner.inner.header
 
