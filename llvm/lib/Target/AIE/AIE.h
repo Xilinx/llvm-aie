@@ -19,8 +19,10 @@
 #include "Utils/AIEBaseInfo.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Target/TargetMachine.h"
+#include <memory>
 
 namespace llvm {
+class AIEOLPTargetConfig;
 class AIESubtarget;
 class AIETargetMachine;
 class AsmPrinter;
@@ -125,7 +127,10 @@ llvm::FunctionPass *createReservedRegsLICMPass();
 // Outer Loop Pipeliner (IR-level, aie2p and aie2ps targets)
 extern char &AIEOuterLoopPipelinerID;
 void initializeAIEOuterLoopPipelinerPass(PassRegistry &);
-llvm::FunctionPass *createAIEOuterLoopPipelinerPass();
+// Config carries the target policy the pass needs; see AIEOLPTargetConfig.
+// Passing nullptr selects the default policy.
+llvm::FunctionPass *createAIEOuterLoopPipelinerPass(
+    std::unique_ptr<const AIEOLPTargetConfig> Config = nullptr);
 
 // Inner Loop Versioning (IR-level). Emits a runtime trip-count guard around a
 // pipelined copy of a single-block inner loop whose minimum trip count is too

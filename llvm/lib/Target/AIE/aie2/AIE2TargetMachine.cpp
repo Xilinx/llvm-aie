@@ -88,13 +88,18 @@ void AIE2PassConfig::addCodeGenPrepare() {
   addPass(createAIESwitchLowering());
 }
 
+std::unique_ptr<const AIEOLPTargetConfig> AIE2PassConfig::getOLPConfig() const {
+  return std::make_unique<AIEOLPTargetConfig>(
+      getTM<AIEBaseTargetMachine>().getAIESubtarget()->getInstrInfo());
+}
+
 bool AIE2PassConfig::addPreISel() {
   if (TM->getOptLevel() != CodeGenOptLevel::None) {
     if (!DisableInnerLoopVersioning)
       addPass(createAIEInnerLoopVersioningPass());
     addPass(createHardwareLoopsLegacyPass());
     addPass(createAIEOuterLoopPointerOptimizerPass());
-    addPass(createAIEOuterLoopPipelinerPass());
+    addPass(createAIEOuterLoopPipelinerPass(getOLPConfig()));
   }
   return false;
 }

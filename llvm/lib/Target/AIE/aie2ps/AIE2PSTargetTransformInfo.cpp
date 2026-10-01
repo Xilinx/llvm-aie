@@ -11,7 +11,6 @@
 #include "AIE2PSTargetTransformInfo.h"
 #include "Utils/AIEIRUtils.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
-#include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/IntrinsicsAIE2PS.h"
 #include "llvm/Transforms/InstCombine/InstCombiner.h"
 
@@ -26,16 +25,6 @@ bool AIE2PSTTICommon::isVectorExtractIntrinsicID(Intrinsic::ID ID) const {
 
 bool AIE2PSTTICommon::isGetSSIntrinsicID(Intrinsic::ID ID) const {
   return ID == Intrinsic::aie2ps_get_ss;
-}
-
-bool AIE2PSTTIImpl::isLeanStage0LoadIntrinsic(const Instruction &I) const {
-  const auto *II = dyn_cast<IntrinsicInst>(&I);
-  if (!II || !II->getCalledFunction())
-    return false;
-  // A FIFO load returns the loaded vector together with the updated pointer
-  // and multidimensional state, so the whole intrinsic has to move to stage 0;
-  // there is no separate address computation to leave behind in stage 1.
-  return II->getCalledFunction()->getName().starts_with("llvm.aie2ps.fifo.ld");
 }
 
 void AIE2PSTTIImpl::getUnrollingPreferences(Loop *L, ScalarEvolution &SE,
