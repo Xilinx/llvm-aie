@@ -85,7 +85,7 @@ ConstantInt *getConstantGEPLastIndex(const GetElementPtrInst *GEP) {
 /// can skip PHIs that are already in that form.
 bool hasDirectMemAccess(Value *V) {
   for (User *U : V->users()) {
-    if (isa<LoadInst>(U) || isa<StoreInst>(U))
+    if (AIEIRUtils::isMemoryAddressOperand(V, U))
       return true;
     if (isa<AddrSpaceCastInst>(U) && hasDirectMemAccess(U))
       return true;

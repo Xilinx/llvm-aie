@@ -200,7 +200,7 @@ bool hasMemoryUseInBlock(const Value *V, const BasicBlock *BB) {
     const Instruction *UI = dyn_cast<Instruction>(U);
     if (!UI || UI->getParent() != BB)
       continue;
-    if (isa<LoadInst>(UI) || isa<StoreInst>(UI))
+    if (AIEIRUtils::isMemoryAddressOperand(V, U))
       return true;
   }
   return false;

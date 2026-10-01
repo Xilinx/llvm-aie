@@ -146,6 +146,14 @@ bool isUpperPartOfResultDiscarded(IntrinsicInst &II) {
 // GEP / Pointer Utilities
 //===----------------------------------------------------------------------===//
 
+bool isMemoryAddressOperand(const Value *V, const User *U) {
+  if (const auto *LI = dyn_cast<LoadInst>(U))
+    return LI->getPointerOperand() == V;
+  if (const auto *SI = dyn_cast<StoreInst>(U))
+    return SI->getPointerOperand() == V;
+  return false;
+}
+
 bool isSimpleGEP(const GetElementPtrInst *GEP) {
   return GEP->getNumIndices() == 1;
 }
@@ -167,11 +175,11 @@ bool isChainLinkCandidate(GetElementPtrInst *GEP, int64_t &OutOffset) {
 SmallVector<Instruction *, 4> collectMemUsers(Value *V) {
   SmallVector<Instruction *, 4> MemUsers;
   for (User *U : V->users()) {
-    if (isa<LoadInst>(U) || isa<StoreInst>(U)) {
+    if (isMemoryAddressOperand(V, U)) {
       MemUsers.push_back(cast<Instruction>(U));
     } else if (auto *ASC = dyn_cast<AddrSpaceCastInst>(U)) {
       for (User *UU : ASC->users())
-        if (isa<LoadInst>(UU) || isa<StoreInst>(UU))
+        if (isMemoryAddressOperand(ASC, UU))
           MemUsers.push_back(cast<Instruction>(UU));
     }
   }

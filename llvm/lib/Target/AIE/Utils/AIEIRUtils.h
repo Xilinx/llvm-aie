@@ -26,6 +26,7 @@ class Type;
 class InstCombiner;
 class Triple;
 class Loop;
+class User;
 class Value;
 } // namespace llvm
 
@@ -70,6 +71,11 @@ void dropLoopMetadata(Loop &L, ArrayRef<StringRef> KeysToDrop);
 // GEP / Pointer Utilities
 // Shared between AIEOuterLoopPointerOptimizer and AIEInnerLoopPointerOptimizer.
 //===----------------------------------------------------------------------===//
+
+/// True if \p V is used as the *address* (pointer) operand of the memory
+/// instruction \p U.  For loads the pointer is always operand 0; for stores
+/// the pointer is operand 1 — so a store-of-\p V (value operand) returns false.
+bool isMemoryAddressOperand(const Value *V, const User *U);
 
 /// True if GEP has exactly one index (simple GEP).
 bool isSimpleGEP(const GetElementPtrInst *GEP);
