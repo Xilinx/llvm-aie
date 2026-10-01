@@ -31,6 +31,7 @@
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/CodeGen/Register.h"
 #include "llvm/MC/MCRegister.h"
+#include "llvm/MC/MCRegisterInfo.h"
 
 namespace llvm {
 
@@ -297,44 +298,17 @@ class RegLiveRangeTracker {
   bool hasTiedOperands(const RegLiveRange &LR) const;
 
   /// Check if a live range's base register is fully defined in the block.
-  /// Uses lane mask intersection with the block's live-in set to determine
+  /// Uses register-unit intersection with the block's live-in set to determine
   /// if the register is truly defined within the block or comes from outside.
   /// This can discriminate between a truly undefined register (not in live-in,
   /// safe to virtualize) and a register defined outside the loop (in live-in,
   /// should be rejected to preserve loop-carried values).
-  bool
-  isFullyDefined(const RegLiveRange &LR,
-                 const DenseMap<MCRegister, LaneBitmask> &LocalLiveLaneMasks,
-                 const MachineBasicBlock &MBB) const;
+  bool isFullyDefined(const RegLiveRange &LR,
+                      const DenseSet<MCRegUnit> &LocalLiveUnits,
+                      const MachineBasicBlock &MBB) const;
 
   /// Second-stage full coverage pruning
   void pruneByFullCoverage();
-
-  //===--------------------------------------------------------------------===//
-  // Analyze helper methods (decomposition of analyze())
-  //===--------------------------------------------------------------------===//
-
-  /// State passed through the liveness scan.
-  /// Groups the mutable state that is threaded through the backward scan.
-  struct LivenessScanState {
-    /// Map from register to its current live range index (signed) and lane
-    /// mask. Use NoLiveRange as sentinel for live-out registers not yet
-    /// associated with a range.
-    DenseMap<MCRegister, std::pair<int, LaneBitmask>> LiveRegs;
-
-    /// Map from operand to live range index.
-    DenseMap<MachineOperand *, unsigned> OperandToLiveRange;
-
-    /// Set of registers used implicitly (invalidates explicit ranges).
-    DenseSet<MCRegister> ImplicitRegs;
-
-    /// Instructions in semantic order, indexed by InstrOrder.
-    ArrayRef<MachineInstr *> SemanticOrder;
-  };
-
-  /// Merge aliasing live ranges when a definition is encountered.
-  void mergeAliasingLiveRanges(unsigned DefLRIdx, MCRegister DefReg,
-                               LivenessScanState &State);
 
   /// Helper to find the most promising scarce range set.
   /// Called by analyze() to populate MostPromisingScarceRanges.
@@ -365,25 +339,56 @@ class RegLiveRangeTracker {
   /// Mark live ranges as scarce if they have exactly 1 available register.
   void markScarceRanges();
 
-  /// Return true if an instruction before \p MI in semantic order defines any
-  /// of the \p Lanes of \p Reg.
-  bool areLanesDefinedBefore(MCRegister Reg, LaneBitmask Lanes,
-                             const MachineInstr &MI,
-                             const LivenessScanState &State) const;
+  //===--------------------------------------------------------------------===//
+  // Analyze helper methods (decomposition of analyze())
+  //===--------------------------------------------------------------------===//
+
+  /// State passed through the liveness scan.
+  /// Groups the mutable state that is threaded through the backward scan.
+  struct LivenessScanState {
+    /// Map from register unit to the set of live range indices currently
+    /// reading it (going backward).  When a def kills a unit, all readers are
+    /// collected and merged into the def's live range.
+    DenseMap<MCRegUnit, SmallVector<unsigned, 4>> UnitReaders;
+
+    /// Map from register unit to the physical live-out register that seeded it.
+    /// Used by mergeAliasingLiveRanges to expand the base register of a live
+    /// range when a def aliases a live-out unit.
+    DenseMap<MCRegUnit, MCRegister> LiveOutReg;
+
+    /// Units whose live-out claim has already been incorporated into a
+    /// RESERVED live range by a def processing step.  Subsequent (earlier in
+    /// forward order) defs and uses must not inherit the reserved status for
+    /// these units.
+    DenseSet<MCRegUnit> ConsumedLiveOutUnits;
+
+    /// Map from operand to live range index.
+    DenseMap<MachineOperand *, unsigned> OperandToLiveRange;
+
+    /// Set of registers used implicitly (invalidates explicit ranges).
+    DenseSet<MCRegister> ImplicitRegs;
+  };
 
   /// Build instruction order map and collect physical register operands.
   /// Also populates ImplicitRegs.
   void buildInstructionOrderAndCollectOperands(
       ArrayRef<MachineInstr *> SemanticOrder, LivenessScanState &State);
 
-  /// Initialize LiveRegs from live-out registers.
-  void initLiveRegsFromLiveOuts(const MachineBasicBlock &MBB,
-                                LivenessScanState &State);
+  /// Initialize LiveOutReg from live-out registers of the basic block.
+  void initLiveOutReg(const MachineBasicBlock &MBB, LivenessScanState &State);
 
-  /// Get or create a live range for a register operand.
-  /// Returns the live range index.
-  unsigned getOrCreateLiveRangeForOperand(MCRegister Reg, MachineOperand *MO,
-                                          LivenessScanState &State);
+  /// Merge aliasing live ranges when a definition is encountered.
+  /// Kills all unit readers of DefReg and attempts to absorb them into
+  /// the def's live range.
+  void mergeAliasingLiveRanges(unsigned DefLRIdx, MCRegister DefReg,
+                               LivenessScanState &State);
+
+  /// Create a new atomic live range for a single register operand.
+  /// Every def and every use operand gets its own live range initially; the
+  /// merge phase (inside mergeAliasingLiveRanges) combines what belongs
+  /// together.  Returns the new live range index.
+  unsigned createLiveRangeForOperand(MCRegister Reg, MachineOperand *MO,
+                                     LivenessScanState &State);
 
   /// Process def operands for a single instruction (reverse pass).
   void processDefsInInstruction(MachineInstr &MI, LivenessScanState &State);
@@ -392,7 +397,7 @@ class RegLiveRangeTracker {
   void processUsesInInstruction(MachineInstr &MI, LivenessScanState &State);
 
   /// Absorb SrcIdx into TargetIdx: merge the two live ranges and redirect
-  /// all OperandToLiveRange and LiveRegs entries from SrcIdx to TargetIdx.
+  /// all OperandToLiveRange and LiveUnits entries from SrcIdx to TargetIdx.
   /// Clears LR[SrcIdx] on success.  Returns false if the merge fails, in
   /// which case neither range is modified.
   bool absorbLiveRange(unsigned TargetIdx, unsigned SrcIdx,
@@ -416,9 +421,9 @@ class RegLiveRangeTracker {
                            LivenessScanState &State);
 
   /// Apply first-stage safety filtering to live ranges.
-  void applySafetyFiltering(
-      const MachineBasicBlock &MBB, const LivenessScanState &State,
-      const DenseMap<MCRegister, LaneBitmask> &LocalLiveLaneMasks);
+  void applySafetyFiltering(const MachineBasicBlock &MBB,
+                            const LivenessScanState &State,
+                            const DenseSet<MCRegUnit> &LocalLiveUnits);
 
   /// Compute register classes and apply register class filtering.
   void computeRegisterClassesAndFilter();

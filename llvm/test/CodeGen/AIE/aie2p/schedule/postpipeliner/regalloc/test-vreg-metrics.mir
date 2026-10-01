@@ -39,20 +39,20 @@
 # METRICS-EMPTY:
 # METRICS-NEXT: LRIdx     RegClass                 Avail  Pure  Alias  TotalLanes  MaxWidth  Duration
 # METRICS-NEXT: --------  -----------------------  -----  ----  -----  ----------  --------  --------
-# METRICS-NEXT: LR#0       VEC576                       4     3    800          20         4         5
-# METRICS-NEXT: LR#1       VEC576                       4     3    800          24         4         6
-# METRICS-NEXT: LR#2       VEC576                       4     3    800          24         4         6
-# METRICS-NEXT: LR#3       VEC576                       4     3    800          20         4         5
-# METRICS-NEXT: LR#4       ACC2048                      1     1      0          10         4         3
-# METRICS-NEXT: LR#5       ACC2048                      1     1      0           4         4         1
-# METRICS-NEXT: LR#6       VEC1024                      2     1    700           6         4         3
-# METRICS-NEXT: LR#7       ACC2048                      1     0      0           4         4         1
-# METRICS-NEXT: LR#8       VEC512                       7     3    800           6         2         4
-# METRICS-NEXT: LR#9       VEC512                       7     3    800           4         2         3
-# METRICS-NEXT: LR#10      VEC1024                      2     1    800           6         4         3
-# METRICS-NEXT: LR#11      ACC2048                      1     0      0           6         4         2
-# METRICS-NEXT: LR#12      VEC512                       7     3    800           6         2         4
-# METRICS-NEXT: LR#13      VEC512                       7     3    600           4         2         3
+# METRICS-NEXT: LR#{{[0-9]+}}       VEC576                       4     3    800          20         4         5
+# METRICS-NEXT: LR#{{[0-9]+}}       VEC576                       4     3    800          24         4         6
+# METRICS-NEXT: LR#{{[0-9]+}}       VEC576                       4     3    800          24         4         6
+# METRICS-NEXT: LR#{{[0-9]+}}       VEC576                       4     3    800          20         4         5
+# METRICS-NEXT: LR#{{[0-9]+}}       ACC2048                      1     1      0          10         4         3
+# METRICS-NEXT: LR#{{[0-9]+}}       ACC2048                      1     1      0           4         4         1
+# METRICS-NEXT: LR#{{[0-9]+}}       VEC1024                      2     1    700           6         4         3
+# METRICS-NEXT: LR#{{[0-9]+}}       ACC2048                      1     0      0           4         4         1
+# METRICS-NEXT: LR#{{[0-9]+}}       VEC512                       7     3    800           6         2         4
+# METRICS-NEXT: LR#{{[0-9]+}}       VEC512                       7     3    800           4         2         3
+# METRICS-NEXT: LR#{{[0-9]+}}      VEC1024                      2     1    800           6         4         3
+# METRICS-NEXT: LR#{{[0-9]+}}      ACC2048                      1     0      0           6         4         2
+# METRICS-NEXT: LR#{{[0-9]+}}      VEC512                       7     3    800           6         2         4
+# METRICS-NEXT: LR#{{[0-9]+}}      VEC512                       7     3    600           4         2         3
 # METRICS-EMPTY:
 # METRICS-NEXT: === Summary Statistics ===
 # METRICS-NEXT: Total Lanes (sum):              144
