@@ -41,10 +41,12 @@
 ; CHECK-NOT:  call void @llvm.set.loop.iterations
 ; CHECK:   br label %steady.stage1.top
 
-; Steady-state header should have PHI nodes for pipelined values
+; Steady-state header should have a PHI for the pipelined value stage 1 reads.
+; The load PHIs are dead, because the multiply consuming them is in stage 0 too.
 ; CHECK: steady.stage1.top:
-; CHECK-DAG:   %v0.steady.phi = phi i32 [ %v0.steady.top, %stage0.top ], [ %v0.steady.bottom, %steady.stage1.bottom.and.stage0.top ]
-; CHECK-DAG:   %v1.steady.phi = phi i32 [ %v1.steady.top, %stage0.top ], [ %v1.steady.bottom, %steady.stage1.bottom.and.stage0.top ]
+; CHECK-NOT:   %v0.steady.phi
+; CHECK-NOT:   %v1.steady.phi
+; CHECK:   %.phi = phi i32 [ %.top, %stage0.top ], [ %.bottom, %steady.stage1.bottom.and.stage0.top ]
 ; CHECK:   call void @llvm.set.loop.iterations.i32(i32 %M)
 ; CHECK:   br label %steady.stage1.inner.innermost.header
 

@@ -26,13 +26,9 @@ define void @dead_stage0_load_phi(ptr noalias %a, ptr noalias %b, ptr noalias %c
 ; CHECK:         %v1.steady.top = load i32, ptr %b
 ; CHECK:         %prod.steady.top = mul i32 %v0.steady.top, %v1.steady.top
 ; CHECK:       steady.stage1.top:
-; FIXME: Both load PHIs are dead: nothing below reads them, yet each one adds a
-; second use to the stage-0 clones of its load.
-; CHECK:         %v0.steady.phi = phi i32 [ %v0.steady.top, %stage0.top ], [ %v0.steady.bottom, %steady.stage1.bottom.and.stage0.top ]
-; CHECK-NEXT:    %v1.steady.phi = phi i32 [ %v1.steady.top, %stage0.top ], [ %v1.steady.bottom, %steady.stage1.bottom.and.stage0.top ]
-; CHECK-NEXT:    %prod.steady.phi = phi i32 [ %prod.steady.top, %stage0.top ], [ %prod.steady.bottom, %steady.stage1.bottom.and.stage0.top ]
 ; CHECK-NOT:     %v0.steady.phi
 ; CHECK-NOT:     %v1.steady.phi
+; CHECK:         %prod.steady.phi = phi i32 [ %prod.steady.top, %stage0.top ], [ %prod.steady.bottom, %steady.stage1.bottom.and.stage0.top ]
 ; CHECK:         ret void
 entry:
   %cmp.outer = icmp sgt i32 %N, 1

@@ -699,13 +699,25 @@ void AIEOuterLoopPipeliner::getAnalysisUsage(AnalysisUsage &AU) const {
   FunctionPass::getAnalysisUsage(AU);
 }
 
-/// Simplify trivial PHI nodes in all blocks of a function.
+/// Remove dead PHIs and simplify trivial PHIs in all blocks of a function.
 static void simplifyTrivialPHIsInFunction(Function &F) {
-  for (BasicBlock &BB : F) {
-    for (PHINode &PN : make_early_inc_range(BB.phis())) {
-      if (Value *V = PN.hasConstantValue()) {
-        PN.replaceAllUsesWith(V);
-        PN.eraseFromParent();
+  // Erasing a PHI can leave one it used dead or trivial in turn, and that one
+  // may sit earlier in block order, so run to a fixpoint instead of once.
+  bool Changed = true;
+  while (Changed) {
+    Changed = false;
+    for (BasicBlock &BB : F) {
+      for (PHINode &PN : make_early_inc_range(BB.phis())) {
+        if (PN.use_empty()) {
+          PN.eraseFromParent();
+          Changed = true;
+          continue;
+        }
+        if (Value *V = PN.hasConstantValue()) {
+          PN.replaceAllUsesWith(V);
+          PN.eraseFromParent();
+          Changed = true;
+        }
       }
     }
   }
