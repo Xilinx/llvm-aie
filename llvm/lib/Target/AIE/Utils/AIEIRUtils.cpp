@@ -172,17 +172,22 @@ bool isChainLinkCandidate(GetElementPtrInst *GEP, int64_t &OutOffset) {
   return OutOffset > 0;
 }
 
-SmallVector<Instruction *, 4> collectMemUsers(Value *V) {
-  SmallVector<Instruction *, 4> MemUsers;
+/// Recursive helper: walk through addrspacecast chains and collect loads/stores
+/// that use the (possibly cast) pointer as their address operand.
+static void collectMemUsersImpl(Value *V,
+                                SmallVectorImpl<Instruction *> &MemUsers) {
   for (User *U : V->users()) {
     if (isMemoryAddressOperand(V, U)) {
       MemUsers.push_back(cast<Instruction>(U));
-    } else if (auto *ASC = dyn_cast<AddrSpaceCastInst>(U)) {
-      for (User *UU : ASC->users())
-        if (isMemoryAddressOperand(ASC, UU))
-          MemUsers.push_back(cast<Instruction>(UU));
+    } else if (isa<AddrSpaceCastInst>(U)) {
+      collectMemUsersImpl(U, MemUsers);
     }
   }
+}
+
+SmallVector<Instruction *, 4> collectMemUsers(Value *V) {
+  SmallVector<Instruction *, 4> MemUsers;
+  collectMemUsersImpl(V, MemUsers);
   return MemUsers;
 }
 
