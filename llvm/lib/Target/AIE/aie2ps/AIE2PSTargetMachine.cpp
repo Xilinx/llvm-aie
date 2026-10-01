@@ -13,8 +13,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIE2PSTargetMachine.h"
+#include "AIE2PSOuterLoopPipelinerConfig.h"
 #include "AIE2PSTargetTransformInfo.h"
 #include "AIECombiners.h"
+#include "AIEOuterLoopPipelinerConfig.h"
 #include "AIESuperRegUtils.h"
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 
@@ -49,6 +51,10 @@ class AIE2PSPassConfig final : public AIE2PPassConfig {
 public:
   AIE2PSPassConfig(TargetMachine &TM, PassManagerBase &PM)
       : AIE2PPassConfig(TM, PM) {}
+  std::unique_ptr<const AIEOLPTargetConfig> getOLPConfig() const override {
+    return std::make_unique<AIE2PSOLPTargetConfig>(
+        getTM<AIEBaseTargetMachine>().getAIESubtarget()->getInstrInfo());
+  }
   void addPreRegBankSelect() override;
   void addPreLegalizeMachineIR() override;
   void addISelPrepare() override;

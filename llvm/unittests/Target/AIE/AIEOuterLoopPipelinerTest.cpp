@@ -10,12 +10,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIE.h"
+#include "AIEOuterLoopPipelinerConfig.h"
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/Analysis/TargetTransformInfo.h"
-#include "llvm/Analysis/TargetTransformInfoImpl.h"
 #include "llvm/AsmParser/Parser.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/TargetPassConfig.h"
+#include "llvm/IR/Instructions.h"
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/IR/Module.h"
 #include "llvm/MC/TargetRegistry.h"
@@ -29,13 +29,9 @@ using namespace llvm;
 
 namespace {
 
-class TestTTIImpl : public TargetTransformInfoImplCRTPBase<TestTTIImpl> {
-  using BaseT = TargetTransformInfoImplCRTPBase<TestTTIImpl>;
-
+class TestOLPConfig : public AIEOLPTargetConfig {
 public:
-  explicit TestTTIImpl(const DataLayout &DL) : BaseT(DL) {}
-
-  bool isLeanStage0Intrinsic(const Instruction &I) const {
+  bool isLeanStage0Intrinsic(const Instruction &I) const override {
     const auto *Call = dyn_cast<CallInst>(&I);
     return Call && Call->getCalledFunction() &&
            Call->getCalledFunction()->getName() == "marker";
@@ -125,14 +121,9 @@ TEST_F(AIEOuterLoopPipelinerTest,
 
   legacy::PassManager PM;
   PM.add(TM->createPassConfig(PM));
-  PM.add(createTargetTransformInfoWrapperPass(
-      TargetIRAnalysis([](const Function &F) {
-        return TargetTransformInfo(
-            std::make_unique<TestTTIImpl>(F.getDataLayout()));
-      })));
   PM.add(createLoopSimplifyPass());
   PM.add(createHardwareLoopsLegacyPass());
-  PM.add(createAIEOuterLoopPipelinerPass());
+  PM.add(createAIEOuterLoopPipelinerPass(std::make_unique<TestOLPConfig>()));
   PM.run(*M);
 
   BasicBlock *Stage0 = nullptr;

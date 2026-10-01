@@ -230,6 +230,7 @@ add_llvm_target(AIECodeGen
    aie2p/AIE2PPostLegalizerGenericCombiner.cpp
    aie2p/AIE2PPreLegalizerCombiner.cpp
    # aie2ps
+   aie2ps/AIE2PSOuterLoopPipelinerConfig.cpp
    aie2ps/AIE2PSSubtarget.cpp
    aie2ps/AIE2PSTargetMachine.cpp
    aie2ps/AIE2PSTargetTransformInfo.cpp

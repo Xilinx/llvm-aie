@@ -17,6 +17,7 @@
 
 #include "AIE2Subtarget.h"
 #include "AIEBaseTargetMachine.h"
+#include "AIEOuterLoopPipelinerConfig.h"
 #include "MCTargetDesc/AIE2MCTargetDesc.h"
 
 extern llvm::cl::opt<bool> EnableSubregRenaming;
@@ -33,6 +34,9 @@ public:
                     std::optional<CodeModel::Model> CM, CodeGenOptLevel OL,
                     bool JIT);
   const AIE2Subtarget *getSubtargetImpl(const Function &) const override {
+    return &Subtarget;
+  }
+  const AIEBaseSubtarget *getAIESubtarget() const override {
     return &Subtarget;
   }
   TargetTransformInfo getTargetTransformInfo(const Function &F) const override;
@@ -56,6 +60,8 @@ public:
   }
 
   bool addPreISel() override;
+  /// Target policy handed to the outer-loop pipeliner when it is created.
+  virtual std::unique_ptr<const AIEOLPTargetConfig> getOLPConfig() const;
   void addCodeGenPrepare() override;
   void addPreEmitPass() override;
   bool addGlobalInstructionSelect() override;

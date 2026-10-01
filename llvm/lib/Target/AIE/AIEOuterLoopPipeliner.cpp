@@ -56,7 +56,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIE.h"
-#include "AIEBaseInstrInfo.h"
+#include "AIEOuterLoopPipelinerConfig.h"
 #include "Utils/AIEIRUtils.h"
 #include "Utils/AIELoopOptionOverrides.h"
 #include "Utils/AIELoopUtils.h"
@@ -67,8 +67,6 @@
 #include "llvm/Analysis/DependenceAnalysis.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/ScalarEvolution.h"
-#include "llvm/Analysis/TargetTransformInfo.h"
-#include "llvm/CodeGen/TargetPassConfig.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Dominators.h"
@@ -202,11 +200,6 @@ static bool isStage1SplitPoint(const Instruction *I) {
       return true;
   }
   return false;
-}
-
-static bool isSafePointerIncrementIntrinsic(const AIEBaseInstrInfo &TII,
-                                            Intrinsic::ID IID) {
-  return IID == TII.getAddrIntrinsic2D() || IID == TII.getAddrIntrinsic3D();
 }
 
 // How reroutePhiIncomings treats OldPred's existing incoming entry.
@@ -418,7 +411,7 @@ class OrigLoopStructure : public LoopStructure {
   // Seed helpers for different collection modes (backward closure seeding).
   void seedFromInnerLoop(SmallVectorImpl<Instruction *> &Seeds);
   void seedFromLoads(SmallVectorImpl<Instruction *> &Seeds,
-                     const TargetTransformInfo &TTI);
+                     const AIEOLPTargetConfig &Config);
 
   // Unified stage-0 collection via backward closure from seeds.
   // PopulateStage1 controls whether remaining candidates go to Stage1Insts.
@@ -460,13 +453,13 @@ public:
   // Stage 0 contains each top-block load, its backward address-computation
   // chain, and its sole direct target-selected intrinsic user with the user's
   // required operand chains. All other pipeline candidates form stage 1.
-  void collectLeanStage0(const TargetTransformInfo &TTI);
+  void collectLeanStage0(const AIEOLPTargetConfig &Config);
 
   // Extend stage-0 with pointer update instructions (GEPs and add.2d/add.3d
   // intrinsics) in the top block that derive from stage-0 values and feed
   // outer loop PHI backedges. These should be pipelined along with the loads
   // they enable.
-  void collectDerivedPointerUpdates(const AIEBaseInstrInfo &TII);
+  void collectDerivedPointerUpdates(const AIEOLPTargetConfig &Config);
 
   // Delete this (now unreachable) LS's blocks.
   void removeFromCFG() const;
@@ -543,7 +536,11 @@ public:
 class AIEOuterLoopPipeliner : public FunctionPass {
 public:
   static char ID;
-  AIEOuterLoopPipeliner() : FunctionPass(ID) {}
+  explicit AIEOuterLoopPipeliner(
+      std::unique_ptr<const AIEOLPTargetConfig> Config = nullptr)
+      : FunctionPass(ID),
+        TargetConfig(Config ? std::move(Config)
+                            : std::make_unique<AIEOLPTargetConfig>()) {}
   bool runOnFunction(Function &F) override;
   void getAnalysisUsage(AnalysisUsage &AU) const override;
   StringRef getPassName() const override { return "AIE Outer Loop Pipeliner"; }
@@ -552,8 +549,7 @@ private:
   LoopInfo *LI = nullptr;
   DominatorTree *DT = nullptr;
   ScalarEvolution *SE = nullptr;
-  const TargetTransformInfo *TTI = nullptr;
-  const AIEBaseInstrInfo *TII = nullptr;
+  const std::unique_ptr<const AIEOLPTargetConfig> TargetConfig;
 
   bool runOnLoop(Loop *L);
   // Run every pipelining precondition as a flat early-return guard and
@@ -678,20 +674,18 @@ INITIALIZE_PASS_BEGIN(AIEOuterLoopPipeliner, DEBUG_TYPE,
 INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolutionWrapperPass)
-INITIALIZE_PASS_DEPENDENCY(TargetPassConfig)
 INITIALIZE_PASS_END(AIEOuterLoopPipeliner, DEBUG_TYPE,
                     "AIE Outer Loop Pipeliner", false, false)
 
-llvm::FunctionPass *llvm::createAIEOuterLoopPipelinerPass() {
-  return new AIEOuterLoopPipeliner();
+llvm::FunctionPass *llvm::createAIEOuterLoopPipelinerPass(
+    std::unique_ptr<const AIEOLPTargetConfig> Config) {
+  return new AIEOuterLoopPipeliner(std::move(Config));
 }
 
 void AIEOuterLoopPipeliner::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<LoopInfoWrapperPass>();
   AU.addRequired<DominatorTreeWrapperPass>();
   AU.addRequired<ScalarEvolutionWrapperPass>();
-  AU.addRequired<TargetTransformInfoWrapperPass>();
-  AU.addRequired<TargetPassConfig>();
   FunctionPass::getAnalysisUsage(AU);
 }
 
@@ -714,11 +708,6 @@ bool AIEOuterLoopPipeliner::runOnFunction(Function &F) {
   LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   SE = &getAnalysis<ScalarEvolutionWrapperPass>().getSE();
-  TTI = &getAnalysis<TargetTransformInfoWrapperPass>().getTTI(F);
-  const TargetMachine &TM =
-      getAnalysis<TargetPassConfig>().getTM<TargetMachine>();
-  TII = static_cast<const AIEBaseInstrInfo *>(
-      TM.getSubtargetImpl(F)->getInstrInfo());
   LLVM_DEBUG(dbgs() << "AIEOuterLoopPipeliner: " << F.getName() << "\n");
 
   bool Changed = false;
@@ -1008,10 +997,10 @@ void OrigLoopStructure::seedFromInnerLoop(
 }
 
 void OrigLoopStructure::seedFromLoads(SmallVectorImpl<Instruction *> &Seeds,
-                                      const TargetTransformInfo &TTI) {
+                                      const AIEOLPTargetConfig &Config) {
   topRegion().forEachInstruction([&](Instruction *I) {
     // Target load intrinsics seed the chain the way a plain load does.
-    if (TTI.isLeanStage0LoadIntrinsic(*I)) {
+    if (Config.isLeanStage0LoadIntrinsic(*I)) {
       Seeds.push_back(I);
       return;
     }
@@ -1022,7 +1011,7 @@ void OrigLoopStructure::seedFromLoads(SmallVectorImpl<Instruction *> &Seeds,
     // Also include single-user loads' lean-stage0 intrinsic users.
     if (I->hasOneUser()) {
       auto *User = cast<Instruction>(*I->user_begin());
-      if (TTI.isLeanStage0Intrinsic(*User))
+      if (Config.isLeanStage0Intrinsic(*User))
         Seeds.push_back(User);
     }
   });
@@ -1052,7 +1041,7 @@ void OrigLoopStructure::collectStage0(
 }
 
 void OrigLoopStructure::collectDerivedPointerUpdates(
-    const AIEBaseInstrInfo &TII) {
+    const AIEOLPTargetConfig &Config) {
   // Build a set of current stage-0 instructions for fast lookup.
   SmallPtrSet<Instruction *, 32> Stage0Set(Stage0Insts.begin(),
                                            Stage0Insts.end());
@@ -1067,7 +1056,7 @@ void OrigLoopStructure::collectDerivedPointerUpdates(
     if (auto *GEP = dyn_cast<GetElementPtrInst>(I))
       return GEP->getPointerOperand();
     if (auto *II = dyn_cast<IntrinsicInst>(I)) {
-      if (isSafePointerIncrementIntrinsic(TII, II->getIntrinsicID()))
+      if (Config.isSafePointerIncrementIntrinsic(II->getIntrinsicID()))
         return II->getArgOperand(0); // First argument is the input pointer
     }
     return nullptr;
@@ -1191,8 +1180,8 @@ void OrigLoopStructure::collectStages(
                     << stage1Insts().size() << " stage-1 instructions\n");
 }
 
-void OrigLoopStructure::collectLeanStage0(const TargetTransformInfo &TTI) {
-  collectStage0([this, &TTI](auto &S) { seedFromLoads(S, TTI); },
+void OrigLoopStructure::collectLeanStage0(const AIEOLPTargetConfig &Config) {
+  collectStage0([this, &Config](auto &S) { seedFromLoads(S, Config); },
                 /*PopulateStage1=*/true);
 }
 
@@ -1889,10 +1878,10 @@ void CloneLoopStructure::markSpeculativePipelining() const {
 
 // An intrinsic other than a safe 2D/3D pointer increment, whose unknown side
 // effects forbid moving it out of the bottom block.
-static bool isUnsafeIntrinsicToLift(const AIEBaseInstrInfo &TII,
+static bool isUnsafeIntrinsicToLift(const AIEOLPTargetConfig &Config,
                                     const Instruction *I) {
   const auto *II = dyn_cast<IntrinsicInst>(I);
-  return II && !isSafePointerIncrementIntrinsic(TII, II->getIntrinsicID());
+  return II && !Config.isSafePointerIncrementIntrinsic(II->getIntrinsicID());
 }
 
 // True if a chain instruction is used by a bottom instruction outside the
@@ -1925,7 +1914,7 @@ AIEOuterLoopPipeliner::collectLiftableBottomChain(
   Worklist.push_back(LatchInst);
   while (!Worklist.empty()) {
     Instruction *I = Worklist.pop_back_val();
-    if (isUnsafeIntrinsicToLift(*TII, I))
+    if (isUnsafeIntrinsicToLift(*TargetConfig, I))
       return std::nullopt;
 
     for (Value *Op : I->operands()) {
@@ -1992,14 +1981,14 @@ bool AIEOuterLoopPipeliner::performTransformation(OrigLoopStructure &OrigLS,
   };
 
   if (Opts.UseLeanStage0)
-    OrigLS.collectLeanStage0(*TTI);
+    OrigLS.collectLeanStage0(*TargetConfig);
   else
     OrigLS.collectStages(IsSplitPoint);
 
   // Extend stage-0 with pointer update instructions (GEPs and add.2d/add.3d)
   // that derive from stage-0 values and feed outer loop PHI backedges. These
   // should be pipelined along with the loads they enable.
-  OrigLS.collectDerivedPointerUpdates(*TII);
+  OrigLS.collectDerivedPointerUpdates(*TargetConfig);
 
   if (OrigLS.stage0Insts().empty()) {
     LLVM_DEBUG(dbgs() << "    Could not extract Stage 0\n");

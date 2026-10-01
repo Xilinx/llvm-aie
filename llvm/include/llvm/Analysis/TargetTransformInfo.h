@@ -947,14 +947,6 @@ public:
 
   LLVM_ABI bool isTargetIntrinsicTriviallyScalarizable(Intrinsic::ID ID) const;
 
-  /// Returns true when \p I should be included in a target's lean stage-0
-  /// prefetch chain.
-  bool isLeanStage0Intrinsic(const Instruction &I) const;
-
-  /// Returns true when \p I is a target load intrinsic that seeds a lean
-  /// stage-0 prefetch chain on its own, the way a plain load does.
-  bool isLeanStage0LoadIntrinsic(const Instruction &I) const;
-
   /// Identifies if the vector form of the intrinsic has a scalar operand.
   LLVM_ABI bool isTargetIntrinsicWithScalarOpAtArg(Intrinsic::ID ID,
                                                    unsigned ScalarOpdIdx) const;

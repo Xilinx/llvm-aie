@@ -39,6 +39,9 @@ public:
   const AIE2PSubtarget *getSubtargetImpl(const Function &) const override {
     return &Subtarget;
   }
+  const AIEBaseSubtarget *getAIESubtarget() const override {
+    return &Subtarget;
+  }
   TargetTransformInfo getTargetTransformInfo(const Function &F) const override;
   TargetPassConfig *createPassConfig(PassManagerBase &PM) override;
   /// PostRAScheduling is scheduled as part of PreSched2 passes.
