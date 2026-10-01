@@ -24,15 +24,18 @@
 # a spurious second x10 live range that couples wh10 (VMOV) with wl10 (VLD),
 # rather than keeping all x10 uses unified in one range.
 #
-# This baseline (pre-fix) test checks for the spurious x10 range:
+# After the fix, x10 has a single unified live range with all three defining
+# instructions and both VMUL uses:
 
 # CHECK: FINAL LIVE RANGES
 # CHECK: Live Range #{{[0-9]+}} for x10:
-# CHECK-NEXT:   Definitions (2):
-# CHECK-NEXT:     [0] Register: wh10 {{.*}} = VMOV_mv_w
-# CHECK-NEXT:     [1] Register: wl10 {{.*}} = VLDB_dmw_ldb_ag_idx_imm
-# CHECK-NEXT:   Uses (1):
+# CHECK-NEXT:   Definitions (3):
+# CHECK-NEXT:     [0] Register: wl10 {{.*}} = VLDA_dmw_lda_w_ag_idx_imm
+# CHECK-NEXT:     [1] Register: wh10 {{.*}} = VMOV_mv_w
+# CHECK-NEXT:     [2] Register: wl10 {{.*}} = VLDB_dmw_ldb_ag_idx_imm
+# CHECK-NEXT:   Uses (2):
 # CHECK-NEXT:     [0] Register: x10 {{.*}} = VMUL_F_vmac_bm_core_dense
+# CHECK-NEXT:     [1] Register: x10 {{.*}} = VMUL_F_vmac_bm_core_dense
 
 --- |
   define void @saxpy_bare(ptr %p) {

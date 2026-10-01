@@ -362,7 +362,16 @@ class RegLiveRangeTracker {
 
     /// Set of registers used implicitly (invalidates explicit ranges).
     DenseSet<MCRegister> ImplicitRegs;
+
+    /// Instructions in semantic order, indexed by InstrOrder.
+    ArrayRef<MachineInstr *> SemanticOrder;
   };
+
+  /// Return true if an instruction before \p MI in semantic order defines any
+  /// of the \p Lanes of \p Reg.
+  bool areLanesDefinedBefore(MCRegister Reg, LaneBitmask Lanes,
+                             const MachineInstr &MI,
+                             const LivenessScanState &State) const;
 
   /// Build instruction order map and collect physical register operands.
   /// Also populates ImplicitRegs.
