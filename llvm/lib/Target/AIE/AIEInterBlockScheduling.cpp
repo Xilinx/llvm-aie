@@ -488,6 +488,14 @@ void InterBlockScheduling::enterBlock(MachineBasicBlock *BB) {
     return;
   }
 
+  // A delay-slot reschedule finds the fixed fragments already in the block,
+  // but interleaved with the free instructions of the previous schedule.
+  if (const DelaySlotRetry *Retry = CurrentBlockState->DSRetry.get()) {
+    for (MachineInstr *MI : reverse(Retry->TopFixedInstrs))
+      BB->splice(BB->begin(), BB, MI->getIterator());
+    return;
+  }
+
   // When relevant, pick up the fixed fragments left by scheduling other
   // blocks, in particular the pipeliner's prologue and epilogue.
   emitInterBlockTop(*CurrentBlockState);
@@ -809,7 +817,22 @@ SchedulingStage InterBlockScheduling::updateFixPoint(BlockState &BS) {
   assert(!IsGatheringPhase);
 
   if (BS.Kind != BlockType::Loop) {
-    return SchedulingStage::SchedulingDone;
+    DelaySlotRetry *Retry = BS.DSRetry.get();
+    if (!Retry || !Retry->Requested) {
+      BS.DSRetry.reset();
+      return SchedulingStage::SchedulingDone;
+    }
+    using PassKind = DelaySlotRetry::PassKind;
+    Retry->Requested = false;
+    Retry->Pass =
+        Retry->Pass == PassKind::First ? PassKind::Pinned : PassKind::Unpinned;
+    for (auto [MI, Opcode] : Retry->OrigOpcodes)
+      MI->setDesc(TII->get(Opcode));
+    DEBUG_BLOCKS(
+        dbgs() << "  Rescheduling for delay slot, "
+               << (Retry->Pass == PassKind::Pinned ? "pinned" : "unpinned")
+               << " pin=" << Retry->Pin << "\n");
+    return SchedulingStage::Scheduling;
   }
 
   BS.FixPoint.NumIters++;
@@ -1296,7 +1319,7 @@ void InterBlockScheduling::enterRegion(MachineBasicBlock *BB,
     return;
   }
 
-  if (BS.Kind == BlockType::Loop) {
+  if (BS.Kind == BlockType::Loop || BS.DSRetry) {
     return;
   }
 

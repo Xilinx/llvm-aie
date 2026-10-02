@@ -84,6 +84,12 @@ static cl::opt<bool> EnableDelaySlotTopDown(
              "branch position in leaveRegion() instead of forcing bottom-up "
              "cycles"));
 
+static cl::opt<bool> EnableDelaySlotReschedule(
+    "aie-delay-slot-reschedule", cl::init(true),
+    cl::desc("[AIE] When fixupDelaySlotPosition lengthens a top-down region, "
+             "reschedule the block with the delay slot instruction pinned at "
+             "the cycle the first schedule computed"));
+
 /// This is a testing option. Resetting it prevents inter-block conflicts from
 /// the scoreboard, so that all interblock scheduling effects can be blamed on
 /// the latencies.
@@ -550,6 +556,17 @@ void AIEPostRASchedStrategy::initialize(ScheduleDAGMI *Dag) {
       // leaveRegion(). Bot-fixed bundles are incompatible with this path
       // because fixupDelaySlotPosition requires BotBundles to be empty.
       PersistentTopDown = true;
+      const DelaySlotRetry *Retry =
+          InterBlock.getBlockState(CurMBB).DSRetry.get();
+      if (Retry && Retry->Pass == DelaySlotRetry::PassKind::Pinned) {
+        // releaseSucc only raises TopReadyCycle, so this holds the branch
+        // back until the pinned cycle, where tryCandidate prefers it.
+        SUnit *BranchSU = DAG->getSUnit(MI);
+        assert(BranchSU);
+        BranchSU->TopReadyCycle = std::max(BranchSU->TopReadyCycle, Retry->Pin);
+        LLVM_DEBUG(dbgs() << "Pinning delay slot instruction at cycle "
+                          << Retry->Pin << "\n");
+      }
     } else {
       // Normal case: force enough bottom-up cycles to place the branch at the
       // correct distance from the end of the region.
@@ -1135,6 +1152,40 @@ void AIEPostRASchedStrategy::fixupDelaySlotPosition(
   }
 }
 
+void AIEPostRASchedStrategy::updateDelaySlotReschedule(
+    unsigned UnfixedLength, unsigned FixedLength, unsigned NumDelaySlots,
+    SmallVector<std::pair<MachineInstr *, unsigned>, 4> OrigOpcodes) {
+  BlockState &BS = InterBlock.getBlockState(CurMBB);
+  assert(BS.Kind != BlockType::Loop && "Loops have no top-fixed bundles");
+  DelaySlotRetry *Retry = BS.DSRetry.get();
+  if (!Retry) {
+    // First schedule. Only worth a retry if the fixup lengthened the region,
+    // and the branch can issue NumDelaySlots bundles before the unfixed end.
+    if (FixedLength <= UnfixedLength || UnfixedLength <= NumDelaySlots)
+      return;
+    BS.DSRetry = std::make_unique<DelaySlotRetry>();
+    Retry = BS.DSRetry.get();
+    Retry->Requested = true;
+    Retry->Pin = UnfixedLength - NumDelaySlots - 1;
+    Retry->UnpinnedLength = FixedLength;
+    Retry->OrigOpcodes = std::move(OrigOpcodes);
+    // The fixed SUnits were created from Region::top_fixed_instrs, in order.
+    assert(FirstTopFixedSU && !FirstBotFixedSU);
+    for (unsigned I = *FirstTopFixedSU; I < DAG->SUnits.size(); ++I)
+      Retry->TopFixedInstrs.push_back(DAG->SUnits[I].getInstr());
+    LLVM_DEBUG(dbgs() << "Delay slot reschedule requested: length "
+                      << FixedLength << ", pin at " << Retry->Pin << "\n");
+    return;
+  }
+  if (Retry->Pass != DelaySlotRetry::PassKind::Pinned)
+    return;
+  LLVM_DEBUG(dbgs() << "Delay slot reschedule: pinned length " << FixedLength
+                    << " vs unpinned " << Retry->UnpinnedLength << "\n");
+  // Not shorter: reschedule once more without the pin to get First back.
+  if (FixedLength >= Retry->UnpinnedLength)
+    Retry->Requested = true;
+}
+
 void AIEPostRASchedStrategy::leaveRegion(const SUnit &ExitSU) {
   LLVM_DEBUG(dbgs() << "    << leaveRegion\n");
 
@@ -1142,6 +1193,19 @@ void AIEPostRASchedStrategy::leaveRegion(const SUnit &ExitSU) {
   if (InterBlock.isGatheringPhase() ||
       BS.FixPoint.Stage != SchedulingStage::Scheduling) {
     return;
+  }
+  // Kept in case the first schedule of a top-down delay-slot region requests a
+  // reschedule.
+  SmallVector<std::pair<MachineInstr *, unsigned>, 4> OrigOpcodes;
+  if (PersistentTopDown && EnableDelaySlotReschedule && !BS.DSRetry) {
+    auto Collect = [&OrigOpcodes](auto Range, const AIEHazardRecognizer &HR) {
+      for (MachineInstr &MI : Range)
+        if (HR.getSelectedAltDescs().getSelectedOpcode(&MI))
+          OrigOpcodes.emplace_back(&MI, MI.getOpcode());
+    };
+    Collect(make_range(DAG->begin(), DAG->top()), *getAIEHazardRecognizer(Top));
+    Collect(make_range(DAG->bottom(), DAG->end()),
+            *getAIEHazardRecognizer(Bot));
   }
   materializeMultiOpcodeInstrs();
   InterBlock.getSelectedAltDescs().clear();
@@ -1165,7 +1229,11 @@ void AIEPostRASchedStrategy::leaveRegion(const SUnit &ExitSU) {
     if (MachineInstr *BranchMI = getDelaySlotInstr(RegionBegin, RegionEnd)) {
       const auto *TII = getTII(CurMBB);
       const unsigned NumDelaySlots = TII->getNumDelaySlots(*BranchMI);
+      const unsigned UnfixedLength = TopBundles.size();
       fixupDelaySlotPosition(TopBundles, BotBundles, BranchMI, NumDelaySlots);
+      if (EnableDelaySlotReschedule)
+        updateDelaySlotReschedule(UnfixedLength, TopBundles.size(),
+                                  NumDelaySlots, std::move(OrigOpcodes));
     }
     PersistentTopDown = false;
   }

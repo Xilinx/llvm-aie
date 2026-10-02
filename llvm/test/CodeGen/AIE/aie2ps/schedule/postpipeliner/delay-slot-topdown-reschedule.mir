@@ -7,6 +7,9 @@
 
 # RUN: llc --mtriple=aie2ps -O2 --run-pass=postmisched %s -o - | FileCheck %s
 
+# The epilogue is rescheduled with the JNZ pinned where exactly five bundles
+# follow it, instead of padding the end with NOPs.
+
 --- |
   target triple = "aie2ps"
 
@@ -101,6 +104,7 @@
   !1 = !{!"llvm.loop.itercount.range", i64 16}
 ...
 
+# Ten ADDs: the JNZ is pinned after the fixed epilogue.
 ---
 name:            pin_after_fixed
 alignment:       16
@@ -139,14 +143,15 @@ body:             |
   ; CHECK-NEXT:   successors: %bb.3(0x40000000), %bb.4(0x40000000)
   ; CHECK-NEXT:   liveins: $p6, $r0, $r1, $x0, $x1
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   renamable $r5 = ADD_add_r_ri renamable $r1, 1, implicit-def dead $srcarry
+  ; CHECK-NEXT:   renamable $r5 = ADD_add_r_ri killed renamable $r5, 1, implicit-def dead $srcarry
   ; CHECK-NEXT:   renamable $r5 = ADD_add_r_ri killed renamable $r5, 1, implicit-def dead $srcarry
   ; CHECK-NEXT:   BUNDLE implicit-def $r5, implicit-def dead $srcarry, implicit-def $x1, implicit-def $wl1, implicit-def $wh1, implicit killed $r5, implicit killed $x3, implicit $x0, implicit $r1 {
   ; CHECK-NEXT:     renamable $r5 = ADD_add_r_ri killed renamable $r5, 1, implicit-def dead $srcarry
   ; CHECK-NEXT:     renamable $x1 = VSHIFT killed $x3, renamable $x0, renamable $r1
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   renamable $r5 = ADD_add_r_ri killed renamable $r5, 1, implicit-def dead $srcarry
+  ; CHECK-NEXT:   JNZ killed $r0, %bb.4
   ; CHECK-NEXT:   BUNDLE implicit-def $r5, implicit-def dead $srcarry, implicit-def $x2, implicit-def $wl2, implicit-def $wh2, implicit killed $r5, implicit killed $x1, implicit killed $x0, implicit killed $r1 {
   ; CHECK-NEXT:     renamable $r5 = ADD_add_r_ri killed renamable $r5, 1, implicit-def dead $srcarry
   ; CHECK-NEXT:     renamable $x2 = VSHIFT killed renamable $x1, killed renamable $x0, killed renamable $r1
@@ -158,13 +163,6 @@ body:             |
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   renamable $r5 = ADD_add_r_ri killed renamable $r5, 1, implicit-def dead $srcarry
   ; CHECK-NEXT:   renamable $r5 = ADD_add_r_ri killed renamable $r5, 1, implicit-def dead $srcarry
-  ; CHECK-NEXT:   renamable $r5 = ADD_add_r_ri killed renamable $r5, 1, implicit-def dead $srcarry
-  ; CHECK-NEXT:   JNZ killed $r0, %bb.4
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   DelayedSchedBarrier
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3:
@@ -240,6 +238,7 @@ body:             |
     DelayedSchedBarrier
 ...
 
+# Three ADDs: the JNZ is pinned inside the fixed epilogue.
 ---
 name:            pin_in_fixed
 alignment:       16
@@ -278,19 +277,17 @@ body:             |
   ; CHECK-NEXT:   successors: %bb.3(0x40000000), %bb.4(0x40000000)
   ; CHECK-NEXT:   liveins: $p6, $r0, $r1, $x0, $x1
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   renamable $r5 = ADD_add_r_ri renamable $r1, 1, implicit-def dead $srcarry
   ; CHECK-NEXT:   renamable $r5 = ADD_add_r_ri killed renamable $r5, 1, implicit-def dead $srcarry
+  ; CHECK-NEXT:   JNZ killed $r0, %bb.4
   ; CHECK-NEXT:   BUNDLE implicit-def $r5, implicit-def dead $srcarry, implicit-def $x1, implicit-def $wl1, implicit-def $wh1, implicit killed $r5, implicit killed $x3, implicit $x0, implicit $r1 {
   ; CHECK-NEXT:     renamable $r5 = ADD_add_r_ri killed renamable $r5, 1, implicit-def dead $srcarry
   ; CHECK-NEXT:     renamable $x1 = VSHIFT killed $x3, renamable $x0, renamable $r1
   ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   JNZ killed $r0, %bb.4
+  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   renamable $x2 = VSHIFT killed renamable $x1, killed renamable $x0, killed renamable $r1
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   renamable $p6 = VST_dmx_sts_x_st_pstm_nrm_imm killed renamable $x2, killed renamable $p6, 64 :: (store (<16 x s32>), addrspace 6)
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   DelayedSchedBarrier
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3:
@@ -359,6 +356,7 @@ body:             |
     DelayedSchedBarrier
 ...
 
+# An LDA feeds an ADD chain: the pinned JNZ delays it, so the first schedule is kept.
 ---
 name:            unpin_chain_delayed
 alignment:       16
@@ -489,6 +487,7 @@ body:             |
     DelayedSchedBarrier
 ...
 
+# Eleven MOVs: the JNZ is pinned and MOVs fill its delay slots.
 ---
 name:            pin_moves_fill_delay_slots
 alignment:       16
@@ -527,25 +526,19 @@ body:             |
   ; CHECK-NEXT:   successors: %bb.3(0x40000000), %bb.4(0x40000000)
   ; CHECK-NEXT:   liveins: $p1, $p6, $r0, $r1, $x0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   renamable $r2 = MOV_alu_mv_mv_mv_scl renamable $r1
   ; CHECK-NEXT:   renamable $r3 = MOV_alu_mv_mv_mv_scl killed renamable $r2
-  ; CHECK-NEXT:   $x1 = VSHIFT killed $x3, killed renamable $x0, killed renamable $r1
   ; CHECK-NEXT:   renamable $r4 = MOV_alu_mv_mv_mv_scl killed renamable $r3
+  ; CHECK-NEXT:   $x1 = VSHIFT killed $x3, killed renamable $x0, killed renamable $r1
   ; CHECK-NEXT:   renamable $r5 = MOV_alu_mv_mv_mv_scl killed renamable $r4
   ; CHECK-NEXT:   renamable $r6 = MOV_alu_mv_mv_mv_scl killed renamable $r5
   ; CHECK-NEXT:   renamable $r8 = MOV_alu_mv_mv_mv_scl killed renamable $r6
+  ; CHECK-NEXT:   JNZ killed $r0, %bb.4
   ; CHECK-NEXT:   renamable $r9 = MOV_alu_mv_mv_mv_scl killed renamable $r8
   ; CHECK-NEXT:   renamable $r10 = MOV_alu_mv_mv_mv_scl killed renamable $r9
   ; CHECK-NEXT:   renamable $r11 = MOV_alu_mv_mv_mv_scl killed renamable $r10
   ; CHECK-NEXT:   renamable $r12 = MOV_alu_mv_mv_mv_scl killed renamable $r11
   ; CHECK-NEXT:   renamable $r13 = MOV_alu_mv_mv_mv_scl killed renamable $r12
-  ; CHECK-NEXT:   JNZ killed $r0, %bb.4
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   DelayedSchedBarrier
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3:
@@ -620,6 +613,7 @@ body:             |
     DelayedSchedBarrier
 ...
 
+# An LDA with a tight negative-latency edge: the JNZ is pinned around it.
 ---
 name:            pin_neg_latency_tight
 alignment:       16
@@ -658,7 +652,6 @@ body:             |
   ; CHECK-NEXT:   successors: %bb.3(0x40000000), %bb.4(0x40000000)
   ; CHECK-NEXT:   liveins: $p1, $p6, $r0, $r1, $x0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   BUNDLE implicit-def $r5, implicit-def dead $srcarry, implicit-def $r6, implicit $r1 {
   ; CHECK-NEXT:     renamable $r5 = ADD_add_r_ri renamable $r1, 1, implicit-def dead $srcarry
   ; CHECK-NEXT:     renamable $r6 = MOV_alu_mv_mv_mv_scl renamable $r1
@@ -667,23 +660,24 @@ body:             |
   ; CHECK-NEXT:     renamable $r5 = ADD_add_r_ri killed renamable $r5, 1, implicit-def dead $srcarry
   ; CHECK-NEXT:     renamable $r7 = MOV_alu_mv_mv_mv_scl killed renamable $r6
   ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   BUNDLE implicit-def $r5, implicit-def dead $srcarry, implicit-def $r8, implicit killed $r5, implicit killed $r7 {
+  ; CHECK-NEXT:     renamable $r5 = ADD_add_r_ri killed renamable $r5, 1, implicit-def dead $srcarry
+  ; CHECK-NEXT:     renamable $r8 = MOV_alu_mv_mv_mv_scl killed renamable $r7
+  ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def $r5, implicit-def dead $srcarry, implicit-def $x1, implicit-def $wl1, implicit-def $wh1, implicit killed $r5, implicit killed $x3, implicit killed $x0, implicit killed $r1 {
   ; CHECK-NEXT:     renamable $r5 = ADD_add_r_ri killed renamable $r5, 1, implicit-def dead $srcarry
   ; CHECK-NEXT:     $x1 = VSHIFT killed $x3, killed renamable $x0, killed renamable $r1
   ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   BUNDLE implicit-def $r5, implicit-def dead $srcarry, implicit-def $r8, implicit killed $p1, implicit killed $r7 {
+  ; CHECK-NEXT:   BUNDLE implicit-def $r5, implicit-def dead $srcarry, implicit-def $r9, implicit killed $p1, implicit killed $r8 {
   ; CHECK-NEXT:     renamable $r5 = LDA_dms_lda_scalar_ld_idx_imm killed renamable $p1, 0 :: (load (s32) from %ir.in, addrspace 5)
   ; CHECK-NEXT:     renamable $r5 = ADD_add_r_ri internal renamable $r5, 1, implicit-def dead $srcarry
-  ; CHECK-NEXT:     renamable $r8 = MOV_alu_mv_mv_mv_scl killed renamable $r7
-  ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   BUNDLE implicit-def $r5, implicit-def dead $srcarry, implicit-def $r9, implicit killed $r5, implicit killed $r8 {
-  ; CHECK-NEXT:     renamable $r5 = ADD_add_r_ri killed renamable $r5, 1, implicit-def dead $srcarry
   ; CHECK-NEXT:     renamable $r9 = MOV_alu_mv_mv_mv_scl killed renamable $r8
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def $r5, implicit-def dead $srcarry, implicit-def $r10, implicit killed $r5, implicit killed $r9 {
   ; CHECK-NEXT:     renamable $r5 = ADD_add_r_ri killed renamable $r5, 1, implicit-def dead $srcarry
   ; CHECK-NEXT:     renamable $r10 = MOV_alu_mv_mv_mv_scl killed renamable $r9
   ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   JNZ killed $r0, %bb.4
   ; CHECK-NEXT:   BUNDLE implicit-def $r5, implicit-def dead $srcarry, implicit-def $r11, implicit killed $r5, implicit killed $r10 {
   ; CHECK-NEXT:     renamable $r5 = ADD_add_r_ri killed renamable $r5, 1, implicit-def dead $srcarry
   ; CHECK-NEXT:     renamable $r11 = MOV_alu_mv_mv_mv_scl killed renamable $r10
@@ -698,12 +692,6 @@ body:             |
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   renamable $r14 = MOV_alu_mv_mv_mv_scl killed renamable $r13
   ; CHECK-NEXT:   renamable $r15 = MOV_alu_mv_mv_mv_scl killed renamable $r14
-  ; CHECK-NEXT:   JNZ killed $r0, %bb.4
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   DelayedSchedBarrier
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3:
@@ -787,6 +775,7 @@ body:             |
     DelayedSchedBarrier
 ...
 
+# As pin_neg_latency_tight, with slack on the negative-latency edge.
 ---
 name:            pin_neg_latency_slack
 alignment:       16
@@ -825,7 +814,6 @@ body:             |
   ; CHECK-NEXT:   successors: %bb.3(0x40000000), %bb.4(0x40000000)
   ; CHECK-NEXT:   liveins: $p1, $p6, $r0, $r1, $x0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   BUNDLE implicit-def $r5, implicit-def dead $srcarry, implicit-def $r6, implicit $r1 {
   ; CHECK-NEXT:     renamable $r5 = ADD_add_r_ri renamable $r1, 1, implicit-def dead $srcarry
   ; CHECK-NEXT:     renamable $r6 = MOV_alu_mv_mv_mv_scl renamable $r1
@@ -834,11 +822,11 @@ body:             |
   ; CHECK-NEXT:     renamable $r5 = ADD_add_r_ri killed renamable $r5, 1, implicit-def dead $srcarry
   ; CHECK-NEXT:     renamable $r7 = MOV_alu_mv_mv_mv_scl killed renamable $r6
   ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   BUNDLE implicit-def $r5, implicit-def dead $srcarry, implicit-def $x1, implicit-def $wl1, implicit-def $wh1, implicit killed $r5, implicit killed $x3, implicit killed $x0, implicit killed $r1 {
+  ; CHECK-NEXT:   BUNDLE implicit-def $r5, implicit-def dead $srcarry, implicit-def $r8, implicit killed $r5, implicit killed $r7 {
   ; CHECK-NEXT:     renamable $r5 = ADD_add_r_ri killed renamable $r5, 1, implicit-def dead $srcarry
-  ; CHECK-NEXT:     $x1 = VSHIFT killed $x3, killed renamable $x0, killed renamable $r1
+  ; CHECK-NEXT:     renamable $r8 = MOV_alu_mv_mv_mv_scl killed renamable $r7
   ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   renamable $r8 = MOV_alu_mv_mv_mv_scl killed renamable $r7
+  ; CHECK-NEXT:   $x1 = VSHIFT killed $x3, killed renamable $x0, killed renamable $r1
   ; CHECK-NEXT:   renamable $r9 = MOV_alu_mv_mv_mv_scl killed renamable $r8
   ; CHECK-NEXT:   BUNDLE implicit-def $r5, implicit-def dead $srcarry, implicit-def $p1, implicit killed $r5 {
   ; CHECK-NEXT:     renamable $r5 = ADD_add_r_ri killed renamable $r5, 1, implicit-def dead $srcarry
@@ -849,6 +837,7 @@ body:             |
   ; CHECK-NEXT:     renamable $r5 = ADD_add_r_ri internal renamable $r5, 1, implicit-def dead $srcarry
   ; CHECK-NEXT:     renamable $r10 = MOV_alu_mv_mv_mv_scl killed renamable $r9
   ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   JNZ killed $r0, %bb.4
   ; CHECK-NEXT:   BUNDLE implicit-def $r5, implicit-def dead $srcarry, implicit-def $r11, implicit killed $r5, implicit killed $r10 {
   ; CHECK-NEXT:     renamable $r5 = ADD_add_r_ri killed renamable $r5, 1, implicit-def dead $srcarry
   ; CHECK-NEXT:     renamable $r11 = MOV_alu_mv_mv_mv_scl killed renamable $r10
@@ -866,12 +855,6 @@ body:             |
   ; CHECK-NEXT:     renamable $r14 = MOV_alu_mv_mv_mv_scl killed renamable $r13
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   renamable $r15 = MOV_alu_mv_mv_mv_scl killed renamable $r14
-  ; CHECK-NEXT:   JNZ killed $r0, %bb.4
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   DelayedSchedBarrier
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3:
@@ -956,6 +939,7 @@ body:             |
     DelayedSchedBarrier
 ...
 
+# An LDA and a MOV share P_WM_PORT: the JNZ is pinned without a port conflict.
 ---
 name:            pin_port_conflict
 alignment:       16
@@ -994,22 +978,19 @@ body:             |
   ; CHECK-NEXT:   successors: %bb.3(0x40000000), %bb.4(0x40000000)
   ; CHECK-NEXT:   liveins: $p1, $p6, $r0, $r1, $x0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   renamable $p4 = LDA_dms_lda_scalar_ld_idx_imm killed renamable $p1, 0 :: (load (s32) from %ir.in, addrspace 5)
-  ; CHECK-NEXT:   renamable $r2 = MOV_alu_mv_mv_mv_scl renamable $r1
+  ; CHECK-NEXT:   BUNDLE implicit-def $p4, implicit-def $r2, implicit killed $p1, implicit $r1 {
+  ; CHECK-NEXT:     renamable $p4 = LDA_dms_lda_scalar_ld_idx_imm killed renamable $p1, 0 :: (load (s32) from %ir.in, addrspace 5)
+  ; CHECK-NEXT:     renamable $r2 = MOV_alu_mv_mv_mv_scl renamable $r1
+  ; CHECK-NEXT:   }
   ; CHECK-NEXT:   renamable $r3 = MOV_alu_mv_mv_mv_scl killed renamable $r2
-  ; CHECK-NEXT:   $x1 = VSHIFT killed $x3, killed renamable $x0, killed renamable $r1
   ; CHECK-NEXT:   renamable $r4 = MOV_alu_mv_mv_mv_scl killed renamable $r3
+  ; CHECK-NEXT:   $x1 = VSHIFT killed $x3, killed renamable $x0, killed renamable $r1
+  ; CHECK-NEXT:   JNZ killed $r0, %bb.4
   ; CHECK-NEXT:   renamable $p2 = MOV_alu_mv_mv_mv_scl killed renamable $r4
   ; CHECK-NEXT:   renamable $r6 = MOV_alu_mv_mv_mv_scl killed renamable $p2
   ; CHECK-NEXT:   renamable $r7 = MOV_alu_mv_mv_mv_scl killed renamable $r6
   ; CHECK-NEXT:   renamable $r8 = MOV_alu_mv_mv_mv_scl killed renamable $r7
   ; CHECK-NEXT:   renamable $r11 = MOV_alu_mv_mv_mv_scl killed renamable $r8
-  ; CHECK-NEXT:   JNZ killed $r0, %bb.4
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   DelayedSchedBarrier
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3:

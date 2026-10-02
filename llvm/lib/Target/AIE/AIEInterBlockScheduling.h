@@ -55,6 +55,29 @@ public:
   int NumIters = 0;
 };
 
+/// Rescheduling of a non-loop block whose top-down region needed its
+/// delay-slot branch moved by fixupDelaySlotPosition. Only exists between the
+/// first schedule and the last one.
+struct DelaySlotRetry {
+  enum class PassKind {
+    First,   // Normal schedule, which requested the retry.
+    Pinned,  // Branch held back until Pin.
+    Unpinned // Pinned was not shorter: reproduce First.
+  };
+  PassKind Pass = PassKind::First;
+  bool Requested = false;
+  unsigned Pin = 0;
+  // Region length (in bundles) produced by the First pass.
+  unsigned UnpinnedLength = 0;
+  // Opcodes changed by materializeMultiOpcodeInstrs in the First pass, restored
+  // before each reschedule so that every pass sees the same alternatives.
+  SmallVector<std::pair<MachineInstr *, unsigned>, 4> OrigOpcodes;
+  // Top-level fixed instructions (BUNDLEs or standalone), in block order.
+  // Region::top_fixed_instrs is positional, so these are moved back to the
+  // top of the block before rescheduling.
+  SmallVector<MachineInstr *, 8> TopFixedInstrs;
+};
+
 // For interblock scheduling we need the original code (SemanticOrder) to
 // compute inter-block dependences and the scheduled code (Bundles) to check
 // interblock contraints
@@ -154,6 +177,8 @@ public:
   BlockState(MachineBasicBlock *Block);
   MachineBasicBlock *TheBlock = nullptr;
   FixedpointState FixPoint;
+  // Null unless a delay-slot reschedule of this block is in progress.
+  std::unique_ptr<DelaySlotRetry> DSRetry;
   BlockType Kind = BlockType::Regular;
   LivePhysRegs LiveOuts;
 
