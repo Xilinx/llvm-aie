@@ -137,6 +137,7 @@ define void @skip_multi_block_loop(ptr %init, i32 %n) {
 ; NORM-LABEL: @skip_multi_block_loop
 ; NORM:       header:
 ; NORM:         %ptr = phi ptr [ %init, %entry ], [ %ptr.preinc, %latch ]
+; NORM:       latch:
 ; NORM:         %ptr.preinc = getelementptr inbounds i8, ptr %ptr, i20 64
 entry:
   br label %header
@@ -207,32 +208,25 @@ exit:
 }
 
 ; ---------------------------------------------------------------------------
-; Pattern 2 + re-root: two GEPs both rooted on phi with absolute offsets.
-;   phi+64 and phi+128 (back-edge).  After repositioning, phi+128 is still
-;   rooted on phi.  Re-root sweep rewrites it to gep1+64.
+; Pattern 2 + reposition: two GEPs both rooted on phi with absolute offsets.
+;   phi+64 (intermediate) and phi+128 (back-edge).
+;   findNextChainGEP selects the smallest offset first (gep1, +64), so:
 ;
 ; Before:
 ;   %gep1 = getelementptr i8, ptr %phi, i20 64   ; placed early
 ;   %gep2 = getelementptr i8, ptr %phi, i20 128  ; back-edge, placed early
-;   load ptr %phi
-;   load ptr %gep1
-;
-; After Sweep 1 (reposition):
-;   load ptr %phi
-;   %gep1 = getelementptr i8, ptr %phi, i20 64   ; after last load of phi
-;   load ptr %gep1
-;   %gep2 = getelementptr i8, ptr %phi, i20 128  ; after last load of gep1
-;
-; After Sweep 1 (reposition):
 ;   %v0 = load ptr %phi
-;   %gep1 = getelementptr i8, ptr %phi, i20 64   ; after last load of phi
 ;   %v1 = load ptr %gep1
-;   %gep2 = getelementptr i8, ptr %phi, i20 128  ; after last load of gep1
 ;
-; Note: the re-root sweep (phi+128 -> gep1+64) requires findNextChainGEP to
-; walk from gep1 to gep2.  Since gep2 is still rooted on phi (not gep1) after
-; sweep 1, findNextChainGEP won't find it from gep1 — so re-root does not
-; fire here.  The test checks the sweep-1 result only.
+; After Sweep 1 (reposition — smallest offset gep1 selected first):
+;   %gep2 = getelementptr i8, ptr %phi, i20 128  ; unchanged (not in chain)
+;   %v0 = load ptr %phi
+;   %gep1 = getelementptr i8, ptr %phi, i20 64   ; moved after last load of phi
+;   %v1 = load ptr %gep1
+;
+; Note: gep2 is rooted on phi (not gep1), so findNextChainGEP walking from
+; gep1 cannot find it. The chain walk stops after gep1, and the re-root
+; sweep also only reaches gep1.  gep2 stays at its original position.
 ; ---------------------------------------------------------------------------
 define void @pattern2_reroot(ptr %init, i32 %n) {
 ; POSTINC-LABEL: @pattern2_reroot
