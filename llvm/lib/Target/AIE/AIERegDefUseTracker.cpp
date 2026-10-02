@@ -512,36 +512,33 @@ void RegLiveRangeTracker::pruneByFullCoverage() {
 #endif
 }
 
-bool RegLiveRangeTracker::absorbLiveRange(
-    unsigned TargetIdx, unsigned SrcIdx,
-    DenseMap<MCRegister, std::pair<int, LaneBitmask>> &LiveRegs,
-    DenseMap<MachineOperand *, unsigned> &OperandToLiveRange) {
+bool RegLiveRangeTracker::absorbLiveRange(unsigned TargetIdx, unsigned SrcIdx,
+                                          LivenessScanState &State) {
   assert(TargetIdx != SrcIdx && "Cannot absorb a range into itself");
   if (!LiveRanges[TargetIdx].mergeFrom(LiveRanges[SrcIdx], TRI))
     return false;
   LiveRanges[SrcIdx].clear();
-  for (auto &[LiveReg, Info] : LiveRegs) {
+  for (auto &[LiveReg, Info] : State.LiveRegs) {
     if (Info.first == static_cast<int>(SrcIdx))
       Info.first = static_cast<int>(TargetIdx);
   }
-  for (auto &Entry : OperandToLiveRange) {
+  for (auto &Entry : State.OperandToLiveRange) {
     if (Entry.second == SrcIdx)
       Entry.second = TargetIdx;
   }
   return true;
 }
 
-void RegLiveRangeTracker::discardLiveRange(
-    unsigned LRIdx, DenseMap<MCRegister, std::pair<int, LaneBitmask>> &LiveRegs,
-    DenseMap<MachineOperand *, unsigned> &OperandToLiveRange) {
+void RegLiveRangeTracker::discardLiveRange(unsigned LRIdx,
+                                           LivenessScanState &State) {
   LLVM_DEBUG(dbgs() << "Discard LR#" << LiveRanges[LRIdx].getID()
                     << " (no common base register)\n");
 
   // Collect the operands before clear() empties the range.
   for (const auto &OpInfo : LiveRanges[LRIdx].operands())
-    OperandToLiveRange.erase(OpInfo.getOperand());
+    State.OperandToLiveRange.erase(OpInfo.getOperand());
 
-  for (auto &[LiveReg, Info] : LiveRegs) {
+  for (auto &[LiveReg, Info] : State.LiveRegs) {
     if (Info.first == static_cast<int>(LRIdx))
       Info.first = RegLiveRange::NoLiveRange;
   }
@@ -549,10 +546,9 @@ void RegLiveRangeTracker::discardLiveRange(
   LiveRanges[LRIdx].clear();
 }
 
-void RegLiveRangeTracker::mergeAliasingLiveRanges(
-    unsigned DefLRIdx, MCRegister DefReg,
-    DenseMap<MCRegister, std::pair<int, LaneBitmask>> &LiveRegs,
-    DenseMap<MachineOperand *, unsigned> &OperandToLiveRange) {
+void RegLiveRangeTracker::mergeAliasingLiveRanges(unsigned DefLRIdx,
+                                                  MCRegister DefReg,
+                                                  LivenessScanState &State) {
 
   // Helper to check if a def register's lanes overlap with a live register's
   // current lanes. This is critical for separating live ranges: after x10 is
@@ -593,7 +589,7 @@ void RegLiveRangeTracker::mergeAliasingLiveRanges(
   // Collect all aliasing live registers and their live ranges.
   // Only include registers where the lanes actually overlap.
   SmallVector<std::pair<MCRegister, int>, 8> AliasingLiveRegs;
-  for (const auto &[LiveReg, Info] : LiveRegs) {
+  for (const auto &[LiveReg, Info] : State.LiveRegs) {
     if (TRI->regsOverlap(DefReg, LiveReg) &&
         LanesOverlap(DefReg, LiveReg, Info.second)) {
       AliasingLiveRegs.push_back({LiveReg, Info.first});
@@ -630,8 +626,8 @@ void RegLiveRangeTracker::mergeAliasingLiveRanges(
   if (!IsReservedFromLiveOut) {
     for (MCSubRegIterator SubIt(DefReg, TRI, /*IncludeSelf=*/true);
          SubIt.isValid(); ++SubIt) {
-      auto It = LiveRegs.find(*SubIt);
-      if (It != LiveRegs.end() &&
+      auto It = State.LiveRegs.find(*SubIt);
+      if (It != State.LiveRegs.end() &&
           It->second.first == RegLiveRange::NoLiveRange) {
         IsReservedFromLiveOut = true;
         break;
@@ -651,7 +647,7 @@ void RegLiveRangeTracker::mergeAliasingLiveRanges(
   for (const auto &[LiveReg, LRIdx] : AliasingLiveRegs) {
     if (LRIdx == RegLiveRange::NoLiveRange) {
       if (!TargetLR.expandBaseToInclude(LiveReg, TRI)) {
-        discardLiveRange(DefLRIdx, LiveRegs, OperandToLiveRange);
+        discardLiveRange(DefLRIdx, State);
         return;
       }
     }
@@ -664,9 +660,9 @@ void RegLiveRangeTracker::mergeAliasingLiveRanges(
     LLVM_DEBUG(dbgs() << "LR#" << TargetLR.getID() << " + LR#"
                       << LiveRanges[LRIdx].getID() << " -> LR#"
                       << TargetLR.getID() << "\n");
-    if (!absorbLiveRange(DefLRIdx, LRIdx, LiveRegs, OperandToLiveRange)) {
-      discardLiveRange(DefLRIdx, LiveRegs, OperandToLiveRange);
-      discardLiveRange(LRIdx, LiveRegs, OperandToLiveRange);
+    if (!absorbLiveRange(DefLRIdx, LRIdx, State)) {
+      discardLiveRange(DefLRIdx, State);
+      discardLiveRange(LRIdx, State);
       return;
     }
   }
@@ -674,7 +670,7 @@ void RegLiveRangeTracker::mergeAliasingLiveRanges(
   // Remove fully redefined registers from LiveRegs.
   for (const auto &[LiveReg, LRIdx] : AliasingLiveRegs) {
     if (DefReg == LiveReg || getSubRegIndex(LiveReg, DefReg) != 0) {
-      LiveRegs.erase(LiveReg);
+      State.LiveRegs.erase(LiveReg);
     }
   }
 
@@ -684,8 +680,8 @@ void RegLiveRangeTracker::mergeAliasingLiveRanges(
   // any y5 (containing x10) should only have x11's lanes live, not x10's.
   for (const auto &[LiveReg, OrigLRIdx] : AliasingLiveRegs) {
     // Skip if already erased (fully redefined).
-    auto LiveIt = LiveRegs.find(LiveReg);
-    if (LiveIt == LiveRegs.end())
+    auto LiveIt = State.LiveRegs.find(LiveReg);
+    if (LiveIt == State.LiveRegs.end())
       continue;
 
     // Check if DefReg is a subreg of LiveReg (DefReg partially kills LiveReg).
@@ -697,7 +693,7 @@ void RegLiveRangeTracker::mergeAliasingLiveRanges(
 
       // If no lanes remain live, remove the entry entirely.
       if (LiveIt->second.second.none()) {
-        LiveRegs.erase(LiveIt);
+        State.LiveRegs.erase(LiveIt);
       }
     }
   }
@@ -748,10 +744,10 @@ void RegLiveRangeTracker::mergeAliasingLiveRanges(
 
   for (const MCRegister CheckReg : RegsToCheck) {
     if (FullyCovered(CheckReg)) {
-      LiveRegs.erase(CheckReg);
+      State.LiveRegs.erase(CheckReg);
       for (MCSuperRegIterator SuperIt(CheckReg, TRI); SuperIt.isValid();
            ++SuperIt) {
-        LiveRegs.erase(*SuperIt);
+        State.LiveRegs.erase(*SuperIt);
       }
     }
   }
@@ -1204,8 +1200,7 @@ void RegLiveRangeTracker::processDefsInInstruction(MachineInstr &MI,
     LiveRanges[DefLRIdx].addDef(&MO, SubRegIdx);
 
     // Merge with any aliasing live ranges.
-    mergeAliasingLiveRanges(DefLRIdx, Reg, State.LiveRegs,
-                            State.OperandToLiveRange);
+    mergeAliasingLiveRanges(DefLRIdx, Reg, State);
   }
 }
 
@@ -1273,15 +1268,14 @@ void RegLiveRangeTracker::mergeCompositeSubregLRs(MachineInstr &MI,
       const unsigned SrcIdx = SubRegLRs[I].first;
       if (SrcIdx == TargetIdx)
         continue;
-      if (!absorbLiveRange(TargetIdx, SrcIdx, State.LiveRegs,
-                           State.OperandToLiveRange)) {
+      if (!absorbLiveRange(TargetIdx, SrcIdx, State)) {
         MergeFailed = true;
         break;
       }
     }
 
     if (MergeFailed) {
-      discardLiveRange(TargetIdx, State.LiveRegs, State.OperandToLiveRange);
+      discardLiveRange(TargetIdx, State);
       continue;
     }
 
