@@ -284,6 +284,10 @@ class InterBlockScheduling {
 
   AIEAlternateDescriptors SelectedAltDescs;
   std::map<MachineBasicBlock *, BlockState> Blocks;
+  /// Per-block DDG of SWP TopFixed/BotFixed vs free instructions of the same
+  /// block. Built by buildFixedContextEdges.
+  std::map<MachineBasicBlock *, std::unique_ptr<InterBlockEdges>>
+      FixedContextEdges;
   std::vector<MachineBasicBlock *> MBBSequence;
   unsigned NextInOrder = 0;
 
@@ -405,6 +409,12 @@ public:
   void updatePerSuccEdges(MachineBasicBlock *BB, MachineBasicBlock *For);
 
   void buildGraph(InterBlockEdges &);
+
+  /// Build the intra-block DDG of SWP fixed inserts vs this block's free
+  /// region. No-op when both TopInsert and BottomInsert are empty.
+  void buildFixedContextEdges(MachineBasicBlock *BB);
+  /// Null if buildFixedContextEdges was not called or had nothing to build.
+  InterBlockEdges *getFixedContextEdges(MachineBasicBlock *BB);
 
   /// Clear and repopulate the PostDepths of every per-successor inter-block
   /// edge for BB. For scheduled successors, records the actual scheduled cycle
