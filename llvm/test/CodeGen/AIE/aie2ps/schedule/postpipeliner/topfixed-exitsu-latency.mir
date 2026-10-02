@@ -6,8 +6,8 @@
 # (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
 
 # The epilogue drain is a mul whose result is used only in the successor, after
-# ret and three adds. Both the default and itinerary paths still insert a nop
-# after that mul.
+# ret and three adds. That depth covers the mul, so the epilogue ends on the
+# mul. The itinerary fallback still inserts a nop after it.
 # dedicated_exit's use block has two predecessors, so the drain is moved into a
 # new block and that block's PerSuccEdges are rebuilt after emitInterBlockTop.
 
@@ -48,12 +48,11 @@
   ; REMAIN-NEXT:  .L_LEnd0:
   ; REMAIN-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
   ; REMAIN-NEXT:  // %bb.3: // %shell
-  ; REMAIN-NEXT:    nop
+  ; REMAIN-NEXT:    nopx
   ; REMAIN-NEXT:    mul r2, r2, r1
   ; REMAIN-NEXT:    nop
   ; REMAIN-NEXT:    nop
   ; REMAIN-NEXT:    mul r2, r2, r1
-  ; REMAIN-NEXT:    nop
   ; REMAIN-NEXT:  .LBB0_4: // %use
   ; REMAIN-NEXT:    nopa ; nopb ; ret lr; nopm
   ; REMAIN-NEXT:    add r1, r1, #1 // Delay Slot 5
@@ -157,12 +156,11 @@
   ; REMAIN-NEXT:  .L_LEnd1:
   ; REMAIN-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
   ; REMAIN-NEXT:  // %bb.3: // %use
-  ; REMAIN-NEXT:    nop
+  ; REMAIN-NEXT:    nopx
   ; REMAIN-NEXT:    mul r2, r2, r1
   ; REMAIN-NEXT:    nop
   ; REMAIN-NEXT:    nop
   ; REMAIN-NEXT:    mul r2, r2, r1
-  ; REMAIN-NEXT:    nop
   ; REMAIN-NEXT:  .LBB1_4: // %use
   ; REMAIN-NEXT:    nopa ; nopb ; ret lr; nopm
   ; REMAIN-NEXT:    add r1, r1, #1 // Delay Slot 5

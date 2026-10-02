@@ -78,7 +78,7 @@ body:             |
   ; CHECK-NEXT:   - Prologue:        bb.1.for.body.preheader
   ; CHECK-NEXT:   - PrologueBundles: '6'
   ; CHECK-NEXT:   - Epilogue:        bb.3.loop.exit
-  ; CHECK-NEXT:   - EpilogueBundles: '5'
+  ; CHECK-NEXT:   - EpilogueBundles: '4'
   ; CHECK-NEXT:   - VregMode:        Physical
   ; CHECK-NEXT:   - SchedHeuristic:  Config_12_1_0_NodeNum
   ; CHECK-NEXT: ...
