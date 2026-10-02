@@ -13,7 +13,7 @@
 ; RUN:   -pass-remarks-missed=aie-inner-loop-versioning %s -o /dev/null 2>&1 \
 ; RUN:   | FileCheck %s
 
-; CHECK: loop versioned: a runtime trip-count guard selects a copy the post-pipeliner may pipeline
+; CHECK: loop versioned: a runtime trip-count guard selects a copy the pipeliner may pipeline
 define void @versioned(ptr noalias %a, ptr noalias %b, i32 %n) {
 entry:
   br label %loop
