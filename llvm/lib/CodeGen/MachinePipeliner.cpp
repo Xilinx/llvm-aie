@@ -2508,6 +2508,18 @@ void SwingSchedulerDAG::computeNodeOrder(NodeSetType &NodeSets) {
   SmallSetVector<SUnit *, 8> R;
   NodeOrder.clear();
 
+  // The node with the highest ASAP, used to seed an ordering when no more
+  // specific seed is available. Returns null only for an empty node set.
+  auto MaxASAPNode = [this](NodeSet &Nodes) -> SUnit * {
+    SUnit *MaxASAP = nullptr;
+    for (SUnit *SU : Nodes) {
+      if (MaxASAP == nullptr || getASAP(SU) > getASAP(MaxASAP) ||
+          (getASAP(SU) == getASAP(MaxASAP) && SU->NodeNum > MaxASAP->NodeNum))
+        MaxASAP = SU;
+    }
+    return MaxASAP;
+  };
+
   for (auto &Nodes : NodeSets) {
     LLVM_DEBUG(dbgs() << "NodeSet size " << Nodes.size() << "\n");
     OrderKind Order;
@@ -2530,17 +2542,18 @@ void SwingSchedulerDAG::computeNodeOrder(NodeSetType &NodeSets) {
       for (const auto &N : Nodes)
         if (N->Succs.size() == 0)
           R.insert(N);
+      // Seeding from sinks alone leaves R empty when every node of the set has
+      // a successor, which ends ordering before it starts and silently drops
+      // the loop from pipelining. Fall back to the same seed the multiple
+      // node-set path below uses.
+      if (R.empty())
+        if (SUnit *Seed = MaxASAPNode(Nodes))
+          R.insert(Seed);
       Order = BottomUp;
       LLVM_DEBUG(dbgs() << "  Bottom up (all) ");
     } else {
-      // Find the node with the highest ASAP.
-      SUnit *maxASAP = nullptr;
-      for (SUnit *SU : Nodes) {
-        if (maxASAP == nullptr || getASAP(SU) > getASAP(maxASAP) ||
-            (getASAP(SU) == getASAP(maxASAP) && SU->NodeNum > maxASAP->NodeNum))
-          maxASAP = SU;
-      }
-      R.insert(maxASAP);
+      if (SUnit *Seed = MaxASAPNode(Nodes))
+        R.insert(Seed);
       Order = BottomUp;
       LLVM_DEBUG(dbgs() << "  Bottom up (default) ");
     }
