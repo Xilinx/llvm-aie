@@ -195,6 +195,14 @@ protected:
                               std::vector<AIE::MachineBundle> &BotBundles,
                               MachineInstr *BranchMI, unsigned NumDelaySlots);
 
+  /// Decide whether the block is rescheduled with the delay slot instruction
+  /// pinned, given the region length before (\p UnfixedLength) and after
+  /// (\p FixedLength) fixupDelaySlotPosition. \p OrigOpcodes are the opcodes
+  /// that materializeMultiOpcodeInstrs changed in the first schedule.
+  void updateDelaySlotReschedule(
+      unsigned UnfixedLength, unsigned FixedLength, unsigned NumDelaySlots,
+      SmallVector<std::pair<MachineInstr *, unsigned>, 4> OrigOpcodes);
+
   // This function returns true when it is impossible to continue with top-down
   // without entering an infinite loop because the only remaining instructions
   // cannot be scheduled in the top zone.

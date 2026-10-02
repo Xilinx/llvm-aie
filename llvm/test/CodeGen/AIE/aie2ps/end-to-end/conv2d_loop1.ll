@@ -80,7 +80,7 @@ define dso_local void @conv2d.for.body.i(i32 %0, ptr %add.ptr.i.i, ptr %add.ptr4
 ; REMARKS-NEXT:   - Prologue:        bb.1.steady.stage1.top
 ; REMARKS-NEXT:   - PrologueBundles: '10'
 ; REMARKS-NEXT:   - Epilogue:        bb.3.steady.stage1.bottom.and.stage0.top
-; REMARKS-NEXT:   - EpilogueBundles: '20'
+; REMARKS-NEXT:   - EpilogueBundles: '19'
 ; REMARKS-NEXT:   - VregMode:        Physical
 ; REMARKS-NEXT:   - SchedHeuristic:  Config_20_1_0_NodeNum
 ; REMARKS-NEXT: ...
@@ -164,8 +164,8 @@ define dso_local void @conv2d.for.body.i(i32 %0, ptr %add.ptr.i.i, ptr %add.ptr4
 ; ASM-NEXT:    nopa ; nopb ; nops ; nopxm ; vmac dm3, dm3, x7, x4, r8
 ; ASM-NEXT:  // %bb.3: // %steady.stage1.bottom.and.stage0.top
 ; ASM-NEXT:    // in Loop: Header=BB0_1 Depth=1
-; ASM-NEXT:    padda [p1], m6; nopb ; nops ; nopxm ; vmac dm2, dm2, x9, x4, r8
-; ASM-NEXT:    paddb.3d [p1], d2; nopx ; mov srssign0, r7; vmac dm1, dm1, x7, x2, r8
+; ASM-NEXT:    padda [p1], m6; nopb ; nops ; nopx ; mov srssign0, r7; vmac dm2, dm2, x9, x4, r8
+; ASM-NEXT:    nopa ; paddb.3d [p1], d2; nopxm ; vmac dm1, dm1, x7, x2, r8
 ; ASM-NEXT:    vlda.ups.2x cml3, s0, upssign1, [p3], #64; vldb x1, [p1, #0]; vshift.align x7, x7, s1, x8, r30; vmac dm0, dm0, x9, x2, r8
 ; ASM-NEXT:    vlda.ups.2x cmh3, s0, upssign1, [p3], #64; vldb x10, [p1, #64]; vshift.align x9, x9, s1, x6, r30
 ; ASM-NEXT:    vlda.ups.2x cml2, s0, upssign1, [p3], #64; mov r0, dc6; vmac dm3, dm3, x7, x4, r8
@@ -177,13 +177,12 @@ define dso_local void @conv2d.for.body.i(i32 %0, ptr %add.ptr.i.i, ptr %add.ptr4
 ; ASM-NEXT:    vst.srs.4x dm3, s2, srssign0, [p2], m7; vldb x3, [p0], m5; mov r0, p0
 ; ASM-NEXT:    vst.srs.4x dm2, s2, srssign0, [p2], m4; vldb.3d x5, [p0], d0; and r0, r0, r2
 ; ASM-NEXT:    vst.srs.4x dm1, s2, srssign0, [p2], m7; add r30, r0, #1
-; ASM-NEXT:    vst.3d.srs.4x dm0, s2, srssign0, [p2], d3; movx srssign0, #0
-; ASM-NEXT:    jnzd r3, r3, p5
-; ASM-NEXT:    nop // Delay Slot 5
+; ASM-NEXT:    vst.3d.srs.4x dm0, s2, srssign0, [p2], d3; jnzd r3, r3, p5
+; ASM-NEXT:    movx srssign0, #0 // Delay Slot 5
 ; ASM-NEXT:    nop // Delay Slot 4
-; ASM-NEXT:    vshift.align x7, x7, s1, x3, r30 // Delay Slot 3
-; ASM-NEXT:    vshift.align x9, x9, s1, x5, r30 // Delay Slot 2
-; ASM-NEXT:    nop // Delay Slot 1
+; ASM-NEXT:    nop // Delay Slot 3
+; ASM-NEXT:    vshift.align x7, x7, s1, x3, r30 // Delay Slot 2
+; ASM-NEXT:    vshift.align x9, x9, s1, x5, r30 // Delay Slot 1
 ; ASM-NEXT:  // %bb.4: // %lastiter.stage1.top
 ; ASM-NEXT:    mova r0, #63; vldb x6, [p0], m5; mov r2, p0
 ; ASM-NEXT:    vlda.3d x4, [p0], d0; and r2, r2, r0
