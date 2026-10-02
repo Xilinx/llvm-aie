@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -97,6 +97,11 @@ public:
 
   /// Called when the loop's preheader has been modified to NewPreheader.
   void setPreheader(MachineBasicBlock *NewPreheader) override;
+
+  /// AIE loop bodies are routinely wider than the target-independent limit
+  /// assumes: a 64-lane elementwise kernel reaches an MII of 66, which the
+  /// default would reject outright and leave unpipelined.
+  std::optional<int> getMaxMII() const override;
 
   /// The default version, no special treatment for any instruction
   /// except the terminators

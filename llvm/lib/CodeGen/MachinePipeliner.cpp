@@ -733,9 +733,15 @@ void SwingSchedulerDAG::schedule() {
     return;
   }
 
-  // Don't pipeline large loops.
-  if (SwpMaxMii != -1 && (int)MII > SwpMaxMii) {
-    LLVM_DEBUG(dbgs() << "MII > " << SwpMaxMii
+  // Don't pipeline large loops. A target may raise the bound for loop bodies
+  // it can still pipeline profitably; an explicit -pipeliner-max-mii wins over
+  // the target's opinion.
+  int MaxMii = SwpMaxMii;
+  if (SwpMaxMii.getNumOccurrences() == 0 && LoopPipelinerInfo)
+    MaxMii = LoopPipelinerInfo->getMaxMII().value_or(SwpMaxMii);
+
+  if (MaxMii != -1 && (int)MII > MaxMii) {
+    LLVM_DEBUG(dbgs() << "MII > " << MaxMii
                       << ", we don't pipeline large loops\n");
     NumFailLargeMaxMII++;
     Pass.ORE->emit([&]() {
@@ -743,7 +749,7 @@ void SwingSchedulerDAG::schedule() {
                  DEBUG_TYPE, "schedule", Loop.getStartLoc(), Loop.getHeader())
              << "Minimal Initiation Interval too large: "
              << ore::NV("MII", (int)MII) << " > "
-             << ore::NV("SwpMaxMii", SwpMaxMii) << "."
+             << ore::NV("SwpMaxMii", MaxMii) << "."
              << "Refer to -pipeliner-max-mii.";
     });
     return;

@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -40,6 +40,11 @@ cl::opt<int>
     LoopMaxGuardCount("aie-pipeliner-max-guards",
                       cl::desc("Refuse SWP schedules with too many guards"),
                       cl::init(1), cl::Hidden);
+
+cl::opt<int> LoopMaxMII(
+    "aie-pipeliner-max-mii",
+    cl::desc("MII above which a loop is too large to be worth pipelining"),
+    cl::init(100), cl::Hidden);
 cl::opt<bool> LoopWholeLoopGuard(
     "aie-pipeliner-whole-guard",
     cl::desc("Allow SWP schedules requiring a guard around the whole loop"),
@@ -119,6 +124,10 @@ void AIEBasePipelinerLoopInfo::adjustTripCount(int TripCountAdjust) {
 /// implicitly taken as the next instruction, or to minimise life range of
 /// loop state registers.
 void AIEBasePipelinerLoopInfo::setPreheader(MachineBasicBlock *NewPreheader) {}
+
+std::optional<int> AIEBasePipelinerLoopInfo::getMaxMII() const {
+  return LoopMaxMII;
+}
 
 MachineInstr *AIEBasePipelinerLoopInfo::getDefInstr(MachineInstr *MI,
                                                     unsigned Idx) {
