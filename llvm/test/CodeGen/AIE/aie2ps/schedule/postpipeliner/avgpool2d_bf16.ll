@@ -6,12 +6,14 @@
 ;
 ; (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
 
-; RUN: llc %s -o - | FileCheck %s
+; RUN: llc %s -aie-pipeliner-max-mii=27 -o - | FileCheck %s
 ;
 ; AvgPool2D bf16 inner loop extracted from AvgPool2D_bfloat16_0.ll.
 ; 72-instruction loop body with data shuffles, shifts, and VMACs.
 ; The post-pipeliner should find II=36 (NS=2) for the inner loop
 ; with MinTripCount=3.
+; The MII of 36 is kept out of the prepipeliner's reach, which would otherwise
+; claim the loop first.
 
 source_filename = "Work/aie/0_0/src/0_0.cc"
 target datalayout = "e-m:e-p:20:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-f32:32:32-i64:32-f64:32-a:0:32-n32"

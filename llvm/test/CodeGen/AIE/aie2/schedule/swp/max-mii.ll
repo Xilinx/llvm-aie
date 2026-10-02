@@ -5,24 +5,23 @@
 ; (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
 
 ; The loop below has an MII of 32 (sixteen 512-bit stores), above the
-; target-independent -pipeliner-max-mii default of 27, so the prepipeliner
-; rejects it and the postpipeliner takes it instead.
+; target-independent -pipeliner-max-mii default of 27. AIE raises the bound
+; through -aie-pipeliner-max-mii, so the prepipeliner takes the loop. An
+; explicit -pipeliner-max-mii overrides the target in either direction.
 
 ; RUN: llc -mtriple=aie2 -O2 %s -o /dev/null -pass-remarks-output=- \
 ; RUN:   -pass-remarks-filter=pipeliner \
-; RUN:   | FileCheck %s --check-prefixes=REJECT27,POST
+; RUN:   | FileCheck %s --check-prefixes=ACCEPT,PRE
+; RUN: llc -mtriple=aie2 -O2 %s -o /dev/null -pass-remarks-output=- \
+; RUN:   -pass-remarks-filter=pipeliner -aie-pipeliner-max-mii=30 \
+; RUN:   | FileCheck %s --check-prefixes=REJECT30,POST
 ; RUN: llc -mtriple=aie2 -O2 %s -o /dev/null -pass-remarks-output=- \
 ; RUN:   -pass-remarks-filter=pipeliner -pipeliner-max-mii=30 \
 ; RUN:   | FileCheck %s --check-prefixes=REJECT30,POST
 ; RUN: llc -mtriple=aie2 -O2 %s -o /dev/null -pass-remarks-output=- \
-; RUN:   -pass-remarks-filter=pipeliner -pipeliner-max-mii=50 \
+; RUN:   -pass-remarks-filter=pipeliner -aie-pipeliner-max-mii=30 \
+; RUN:   -pipeliner-max-mii=50 \
 ; RUN:   | FileCheck %s --check-prefixes=ACCEPT,PRE
-
-; REJECT27:      - String: 'Minimal Initiation Interval too large: '
-; REJECT27-NEXT: - MII: '32'
-; REJECT27-NEXT: - String: ' > '
-; REJECT27-NEXT: - SwpMaxMii: '27'
-; REJECT27-NOT:  Schedule found with Initiation Interval
 
 ; REJECT30:      - String: 'Minimal Initiation Interval too large: '
 ; REJECT30-NEXT: - MII: '32'

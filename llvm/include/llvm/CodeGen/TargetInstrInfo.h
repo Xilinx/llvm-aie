@@ -778,6 +778,13 @@ public:
       return {DefaultSMSOrder};
     }
 
+    /// Return a target-specific upper bound on the MII of a loop that is still
+    /// worth pipelining. Loops above the bound are not pipelined at all, so a
+    /// target with wide loop bodies may need a higher one than the
+    /// target-independent default. std::nullopt keeps that default, and an
+    /// explicitly given -pipeliner-max-mii overrides this in either case.
+    virtual std::optional<int> getMaxMII() const { return std::nullopt; }
+
     virtual ~PipelinerLoopInfo();
     /// Return true if the given instruction should not be pipelined and should
     /// be ignored. An example could be a loop comparison, or induction variable
