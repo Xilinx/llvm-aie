@@ -146,18 +146,24 @@ bool hasUserBetween(Value *V, Instruction *From, Instruction *To) {
   return false;
 }
 
-/// Returns the unique constant-stride i8 GEP in \p Body that uses \p Node as
-/// its pointer operand, or nullptr if no such GEP exists.
+/// Returns the chain-link GEP in \p Body with the smallest positive constant
+/// offset that uses \p Node as its pointer operand, or nullptr if none exists.
+/// Selecting the smallest offset ensures the chain is built in ascending order
+/// (phi -> +64 -> +128 ...) regardless of LLVM's use-list iteration order.
 GetElementPtrInst *findNextChainGEP(Value *Node, BasicBlock *Body) {
+  GetElementPtrInst *Best = nullptr;
+  int64_t BestOff = INT64_MAX;
   for (User *U : Node->users()) {
     auto *const GEP = dyn_cast<GetElementPtrInst>(U);
     if (!GEP || GEP->getParent() != Body)
       continue;
     int64_t Off = 0;
-    if (AIEIRUtils::isChainLinkCandidate(GEP, Off))
-      return GEP;
+    if (AIEIRUtils::isChainLinkCandidate(GEP, Off) && Off < BestOff) {
+      Best = GEP;
+      BestOff = Off;
+    }
   }
-  return nullptr;
+  return Best;
 }
 
 //===----------------------------------------------------------------------===//
