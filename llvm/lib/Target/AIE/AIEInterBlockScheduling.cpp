@@ -493,6 +493,12 @@ void InterBlockScheduling::enterBlock(MachineBasicBlock *BB) {
   // blocks, in particular the pipeliner's prologue and epilogue.
   emitInterBlockTop(*CurrentBlockState);
   emitInterBlockBottom(*CurrentBlockState);
+
+  // Gathering built this graph with an empty drain. Once the clones are in
+  // this block, rebuild so pre-boundary includes them. A dedicated exit takes
+  // the drain, leaving TopInsert empty here; that exit rebuilds on entry.
+  if (!CurrentBlockState->TopInsert.empty())
+    buildPerSuccEdges(BB);
 }
 namespace {
 /// This implements the interface to the postpipeliner to extract the
@@ -1124,7 +1130,17 @@ void InterBlockScheduling::buildGraph(InterBlockEdges &DAG) {
   const BlockState &BS = getBlockState(PredBB);
   const Region &Bot = BS.getBottom();
 
-  // Pre-boundary: free instructions of the current region.
+  // Pre-boundary: SWP drain (empty until emitted), then free.
+  for (MachineInstr *MI : BS.TopInsertSemanticOrder) {
+    if (!MI)
+      continue;
+    DAG.addNode(MI);
+    // Edge building calls getMF(). Park unparented drain clones in the
+    // epilogue; emitInterBlockTop removes them before the real insertion.
+    // Position in the block does not matter: edges follow DAG order.
+    if (!MI->getParent())
+      PredBB->push_back(MI);
+  }
   for (MachineInstr *MI : Bot.getFreeInstructions())
     DAG.addNode(MI);
 
@@ -1503,6 +1519,13 @@ void InterBlockScheduling::emitInterBlockTop(BlockState &BS) {
   // this block to be scheduled later. Some maintenance of the original block
   // state is also necessary.
   auto *DedicatedExit = makeDedicatedLoopExit(ParentLoopMBB, EpilogueBB);
+  // buildGraph may have parked unparented drain clones here so dependency
+  // queries can reach the subtarget. Remove them before emitBundles, or
+  // before this region is transferred to a new dedicated exit.
+  for (MachineInstr *MI : BS.TopInsertSemanticOrder) {
+    if (MI && MI->getParent() == EpilogueBB)
+      EpilogueBB->remove_instr(MI);
+  }
   if (DedicatedExit == EpilogueBB) {
 
     // Trim excedent empty bundles. Empty TopInsert means 1-stage pipeline.
