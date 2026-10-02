@@ -20,6 +20,7 @@
 #include "AIEMachineScheduler.h"
 #include "AIEMaxLatencyFinder.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/STLFunctionalExtras.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
@@ -384,30 +385,42 @@ class FuncArgCopyEdges : public ScheduleDAGMutation {
 };
 
 class RegionEndEdges : public ScheduleDAGMutation {
-  void removeExitSUPreds(ScheduleDAGInstrs *DAG) {
+  void removeExitSUPreds(ScheduleDAGInstrs *DAG,
+                         function_ref<bool(const SUnit &)> IsFree) {
     SUnit &ExitSU = DAG->ExitSU;
-    while (!ExitSU.Preds.empty()) {
-      ExitSU.removePred(ExitSU.Preds.back());
+    SmallVector<SDep, 8> ToRemove;
+    for (const SDep &Pred : ExitSU.Preds) {
+      if (!IsFree(*Pred.getSUnit()))
+        continue;
+      ToRemove.push_back(Pred);
     }
+    for (const SDep &Pred : ToRemove)
+      ExitSU.removePred(Pred);
   }
   void apply(ScheduleDAGInstrs *DAG) override {
     AIE::MaxLatencyFinder MaxLatency(DAG);
     MachineBasicBlock *PrologueMBB = DAG->getBB();
     unsigned int ZOLBundlesCount = 0;
 
+    // PostRA only. DDG mutations have no scheduler, so every SUnit is free.
+    AIEPostRASchedStrategy *Scheduler = nullptr;
+    if (PrologueMBB)
+      Scheduler = static_cast<AIEScheduleDAGMI *>(DAG)->getSchedImpl();
+
+    auto IsFree = [Scheduler](const SUnit &SU) {
+      return !Scheduler || Scheduler->isFreeSU(SU);
+    };
+
     // Default edges to ExitSU are conservative, and can't be shrunk.
-    // We really should know what we're doing here, so just remove and
-    // recompute all of them.
-    removeExitSUPreds(DAG);
+    // Remove and recompute free-instruction edges. Leave fixed SUnits:
+    // BotFixed pins position, TopFixed still uses itinerary latency.
+    removeExitSUPreds(DAG, IsFree);
 
     const auto *TII = static_cast<const AIEBaseInstrInfo *>(DAG->TII);
     bool UserSetLatencyMargin = UserLatencyMargin.getNumOccurrences() > 0;
 
-    // Need a BB to look up BotFixed; PostRA only. DDG mutations do not have one.
-    AIEPostRASchedStrategy *Scheduler = nullptr;
     AIE::InterBlockEdges *BotEdges = nullptr;
-    if (PrologueMBB) {
-      Scheduler = static_cast<AIEScheduleDAGMI *>(DAG)->getSchedImpl();
+    if (Scheduler) {
       AIE::InterBlockScheduling &IB = Scheduler->getInterBlock();
       if (!IB.getBlockState(PrologueMBB)
                .getCurrentRegion()
@@ -420,6 +433,8 @@ class RegionEndEdges : public ScheduleDAGMutation {
 
     DenseMap<const SUnit *, unsigned> BotFixedLatencies;
     for (SUnit &SU : DAG->SUnits) {
+      if (!IsFree(SU))
+        continue;
       MachineInstr &MI = *SU.getInstr();
 
       SDep ExitDep(&SU, SDep::Artificial);
@@ -485,7 +500,7 @@ class RegionEndEdges : public ScheduleDAGMutation {
     // to be able to issue in the same cycle as ExitSU (cycle #0 in bottom-up
     // scheduling).
     for (SDep &PredEdge : DAG->ExitSU.Preds) {
-      if (!PredEdge.isArtificial())
+      if (!PredEdge.isArtificial() || !IsFree(*PredEdge.getSUnit()))
         continue;
       unsigned BackwardLatency =
           PredEdge.getLatency() ? PredEdge.getLatency() - 1 : 0;
