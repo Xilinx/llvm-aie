@@ -14,6 +14,7 @@
 
 #include "AIEMaxLatencyFinder.h"
 #include "Utils/AIEMachineInstrPrint.h"
+#include <algorithm>
 
 #undef DEBUG_TYPE
 #define DEBUG_TYPE "sched-blocks"
@@ -188,6 +189,29 @@ unsigned MaxLatencyFinder::operator()(MachineInstr &MI) {
   }
 
   return Latency;
+}
+
+int computeMinEntryDepth(const SUnit &EdgeSU, const InterBlockEdges &Edges) {
+  int MaxDepth = 0;
+  for (const SDep &PredEdge : EdgeSU.Preds) {
+    SUnit *PredSU = PredEdge.getSUnit();
+
+    int PredDepth = 0;
+    bool HasKnownDepth = false;
+    if (Edges.isPreBoundaryNode(PredSU) && Edges.hasPreDepth(PredSU)) {
+      PredDepth = Edges.getPreDepthOr(PredSU, 0);
+      HasKnownDepth = true;
+    } else if (Edges.isPostBoundaryNode(PredSU) && Edges.hasPostDepth(PredSU)) {
+      PredDepth = Edges.getPostDepthOr(PredSU, 0);
+      HasKnownDepth = true;
+    }
+
+    if (!HasKnownDepth)
+      continue;
+
+    MaxDepth = std::max(MaxDepth, PredDepth + PredEdge.getSignedLatency());
+  }
+  return MaxDepth;
 }
 
 } // namespace llvm::AIE

@@ -470,6 +470,57 @@ public:
   RegionEndEdges() {}
 };
 
+/// EntrySU latencies for free SUnits from TopFixed depths in
+/// FixedContextEdges. Symmetric to RegionEndEdges at the start of the
+/// region. Runs before EmitFixedSUnits so DAG->SUnits are still free only.
+/// Loop-context (pre-boundary) depths are not filled yet: today's epilogue
+/// graph has an empty pre-boundary, so only TopFixed post-depths contribute.
+class RegionStartEdges : public ScheduleDAGMutation {
+  void apply(ScheduleDAGInstrs *DAG) override {
+    MachineBasicBlock *BB = DAG->getBB();
+    if (!BB)
+      return;
+
+    auto *Scheduler = static_cast<AIEScheduleDAGMI *>(DAG)->getSchedImpl();
+    AIE::InterBlockScheduling &IB = Scheduler->getInterBlock();
+    const BlockState &BS = IB.getBlockState(BB);
+    const Region &R = BS.getCurrentRegion();
+
+    if (R.getTopFixedBundles().empty())
+      return;
+
+    IB.buildFixedContextEdges(BB);
+    AIE::InterBlockEdges *Edges = IB.getFixedContextEdges(BB);
+    if (!Edges)
+      return;
+
+    for (SUnit &SU : DAG->SUnits) {
+      if (Scheduler->isFixedSU(SU, true) || Scheduler->isFixedSU(SU, false))
+        continue;
+
+      MachineInstr &MI = *SU.getInstr();
+      const SUnit *EdgeSU = Edges->getPostBoundaryNode(&MI);
+      if (!EdgeSU)
+        continue;
+
+      const int MaxDepth = AIE::computeMinEntryDepth(*EdgeSU, *Edges);
+      if (MaxDepth <= 0)
+        continue;
+
+      LLVM_DEBUG(dbgs() << "RegionStartEdges: SU(" << SU.NodeNum
+                        << ") EntrySU latency " << MaxDepth << ": " << MI);
+      SDep Dep(&DAG->EntrySU, SDep::Artificial);
+      Dep.setLatency(MaxDepth);
+      SU.addPred(Dep, /*Required=*/true);
+    }
+
+    DAG->EntrySU.setHeightDirty();
+  }
+
+public:
+  RegionStartEdges() {}
+};
+
 /// This Mutator is responsible for emitting "fixed" SUnits at the top or bottom
 /// of the region. These special SUnits require a specific cycle and cannot be
 /// placed freely by the scheduler.
@@ -1031,6 +1082,7 @@ AIEBaseSubtarget::getPostRAMutationsImpl(const Triple &TT, AAResults *AA) {
     if (EnableWAWStickyRegisters)
       Mutations.emplace_back(std::make_unique<WAWStickyRegistersEdges>());
     Mutations.emplace_back(std::make_unique<RegionEndEdges>());
+    Mutations.emplace_back(std::make_unique<RegionStartEdges>());
     Mutations.emplace_back(std::make_unique<MemoryEdges>(true));
     Mutations.emplace_back(std::make_unique<MachineSchedWAWEdges>());
     Mutations.emplace_back(std::make_unique<BiasDepth>());

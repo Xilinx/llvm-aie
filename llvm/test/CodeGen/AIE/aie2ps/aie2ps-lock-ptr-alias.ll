@@ -268,15 +268,17 @@ define void @pipelined_release_ptr_disjoint_buffer(ptr noalias %lock_io, ptr noa
 ; CHECK-NEXT:  .L_LEnd1:
 ; CHECK-NEXT:    nopa ; vldb x2, [p0], #64; vst x4, [p1], #64; nopx ; vadd.32 x4, x2, x0; nopv
 ; CHECK-NEXT:  // %bb.2: // %for.exit
-; CHECK-NEXT:    nopa ; nopb ; vst x4, [p1], #64; nopx ; vadd.32 x4, x2, x0; nopv
-; CHECK-NEXT:    vst x4, [p1], #64; nopx ; vadd.32 x4, x2, x0
+; CHECK-NEXT:    nopa ; nopb ; nopx ; vadd.32 x4, x2, x0; vst x4, [p1], #64
 ; CHECK-NEXT:    vst x4, [p1], #64; vadd.32 x4, x2, x0
-; CHECK-NEXT:    vst x4, [p1], #64; rel r0, r2; vadd.32 x4, x2, x0
+; CHECK-NEXT:    vst x4, [p1], #64; vadd.32 x4, x2, x0
+; CHECK-NEXT:    vst x4, [p1], #64; vadd.32 x4, x2, x0
+; CHECK-NEXT:    vst x4, [p1], #64; vadd.32 x4, x2, x0
+; CHECK-NEXT:    vst x4, [p1], #64; vadd.32 x4, x2, x0
 ; CHECK-NEXT:    vst x4, [p1], #64; ret lr; vadd.32 x4, x2, x0
-; CHECK-NEXT:    vst x4, [p1], #64; vadd.32 x4, x2, x0 // Delay Slot 5
-; CHECK-NEXT:    vst x4, [p1], #64; vadd.32 x4, x2, x0 // Delay Slot 4
-; CHECK-NEXT:    vst x4, [p1], #64 // Delay Slot 3
-; CHECK-NEXT:    vst x4, [p1], #64 // Delay Slot 2
+; CHECK-NEXT:    vst x4, [p1], #64 // Delay Slot 5
+; CHECK-NEXT:    vst x4, [p1], #64; rel r0, r2 // Delay Slot 4
+; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %cur_id.ptr = getelementptr inbounds i8, ptr %lock_io, i20 12

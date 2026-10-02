@@ -9,6 +9,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIEDataDependenceHelper.h"
+#include "AIEMaxLatencyFinder.h"
 #include "AIETestTarget.h"
 #include "ScheduleDAGMITestUtils.h"
 
@@ -218,6 +219,60 @@ TEST_F(InterBlockEdgesTest, ClearResetsDAGAndMaps) {
   EXPECT_EQ(DAG.getPreRegionMaxDepth(), 0);
   EXPECT_EQ(DAG.getPreRegionMaxHeight(), 0);
   EXPECT_EQ(DAG.getPostRegionMaxHeight(), 0);
+}
+
+TEST_F(InterBlockEdgesTest, ComputeMinEntryDepthFromKnownDepths) {
+  auto *LoopD = appendPlainInstr();
+  auto *Top0 = appendPlainInstr();
+  auto *Top2 = appendPlainInstr();
+  auto *OtherFree = appendPlainInstr();
+  auto *Free = appendPlainInstr();
+  InterBlockEdges DAG = makeDAG();
+
+  DAG.addNode(LoopD);
+  DAG.recordPreDepth(LoopD, 3);
+  DAG.markBoundary();
+  DAG.addNode(Top0);
+  DAG.addNode(Top2);
+  DAG.addNode(OtherFree);
+  DAG.addNode(Free);
+  DAG.recordPostDepth(Top0, 0);
+  DAG.recordPostDepth(Top2, 2);
+
+  SUnit *LoopDSU = const_cast<SUnit *>(DAG.getPreBoundaryNode(LoopD));
+  SUnit *Top0SU = const_cast<SUnit *>(DAG.getPostBoundaryNode(Top0));
+  SUnit *Top2SU = const_cast<SUnit *>(DAG.getPostBoundaryNode(Top2));
+  SUnit *OtherFreeSU = const_cast<SUnit *>(DAG.getPostBoundaryNode(OtherFree));
+  SUnit *FreeSU = const_cast<SUnit *>(DAG.getPostBoundaryNode(Free));
+  ASSERT_NE(LoopDSU, nullptr);
+  ASSERT_NE(Top0SU, nullptr);
+  ASSERT_NE(Top2SU, nullptr);
+  ASSERT_NE(OtherFreeSU, nullptr);
+  ASSERT_NE(FreeSU, nullptr);
+
+  // No preds: unconstrained, free to issue alongside the fixed region.
+  EXPECT_EQ(computeMinEntryDepth(*FreeSU, DAG), 0);
+
+  // A pred without a recorded depth carries no position information.
+  SDep FromFree(OtherFreeSU, SDep::Artificial);
+  FromFree.setLatency(10);
+  FreeSU->addPred(FromFree, /*Required=*/true);
+  EXPECT_EQ(computeMinEntryDepth(*FreeSU, DAG), 0);
+
+  SDep FromTop0(Top0SU, SDep::Artificial);
+  FromTop0.setLatency(1);
+  FreeSU->addPred(FromTop0, /*Required=*/true);
+  EXPECT_EQ(computeMinEntryDepth(*FreeSU, DAG), 1);
+
+  SDep FromTop2(Top2SU, SDep::Artificial);
+  FromTop2.setLatency(2);
+  FreeSU->addPred(FromTop2, /*Required=*/true);
+  EXPECT_EQ(computeMinEntryDepth(*FreeSU, DAG), 4);
+
+  SDep FromLoop(LoopDSU, SDep::Artificial);
+  FromLoop.setLatency(2);
+  FreeSU->addPred(FromLoop, /*Required=*/true);
+  EXPECT_EQ(computeMinEntryDepth(*FreeSU, DAG), 5);
 }
 
 } // namespace
