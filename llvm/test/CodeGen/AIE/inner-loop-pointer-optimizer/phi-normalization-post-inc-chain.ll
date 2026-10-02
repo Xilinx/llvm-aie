@@ -238,9 +238,9 @@ define void @pattern2_reroot(ptr %init, i32 %n) {
 ; POSTINC-LABEL: @pattern2_reroot
 ; POSTINC:      loop:
 ; POSTINC:        %phi = phi ptr
-; POSTINC:        %gep1 = getelementptr inbounds i8, ptr %phi, i20 64
-; POSTINC:        %v0 = load i32, ptr %phi
 ; POSTINC:        %gep2 = getelementptr inbounds i8, ptr %phi, i20 128
+; POSTINC:        %v0 = load i32, ptr %phi
+; POSTINC:        %gep1 = getelementptr inbounds i8, ptr %phi, i20 64
 ; POSTINC:        %v1 = load i32, ptr %gep1
 entry:
   br label %loop
