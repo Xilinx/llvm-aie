@@ -185,15 +185,14 @@ public:
   /// Returns std::nullopt if the loop has subloops, no preheader, no single
   /// latch, or the latch is not the same block as the header (not
   /// single-block).
-  static std::optional<InnerLoopStructure> tryBuildFrom(Loop *L, LoopInfo &LI);
+  static std::optional<InnerLoopStructure> tryBuildFrom(Loop *L);
 
   BasicBlock *getBody() const { return Body; }
   BasicBlock *getPreheader() const { return TheLoop->getLoopPreheader(); }
   Loop *getLoop() const { return TheLoop; }
 };
 
-std::optional<InnerLoopStructure>
-InnerLoopStructure::tryBuildFrom(Loop *L, LoopInfo &LI) {
+std::optional<InnerLoopStructure> InnerLoopStructure::tryBuildFrom(Loop *L) {
   // Must be a leaf loop (no subloops)
   if (!L->getSubLoops().empty()) {
     LLVM_DEBUG(dbgs() << "ILPO: Loop has subloops, skipping\n");
@@ -286,7 +285,7 @@ bool AIEInnerLoopPointerOptimizer::runOnFunction(Function &F) {
 }
 
 bool AIEInnerLoopPointerOptimizer::runOnLoop(Loop *L) {
-  auto ILS = InnerLoopStructure::tryBuildFrom(L, *LI);
+  auto ILS = InnerLoopStructure::tryBuildFrom(L);
   if (!ILS)
     return false;
   return tryOptimizeLoop(*ILS);
