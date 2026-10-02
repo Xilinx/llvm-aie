@@ -426,8 +426,8 @@ class RegionEndEdges : public ScheduleDAGMutation {
                .getCurrentRegion()
                .getBotFixedBundles()
                .empty()) {
-        IB.buildFixedContextEdges(PrologueMBB);
-        BotEdges = IB.getFixedContextEdges(PrologueMBB);
+        IB.buildPrologueFixedContextEdges(PrologueMBB);
+        BotEdges = IB.getPrologueFixedContextEdges(PrologueMBB);
       }
     }
 
@@ -561,8 +561,8 @@ class RegionStartEdges : public ScheduleDAGMutation {
     if (R.getTopFixedBundles().empty())
       return;
 
-    IB.buildFixedContextEdges(BB);
-    AIE::InterBlockEdges *Edges = IB.getFixedContextEdges(BB);
+    IB.buildEpilogueFixedContextEdges(BB);
+    AIE::InterBlockEdges *Edges = IB.getEpilogueFixedContextEdges(BB);
     if (!Edges)
       return;
 

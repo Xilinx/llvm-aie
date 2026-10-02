@@ -284,10 +284,11 @@ class InterBlockScheduling {
 
   AIEAlternateDescriptors SelectedAltDescs;
   std::map<MachineBasicBlock *, BlockState> Blocks;
-  /// Per-block DDG of SWP TopFixed/BotFixed vs free instructions, plus
-  /// pipelined-loop pre-boundary nodes for epilogues.
+  /// Per-block DDGs of SWP TopFixed/BotFixed vs free instructions.
   std::map<MachineBasicBlock *, std::unique_ptr<InterBlockEdges>>
-      FixedContextEdges;
+      EpilogueFixedContextEdges;
+  std::map<MachineBasicBlock *, std::unique_ptr<InterBlockEdges>>
+      PrologueFixedContextEdges;
   std::vector<MachineBasicBlock *> MBBSequence;
   unsigned NextInOrder = 0;
 
@@ -410,13 +411,17 @@ public:
 
   void buildGraph(InterBlockEdges &);
 
-  /// Build the DDG of SWP fixed inserts vs this block's free region.
-  /// For epilogues, also includes pipelined-loop instructions as pre-boundary
-  /// nodes with negative depths. No-op when both TopInsert and BottomInsert
-  /// are empty.
-  void buildFixedContextEdges(MachineBasicBlock *BB);
-  /// Null if buildFixedContextEdges was not called or had nothing to build.
-  InterBlockEdges *getFixedContextEdges(MachineBasicBlock *BB);
+  /// Build the DDG of TopFixed vs this block's free region, including
+  /// pipelined-loop instructions as pre-boundary nodes with negative depths.
+  void buildEpilogueFixedContextEdges(MachineBasicBlock *BB);
+  /// Null if buildEpilogueFixedContextEdges was not called or had no TopInsert.
+  InterBlockEdges *getEpilogueFixedContextEdges(MachineBasicBlock *BB);
+
+  /// Build the DDG of this block's free region vs BotFixed.
+  void buildPrologueFixedContextEdges(MachineBasicBlock *BB);
+  /// Null if buildPrologueFixedContextEdges was not called or had no
+  /// BottomInsert.
+  InterBlockEdges *getPrologueFixedContextEdges(MachineBasicBlock *BB);
 
   /// Clear and repopulate the PostDepths of every per-successor inter-block
   /// edge for BB. For scheduled successors, records the actual scheduled cycle

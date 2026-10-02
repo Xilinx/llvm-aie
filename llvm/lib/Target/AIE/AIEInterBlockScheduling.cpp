@@ -473,7 +473,8 @@ void InterBlockScheduling::emitLoopRemarks() {
 void InterBlockScheduling::leaveFunction() {
   DEBUG_BLOCKS(dbgs() << "<< leaveFunction\n");
   emitLoopRemarks();
-  FixedContextEdges.clear();
+  EpilogueFixedContextEdges.clear();
+  PrologueFixedContextEdges.clear();
   Blocks.clear();
 }
 
@@ -1073,8 +1074,7 @@ void InterBlockScheduling::defineSchedulingOrder(MachineFunction *MF) {
   // Now initialize the index to the start.
   NextInOrder = 0;
   DEBUG_BLOCKS(dbgs() << "MBB scheduling sequence : ";
-               for (const auto &MBBSeq
-                    : MBBSequence) dbgs()
+               for (const auto &MBBSeq : MBBSequence) dbgs()
                << MBBSeq->getNumber() << " -> ";
                dbgs() << "\n";);
 
@@ -1216,46 +1216,69 @@ void fillPrologueFixedContext(InterBlockEdges &DAG, BlockState &BS) {
 
   DAG.markBoundary();
 }
+
+// RegionEndEdges queries itinerary operand cycles.
+void buildEdgesIfItinerary(const MachineSchedContext &Context,
+                           InterBlockEdges &DAG) {
+  const InstrItineraryData *Itins =
+      Context.MF->getSubtarget().getInstrItineraryData();
+  if (Itins && !Itins->isEmpty())
+    DAG.buildEdges();
+}
 } // namespace
 
-void InterBlockScheduling::buildFixedContextEdges(MachineBasicBlock *BB) {
-  if (FixedContextEdges.count(BB))
+void InterBlockScheduling::buildEpilogueFixedContextEdges(
+    MachineBasicBlock *BB) {
+  if (EpilogueFixedContextEdges.count(BB))
     return;
 
   BlockState &BS = getBlockState(BB);
-  if (BS.TopInsert.empty() && BS.BottomInsert.empty())
+  if (BS.TopInsert.empty())
     return;
 
   assert(!BS.getRegions().empty() &&
          "Fixed context edges require a gathered region.");
 
-  std::unique_ptr<InterBlockEdges> DAG;
-  if (!BS.TopInsert.empty()) {
-    auto LoopBundles = getSWPLoopBundlesForEpilogue(BB);
-    MachineBasicBlock *Pred = AIELoopUtils::getLoopPredecessor(*BB);
-    assert(LoopBundles && Pred &&
-           "Non-empty TopInsert requires a pipelined loop predecessor");
-    DAG = std::make_unique<InterBlockEdges>(
-        *Context, BS.isSafeToIgnoreMemDeps(), Pred, BB);
-    fillEpilogueFixedContext(*DAG, BS, *LoopBundles, HR->getConflictHorizon());
-  } else if (!BS.BottomInsert.empty()) {
-    DAG = std::make_unique<InterBlockEdges>(
-        *Context, BS.isSafeToIgnoreMemDeps(), BB, /*Succ=*/nullptr);
-    fillPrologueFixedContext(*DAG, BS);
-  }
-
-  // RegionEndEdges (a DDG mutation) queries itinerary operand cycles.
-  const InstrItineraryData *Itins =
-      Context->MF->getSubtarget().getInstrItineraryData();
-  if (Itins && !Itins->isEmpty())
-    DAG->buildEdges();
-  FixedContextEdges[BB] = std::move(DAG);
+  auto LoopBundles = getSWPLoopBundlesForEpilogue(BB);
+  MachineBasicBlock *Pred = AIELoopUtils::getLoopPredecessor(*BB);
+  assert(LoopBundles && Pred &&
+         "Non-empty TopInsert requires a pipelined loop predecessor");
+  auto DAG = std::make_unique<InterBlockEdges>(
+      *Context, BS.isSafeToIgnoreMemDeps(), Pred, BB);
+  fillEpilogueFixedContext(*DAG, BS, *LoopBundles, HR->getConflictHorizon());
+  buildEdgesIfItinerary(*Context, *DAG);
+  EpilogueFixedContextEdges[BB] = std::move(DAG);
 }
 
 InterBlockEdges *
-InterBlockScheduling::getFixedContextEdges(MachineBasicBlock *BB) {
-  auto It = FixedContextEdges.find(BB);
-  return It == FixedContextEdges.end() ? nullptr : It->second.get();
+InterBlockScheduling::getEpilogueFixedContextEdges(MachineBasicBlock *BB) {
+  auto It = EpilogueFixedContextEdges.find(BB);
+  return It == EpilogueFixedContextEdges.end() ? nullptr : It->second.get();
+}
+
+void InterBlockScheduling::buildPrologueFixedContextEdges(
+    MachineBasicBlock *BB) {
+  if (PrologueFixedContextEdges.count(BB))
+    return;
+
+  BlockState &BS = getBlockState(BB);
+  if (BS.BottomInsert.empty())
+    return;
+
+  assert(!BS.getRegions().empty() &&
+         "Fixed context edges require a gathered region.");
+
+  auto DAG = std::make_unique<InterBlockEdges>(
+      *Context, BS.isSafeToIgnoreMemDeps(), BB, /*Succ=*/nullptr);
+  fillPrologueFixedContext(*DAG, BS);
+  buildEdgesIfItinerary(*Context, *DAG);
+  PrologueFixedContextEdges[BB] = std::move(DAG);
+}
+
+InterBlockEdges *
+InterBlockScheduling::getPrologueFixedContextEdges(MachineBasicBlock *BB) {
+  auto It = PrologueFixedContextEdges.find(BB);
+  return It == PrologueFixedContextEdges.end() ? nullptr : It->second.get();
 }
 
 void InterBlockScheduling::buildPerSuccEdges(MachineBasicBlock *BB) {

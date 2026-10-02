@@ -48,8 +48,8 @@
   ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    lda r2, [p1], #4
   ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    lda r2, [p1], #4
-  ; CHECK-NEXT:    add r4, r2, #1
+  ; CHECK-NEXT:    lda r2, [p1], #4; add r4, r2, #1
+  ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    .p2align 4
   ; CHECK-NEXT:  .LBB0_4: // %loop2
   ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
