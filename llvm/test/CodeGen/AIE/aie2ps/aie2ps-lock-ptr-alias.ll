@@ -174,9 +174,9 @@ define void @pipelined_release_ptr_same_buffer(ptr noalias %data_io, i32 %lock_i
 ; CHECK-NEXT:    lda r27, [p0, #12]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    mova r6, #-1
-; CHECK-NEXT:    acq r0, r6
 ; CHECK-NEXT:    nop
+; CHECK-NEXT:    movx r6, #-1
+; CHECK-NEXT:    acq r0, r6
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    sel.eqz r4, r2, r4, r27
 ; CHECK-NEXT:    mov p1, r4
@@ -184,9 +184,9 @@ define void @pipelined_release_ptr_same_buffer(ptr noalias %data_io, i32 %lock_i
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mova r2, #1
 ; CHECK-NEXT:    vbcst.32 x0, r2
-; CHECK-NEXT:    nop
 ; CHECK-NEXT:    vadd.32 x4, x2, x0
 ; CHECK-NEXT:    mova r1, #16; add.nc ls, pc, #.LBB9_1; mov p0, r4
 ; CHECK-NEXT:    nopa ; nopb ; vst x4, [p0, #0]; add.nc lc, r1, #-1; addm.nc le, pc, #.L_LEnd0; nopv
@@ -248,9 +248,9 @@ define void @pipelined_release_ptr_disjoint_buffer(ptr noalias %lock_io, ptr noa
 ; CHECK-NEXT:    lda r27, [p0, #12]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    mova r6, #-1
-; CHECK-NEXT:    acq r0, r6
 ; CHECK-NEXT:    nop
+; CHECK-NEXT:    movx r6, #-1
+; CHECK-NEXT:    acq r0, r6
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    sel.eqz r4, r2, r4, r27
 ; CHECK-NEXT:    mov p0, r4
@@ -258,9 +258,9 @@ define void @pipelined_release_ptr_disjoint_buffer(ptr noalias %lock_io, ptr noa
 ; CHECK-NEXT:    mova r1, #16; vldb x2, [p0], #64; add.nc ls, pc, #.LBB10_1
 ; CHECK-NEXT:    nopa ; vldb x2, [p0], #64; nops ; add.nc lc, r1, #-9; addm.nc le, pc, #.L_LEnd1; nopv
 ; CHECK-NEXT:    nopa ; vldb x2, [p0], #64; nops ; nopxm ; nopv
+; CHECK-NEXT:    nopa ; vldb x2, [p0], #64; nops ; nopxm ; nopv
 ; CHECK-NEXT:    mova r2, #1; vldb x2, [p0], #64; nops ; nopxm ; nopv
 ; CHECK-NEXT:    nopa ; vldb x2, [p0], #64; nops ; nopx ; vbcst.32 x0, r2; nopv
-; CHECK-NEXT:    nopa ; vldb x2, [p0], #64; nops ; nopxm ; nopv
 ; CHECK-NEXT:    nopa ; vldb x2, [p0], #64; nops ; nopx ; vadd.32 x4, x2, x0; nopv
 ; CHECK-NEXT:    nopa ; vldb x2, [p0], #64; nops ; nopx ; vadd.32 x4, x2, x0; nopv
 ; CHECK-NEXT:  .LBB10_1: // %for.body
@@ -315,7 +315,7 @@ for.exit:
 define void @pipelined_acquire_ptr_same_buffer(ptr noalias %data_io, i32 %lock_id) {
 ; CHECK-LABEL: pipelined_acquire_ptr_same_buffer:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    lda r2, [p0, #4]; nopx
+; CHECK-NEXT:    lda r2, [p0, #4]; nopb ; nopx
 ; CHECK-NEXT:    lda r4, [p0, #8]
 ; CHECK-NEXT:    lda r27, [p0, #12]
 ; CHECK-NEXT:    nop
@@ -328,15 +328,14 @@ define void @pipelined_acquire_ptr_same_buffer(ptr noalias %data_io, i32 %lock_i
 ; CHECK-NEXT:    acq r0, r4
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mov p1, r2
 ; CHECK-NEXT:    vldb x2, [p1], #64
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mova r6, #1
 ; CHECK-NEXT:    vbcst.32 x0, r6
-; CHECK-NEXT:    nop
 ; CHECK-NEXT:    vadd.32 x4, x2, x0
 ; CHECK-NEXT:    mova r1, #16; add.nc ls, pc, #.LBB11_1; mov p0, r2
 ; CHECK-NEXT:    nopa ; nopb ; vst x4, [p0, #0]; add.nc lc, r1, #-1; addm.nc le, pc, #.L_LEnd2; nopv
@@ -391,7 +390,7 @@ for.exit:
 define void @pipelined_acquire_ptr_disjoint_buffer(ptr noalias %lock_io, ptr noalias %out, i32 %lock_id) {
 ; CHECK-LABEL: pipelined_acquire_ptr_disjoint_buffer:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    lda r2, [p0, #4]; nopb ; nopxm
+; CHECK-NEXT:    lda r2, [p0, #4]; nopb ; nopxm ; nops
 ; CHECK-NEXT:    lda r4, [p0, #8]
 ; CHECK-NEXT:    lda r27, [p0, #12]
 ; CHECK-NEXT:    nop
@@ -404,15 +403,14 @@ define void @pipelined_acquire_ptr_disjoint_buffer(ptr noalias %lock_io, ptr noa
 ; CHECK-NEXT:    acq r0, r4
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mov p0, r2
 ; CHECK-NEXT:    vldb x2, [p0], #64
 ; CHECK-NEXT:    mova r1, #16; vldb x2, [p0], #64; add.nc ls, pc, #.LBB12_1
 ; CHECK-NEXT:    nopa ; vldb x2, [p0], #64; nops ; add.nc lc, r1, #-9; addm.nc le, pc, #.L_LEnd3; nopv
 ; CHECK-NEXT:    nopa ; vldb x2, [p0], #64; nops ; nopxm ; nopv
+; CHECK-NEXT:    nopa ; vldb x2, [p0], #64; nops ; nopxm ; nopv
 ; CHECK-NEXT:    mova r6, #1; vldb x2, [p0], #64; nops ; nopxm ; nopv
 ; CHECK-NEXT:    nopa ; vldb x2, [p0], #64; nops ; nopx ; vbcst.32 x0, r6; nopv
-; CHECK-NEXT:    nopa ; vldb x2, [p0], #64; nops ; nopxm ; nopv
 ; CHECK-NEXT:    nopa ; vldb x2, [p0], #64; nops ; nopx ; vadd.32 x4, x2, x0; nopv
 ; CHECK-NEXT:    nopa ; vldb x2, [p0], #64; nops ; nopx ; vadd.32 x4, x2, x0; nopv
 ; CHECK-NEXT:  .LBB12_1: // %for.body
