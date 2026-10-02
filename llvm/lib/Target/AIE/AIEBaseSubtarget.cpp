@@ -21,10 +21,11 @@
 #include "AIEMaxLatencyFinder.h"
 #include "AIERegMemEventTracker.h"
 #include "Utils/AIELoopUtils.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/CodeGen/MachineScheduler.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/MachineScheduler.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/CodeGen/ScheduleDAGInstrs.h"
 #include "llvm/CodeGen/ScheduleDAGMutation.h"
@@ -407,6 +408,23 @@ class RegionEndEdges : public ScheduleDAGMutation {
 
     const auto *TII = static_cast<const AIEBaseInstrInfo *>(DAG->TII);
     bool UserSetLatencyMargin = UserLatencyMargin.getNumOccurrences() > 0;
+
+    // Need a BB to look up BotFixed; PostRA only. DDG mutations do not have one.
+    AIEPostRASchedStrategy *Scheduler = nullptr;
+    AIE::InterBlockEdges *BotEdges = nullptr;
+    if (PrologueMBB) {
+      Scheduler = static_cast<AIEScheduleDAGMI *>(DAG)->getSchedImpl();
+      AIE::InterBlockScheduling &IB = Scheduler->getInterBlock();
+      if (!IB.getBlockState(PrologueMBB)
+               .getCurrentRegion()
+               .getBotFixedBundles()
+               .empty()) {
+        IB.buildFixedContextEdges(PrologueMBB);
+        BotEdges = IB.getFixedContextEdges(PrologueMBB);
+      }
+    }
+
+    DenseMap<const SUnit *, unsigned> BotFixedLatencies;
     for (SUnit &SU : DAG->SUnits) {
       MachineInstr &MI = *SU.getInstr();
 
@@ -447,6 +465,22 @@ class RegionEndEdges : public ScheduleDAGMutation {
           EdgeLatency = std::max(EdgeLatency, ZOLSupport->LoopSetupDistance -
                                                   ZOLBundlesCount);
       }
+
+      if (BotEdges && !Scheduler->isFixedSU(SU, false)) {
+        const SUnit *EdgeSU = BotEdges->getPreBoundaryNode(&MI);
+        if (EdgeSU) {
+          const int BotFixedLatency =
+              AIE::computeMaxExitLatency(*EdgeSU, *BotEdges);
+          if (BotFixedLatency > 0) {
+            LLVM_DEBUG(dbgs() << "RegionEndEdges: SU(" << SU.NodeNum
+                              << ") BotFixed ExitSU latency " << BotFixedLatency
+                              << ": " << MI);
+            BotFixedLatencies[&SU] = BotFixedLatency;
+            EdgeLatency = std::max(EdgeLatency, (unsigned)BotFixedLatency);
+          }
+        }
+      }
+
       ExitDep.setLatency(EdgeLatency);
       DAG->ExitSU.addPred(ExitDep, /*Required=*/true);
     }
@@ -461,6 +495,10 @@ class RegionEndEdges : public ScheduleDAGMutation {
         continue;
       unsigned BackwardLatency =
           PredEdge.getLatency() ? PredEdge.getLatency() - 1 : 0;
+      if (auto It = BotFixedLatencies.find(PredEdge.getSUnit());
+          It != BotFixedLatencies.end())
+        // This value is already the bottom-up ready cycle.
+        BackwardLatency = std::max(BackwardLatency, It->second);
       PredEdge.setLatency(BackwardLatency);
     }
     DAG->ExitSU.setDepthDirty();

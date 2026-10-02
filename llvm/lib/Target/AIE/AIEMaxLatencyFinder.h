@@ -36,6 +36,12 @@ int maxLatency(const MachineInstr *MI, const AIEBaseInstrInfo &InstrInfo,
 /// the instruction free to issue alongside the fixed region.
 int computeMinEntryDepth(const SUnit &EdgeSU, const InterBlockEdges &Edges);
 
+/// Maximum extra ExitSU latency for a free pre-boundary node in a
+/// FixedContext DDG: the largest EdgeLat + SuccHeight over succs that have
+/// a recorded pre- or post-height. Zero when there is no such succ, which
+/// leaves the instruction unconstrained by BotFixed.
+int computeMaxExitLatency(const SUnit &EdgeSU, const InterBlockEdges &Edges);
+
 class MaxLatencyFinder {
   AIEPostRASchedStrategy *const Scheduler;
   const AIEBaseInstrInfo *const TII;

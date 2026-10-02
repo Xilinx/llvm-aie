@@ -275,4 +275,58 @@ TEST_F(InterBlockEdgesTest, ComputeMinEntryDepthFromKnownDepths) {
   EXPECT_EQ(computeMinEntryDepth(*FreeSU, DAG), 5);
 }
 
+TEST_F(InterBlockEdgesTest, ComputeMaxExitLatencyFromKnownHeights) {
+  auto *Free = appendPlainInstr();
+  auto *OtherFree = appendPlainInstr();
+  auto *Bot0 = appendPlainInstr();
+  auto *Bot2 = appendPlainInstr();
+  auto *LoopH = appendPlainInstr();
+  InterBlockEdges DAG = makeDAG();
+
+  DAG.addNode(Free);
+  DAG.addNode(OtherFree);
+  DAG.addNode(Bot0);
+  DAG.addNode(Bot2);
+  DAG.recordPreHeight(Bot0, 0);
+  DAG.recordPreHeight(Bot2, 2);
+  DAG.markBoundary();
+  DAG.addNode(LoopH);
+  DAG.recordPostHeight(LoopH, 3);
+
+  SUnit *FreeSU = const_cast<SUnit *>(DAG.getPreBoundaryNode(Free));
+  SUnit *OtherFreeSU = const_cast<SUnit *>(DAG.getPreBoundaryNode(OtherFree));
+  SUnit *Bot0SU = const_cast<SUnit *>(DAG.getPreBoundaryNode(Bot0));
+  SUnit *Bot2SU = const_cast<SUnit *>(DAG.getPreBoundaryNode(Bot2));
+  SUnit *LoopHSU = const_cast<SUnit *>(DAG.getPostBoundaryNode(LoopH));
+  ASSERT_NE(FreeSU, nullptr);
+  ASSERT_NE(OtherFreeSU, nullptr);
+  ASSERT_NE(Bot0SU, nullptr);
+  ASSERT_NE(Bot2SU, nullptr);
+  ASSERT_NE(LoopHSU, nullptr);
+
+  // No succs: unconstrained by BotFixed.
+  EXPECT_EQ(computeMaxExitLatency(*FreeSU, DAG), 0);
+
+  // A succ without a recorded height carries no position information.
+  SDep ToFree(FreeSU, SDep::Artificial);
+  ToFree.setLatency(10);
+  OtherFreeSU->addPred(ToFree, /*Required=*/true);
+  EXPECT_EQ(computeMaxExitLatency(*FreeSU, DAG), 0);
+
+  SDep ToBot0(FreeSU, SDep::Artificial);
+  ToBot0.setLatency(1);
+  Bot0SU->addPred(ToBot0, /*Required=*/true);
+  EXPECT_EQ(computeMaxExitLatency(*FreeSU, DAG), 1);
+
+  SDep ToBot2(FreeSU, SDep::Artificial);
+  ToBot2.setLatency(2);
+  Bot2SU->addPred(ToBot2, /*Required=*/true);
+  EXPECT_EQ(computeMaxExitLatency(*FreeSU, DAG), 4);
+
+  SDep ToLoop(FreeSU, SDep::Artificial);
+  ToLoop.setLatency(2);
+  LoopHSU->addPred(ToLoop, /*Required=*/true);
+  EXPECT_EQ(computeMaxExitLatency(*FreeSU, DAG), 5);
+}
+
 } // namespace

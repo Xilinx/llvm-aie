@@ -74,4 +74,23 @@ TEST_F(BlockStateInsertMapsTest, TopInsertSemanticOrderIndependentOfBundles) {
   EXPECT_EQ(BS.TopInsertCycleMap.lookup(A), 1);
 }
 
+TEST_F(BlockStateInsertMapsTest,
+       BottomInsertSemanticOrderIndependentOfBundles) {
+  auto *A = appendPlainInstr();
+  auto *B = appendPlainInstr();
+  BlockState BS(MBB);
+  // Bundle/scheduled order is B then A; semantic (program) order is A then B.
+  BS.BottomInsert = {makeBundle({B}), makeBundle({A})};
+  BS.BottomInsertSemanticOrder = {A, B};
+
+  BS.rebuildBottomInsertCycleMap();
+
+  EXPECT_EQ(BS.BottomInsertSemanticOrder.size(), 2u);
+  EXPECT_EQ(BS.BottomInsertSemanticOrder[0], A);
+  EXPECT_EQ(BS.BottomInsertSemanticOrder[1], B);
+  // Heights are distance from the end: last bundle is 0, first is 1.
+  EXPECT_EQ(BS.BottomInsertCycleMap.lookup(B), 1);
+  EXPECT_EQ(BS.BottomInsertCycleMap.lookup(A), 0);
+}
+
 } // namespace

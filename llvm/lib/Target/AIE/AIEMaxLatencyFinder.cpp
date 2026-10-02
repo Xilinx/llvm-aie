@@ -214,4 +214,28 @@ int computeMinEntryDepth(const SUnit &EdgeSU, const InterBlockEdges &Edges) {
   return MaxDepth;
 }
 
+int computeMaxExitLatency(const SUnit &EdgeSU, const InterBlockEdges &Edges) {
+  int MaxLatency = 0;
+  for (const SDep &SuccEdge : EdgeSU.Succs) {
+    SUnit *SuccSU = SuccEdge.getSUnit();
+
+    int SuccHeight = 0;
+    bool HasKnownHeight = false;
+    if (Edges.isPreBoundaryNode(SuccSU) && Edges.hasPreHeight(SuccSU)) {
+      SuccHeight = Edges.getPreHeightOr(SuccSU, 0);
+      HasKnownHeight = true;
+    } else if (Edges.isPostBoundaryNode(SuccSU) &&
+               Edges.hasPostHeight(SuccSU)) {
+      SuccHeight = Edges.getPostHeightOr(SuccSU, 0);
+      HasKnownHeight = true;
+    }
+
+    if (!HasKnownHeight)
+      continue;
+
+    MaxLatency = std::max(MaxLatency, SuccHeight + SuccEdge.getSignedLatency());
+  }
+  return MaxLatency;
+}
+
 } // namespace llvm::AIE
