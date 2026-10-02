@@ -261,6 +261,283 @@ exit:
   ret void
 }
 
+; ============================================================================
+; Test 6: Chain epilogue GEPs from final inner-loop pointer values
+;
+; Expected: address recomputations equal to the inner-loop exit pointers are
+; removed, and later epilogue addresses become +128 chains.
+; ============================================================================
+
+; CHECK-LABEL: define i8 @test_chain_from_inner_exit
+; The outer pointer PHIs must carry the rebased epilogue pointers.
+; CHECK: top:
+; CHECK:   %a.outer = phi ptr [ %a, %entry ], [ %a.next.inner.chained, %bottom ]
+; CHECK:   %b.outer = phi ptr [ %b, %entry ], [ %b.next2.inner.chained, %bottom ]
+; CHECK: inner:
+; CHECK:   %a.step = getelementptr inbounds i8, ptr %a.inner, i20 128
+; CHECK:   %b.step = getelementptr inbounds i8, ptr %b.inner, i20 128
+; CHECK: bottom:
+; CHECK-NOT: %a.at.exit =
+; CHECK-NOT: %b.at.exit =
+; CHECK:   %a.value = load i8, ptr %a.step
+; CHECK:   %a.next.inner.chained = getelementptr inbounds i8, ptr %a.step, i20 128
+; CHECK:   %b.value0 = load i8, ptr %b.step
+; CHECK:   %b.next1.inner.chained = getelementptr inbounds i8, ptr %b.step, i20 128
+; CHECK:   %b.value1 = load i8, ptr %b.next1.inner.chained
+; CHECK:   %b.next2.inner.chained = getelementptr inbounds i8, ptr %b.next1.inner.chained, i20 128
+; CHECK:   %b.value2 = load i8, ptr %b.next2.inner.chained
+
+define i8 @test_chain_from_inner_exit(ptr %a, ptr %b, i32 %N) {
+entry:
+  br label %top
+
+top:
+  %outer.iv = phi i32 [ 0, %entry ], [ %outer.iv.next, %bottom ]
+  %a.outer = phi ptr [ %a, %entry ], [ %a.next, %bottom ]
+  %b.outer = phi ptr [ %b, %entry ], [ %b.next2, %bottom ]
+  %a.start = getelementptr inbounds i8, ptr %a.outer, i20 256
+  %b.start = getelementptr inbounds i8, ptr %b.outer, i20 128
+  br label %inner
+
+inner:
+  %inner.iv = phi i32 [ 0, %top ], [ %inner.iv.next, %inner ]
+  %a.inner = phi ptr [ %a.start, %top ], [ %a.step, %inner ]
+  %b.inner = phi ptr [ %b.start, %top ], [ %b.step, %inner ]
+  %a.inner.value = load volatile i8, ptr %a.inner
+  %b.inner.value = load volatile i8, ptr %b.inner
+  %a.step = getelementptr inbounds i8, ptr %a.inner, i20 128
+  %b.step = getelementptr inbounds i8, ptr %b.inner, i20 128
+  %inner.iv.next = add nuw nsw i32 %inner.iv, 1
+  %inner.done = icmp eq i32 %inner.iv.next, 29
+  br i1 %inner.done, label %bottom, label %inner
+
+bottom:
+  %a.at.exit = getelementptr inbounds i8, ptr %a.outer, i20 3968
+  %a.value = load i8, ptr %a.at.exit
+  %a.next = getelementptr inbounds i8, ptr %a.outer, i20 4096
+  %b.at.exit = getelementptr inbounds i8, ptr %b.inner, i20 128
+  %b.value0 = load i8, ptr %b.at.exit
+  %b.next1 = getelementptr inbounds i8, ptr %b.inner, i20 256
+  %b.value1 = load i8, ptr %b.next1
+  %b.next2 = getelementptr inbounds i8, ptr %b.inner, i20 384
+  %b.value2 = load i8, ptr %b.next2
+  %sum0 = add i8 %a.value, %b.value0
+  %sum1 = add i8 %sum0, %b.value1
+  %sum2 = add i8 %sum1, %b.value2
+  %outer.iv.next = add nuw nsw i32 %outer.iv, 1
+  %outer.done = icmp eq i32 %outer.iv.next, %N
+  br i1 %outer.done, label %exit, label %top
+
+exit:
+  ret i8 %sum2
+}
+
+; ============================================================================
+; Test 7: Same-base inner exit pointers rebase onto the nearest anchor
+;
+; p and q step through one buffer, with q 128 bytes ahead. After 2 iterations
+; p.step is base+256 and q.step is base+384. base+384 matches both; the nearer
+; anchor is q.step. base+512 chains +128 from that same anchor.
+; ============================================================================
+
+; CHECK-LABEL: define i8 @test_chain_from_nearest_same_base
+; CHECK: inner:
+; CHECK:   %p.step = getelementptr inbounds i8, ptr %p.inner, i20 128
+; CHECK:   %q.step = getelementptr inbounds i8, ptr %q.inner, i20 128
+; CHECK: bottom:
+; CHECK-NOT: %at.p =
+; CHECK-NOT: %at.q =
+; CHECK:   %p.value = load i8, ptr %p.step
+; CHECK:   %q.value = load i8, ptr %q.step
+; CHECK:   %past.q.inner.chained = getelementptr inbounds i8, ptr %q.step, i20 128
+; CHECK:   %past.value = load i8, ptr %past.q.inner.chained
+
+define i8 @test_chain_from_nearest_same_base(ptr %base, i32 %N) {
+entry:
+  br label %top
+
+top:
+  %outer.iv = phi i32 [ 0, %entry ], [ %outer.iv.next, %bottom ]
+  %q.start = getelementptr inbounds i8, ptr %base, i20 128
+  br label %inner
+
+inner:
+  %inner.iv = phi i32 [ 0, %top ], [ %inner.iv.next, %inner ]
+  %p.inner = phi ptr [ %base, %top ], [ %p.step, %inner ]
+  %q.inner = phi ptr [ %q.start, %top ], [ %q.step, %inner ]
+  %p.inner.value = load volatile i8, ptr %p.inner
+  %q.inner.value = load volatile i8, ptr %q.inner
+  %p.step = getelementptr inbounds i8, ptr %p.inner, i20 128
+  %q.step = getelementptr inbounds i8, ptr %q.inner, i20 128
+  %inner.iv.next = add nuw nsw i32 %inner.iv, 1
+  %inner.done = icmp eq i32 %inner.iv.next, 2
+  br i1 %inner.done, label %bottom, label %inner
+
+bottom:
+  %at.p = getelementptr inbounds i8, ptr %base, i20 256
+  %p.value = load i8, ptr %at.p
+  %at.q = getelementptr inbounds i8, ptr %base, i20 384
+  %q.value = load i8, ptr %at.q
+  %past.q = getelementptr inbounds i8, ptr %base, i20 512
+  %past.value = load i8, ptr %past.q
+  %sum0 = add i8 %p.value, %q.value
+  %sum1 = add i8 %sum0, %past.value
+  %outer.iv.next = add nuw nsw i32 %outer.iv, 1
+  %outer.done = icmp eq i32 %outer.iv.next, %N
+  br i1 %outer.done, label %exit, label %top
+
+exit:
+  ret i8 %sum1
+}
+
+; ============================================================================
+; Test 8: A later, smaller epilogue offset still rebases from the anchor
+;
+; After 2 iterations p.step is base+256. The epilogue mentions base+512 before
+; base+384, so the offsets go 256 then 128. The smaller GEP cannot chain from
+; the larger one; both rebase from p.step.
+; ============================================================================
+
+; CHECK-LABEL: define i8 @test_chain_from_out_of_order_inner_exit
+; CHECK: inner:
+; CHECK:   %p.step = getelementptr inbounds i8, ptr %p.inner, i20 128
+; CHECK: bottom:
+; An earlier pass may rename the first epilogue GEP before this one.
+; CHECK:   %[[FAR_PTR:.*]] = getelementptr inbounds i8, ptr %p.step, i20 256
+; CHECK:   %far.value = load i8, ptr %[[FAR_PTR]]
+; CHECK:   %near.inner.chained = getelementptr inbounds i8, ptr %p.step, i20 128
+; CHECK:   %near.value = load i8, ptr %near.inner.chained
+
+define i8 @test_chain_from_out_of_order_inner_exit(ptr %base, i32 %N) {
+entry:
+  br label %top
+
+top:
+  %outer.iv = phi i32 [ 0, %entry ], [ %outer.iv.next, %bottom ]
+  br label %inner
+
+inner:
+  %inner.iv = phi i32 [ 0, %top ], [ %inner.iv.next, %inner ]
+  %p.inner = phi ptr [ %base, %top ], [ %p.step, %inner ]
+  %p.inner.value = load volatile i8, ptr %p.inner
+  %p.step = getelementptr inbounds i8, ptr %p.inner, i20 128
+  %inner.iv.next = add nuw nsw i32 %inner.iv, 1
+  %inner.done = icmp eq i32 %inner.iv.next, 2
+  br i1 %inner.done, label %bottom, label %inner
+
+bottom:
+  %far = getelementptr inbounds i8, ptr %base, i20 512
+  %far.value = load i8, ptr %far
+  %near = getelementptr inbounds i8, ptr %base, i20 384
+  %near.value = load i8, ptr %near
+  %sum = add i8 %far.value, %near.value
+  %outer.iv.next = add nuw nsw i32 %outer.iv, 1
+  %outer.done = icmp eq i32 %outer.iv.next, %N
+  br i1 %outer.done, label %exit, label %top
+
+exit:
+  ret i8 %sum
+}
+
+; ============================================================================
+; Test 9: One inner iteration uses the backedge step, not the PHI
+;
+; The loop body runs once, so the PHI still holds %ptr.outer and %p.step is
+; %ptr.outer+128. The epilogue address %ptr.outer+128 must be %p.step itself.
+; Using the PHI as the exit value would produce getelementptr %p.inner, 128.
+; %ptr.outer+256 is then +128 from %p.step, and that pointer feeds %ptr.outer.
+; ============================================================================
+
+; CHECK-LABEL: define i8 @test_chain_from_one_inner_iteration
+; CHECK: top:
+; CHECK:   %ptr.outer = phi ptr [ %base, %entry ], [ %ptr.next.inner.chained, %bottom ]
+; CHECK: inner:
+; CHECK:   %p.inner = phi ptr [ %ptr.outer, %top ], [ %p.step, %inner ]
+; CHECK:   %p.step = getelementptr inbounds i8, ptr %p.inner, i20 128
+; CHECK: bottom:
+; CHECK:   %value = load i8, ptr %p.step
+; CHECK:   %ptr.next.inner.chained = getelementptr inbounds i8, ptr %p.step, i20 128
+
+define i8 @test_chain_from_one_inner_iteration(ptr %base, i32 %N) {
+entry:
+  br label %top
+
+top:
+  %outer.iv = phi i32 [ 0, %entry ], [ %outer.iv.next, %bottom ]
+  %ptr.outer = phi ptr [ %base, %entry ], [ %ptr.next, %bottom ]
+  br label %inner
+
+inner:
+  %inner.iv = phi i32 [ 0, %top ], [ %inner.iv.next, %inner ]
+  %p.inner = phi ptr [ %ptr.outer, %top ], [ %p.step, %inner ]
+  %p.inner.value = load volatile i8, ptr %p.inner
+  %p.step = getelementptr inbounds i8, ptr %p.inner, i20 128
+  %inner.iv.next = add nuw nsw i32 %inner.iv, 1
+  %inner.done = icmp eq i32 %inner.iv.next, 1
+  br i1 %inner.done, label %bottom, label %inner
+
+bottom:
+  %at.exit = getelementptr inbounds i8, ptr %ptr.outer, i20 128
+  %value = load i8, ptr %at.exit
+  %ptr.next = getelementptr inbounds i8, ptr %ptr.outer, i20 256
+  %outer.iv.next = add nuw nsw i32 %outer.iv, 1
+  %outer.done = icmp eq i32 %outer.iv.next, %N
+  br i1 %outer.done, label %exit, label %top
+
+exit:
+  ret i8 %value
+}
+
+; ============================================================================
+; Test 10: Unknown inner-loop trip count does not rebase epilogue GEPs
+;
+; %K is not a constant, so the final %ptr.step is not a known offset from
+; %ptr.outer. The volatile load keeps that step live. Chain linking may still
+; attach the epilogue to %ptr.start (3968 - 256 = 3712), but not to %ptr.step.
+; ============================================================================
+
+; CHECK-LABEL: define i8 @test_no_chain_from_unknown_inner_exit
+; CHECK: inner:
+; CHECK:   %ptr.step = getelementptr inbounds i8, ptr %ptr.inner, i20 128
+; CHECK: bottom:
+; CHECK-NOT: %ptr.step
+; CHECK:   %at.constant.offset.chained = getelementptr inbounds i8, ptr %ptr.start, i20 3712
+; CHECK-NOT: %ptr.step
+; CHECK:   %value = load i8, ptr %at.constant.offset.chained
+; CHECK-NOT: %ptr.step
+; CHECK:   %ptr.next.chained = getelementptr inbounds i8, ptr %at.constant.offset.chained, i20 128
+
+define i8 @test_no_chain_from_unknown_inner_exit(ptr %base, i32 %N, i32 %K) {
+entry:
+  br label %top
+
+top:
+  %outer.iv = phi i32 [ 0, %entry ], [ %outer.iv.next, %bottom ]
+  %ptr.outer = phi ptr [ %base, %entry ], [ %ptr.next, %bottom ]
+  %ptr.start = getelementptr inbounds i8, ptr %ptr.outer, i20 256
+  br label %inner
+
+inner:
+  %inner.iv = phi i32 [ 0, %top ], [ %inner.iv.next, %inner ]
+  %ptr.inner = phi ptr [ %ptr.start, %top ], [ %ptr.step, %inner ]
+  %ptr.inner.value = load volatile i8, ptr %ptr.inner
+  %ptr.step = getelementptr inbounds i8, ptr %ptr.inner, i20 128
+  %inner.iv.next = add nuw nsw i32 %inner.iv, 1
+  %inner.done = icmp eq i32 %inner.iv.next, %K
+  br i1 %inner.done, label %bottom, label %inner
+
+bottom:
+  %at.constant.offset = getelementptr inbounds i8, ptr %ptr.outer, i20 3968
+  %value = load i8, ptr %at.constant.offset
+  %ptr.next = getelementptr inbounds i8, ptr %ptr.outer, i20 4096
+  %outer.iv.next = add nuw nsw i32 %outer.iv, 1
+  %outer.done = icmp eq i32 %outer.iv.next, %N
+  br i1 %outer.done, label %exit, label %top
+
+exit:
+  ret i8 %value
+}
+
 declare void @llvm.set.loop.iterations.i32(i32)
 declare i1 @llvm.loop.decrement.i32(i32)
 
