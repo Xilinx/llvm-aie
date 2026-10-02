@@ -417,10 +417,14 @@ bool AIEInnerLoopPointerOptimizer::normalizePhiToLoadBase(
     BackGEP->replaceAllUsesWith(&Phi);
     BackGEP->eraseFromParent();
 
-    // Adjust all sibling GEPs: after shifting phi by Stride, each "phi + K"
-    // now addresses "old_phi + K + Stride".  Rewrite to "phi + (K - Stride)"
-    // to preserve the original memory address.
+    // Adjust sibling GEPs rooted directly on the PHI: after shifting phi by
+    // Stride, each "phi + K" now addresses "old_phi + K + Stride".  Rewrite
+    // to "phi + (K - Stride)" to preserve the original memory address.
+    // GEPs rooted on other GEPs (transitive children) inherit the shift
+    // through their already-adjusted base and must NOT be touched.
     for (GetElementPtrInst *GEP : SiblingGEPs) {
+      if (GEP->getPointerOperand() != &Phi)
+        continue;
       const ConstantInt *const OldCI = getConstantGEPLastIndex(GEP);
       const int64_t NewOffset = OldCI->getSExtValue() - Stride;
       LLVM_DEBUG(dbgs() << "ILPO:   Adjusting sibling GEP offset: "
