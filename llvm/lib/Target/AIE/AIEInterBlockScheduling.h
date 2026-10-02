@@ -146,6 +146,22 @@ public:
   int MaxLatencyExtent = 0;
   int MaxResourceExtent = 0;
   int NumIters = 0;
+  // Lower bound on the issue cycle of the delay slot instruction of an
+  // epilogue. Every reschedule moves it one cycle past the position the
+  // instruction reached, so it grows strictly. Zero leaves the instruction
+  // unconstrained, as in the first schedule.
+  unsigned EarliestDelaySlotCycle = 0;
+  // The shortest region seen so far and the bound that produced it, so that
+  // the block can end on that schedule rather than on the last one tried. A
+  // zero length means that no schedule has been recorded yet.
+  unsigned BestDelaySlotLength = 0;
+  unsigned BestDelaySlotCycle = 0;
+  // Set while the delay slot instruction is too far from the end of the block,
+  // which wastes some of its delay slots.
+  bool DelaySlotRetry = false;
+  // Set while the block is scheduled a last time to reproduce the best
+  // schedule, so that no further reschedule is requested.
+  bool DelaySlotFinalPass = false;
 };
 
 // For interblock scheduling we need the original code (SemanticOrder) to
@@ -256,6 +272,13 @@ public:
   /// in the preheader and exit block.
   std::vector<MachineBundle> TopInsert;
   std::vector<MachineBundle> BottomInsert;
+
+  /// The top-level instructions (BUNDLEs or standalone) that TopInsert and
+  /// BottomInsert were emitted as, in block order. top_fixed_instrs() and
+  /// bot_fixed_instrs() are positional, so these are moved back to the top and
+  /// the bottom of the block before a reschedule.
+  SmallVector<MachineInstr *, 8> TopFixedInstrs;
+  SmallVector<MachineInstr *, 8> BotFixedInstrs;
 
   /// For pipelined loop preheaders: a parallel array to the loop body's
   /// SemanticOrder. Each entry is the first-iteration clone from BottomInsert
@@ -407,6 +430,11 @@ class InterBlockScheduling {
   SchedulingStage updateScheduling(BlockState &BS);
   SchedulingStage updatePipelining(BlockState &BS);
 
+  /// Convergence of the delay slot position in an epilogue. Reschedules the
+  /// block with the delay slot instruction held back one more cycle, until it
+  /// is close enough to the end of the block to leave no unused delay slots.
+  SchedulingStage updateDelaySlots(BlockState &BS);
+
   /// Emit scheduling remarks for all loop blocks (post/pre/unpipelined).
   void emitLoopRemarks();
 
@@ -522,6 +550,18 @@ public:
 
   /// Get the materialization tracker for clone tracking.
   MaterializationTracker &getMatTracker() { return MatTracker; }
+
+  /// Take note of where the delay slot instruction of epilogue \p BB ended up,
+  /// and decide whether the block should be scheduled again to place it better.
+  /// \p BranchCycle is the cycle it was issued in, \p UnfixedLength and
+  /// \p FixedLength the region lengths before and after fixupDelaySlotPosition.
+  void recordDelaySlotPosition(MachineBasicBlock *BB, unsigned BranchCycle,
+                               unsigned UnfixedLength, unsigned FixedLength,
+                               unsigned NumDelaySlots);
+
+  /// The cycle before which the delay slot instruction of \p BB may not be
+  /// issued. Zero leaves it unconstrained, as in the first schedule.
+  unsigned getEarliestDelaySlotCycle(MachineBasicBlock *BB) const;
 
   // Returns the scheduled bundles of the pipelined loop body preceding
   // \p Epilogue. Returns nullopt if \p Epilogue is not the epilogue of a
