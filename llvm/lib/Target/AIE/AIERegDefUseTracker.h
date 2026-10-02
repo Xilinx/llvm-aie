@@ -310,11 +310,31 @@ class RegLiveRangeTracker {
   /// Second-stage full coverage pruning
   void pruneByFullCoverage();
 
+  //===--------------------------------------------------------------------===//
+  // Analyze helper methods (decomposition of analyze())
+  //===--------------------------------------------------------------------===//
+
+  /// State passed through the liveness scan.
+  /// Groups the mutable state that is threaded through the backward scan.
+  struct LivenessScanState {
+    /// Map from register to its current live range index (signed) and lane
+    /// mask. Use NoLiveRange as sentinel for live-out registers not yet
+    /// associated with a range.
+    DenseMap<MCRegister, std::pair<int, LaneBitmask>> LiveRegs;
+
+    /// Map from operand to live range index.
+    DenseMap<MachineOperand *, unsigned> OperandToLiveRange;
+
+    /// Set of registers used implicitly (invalidates explicit ranges).
+    DenseSet<MCRegister> ImplicitRegs;
+
+    /// Instructions in semantic order, indexed by InstrOrder.
+    ArrayRef<MachineInstr *> SemanticOrder;
+  };
+
   /// Merge aliasing live ranges when a definition is encountered.
-  void mergeAliasingLiveRanges(
-      unsigned DefLRIdx, MCRegister DefReg,
-      DenseMap<MCRegister, std::pair<int, LaneBitmask>> &LiveRegs,
-      DenseMap<MachineOperand *, unsigned> &OperandToLiveRange);
+  void mergeAliasingLiveRanges(unsigned DefLRIdx, MCRegister DefReg,
+                               LivenessScanState &State);
 
   /// Helper to find the most promising scarce range set.
   /// Called by analyze() to populate MostPromisingScarceRanges.
@@ -344,28 +364,6 @@ class RegLiveRangeTracker {
 
   /// Mark live ranges as scarce if they have exactly 1 available register.
   void markScarceRanges();
-
-  //===--------------------------------------------------------------------===//
-  // Analyze helper methods (decomposition of analyze())
-  //===--------------------------------------------------------------------===//
-
-  /// State passed through the liveness scan.
-  /// Groups the mutable state that is threaded through the backward scan.
-  struct LivenessScanState {
-    /// Map from register to its current live range index (signed) and lane
-    /// mask. Use NoLiveRange as sentinel for live-out registers not yet
-    /// associated with a range.
-    DenseMap<MCRegister, std::pair<int, LaneBitmask>> LiveRegs;
-
-    /// Map from operand to live range index.
-    DenseMap<MachineOperand *, unsigned> OperandToLiveRange;
-
-    /// Set of registers used implicitly (invalidates explicit ranges).
-    DenseSet<MCRegister> ImplicitRegs;
-
-    /// Instructions in semantic order, indexed by InstrOrder.
-    ArrayRef<MachineInstr *> SemanticOrder;
-  };
 
   /// Return true if an instruction before \p MI in semantic order defines any
   /// of the \p Lanes of \p Reg.
@@ -397,17 +395,12 @@ class RegLiveRangeTracker {
   /// all OperandToLiveRange and LiveRegs entries from SrcIdx to TargetIdx.
   /// Clears LR[SrcIdx] on success.  Returns false if the merge fails, in
   /// which case neither range is modified.
-  bool
-  absorbLiveRange(unsigned TargetIdx, unsigned SrcIdx,
-                  DenseMap<MCRegister, std::pair<int, LaneBitmask>> &LiveRegs,
-                  DenseMap<MachineOperand *, unsigned> &OperandToLiveRange);
+  bool absorbLiveRange(unsigned TargetIdx, unsigned SrcIdx,
+                       LivenessScanState &State);
 
   /// Drop a live range that could not be merged with an overlapping one,
   /// together with every reference to it.
-  void
-  discardLiveRange(unsigned LRIdx,
-                   DenseMap<MCRegister, std::pair<int, LaneBitmask>> &LiveRegs,
-                   DenseMap<MachineOperand *, unsigned> &OperandToLiveRange);
+  void discardLiveRange(unsigned LRIdx, LivenessScanState &State);
 
   /// Merge the per-sub-register live ranges of a composite physical register
   /// into a single LR.  Called at the end of use processing for each
