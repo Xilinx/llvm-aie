@@ -507,9 +507,14 @@ class PipelineExtractor : public PipelineScheduleVisitor {
   bool InLoop = false;
   // True while visiting the prologue section.
   bool InPrologue = false;
+  // True while visiting the epilogue section.
+  bool InEpilogue = false;
   // Maps each original loop instruction to its first-iteration clone in the
   // prologue. Only the first occurrence of each original is recorded.
   DenseMap<const MachineInstr *, MachineInstr *> PrologueFirstIterClones;
+  // Maps each original loop instruction to its last-iteration clone in the
+  // epilogue. Later occurrences overwrite earlier ones.
+  DenseMap<const MachineInstr *, MachineInstr *> EpilogueLastIterClones;
 
   void startPrologue() override { InPrologue = true; }
   void startLoop() override {
@@ -534,6 +539,7 @@ class PipelineExtractor : public PipelineScheduleVisitor {
       if (It != PrologueFirstIterClones.end())
         Prologue->BottomInsertSemanticOrder.push_back(It->second);
     }
+    Prologue->rebuildBottomInsertCycleMap();
 
     InPrologue = false;
     InLoop = true;
@@ -542,6 +548,7 @@ class PipelineExtractor : public PipelineScheduleVisitor {
     Loop.getTop().Bundles = TimedRegion;
     TimedRegion.clear();
     InLoop = false;
+    InEpilogue = true;
   }
   void finish() override {
     auto &CopyTo = Epilogue->TopInsert;
@@ -557,6 +564,15 @@ class PipelineExtractor : public PipelineScheduleVisitor {
       CopyTo.push_back(TimedRegion[I]);
     }
     TimedRegion.clear();
+
+    // Last-iteration epilogue clones in original loop-body order. Only
+    // instructions that were actually cloned into the epilogue are recorded.
+    for (MachineInstr *OrigMI : Loop.getTop().getFreeInstructions()) {
+      const auto It = EpilogueLastIterClones.find(OrigMI);
+      if (It != EpilogueLastIterClones.end())
+        Epilogue->TopInsertSemanticOrder.push_back(It->second);
+    }
+    Epilogue->rebuildTopInsertCycleMap();
   }
   void startBundle() override { CurrentBundle.clear(); }
   void addToBundle(MachineInstr *MI) override {
@@ -571,6 +587,8 @@ class PipelineExtractor : public PipelineScheduleVisitor {
     // occurrence (i.e. the first-iteration copy) is kept.
     if (InPrologue)
       PrologueFirstIterClones.try_emplace(MI, ToBeEmitted);
+    if (InEpilogue)
+      EpilogueLastIterClones[MI] = ToBeEmitted;
   }
   void endBundle() override { TimedRegion.emplace_back(CurrentBundle); }
 
@@ -1407,6 +1425,7 @@ void InterBlockScheduling::emitInterBlockTop(BlockState &BS) {
         BS.TopInsert.pop_back();
       }
     }
+    BS.rebuildTopInsertCycleMap();
 
     // If we are in the same BB, just emit.
     emitBundles(BS.TopInsert, DedicatedExit, DedicatedExit->begin(),
@@ -1418,7 +1437,11 @@ void InterBlockScheduling::emitInterBlockTop(BlockState &BS) {
     MBBSequence.push_back(DedicatedExit);
     BlockState &NewBS = getBlockState(DedicatedExit);
     NewBS.TopInsert = BS.TopInsert;
+    NewBS.TopInsertSemanticOrder = std::move(BS.TopInsertSemanticOrder);
+    NewBS.TopInsertCycleMap = std::move(BS.TopInsertCycleMap);
     BS.TopInsert.clear();
+    BS.TopInsertSemanticOrder.clear();
+    BS.TopInsertCycleMap.clear();
   }
 }
 
@@ -1609,6 +1632,23 @@ void Region::setBotFixedBundles(ArrayRef<MachineBundle> Bundles) {
 
 BlockState::BlockState(MachineBasicBlock *Block) : TheBlock(Block) {
   setBlockProperties();
+}
+
+void BlockState::rebuildTopInsertCycleMap() {
+  TopInsertCycleMap.clear();
+  for (int Cycle = 0, E = (int)TopInsert.size(); Cycle < E; ++Cycle) {
+    for (MachineInstr *MI : TopInsert[Cycle].getInstrs())
+      TopInsertCycleMap[MI] = Cycle;
+  }
+}
+
+void BlockState::rebuildBottomInsertCycleMap() {
+  BottomInsertCycleMap.clear();
+  const int NumBundles = (int)BottomInsert.size();
+  for (int Cycle = 0; Cycle < NumBundles; ++Cycle) {
+    for (MachineInstr *MI : BottomInsert[Cycle].getInstrs())
+      BottomInsertCycleMap[MI] = NumBundles - 1 - Cycle;
+  }
 }
 
 // This safety margin is independent of the successor block, and is therefore

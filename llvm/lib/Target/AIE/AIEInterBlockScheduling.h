@@ -25,6 +25,7 @@
 #include "AIERegDefUseTracker.h"
 #include "AIESchedulingTypes.h"
 #include "Utils/AIELoopUtils.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/CodeGen/LivePhysRegs.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineScheduler.h"
@@ -163,12 +164,26 @@ public:
   std::vector<MachineBundle> TopInsert;
   std::vector<MachineBundle> BottomInsert;
 
+  /// For pipelined loop epilogues: last-iteration clones from TopInsert, in
+  /// original loop-body order. Originals with no epilogue copy are omitted.
+  std::vector<MachineInstr *> TopInsertSemanticOrder;
+
   /// For pipelined loop preheaders: a parallel array to the loop body's
   /// SemanticOrder. Each entry is the first-iteration clone from BottomInsert
   /// for the corresponding original loop instruction, or nullptr when that
   /// instruction has no copy in the prologue. Populated by PipelineExtractor
   /// during PipeliningDone.
   std::vector<MachineInstr *> BottomInsertSemanticOrder;
+
+  /// Cycle position of each TopInsert instruction: bundle index (depth from
+  /// the start of the epilogue). Rebuilt from TopInsert.
+  DenseMap<MachineInstr *, int> TopInsertCycleMap;
+  /// Cycle position of each BottomInsert instruction: height from ExitSU
+  /// (last bundle is 0). Rebuilt from BottomInsert.
+  DenseMap<MachineInstr *, int> BottomInsertCycleMap;
+
+  void rebuildTopInsertCycleMap();
+  void rebuildBottomInsertCycleMap();
 
   void initInterBlock(const MachineSchedContext &Context,
                       const AIEHazardRecognizer &HR);
