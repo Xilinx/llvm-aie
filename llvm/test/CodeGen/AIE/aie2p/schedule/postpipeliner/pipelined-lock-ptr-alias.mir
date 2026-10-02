@@ -7,12 +7,12 @@
 
 # RUN: llc --mtriple=aie2p -O2 --run-pass=postmisched --aie-loop-min-tripcount=16 %s -o - | FileCheck %s
 
-# Exercises alias-aware lock spacing in AIERegMemEventTracker via EmitFixedSUnits
+# Exercises alias-aware lock spacing via FixedContextEdges / LockDelays
 # for pipelined prologue/epilogue scheduling (distinct from same-block LockDelays
 # coverage in aie2p-lock-ptr-alias.ll).
 #
-# Epilogue REL_ptr: stall-before-lock uses getSafeOperandsDistanceFromTop().
-# Prologue ACQ_ptr: resume-after-lock uses getSafeOperandsDistanceFromBottom().
+# Epilogue REL_ptr and prologue ACQ_ptr spacing come from the DDG
+# (RegionStartEdges / RegionEndEdges), not from operand-cycle timelines.
 #
 # Pointer-coupled locks use annotative MMOs tied to distinct IR allocas so AA can
 # distinguish same-buffer vs disjoint-buffer cases.

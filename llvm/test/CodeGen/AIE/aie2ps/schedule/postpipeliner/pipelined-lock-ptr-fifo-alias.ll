@@ -20,8 +20,9 @@
 ;   - Lock ptr MMOs are annotative unknown-size (getTgtMemIntrinsic for
 ;     acquire_ptr/release_ptr uses MVT::Other).
 ;   - FIFO pop/push MMOs are also unknown-size.
-;   - AA returns MayAlias when both MMOs are unknown-size, so AIERegMemEventTracker
-;     always orders locks against loop FIFO memory ops — even when IR pointers are noalias.
+;   - AA returns MayAlias when both MMOs are unknown-size, so FixedContextEdges
+;     / LockDelays still order locks against loop FIFO memory ops — even when IR
+;     pointers are noalias.
 
 declare void @llvm.aie2ps.acquire.ptr(ptr, i32, i32)
 declare void @llvm.aie2ps.release.ptr(ptr, i32, i32)
@@ -38,7 +39,7 @@ declare { ptr, <32 x i32>, i32 }
 define void @pipelined_acquire_ptr_fifo_same(ptr noalias %io, i32 %lock_id) {
 ; CHECK-LABEL: pipelined_acquire_ptr_fifo_same:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    lda r2, [p0, #4]; nopxm
+; CHECK-NEXT:    lda r2, [p0, #4]; nopb ; nopxm
 ; CHECK-NEXT:    lda r4, [p0, #8]
 ; CHECK-NEXT:    lda r27, [p0, #12]
 ; CHECK-NEXT:    nop
@@ -48,8 +49,7 @@ define void @pipelined_acquire_ptr_fifo_same(ptr noalias %io, i32 %lock_id) {
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mova r4, #-1; sel.eqz r2, r2, r4, r27
-; CHECK-NEXT:    acq r0, r4
-; CHECK-NEXT:    mova r24, #0
+; CHECK-NEXT:    mova r24, #0; acq r0, r4
 ; CHECK-NEXT:    paddxm [sp], #64; add.nc ls, pc, #.LBB0_1; mov r3, #16
 ; CHECK-NEXT:    mova r30, #63; add.nc le, pc, #.L_LEnd0; mov p1, sp
 ; CHECK-NEXT:    padda [p1], #-64; nopb ; nops ; add.nc lc, r3, #0; mov p0, r2; nopv
@@ -114,9 +114,8 @@ for.exit:
 define void @pipelined_acquire_ptr_fifo_disjoint(ptr noalias %lock_io, ptr noalias %in_port, i32 %lock_id) {
 ; CHECK-LABEL: pipelined_acquire_ptr_fifo_disjoint:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    mova r2, #-1
+; CHECK-NEXT:    mova r2, #-1; nopx
 ; CHECK-NEXT:    acq r0, r2
-; CHECK-NEXT:    nop
 ; CHECK-NEXT:    paddxm [sp], #64; add.nc ls, pc, #.LBB1_1; mov r24, #0
 ; CHECK-NEXT:    mova r3, #16; movs p0, p1; add.nc le, pc, #.L_LEnd1; mov p1, sp
 ; CHECK-NEXT:    padda [p1], #-64; nopb ; nops ; add.nc lc, r3, #0; mov r30, #63; nopv
@@ -189,9 +188,9 @@ define void @pipelined_release_ptr_fifo_same(ptr noalias %io, i32 %lock_id) {
 ; CHECK-NEXT:    mova r1, #16; add.nc ls, pc, #.LBB2_1
 ; CHECK-NEXT:    nopa ; nopb ; nops ; add.nc lc, r1, #0; addm.nc le, pc, #.L_LEnd2; nopv
 ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
+; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    nopa ; nopb ; nops ; movx r6, #-1; nopm ; nopv
-; CHECK-NEXT:    nopa ; nopb ; nops ; acq r0, r6; nopm ; nopv
-; CHECK-NEXT:    nopa ; nopb ; nops ; movx r26, #0; nopm ; nopv
+; CHECK-NEXT:    nopa ; nopb ; nops ; acq r0, r6; mov r26, #0; nopv
 ; CHECK-NEXT:    nopa ; nopb ; nops ; sel.eqz r4, r2, r4, r27; vbcst.32 x0, r26; nopv
 ; CHECK-NEXT:    mova r2, #1; nopb ; nops ; nopx ; mov p2, r4; nopv
 ; CHECK-NEXT:  .LBB2_1: // %for.body
@@ -199,8 +198,6 @@ define void @pipelined_release_ptr_fifo_same(ptr noalias %io, i32 %lock_id) {
 ; CHECK-NEXT:  .L_LEnd2:
 ; CHECK-NEXT:    nopa ; nopb ; vst.push.512 x0, [p2, sf, r26]; nopxm ; nopv
 ; CHECK-NEXT:  // %bb.2: // %for.exit
-; CHECK-NEXT:    nopa ; nopb ; nopxm ; nops
-; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    rel r0, r2 // Delay Slot 4
@@ -244,9 +241,9 @@ define void @pipelined_release_ptr_fifo_disjoint(ptr noalias %lock_io, ptr noali
 ; CHECK-NEXT:    mova r1, #16; nopb ; nops ; add.nc ls, pc, #.LBB3_1; nopm ; nopv
 ; CHECK-NEXT:    nopa ; nopb ; nops ; add.nc lc, r1, #0; addm.nc le, pc, #.L_LEnd3; nopv
 ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
+; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    mova r4, #-1; nopb ; nops ; nopxm ; nopv
-; CHECK-NEXT:    nopa ; nopb ; nops ; acq r0, r4; nopm ; nopv
-; CHECK-NEXT:    mova r26, #0; nopb ; nops ; nopxm ; nopv
+; CHECK-NEXT:    mova r26, #0; nopb ; nops ; acq r0, r4; nopm ; nopv
 ; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; vbcst.32 x0, r26; nopv
 ; CHECK-NEXT:    mova r2, #1; nopb ; nops ; nopx ; mov p2, p1; nopv
 ; CHECK-NEXT:  .LBB3_1: // %for.body
@@ -254,8 +251,6 @@ define void @pipelined_release_ptr_fifo_disjoint(ptr noalias %lock_io, ptr noali
 ; CHECK-NEXT:  .L_LEnd3:
 ; CHECK-NEXT:    nopa ; nopb ; vst.push.512 x0, [p2, sf, r26]; nopxm ; nopv
 ; CHECK-NEXT:  // %bb.2: // %for.exit
-; CHECK-NEXT:    nopa ; nopb ; nopxm ; nops
-; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    rel r0, r2 // Delay Slot 4

@@ -25,6 +25,7 @@
 #include "AIERegDefUseTracker.h"
 #include "AIESchedulingTypes.h"
 #include "Utils/AIELoopUtils.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/CodeGen/LivePhysRegs.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineScheduler.h"
@@ -163,12 +164,26 @@ public:
   std::vector<MachineBundle> TopInsert;
   std::vector<MachineBundle> BottomInsert;
 
+  /// For pipelined loop epilogues: last-iteration clones from TopInsert, in
+  /// original loop-body order. Originals with no epilogue copy are omitted.
+  std::vector<MachineInstr *> TopInsertSemanticOrder;
+
   /// For pipelined loop preheaders: a parallel array to the loop body's
   /// SemanticOrder. Each entry is the first-iteration clone from BottomInsert
   /// for the corresponding original loop instruction, or nullptr when that
   /// instruction has no copy in the prologue. Populated by PipelineExtractor
   /// during PipeliningDone.
   std::vector<MachineInstr *> BottomInsertSemanticOrder;
+
+  /// Cycle position of each TopInsert instruction: bundle index (depth from
+  /// the start of the epilogue). Rebuilt from TopInsert.
+  DenseMap<MachineInstr *, int> TopInsertCycleMap;
+  /// Cycle position of each BottomInsert instruction: height from ExitSU
+  /// (last bundle is 0). Rebuilt from BottomInsert.
+  DenseMap<MachineInstr *, int> BottomInsertCycleMap;
+
+  void rebuildTopInsertCycleMap();
+  void rebuildBottomInsertCycleMap();
 
   void initInterBlock(const MachineSchedContext &Context,
                       const AIEHazardRecognizer &HR);
@@ -269,6 +284,11 @@ class InterBlockScheduling {
 
   AIEAlternateDescriptors SelectedAltDescs;
   std::map<MachineBasicBlock *, BlockState> Blocks;
+  /// Per-block DDGs of SWP TopFixed/BotFixed vs free instructions.
+  std::map<MachineBasicBlock *, std::unique_ptr<InterBlockEdges>>
+      EpilogueFixedContextEdges;
+  std::map<MachineBasicBlock *, std::unique_ptr<InterBlockEdges>>
+      PrologueFixedContextEdges;
   std::vector<MachineBasicBlock *> MBBSequence;
   unsigned NextInOrder = 0;
 
@@ -390,6 +410,18 @@ public:
   void updatePerSuccEdges(MachineBasicBlock *BB, MachineBasicBlock *For);
 
   void buildGraph(InterBlockEdges &);
+
+  /// Build the DDG of TopFixed vs this block's free region, including
+  /// pipelined-loop instructions as pre-boundary nodes with negative depths.
+  void buildEpilogueFixedContextEdges(MachineBasicBlock *BB);
+  /// Null if buildEpilogueFixedContextEdges was not called or had no TopInsert.
+  InterBlockEdges *getEpilogueFixedContextEdges(MachineBasicBlock *BB);
+
+  /// Build the DDG of this block's free region vs BotFixed.
+  void buildPrologueFixedContextEdges(MachineBasicBlock *BB);
+  /// Null if buildPrologueFixedContextEdges was not called or had no
+  /// BottomInsert.
+  InterBlockEdges *getPrologueFixedContextEdges(MachineBasicBlock *BB);
 
   /// Clear and repopulate the PostDepths of every per-successor inter-block
   /// edge for BB. For scheduled successors, records the actual scheduled cycle

@@ -68,12 +68,17 @@ public:
 /// When SafeToIgnoreMemDeps is set, memory-alias edges that cross the
 /// pre/post boundary are suppressed via a mayAlias() override.
 ///
-/// The class also provides a depth map (keyed by SUnit NodeNum) that represents
-/// the depth of an instruction after the boundary.
+/// The class also provides depth and height maps (keyed by SUnit NodeNum):
 ///
+///   PreDepths — top-down cycle of each pre-boundary node.
 ///   PostDepths — top-down cycle of each post-boundary node.
+///   PreHeights — distance from ExitSU of each pre-boundary node.
+///   PostHeights — distance from ExitSU of each post-boundary node.
 ///
-///   PostRegionMaxDepth — The maximum of the recorded depths.
+/// Each map has a corresponding region max. Recording an instruction that is
+/// not in the matching pre/post map is ignored for the per-node map but still
+/// updates the region max. The no-instruction overloads exist for empty
+/// bundles (NOPs). Negative values are allowed.
 ///
 /// In practice, SUnits and their dependences are invariant after first
 /// construction. PostDepth is variant, and lazily re-evaluated by algorithms
@@ -98,11 +103,22 @@ class InterBlockEdges : public DataDependenceHelper {
 
   /// Depth (top-down cycle) of post-boundary SUnits, keyed by NodeNum.
   std::map<unsigned, int> PostDepths;
+  /// Depth of pre-boundary SUnits, keyed by NodeNum.
+  std::map<unsigned, int> PreDepths;
+  /// Height of pre-boundary SUnits, keyed by NodeNum.
+  std::map<unsigned, int> PreHeights;
+  /// Height of post-boundary SUnits, keyed by NodeNum.
+  std::map<unsigned, int> PostHeights;
 
-  /// Maximum depth of any PostBoundary node
   int PostRegionMaxDepth = 0;
+  int PreRegionMaxDepth = 0;
+  int PreRegionMaxHeight = 0;
+  int PostRegionMaxHeight = 0;
 
   bool mayAlias(SUnit *SUa, SUnit *SUb, bool TBAA) override;
+
+  void recordValue(const IndexMap &IMap, std::map<unsigned, int> &Values,
+                   int &MaxVal, MachineInstr *MI, int Val);
 
 public:
   InterBlockEdges(const MachineSchedContext &Context,
@@ -138,8 +154,15 @@ public:
   /// boundary, null if not found.
   const SUnit *getPreBoundaryNode(MachineInstr *MI) const;
 
+  /// Retrieve the SUnit that represents MI's instance after the
+  /// boundary, null if not found.
+  const SUnit *getPostBoundaryNode(MachineInstr *MI) const;
+
+  /// Check whether SU represents an instruction before the boundary.
+  bool isPreBoundaryNode(const SUnit *SU) const;
+
   /// Check whether SU represents an instruction after the boundary.
-  bool isPostBoundaryNode(SUnit *SU) const;
+  bool isPostBoundaryNode(const SUnit *SU) const;
 
   /// Post-boundary depth interface.
   /// Record the top-down cycle of a post-boundary instruction. If MI is not
@@ -153,6 +176,7 @@ public:
   /// if no depth has been recorded (e.g. the instruction is beyond the
   /// conflict horizon).
   int getPostDepthOr(const SUnit *SU, int Default) const;
+  bool hasPostDepth(const SUnit *SU) const;
 
   /// Clear all recorded post-boundary depths.  Call before repopulating.
   void clearPostDepths();
@@ -161,7 +185,28 @@ public:
   // of the next region.
   int getPostRegionMaxDepth() const { return PostRegionMaxDepth; }
 
-  // Clear DAG and local extensions like PostDepths
+  void recordPreDepth(MachineInstr *MI, int Depth);
+  void recordPreDepth(int Depth);
+  int getPreDepthOr(const SUnit *SU, int Default) const;
+  bool hasPreDepth(const SUnit *SU) const;
+  void clearPreDepths();
+  int getPreRegionMaxDepth() const { return PreRegionMaxDepth; }
+
+  void recordPreHeight(MachineInstr *MI, int Height);
+  void recordPreHeight(int Height);
+  int getPreHeightOr(const SUnit *SU, int Default) const;
+  bool hasPreHeight(const SUnit *SU) const;
+  void clearPreHeights();
+  int getPreRegionMaxHeight() const { return PreRegionMaxHeight; }
+
+  void recordPostHeight(MachineInstr *MI, int Height);
+  void recordPostHeight(int Height);
+  int getPostHeightOr(const SUnit *SU, int Default) const;
+  bool hasPostHeight(const SUnit *SU) const;
+  void clearPostHeights();
+  int getPostRegionMaxHeight() const { return PostRegionMaxHeight; }
+
+  // Clear DAG and recorded depths/heights.
   void clear();
 };
 

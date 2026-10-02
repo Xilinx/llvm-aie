@@ -30,10 +30,12 @@ add_llvm_target_unittest(AIETests
   ${LLVM_MAIN_SRC_DIR}/unittests/CodeGen/ScheduleDAGMITestUtils.cpp
   AIELoopUtilsTest.cpp
   AIEScheduleDAGMITest.cpp
+  BlockStateInsertMapsTest.cpp
   AIEOuterLoopPipelinerTest.cpp
   AIETestTarget.cpp
   BundleTest.cpp
   HazardRecognizerTest.cpp
+  InterBlockEdgesTest.cpp
   StaticBitSetTest.cpp
   SlotCountsTest.cpp
   SlotStatisticsTest.cpp

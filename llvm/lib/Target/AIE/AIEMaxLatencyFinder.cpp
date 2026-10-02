@@ -14,6 +14,7 @@
 
 #include "AIEMaxLatencyFinder.h"
 #include "Utils/AIEMachineInstrPrint.h"
+#include <algorithm>
 
 #undef DEBUG_TYPE
 #define DEBUG_TYPE "sched-blocks"
@@ -188,6 +189,53 @@ unsigned MaxLatencyFinder::operator()(MachineInstr &MI) {
   }
 
   return Latency;
+}
+
+int computeMinEntryDepth(const SUnit &EdgeSU, const InterBlockEdges &Edges) {
+  int MaxDepth = 0;
+  for (const SDep &PredEdge : EdgeSU.Preds) {
+    SUnit *PredSU = PredEdge.getSUnit();
+
+    int PredDepth = 0;
+    bool HasKnownDepth = false;
+    if (Edges.isPreBoundaryNode(PredSU) && Edges.hasPreDepth(PredSU)) {
+      PredDepth = Edges.getPreDepthOr(PredSU, 0);
+      HasKnownDepth = true;
+    } else if (Edges.isPostBoundaryNode(PredSU) && Edges.hasPostDepth(PredSU)) {
+      PredDepth = Edges.getPostDepthOr(PredSU, 0);
+      HasKnownDepth = true;
+    }
+
+    if (!HasKnownDepth)
+      continue;
+
+    MaxDepth = std::max(MaxDepth, PredDepth + PredEdge.getSignedLatency());
+  }
+  return MaxDepth;
+}
+
+int computeMaxExitLatency(const SUnit &EdgeSU, const InterBlockEdges &Edges) {
+  int MaxLatency = 0;
+  for (const SDep &SuccEdge : EdgeSU.Succs) {
+    SUnit *SuccSU = SuccEdge.getSUnit();
+
+    int SuccHeight = 0;
+    bool HasKnownHeight = false;
+    if (Edges.isPreBoundaryNode(SuccSU) && Edges.hasPreHeight(SuccSU)) {
+      SuccHeight = Edges.getPreHeightOr(SuccSU, 0);
+      HasKnownHeight = true;
+    } else if (Edges.isPostBoundaryNode(SuccSU) &&
+               Edges.hasPostHeight(SuccSU)) {
+      SuccHeight = Edges.getPostHeightOr(SuccSU, 0);
+      HasKnownHeight = true;
+    }
+
+    if (!HasKnownHeight)
+      continue;
+
+    MaxLatency = std::max(MaxLatency, SuccHeight + SuccEdge.getSignedLatency());
+  }
+  return MaxLatency;
 }
 
 } // namespace llvm::AIE

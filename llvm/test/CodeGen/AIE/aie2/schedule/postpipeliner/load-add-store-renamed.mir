@@ -39,7 +39,7 @@
   ; CHECK-NEXT:  .L_LEnd0:
   ; CHECK-NEXT:    nopb ; lda r0, [p1], #4; st r1, [p0], #4; add r1, r0, #1; nopm ; nopv
   ; CHECK-NEXT:  // %bb.3: // %for.cond.cleanup
-  ; CHECK-NEXT:    st r1, [p0], #4; add r1, r0, #1
+  ; CHECK-NEXT:    st r1, [p0], #4; nopb ; add r1, r0, #1
   ; CHECK-NEXT:    st r1, [p0], #4; add r1, r0, #1
   ; CHECK-NEXT:    st r1, [p0], #4; add r1, r0, #1
   ; CHECK-NEXT:    st r1, [p0], #4; add r1, r0, #1
@@ -47,7 +47,6 @@
   ; CHECK-NEXT:    st r1, [p0], #4; add r1, r0, #1
   ; CHECK-NEXT:    st r1, [p0], #4; add r1, r0, #1
   ; CHECK-NEXT:    st r1, [p0], #4
-  ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    .p2align 4
   ; CHECK-NEXT:  .LBB0_4: // %for.cond.cleanup
   ; CHECK-NEXT:    nopa ; ret lr

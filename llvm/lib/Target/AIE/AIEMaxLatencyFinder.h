@@ -30,6 +30,18 @@ namespace llvm::AIE {
 int maxLatency(const MachineInstr *MI, const AIEBaseInstrInfo &InstrInfo,
                const InstrItineraryData &Itineraries, bool IncludeStages);
 
+/// Minimum EntrySU latency for a free post-boundary node in a FixedContext
+/// DDG: the largest PredDepth + edge latency over the preds that have a
+/// recorded pre- or post-depth. Zero when there is no such pred, which leaves
+/// the instruction free to issue alongside the fixed region.
+int computeMinEntryDepth(const SUnit &EdgeSU, const InterBlockEdges &Edges);
+
+/// Maximum extra ExitSU latency for a free pre-boundary node in a
+/// FixedContext DDG: the largest EdgeLat + SuccHeight over succs that have
+/// a recorded pre- or post-height. Zero when there is no such succ, which
+/// leaves the instruction unconstrained by BotFixed.
+int computeMaxExitLatency(const SUnit &EdgeSU, const InterBlockEdges &Edges);
+
 class MaxLatencyFinder {
   AIEPostRASchedStrategy *const Scheduler;
   const AIEBaseInstrInfo *const TII;
