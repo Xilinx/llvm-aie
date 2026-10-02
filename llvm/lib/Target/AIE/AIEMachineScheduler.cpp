@@ -550,6 +550,15 @@ void AIEPostRASchedStrategy::initialize(ScheduleDAGMI *Dag) {
       // leaveRegion(). Bot-fixed bundles are incompatible with this path
       // because fixupDelaySlotPosition requires BotBundles to be empty.
       PersistentTopDown = true;
+      if (unsigned Earliest = InterBlock.getEarliestDelaySlotCycle(CurMBB)) {
+        // releaseSucc only raises TopReadyCycle, so this holds the branch
+        // back until that cycle, where tryCandidate prefers it.
+        SUnit *BranchSU = DAG->getSUnit(MI);
+        assert(BranchSU);
+        BranchSU->TopReadyCycle = std::max(BranchSU->TopReadyCycle, Earliest);
+        LLVM_DEBUG(dbgs() << "Holding delay slot instruction back until cycle "
+                          << BranchSU->TopReadyCycle << "\n");
+      }
     } else {
       // Normal case: force enough bottom-up cycles to place the branch at the
       // correct distance from the end of the region.
@@ -1165,7 +1174,12 @@ void AIEPostRASchedStrategy::leaveRegion(const SUnit &ExitSU) {
     if (MachineInstr *BranchMI = getDelaySlotInstr(RegionBegin, RegionEnd)) {
       const auto *TII = getTII(CurMBB);
       const unsigned NumDelaySlots = TII->getNumDelaySlots(*BranchMI);
+      // Measure before the fixup moves the branch into place.
+      const unsigned BranchCycle = findInBundles(TopBundles, BranchMI);
+      const unsigned UnfixedLength = TopBundles.size();
       fixupDelaySlotPosition(TopBundles, BotBundles, BranchMI, NumDelaySlots);
+      InterBlock.recordDelaySlotPosition(CurMBB, BranchCycle, UnfixedLength,
+                                         TopBundles.size(), NumDelaySlots);
     }
     PersistentTopDown = false;
   }

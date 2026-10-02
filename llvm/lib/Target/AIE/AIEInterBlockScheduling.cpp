@@ -59,6 +59,17 @@ static cl::opt<int> MaxExpensiveIterations(
     cl::desc("[AIE] Maximum iterations for fine-grained convergence in "
              "iterative loop scheduling"));
 
+static cl::opt<bool> EnableDelaySlotReschedule(
+    "aie-delay-slot-reschedule", cl::init(true),
+    cl::desc("[AIE] Reschedule an epilogue whose delay slot instruction was "
+             "moved by fixupDelaySlotPosition, holding the instruction back "
+             "one cycle at a time until no delay slot is wasted"));
+
+static cl::opt<int> MaxDelaySlotIterations(
+    "aie-max-delay-slot-iterations", cl::init(64),
+    cl::desc("[AIE] Maximum reschedules of an epilogue to position its delay "
+             "slot instruction"));
+
 static cl::opt<bool>
     BiasDepth("aie-loop-aware-bias-depth", cl::init(true),
               cl::desc("[AIE] Try to bias the depth for hazard avoidance in "
@@ -491,6 +502,25 @@ void InterBlockScheduling::enterBlock(MachineBasicBlock *BB) {
     return;
   }
 
+  // A reschedule finds the fixed fragments already in the block, but the
+  // previous schedule bundled them with the free instructions that filled
+  // their empty slots and cycles. Move them back to the edges of the block,
+  // since top_fixed_instrs() and bot_fixed_instrs() identify them by position.
+  if (CurrentBlockState->FixPoint.NumIters > 0 &&
+      !CurrentBlockState->TopFixedInstrs.empty()) {
+    for (MachineInstr *MI : reverse(CurrentBlockState->TopFixedInstrs))
+      BB->splice(BB->begin(), BB, MI->getIterator());
+    for (MachineInstr *MI : CurrentBlockState->BotFixedInstrs)
+      BB->splice(BB->end(), BB, MI->getIterator());
+    // Undo the slot selection of the previous schedule, so that this one can
+    // choose freely again. The fixed fragments keep theirs: the bundles they
+    // were emitted from record it.
+    for (const Region &R : CurrentBlockState->getRegions())
+      for (MachineInstr *MI : R.getFreeInstructions())
+        MatTracker.dematerialize(MI);
+    return;
+  }
+
   // When relevant, pick up the fixed fragments left by scheduling other
   // blocks, in particular the pipeliner's prologue and epilogue.
   emitInterBlockTop(*CurrentBlockState);
@@ -813,6 +843,11 @@ MachineInstr *InterBlockScheduling::latencyConverged(BlockState &BS) {
 SchedulingStage InterBlockScheduling::updateFixPoint(BlockState &BS) {
   assert(!IsGatheringPhase);
 
+  if (BS.Kind == BlockType::Epilogue) {
+    BS.FixPoint.NumIters++;
+    return updateDelaySlots(BS);
+  }
+
   if (BS.Kind != BlockType::Loop) {
     return SchedulingStage::SchedulingDone;
   }
@@ -823,6 +858,80 @@ SchedulingStage InterBlockScheduling::updateFixPoint(BlockState &BS) {
   }
 
   return updatePipelining(BS);
+}
+
+SchedulingStage InterBlockScheduling::updateDelaySlots(BlockState &BS) {
+  if (!BS.FixPoint.DelaySlotRetry) {
+    return SchedulingStage::SchedulingDone;
+  }
+  BS.FixPoint.DelaySlotRetry = false;
+
+  // The earliest cycle is raised past the cycle the instruction reached, so it
+  // grows strictly and the block converges once the instruction is last. In
+  // case an unforeseen schedule change keeps requesting retries, stop here and
+  // settle for the best schedule found so far.
+  if (BS.FixPoint.NumIters > MaxDelaySlotIterations) {
+    DEBUG_BLOCKS(dbgs() << "  Delay slot position did not converge\n");
+    if (BS.FixPoint.EarliestDelaySlotCycle == BS.FixPoint.BestDelaySlotCycle) {
+      return SchedulingStage::SchedulingDone;
+    }
+    BS.FixPoint.EarliestDelaySlotCycle = BS.FixPoint.BestDelaySlotCycle;
+    BS.FixPoint.DelaySlotFinalPass = true;
+  }
+
+  DEBUG_BLOCKS(dbgs() << "  Rescheduling with the delay slot instruction held "
+                         "back until cycle "
+                      << BS.FixPoint.EarliestDelaySlotCycle << "\n");
+  return SchedulingStage::Scheduling;
+}
+
+void InterBlockScheduling::recordDelaySlotPosition(MachineBasicBlock *BB,
+                                                   unsigned BranchCycle,
+                                                   unsigned UnfixedLength,
+                                                   unsigned FixedLength,
+                                                   unsigned NumDelaySlots) {
+  BlockState &BS = getBlockState(BB);
+  assert(BS.Kind == BlockType::Epilogue &&
+         "Only epilogues have top-fixed bundles");
+  FixedpointState &FixPoint = BS.FixPoint;
+  const unsigned BundlesAfterBranch = UnfixedLength - BranchCycle - 1;
+
+  if (!EnableDelaySlotReschedule || FixPoint.DelaySlotFinalPass) {
+    return;
+  }
+
+  // The last schedule is not guaranteed to be the best one, so cache the
+  // shortest region and the bound that produced it.
+  if (!FixPoint.BestDelaySlotLength ||
+      FixedLength < FixPoint.BestDelaySlotLength) {
+    FixPoint.BestDelaySlotLength = FixedLength;
+    FixPoint.BestDelaySlotCycle = FixPoint.EarliestDelaySlotCycle;
+  }
+
+  // Keep searching while the branch wastes delay slots and moving it costs
+  // bundles; bounds below the cycle it reached would give the same schedule
+  // again. Otherwise go back to the cached bound, unless it is the one that
+  // produced this schedule.
+  const bool KeepSearching =
+      BundlesAfterBranch > NumDelaySlots && FixedLength > UnfixedLength;
+  const unsigned NextCycle =
+      KeepSearching ? BranchCycle + 1 : FixPoint.BestDelaySlotCycle;
+  FixPoint.DelaySlotRetry = NextCycle != FixPoint.EarliestDelaySlotCycle;
+  FixPoint.DelaySlotFinalPass = !KeepSearching;
+  FixPoint.EarliestDelaySlotCycle = NextCycle;
+
+  DEBUG_BLOCKS(
+      dbgs() << "  Delay slot instruction at cycle " << BranchCycle
+             << " leaves " << BundlesAfterBranch
+             << " bundles after it, for a region of " << FixedLength
+             << " bundles. Best is " << FixPoint.BestDelaySlotLength
+             << " bundles at cycle " << FixPoint.BestDelaySlotCycle
+             << (FixPoint.DelaySlotRetry ? ". Rescheduling.\n" : ".\n"));
+}
+
+unsigned
+InterBlockScheduling::getEarliestDelaySlotCycle(MachineBasicBlock *BB) const {
+  return getBlockState(BB).FixPoint.EarliestDelaySlotCycle;
 }
 
 // Get the first pipeliner mode to try based on command line options.
@@ -1301,7 +1410,8 @@ void InterBlockScheduling::enterRegion(MachineBasicBlock *BB,
     return;
   }
 
-  if (BS.Kind == BlockType::Loop) {
+  // Loops have no fixed bundles, and on a reschedule they are already set.
+  if (BS.Kind == BlockType::Loop || BS.FixPoint.NumIters > 0) {
     return;
   }
 
@@ -1310,10 +1420,20 @@ void InterBlockScheduling::enterRegion(MachineBasicBlock *BB,
   // has physically inserted the SWP instructions into the block.
   assert(!BS.getRegions().empty() &&
          "Every block in Blocks must have at least one region.");
-  if (RegionBegin == BB->begin() && !BS.TopInsert.empty())
+  if (RegionBegin == BB->begin() && !BS.TopInsert.empty()) {
     BS.getCurrentRegion().setTopFixedBundles(BS.TopInsert);
-  if (RegionEnd == BB->end() && !BS.BottomInsert.empty())
+    // Remember them by identity, so that a reschedule can restore the
+    // positional invariant that top_fixed_instrs() relies on.
+    BS.TopFixedInstrs.clear();
+    for (MachineInstr &MI : BS.getCurrentRegion().top_fixed_instrs())
+      BS.TopFixedInstrs.push_back(&MI);
+  }
+  if (RegionEnd == BB->end() && !BS.BottomInsert.empty()) {
     BS.getCurrentRegion().setBotFixedBundles(BS.BottomInsert);
+    BS.BotFixedInstrs.clear();
+    for (MachineInstr &MI : BS.getCurrentRegion().bot_fixed_instrs())
+      BS.BotFixedInstrs.push_back(&MI);
+  }
 }
 
 namespace {
