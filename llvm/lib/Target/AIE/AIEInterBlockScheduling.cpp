@@ -29,6 +29,7 @@
 #include "llvm/CodeGen/MachineOptimizationRemarkEmitter.h"
 #include "llvm/CodeGen/MachineScheduler.h"
 #include "llvm/Support/ErrorHandling.h"
+#include <algorithm>
 #include <memory>
 #include <optional>
 
@@ -1157,8 +1158,22 @@ void InterBlockScheduling::buildGraph(InterBlockEdges &DAG) {
 }
 
 namespace {
-void fillEpilogueFixedContext(InterBlockEdges &DAG, BlockState &BS) {
-  // Empty pre-boundary: TopFixed and free sit inside this block (post).
+void fillEpilogueFixedContext(InterBlockEdges &DAG, BlockState &BS,
+                              ArrayRef<MachineBundle> LoopBundles,
+                              int ConflictHorizon) {
+  // Pre-boundary: last kernel iteration. The final bundle is one cycle
+  // before epilogue cycle 0, so depths run ..., -2, -1.
+  const int L = (int)LoopBundles.size();
+  const int Start = ConflictHorizon > 0 ? std::max(0, L - ConflictHorizon) : 0;
+  for (int I = Start; I < L; ++I) {
+    const int Depth = I - L;
+    for (MachineInstr *MI : LoopBundles[I].getInstrs()) {
+      DAG.addNode(MI);
+      DAG.recordPreDepth(MI, Depth);
+    }
+    DAG.recordPreDepth(Depth);
+  }
+
   DAG.markBoundary();
 
   for (MachineInstr *MI : BS.TopInsertSemanticOrder) {
@@ -1198,15 +1213,20 @@ void InterBlockScheduling::buildFixedContextEdges(MachineBasicBlock *BB) {
   assert(!BS.getRegions().empty() &&
          "Fixed context edges require a gathered region.");
 
-  MachineBasicBlock *Pred = !BS.BottomInsert.empty() ? BB : nullptr;
-  MachineBasicBlock *Succ = !BS.TopInsert.empty() ? BB : nullptr;
-  auto DAG = std::make_unique<InterBlockEdges>(
-      *Context, BS.isSafeToIgnoreMemDeps(), Pred, Succ);
-
-  if (!BS.TopInsert.empty())
-    fillEpilogueFixedContext(*DAG, BS);
-  else if (!BS.BottomInsert.empty())
+  std::unique_ptr<InterBlockEdges> DAG;
+  if (!BS.TopInsert.empty()) {
+    auto LoopBundles = getSWPLoopBundlesForEpilogue(BB);
+    MachineBasicBlock *Pred = AIELoopUtils::getLoopPredecessor(*BB);
+    assert(LoopBundles && Pred &&
+           "Non-empty TopInsert requires a pipelined loop predecessor");
+    DAG = std::make_unique<InterBlockEdges>(
+        *Context, BS.isSafeToIgnoreMemDeps(), Pred, BB);
+    fillEpilogueFixedContext(*DAG, BS, *LoopBundles, HR->getConflictHorizon());
+  } else if (!BS.BottomInsert.empty()) {
+    DAG = std::make_unique<InterBlockEdges>(
+        *Context, BS.isSafeToIgnoreMemDeps(), BB, /*Succ=*/nullptr);
     fillPrologueFixedContext(*DAG, BS);
+  }
 
   // RegionEndEdges (a DDG mutation) queries itinerary operand cycles.
   const InstrItineraryData *Itins =
@@ -1910,7 +1930,11 @@ InterBlockScheduling::getSWPLoopBundlesForEpilogue(
   if (BS.Kind != BlockType::Epilogue)
     return std::nullopt;
 
-  BlockState &LoopBS = getBlockState(*Epilogue->pred_begin());
+  MachineBasicBlock *LoopMBB = AIELoopUtils::getLoopPredecessor(*Epilogue);
+  if (!LoopMBB)
+    return std::nullopt;
+
+  BlockState &LoopBS = getBlockState(LoopMBB);
 
   if (!LoopBS.isPipelined())
     return std::nullopt;

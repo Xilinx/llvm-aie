@@ -275,6 +275,45 @@ TEST_F(InterBlockEdgesTest, ComputeMinEntryDepthFromKnownDepths) {
   EXPECT_EQ(computeMinEntryDepth(*FreeSU, DAG), 5);
 }
 
+TEST_F(InterBlockEdgesTest, ComputeMinEntryDepthFromEpilogueLoopPreBoundary) {
+  // fillEpilogueFixedContext records kernel bundles at Depth = I - L; the
+  // last bundle is -1 (one cycle before epilogue cycle 0).
+  auto *LoopEarlier = appendPlainInstr();
+  auto *LoopLast = appendPlainInstr();
+  auto *Free = appendPlainInstr();
+  InterBlockEdges DAG = makeDAG();
+
+  DAG.addNode(LoopEarlier);
+  DAG.recordPreDepth(LoopEarlier, -2);
+  DAG.addNode(LoopLast);
+  DAG.recordPreDepth(LoopLast, -1);
+  DAG.markBoundary();
+  DAG.addNode(Free);
+
+  SUnit *EarlierSU = const_cast<SUnit *>(DAG.getPreBoundaryNode(LoopEarlier));
+  SUnit *LastSU = const_cast<SUnit *>(DAG.getPreBoundaryNode(LoopLast));
+  SUnit *FreeSU = const_cast<SUnit *>(DAG.getPostBoundaryNode(Free));
+  ASSERT_NE(EarlierSU, nullptr);
+  ASSERT_NE(LastSU, nullptr);
+  ASSERT_NE(FreeSU, nullptr);
+
+  // Latency 1 from depth -1 does not push past EntrySU cycle 0.
+  SDep Short(LastSU, SDep::Artificial);
+  Short.setLatency(1);
+  FreeSU->addPred(Short, /*Required=*/true);
+  EXPECT_EQ(computeMinEntryDepth(*FreeSU, DAG), 0);
+
+  SDep Long(LastSU, SDep::Artificial);
+  Long.setLatency(4);
+  FreeSU->addPred(Long, /*Required=*/true);
+  EXPECT_EQ(computeMinEntryDepth(*FreeSU, DAG), 3);
+
+  SDep FromEarlier(EarlierSU, SDep::Artificial);
+  FromEarlier.setLatency(6);
+  FreeSU->addPred(FromEarlier, /*Required=*/true);
+  EXPECT_EQ(computeMinEntryDepth(*FreeSU, DAG), 4);
+}
+
 TEST_F(InterBlockEdgesTest, ComputeMaxExitLatencyFromKnownHeights) {
   auto *Free = appendPlainInstr();
   auto *OtherFree = appendPlainInstr();
