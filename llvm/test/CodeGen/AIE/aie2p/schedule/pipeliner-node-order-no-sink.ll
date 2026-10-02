@@ -8,18 +8,17 @@
 ; REQUIRES: asserts
 
 ; The loop body is a single chain whose last node only feeds ExitSU through an
-; artificial edge, so the lone node set has no node without successors.
-; FIXME: the bottom-up order is never seeded, the node order comes out empty
-; and no II is ever tried.
+; artificial edge, so the lone node set has no node without successors. The
+; bottom-up order must still be seeded, otherwise the node order comes out
+; empty and no II is ever tried.
 
 ; CHECK:       SU(9): {{.*}}VSRS
 ; CHECK:       Successors:
 ; CHECK-NEXT:    ExitSU: Ord {{.*}} Artificial
 ; CHECK:       NodeSet size 10
-; CHECK-NEXT:    Bottom up (all) {{$}}
-; CHECK-NEXT:  Done with Nodeset
-; CHECK-NEXT:  Node order: {{$}}
-; CHECK-NOT:   Try to schedule with
+; CHECK-NEXT:    Bottom up (all) 9 8 7 6 5 4 3 2 1 0
+; CHECK:       Node order:  9  8  7  6  5  4  3  2  1  0
+; CHECK:       Try to schedule with 2
 
 define void @single_chain() {
 entry:
