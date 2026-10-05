@@ -4,7 +4,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple=aie2p -run-pass=postmisched --issue-limit=1 --debug %s -o - 2>%t.log | FileCheck %s
 # RUN: cat %t.log | FileCheck %s --check-prefix=CHECK-SU
 # REQUIRES: asserts
@@ -89,8 +89,9 @@ body:             |
     ; CHECK-LABEL: name: antidep_minus_1
     ; CHECK: liveins: $p0
     ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: $bmll0 = VCONV_fp32_bf16_mv_ups_wbf killed $wh0
     ; CHECK-NEXT: $x0 = VBAND killed $x2, killed $x4
-    ; CHECK-NEXT: $bmll0 = VCONV_fp32_bf16_mv_ups_wbf $wh0
+    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: VST_dmw_sts_w_idx_imm killed $wh0, killed $p0, 0
     ; CHECK-NEXT: NOP
     $bmll0 = VCONV_fp32_bf16_mv_ups_wbf $wh0
@@ -100,7 +101,7 @@ body:             |
 # CHECK-SU-LABEL: antidep_minus_1:%bb.0 entry
 # CHECK-SU: SU(0):   $bmll0 = VCONV_fp32_bf16_mv_ups_wbf $wh0
 # CHECK-SU:  Successors:
-# CHECK-SU:    SU(1): Anti Latency=0(-1)
+# CHECK-SU:    SU(1): Anti Latency=0{{$}}
 # CHECK-SU: SU(1):   $x0 = VBAND $x2, $x4
 
 # There is an anti-dependency between VMOV and VBAND.

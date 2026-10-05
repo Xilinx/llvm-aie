@@ -11,8 +11,8 @@
   define dso_local void @test() {
   ; CHECK-LABEL: test:
   ; CHECK:       // %bb.0: // %entry
-  ; CHECK-NEXT:    nopa ; nopx ; vtanh wh4, bmll0
-  ; CHECK-NEXT:    vconv.fp32.bf16 bmll1, wh4
+  ; CHECK-NEXT:    nopa ; nopx ; vconv.fp32.bf16 bmll1, wh4
+  ; CHECK-NEXT:    vtanh wh4, bmll0
   ; CHECK-NEXT:    vmov wl4, wh4
   ; CHECK-NEXT:  // %bb.1:
   ; CHECK-NEXT:    ret lr
