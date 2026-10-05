@@ -15,10 +15,10 @@
 ; the load base resolves to the noalias argument %a, so loads and stores are
 ; independent and the drain loop is post-pipelined at II=1.
 ;
-; With outer loop pipelining, the load base reaches an extractvalue of the
-; steady-header merge PHI of the FIFO pop result (see
-; outer-loop-pipelining-aggregate-phi.ll). That base is unknown, so each store
-; may feed the next iteration's load and the drain loop is not post-pipelined.
+; With outer loop pipelining, the load base goes through the steady-header
+; merge of the FIFO pop pointer (see outer-loop-pipelining-aggregate-phi.ll).
+; That merge must stay traceable to %a, otherwise each store may feed the next
+; iteration's load and the drain loop is no longer post-pipelined.
 
 declare { <64 x i8>, ptr, <32 x i32>, i32 } @llvm.aie2ps.fifo.ld.pop.512.unaligned.p0.p0(ptr, <32 x i32>, i32)
 declare void @llvm.set.loop.iterations.i32(i32)
@@ -91,26 +91,30 @@ define void @drain_after_olp(ptr noalias %a, ptr noalias %c, ptr %out, i32 %n, i
 ; OLP-NEXT:  .L_LEnd1:
 ; OLP-NEXT:    nopa ; nopb ; nops ; add r4, r4, r0; nopm ; nopv
 ; OLP-NEXT:  // %bb.7: // %lastiter.stage1.bottom
-; OLP-NEXT:    st r4, [p3, #0]; nopx
-; OLP-NEXT:    nop
-; OLP-NEXT:    nop
-; OLP-NEXT:    nop
-; OLP-NEXT:    add.nc lc, r2, #0
-; OLP-NEXT:    nopa ; nopb ; nops ; add.nc le, pc, #.L_LEnd0; addm.nc ls, pc, #.LBB0_8; nopv
+; OLP-NEXT:    vldb x0, [p4], #64; nopxm
+; OLP-NEXT:    vldb x0, [p4], #64; add.nc lc, r2, #-9
+; OLP-NEXT:    nopa ; vldb x0, [p4], #64; nops ; add.nc le, pc, #.L_LEnd0; addm.nc ls, pc, #.LBB0_8; nopv
+; OLP-NEXT:    nopa ; vldb x0, [p4], #64; st r4, [p3, #0]; nopxm ; nopv
+; OLP-NEXT:    nopa ; vldb x0, [p4], #64; nops ; nopxm ; nopv
+; OLP-NEXT:    nopa ; vldb x0, [p4], #64; nops ; nopxm ; nopv
+; OLP-NEXT:    nopa ; vldb x0, [p4], #64; nops ; nopxm ; nopv
+; OLP-NEXT:    nopa ; vldb x0, [p4], #64; nops ; nopx ; vadd.32 x2, x0, x0; nopv
+; OLP-NEXT:    nopa ; vldb x0, [p4], #64; nops ; nopx ; vadd.32 x2, x0, x0; nopv
 ; OLP-NEXT:  .LBB0_8: // %drain
 ; OLP-NEXT:    // =>This Inner Loop Header: Depth=1
-; OLP-NEXT:    nopa ; vldb x0, [p4], #64; nops ; nopxm ; nopv
-; OLP-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
-; OLP-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
-; OLP-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
-; OLP-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
-; OLP-NEXT:    nopa ; nopb ; nopx
-; OLP-NEXT:    nop
-; OLP-NEXT:    vadd.32 x2, x0, x0
-; OLP-NEXT:    nop
 ; OLP-NEXT:  .L_LEnd0:
-; OLP-NEXT:    nopa ; nopb ; vst x2, [p2], #64; nopxm ; nopv
+; OLP-NEXT:    nopa ; vldb x0, [p4], #64; vst x2, [p2], #64; nopx ; vadd.32 x2, x0, x0; nopv
 ; OLP-NEXT:  // %bb.9: // %exit
+; OLP-NEXT:    nopa ; nopb ; vst x2, [p2], #64; nopx ; vadd.32 x2, x0, x0; nopv
+; OLP-NEXT:    nopa ; nopb ; nopx ; vadd.32 x2, x0, x0; vst x2, [p2], #64
+; OLP-NEXT:    vst x2, [p2], #64; vadd.32 x2, x0, x0
+; OLP-NEXT:    vst x2, [p2], #64; vadd.32 x2, x0, x0
+; OLP-NEXT:    vst x2, [p2], #64; vadd.32 x2, x0, x0
+; OLP-NEXT:    vst x2, [p2], #64; vadd.32 x2, x0, x0
+; OLP-NEXT:    vst x2, [p2], #64; vadd.32 x2, x0, x0
+; OLP-NEXT:    vst x2, [p2], #64
+; OLP-NEXT:    vst x2, [p2], #64
+; OLP-NEXT:    nop
 ; OLP-NEXT:  .LBB0_10: // %exit
 ; OLP-NEXT:    nopa ; ret lr
 ; OLP-NEXT:    nop // Delay Slot 5

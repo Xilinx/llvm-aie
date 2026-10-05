@@ -1443,6 +1443,7 @@ void AIEOuterLoopPipeliner::createPipelinedPHIs(const OrigLoopStructure &OrigLS,
   // the steady clone, and SteadyLS's map is retargeted Orig -> PHI so the slot
   // resolves to the merged PHI afterwards (e.g. for lastIterInputFor).
   SmallVector<Instruction *, 16> SteadyClones;
+  SmallVector<PHINode *, 4> AggregatePHIs;
   for (Instruction *OrigI : OrigLS.stage0Insts()) {
     Instruction *I = cast<Instruction>(SteadyLS.cloneOf(OrigI));
     SteadyClones.push_back(I);
@@ -1465,12 +1466,39 @@ void AIEOuterLoopPipeliner::createPipelinedPHIs(const OrigLoopStructure &OrigLS,
     // bottom clones keep using their own mapped values.
     I->replaceAllUsesWith(PHI);
     SteadyLS.retargetClone(OrigI, PHI);
+    if (PHI->getType()->isAggregateType())
+      AggregatePHIs.push_back(PHI);
   }
 
   // Erase the now-dead steady stage-0 clones (reverse order).
   for (Instruction *I : reverse(SteadyClones))
     if (I->use_empty())
       I->eraseFromParent();
+
+  // getUnderlyingObject looks through an extractvalue only when the aggregate
+  // is the producing intrinsic call, not a PHI of such calls. Give each field
+  // read from an aggregate merge PHI its own merge PHI of per-path extracts,
+  // so a pointer field stays traceable to its base. The aggregate PHI stays:
+  // the clone map resolves the stage-0 slot to it.
+  for (PHINode *PHI : AggregatePHIs) {
+    for (User *U : make_early_inc_range(PHI->users())) {
+      auto *EV = dyn_cast<ExtractValueInst>(U);
+      if (!EV)
+        continue;
+      PHINode *FieldPHI =
+          PHINode::Create(EV->getType(), 2, EV->getName() + ".phi");
+      FieldPHI->insertBefore(PHI->getParent()->getFirstNonPHIIt());
+      for (BasicBlock *Pred : {Preheader, SteadyLS.getBottom()}) {
+        Value *Field = ExtractValueInst::Create(
+            PHI->getIncomingValueForBlock(Pred), EV->getIndices(),
+            EV->getName() + (Pred == Preheader ? ".top" : ".bottom"),
+            Pred->getTerminator()->getIterator());
+        FieldPHI->addIncoming(Field, Pred);
+      }
+      EV->replaceAllUsesWith(FieldPHI);
+      EV->eraseFromParent();
+    }
+  }
 }
 
 void AIEOuterLoopPipeliner::peelLastIteration(
