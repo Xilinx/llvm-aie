@@ -314,12 +314,14 @@ void InterBlockScheduling::classifyBlock(BlockState &BS) {
 void InterBlockScheduling::enterFunction(MachineFunction *MF) {
   DEBUG_BLOCKS(dbgs() << ">> enterFunction " << MF->getName() << "\n");
 
-  // Get ourselves a hazard recognizer
+  // Initialize InstrInfo early: needed by saveFunction's multi-slot filter.
   const auto &Subtarget = MF->getSubtarget();
-  HR = std::make_unique<AIEHazardRecognizer>(Subtarget, SelectedAltDescs);
-
-  // And a native InstrInfo
   TII = static_cast<const AIEBaseInstrInfo *>(Subtarget.getInstrInfo());
+
+  MatTracker.saveFunction(*MF, *TII);
+
+  // Get ourselves a hazard recognizer
+  HR = std::make_unique<AIEHazardRecognizer>(Subtarget, SelectedAltDescs);
 
   const TargetRegisterInfo *TRI = MF->getSubtarget().getRegisterInfo();
   LiveRegs MBBLiveness(MF);
@@ -474,6 +476,7 @@ void InterBlockScheduling::leaveFunction() {
   DEBUG_BLOCKS(dbgs() << "<< leaveFunction\n");
   emitLoopRemarks();
   Blocks.clear();
+  MatTracker.clear();
 }
 
 void InterBlockScheduling::enterBlock(MachineBasicBlock *BB) {
@@ -500,6 +503,7 @@ namespace {
 /// into the appropriate blockstate region.
 /// TimedRegion is built one bundle at the time
 class PipelineExtractor : public PipelineScheduleVisitor {
+  MaterializationTracker &MatTracker;
   BlockState &Loop;
   BlockState *Prologue = nullptr;
   BlockState *Epilogue = nullptr;
@@ -562,9 +566,9 @@ class PipelineExtractor : public PipelineScheduleVisitor {
   void startBundle() override { CurrentBundle.clear(); }
   void addToBundle(MachineInstr *MI) override {
     // We re-emit the original instructions into the loop body.
-    // Prologue and epilogue obtain copies.
+    // Prologue and epilogue obtain copies, tracked via MaterializationTracker.
     MachineInstr *ToBeEmitted =
-        InLoop ? MI : Loop.TheBlock->getParent()->CloneMachineInstr(MI);
+        InLoop ? MI : MatTracker.cloneInstr(*Loop.TheBlock->getParent(), MI);
     CurrentBundle.add(ToBeEmitted);
 
     // Record the first-iteration prologue clone for each original instruction.
@@ -578,7 +582,8 @@ class PipelineExtractor : public PipelineScheduleVisitor {
 public:
   PipelineExtractor(InterBlockScheduling &InterBlock, BlockState &BS,
                     const AIEBaseInstrInfo &TII)
-      : Loop(BS), CurrentBundle(TII.getFormatInterface()) {
+      : MatTracker(InterBlock.getMatTracker()), Loop(BS),
+        CurrentBundle(TII.getFormatInterface()) {
     auto [PrologueMBB, EpilogueMBB] =
         AIELoopUtils::findPrologueEpilogue(*Loop.TheBlock);
     assert(PrologueMBB && EpilogueMBB &&

@@ -34,6 +34,99 @@
 
 namespace llvm::AIE {
 
+/// Tracks original instruction descriptions to enable dematerialization.
+/// Records the original MCInstrDesc for each multi-slot pseudo instruction
+/// before any materialization (e.g., multislot pseudo materialization) occurs.
+/// Also tracks clones to their ultimate original instruction.
+/// This allows restoring instructions to their original state if needed.
+class MaterializationTracker {
+  /// Maps MachineInstr pointers to their original MCInstrDesc.
+  DenseMap<const MachineInstr *, const MCInstrDesc *> OriginalDescs;
+
+  /// Maps cloned instructions to their ultimate original instruction.
+  /// If Src is cloned to create Clone, we store Clone -> Src.
+  /// If Src itself is a clone, we trace back to the ultimate original.
+  DenseMap<const MachineInstr *, const MachineInstr *> CloneToOriginal;
+
+public:
+  /// Save the original descriptions for multi-slot pseudo instructions
+  /// in the function. Only these can be materialized, so only they need
+  /// tracking for potential dematerialization.
+  void saveFunction(MachineFunction &MF, const AIEBaseInstrInfo &TII) {
+    for (MachineBasicBlock &MBB : MF) {
+      for (MachineInstr &MI : MBB) {
+        if (TII.isMultiSlotPseudo(MI))
+          OriginalDescs[&MI] = &MI.getDesc();
+      }
+    }
+  }
+
+  /// Clear all tracked descriptions (e.g., when leaving a function).
+  void clear() {
+    OriginalDescs.clear();
+    CloneToOriginal.clear();
+  }
+
+  /// Get the ultimate original instruction for a clone, or MI itself if not a
+  /// clone.
+  const MachineInstr *getUltimateOriginal(const MachineInstr *MI) const {
+    auto It = CloneToOriginal.find(MI);
+    return It != CloneToOriginal.end() ? It->second : MI;
+  }
+
+  /// Clone an instruction and track the mapping to the ultimate original.
+  /// If Src is itself a clone, traces back to the ultimate original.
+  MachineInstr *cloneInstr(MachineFunction &MF, const MachineInstr *Src) {
+    MachineInstr *Clone = MF.CloneMachineInstr(Src);
+
+    // Find the ultimate original: if Src is a clone, use its original
+    const MachineInstr *Ultimate = getUltimateOriginal(Src);
+
+    CloneToOriginal[Clone] = Ultimate;
+    return Clone;
+  }
+
+  /// Get the original description for an instruction, if tracked.
+  /// For clones, traces back to the ultimate original's description.
+  const MCInstrDesc *getOriginalDesc(const MachineInstr *MI) const {
+    // If MI is a clone, trace to its ultimate original
+    const MachineInstr *Original = getUltimateOriginal(MI);
+
+    auto It = OriginalDescs.find(Original);
+    return It != OriginalDescs.end() ? It->second : nullptr;
+  }
+
+  /// Returns true if the instruction was materialized (desc changed).
+  /// For clones, compares against the ultimate original's saved description.
+  bool wasMaterialized(const MachineInstr *MI) const {
+    const MCInstrDesc *OrigDesc = getOriginalDesc(MI);
+    return OrigDesc && OrigDesc != &MI->getDesc();
+  }
+
+  /// Restore an instruction to its original opcode (before materialization).
+  /// Works for both original instructions and clones.
+  /// Returns true if the instruction was dematerialized, false if no
+  /// original description was tracked (i.e., it was never materialized).
+  bool dematerialize(MachineInstr *MI) {
+    const MCInstrDesc *OrigDesc = getOriginalDesc(MI);
+    if (!OrigDesc || OrigDesc == &MI->getDesc())
+      return false; // Not tracked or already at original opcode
+    MI->setDesc(*OrigDesc);
+    return true;
+  }
+
+  /// Returns the number of tracked original instructions.
+  size_t size() const { return OriginalDescs.size(); }
+
+  /// Returns the number of tracked clones.
+  size_t cloneCount() const { return CloneToOriginal.size(); }
+
+  /// Returns true if no instructions are being tracked.
+  bool empty() const {
+    return OriginalDescs.empty() && CloneToOriginal.empty();
+  }
+};
+
 /// Parameters that drive fixpoint convergence
 class FixedpointState {
 public:
@@ -330,6 +423,10 @@ class InterBlockScheduling {
 
   BlockState *CurrentBlockState = nullptr;
 
+  /// Tracks original instruction descriptions to enable dematerialization.
+  /// Populated in enterFunction, cleared in leaveFunction.
+  MaterializationTracker MatTracker;
+
 public:
   InterBlockScheduling(const MachineSchedContext *C, bool InterBlock);
   void enterFunction(MachineFunction *MF);
@@ -422,6 +519,9 @@ public:
 
   const MachineSchedContext *getContext() const { return Context; }
   bool isGatheringPhase() const { return IsGatheringPhase; }
+
+  /// Get the materialization tracker for clone tracking.
+  MaterializationTracker &getMatTracker() { return MatTracker; }
 
   // Returns the scheduled bundles of the pipelined loop body preceding
   // \p Epilogue. Returns nullopt if \p Epilogue is not the epilogue of a
