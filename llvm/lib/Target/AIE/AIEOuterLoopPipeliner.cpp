@@ -510,6 +510,10 @@ public:
   // they enable.
   void collectDerivedPointerUpdates(const AIEOLPTargetConfig &Config);
 
+  // Returns true if I is in the stage-0 (displaced) set. Used by peel-first
+  // to filter stage-0 instructions from the firstiter bottom block.
+  bool isInStage0(const Instruction *I) const;
+
   // Delete this (now unreachable) LS's blocks.
   void removeFromCFG() const;
 };
@@ -716,6 +720,30 @@ private:
   // the preheader, a counter PHI in the header, loop.decrement.reg in the
   // latch. Requires latchCondition().isDowncounting().
   void convertOuterLoopToHardwareLoop(CloneLoopStructure &SteadyLS);
+
+  // --- Peel-first step helpers ---
+
+  // Create the first-iteration prologue region (full top + inner + stage-1-only
+  // bottom) and wire it before the steady loop. Returns the firstiter LS whose
+  // VMap maps original inner-loop instructions to their firstiter clones.
+  CloneLoopStructure peelFirstIteration(const OrigLoopStructure &OrigLS,
+                                        CloneLoopStructure &SteadyLS);
+
+  // Clone the bottom-block stage-0 instructions (stores + inner-result users)
+  // into the beginning of the steady top, creating inner_result_phi merge
+  // nodes. Erases stage-0 clones from steady.stage1.bottom. TopVMap is output
+  // for createStage1Epilogue.
+  void cloneStage0IntoTop(const OrigLoopStructure &OrigLS,
+                          CloneLoopStructure &SteadyLS,
+                          const CloneLoopStructure &FirstIterLS,
+                          RemapTable &TopVMap);
+
+  // Create the single-block epilogue (lastiter.stage1.bottom) after the steady
+  // loop exit, containing stage-0 instructions using the last steady
+  // inner-loop results.
+  void createStage1Epilogue(const OrigLoopStructure &OrigLS,
+                            const CloneLoopStructure &SteadyLS,
+                            const RemapTable &TopVMap);
 };
 
 } // end anonymous namespace
@@ -1506,6 +1534,10 @@ void CloneLoopStructure::remapBoundThroughCloneMap() {
   B.Limit = Map(B.Limit);
   B.Counter = cast_or_null<BinaryOperator>(Map(B.Counter));
   B.IV = cast_or_null<PHINode>(Map(B.IV));
+}
+
+bool OrigLoopStructure::isInStage0(const Instruction *I) const {
+  return llvm::is_contained(Stage0Insts, I);
 }
 
 void OrigLoopStructure::removeFromCFG() const {
