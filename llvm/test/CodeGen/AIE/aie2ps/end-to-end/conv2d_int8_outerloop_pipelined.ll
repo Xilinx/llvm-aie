@@ -165,7 +165,7 @@ define dso_local void @conv2d(i32 %0, ptr %add.ptr3, ptr %cond, ptr %cond.i, ptr
 ; ASM-NEXT:  // %bb.3: // %for.cond.cleanup158.i
 ; ASM-NEXT:    // in Loop: Header=BB0_1 Depth=1
 ; ASM-NEXT:    vlda x4, [p3], #64; nopb ; movs m6, r17; add r0, r0, #-1; vshuffle x0, x6, x6, r6; vmac dm1, dm1, x0, x4, r8
-; ASM-NEXT:    vlda x2, [p3], #64; movs dj1, r20; mov srssign0, r4; vmac dm0, dm0, x0, x2, r8
+; ASM-NEXT:    vlda x2, [p3], #64; nopb ; movs dj1, r20; nopx ; mov srssign0, r4; vmac dm0, dm0, x0, x2, r8
 ; ASM-NEXT:    movs p3, p2; vshuffle x0, x6, x6, r6; vmac dm1, dm1, x0, x4, r8
 ; ASM-NEXT:    padda [p3], m6; movs dc5, r7; mov m6, r20; vmac dm0, dm0, x0, x2, r8
 ; ASM-NEXT:    movs dn5, r22; vshuffle x0, x6, x6, r6; vmac dm1, dm1, x0, x4, r8
@@ -184,12 +184,12 @@ define dso_local void @conv2d(i32 %0, ptr %add.ptr3, ptr %cond, ptr %cond.i, ptr
 ; ASM-NEXT:    padda [p1], m6; vst.2d.srs.4x cmh0, s1, srssign0, [p2], d5; movx srssign0, #0; mov m6, r21
 ; ASM-NEXT:    padda [p6], m6; paddb.3d [p1], d3; movs dj5, r25; mov r7, dc5
 ; ASM-NEXT:    vlda.ups.2x cml1, s0, upssign1, [p1], m7; paddb.3d [p6], d2; movs dc5, r5; mov dn5, r27
-; ASM-NEXT:    vlda.ups.2x cmh1, s0, upssign1, [p1], m4; jnz r0, #.LBB0_1
-; ASM-NEXT:    padda [p1], m7 // Delay Slot 5
-; ASM-NEXT:    padda [p1], m1; mov m1, r23 // Delay Slot 4
-; ASM-NEXT:    vlda.ups.2x cml0, s0, upssign1, [p1, #0]; paddb [p1], m7; padds.3d [p0], d1 // Delay Slot 3
-; ASM-NEXT:    vlda.ups.2x cmh0, s0, upssign1, [p1, #0]; mov r5, dc5 // Delay Slot 2
-; ASM-NEXT:    nop // Delay Slot 1
+; ASM-NEXT:    jnz r0, #.LBB0_1
+; ASM-NEXT:    vlda.ups.2x cmh1, s0, upssign1, [p1], m4 // Delay Slot 5
+; ASM-NEXT:    padda [p1], m7 // Delay Slot 4
+; ASM-NEXT:    padda [p1], m1; mov m1, r23 // Delay Slot 3
+; ASM-NEXT:    vlda.ups.2x cml0, s0, upssign1, [p1, #0]; paddb [p1], m7; padds.3d [p0], d1 // Delay Slot 2
+; ASM-NEXT:    vlda.ups.2x cmh0, s0, upssign1, [p1, #0]; mov r5, dc5 // Delay Slot 1
 ; ASM-NEXT:  // %bb.4: // %lastiter.stage1.top
 ; ASM-NEXT:    vldb.popx x6, [p0, lf0, r24]
 ; ASM-NEXT:    padds.3d [p0], d0
