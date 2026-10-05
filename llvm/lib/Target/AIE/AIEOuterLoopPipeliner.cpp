@@ -525,7 +525,12 @@ class CloneLoopStructure : public LoopStructure {
 public:
   // Deep-clone Src into "<name>.<Suffix>" IR; internal references are remapped,
   // edges leaving the LS stay at Src's externals for the caller to rewire.
-  CloneLoopStructure(const LoopStructure &Src, const Twine &Suffix);
+  // When PeelFirst is true, block names reflect the peel-first layout:
+  //   "firstiter" -> firstiter.stage0.{top,inner,bottom}
+  //   "steady"    -> steady.stage0.bottom.and.stage1.top / stage1.inner /
+  //   stage1.bottom
+  CloneLoopStructure(const LoopStructure &Src, const Twine &Suffix,
+                     bool PeelFirst = false);
 
   // Create the empty last-iteration blocks spliced before Src's exit and record
   // the Src->lastiter block mappings; the caller fills the bodies. Src is the
@@ -1374,7 +1379,7 @@ SmallVector<Instruction *, 16> AIEOuterLoopPipeliner::cloneAndRemapInsts(
 }
 
 CloneLoopStructure::CloneLoopStructure(const LoopStructure &Src,
-                                       const Twine &Suffix) {
+                                       const Twine &Suffix, bool PeelFirst) {
   Function *F = Src.getTop()->getParent();
 
   // Blocks in program order; CloneBasicBlock seeds CloneMap (src->clone).
@@ -1412,12 +1417,25 @@ CloneLoopStructure::CloneLoopStructure(const LoopStructure &Src,
   // until remapBoundThroughCloneMap retargets them to this clone.
   OuterLoopCondition = Src.latchCondition();
 
-  // Label clones by <copy>.stage1.<position>; the bottom block also hosts the
-  // next iteration's stage-0 prefetch, hence the compound name.
-  getTop()->setName(SuffixStr + ".stage1.top");
-  getBottom()->setName(SuffixStr + ".stage1.bottom.and.stage0.top");
+  // Compute block names based on pipelining mode. Peel-last and peel-first
+  // use different naming to reflect which stage occupies each position.
+  const bool IsFirstIter = PeelFirst && SuffixStr == "firstiter";
+  const std::string TopName =
+      PeelFirst
+          ? (IsFirstIter ? (SuffixStr + ".stage0.top").str()
+                         : (SuffixStr + ".stage0.bottom.and.stage1.top").str())
+          : (SuffixStr + ".stage1.top").str();
+  const std::string BottomName =
+      PeelFirst ? (IsFirstIter ? (SuffixStr + ".stage0.bottom").str()
+                               : (SuffixStr + ".stage1.bottom").str())
+                : (SuffixStr + ".stage1.bottom.and.stage0.top").str();
+  const std::string InnerTag =
+      (SuffixStr + "." + (IsFirstIter ? "stage0" : "stage1") + ".inner.").str();
+
+  getTop()->setName(TopName);
+  getBottom()->setName(BottomName);
   for (auto [Orig, Clone] : zip(Src.getInnerBlocks(), getInnerBlocks()))
-    Clone->setName(SuffixStr + ".stage1.inner." + Orig->getName());
+    Clone->setName(InnerTag + Orig->getName());
 }
 
 CloneLoopStructure::CloneLoopStructure(const LoopStructure &Src) {
