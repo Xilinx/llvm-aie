@@ -1,3 +1,14 @@
+#===----------------------------------------------------------------------===#
+#
+# Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+# affiliates
+#
+#===----------------------------------------------------------------------===#
+
 set(files
   __algorithm/adjacent_find.h
   __algorithm/all_of.h
@@ -1676,6 +1687,10 @@ set(files
   __cxx03/wctype.h
   )
 
+# Per-target runtimes builds share LIBCXX_GENERATED_INCLUDE_DIR and may configure
+# concurrently. configure_file stages its output in a fixed "<out>.tmp", so
+# concurrent writers race; serialize them across processes.
+file(LOCK "${LIBCXX_GENERATED_INCLUDE_DIR}.configure.lock" GUARD PROCESS)
 configure_file("__config_site.in" "${LIBCXX_GENERATED_INCLUDE_TARGET_DIR}/__config_site" @ONLY)
 configure_file("${LIBCXX_ASSERTION_HANDLER_FILE}" "${LIBCXX_GENERATED_INCLUDE_DIR}/__assertion_handler" COPYONLY)
 
@@ -1685,6 +1700,7 @@ if (NOT LLVM_ENABLE_PER_TARGET_RUNTIME_DIR)
   set(LIBCXX_CONFIG_SITE_MODULE_ENTRY "textual header \"__config_site\"")
 endif()
 configure_file("module.modulemap.in" "${LIBCXX_GENERATED_INCLUDE_DIR}/module.modulemap" @ONLY)
+file(LOCK "${LIBCXX_GENERATED_INCLUDE_DIR}.configure.lock" RELEASE)
 
 set(_all_includes "${LIBCXX_GENERATED_INCLUDE_TARGET_DIR}/__config_site"
                   "${LIBCXX_GENERATED_INCLUDE_DIR}/__assertion_handler"
