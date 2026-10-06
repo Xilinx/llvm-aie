@@ -2349,6 +2349,19 @@ bool AIEOuterLoopPipeliner::performTransformation(OrigLoopStructure &OrigLS,
     SteadyLS.adjustLoopBound();
     SteadyLS.updateLoopMetadata();
 
+    // Determine whether to use hardware loop based on pointer pressure.
+    const unsigned NumPointerPHIs = OrigLS.countBasePointerPHIs();
+    const bool OuterIsHardwareLoop =
+        Opts.shouldUseHardwareLoop(NumPointerPHIs) &&
+        SteadyLS.latchCondition().isDowncounting();
+    LLVM_DEBUG(dbgs() << "    Pointer PHIs: " << NumPointerPHIs
+                      << ", threshold: " << OuterLoopPointerThreshold
+                      << ", using " << (OuterIsHardwareLoop ? "hw" : "soft")
+                      << " loop\n");
+
+    if (OuterIsHardwareLoop)
+      convertOuterLoopToHardwareLoop(SteadyLS);
+
     OrigLS.removeFromCFG();
     return true;
   }

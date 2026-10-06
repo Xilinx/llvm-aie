@@ -30,10 +30,10 @@ define void @peel_first_hwloop(ptr noalias %src, ptr noalias %dst, i32 %N, i32 %
 ; CHECK:       [[OUTER_HEADER_PREHEADER]]:
 ; CHECK-NEXT:    br label %[[FIRSTITER_STAGE0_TOP:.*]]
 ; CHECK:       [[STEADY_STAGE0_BOTTOM_AND_STAGE1_TOP:.*]]:
-; CHECK-NEXT:    [[IV_STEADY:%.*]] = phi i32 [ [[IV_NEXT_STEADY:%.*]], %[[STEADY_STAGE1_BOTTOM:.*]] ], [ [[N]], %[[FIRSTITER_STAGE0_BOTTOM:.*]] ]
-; CHECK-NEXT:    [[SRC_PTR_STEADY:%.*]] = phi ptr [ [[SRC_NEXT1_STEADY:%.*]], %[[STEADY_STAGE1_BOTTOM]] ], [ [[SRC_NEXT1_FIRSTITER:%.*]], %[[FIRSTITER_STAGE0_BOTTOM]] ]
+; CHECK-NEXT:    [[SRC_PTR_STEADY:%.*]] = phi ptr [ [[SRC_NEXT1_STEADY:%.*]], %[[STEADY_STAGE1_BOTTOM:.*]] ], [ [[SRC_NEXT1_FIRSTITER:%.*]], %[[FIRSTITER_STAGE0_BOTTOM:.*]] ]
 ; CHECK-NEXT:    [[DST_PTR_STEADY:%.*]] = phi ptr [ [[DST_NEXT2_STEADY:%.*]], %[[STEADY_STAGE1_BOTTOM]] ], [ [[DST_NEXT2_FIRSTITER:%.*]], %[[FIRSTITER_STAGE0_BOTTOM]] ]
 ; CHECK-NEXT:    [[ACC_NEXT_LCSSA_INNER_RESULT_PHI:%.*]] = phi i32 [ [[ACC_NEXT_FIRSTITER:%.*]], %[[FIRSTITER_STAGE0_BOTTOM]] ], [ [[ACC_NEXT_STEADY:%.*]], %[[STEADY_STAGE1_BOTTOM]] ]
+; CHECK-NEXT:    [[OUTER_CTR:%.*]] = phi i32 [ [[OUTER_CTR_INIT:%.*]], %[[FIRSTITER_STAGE0_BOTTOM]] ], [ [[OUTER_CTR_NEXT:%.*]], %[[STEADY_STAGE1_BOTTOM]] ]
 ; CHECK-NEXT:    store i32 [[ACC_NEXT_LCSSA_INNER_RESULT_PHI]], ptr [[DST_PTR_STEADY]], align 4
 ; CHECK-NEXT:    [[VAL_STEADY:%.*]] = load i32, ptr [[SRC_PTR_STEADY]], align 4
 ; CHECK-NEXT:    call void @llvm.set.loop.iterations.i32(i32 [[M]])
@@ -55,12 +55,14 @@ define void @peel_first_hwloop(ptr noalias %src, ptr noalias %dst, i32 %N, i32 %
 ; CHECK:       [[STEADY_STAGE1_BOTTOM]]:
 ; CHECK-NEXT:    [[SRC_NEXT1_STEADY]] = getelementptr inbounds i8, ptr [[SRC_PTR_STEADY]], i32 4
 ; CHECK-NEXT:    [[DST_NEXT2_STEADY]] = getelementptr inbounds i8, ptr [[DST_PTR_STEADY]], i32 4
-; CHECK-NEXT:    [[IV_NEXT_STEADY]] = add i32 [[IV_STEADY]], -1
-; CHECK-NEXT:    [[OUTER_COND_STEADY:%.*]] = icmp sgt i32 [[IV_NEXT_STEADY]], 1
-; CHECK-NEXT:    br i1 [[OUTER_COND_STEADY]], label %[[STEADY_STAGE0_BOTTOM_AND_STAGE1_TOP]], label %[[LASTITER_STAGE1_BOTTOM:.*]], !llvm.loop [[LOOP2:![0-9]+]]
+; CHECK-NEXT:    [[OUTER_CTR_NEXT]] = call i32 @llvm.loop.decrement.reg.i32(i32 [[OUTER_CTR]], i32 1)
+; CHECK-NEXT:    [[OUTER_LOOP_COND:%.*]] = icmp ne i32 [[OUTER_CTR_NEXT]], 0
+; CHECK-NEXT:    br i1 [[OUTER_LOOP_COND]], label %[[STEADY_STAGE0_BOTTOM_AND_STAGE1_TOP]], label %[[LASTITER_STAGE1_BOTTOM:.*]], !llvm.loop [[LOOP2:![0-9]+]]
 ; CHECK:       [[FIRSTITER_STAGE0_BOTTOM]]:
 ; CHECK-NEXT:    [[SRC_NEXT1_FIRSTITER]] = getelementptr inbounds i8, ptr [[SRC]], i32 4
 ; CHECK-NEXT:    [[DST_NEXT2_FIRSTITER]] = getelementptr inbounds i8, ptr [[DST]], i32 4
+; CHECK-NEXT:    [[OUTER_JNZD_TC:%.*]] = sub i32 [[N]], 1
+; CHECK-NEXT:    [[OUTER_CTR_INIT]] = call i32 @llvm.start.loop.iterations.i32(i32 [[OUTER_JNZD_TC]])
 ; CHECK-NEXT:    br label %[[STEADY_STAGE0_BOTTOM_AND_STAGE1_TOP]]
 ; CHECK:       [[LASTITER_STAGE1_BOTTOM]]:
 ; CHECK-NEXT:    store i32 [[ACC_NEXT_STEADY]], ptr [[DST_NEXT2_STEADY]], align 4
