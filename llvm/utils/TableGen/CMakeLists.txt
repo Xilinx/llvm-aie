@@ -3,7 +3,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# Modifications (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 
 # Basic utilities which is the strict minimum needed to build
 # llvm-min-tblgen.
@@ -39,6 +39,7 @@ add_tablegen(llvm-tblgen LLVM
   DESTINATION "${LLVM_TOOLS_INSTALL_DIR}"
   EXPORT LLVM
   AIEMemoryCyclesEmitter.cpp
+  AIECopyMaterializationEmitter.cpp
   AIEPreSchedLoweringEmitter.cpp
   AIESplitInstrTablesEmitter.cpp
   AIEVariableInstrItineraryEmitter.cpp

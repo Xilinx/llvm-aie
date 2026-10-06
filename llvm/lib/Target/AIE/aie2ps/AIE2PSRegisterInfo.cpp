@@ -507,6 +507,11 @@ AIE2PSRegisterInfo::getLargestLegalSuperClass(const TargetRegisterClass *RC,
   if (AIE2PS::eSRegClass.hasSubClassEq(RC))
     return &AIE2PS::spill_eS_to_eRRegClass;
 
+  // Widen eCML to the full acc bank so fp-acc overflow parks in cmh, not stack.
+  // TODO: extend to VEC1024
+  if (AIE2PS::ACC1024RegClass.hasSubClassEq(RC))
+    return &AIE2PS::ACC1024RegClass;
+
   return RC;
 }
 
@@ -777,6 +782,13 @@ bool AIE2PSRegisterInfo::isSimplifiableReservedReg(MCRegister PhysReg) const {
                               AIE2PS::mCRm_fileRegClass.contains(PhysReg));
 }
 
+bool AIE2PSRegisterInfo::hasPhysRegProperty(MCRegister PhysReg,
+                                            PhysRegProperty Prop) const {
+  if (Prop == PhysRegProperty::LocalScope && PhysReg == AIE2PS::crSRSMode)
+    return true;
+  return AIEBaseRegisterInfo::hasPhysRegProperty(PhysReg, Prop);
+}
+
 bool AIE2PSRegisterInfo::isVecOrAccRegClass(
     const TargetRegisterClass &RC) const {
   // ******** Vector classes ********
@@ -883,6 +895,10 @@ Register AIE2PSRegisterInfo::getControlRegister(unsigned Idx) const {
   if (ControlRegisterMap.find(Idx) != ControlRegisterMap.end())
     return ControlRegisterMap[Idx];
   llvm_unreachable("Unexpected key for control register.");
+}
+
+Register AIE2PSRegisterInfo::getUnpackSignCtrlReg() const {
+  return AIE2PS::unpackSign0;
 }
 
 unsigned

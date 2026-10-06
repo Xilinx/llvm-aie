@@ -711,6 +711,35 @@ void AIEHazardRecognizer::enterResources(
   });
 }
 
+int AIEHazardRecognizer::computeInstrSelfMII(const MachineInstr &MI) const {
+  const MCInstrDesc &Desc = MI.getDesc();
+  const unsigned SchedClass =
+      TII->getSchedClass(Desc, MI.operands(), MI.getMF()->getRegInfo());
+  // Instructions without scheduling info cannot self-conflict.
+  if (SchedClass == 0 || PipelineDepth <= 0)
+    return 1;
+
+  // Scan all candidate II values. Self-conflict is not monotone: a
+  // non-conflicting II can be followed by a conflicting one (e.g. resource
+  // uses at cycles {0, 3, 7} conflict at II=7 because 7 mod 7 == 0 mod 7,
+  // even if II=5 is conflict-free). We therefore track the largest II that
+  // self-conflicts and return that value plus one.
+  int SelfMII = 1;
+  for (int II = 1; II <= PipelineDepth; ++II) {
+    std::vector<FuncUnitWrapper> SelfBoard(II);
+    if (anyStage(ItinData->getStages(SchedClass),
+                 [&](int Cycle, const FuncUnitWrapper &ThisCycle) {
+                   const int Mod = Cycle % II;
+                   if (ThisCycle.conflict(SelfBoard[Mod]))
+                     return true;
+                   SelfBoard[Mod] |= ThisCycle;
+                   return false;
+                 }))
+      SelfMII = II + 1;
+  }
+  return SelfMII;
+}
+
 unsigned AIEHazardRecognizer::getPipelineDepth() const { return PipelineDepth; }
 
 unsigned AIEHazardRecognizer::getMaxLatency() const { return MaxLatency; }

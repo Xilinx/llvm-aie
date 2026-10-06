@@ -1701,3 +1701,87 @@ body:             |
     %2:_(<16 x s32>) = G_SHUFFLE_VECTOR %0:_(<16 x s32>), %1:_, shufflemask(17, 17, 17, 17, 17, 17, 17, 2, 3, 0, 0, 0, 0, 0, 0, 0)
     PseudoRET implicit $lr, implicit %2
 ...
+
+---
+name: shuffle_vector_widen_undef_one_insert_second_input
+tracksRegLiveness: true
+body:             |
+  bb.1:
+    liveins: $x0, $x1
+    ; CHECK-LABEL: name: shuffle_vector_widen_undef_one_insert_second_input
+    ; CHECK: liveins: $x0, $x1
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<16 x s32>) = COPY $x0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<16 x s32>) = COPY $x1
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; CHECK-NEXT: [[EVEC:%[0-9]+]]:_(s32) = G_EXTRACT_VECTOR_ELT [[COPY]](<16 x s32>), [[C]](s32)
+    ; CHECK-NEXT: [[IVEC:%[0-9]+]]:_(<16 x s32>) = G_INSERT_VECTOR_ELT [[COPY1]], [[EVEC]](s32), [[C]](s32)
+    ; CHECK-NEXT: [[DEF:%[0-9]+]]:_(<16 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[IVEC]](<16 x s32>), [[DEF]](<16 x s32>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS]](<32 x s32>)
+    %0:_(<16 x s32>) = COPY $x0
+    %1:_(<16 x s32>) = COPY $x1
+    %2:_(<32 x s32>) = G_SHUFFLE_VECTOR %0(<16 x s32>), %1, shufflemask(0, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, undef, undef, undef, undef, undef, undef, undef, undef, undef, undef, undef, undef, undef, undef, undef, undef)
+    PseudoRET implicit $lr, implicit %2
+...
+
+---
+name: shuffle_vector_widen_undef_one_insert_first_input
+tracksRegLiveness: true
+body:             |
+  bb.1:
+    liveins: $x0, $x1
+    ; CHECK-LABEL: name: shuffle_vector_widen_undef_one_insert_first_input
+    ; CHECK: liveins: $x0, $x1
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<16 x s32>) = COPY $x0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<16 x s32>) = COPY $x1
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 5
+    ; CHECK-NEXT: [[EVEC:%[0-9]+]]:_(s32) = G_EXTRACT_VECTOR_ELT [[COPY1]](<16 x s32>), [[C]](s32)
+    ; CHECK-NEXT: [[IVEC:%[0-9]+]]:_(<16 x s32>) = G_INSERT_VECTOR_ELT [[COPY]], [[EVEC]](s32), [[C]](s32)
+    ; CHECK-NEXT: [[DEF:%[0-9]+]]:_(<16 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[IVEC]](<16 x s32>), [[DEF]](<16 x s32>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS]](<32 x s32>)
+    %0:_(<16 x s32>) = COPY $x0
+    %1:_(<16 x s32>) = COPY $x1
+    %2:_(<32 x s32>) = G_SHUFFLE_VECTOR %0(<16 x s32>), %1, shufflemask(0, 1, 2, 3, 4, 21, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, undef, undef, undef, undef, undef, undef, undef, undef, undef, undef, undef, undef, undef, undef, undef, undef)
+    PseudoRET implicit $lr, implicit %2
+...
+
+---
+name: shuffle_vector_widen_upper_not_undef_no_combine
+tracksRegLiveness: true
+body:             |
+  bb.1:
+    liveins: $x0, $x1
+    ; CHECK-LABEL: name: shuffle_vector_widen_upper_not_undef_no_combine
+    ; CHECK: liveins: $x0, $x1
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<16 x s32>) = COPY $x0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<16 x s32>) = COPY $x1
+    ; CHECK-NEXT: [[SHUF:%[0-9]+]]:_(<32 x s32>) = G_SHUFFLE_VECTOR [[COPY]](<16 x s32>), [[COPY1]], shufflemask(0, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 0, undef, undef, undef, undef, undef, undef, undef, undef, undef, undef, undef, undef, undef, undef, undef)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[SHUF]](<32 x s32>)
+    %0:_(<16 x s32>) = COPY $x0
+    %1:_(<16 x s32>) = COPY $x1
+    %2:_(<32 x s32>) = G_SHUFFLE_VECTOR %0(<16 x s32>), %1, shufflemask(0, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 0, undef, undef, undef, undef, undef, undef, undef, undef, undef, undef, undef, undef, undef, undef, undef)
+    PseudoRET implicit $lr, implicit %2
+...
+
+---
+name: shuffle_vector_widen_undef_beyond_max_exceptions_no_combine
+tracksRegLiveness: true
+body:             |
+  bb.1:
+    liveins: $x0, $x1
+    ; CHECK-LABEL: name: shuffle_vector_widen_undef_beyond_max_exceptions_no_combine
+    ; CHECK: liveins: $x0, $x1
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<16 x s32>) = COPY $x0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<16 x s32>) = COPY $x1
+    ; CHECK-NEXT: [[SHUF:%[0-9]+]]:_(<32 x s32>) = G_SHUFFLE_VECTOR [[COPY]](<16 x s32>), [[COPY1]], shufflemask(0, 1, 2, 3, 4, 5, 6, 7, 24, 25, 26, 27, 28, 29, 30, 31, undef, undef, undef, undef, undef, undef, undef, undef, undef, undef, undef, undef, undef, undef, undef, undef)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[SHUF]](<32 x s32>)
+    %0:_(<16 x s32>) = COPY $x0
+    %1:_(<16 x s32>) = COPY $x1
+    %2:_(<32 x s32>) = G_SHUFFLE_VECTOR %0(<16 x s32>), %1, shufflemask(0, 1, 2, 3, 4, 5, 6, 7, 24, 25, 26, 27, 28, 29, 30, 31, undef, undef, undef, undef, undef, undef, undef, undef, undef, undef, undef, undef, undef, undef, undef, undef)
+    PseudoRET implicit $lr, implicit %2
+...

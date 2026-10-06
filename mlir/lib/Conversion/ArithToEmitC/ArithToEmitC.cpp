@@ -666,6 +666,41 @@ class UnsignedShiftOpConversion final
   using ShiftOpConversion<ArithOp, EmitCOp, true>::ShiftOpConversion;
 };
 
+// Lowers arith.{min,max}{s,u}i as a compare-and-select, e.g. `min(a, b)`
+// becomes `a < b ? a : b`. Unlike ShiftOpConversion, there's no UB to guard
+// against, so the comparison can be materialized as an ordinary statement
+// rather than nested inside an emitc::ExpressionOp.
+template <typename ArithOp, emitc::CmpPredicate predicate, bool isUnsignedOp>
+class MinMaxOpConversion final : public OpConversionPattern<ArithOp> {
+public:
+  using OpConversionPattern<ArithOp>::OpConversionPattern;
+
+  LogicalResult
+  matchAndRewrite(ArithOp op, typename ArithOp::Adaptor adaptor,
+                  ConversionPatternRewriter &rewriter) const override {
+
+    Type type = this->getTypeConverter()->convertType(op.getType());
+    if (!type || !(emitc::isIntegerOrOpaqueType(type) ||
+                   emitc::isPointerWideType(type))) {
+      return rewriter.notifyMatchFailure(
+          op, "expected integer or size_t/ssize_t/ptrdiff_t type");
+    }
+
+    // Compare using the correctly-signed view of the operands; the ternary
+    // still yields the original (unmodified) lhs/rhs values.
+    Type cmpType = adaptIntegralTypeSignedness(type, isUnsignedOp);
+    Value lhsForCmp = adaptValueType(adaptor.getLhs(), rewriter, cmpType);
+    Value rhsForCmp = adaptValueType(adaptor.getRhs(), rewriter, cmpType);
+
+    Value cmp =
+        emitc::CmpOp::create(rewriter, op.getLoc(), rewriter.getI1Type(),
+                             predicate, lhsForCmp, rhsForCmp);
+    rewriter.replaceOpWithNewOp<emitc::ConditionalOp>(
+        op, type, cmp, adaptor.getLhs(), adaptor.getRhs());
+    return success();
+  }
+};
+
 class SelectOpConversion : public OpConversionPattern<arith::SelectOp> {
 public:
   using OpConversionPattern<arith::SelectOp>::OpConversionPattern;
@@ -856,6 +891,10 @@ void mlir::populateArithToEmitCPatterns(TypeConverter &typeConverter,
     UnsignedShiftOpConversion<arith::ShLIOp, emitc::BitwiseLeftShiftOp>,
     SignedShiftOpConversion<arith::ShRSIOp, emitc::BitwiseRightShiftOp>,
     UnsignedShiftOpConversion<arith::ShRUIOp, emitc::BitwiseRightShiftOp>,
+    MinMaxOpConversion<arith::MinSIOp, emitc::CmpPredicate::lt, false>,
+    MinMaxOpConversion<arith::MaxSIOp, emitc::CmpPredicate::gt, false>,
+    MinMaxOpConversion<arith::MinUIOp, emitc::CmpPredicate::lt, true>,
+    MinMaxOpConversion<arith::MaxUIOp, emitc::CmpPredicate::gt, true>,
     CmpFOpConversion,
     CmpIOpConversion,
     NegFOpConversion,

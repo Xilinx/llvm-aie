@@ -15,11 +15,11 @@
 ; CHECK:   bb.1.if.then:
 ; CHECK:     PseudoJL @f0
 ; CHECK:   bb.2.if.end:
-; CHECK:     PseudoJZ killed renamable $r16, %bb.4
-; CHECK:   bb.3.if.then2:
-; CHECK:     PseudoJL @f0
-; CHECK:   bb.4.if.end3:
+; CHECK:     PseudoJNZ killed renamable $r16, %bb.4
+; CHECK:   bb.3.if.end3:
 ; CHECK:     PseudoRET
+; CHECK:   bb.4.if.then2:
+; CHECK:     PseudoJ_TCO_jump_imm @f0
 
 define void @f(i32 %i, i32 %j) {
 entry:

@@ -87,8 +87,31 @@ struct VarItinInterface {
   bool hasVariants() const { return !InstrVariants.empty(); }
 };
 
+struct CopyTuple {
+  unsigned DstSubRegIdx;
+  unsigned SrcSubRegIdx;
+  unsigned MoveOpcode;
+};
+
+struct CopyRecipe {
+  const TargetRegisterClass *DstRC;
+  const TargetRegisterClass *SrcRC;
+  unsigned FirstCopy;
+  unsigned NumCopies;
+};
+
+struct CopyTableView {
+  ArrayRef<CopyRecipe> Recipes;
+  ArrayRef<CopyTuple> Tuples;
+};
+
 struct AIEBaseInstrInfo : public TargetInstrInfo {
-  using TargetInstrInfo::TargetInstrInfo;
+  AIEBaseInstrInfo() = default;
+  /// Initializes TargetInstrInfo with the target's control-flow pseudo opcodes.
+  AIEBaseInstrInfo(unsigned CFSetupOpcode, unsigned CFDestroyOpcode,
+                   unsigned CatchRetOpcode, unsigned ReturnOpcode)
+      : TargetInstrInfo(CFSetupOpcode, CFDestroyOpcode, CatchRetOpcode,
+                        ReturnOpcode) {}
   // This codifies the model of ZeroOverheadLoops
   class ZOLSupport {
   public:
@@ -103,12 +126,16 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
     // SetLoopCount has the same operands as LoopStart.
     unsigned SetLoopCountOpcode;
     Register LCRegister;
+    Register LSRegister;
+    Register LERegister;
 
     // SetLoop{Start,End} takes an address and writes it to a loop register
     unsigned SetLoopStartOpcode;
     unsigned SetLoopEndOpcode;
-    std::optional<Register> LSRegister;
-    std::optional<Register> LERegister;
+    // Optional PC-relative loop start/end setup opcodes. When present, they
+    // provide an alternative to the (absolute) SetLoop{Start,End}Opcode above.
+    std::optional<unsigned> SetLoopStartPCRelOpcode;
+    std::optional<unsigned> SetLoopEndPCRelOpcode;
     // The distance between setup and the start of the loop, in units
     // of bundles.
     unsigned LoopSetupDistance;
@@ -258,10 +285,6 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
                                                        unsigned int Reg,
                                                        APInt &Val) const {
     return std::nullopt;
-  }
-  /// Return Multi-Slot Pseudo opcode based on Reg type
-  virtual unsigned getScalarMovOpcode(Register DstReg, Register SrcReg) const {
-    llvm_unreachable("Target didn't implement getScalarMovOpcode");
   }
   /// Return the MOV opcode
   virtual unsigned getMvSclOpcode() const {
@@ -457,6 +480,9 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   }
 
   virtual bool isGenericOffsetMemOpcode(unsigned Opcode) const { return false; }
+
+  /// Check whether \p Opcode is a generic memory opcode.
+  virtual bool isGenericMemOpcode(unsigned Opcode) const { return false; }
 
   // Used for Load/Store combiners
   virtual unsigned getOffsetMemOpcode(unsigned BaseMemOpcode) const {
@@ -738,16 +764,10 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   /// \p UseMI (schedule class \p UseSchedClass) for the given operand indices.
   /// The schedule classes are pre-computed by the caller; they are passed
   /// explicitly so the base implementation avoids calling getSchedClass again.
-  /// Subclasses may additionally inspect the MachineInstrs for analysis data.
   /// Returns 0 if no bypass is taken.
-  /// PLEASE NOTE: overriding this is discouraged. Instead, use itinerary reg
-  /// pairs to switch the itinerary.
-  virtual unsigned getNumBypassedCycles(const InstrItineraryData *ItinData,
-                                        const MachineInstr &DefMI,
-                                        unsigned DefSchedClass, unsigned DefIdx,
-                                        const MachineInstr &UseMI,
-                                        unsigned UseSchedClass,
-                                        unsigned UseIdx) const;
+  unsigned getNumBypassedCycles(const InstrItineraryData *ItinData,
+                                unsigned DefSchedClass, unsigned DefIdx,
+                                unsigned UseSchedClass, unsigned UseIdx) const;
 
   /// Returns the latency to be observed to preserve the ordering of aliasing
   /// memory operations.
@@ -1039,6 +1059,16 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   }
 
 public:
+  /// Return the number of instructions materialized for an exact physical
+  /// register copy, or std::nullopt if the copy is unsupported.
+  std::optional<unsigned> getCopyCost(MCRegister DstReg,
+                                      MCRegister SrcReg) const;
+
+  void copyPhysReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
+                   const DebugLoc &DL, Register DstReg, Register SrcReg,
+                   bool KillSrc, bool RenamableDest = false,
+                   bool RenamableSrc = false) const override;
+
   /// Expand a spill pseudo-instruction into actual target instructions. This
   /// will essentially split the register being handled into its sub-registers,
   /// until there is an actual instruction that can handle them.
@@ -1092,6 +1122,14 @@ public:
     return {};
   };
 
+private:
+  virtual const CopyTableView &getCopyTable() const;
+
+  bool materializeCopyFromTable(MachineBasicBlock &MBB,
+                                MachineBasicBlock::iterator MBBI,
+                                const DebugLoc &DL, MCRegister DstReg,
+                                MCRegister SrcReg, bool KillSrc) const;
+
 protected:
   struct AIERegOffsetSpillInstrInfo {
     /// Opcode for spill using register offset.
@@ -1113,12 +1151,6 @@ protected:
   getRegOffsetSpillInstrInfoFromImmOffset(const unsigned Opcode) const {
     return {};
   }
-
-  // Copy SrcReg to DstReg through their sub-registers.
-  void copyThroughSubRegs(MachineBasicBlock &MBB,
-                          MachineBasicBlock::iterator MBBI, const DebugLoc &DL,
-                          MCRegister DstReg, MCRegister SrcReg,
-                          bool KillSrc) const;
 
 #if 0
   // TODO. I guess this should wait for Davy's PR to land

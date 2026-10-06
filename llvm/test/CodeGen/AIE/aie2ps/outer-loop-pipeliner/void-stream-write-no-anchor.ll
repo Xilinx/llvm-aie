@@ -57,7 +57,7 @@ define void @void_stream_write_no_anchor(ptr %a, ptr %c, i32 %n, i32 %m) {
 ; REMARKS-NEXT: Function:        void_stream_write_no_anchor
 ; REMARKS-NEXT: Args:
 ; REMARKS-NEXT:   - String:          Schedule found
-; REMARKS-NEXT:   - Pipeliner:       ''
+; REMARKS-NEXT:   - Pipeliner:       loop-aware
 ; REMARKS-NEXT:   - II:              '4'
 ; REMARKS-NEXT:   - NS:              '1'
 ; REMARKS-NEXT:   - Loop:            bb.3.inner.header

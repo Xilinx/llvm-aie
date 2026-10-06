@@ -217,8 +217,18 @@ AIE2LegalizerInfo::AIE2LegalizerInfo(const AIE2Subtarget &ST) : AIEHelper(ST) {
   // G_PTRTOINT), the only legal extension is S20 -> S32.
   // Extensions to types larger than 64 bits have to be broken down into
   // multiple parts.
-  getActionDefinitionsBuilder({G_ANYEXT, G_SEXT, G_ZEXT})
+  // A packed sub-register vector such as <2 x s8> reaches its scalar form
+  // through S16, so S16 has to survive as the low half of a GPR.
+  getActionDefinitionsBuilder(G_ANYEXT)
+      .legalFor({{S32, S20}, {S32, S16}})
+      .customIf(all(typeIs(0, V2S16), typeIs(1, V2S8)))
+      .clampScalar(0, S32, S32);
+  getActionDefinitionsBuilder(G_SEXT)
       .legalFor({{S32, S20}})
+      .clampScalar(0, S32, S32);
+  getActionDefinitionsBuilder(G_ZEXT)
+      .legalFor({{S32, S20}})
+      .customIf(all(typeIs(0, V2S16), typeIs(1, V2S8)))
       .clampScalar(0, S32, S32);
   // FIXME: (s|z|any)ext s20 to s64 is broken.
 
@@ -241,7 +251,9 @@ AIE2LegalizerInfo::AIE2LegalizerInfo(const AIE2Subtarget &ST) : AIEHelper(ST) {
       .clampScalar(0, S32, S32)
       .clampScalar(1, S32, S32);
 
-  getActionDefinitionsBuilder(G_TRUNC).alwaysLegal();
+  getActionDefinitionsBuilder(G_TRUNC)
+      .customIf(all(typeIs(0, V2S8), typeIs(1, V2S16)))
+      .alwaysLegal();
 
   getActionDefinitionsBuilder(G_SELECT)
       .legalFor({{S32, S32}, {P0, S32}})
@@ -388,13 +400,14 @@ AIE2LegalizerInfo::AIE2LegalizerInfo(const AIE2Subtarget &ST) : AIEHelper(ST) {
       .bitcastIf(
           [=](const LegalityQuery &Query) {
             const LLT &Ty = Query.Types[0];
-            return Ty.isVector() &&
-                   (Ty.getSizeInBits() == 64 || Ty.getSizeInBits() == 32);
+            const unsigned Size = Ty.getSizeInBits();
+            return Ty.isVector() && (Size == 16 || Size == 32 || Size == 64);
           },
           [=](const LegalityQuery &Query) {
             const LLT Ty = Query.Types[0];
             const unsigned Size = Ty.getSizeInBits();
-            assert(Size % 32 == 0);
+            assert((Size == 16 || Size == 32 || Size == 64) &&
+                   "Unexpected vector size");
             return std::pair(0, LLT::scalar(Size));
           })
       .clampScalar(0, S32, S32)
@@ -420,15 +433,13 @@ AIE2LegalizerInfo::AIE2LegalizerInfo(const AIE2Subtarget &ST) : AIEHelper(ST) {
             return VecTy.getSizeInBits() == 32;
           },
           bitcastToVectorElement32(1))
-      // For 2 x 8 vectors, we want to increase the number of elements to 4
-      .moreElementsIf(
-          [=](const LegalityQuery &Query) {
-            return Query.Types[1].getScalarSizeInBits() == 8 &&
-                   Query.Types[1].getNumElements() == 2;
-          },
-          [=](const LegalityQuery &Query) {
-            return std::make_pair(1, LLT::fixed_vector(4, S8));
-          })
+      // For 2 x 8 vectors, we want to increase the number of elements to 4.
+      // moreElements() pads through a G_UNMERGE_VALUES of the <2 x s8>, which
+      // is itself legalized back into a G_EXTRACT_VECTOR_ELT of it, looping.
+      .customIf([=](const LegalityQuery &Query) {
+        return Query.Types[1].getScalarSizeInBits() == 8 &&
+               Query.Types[1].getNumElements() == 2;
+      })
       // Custom legalize 2 x 32 vectors
       .customIf(typeInSet(1, {V2S32}))
       // Extend vectors to have at least 256-bits
@@ -470,8 +481,7 @@ AIE2LegalizerInfo::AIE2LegalizerInfo(const AIE2Subtarget &ST) : AIEHelper(ST) {
   getActionDefinitionsBuilder(G_BITCAST)
       .legalIf(
           LegalityPredicates::all(isLegalBitCastType(0), isLegalBitCastType(1)))
-      .customIf(typeInSet(0, {V2S8, S16}));
-  ;
+      .legalFor({{S16, V2S8}, {V2S8, S16}});
 
   getActionDefinitionsBuilder(G_MERGE_VALUES).legalFor({{S64, S32}});
   getActionDefinitionsBuilder(G_UNMERGE_VALUES)
@@ -479,6 +489,11 @@ AIE2LegalizerInfo::AIE2LegalizerInfo(const AIE2Subtarget &ST) : AIEHelper(ST) {
       .customIf([=](const LegalityQuery &Query) {
         const LLT &DstTy = Query.Types[0];
         const LLT &SrcTy = Query.Types[1];
+        // 32-bit vector split into two sub-register-sized halves.
+        if (DstTy.isVector() && SrcTy.isVector() &&
+            DstTy.getElementType() == SrcTy.getElementType() &&
+            SrcTy.getSizeInBits() == 32 && DstTy.getSizeInBits() == 16)
+          return true;
 
         return SrcTy.isVector() && DstTy.isScalar() &&
                DstTy == SrcTy.getElementType();
@@ -493,6 +508,8 @@ AIE2LegalizerInfo::AIE2LegalizerInfo(const AIE2Subtarget &ST) : AIEHelper(ST) {
   getActionDefinitionsBuilder(G_BUILD_VECTOR)
       // Legacy legalization for bitcasts
       .legalFor({{V2S32, S32}})
+      // <2 x s8> is packed into the low half of a scalar register.
+      .customIf(typeIs(0, V2S8))
       .unsupportedIf(IsNotValidDestinationVector)
       // We clamp the high values and not the low ones, since the former
       // splits the values but the latter keeps the same G_BUILD_VECTOR in
@@ -583,8 +600,11 @@ bool AIE2LegalizerInfo::legalizeCustom(
     return AIEHelper.legalizeG_UNMERGE_VALUES(Helper, MI);
   case TargetOpcode::G_SEXT_INREG:
     return AIEHelper.legalizeG_SEXT_INREG(Helper, MI);
-  case TargetOpcode::G_BITCAST:
-    return AIEHelper.legalizeG_BITCAST(Helper, MI);
+  case TargetOpcode::G_ANYEXT:
+  case TargetOpcode::G_ZEXT:
+    return AIEHelper.legalizeG_ZEXT_G_ANYEXT(Helper, MI);
+  case TargetOpcode::G_TRUNC:
+    return AIEHelper.legalizeG_TRUNC(Helper, MI);
   case TargetOpcode::G_SELECT:
     return AIEHelper.legalizeG_SELECT(Helper, MI, /* MaxBitSize */ 512);
   }

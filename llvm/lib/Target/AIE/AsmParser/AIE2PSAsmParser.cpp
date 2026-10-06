@@ -182,6 +182,56 @@ bool AIE2PSAsmParser::matchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   llvm_unreachable("Unknown match type detected");
 }
 
+// Some AIE2PS bfp16 instructions (vmac.f, vmsc.f, vmul.f, vnegmul.f,
+// vaddmac.f, vaddmsc.f) print their EWL (low-half) operand using the name of
+// the enclosing EX register (e.g. "ex11" instead of "ewl11"). The custom
+// AIE2PSInstPrinter::printOperand implements this aliasing. To be able to read
+// this syntax back, we perform the inverse mapping here: when one of these
+// mnemonics is parsed with an EX register operand, we convert it into its
+// corresponding EWL register so that the auto-generated matcher (which expects
+// the EWL operand class) accepts it.
+static Register convertEXToEWL(Register Reg) {
+  switch (Reg) {
+  case AIE2PS::ex0:
+    return AIE2PS::ewl0;
+  case AIE2PS::ex1:
+    return AIE2PS::ewl1;
+  case AIE2PS::ex2:
+    return AIE2PS::ewl2;
+  case AIE2PS::ex3:
+    return AIE2PS::ewl3;
+  case AIE2PS::ex4:
+    return AIE2PS::ewl4;
+  case AIE2PS::ex5:
+    return AIE2PS::ewl5;
+  case AIE2PS::ex6:
+    return AIE2PS::ewl6;
+  case AIE2PS::ex7:
+    return AIE2PS::ewl7;
+  case AIE2PS::ex8:
+    return AIE2PS::ewl8;
+  case AIE2PS::ex9:
+    return AIE2PS::ewl9;
+  case AIE2PS::ex10:
+    return AIE2PS::ewl10;
+  case AIE2PS::ex11:
+    return AIE2PS::ewl11;
+  default:
+    return Reg;
+  }
+}
+
+// Returns true if the given instruction mnemonic corresponds to a bfp16
+// instruction that uses the EX-for-EWL printing alias.
+static bool usesEWLBisAlias(StringRef InstrName) {
+  return InstrName.equals_insensitive("vmac.f") ||
+         InstrName.equals_insensitive("vmsc.f") ||
+         InstrName.equals_insensitive("vmul.f") ||
+         InstrName.equals_insensitive("vnegmul.f") ||
+         InstrName.equals_insensitive("vaddmac.f") ||
+         InstrName.equals_insensitive("vaddmsc.f");
+}
+
 static Register convertToD_3D(Register Reg) {
   // We could use the existing eDS/eD reg classes and play around with
   // subreg indices, but that would introduce a dependency with CodeGen.
@@ -215,6 +265,12 @@ bool AIE2PSAsmParser::parseIdentifier(OperandVector &Operands) {
         static_cast<AIEBaseOperand *>(Operands[0].get())->getToken();
     if (InstrName.find_insensitive(".3d") != StringRef::npos) {
       RegNo = convertToD_3D(RegNo);
+    }
+    // For bfp16 instructions, the low-half (EWL) operand is printed using the
+    // enclosing EX register name. Convert it back to the EWL register so the
+    // matcher, which expects the EWL operand class, accepts it.
+    if (usesEWLBisAlias(InstrName)) {
+      RegNo = convertEXToEWL(RegNo);
     }
     Operands.push_back(
         AIE2PSOperand::CreateReg(getContext(), RegNo, Begin, End));

@@ -22,7 +22,10 @@
 #include "AIEDataDependenceHelper.h"
 #include "AIEHazardRecognizer.h"
 #include "AIEPostPipeliner.h"
+#include "AIERegDefUseTracker.h"
+#include "AIESchedulingTypes.h"
 #include "Utils/AIELoopUtils.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/CodeGen/LivePhysRegs.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineScheduler.h"
@@ -31,39 +34,12 @@
 
 namespace llvm::AIE {
 
-// BlockType determines scheduling priority, direction and safety margin
-// handling.
-enum class BlockType { Regular, Loop, Epilogue };
-
-// These are states in the state machine that drives scheduling
-enum class SchedulingStage {
-  // We are scheduling, which includes iterating during loop-aware scheduling
-  Scheduling,
-
-  // This is a fatal error state, when we didn't converge in loop-aware
-  // scheduling. It may not be observable.
-  SchedulingNotConverged,
-
-  // We have found a schedule. This is the final state for regular blocks. SWP
-  // candidates proceed from here into Pipelining with II=1
-  SchedulingDone,
-
-  // We are busy pipelining the loop. Each round will try a larger II
-  Pipelining,
-
-  // We found a SWP schedule. This is a final state.
-  PipeliningDone,
-
-  // We tried pipelining, but didn't find a SWP schedule. This is a final
-  // state equivalent to SchedulingDone, except that it doesn't proceed to
-  // Pipelining anymore.
-  PipeliningFailed
-};
-
 /// Parameters that drive fixpoint convergence
 class FixedpointState {
 public:
   SchedulingStage Stage = SchedulingStage::Scheduling;
+  // PostPipeliner mode - physical or virtual register mode
+  PostPipelinerMode PipelinerMode = PostPipelinerMode::None;
   // Parameters of the loop-aware convergence
   int LatencyMargin = 0;
   SmallMapVector<MachineInstr *, int, 8> PerMILatencyMargin;
@@ -171,6 +147,9 @@ class BlockState {
   // will be loaded in a further iteration.
   bool IsSafeToIgnoreMemDeps = false;
 
+  // This holds an instance of the RegLiveRangeTracker for loops.
+  std::unique_ptr<llvm::RegLiveRangeTracker> RegTracker;
+
 public:
   BlockState(MachineBasicBlock *Block);
   MachineBasicBlock *TheBlock = nullptr;
@@ -244,6 +223,14 @@ public:
   void clearSchedule();
 
   void setPipelined();
+
+  /// Initialize for pipelining - virtualizes registers if in virtual mode
+  void initPipelining();
+
+  /// Restore after failed pipelining - restores physical registers if
+  /// virtualized
+  void restorePipelining();
+
   bool isScheduled() const {
     return FixPoint.Stage == SchedulingStage::SchedulingDone || isPipelined() ||
            pipeliningFailed();
@@ -365,6 +352,25 @@ public:
   /// Retrieve the inter-block state for BB
   const BlockState &getBlockState(MachineBasicBlock *BB) const;
   BlockState &getBlockState(MachineBasicBlock *BB);
+
+  /// Collect the inter-block DDG edges that end in \p BB, i.e. the entries of
+  /// each predecessor's PerSuccEdges that name BB as their successor. The
+  /// graphs stay owned by the predecessors; computing the list on demand keeps
+  /// it in step with the CFG and with any rebuild done by buildPerSuccEdges().
+  std::vector<InterBlockEdges *> getPerPredEdges(MachineBasicBlock *BB) const;
+
+  /// Return the largest positive latency that each instruction in the top
+  /// region of \p BB inherits from an edge out of a predecessor block, keyed
+  /// by instruction. Latencies of any dependence kind are considered; zero and
+  /// negative ones do not increase depth and are dropped.
+  ///
+  /// A pred edge graph only spans the bottom region of the predecessor and the
+  /// top region of BB, so the result is empty unless BB is currently
+  /// scheduling its top region. The self edge of a single-block loop is
+  /// excluded as well: its predecessor is BB itself, so there is no separate
+  /// schedule that could absorb the latency.
+  DenseMap<const MachineInstr *, int>
+  getIncomingLatencies(MachineBasicBlock *BB) const;
 
   /// Return the maximum interblock latency we need to account for
   /// the given successor. This represents the latency margin we assume for

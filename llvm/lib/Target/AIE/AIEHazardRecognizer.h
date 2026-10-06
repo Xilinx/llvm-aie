@@ -245,6 +245,12 @@ public:
   /// stores. This is not for correctness, but for wait cycles avoidance.
   MemoryObjectPair getMemoryObjectsBits(const MachineInstr *MI) const;
 
+  /// Return the minimum II at which instruction \p MI does not conflict with
+  /// a copy of itself from the previous iteration (self-conflict). A single
+  /// instruction whose pipeline resources span more than one cycle can alias
+  /// with itself in the modulo schedule when II is too small.
+  int computeInstrSelfMII(const MachineInstr &MI) const;
+
   /// The pipeline depth is the depth of the deepest instruction.
   /// We compute that once from the itineraries.
   unsigned getPipelineDepth() const;

@@ -7,9 +7,9 @@
 #
 # RUN: llc %llcflags --filetype=obj -o %t
 # RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
-# TODO: llc %llcflags --filetype=asm -o %t2
-# TODO: llvm-mc -triple aie2ps -filetype=obj -o %t %t2
-# TODO: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2ps -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
 #
 # Test file automatically generated using generate_instr_info_test.py
 # * Automatically generated file, do not edit! *

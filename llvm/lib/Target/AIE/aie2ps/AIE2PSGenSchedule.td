@@ -4885,22 +4885,22 @@ MemInstrItinData<II_ST_s8_pstm_nrm_imm, [IsPartWordStore, EmptyCycles<1>, Simple
 InstrItinData<II_SUB, [], [/*d0*/1, /*s0*/1, /*s1*/1, /*srCarry*/1]>,
 
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_abs__vec_cmp_out_single__vec_cmp_out_single32__mR16m__vec_add_nX__vaddSign0
-InstrItinData<II_VABS_GTZ16_vaddSign0, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign0*/1], [/*d*/MV_Bypass, /*r16*/NoBypass, /*s2*/MV_Bypass]>,
+InstrItinData<II_VABS_GTZ16_vaddSign0, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign0*/1], [/*d*/MV_Bypass, /*r16*/MV_Bypass, /*s2*/MV_Bypass]>,
 
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_abs__vec_cmp_out_single__vec_cmp_out_single32__mR16m__vec_add_nX__vaddSign1
-InstrItinData<II_VABS_GTZ16_vaddSign1, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign1*/1], [/*d*/MV_Bypass, /*r16*/NoBypass, /*s2*/MV_Bypass]>,
+InstrItinData<II_VABS_GTZ16_vaddSign1, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign1*/1], [/*d*/MV_Bypass, /*r16*/MV_Bypass, /*s2*/MV_Bypass]>,
 
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_abs__vec_cmp_out_single__vec_cmp_out_single16__mR16m__vec_add_nX__vaddSign0
-InstrItinData<II_VABS_GTZ32_vaddSign0, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign0*/1], [/*d*/MV_Bypass, /*r16*/NoBypass, /*s2*/MV_Bypass]>,
+InstrItinData<II_VABS_GTZ32_vaddSign0, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign0*/1], [/*d*/MV_Bypass, /*r16*/MV_Bypass, /*s2*/MV_Bypass]>,
 
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_abs__vec_cmp_out_single__vec_cmp_out_single16__mR16m__vec_add_nX__vaddSign1
-InstrItinData<II_VABS_GTZ32_vaddSign1, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign1*/1], [/*d*/MV_Bypass, /*r16*/NoBypass, /*s2*/MV_Bypass]>,
+InstrItinData<II_VABS_GTZ32_vaddSign1, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign1*/1], [/*d*/MV_Bypass, /*r16*/MV_Bypass, /*s2*/MV_Bypass]>,
 
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_abs__vec_cmp_out_single__vec_cmp_out_single64__mL8m__vec_add_nX__vaddSign0
-InstrItinData<II_VABS_GTZ8_vaddSign0, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r17_r16*/2, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign0*/1], [/*d*/MV_Bypass, /*r17_r16*/NoBypass, /*s2*/MV_Bypass]>,
+InstrItinData<II_VABS_GTZ8_vaddSign0, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r17_r16*/2, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign0*/1], [/*d*/MV_Bypass, /*r17_r16*/MV_L_Bypass, /*s2*/MV_Bypass]>,
 
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_abs__vec_cmp_out_single__vec_cmp_out_single64__mL8m__vec_add_nX__vaddSign1
-InstrItinData<II_VABS_GTZ8_vaddSign1, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r17_r16*/2, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign1*/1], [/*d*/MV_Bypass, /*r17_r16*/NoBypass, /*s2*/MV_Bypass]>,
+InstrItinData<II_VABS_GTZ8_vaddSign1, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r17_r16*/2, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign1*/1], [/*d*/MV_Bypass, /*r17_r16*/MV_L_Bypass, /*s2*/MV_Bypass]>,
 
 // id: me__instr128_or__vec__vaddmac__mDMv__vmac_acc1_add_d__vmac_acc1_comp1__add__mDMv__vmac_acc2_add_reg_d__vmac_acc2_comp1__add_reg__mDMm__vmul_cm_core__vmul_cm_core_X_QX__vacc_cm_core
 InstrItinData<II_VADDMAC_vaddmac_vmul_cm_core_X_QX, [PrefixCycle<FEY_RW_L0_PORT>, PrefixCycle<VCTRL_IN>, SimpleCycle<VCTRL_SUB0_CG1U>, EmptyCycles<1>, PrefixCycle<CRSHMODEH__DUMMY>, SimpleCycle<CRSHMODEL__DUMMY>, PrefixCycle<ACC_B_IN>, PrefixCycle<ACC_B_INH>, PrefixCycle<ACC_B_INL>, PrefixCycle<DM_RM_L0_PORT>, PrefixCycle<DM_RV_L0_PORT>, PrefixCycle<PSA_MMODEH>, SimpleCycle<PSA_SUMH__A>, PrefixCycle<PSA_ACCH_IN>, SimpleCycle<PSA_ACCL_IN>, PrefixCycle<ACC_R>, SimpleCycle<DM_WV_L0_PORT>], [/*dst*/6, /*acc1*/4, /*acc2*/4, /*s1*/1, /*s2*/1, /*acc*/1, /*srSparse_of*/2], [/*dst*/VEC_Bypass, /*acc1*/VEC_Bypass, /*acc2*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
@@ -5410,13 +5410,13 @@ InstrItinData<II_VBCST_64, [], [/*dst*/2, /*src*/1], [/*dst*/MV_Bypass, /*src*/N
 InstrItinData<II_VBCST_8, [], [/*dst*/2, /*src*/1], [/*dst*/MV_Bypass, /*src*/NoBypass]>,
 
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_not__vbneg_ltz__vec_cmp_out_single__vec_cmp_out_single32__mR16m__vec_add_nX
-InstrItinData<II_VBNEG_LTZ_s16, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1], [/*d*/MV_Bypass, /*r16*/NoBypass, /*s2*/MV_Bypass]>,
+InstrItinData<II_VBNEG_LTZ_s16, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1], [/*d*/MV_Bypass, /*r16*/MV_Bypass, /*s2*/MV_Bypass]>,
 
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_not__vbneg_ltz__vec_cmp_out_single__vec_cmp_out_single16__mR16m__vec_add_nX
-InstrItinData<II_VBNEG_LTZ_s32, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1], [/*d*/MV_Bypass, /*r16*/NoBypass, /*s2*/MV_Bypass]>,
+InstrItinData<II_VBNEG_LTZ_s32, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1], [/*d*/MV_Bypass, /*r16*/MV_Bypass, /*s2*/MV_Bypass]>,
 
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_not__vbneg_ltz__vec_cmp_out_single__vec_cmp_out_single64__mL8m__vec_add_nX
-InstrItinData<II_VBNEG_LTZ_s8, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r17_r16*/2, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1], [/*d*/MV_Bypass, /*r17_r16*/NoBypass, /*s2*/MV_Bypass]>,
+InstrItinData<II_VBNEG_LTZ_s8, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r17_r16*/2, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1], [/*d*/MV_Bypass, /*r17_r16*/MV_L_Bypass, /*s2*/MV_Bypass]>,
 
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_log__vbor__vec_add_mX__vec_add_nX__vec_size16
 InstrItinData<II_VBOR, [SimpleCycle<CRBF8CONF_RV>], [/*d*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1], [/*d*/MV_Bypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
@@ -6320,82 +6320,82 @@ InstrItinData<II_VMAC_f_vmac_bfp13, [PrefixCycle<FEY_RW_L0_PORT>, PrefixCycle<VC
 InstrItinData<II_VMAC_f_vmac_bfp16, [PrefixCycle<FEY_RW_L0_PORT>, InstrStage<2, [VCTRL_IN], 0>, InstrStage<2, [VCTRL_SUB0_CG1U], 0>, InstrStage<2, [X_EGWL], 0>, InstrStage<2, [X_EXP_ELL], 0>, InstrStage<2, [Y_EGY], 1>, PrefixCycle<FEY_RW_L0_PORT>, SimpleCycle<Y_EXP_E>, PrefixCycle<CRSHMODEH__DUMMY>, SimpleCycle<CRSHMODEL__DUMMY>, PrefixCycle<ACC2_SHH>, PrefixCycle<ACC2_SLH>, PrefixCycle<ACC_B_INH>, PrefixCycle<ACC_B_INL>, PrefixCycle<BFPEXT__A>, PrefixCycle<DM_RV_L0_PORT>, PrefixCycle<PSA_MMODEH>, PrefixCycle<PSA_RSRC>, SimpleCycle<PSA_SUMH__A>, PrefixCycle<BFSHCH__ACC1>, SimpleCycle<BFSHCH__SUBTRACT_ACC>, PrefixCycle<BFACC1SHFTH__A>, PrefixCycle<BFACC1SHFTL__A>, PrefixCycle<PSA_ACCH_IN>, SimpleCycle<PSA_ACCL_IN>, PrefixCycle<ACC_R>, PrefixCycle<ACC_RH>, PrefixCycle<ACC_RL>, PrefixCycle<DM_WV_L0_PORT>, SimpleCycle<FP32NORML__FLAGS>, PrefixCycle<CRFPMASK_RV>, SimpleCycle<FP32FLAG__AH>], [/*dst*/7, /*acc1*/4, /*s1l*/1, /*s2l*/1, /*s2h*/2, /*s1h*/2, /*acc*/1, /*srFPFlags*/8, /*crFPMask*/8], [/*dst*/VEC_Bypass, /*acc1*/VEC_Bypass, /*s1l*/NoBypass, /*s2l*/NoBypass, /*s2h*/NoBypass, /*s1h*/NoBypass, /*acc*/NoBypass]>,
 
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_sub_min_max__vmaxdiff_lt__vec_cmp_out_single__vec_cmp_out_single32__mR16m__vec_add_mX__vec_add_nX__vaddSign0
-InstrItinData<II_VMAXDIFF_LT_16_vaddSign0, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign0*/1], [/*d*/MV_Bypass, /*r16*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+InstrItinData<II_VMAXDIFF_LT_16_vaddSign0, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign0*/1], [/*d*/MV_Bypass, /*r16*/MV_Bypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
 
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_sub_min_max__vmaxdiff_lt__vec_cmp_out_single__vec_cmp_out_single32__mR16m__vec_add_mX__vec_add_nX__vaddSign1
-InstrItinData<II_VMAXDIFF_LT_16_vaddSign1, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign1*/1], [/*d*/MV_Bypass, /*r16*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+InstrItinData<II_VMAXDIFF_LT_16_vaddSign1, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign1*/1], [/*d*/MV_Bypass, /*r16*/MV_Bypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
 
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_sub_min_max__vmaxdiff_lt__vec_cmp_out_single__vec_cmp_out_single16__mR16m__vec_add_mX__vec_add_nX__vaddSign0
-InstrItinData<II_VMAXDIFF_LT_32_vaddSign0, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign0*/1], [/*d*/MV_Bypass, /*r16*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+InstrItinData<II_VMAXDIFF_LT_32_vaddSign0, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign0*/1], [/*d*/MV_Bypass, /*r16*/MV_Bypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
 
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_sub_min_max__vmaxdiff_lt__vec_cmp_out_single__vec_cmp_out_single16__mR16m__vec_add_mX__vec_add_nX__vaddSign1
-InstrItinData<II_VMAXDIFF_LT_32_vaddSign1, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign1*/1], [/*d*/MV_Bypass, /*r16*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+InstrItinData<II_VMAXDIFF_LT_32_vaddSign1, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign1*/1], [/*d*/MV_Bypass, /*r16*/MV_Bypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
 
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_sub_min_max__vmaxdiff_lt__vec_cmp_out_single__vec_cmp_out_single64__mL8m__vec_add_mX__vec_add_nX__vaddSign0
-InstrItinData<II_VMAXDIFF_LT_8_vaddSign0, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r17_r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign0*/1], [/*d*/MV_Bypass, /*r17_r16*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+InstrItinData<II_VMAXDIFF_LT_8_vaddSign0, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r17_r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign0*/1], [/*d*/MV_Bypass, /*r17_r16*/MV_L_Bypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
 
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_sub_min_max__vmaxdiff_lt__vec_cmp_out_single__vec_cmp_out_single64__mL8m__vec_add_mX__vec_add_nX__vaddSign1
-InstrItinData<II_VMAXDIFF_LT_8_vaddSign1, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r17_r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign1*/1], [/*d*/MV_Bypass, /*r17_r16*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+InstrItinData<II_VMAXDIFF_LT_8_vaddSign1, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r17_r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign1*/1], [/*d*/MV_Bypass, /*r17_r16*/MV_L_Bypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
 
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_sub_min_max__vmax_lt__vec_cmp_out_single__vec_cmp_out_single32__mR16m__vec_add_mX__vec_add_nX__vaddSign0
-InstrItinData<II_VMAX_LT_16_vaddSign0, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign0*/1], [/*d*/MV_Bypass, /*r16*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+InstrItinData<II_VMAX_LT_16_vaddSign0, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign0*/1], [/*d*/MV_Bypass, /*r16*/MV_Bypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
 
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_sub_min_max__vmax_lt__vec_cmp_out_single__vec_cmp_out_single32__mR16m__vec_add_mX__vec_add_nX__vaddSign1
-InstrItinData<II_VMAX_LT_16_vaddSign1, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign1*/1], [/*d*/MV_Bypass, /*r16*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+InstrItinData<II_VMAX_LT_16_vaddSign1, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign1*/1], [/*d*/MV_Bypass, /*r16*/MV_Bypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
 
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_sub_min_max__vmax_lt__vec_cmp_out_single__vec_cmp_out_single16__mR16m__vec_add_mX__vec_add_nX__vaddSign0
-InstrItinData<II_VMAX_LT_32_vaddSign0, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign0*/1], [/*d*/MV_Bypass, /*r16*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+InstrItinData<II_VMAX_LT_32_vaddSign0, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign0*/1], [/*d*/MV_Bypass, /*r16*/MV_Bypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
 
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_sub_min_max__vmax_lt__vec_cmp_out_single__vec_cmp_out_single16__mR16m__vec_add_mX__vec_add_nX__vaddSign1
-InstrItinData<II_VMAX_LT_32_vaddSign1, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign1*/1], [/*d*/MV_Bypass, /*r16*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+InstrItinData<II_VMAX_LT_32_vaddSign1, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign1*/1], [/*d*/MV_Bypass, /*r16*/MV_Bypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
 
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_sub_min_max__vmax_lt__vec_cmp_out_single__vec_cmp_out_single64__mL8m__vec_add_mX__vec_add_nX__vaddSign0
-InstrItinData<II_VMAX_LT_8_vaddSign0, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r17_r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign0*/1], [/*d*/MV_Bypass, /*r17_r16*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+InstrItinData<II_VMAX_LT_8_vaddSign0, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r17_r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign0*/1], [/*d*/MV_Bypass, /*r17_r16*/MV_L_Bypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
 
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_sub_min_max__vmax_lt__vec_cmp_out_single__vec_cmp_out_single64__mL8m__vec_add_mX__vec_add_nX__vaddSign1
-InstrItinData<II_VMAX_LT_8_vaddSign1, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r17_r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign1*/1], [/*d*/MV_Bypass, /*r17_r16*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+InstrItinData<II_VMAX_LT_8_vaddSign1, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r17_r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign1*/1], [/*d*/MV_Bypass, /*r17_r16*/MV_L_Bypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
 
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_f16_min_max__vmax_lt_bf16__vec_cmp_out_single32__mR16m__vec_add_mX__vec_add_nX
-InstrItinData<II_VMAX_LT_bf16, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1], [/*d*/MV_Bypass, /*r16*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+InstrItinData<II_VMAX_LT_bf16, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1], [/*d*/MV_Bypass, /*r16*/MV_Bypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
 
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_f8_min_max__vmax_lt_bf8__vec_cmp_out_single64__mL8m__vec_add_mX__vec_add_nX
-InstrItinData<II_VMAX_LT_bf8, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r17_r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1], [/*d*/MV_Bypass, /*r17_r16*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+InstrItinData<II_VMAX_LT_bf8, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r17_r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1], [/*d*/MV_Bypass, /*r17_r16*/MV_L_Bypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
 
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_f16_min_max__vmax_lt_fp16__vec_cmp_out_single32__mR16m__vec_add_mX__vec_add_nX
-InstrItinData<II_VMAX_LT_fp16, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1], [/*d*/MV_Bypass, /*r16*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+InstrItinData<II_VMAX_LT_fp16, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1], [/*d*/MV_Bypass, /*r16*/MV_Bypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
 
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_f8_min_max__vmax_lt_fp8__vec_cmp_out_single64__mL8m__vec_add_mX__vec_add_nX
-InstrItinData<II_VMAX_LT_fp8, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r17_r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1], [/*d*/MV_Bypass, /*r17_r16*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+InstrItinData<II_VMAX_LT_fp8, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r17_r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1], [/*d*/MV_Bypass, /*r17_r16*/MV_L_Bypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
 
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_sub_min_max__vmin_ge__vec_cmp_out_single__vec_cmp_out_single32__mR16m__vec_add_mX__vec_add_nX__vaddSign0
-InstrItinData<II_VMIN_GE_16_vaddSign0, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign0*/1], [/*d*/MV_Bypass, /*r16*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+InstrItinData<II_VMIN_GE_16_vaddSign0, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign0*/1], [/*d*/MV_Bypass, /*r16*/MV_Bypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
 
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_sub_min_max__vmin_ge__vec_cmp_out_single__vec_cmp_out_single32__mR16m__vec_add_mX__vec_add_nX__vaddSign1
-InstrItinData<II_VMIN_GE_16_vaddSign1, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign1*/1], [/*d*/MV_Bypass, /*r16*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+InstrItinData<II_VMIN_GE_16_vaddSign1, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign1*/1], [/*d*/MV_Bypass, /*r16*/MV_Bypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
 
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_sub_min_max__vmin_ge__vec_cmp_out_single__vec_cmp_out_single16__mR16m__vec_add_mX__vec_add_nX__vaddSign0
-InstrItinData<II_VMIN_GE_32_vaddSign0, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign0*/1], [/*d*/MV_Bypass, /*r16*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+InstrItinData<II_VMIN_GE_32_vaddSign0, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign0*/1], [/*d*/MV_Bypass, /*r16*/MV_Bypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
 
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_sub_min_max__vmin_ge__vec_cmp_out_single__vec_cmp_out_single16__mR16m__vec_add_mX__vec_add_nX__vaddSign1
-InstrItinData<II_VMIN_GE_32_vaddSign1, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign1*/1], [/*d*/MV_Bypass, /*r16*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+InstrItinData<II_VMIN_GE_32_vaddSign1, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign1*/1], [/*d*/MV_Bypass, /*r16*/MV_Bypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
 
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_sub_min_max__vmin_ge__vec_cmp_out_single__vec_cmp_out_single64__mL8m__vec_add_mX__vec_add_nX__vaddSign0
-InstrItinData<II_VMIN_GE_8_vaddSign0, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r17_r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign0*/1], [/*d*/MV_Bypass, /*r17_r16*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+InstrItinData<II_VMIN_GE_8_vaddSign0, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r17_r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign0*/1], [/*d*/MV_Bypass, /*r17_r16*/MV_L_Bypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
 
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_sub_min_max__vmin_ge__vec_cmp_out_single__vec_cmp_out_single64__mL8m__vec_add_mX__vec_add_nX__vaddSign1
-InstrItinData<II_VMIN_GE_8_vaddSign1, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r17_r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign1*/1], [/*d*/MV_Bypass, /*r17_r16*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+InstrItinData<II_VMIN_GE_8_vaddSign1, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r17_r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign1*/1], [/*d*/MV_Bypass, /*r17_r16*/MV_L_Bypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
 
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_f16_min_max__vmin_ge_bf16__vec_cmp_out_single32__mR16m__vec_add_mX__vec_add_nX
-InstrItinData<II_VMIN_GE_bf16, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1], [/*d*/MV_Bypass, /*r16*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+InstrItinData<II_VMIN_GE_bf16, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1], [/*d*/MV_Bypass, /*r16*/MV_Bypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
 
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_f8_min_max__vmin_ge_bf8__vec_cmp_out_single64__mL8m__vec_add_mX__vec_add_nX
-InstrItinData<II_VMIN_GE_bf8, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r17_r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1], [/*d*/MV_Bypass, /*r17_r16*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+InstrItinData<II_VMIN_GE_bf8, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r17_r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1], [/*d*/MV_Bypass, /*r17_r16*/MV_L_Bypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
 
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_f16_min_max__vmin_ge_fp16__vec_cmp_out_single32__mR16m__vec_add_mX__vec_add_nX
-InstrItinData<II_VMIN_GE_fp16, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1], [/*d*/MV_Bypass, /*r16*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+InstrItinData<II_VMIN_GE_fp16, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1], [/*d*/MV_Bypass, /*r16*/MV_Bypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
 
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_f8_min_max__vmin_ge_fp8__vec_cmp_out_single64__mL8m__vec_add_mX__vec_add_nX
-InstrItinData<II_VMIN_GE_fp8, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r17_r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1], [/*d*/MV_Bypass, /*r17_r16*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+InstrItinData<II_VMIN_GE_fp8, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r17_r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1], [/*d*/MV_Bypass, /*r17_r16*/MV_L_Bypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
 
 // id: me__instr128_or__alu_mv__alumv_or__alu__mv_scd_slotX__mv_scd_cm__mv_scd_E2__long_static__scd_cm_0__mSCD_E2__mSCD_comp_E2__mSCD
 InstrItinData<II_VMOV_0_mv_scd_cm, [SimpleCycle<SCD_CTL>, PrefixCycle<BM_WM_1>, PrefixCycle<DM_WM_L0_PORT>, SimpleCycle<SCD>], [/*dst*/2, /*crSCDEn*/1]>,
@@ -6822,13 +6822,13 @@ InstrItinData<II_VNEGMUL_f_vmul_bfp13, [PrefixCycle<FEY_RW_L0_PORT>, PrefixCycle
 InstrItinData<II_VNEGMUL_f_vmul_bfp16, [PrefixCycle<FEY_RW_L0_PORT>, InstrStage<2, [VCTRL_IN], 0>, InstrStage<2, [VCTRL_SUB0_CG1U], 0>, InstrStage<2, [X_EGWL], 0>, InstrStage<2, [X_EXP_ELL], 0>, InstrStage<2, [Y_EGY], 1>, PrefixCycle<FEY_RW_L0_PORT>, SimpleCycle<Y_EXP_E>, PrefixCycle<CRSHMODEH__DUMMY>, SimpleCycle<CRSHMODEL__DUMMY>, PrefixCycle<ACC2_SHH>, PrefixCycle<ACC2_SLH>, PrefixCycle<ACC_B_INH>, PrefixCycle<ACC_B_INL>, PrefixCycle<BFPEXT__A>, PrefixCycle<DM_RV_L0>, PrefixCycle<PSA_MMODEH>, PrefixCycle<PSA_RSRC>, SimpleCycle<PSA_SUMH__A>, PrefixCycle<BFSHCH__ACC1>, SimpleCycle<BFSHCH__SUBTRACT_ACC>, PrefixCycle<BFACC1SHFTH__A>, PrefixCycle<BFACC1SHFTL__A>, PrefixCycle<PSA_ACCH_IN>, SimpleCycle<PSA_ACCL_IN>, PrefixCycle<ACC_R>, PrefixCycle<ACC_RH>, PrefixCycle<ACC_RL>, PrefixCycle<DM_WV_L0_PORT>, SimpleCycle<FP32NORML__FLAGS>, PrefixCycle<CRFPMASK_RV>, SimpleCycle<FP32FLAG__AH>], [/*dst*/7, /*s1l*/1, /*s2l*/1, /*s2h*/2, /*s1h*/2, /*acc*/1, /*srFPFlags*/8, /*crFPMask*/8], [/*dst*/VEC_Bypass, /*s1l*/NoBypass, /*s2l*/NoBypass, /*s2h*/NoBypass, /*s1h*/NoBypass, /*acc*/NoBypass]>,
 
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_not__vneg_gtz__vec_cmp_out_single__vec_cmp_out_single32__mR16m__vec_add_nX
-InstrItinData<II_VNEG_GTZ_16, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1], [/*d*/MV_Bypass, /*r16*/NoBypass, /*s2*/MV_Bypass]>,
+InstrItinData<II_VNEG_GTZ_16, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1], [/*d*/MV_Bypass, /*r16*/MV_Bypass, /*s2*/MV_Bypass]>,
 
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_not__vneg_gtz__vec_cmp_out_single__vec_cmp_out_single16__mR16m__vec_add_nX
-InstrItinData<II_VNEG_GTZ_32, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1], [/*d*/MV_Bypass, /*r16*/NoBypass, /*s2*/MV_Bypass]>,
+InstrItinData<II_VNEG_GTZ_32, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1], [/*d*/MV_Bypass, /*r16*/MV_Bypass, /*s2*/MV_Bypass]>,
 
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_not__vneg_gtz__vec_cmp_out_single__vec_cmp_out_single64__mL8m__vec_add_nX
-InstrItinData<II_VNEG_GTZ_8, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r17_r16*/2, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1], [/*d*/MV_Bypass, /*r17_r16*/NoBypass, /*s2*/MV_Bypass]>,
+InstrItinData<II_VNEG_GTZ_8, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r17_r16*/2, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1], [/*d*/MV_Bypass, /*r17_r16*/MV_L_Bypass, /*s2*/MV_Bypass]>,
 
 // id: me__instr128_or__vec__vneg__mDMv__vmac_acc1_add_d__vmac_acc1_comp1__add__mDMv__vacc_cm_core
 InstrItinData<II_VNEG_vneg, [SimpleCycle<VCTRL_IN>, EmptyCycles<2>, PrefixCycle<ACC2_SHH>, PrefixCycle<ACC2_SLH>, PrefixCycle<ACC_B_INH>, PrefixCycle<ACC_B_INL>, SimpleCycle<DM_RV_L0_PORT>, PrefixCycle<PSA_ACCH_IN>, PrefixCycle<PSA_ACCH_IN_S>, PrefixCycle<PSA_ACCL_IN>, SimpleCycle<PSA_ACCL_IN_S>, PrefixCycle<ACC_R>, SimpleCycle<DM_WV_L0_PORT>], [/*dst*/6, /*acc1*/4, /*acc*/1], [/*dst*/VEC_Bypass, /*acc1*/VEC_Bypass, /*acc*/NoBypass]>,
@@ -7449,40 +7449,40 @@ InstrItinData<II_VSUB_32, [SimpleCycle<CRBF8CONF_RV>], [/*d*/2, /*s1*/1, /*s2*/1
 InstrItinData<II_VSUB_8, [SimpleCycle<CRBF8CONF_RV>], [/*d*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1], [/*d*/MV_Bypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
 
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_sub_min_max__vsub_ge__vec_cmp_out_single__vec_cmp_out_single32__mR16m__vec_add_mX__vec_add_nX__vaddSign0
-InstrItinData<II_VSUB_GE_16_vaddSign0, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign0*/1], [/*d*/MV_Bypass, /*r16*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+InstrItinData<II_VSUB_GE_16_vaddSign0, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign0*/1], [/*d*/MV_Bypass, /*r16*/MV_Bypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
 
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_sub_min_max__vsub_ge__vec_cmp_out_single__vec_cmp_out_single32__mR16m__vec_add_mX__vec_add_nX__vaddSign1
-InstrItinData<II_VSUB_GE_16_vaddSign1, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign1*/1], [/*d*/MV_Bypass, /*r16*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+InstrItinData<II_VSUB_GE_16_vaddSign1, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign1*/1], [/*d*/MV_Bypass, /*r16*/MV_Bypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
 
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_sub_min_max__vsub_ge__vec_cmp_out_single__vec_cmp_out_single16__mR16m__vec_add_mX__vec_add_nX__vaddSign0
-InstrItinData<II_VSUB_GE_32_vaddSign0, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign0*/1], [/*d*/MV_Bypass, /*r16*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+InstrItinData<II_VSUB_GE_32_vaddSign0, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign0*/1], [/*d*/MV_Bypass, /*r16*/MV_Bypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
 
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_sub_min_max__vsub_ge__vec_cmp_out_single__vec_cmp_out_single16__mR16m__vec_add_mX__vec_add_nX__vaddSign1
-InstrItinData<II_VSUB_GE_32_vaddSign1, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign1*/1], [/*d*/MV_Bypass, /*r16*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+InstrItinData<II_VSUB_GE_32_vaddSign1, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign1*/1], [/*d*/MV_Bypass, /*r16*/MV_Bypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
 
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_sub_min_max__vsub_ge__vec_cmp_out_single__vec_cmp_out_single64__mL8m__vec_add_mX__vec_add_nX__vaddSign0
-InstrItinData<II_VSUB_GE_8_vaddSign0, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r17_r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign0*/1], [/*d*/MV_Bypass, /*r17_r16*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+InstrItinData<II_VSUB_GE_8_vaddSign0, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r17_r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign0*/1], [/*d*/MV_Bypass, /*r17_r16*/MV_L_Bypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
 
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_sub_min_max__vsub_ge__vec_cmp_out_single__vec_cmp_out_single64__mL8m__vec_add_mX__vec_add_nX__vaddSign1
-InstrItinData<II_VSUB_GE_8_vaddSign1, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r17_r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign1*/1], [/*d*/MV_Bypass, /*r17_r16*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+InstrItinData<II_VSUB_GE_8_vaddSign1, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r17_r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign1*/1], [/*d*/MV_Bypass, /*r17_r16*/MV_L_Bypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
 
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_sub_min_max__vsub_lt__vec_cmp_out_single__vec_cmp_out_single32__mR16m__vec_add_mX__vec_add_nX__vaddSign0
-InstrItinData<II_VSUB_LT_16_vaddSign0, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign0*/1], [/*d*/MV_Bypass, /*r16*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+InstrItinData<II_VSUB_LT_16_vaddSign0, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign0*/1], [/*d*/MV_Bypass, /*r16*/MV_Bypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
 
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_sub_min_max__vsub_lt__vec_cmp_out_single__vec_cmp_out_single32__mR16m__vec_add_mX__vec_add_nX__vaddSign1
-InstrItinData<II_VSUB_LT_16_vaddSign1, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign1*/1], [/*d*/MV_Bypass, /*r16*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+InstrItinData<II_VSUB_LT_16_vaddSign1, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign1*/1], [/*d*/MV_Bypass, /*r16*/MV_Bypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
 
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_sub_min_max__vsub_lt__vec_cmp_out_single__vec_cmp_out_single16__mR16m__vec_add_mX__vec_add_nX__vaddSign0
-InstrItinData<II_VSUB_LT_32_vaddSign0, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign0*/1], [/*d*/MV_Bypass, /*r16*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+InstrItinData<II_VSUB_LT_32_vaddSign0, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign0*/1], [/*d*/MV_Bypass, /*r16*/MV_Bypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
 
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_sub_min_max__vsub_lt__vec_cmp_out_single__vec_cmp_out_single16__mR16m__vec_add_mX__vec_add_nX__vaddSign1
-InstrItinData<II_VSUB_LT_32_vaddSign1, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign1*/1], [/*d*/MV_Bypass, /*r16*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+InstrItinData<II_VSUB_LT_32_vaddSign1, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign1*/1], [/*d*/MV_Bypass, /*r16*/MV_Bypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
 
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_sub_min_max__vsub_lt__vec_cmp_out_single__vec_cmp_out_single64__mL8m__vec_add_mX__vec_add_nX__vaddSign0
-InstrItinData<II_VSUB_LT_8_vaddSign0, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r17_r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign0*/1], [/*d*/MV_Bypass, /*r17_r16*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+InstrItinData<II_VSUB_LT_8_vaddSign0, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r17_r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign0*/1], [/*d*/MV_Bypass, /*r17_r16*/MV_L_Bypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
 
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_sub_min_max__vsub_lt__vec_cmp_out_single__vec_cmp_out_single64__mL8m__vec_add_mX__vec_add_nX__vaddSign1
-InstrItinData<II_VSUB_LT_8_vaddSign1, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r17_r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign1*/1], [/*d*/MV_Bypass, /*r17_r16*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+InstrItinData<II_VSUB_LT_8_vaddSign1, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*d*/2, /*r17_r16*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign1*/1], [/*d*/MV_Bypass, /*r17_r16*/MV_L_Bypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
 
 // id: me__instr128_or__vec__vacc__mDMv__vmac_acc1_add_d__vmac_acc1_comp1__add__mDMv__vmac_acc2_add_reg_d__vmac_acc2_comp1__add_reg__mDMm__vacc_cm_core
 InstrItinData<II_VSUB_vacc, [SimpleCycle<VCTRL_IN>, EmptyCycles<2>, PrefixCycle<ACC_B_IN>, PrefixCycle<ACC_B_INH>, PrefixCycle<ACC_B_INL>, PrefixCycle<DM_RM_L0_PORT>, SimpleCycle<DM_RV_L0_PORT>, PrefixCycle<PSA_ACCH_IN>, PrefixCycle<PSA_ACCH_IN_S>, PrefixCycle<PSA_ACCL_IN>, SimpleCycle<PSA_ACCL_IN_S>, PrefixCycle<ACC_R>, SimpleCycle<DM_WV_L0_PORT>], [/*dst*/6, /*acc1*/4, /*acc2*/4, /*acc*/1], [/*dst*/VEC_Bypass, /*acc1*/VEC_Bypass, /*acc2*/VEC_Bypass, /*acc*/NoBypass]>,

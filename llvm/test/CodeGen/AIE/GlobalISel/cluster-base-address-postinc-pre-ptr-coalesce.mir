@@ -54,21 +54,20 @@ body:             |
   ; CHECK-COMBINER-NEXT:   %i:_(s32) = G_PHI [[COPY1]](s32), %bb.0, %inext(s32), %bb.1
   ; CHECK-COMBINER-NEXT:   %val:_(s32), %post:_(p0) = G_AIE_POSTINC_LOAD %pre, [[C2]](s20) :: (load (s32))
   ; CHECK-COMBINER-NEXT:   %lk_off1:_(s20) = G_CONSTANT i20 8
-  ; CHECK-COMBINER-NEXT:   %lk_ptr1:_(p0) = G_PTR_ADD %pre, %lk_off1(s20)
-  ; CHECK-COMBINER-NEXT:   [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 8
-  ; CHECK-COMBINER-NEXT:   %lk_ptr2:_(p0) = G_AIE_POSTINC_STORE [[C]](s32), %lk_ptr1, [[C4]](s20) :: (store (s32))
-  ; CHECK-COMBINER-NEXT:   G_STORE [[C]](s32), %lk_ptr2(p0) :: (store (s32))
+  ; CHECK-COMBINER-NEXT:   G_AIE_OFFSET_STORE [[C]](s32), %pre(p0), %lk_off1(s20) :: (store (s32))
+  ; CHECK-COMBINER-NEXT:   [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 16
+  ; CHECK-COMBINER-NEXT:   G_AIE_OFFSET_STORE [[C]](s32), %pre(p0), [[C4]](s20) :: (store (s32))
   ; CHECK-COMBINER-NEXT:   %inext:_(s32) = G_ADD %i, [[C1]]
   ; CHECK-COMBINER-NEXT:   %cond:_(s32) = G_ICMP intpred(sgt), %inext(s32), [[C]]
   ; CHECK-COMBINER-NEXT:   G_BRCOND %cond(s32), %bb.1
   ; CHECK-COMBINER-NEXT:   G_BR %bb.2
   ; CHECK-COMBINER-NEXT: {{  $}}
   ; CHECK-COMBINER-NEXT: bb.2:
-  ; CHECK-COMBINER-NEXT:   [[C5:%[0-9]+]]:_(s20) = G_CONSTANT i20 16
-  ; CHECK-COMBINER-NEXT:   %adjusted:_(p0) = G_PTR_ADD %lk_ptr2, [[C5]](s20)
-  ; CHECK-COMBINER-NEXT:   G_AIE_OFFSET_STORE [[C]](s32), %lk_ptr2(p0), [[C5]](s20) :: (store (s32))
-  ; CHECK-COMBINER-NEXT:   [[C6:%[0-9]+]]:_(s20) = G_CONSTANT i20 24
-  ; CHECK-COMBINER-NEXT:   G_AIE_OFFSET_STORE [[C]](s32), %lk_ptr2(p0), [[C6]](s20) :: (store (s32))
+  ; CHECK-COMBINER-NEXT:   [[C5:%[0-9]+]]:_(s20) = G_CONSTANT i20 32
+  ; CHECK-COMBINER-NEXT:   %adjusted:_(p0) = G_PTR_ADD %pre, [[C5]](s20)
+  ; CHECK-COMBINER-NEXT:   G_AIE_OFFSET_STORE [[C]](s32), %pre(p0), [[C5]](s20) :: (store (s32))
+  ; CHECK-COMBINER-NEXT:   [[C6:%[0-9]+]]:_(s20) = G_CONSTANT i20 40
+  ; CHECK-COMBINER-NEXT:   G_AIE_OFFSET_STORE [[C]](s32), %pre(p0), [[C6]](s20) :: (store (s32))
   ; CHECK-COMBINER-NEXT:   PseudoRET implicit $lr, implicit %adjusted(p0)
   ;
   ; CHECK-COALESCER-LABEL: name: ptr-postinc-coalesce
@@ -82,29 +81,27 @@ body:             |
   ; CHECK-COALESCER-NEXT:   [[MOV_PD_imm11_pseudo:%[0-9]+]]:em = MOV_PD_imm11_pseudo 32
   ; CHECK-COALESCER-NEXT:   ST_dms_sts_scalar_st_idx_imm [[MOV_RLC_imm11_pseudo]], [[COPY]], 8 :: (store (s32))
   ; CHECK-COALESCER-NEXT:   ST_dms_sts_scalar_st_idx_imm [[MOV_RLC_imm11_pseudo]], [[COPY]], 12 :: (store (s32))
-  ; CHECK-COALESCER-NEXT:   %lk_off1:em = MOV_PD_imm11_pseudo 8
-  ; CHECK-COALESCER-NEXT:   %post:ep = COPY [[COPY]]
   ; CHECK-COALESCER-NEXT: {{  $}}
   ; CHECK-COALESCER-NEXT: bb.1:
   ; CHECK-COALESCER-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
   ; CHECK-COALESCER-NEXT: {{  $}}
-  ; CHECK-COALESCER-NEXT:   dead %val:er, %post:ep = LDA_dms_lda_scalar_ld_pstm_nrm %post, [[MOV_PD_imm11_pseudo]] :: (load (s32))
-  ; CHECK-COALESCER-NEXT:   [[COPY:%[0-9]+]]:ep_as_32bit = PADD_mod_pseudo [[COPY]], %lk_off1
-  ; CHECK-COALESCER-NEXT:   %lk_ptr2:ep = COPY [[COPY]]
-  ; CHECK-COALESCER-NEXT:   %lk_ptr2:ep = ST_dms_sts_scalar_st_pstm_nrm_imm [[MOV_RLC_imm11_pseudo]], %lk_ptr2, 8 :: (store (s32))
-  ; CHECK-COALESCER-NEXT:   ST_dms_sts_scalar_st_idx_imm [[MOV_RLC_imm11_pseudo]], %lk_ptr2, 0 :: (store (s32))
+  ; CHECK-COALESCER-NEXT:   %pre:ep = COPY [[COPY]]
+  ; CHECK-COALESCER-NEXT:   dead %val:er, [[COPY]]:ep_as_32bit = LDA_dms_lda_scalar_ld_pstm_nrm [[COPY]], [[MOV_PD_imm11_pseudo]] :: (load (s32))
+  ; CHECK-COALESCER-NEXT:   ST_dms_sts_scalar_st_idx_imm [[MOV_RLC_imm11_pseudo]], %pre, 8 :: (store (s32))
+  ; CHECK-COALESCER-NEXT:   ST_dms_sts_scalar_st_idx_imm [[MOV_RLC_imm11_pseudo]], %pre, 16 :: (store (s32))
   ; CHECK-COALESCER-NEXT:   [[COPY1:%[0-9]+]]:mlockid_reg = ADD_add_r_ri [[COPY1]], -1, implicit-def dead $srcarry
   ; CHECK-COALESCER-NEXT:   %cond:mlockid_reg = LT [[MOV_RLC_imm11_pseudo]], [[COPY1]]
-  ; CHECK-COALESCER-NEXT:   [[COPY:%[0-9]+]]:ep_as_32bit = COPY %post
   ; CHECK-COALESCER-NEXT:   PseudoJNZ %cond, %bb.1
   ; CHECK-COALESCER-NEXT:   PseudoJ_jump_imm %bb.2
   ; CHECK-COALESCER-NEXT: {{  $}}
   ; CHECK-COALESCER-NEXT: bb.2:
-  ; CHECK-COALESCER-NEXT:   [[MOV_PD_imm11_pseudo1:%[0-9]+]]:em = MOV_PD_imm11_pseudo 16
-  ; CHECK-COALESCER-NEXT:   %adjusted:ep = COPY %lk_ptr2
-  ; CHECK-COALESCER-NEXT:   %adjusted:ep = PADD_mod_pseudo %adjusted, [[MOV_PD_imm11_pseudo1]]
-  ; CHECK-COALESCER-NEXT:   ST_dms_sts_scalar_st_idx_imm [[MOV_RLC_imm11_pseudo]], %lk_ptr2, 16 :: (store (s32))
-  ; CHECK-COALESCER-NEXT:   ST_dms_sts_scalar_st_idx_imm [[MOV_RLC_imm11_pseudo]], %lk_ptr2, 24 :: (store (s32))
+  ; CHECK-COALESCER-NEXT:   [[MOV_PD_imm11_pseudo1:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 32
+  ; CHECK-COALESCER-NEXT:   [[COPY2:%[0-9]+]]:em = COPY [[MOV_PD_imm11_pseudo1]]
+  ; CHECK-COALESCER-NEXT:   %adjusted:ep = COPY %pre
+  ; CHECK-COALESCER-NEXT:   %adjusted:ep = PADD_mod_pseudo %adjusted, [[COPY2]]
+  ; CHECK-COALESCER-NEXT:   ST_dms_sts_scalar_st_idx [[MOV_RLC_imm11_pseudo]], %pre, [[MOV_PD_imm11_pseudo1]] :: (store (s32))
+  ; CHECK-COALESCER-NEXT:   [[MOV_PD_imm11_pseudo2:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 40
+  ; CHECK-COALESCER-NEXT:   ST_dms_sts_scalar_st_idx [[MOV_RLC_imm11_pseudo]], %pre, [[MOV_PD_imm11_pseudo2]] :: (store (s32))
   ; CHECK-COALESCER-NEXT:   PseudoRET implicit $lr, implicit %adjusted
   ;
   ; CHECK-LABEL: name: ptr-postinc-coalesce
@@ -113,35 +110,33 @@ body:             |
   ; CHECK-NEXT:   liveins: $p0, $r0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   renamable $r2 = MOV_RLC_imm11_pseudo 0
-  ; CHECK-NEXT:   renamable $m0 = MOV_PD_imm11_pseudo 32
   ; CHECK-NEXT:   ST_dms_sts_scalar_st_idx_imm renamable $r2, renamable $p0, 8 :: (store (s32))
+  ; CHECK-NEXT:   renamable $m0 = MOV_PD_imm11_pseudo 32
   ; CHECK-NEXT:   ST_dms_sts_scalar_st_idx_imm renamable $r2, renamable $p0, 12 :: (store (s32))
-  ; CHECK-NEXT:   renamable $m1 = MOV_PD_imm11_pseudo 8
-  ; CHECK-NEXT:   renamable $p1 = COPY renamable $p0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
-  ; CHECK-NEXT:   liveins: $m0, $m1, $p0, $p1, $r0, $r2
+  ; CHECK-NEXT:   liveins: $m0, $p0, $r0, $r2
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   renamable $p0 = PADD_mod_pseudo killed renamable $p0, renamable $m1
+  ; CHECK-NEXT:   renamable $p1 = COPY renamable $p0
+  ; CHECK-NEXT:   dead renamable $r1, renamable $p0 = LDA_dms_lda_scalar_ld_pstm_nrm killed renamable $p0, renamable $m0 :: (load (s32))
   ; CHECK-NEXT:   renamable $r0 = ADD_add_r_ri killed renamable $r0, -1, implicit-def dead $srcarry
-  ; CHECK-NEXT:   dead renamable $r1, renamable $p1 = LDA_dms_lda_scalar_ld_pstm_nrm killed renamable $p1, renamable $m0 :: (load (s32))
-  ; CHECK-NEXT:   renamable $p2 = COPY killed renamable $p0
-  ; CHECK-NEXT:   renamable $p2 = ST_dms_sts_scalar_st_pstm_nrm_imm renamable $r2, killed renamable $p2, 8 :: (store (s32))
+  ; CHECK-NEXT:   ST_dms_sts_scalar_st_idx_imm renamable $r2, renamable $p1, 8 :: (store (s32))
   ; CHECK-NEXT:   renamable $r4 = LT renamable $r2, renamable $r0
-  ; CHECK-NEXT:   ST_dms_sts_scalar_st_idx_imm renamable $r2, renamable $p2, 0 :: (store (s32))
-  ; CHECK-NEXT:   renamable $p0 = COPY renamable $p1
+  ; CHECK-NEXT:   ST_dms_sts_scalar_st_idx_imm renamable $r2, renamable $p1, 16 :: (store (s32))
   ; CHECK-NEXT:   PseudoJNZ killed renamable $r4, %bb.1
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
-  ; CHECK-NEXT:   liveins: $p2, $r2
+  ; CHECK-NEXT:   liveins: $p1, $r2
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   renamable $m0 = MOV_PD_imm11_pseudo 16
-  ; CHECK-NEXT:   renamable $p0 = COPY renamable $p2
+  ; CHECK-NEXT:   renamable $dj0 = MOV_PD_imm11_pseudo 32
+  ; CHECK-NEXT:   ST_dms_sts_scalar_st_idx renamable $r2, renamable $p1, renamable $dj0 :: (store (s32))
+  ; CHECK-NEXT:   renamable $m0 = COPY killed renamable $dj0
+  ; CHECK-NEXT:   renamable $p0 = COPY renamable $p1
   ; CHECK-NEXT:   renamable $p0 = PADD_mod_pseudo killed renamable $p0, killed renamable $m0
-  ; CHECK-NEXT:   ST_dms_sts_scalar_st_idx_imm renamable $r2, renamable $p2, 16 :: (store (s32))
-  ; CHECK-NEXT:   ST_dms_sts_scalar_st_idx_imm killed renamable $r2, killed renamable $p2, 24 :: (store (s32))
+  ; CHECK-NEXT:   renamable $dj0 = MOV_PD_imm11_pseudo 40
+  ; CHECK-NEXT:   ST_dms_sts_scalar_st_idx killed renamable $r2, killed renamable $p1, killed renamable $dj0 :: (store (s32))
   ; CHECK-NEXT:   PseudoRET implicit $lr, implicit killed renamable $p0
   bb.0:
     liveins: $p0, $r0

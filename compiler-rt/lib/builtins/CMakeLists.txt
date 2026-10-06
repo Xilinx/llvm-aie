@@ -418,6 +418,7 @@ set(aie_SOURCES
 list(REMOVE_ITEM aie_SOURCES
 apple_versioning.c # Not apple
 divsc3.c # Needs sitofp
+divdc3.c # ran out of registers
 emutls.c # Needs  __attribute__ ((__regparm__ (1)))
 enable_execute_stack.c # Trampoline stuff
 eprintf.c # Archaeology

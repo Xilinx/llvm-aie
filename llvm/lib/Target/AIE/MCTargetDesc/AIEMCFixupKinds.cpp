@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -39,9 +39,22 @@ MCFixupKind AIEMCFixupKinds::findFixupfromFixupFields(
   if (Fields.empty())
     llvm_unreachable("No field to map");
 
+  // Allow subclass to provide corrected fixup fields for specific opcodes.
+  // This is needed when sub-instruction standalone encoding produces fields
+  // that don't match the fixup table due to FormatSize or field granularity
+  // mismatches (see resolveSubInstFixupFields documentation).
+  const SmallVector<FixupField> *LookupFields = &Fields;
+  SmallVector<FixupField> ResolvedFields;
   auto CandidatesIt = FixupFieldsMapper.find(Fields);
-  if (CandidatesIt == FixupFieldsMapper.end())
-    llvm_unreachable("Missing fields definition into the FixupFieldsMapper");
+  if (CandidatesIt == FixupFieldsMapper.end()) {
+    if (auto AltFields = resolveSubInstFixupFields(Inst.getOpcode(), Fields)) {
+      ResolvedFields = std::move(*AltFields);
+      LookupFields = &ResolvedFields;
+      CandidatesIt = FixupFieldsMapper.find(*LookupFields);
+    }
+    if (CandidatesIt == FixupFieldsMapper.end())
+      llvm_unreachable("Missing fields definition into the FixupFieldsMapper");
+  }
 
   // Retrieve the signedness property of the relocatable instruction
   FixupFlag InstrSignedness = getInstrFieldSignedness(Inst.getOpcode());
@@ -57,7 +70,7 @@ MCFixupKind AIEMCFixupKinds::findFixupfromFixupFields(
   };
 
   const std::set<unsigned> &Candidates = CandidatesIt->second;
-  // Select the fixup satisfiying the predicate above.
+  // Select the fixup satisfying the predicate above.
   auto FixupSelectionIt = llvm::find_if(Candidates, FixupPredicate);
 
   if (FixupSelectionIt == Candidates.end())

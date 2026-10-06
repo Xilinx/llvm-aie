@@ -119,11 +119,7 @@ bool AIE2PPassConfig::addRegAssignAndRewriteOptimized() {
       addPass(createAIEUnallocatedSuperRegRewriter());
   }
   addPass(createGreedyRegisterAllocator());
-  if (EnableWAWRegRewrite) {
-    addPass(createAIEWawRegRewriter());
-    addPass(createGreedyRegisterAllocator());
-  }
-  addPass(createVirtRegRewriter());
+  addRegRewritePasses();
 
   return true;
 }

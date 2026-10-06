@@ -53,6 +53,7 @@ extern cl::opt<bool> EnableSuperRegSplitting;
 extern cl::opt<bool> AllocateMRegsFirst;
 extern cl::opt<bool> EnablePreMISchedCoalescer;
 extern cl::opt<bool> EnableWAWRegRewrite;
+extern cl::opt<bool> EnableEpilogueRegRewrite;
 extern cl::opt<bool> EnableAIEIfConversion;
 
 extern bool AIEDumpArtifacts;
@@ -77,12 +78,28 @@ TargetPassConfig *AIE2TargetMachine::createPassConfig(PassManagerBase &PM) {
   return new AIE2PassConfig(*this, PM);
 }
 
+void AIE2PassConfig::addCodeGenPrepare() {
+  TargetPassConfig::addCodeGenPrepare();
+  // Branches are expensive on AIE2 and later (mandatory delay slots). Rewrite
+  // switches whose case values reach a small number of destinations into
+  // OR-of-icmp chains so that (together with setJumpIsExpensive) IRTranslator
+  // emits a single conditional branch per destination instead of one per case
+  // cluster.
+  addPass(createAIESwitchLowering());
+}
+
+std::unique_ptr<const AIEOLPTargetConfig> AIE2PassConfig::getOLPConfig() const {
+  return std::make_unique<AIEOLPTargetConfig>(
+      getTM<AIEBaseTargetMachine>().getAIESubtarget()->getInstrInfo());
+}
+
 bool AIE2PassConfig::addPreISel() {
   if (TM->getOptLevel() != CodeGenOptLevel::None) {
     if (!DisableInnerLoopVersioning)
       addPass(createAIEInnerLoopVersioningPass());
     addPass(createHardwareLoopsLegacyPass());
-    addPass(createAIEOuterLoopPipelinerPass());
+    addPass(createAIEOuterLoopPointerOptimizerPass());
+    addPass(createAIEOuterLoopPipelinerPass(getOLPConfig()));
   }
   return false;
 }
@@ -170,6 +187,16 @@ static bool onlyAllocateMRegisters(const TargetRegisterInfo &TRI,
   return AIE2::eMRegClass.hasSubClassEq(MRI.getRegClass(R));
 }
 
+void AIE2PassConfig::addRegRewritePasses() {
+  if (EnableWAWRegRewrite)
+    addPass(createAIEWawRegRewriter());
+  if (EnableEpilogueRegRewrite)
+    addPass(createAIEEpilogueRegRewriter());
+  if (EnableWAWRegRewrite)
+    addPass(createGreedyRegisterAllocator());
+  addPass(createVirtRegRewriter());
+}
+
 bool AIE2PassConfig::addRegAssignAndRewriteOptimized() {
 
   // Pre-RA scheduling might have exposed simplifiable copies.
@@ -195,11 +222,7 @@ bool AIE2PassConfig::addRegAssignAndRewriteOptimized() {
     addPass(createAIESuperRegRewriter());
   }
   addPass(createGreedyRegisterAllocator());
-  if (EnableWAWRegRewrite) {
-    addPass(createAIEWawRegRewriter());
-    addPass(createGreedyRegisterAllocator());
-  }
-  addPass(createVirtRegRewriter());
+  addRegRewritePasses();
 
   return true;
 }

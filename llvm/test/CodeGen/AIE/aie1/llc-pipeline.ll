@@ -3,7 +3,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 
 ; When EXPENSIVE_CHECKS are enabled, the machine verifier appears between each
 ; pass. Ignore it with 'grep -v'.
@@ -16,6 +16,8 @@
 ; RUN:   | grep -v 'Verify generated machine code' | FileCheck -match-full-lines -strict-whitespace -check-prefixes=AIE-O123,AIE-O0123 %s
 ; RUN: llc -O3 -mtriple=aie -disable-verify -debug-pass=Structure < %s 2>&1 \
 ; RUN:   | grep -v 'Verify generated machine code' | FileCheck -match-full-lines -strict-whitespace -check-prefixes=AIE-O123,AIE-O0123 %s
+; RUN: llc -O2 -mtriple=aie -disable-verify -debug-pass=Structure < %s 2>&1 \
+; RUN:   | not grep -F 'AIE epilogue register rewrite'
 
 ; REQUIRES: asserts
 

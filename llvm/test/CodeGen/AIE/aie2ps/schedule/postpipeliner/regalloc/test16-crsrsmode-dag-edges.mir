@@ -1,0 +1,94 @@
+# NOTE: Test for crSRSMode WAR/WAW edge removal with --aie-simplify-reserved-regs
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+
+# RUN: llc -verify-machineinstrs --mtriple=aie2ps -O2 \
+# RUN:   --start-before=postmisched %s \
+# RUN:   --aie-postpipeliner-vreg-mode=1 \
+# RUN:   --aie-postpipeliner-phys-mode=0 \
+# RUN:   --aie-simplify-reserved-regs \
+# RUN:   --aie-postpipeliner-minii=4 \
+# RUN:   --aie-postpipeliner-maxii=4 \
+# RUN:   --debug-only=postpipeliner \
+# RUN:   -o /dev/null 2>&1 | FileCheck %s
+# REQUIRES: asserts
+
+# Test 16: Verify that the postpipeliner DAG contains no WAR/WAW edges for
+# crSRSMode when --aie-simplify-reserved-regs is active.
+#
+# The loop has two crSRSMode defs, each consumed implicitly by a VSRS:
+#
+#   SU0: crsrsmode = MOVX 0
+#   SU1: x0 = VSRS_2x ... (implicit crSRSMode)    RAW: SU0->SU1
+#   SU2: crsrsmode = MOVX 1
+#   SU3: x0 = VSRS_4x ... (implicit crSRSMode)    RAW: SU2->SU3
+#
+# Without simplification the scheduler would also build WAR (Anti) and WAW
+# (Output) edges on crSRSMode, serialising the two SRS operations. With
+# --aie-simplify-reserved-regs those Anti/Output edges are removed, leaving
+# only the two RAW data edges (color=red in the dot output).
+#
+# CHECK:      digraph PostPipeliner_II4_Virtual {
+# CHECK-NEXT:         SU0 [label="SU0\nMOVX_mvx_c\n[0,1]\n"]
+# CHECK-NEXT:         SU1 [label="SU1\nVSRS_2x_mv\n[1,0]\n"]
+# CHECK-NEXT:         SU2 [label="SU2\nMOVX_mvx_c\n[0,1]\n"]
+# CHECK-NEXT:         SU3 [label="SU3\nVSRS_4x_mv\n[1,0]\n"]
+# CHECK-NEXT:         SU0 -> SU1 [label="1 crSRSMode", color=red]
+# CHECK-NEXT:         SU2 -> SU3 [label="1 crSRSMode", color=red]
+# CHECK-NEXT: }
+
+--- |
+  target triple = "aie2ps"
+
+  define void @test_crsrsmode_dag(ptr addrspace(5) noalias %in, i32 %n) {
+  preheader:
+    call void @llvm.set.loop.iterations.i32(i32 %n)
+    br label %loop
+  loop:
+    %dec = call i1 @llvm.loop.decrement.i32(i32 1)
+    br i1 %dec, label %loop, label %exit, !llvm.loop !0
+  exit:
+    ret void
+  }
+
+  declare void @llvm.set.loop.iterations.i32(i32)
+  declare i1 @llvm.loop.decrement.i32(i32)
+
+  !0 = distinct !{!0, !1}
+  !1 = !{!"llvm.loop.itercount.range", i64 4}
+...
+---
+name:            test_crsrsmode_dag
+tracksRegLiveness: true
+body:             |
+  bb.0.preheader:
+    successors: %bb.1
+    liveins: $r1, $cml0, $dm5, $s1, $s2
+
+    $lc = ADD_NC_add_lc_ri $r1, 0
+    MOVXM_lng_cg_ls_abs %bb.1, implicit-def $ls
+    MOVXM_lng_cg_le_abs <mcsymbol .L_LEnd0>, implicit-def $le
+
+  bb.1.loop (align 16):
+    successors: %bb.1, %bb.2
+    liveins: $cml0, $dm5, $s1, $s2
+
+    ; First crSRSMode live range: RAW edge to VSRS_2x.
+    $crsrsmode = MOVX_mvx_cr_imm 0
+    $x0 = VSRS_2x_mv_x_srs_cm_srsSign1 $cml0, $s1, implicit-def dead $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+
+    ; Second crSRSMode live range: RAW edge to VSRS_4x.
+    $crsrsmode = MOVX_mvx_cr_imm 1
+    $x0 = VSRS_4x_mv_x_srs_dm_srsSign1 $dm5, $s2, implicit-def dead $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+
+  bb.2.exit (align 16):
+
+    RET implicit $lr
+    DelayedSchedBarrier
+
+...

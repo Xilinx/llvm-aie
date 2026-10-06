@@ -9,6 +9,17 @@
 //===----------------------------------------------------------------------===//
 include "llvm/Target/GlobalISel/Combine.td"
 
+// AIE-specific reassociation of G_PTR_ADD chains with constant offsets.
+// Unlike the upstream reassoc_ptradd, this variant only triggers when the
+// intermediate pointer (LHS of the root PTR_ADD) has exactly one use.
+// This prevents breaking addressing mode opportunities for loops where the
+// intermediate pointer feeds both memory operations and subsequent PTR_ADDs.
+def aie_reassoc_ptradd : GICombineRule<
+  (defs root:$root, build_fn_matchinfo:$matchinfo),
+  (match (wip_match_opcode G_PTR_ADD):$root,
+         [{ return matchAIEReassocPtrAdd(*${root}, MRI, Helper, ${matchinfo}); }]),
+  (apply [{ Helper.applyBuildFnNoErase(*${root}, ${matchinfo}); }])>;
+
 // Explicitly listing each generic combine here ensures direct visibility and
 // control over all functionalities.
 def aie_generic_combines : GICombineGroup<[trivial_combines, vector_ops_combines,
@@ -16,7 +27,7 @@ def aie_generic_combines : GICombineGroup<[trivial_combines, vector_ops_combines
   combine_extracted_vector_load,
   undef_combines, identity_combines, phi_combines,
   simplify_add_to_sub, hoist_logic_op_with_same_opcode_hands, shifts_too_big,
-  reassocs, ptr_add_immed_chain,
+  reassoc_comm_binops, aie_reassoc_ptradd,
   shl_ashr_to_sext_inreg, sext_inreg_of_load,
   width_reduction_combines, select_combines,
   known_bits_simplifications, cast_combines,
@@ -565,6 +576,14 @@ def combine_global_load_store_increment : GICombineRule <
           [{ return matchGlobalPtrModOptimizer(*${root}, MRI, Helper, B.getTII(), GlobalCombiners); }]),
   (apply [{ applyLdStInc(*${root}, MRI, Helper, B, Observer, GlobalCombiners); }] )>;
 
+// ptr_add_immed_chain, keeping the pointer modifiers of the post-increment
+// combines found by aie-ptr-mod-opt.
+def aie_ptr_add_immed_chain : GICombineRule<
+  (defs root:$d, ptr_add_immed_matchdata:$matchinfo),
+  (match (wip_match_opcode G_PTR_ADD):$d,
+         [{ return !GlobalCombiners->isPostIncPtrMod(*${d}) &&
+                   Helper.matchPtrAddImmedChain(*${d}, ${matchinfo}); }]),
+  (apply [{ Helper.applyPtrAddImmedChain(*${d}, ${matchinfo}); }])>;
 
 
 // Post-legalizer custom combines: shared base plus per-target additions.
@@ -572,7 +591,7 @@ def aie_postlegalizer_custom_shared_combines : GICombineGroup<[
   combine_broadcast_extract_to_copy,
   combine_global_load_store_increment,
   combine_load_store_increment,
-  ptr_add_immed_chain,
+  aie_ptr_add_immed_chain,
   combine_offset_load_store_ptradd,
   combine_offset_load_store_share_ptradd,
   combine_add_vector_elt_undef,

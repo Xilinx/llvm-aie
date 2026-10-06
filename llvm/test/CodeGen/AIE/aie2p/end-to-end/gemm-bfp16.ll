@@ -48,39 +48,43 @@ define dso_local void @gemm_bfp16(ptr %ofm_ptr, ptr %ifm_ptr, ptr %wts_ptr, ptr 
 ; CHECK-NEXT:  .LBB0_1: // %for.body.i
 ; CHECK-NEXT:    // =>This Loop Header: Depth=1
 ; CHECK-NEXT:    // Child Loop BB0_2 Depth 2
-; CHECK-NEXT:    mova m1, #80; nopb ; nopx ; mov p5, p3
-; CHECK-NEXT:    padda [p5], m1
-; CHECK-NEXT:    lda m3, [p5], #4
-; CHECK-NEXT:    lda m5, [p5], #4
+; CHECK-NEXT:    mova m1, #80; mov p5, p3
+; CHECK-NEXT:    mova m1, #72; paddb [p5], m1; nopx ; mov p6, p3
+; CHECK-NEXT:    lda m3, [p5], #4; paddb [p6], m1; mov m1, #88
+; CHECK-NEXT:    lda r5, [p6], m1
 ; CHECK-NEXT:    lda m6, [p5], #4
-; CHECK-NEXT:    lda m7, [p5], #-20; mov m1, #104
-; CHECK-NEXT:    lda r5, [p5], m1
-; CHECK-NEXT:    lda m1, [p5], #-16
-; CHECK-NEXT:    lda dn1, [p5], #4; mov p6, p4
-; CHECK-NEXT:    lda dj1, [p5], #4; paddb [p6], m3
-; CHECK-NEXT:    vlda bmll1, [p6, #0]
-; CHECK-NEXT:    vlda bmlh1, [p6, #64]
-; CHECK-NEXT:    vlda bmhl1, [p6, #128]
-; CHECK-NEXT:    vlda bmhh1, [p6, #192]; mov p7, p4
-; CHECK-NEXT:    lda dn5, [p5], #4; paddb [p7], m5
-; CHECK-NEXT:    vlda bmll0, [p7, #0]
-; CHECK-NEXT:    vlda bmlh0, [p7, #64]
-; CHECK-NEXT:    lda dj5, [p5, #0]
-; CHECK-NEXT:    lda m5, [p5, #8]
-; CHECK-NEXT:    vlda bmhl0, [p7, #128]; movs p5, p2
-; CHECK-NEXT:    vlda bmhh0, [p7, #192]; vldb.3d x9, [p2], d0; mov p6, p4
-; CHECK-NEXT:    padda [p5], m4; vldb x8, [p5, #64]; padds [p6], m6
-; CHECK-NEXT:    vlda bmll4, [p6, #0]; vldb x7, [p5, #0]
-; CHECK-NEXT:    vlda bmlh4, [p6, #64]; vldb x5, [p5, #64]
-; CHECK-NEXT:    vlda bmhl4, [p6, #128]; mov p7, p4
-; CHECK-NEXT:    vlda bmhh4, [p6, #192]; paddb [p7], m7
-; CHECK-NEXT:    vlda bmll3, [p7, #0]
+; CHECK-NEXT:    lda m5, [p5], #4
+; CHECK-NEXT:    lda dn1, [p6], #4; mov m1, #84
+; CHECK-NEXT:    lda m7, [p5], m1
+; CHECK-NEXT:    lda dj1, [p6], #4
+; CHECK-NEXT:    lda dn5, [p6, #0]
+; CHECK-NEXT:    lda dj5, [p6, #4]
+; CHECK-NEXT:    lda m1, [p5, #0]; mov p7, p4
+; CHECK-NEXT:    padda [p7], m3
+; CHECK-NEXT:    vlda bmll1, [p7, #0]
+; CHECK-NEXT:    vlda bmlh1, [p7, #64]
+; CHECK-NEXT:    vlda bmhl1, [p7, #128]
+; CHECK-NEXT:    vlda bmhh1, [p7, #192]; mov p6, p4
+; CHECK-NEXT:    padda [p6], m6
+; CHECK-NEXT:    vlda bmll0, [p6, #0]
+; CHECK-NEXT:    vlda bmlh0, [p6, #64]
+; CHECK-NEXT:    vlda bmhl0, [p6, #128]
+; CHECK-NEXT:    vlda bmhh0, [p6, #192]
+; CHECK-NEXT:    lda m7, [p5, #4]; mov p7, p4
+; CHECK-NEXT:    padda [p7], m5; movs p5, p2
+; CHECK-NEXT:    vlda bmll4, [p7, #0]; vldb.3d x9, [p2], d0
+; CHECK-NEXT:    padda [p5], m4; vldb x8, [p5, #64]; mov p6, p4
+; CHECK-NEXT:    padda [p6], m7; vldb x7, [p5, #0]
+; CHECK-NEXT:    vlda bmll3, [p6, #0]; vldb x5, [p5, #64]
+; CHECK-NEXT:    vlda bmlh3, [p6, #64]
+; CHECK-NEXT:    vlda bmhl3, [p6, #128]
+; CHECK-NEXT:    vlda bmhh3, [p6, #192]
 ; CHECK-NEXT:    vlda.conv.fp32.bf16 cmh2, [p1, #64]; movs p5, p2; mov p6, p1
 ; CHECK-NEXT:    vlda.3d.conv.fp32.bf16 cml2, [p1], d1; vldb.3d x9, [p2], d0; vshuffle x10, x9, x8, r0
 ; CHECK-NEXT:    padda [p5], m4; vldb x8, [p5, #64]; vshuffle x11, x9, x8, r1
-; CHECK-NEXT:    vlda bmlh3, [p7, #64]; vldb x7, [p5, #0]; vshuffle x10, x7, x5, r0
-; CHECK-NEXT:    vlda bmhl3, [p7, #128]; vldb x5, [p5, #64]; vshuffle x11, x7, x5, r1; vmul.f dm2, y5, y0, r2
-; CHECK-NEXT:    vlda bmhh3, [p7, #192]; paddb [p6], m5; movxm ls, #.LBB0_2
+; CHECK-NEXT:    vlda bmlh4, [p7, #64]; vldb x7, [p5, #0]; vshuffle x10, x7, x5, r0
+; CHECK-NEXT:    vlda bmhl4, [p7, #128]; vldb x5, [p5, #64]; vshuffle x11, x7, x5, r1; vmul.f dm2, y5, y0, r2
+; CHECK-NEXT:    vlda bmhh4, [p7, #192]; paddb [p6], m7; movxm ls, #.LBB0_2
 ; CHECK-NEXT:    vlda.conv.fp32.bf16 cml2, [p6, #0]; movxm le, #.L_LEnd0; vmul.f dm2, y5, y0, r2
 ; CHECK-NEXT:    vlda.conv.fp32.bf16 cmh2, [p6, #64]; add.nc lc, r5, #-3
 ; CHECK-NEXT:    vlda.conv.fp32.bf16 cmh2, [p1, #64]; movs p5, p2; mov p6, p1
@@ -91,7 +95,7 @@ define dso_local void @gemm_bfp16(ptr %ofm_ptr, ptr %ifm_ptr, ptr %wts_ptr, ptr 
 ; CHECK-NEXT:    // Parent Loop BB0_1 Depth=1
 ; CHECK-NEXT:    // => This Inner Loop Header: Depth=2
 ; CHECK-NEXT:    nopa ; vldb x5, [p5, #64]; vconv.bfp16ebs8.fp32 ex4, dm2; nopx ; vshuffle x11, x7, x5, r1; vmul.f dm2, y5, y0, r2
-; CHECK-NEXT:    nopa ; paddb [p6], m5; nopx
+; CHECK-NEXT:    nopa ; paddb [p6], m7; nopx
 ; CHECK-NEXT:    vlda.conv.fp32.bf16 cml2, [p6, #0]; vconv.bfp16ebs8.fp32 ex2, dm2; vmul.f dm2, y5, y0, r2
 ; CHECK-NEXT:    vlda.conv.fp32.bf16 cmh2, [p6, #64]
 ; CHECK-NEXT:    vlda.conv.fp32.bf16 cmh2, [p1, #64]; movs p5, p2; mov p6, p1; vmac.f dm1, dm1, ex3, ex6, r3
@@ -102,7 +106,7 @@ define dso_local void @gemm_bfp16(ptr %ofm_ptr, ptr %ifm_ptr, ptr %wts_ptr, ptr 
 ; CHECK-NEXT:  // %bb.3: // %for.cond.cleanup45.i
 ; CHECK-NEXT:    // in Loop: Header=BB0_1 Depth=1
 ; CHECK-NEXT:    nopa ; vldb x5, [p5, #64]; vconv.bfp16ebs8.fp32 ex4, dm2; add r4, r4, #1; vshuffle x11, x7, x5, r1; vmul.f dm2, y5, y0, r2
-; CHECK-NEXT:    nopa ; paddb [p6], m5; nopx ; mov p5, p0
+; CHECK-NEXT:    nopa ; paddb [p6], m7; nopx ; mov p5, p0
 ; CHECK-NEXT:    vlda.conv.fp32.bf16 cml2, [p6, #0]; paddb [p5], m3; vconv.bfp16ebs8.fp32 ex2, dm2; nopx ; mov m3, m2; vmul.f dm2, y5, y0, r2
 ; CHECK-NEXT:    vlda.conv.fp32.bf16 cmh2, [p6, #64]
 ; CHECK-NEXT:    vlda.conv.fp32.bf16 cmh2, [p1, #64]; mov p6, p1; vmac.f dm1, dm1, ex3, ex6, r3
@@ -110,7 +114,7 @@ define dso_local void @gemm_bfp16(ptr %ofm_ptr, ptr %ifm_ptr, ptr %wts_ptr, ptr 
 ; CHECK-NEXT:    mova m1, #84; vshuffle x11, x9, x8, r1; vmac.f dm4, dm4, ex2, ex6, r3
 ; CHECK-NEXT:    vconv.bfp16ebs8.fp32 ex6, dm2; vshuffle x10, x7, x5, r0; vmac.f dm3, dm3, ex2, ex4, r3
 ; CHECK-NEXT:    vconv.bfp16ebs8.fp32 ex4, dm2; vshuffle x11, x7, x5, r1; vmul.f dm2, y5, y0, r2
-; CHECK-NEXT:    paddb [p6], m5
+; CHECK-NEXT:    paddb [p6], m7
 ; CHECK-NEXT:    vlda.conv.fp32.bf16 cml2, [p6, #0]; vconv.bfp16ebs8.fp32 ex2, dm2; vmul.f dm2, y5, y0, r2
 ; CHECK-NEXT:    vlda.conv.fp32.bf16 cmh2, [p6, #64]
 ; CHECK-NEXT:    mov p6, p0; vmac.f dm1, dm1, ex3, ex6, r3

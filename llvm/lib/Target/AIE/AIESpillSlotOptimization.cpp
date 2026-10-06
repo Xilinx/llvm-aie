@@ -68,14 +68,22 @@ struct SubRegInfo {
   unsigned SizeBytes = 0;
   int64_t ByteOffset = 0;
   bool IsLive = false;
+  // Minimal register class of Reg. Determines both the replacement slot's
+  // spill alignment and the spill/reload opcode. It must come from the
+  // register actually being accessed, because StackSlotColoring can coalesce
+  // registers from different register files onto one slot (see emitSubRegAccess
+  // and hasConflictingLanes).
+  const TargetRegisterClass *RC = nullptr;
 
-  SubRegInfo(MCRegister R, unsigned Idx, unsigned Size, int64_t Off, bool Live)
+  SubRegInfo(MCRegister R, unsigned Idx, unsigned Size, int64_t Off, bool Live,
+             const TargetRegisterClass *RC)
       : Reg(R), SubRegIndex(Idx), SizeBytes(Size), ByteOffset(Off),
-        IsLive(Live) {
+        IsLive(Live), RC(RC) {
     assert(Reg.isValid() && "SubRegInfo must have a valid register");
     assert(ByteOffset >= 0 && "ByteOffset must be non-negative");
     assert(SizeBytes >= MinMemSizeBytes &&
            "SubregSpill size is not natively supported");
+    assert(RC && "SubRegInfo must have a valid register class");
   }
 };
 
@@ -188,6 +196,7 @@ private:
   // Phase 1: Analysis
   void analyzeFunction(MachineFunction &MF);
   bool isValidSpillSlot(int FI, MachineInstr &MI) const;
+  DenseSet<int> collectUntrackableAccesses(MachineFunction &MF) const;
 
   // Phase 2: Rewrite
   bool rewriteInstructions(MachineFunction &MF);
@@ -297,7 +306,8 @@ static SubRegInfo buildSubRegInfo(Register Reg, int64_t BaseOffset,
            : 0);
 
   const bool IsLive = !LiveRegs.available(MRI, SubReg);
-  return SubRegInfo(SubReg, EI.SubRegIndex, SizeBytes, ByteOffset, IsLive);
+  return SubRegInfo(SubReg, EI.SubRegIndex, SizeBytes, ByteOffset, IsLive,
+                    TRI.getMinimalPhysRegClass(SubReg));
 }
 
 SpillPoint::SpillPoint(MachineInstr &MI, int FI, uint64_t SlotSize,
@@ -329,7 +339,8 @@ SpillPoint::SpillPoint(MachineInstr &MI, int FI, uint64_t SlotSize,
   if (FlattenedInfos.empty()) {
     const unsigned SizeBytes = (*MI.memoperands_begin())->getSize().getValue();
     const bool IsLive = !LiveRegs.available(MRI, Reg);
-    SubRegs.emplace_back(Reg.asMCReg(), 0, SizeBytes, BaseOffset, IsLive);
+    SubRegs.emplace_back(Reg.asMCReg(), 0, SizeBytes, BaseOffset, IsLive,
+                         TRI.getMinimalPhysRegClass(Reg.asMCReg()));
     return;
   }
 
@@ -371,10 +382,48 @@ bool AIESpillSlotOptimization::isValidSpillSlot(int FI,
          !MFI->isDeadObjectIndex(FI) && MFI->isSpillSlotObjectIndex(FI);
 }
 
+/// Collect the slots accessed by an instruction this pass cannot rewrite. Only
+/// the spill/reload pseudos that isStoreToStackSlot()/isLoadFromStackSlot()
+/// recognize can be redirected to a replacement slot; any other frame index
+/// operand - e.g. the multi-register VST_PLFR_SPILL / VLDA_PLFR_SPILL pseudos,
+/// whose non-standard operand layout those hooks do not recognize - is
+/// untrackable. Debug instructions are ignored so the result does not depend on
+/// -g.
+DenseSet<int> AIESpillSlotOptimization::collectUntrackableAccesses(
+    MachineFunction &MF) const {
+  DenseSet<int> SlotsWithUntrackableAccesses;
+  for (MachineBasicBlock &MBB : MF) {
+    for (MachineInstr &MI : MBB) {
+      if (MI.isDebugInstr())
+        continue;
+      int SpillFI = -1;
+      if (TII->isLoadFromStackSlot(MI, SpillFI) ||
+          TII->isStoreToStackSlot(MI, SpillFI))
+        continue;
+      for (const MachineOperand &MO : MI.operands()) {
+        if (!MO.isFI())
+          continue;
+        LLVM_DEBUG(dbgs() << "  Untrackable access to FI=" << MO.getIndex()
+                          << ": " << MI);
+        SlotsWithUntrackableAccesses.insert(MO.getIndex());
+      }
+    }
+  }
+  return SlotsWithUntrackableAccesses;
+}
+
 void AIESpillSlotOptimization::analyzeFunction(MachineFunction &MF) {
   LLVM_DEBUG(dbgs() << "=== Phase 1: Analysis ===\n");
 
   OrigSlotDecompositions.clear();
+
+  // Leave slots with an untrackable access intact: decomposing them would
+  // remove the original stack object while that access keeps pointing at it,
+  // which makes prologepilog fail in eliminateFrameIndex(). StackSlotColoring
+  // can coalesce such an access onto a slot that is otherwise decomposable, so
+  // this has to be checked per slot rather than per spill point.
+  const DenseSet<int> SlotsWithUntrackableAccesses =
+      collectUntrackableAccesses(MF);
 
   for (MachineBasicBlock &MBB : MF) {
     // Pass 1 (Backward): Collect reloads with post-MI liveness.
@@ -383,7 +432,8 @@ void AIESpillSlotOptimization::analyzeFunction(MachineFunction &MF) {
 
     for (MachineInstr &MI : reverse(MBB)) {
       int FI = -1;
-      if (TII->isLoadFromStackSlot(MI, FI) && isValidSpillSlot(FI, MI)) {
+      if (TII->isLoadFromStackSlot(MI, FI) && isValidSpillSlot(FI, MI) &&
+          !SlotsWithUntrackableAccesses.contains(FI)) {
         auto SP = std::make_unique<SpillPoint>(MI, FI, MFI->getObjectSize(FI),
                                                LiveRegs, *TII, *MRI);
         LLVM_DEBUG(dbgs() << "  " << *SP << ": " << MI);
@@ -399,7 +449,8 @@ void AIESpillSlotOptimization::analyzeFunction(MachineFunction &MF) {
 
     for (MachineInstr &MI : MBB) {
       int FI = -1;
-      if (TII->isStoreToStackSlot(MI, FI) && isValidSpillSlot(FI, MI)) {
+      if (TII->isStoreToStackSlot(MI, FI) && isValidSpillSlot(FI, MI) &&
+          !SlotsWithUntrackableAccesses.contains(FI)) {
         auto Spill = std::make_unique<SpillPoint>(
             MI, FI, MFI->getObjectSize(FI), LiveRegs, *TII, *MRI);
         LLVM_DEBUG(dbgs() << "  " << *Spill << ": " << MI);
@@ -433,13 +484,20 @@ void AIESpillSlotOptimization::emitSubRegAccess(
   MachineBasicBlock &MBB = *MI.getParent();
   const bool IsKill = SP.RegFlags & RegState::Kill;
 
+  // Select the spill/reload opcode from the class of the register actually
+  // being accessed (SI.RC), not from the replacement slot's class (R.RC).
+  // StackSlotColoring can coalesce registers from different register files
+  // (e.g. an accumulator BM register and a load-FIFO register) onto the same
+  // slot, in which case R.RC belongs to whichever register created the slot
+  // first. Using it here would pick a spill opcode for the wrong register file
+  // and emit an unencodable instruction.
   // Use TII methods to create spill/reload with correct pseudo opcodes.
   if (SP.IsStore) {
     TII->storeRegToStackSlot(MBB, MI.getIterator(), SI.Reg, IsKill, R.NewFI,
-                             R.RC, TRI, Register());
+                             SI.RC, TRI, Register());
   } else {
-    TII->loadRegFromStackSlot(MBB, MI.getIterator(), SI.Reg, R.NewFI, R.RC, TRI,
-                              Register());
+    TII->loadRegFromStackSlot(MBB, MI.getIterator(), SI.Reg, R.NewFI, SI.RC,
+                              TRI, Register());
   }
 
   MachineInstr &NewMI = *std::prev(MI.getIterator());
@@ -466,9 +524,8 @@ DenseSet<int64_t> AIESpillSlotOptimization::processSpillsForSlot(
         continue;
       StoredOffsets.insert(SI.ByteOffset);
 
-      const auto *RC = TRI->getMinimalPhysRegClass(SI.Reg);
-      ReplacementSlot &Slot = Info.getOrCreateSlot(SI.ByteOffset, SI.SizeBytes,
-                                                   TRI->getSpillAlign(*RC), RC);
+      ReplacementSlot &Slot = Info.getOrCreateSlot(
+          SI.ByteOffset, SI.SizeBytes, TRI->getSpillAlign(*SI.RC), SI.RC);
       Slot.allocateStackObject(*MFI);
 
       LLVM_DEBUG(dbgs() << "  FI=" << FI << " Offset=" << SI.ByteOffset

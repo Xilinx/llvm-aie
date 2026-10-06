@@ -67,6 +67,8 @@ body:             |
   ; CHECK-NEXT:   - PrologueBundles: '10'
   ; CHECK-NEXT:   - Epilogue:        bb.2.for.cond.cleanup
   ; CHECK-NEXT:   - EpilogueBundles: '11'
+  ; CHECK-NEXT:   - VregMode:        Physical
+  ; CHECK-NEXT:   - SchedHeuristic:  Config_14_1_0_NodeNum
   ; CHECK-NEXT: ...
   bb.0:
     successors: %bb.1(0x80000000)

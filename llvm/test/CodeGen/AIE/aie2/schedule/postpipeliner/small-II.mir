@@ -144,6 +144,8 @@ body:             |
   ; CHECK-NEXT:   - PrologueBundles: '8'
   ; CHECK-NEXT:   - Epilogue:        bb.4.for.cond.cleanup
   ; CHECK-NEXT:   - EpilogueBundles: '8'
+  ; CHECK-NEXT:   - VregMode:        Physical
+  ; CHECK-NEXT:   - SchedHeuristic:  Config_16_1_0_NodeNum
   ; CHECK-NEXT: ...
   bb.0.entry (align 16):
     successors: %bb.1(0x50000000), %bb.3(0x30000000)

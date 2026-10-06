@@ -75,7 +75,9 @@ protected:
   void determineFrameLayout(MachineFunction &MF) const;
 
   /// Optimize callee-saved L registers by deciding whether to save as L
-  /// register pair or individual GPRs based on usage and call patterns.
+  /// register pair or individual GPRs. Pair as L when a stack spill is
+  /// unavoidable (calls, or a leaf with too few unused scratch GPRs);
+  /// otherwise keep even/odd GPRs so they can be copied into scratches.
   void optimizeLRegCalleeSaves(MachineFunction &MF, BitVector &SavedRegs,
                                const TargetRegisterClass &LRegClass,
                                unsigned SubRegIdxEven,

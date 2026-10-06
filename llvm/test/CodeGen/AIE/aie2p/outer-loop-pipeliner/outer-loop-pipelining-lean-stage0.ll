@@ -4,12 +4,12 @@
 ;
 ; (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
 ;
-; RUN: llc -mtriple=aie2p -O2 -aie-enable-outer-loop-pipelining \
+; RUN: llc -mtriple=aie2p -O2 -aie-enable-outer-loop-pointer-opt=false -aie-enable-outer-loop-pipelining \
 ; RUN:     -stop-after=aie-outer-loop-pipeliner -o - %s | FileCheck %s --check-prefix=DEFAULT
-; RUN: llc -mtriple=aie2p -O2 -aie-enable-outer-loop-pipelining \
+; RUN: llc -mtriple=aie2p -O2 -aie-enable-outer-loop-pointer-opt=false -aie-enable-outer-loop-pipelining \
 ; RUN:     -aie-outer-loop-pipelining-lean-stage0 \
 ; RUN:     -stop-after=aie-outer-loop-pipeliner -o - %s | FileCheck %s --check-prefix=LEAN
-; RUN: llc -mtriple=aie2p -O2 -aie-enable-outer-loop-pipelining \
+; RUN: llc -mtriple=aie2p -O2 -aie-enable-outer-loop-pointer-opt=false -aie-enable-outer-loop-pipelining \
 ; RUN:     -aie-outer-loop-pipelining-lean-stage0 \
 ; RUN:     -aie-outer-loop-pipelining-speculative=false \
 ; RUN:     -stop-after=aie-outer-loop-pipeliner -o - %s | FileCheck %s --check-prefix=LEAN-NOSPEC

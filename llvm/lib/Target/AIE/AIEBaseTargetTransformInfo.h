@@ -98,12 +98,6 @@ public:
     // cost?
     return TTI::TCC_Basic;
   }
-  void adjustUnrollingPreferences(Loop *L, ScalarEvolution &SE,
-                                  TTI::UnrollingPreferences &UP,
-                                  OptimizationRemarkEmitter *ORE) const;
-  bool isHardwareLoopProfitable(Loop *L, ScalarEvolution &SE,
-                                AssumptionCache &AC, TargetLibraryInfo *LibInfo,
-                                HardwareLoopInfo &HWLoopInfo) const override;
 
   // AIE vector arithmetic operates on 512-bit registers. The default
   // getRegisterBitWidth returns 32 (scalar width), which causes the loop

@@ -545,6 +545,9 @@ define dso_local void @multipleExits(ptr noundef %ptr, i32 noundef %n, i32 nound
 ; CHECK-NEXT:    [[TMP2:%.*]] = load ptr, ptr [[PTR_ADDR]], align 8
 ; CHECK-NEXT:    [[TMP3:%.*]] = load ptr, ptr [[PTR_ADDR]], align 8
 ; CHECK-NEXT:    [[I_PROMOTED:%.*]] = load i32, ptr [[I]], align 4
+; CHECK-NEXT:    [[TMP6:%.*]] = add nsw i32 [[I_PROMOTED]], 3
+; CHECK-NEXT:    [[TMP5:%.*]] = icmp slt i32 [[TMP6]], [[TMP0]]
+; CHECK-NEXT:    call void @llvm.assume(i1 [[TMP5]])
 ; CHECK-NEXT:    br label [[FOR_COND:%.*]]
 ; CHECK:       for.cond:
 ; CHECK-NEXT:    [[INC1:%.*]] = phi i32 [ [[INC:%.*]], [[FOR_INC:%.*]] ], [ [[I_PROMOTED]], [[ENTRY:%.*]] ]

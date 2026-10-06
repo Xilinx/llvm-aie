@@ -19,8 +19,10 @@
 #include "Utils/AIEBaseInfo.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Target/TargetMachine.h"
+#include <memory>
 
 namespace llvm {
+class AIEOLPTargetConfig;
 class AIESubtarget;
 class AIETargetMachine;
 class AsmPrinter;
@@ -57,10 +59,12 @@ FunctionPass *createAIESubRegConstrainer();
 MachineFunctionPass *createAIEClusterBaseAddress();
 MachineFunctionPass *createAIEPtrModOptimizer();
 MachineFunctionPass *createAIEAddressSpaceFlattening();
+FunctionPass *createAIESwitchLowering();
 MachineFunctionPass *createAIEEliminateDuplicatePHI();
 FunctionPass *createAIEOutlineMemoryGEP();
 FunctionPass *createAIESuperRegRewriter();
 FunctionPass *createAIEWawRegRewriter();
+FunctionPass *createAIEEpilogueRegRewriter();
 FunctionPass *createAIEUnallocatedSuperRegRewriter();
 FunctionPass *createAIESpillSlotOptimization();
 FunctionPass *createAIEPostSelectOptimize();
@@ -73,6 +77,7 @@ void initializeAIEBaseHardwareLoopsPass(PassRegistry &);
 void initializeAIEClusterBaseAddressPass(PassRegistry &);
 void initializeAIEPtrModOptimizerPass(PassRegistry &);
 void initializeAIEAddressSpaceFlatteningPass(PassRegistry &);
+void initializeAIESwitchLoweringPass(PassRegistry &);
 void initializeAIEEliminateDuplicatePHIPass(PassRegistry &);
 extern char &AIEFormatSelectorID;
 void initializeAIEFormatSelectorPass(PassRegistry &);
@@ -89,6 +94,8 @@ extern char &AIESuperRegRewriterID;
 void initializeAIESuperRegRewriterPass(PassRegistry &);
 extern char &AIEWawRegRewriterID;
 void initializeAIEWawRegRewriterPass(PassRegistry &);
+extern char &AIEEpilogueRegRewriterID;
+void initializeAIEEpilogueRegRewriterPass(PassRegistry &);
 extern char &AIEUnallocatedSuperRegRewriterID;
 void initializeAIEUnallocatedSuperRegRewriterPass(PassRegistry &);
 extern char &AIESpillSlotOptimizationID;
@@ -120,7 +127,10 @@ llvm::FunctionPass *createReservedRegsLICMPass();
 // Outer Loop Pipeliner (IR-level, aie2p and aie2ps targets)
 extern char &AIEOuterLoopPipelinerID;
 void initializeAIEOuterLoopPipelinerPass(PassRegistry &);
-llvm::FunctionPass *createAIEOuterLoopPipelinerPass();
+// Config carries the target policy the pass needs; see AIEOLPTargetConfig.
+// Passing nullptr selects the default policy.
+llvm::FunctionPass *createAIEOuterLoopPipelinerPass(
+    std::unique_ptr<const AIEOLPTargetConfig> Config = nullptr);
 
 // Inner Loop Versioning (IR-level). Emits a runtime trip-count guard around a
 // pipelined copy of a single-block inner loop whose minimum trip count is too
@@ -129,6 +139,11 @@ extern char &AIEInnerLoopVersioningID;
 extern llvm::cl::opt<bool> DisableInnerLoopVersioning;
 void initializeAIEInnerLoopVersioningPass(PassRegistry &);
 llvm::FunctionPass *createAIEInnerLoopVersioningPass();
+
+// Outer Loop Pointer Optimizer (IR-level, runs before Outer Loop Pipeliner)
+extern char &AIEOuterLoopPointerOptimizerID;
+void initializeAIEOuterLoopPointerOptimizerPass(PassRegistry &);
+llvm::FunctionPass *createAIEOuterLoopPointerOptimizerPass();
 } // namespace llvm
 
 #endif

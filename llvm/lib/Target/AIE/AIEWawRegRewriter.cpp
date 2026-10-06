@@ -8,8 +8,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This pass rewrites physical register assignments in critical parts of the
-// code (like loops) to break WAW and WAR dependencies.
+// This pass rewrites loop assignments to break WAW dependencies; epilogue WAR
+// repairs are performed by AIEEpilogueRegRewriter.
 //
 //===----------------------------------------------------------------------===//
 
@@ -21,6 +21,7 @@
 #include "AIESlotStatistics.h"
 #include "Utils/AIELoopOptionOverrides.h"
 #include "Utils/AIELoopUtils.h"
+#include "Utils/AIERegAllocationUtils.h"
 
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/SmallVector.h"
@@ -96,7 +97,7 @@ static cl::opt<int> MinIIBias("aie-realloc-ii-bias", cl::Hidden, cl::init(0),
 namespace {
 
 // Defines the next register to use in reallocation.
-using RoundRobin = std::list<MCPhysReg>;
+using RoundRobin = SmallVector<MCPhysReg, 32>;
 
 // Record the candidates and their original allocation.
 using OriginalAllocation = std::vector<std::pair<Register, MCPhysReg>>;
@@ -137,10 +138,8 @@ std::optional<int> getMinIIBias(RewriteMode Mode, int LoopClass) {
 }
 
 ///
-/// This pass rewrites physical register assignments in critical parts of the
-/// code (like loops) to break WAW and WAR dependencies.
-/// The pass will update the \p VirtRegMap so that the new vregs have fixed
-/// assignments, guaranteeing that the reg renaming does not cause conflicts.
+/// Rewrites physical register assignments in critical loop regions to break
+/// WAW dependencies; epilogue WAR repairs belong to the separate epilogue pass.
 class AIEWawRegRewriter : public MachineFunctionPass {
 
 public:
@@ -739,7 +738,7 @@ bool AIEWawRegRewriter::replaceReg(const Register VReg,
 /// Returns a vreg of the same class that is exclusively used (and killed)
 /// at the point \p VReg gets defined.
 std::optional<Register>
-getKilledRegAtSingledDefPoint(Register VReg, const MachineRegisterInfo &MRI) {
+getKilledRegAtSingleDefPoint(Register VReg, const MachineRegisterInfo &MRI) {
   MachineOperand *MO = MRI.getOneDef(VReg);
   if (!MO)
     return std::nullopt;
@@ -789,46 +788,32 @@ MCPhysReg AIEWawRegRewriter::getReplacementPhysReg(const Register VReg,
   const TargetRegisterClass *RC = MRI->getRegClass(VReg);
   const LiveInterval &LI = LIS->getInterval(VReg);
 
-  // Find the least-recently assigned register to assign to VReg.
-  for (auto It = LRURegisters.begin(); It != LRURegisters.end(); ++It) {
-    MCPhysReg PhysReg = *It;
+  MCPhysReg PhysReg = AIERegAllocationUtils::findFreeNonOverlappingPhysReg(
+      LI, *RC, LRURegisters, BitVector(), *TRI, *LRM);
+  if (!PhysReg)
+    return MCRegister::NoRegister;
 
-    if (!RC->contains(PhysReg)) {
-      continue;
+  assert(llvm::is_contained(LRURegisters, PhysReg));
+
+  // Prefer a previously used killed register when it remains free.
+  if (std::optional<Register> KilledReg =
+          getKilledRegAtSingleDefPoint(VReg, *MRI);
+      KilledReg && WasUsedForReassignment(PhysReg)) {
+    MCRegister KilledPhysReg = getAssignedPhysReg(*KilledReg);
+    if (KilledPhysReg &&
+        LRM->checkInterference(LI, KilledPhysReg) == LiveRegMatrix::IK_Free) {
+
+      LLVM_DEBUG(dbgs() << "     re-use killed physreg for assigning: "
+                        << printReg(VReg, TRI) << " to "
+                        << TRI->getName(KilledPhysReg) << '\n');
+      PhysReg = KilledPhysReg;
+      assert(llvm::is_contained(LRURegisters, KilledPhysReg));
     }
-    LiveRegMatrix::InterferenceKind IK = LRM->checkInterference(LI, PhysReg);
-    if (IK == LiveRegMatrix::IK_Free) {
-      // If the chosen physical register has already been used and the vreg to
-      // allocate is defined at a point where another vreg gets killed, prefer
-      // reusing the assignment of the killed reg.
-      if (std::optional<Register> KilledReg =
-              getKilledRegAtSingledDefPoint(VReg, *MRI);
-          KilledReg && WasUsedForReassignment(PhysReg)) {
-        MCRegister KilledPhysReg = getAssignedPhysReg(*KilledReg);
-        if (KilledPhysReg && LRM->checkInterference(LI, KilledPhysReg) ==
-                                 LiveRegMatrix::IK_Free) {
-
-          LLVM_DEBUG(dbgs() << "     re-use killed physreg for assigning: "
-                            << printReg(VReg, TRI) << " to "
-                            << TRI->getName(KilledPhysReg) << '\n');
-          PhysReg = KilledPhysReg;
-          It = llvm::find(LRURegisters, KilledPhysReg);
-          assert(It != LRURegisters.end());
-        }
-      }
-
-      // Move it to the end of the list. We return, so don't have to
-      // care about invalidation
-      moveRegAndAliasesBack(PhysReg, LRURegisters, TRI);
-      for (MCRegUnit RU : TRI->regunits(PhysReg))
-        UsedUnits.set(RU);
-      return PhysReg;
-    }
-    LLVM_DEBUG(dbgs() << "       Cannot assign " << printReg(VReg, TRI)
-                      << " to " << TRI->getName(PhysReg)
-                      << " due to interference\n");
   }
-  return MCRegister::NoRegister;
+
+  moveRegAndAliasesBack(PhysReg, LRURegisters, TRI);
+  AIERegAllocationUtils::reserveRegUnits(PhysReg, *TRI, UsedUnits);
+  return PhysReg;
 }
 
 bool AIEWawRegRewriter::isIdentityCopy(const MachineInstr &MI) const {
@@ -886,6 +871,14 @@ std::set<MCRegister> AIEWawRegRewriter::getHighOutputLatencyRegs(
       };
 
       if (!IsHighLatInstrOperand())
+        continue;
+
+      // AggressiveReAlloc de-allocates the live-through registers of every
+      // loop it processes and leaves them for the greedy run that follows this
+      // pass. A later loop can therefore define a register that currently
+      // holds no physreg, which then classifies as neither high nor low
+      // latency. It cannot become a candidate here either, see isWorthRenaming.
+      if (!VRM->hasPhys(Reg))
         continue;
 
       const MCRegister AssignedPhysReg = VRM->getPhys(Reg);

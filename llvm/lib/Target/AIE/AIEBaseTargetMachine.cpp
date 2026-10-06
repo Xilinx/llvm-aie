@@ -63,6 +63,7 @@ extern cl::opt<bool> ForcePreciseRotationCost;
 extern cl::opt<bool> EnableFullPHIAnalysis;
 extern cl::opt<unsigned> MaxLookupSearchDepth;
 extern cl::opt<bool> SwpPragmaAsMaxII;
+extern cl::opt<unsigned> MaxCheckLimit;
 
 namespace {
 class AIEFinalizeExistingBundles final : public MachineFunctionPass {
@@ -132,6 +133,11 @@ cl::opt<bool>
                         cl::desc("Enable the WAW Register Renaming in loops"),
                         cl::init(true), cl::Hidden);
 
+cl::opt<bool> EnableEpilogueRegRewrite(
+    "aie-enable-epilogue-reg-rewrite",
+    cl::desc("Enable epilogue register renaming after allocation"),
+    cl::init(true), cl::Hidden);
+
 cl::opt<bool>
     EnableSuperRegSplitting("aie-split-superregs", cl::Hidden, cl::init(true),
                             cl::desc("Enable splitting super-regs into their "
@@ -172,6 +178,7 @@ extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeAIETarget() {
   auto *PR = PassRegistry::getPassRegistry();
   initializeGlobalISel(*PR);
   initializeAIEAddressSpaceFlatteningPass(*PR);
+  initializeAIESwitchLoweringPass(*PR);
   initializeAIEEliminateDuplicatePHIPass(*PR);
   initializeAIEClusterBaseAddressPass(*PR);
   initializeAIEPtrModOptimizerPass(*PR);
@@ -186,6 +193,7 @@ extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeAIETarget() {
   initializeAIESuperRegRewriterPass(*PR);
   initializeAIEUnallocatedSuperRegRewriterPass(*PR);
   initializeAIEWawRegRewriterPass(*PR);
+  initializeAIEEpilogueRegRewriterPass(*PR);
   initializeAIEOutlineMemoryGEPPass(*PR);
   initializeAIEFinalizeBundlePass(*PR);
   initializeAIEMachineAlignmentPass(*PR);
@@ -197,6 +205,7 @@ extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeAIETarget() {
   initializeAIESplitInstrReplacerPass(*PR);
   initializeAIERegClassConstrainerPass(*PR);
   initializeReservedRegsLICMPass(*PR);
+  initializeAIEOuterLoopPointerOptimizerPass(*PR);
   initializeAIEOuterLoopPipelinerPass(*PR);
   initializeAIEInnerLoopVersioningPass(*PR);
   initializeAIESpillSlotOptimizationPass(*PR);
@@ -229,6 +238,7 @@ AIEBaseTargetMachine::AIEBaseTargetMachine(const Target &T, const Triple &TT,
 
   setMBBPlacementOpts();
   setAliasAnalysisOpts();
+  setMemorySSAOpts();
   setPipelinerOpts();
 }
 
@@ -250,6 +260,14 @@ void AIEBaseTargetMachine::setAliasAnalysisOpts() {
   // decomposition so deeper pointer chains can be disambiguated.
   if (MaxLookupSearchDepth.getNumOccurrences() == 0)
     MaxLookupSearchDepth = 10;
+}
+
+void AIEBaseTargetMachine::setMemorySSAOpts() {
+  // Kernels commonly contain long straight-line blocks with many vector
+  // stores, which exhausts the default walk budget. That leaves MemoryUses
+  // unoptimized and weakens the passes relying on them, such as DSE and LICM.
+  if (MaxCheckLimit.getNumOccurrences() == 0)
+    MaxCheckLimit = 200;
 }
 
 void AIEBaseTargetMachine::setPipelinerOpts() {

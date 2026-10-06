@@ -711,8 +711,8 @@ static bool combineSubRegCopyToSuperregCopy(MachineBasicBlock &MBB,
       const unsigned SubRegIdx = MI.getOperand(I + 1).getImm();
 
       auto *SubRegDef = MRI.getVRegDef(SrcReg);
-      if (!SubRegDef->isCopy()) {
-        LLVM_DEBUG(llvm::dbgs() << "Src is not a COPY. Skip\n");
+      if (!SubRegDef || !SubRegDef->isCopy()) {
+        LLVM_DEBUG(llvm::dbgs() << "Src has no def or is not a COPY. Skip\n");
         CommonSrcReg = {};
         break;
       }

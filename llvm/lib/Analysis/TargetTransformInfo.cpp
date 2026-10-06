@@ -57,10 +57,6 @@ namespace {
 struct NoTTIImpl : TargetTransformInfoImplCRTPBase<NoTTIImpl> {
   explicit NoTTIImpl(const DataLayout &DL)
       : TargetTransformInfoImplCRTPBase<NoTTIImpl>(DL) {}
-
-  bool isLeanStage0Intrinsic(const Instruction &I) const override {
-    return false;
-  }
 };
 } // namespace
 
@@ -626,10 +622,6 @@ bool TargetTransformInfo::useColdCCForColdCall(Function &F) const {
 bool TargetTransformInfo::isTargetIntrinsicTriviallyScalarizable(
     Intrinsic::ID ID) const {
   return TTIImpl->isTargetIntrinsicTriviallyScalarizable(ID);
-}
-
-bool TargetTransformInfo::isLeanStage0Intrinsic(const Instruction &I) const {
-  return TTIImpl->isLeanStage0Intrinsic(I);
 }
 
 bool TargetTransformInfo::isTargetIntrinsicWithScalarOpAtArg(

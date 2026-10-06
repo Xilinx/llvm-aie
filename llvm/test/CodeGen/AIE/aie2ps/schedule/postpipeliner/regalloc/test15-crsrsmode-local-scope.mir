@@ -1,0 +1,103 @@
+# NOTE: Test for AIERegDefUseTracker - crSRSMode LocalScope live range tracking
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+
+# RUN: llc -verify-machineinstrs --mtriple=aie2ps -O2 \
+# RUN:   --start-before=postmisched %s \
+# RUN:   --aie-postpipeliner-vreg-mode=1 \
+# RUN:   --aie-postpipeliner-phys-mode=0 \
+# RUN:   --debug-only=aie-reg-liverange \
+# RUN:   --aie-test-regdefuse-tracker \
+# RUN:   --aie-simplify-reserved-regs \
+# RUN:   -o /dev/null 2>&1 | FileCheck %s
+# REQUIRES: asserts
+
+# Test 15: crSRSMode LocalScope live range tracking
+#
+# Stripped from a motivating example containing two SRS operations that each
+# require a different crSRSMode value. The pattern is:
+#
+#   crsrsmode = MOVX 0           ; first crSRSMode live range
+#   x0 = VSRS_2x ... crsrsmode  ; implicit use
+#   crsrsmode = MOVX 1           ; second crSRSMode live range
+#   x0 = VSRS_4x ... crsrsmode  ; implicit use
+#
+# cml0 and dm5 are live-in inputs to the two SRS operations.
+# Neither x0 is live-out, so each forms a virtualizable live range with
+# exactly one def and no uses.
+# Each crSRSMode def is consumed only implicitly, making those live ranges
+# non-virtualizable. Because crSRSMode has the LocalScope property,
+# --aie-simplify-reserved-regs causes them to be retained for liveness
+# tracking alongside the virtualizable x0 ranges.
+#
+# CHECK: FINAL LIVE RANGES
+# CHECK: Total live ranges: 4
+# CHECK-EMPTY:
+# CHECK-NEXT: Live Range #{{[0-9]+}} for crSRSMode:
+# CHECK-NEXT:   Definitions (1):
+# CHECK-NEXT:     [0] Register: crSRSMode $crsrsmode = MOVX_mvx_cr_imm 0
+# CHECK-NEXT:   Uses (1):
+# CHECK-NEXT:     [0] Register: crSRSMode $x0 = VSRS_2x_mv_x_srs_cm_srsSign1 $cml0, $s1, implicit-def dead $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+# CHECK-EMPTY:
+# CHECK-NEXT: Live Range #{{[0-9]+}} for crSRSMode:
+# CHECK-NEXT:   Definitions (1):
+# CHECK-NEXT:     [0] Register: crSRSMode $crsrsmode = MOVX_mvx_cr_imm 1
+# CHECK-NEXT:   Uses (1):
+# CHECK-NEXT:     [0] Register: crSRSMode $x0 = VSRS_4x_mv_x_srs_dm_srsSign1 $dm5, $s2, implicit-def dead $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+# CHECK-EMPTY:
+# CHECK-NEXT: Live Range #{{[0-9]+}} for x0:
+# CHECK-NEXT:   Definitions (1):
+# CHECK-NEXT:     [0] Register: x0 $x0 = VSRS_2x_mv_x_srs_cm_srsSign1 $cml0, $s1, implicit-def dead $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+# CHECK-NEXT:   Uses (0):
+# CHECK-EMPTY:
+# CHECK-NEXT: Live Range #{{[0-9]+}} for x0:
+# CHECK-NEXT:   Definitions (1):
+# CHECK-NEXT:     [0] Register: x0 $x0 = VSRS_4x_mv_x_srs_dm_srsSign1 $dm5, $s2, implicit-def dead $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+# CHECK-NEXT:   Uses (0):
+
+--- |
+  define void @test_crsrsmode_local_scope() {
+  entry:
+    br label %loop
+  loop:
+    br i1 undef, label %loop, label %exit
+  exit:
+    ret void
+  }
+...
+---
+name:            test_crsrsmode_local_scope
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  bb.0.entry:
+    successors: %bb.1
+    liveins: $r1, $cml0, $dm5, $s1, $s2
+
+    $lc = ADD_NC_add_lc_ri $r1, 0
+    MOVXM_lng_cg_ls_abs %bb.1, implicit-def $ls
+    MOVXM_lng_cg_le_abs <mcsymbol .L_LEnd0>, implicit-def $le
+
+  bb.1.loop (align 16):
+    successors: %bb.1, %bb.2
+    liveins: $cml0, $dm5, $s1, $s2
+
+    ; First crSRSMode live range: def then implicit use.
+    $crsrsmode = MOVX_mvx_cr_imm 0
+    $x0 = VSRS_2x_mv_x_srs_cm_srsSign1 $cml0, $s1, implicit-def dead $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+
+    ; Second crSRSMode live range: def then implicit use.
+    $crsrsmode = MOVX_mvx_cr_imm 1
+    $x0 = VSRS_4x_mv_x_srs_dm_srsSign1 $dm5, $s2, implicit-def dead $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+
+  bb.2.exit (align 16):
+
+    RET implicit $lr
+    DelayedSchedBarrier
+
+...

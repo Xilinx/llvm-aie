@@ -55,7 +55,9 @@ public:
   bool selectG_CONCAT_VECTORS(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectG_AIE_BROADCAST_VECTOR(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectVST_FIFO(MachineInstr &I, MachineRegisterInfo &MRI);
-  bool selectVST_FIFO_CONV(MachineInstr &StoreI, MachineRegisterInfo &MRI);
+  bool selectVST_FIFO_CONV(MachineInstr &StoreI, MachineRegisterInfo &MRI,
+                           Intrinsic::ID ConvIID, unsigned NumComponents,
+                           unsigned FusedOpcode);
   unsigned getSub256LoIdx() const override { return AIE2PS::sub_256_lo; }
   unsigned getNoSubRegIdx() const override { return AIE2PS::NoSubRegister; }
   const TargetRegisterClass &getVEC128RegClass() const override {
@@ -75,7 +77,6 @@ public:
                              MachineRegisterInfo &MRI) override;
   bool selectG_AIE_STORE_PACK(MachineInstr &StoreI,
                               MachineRegisterInfo &MRI) override;
-  bool selectG_AIE_LOAD_UNPACK(MachineInstr &UNPACKI, MachineRegisterInfo &MRI);
   bool selectG_AIE_LOAD_UPS(MachineInstr &UPSI, MachineRegisterInfo &MRI,
                             std::optional<unsigned> crUPSModeVal) override;
   bool selectVSHUFFLEBFP640(MachineInstr &I, MachineRegisterInfo &MRI);
@@ -346,6 +347,8 @@ private:
       std::optional<APInt> Immediate, bool IsSigned) override;
   bool canCombineUNPACKLoad(MachineInstr &MemOp, MachineInstr &CombOp,
                             MachineRegisterInfo &MRI) override;
+  bool setUnpackSizeRegister(MachineIRBuilder &MIB,
+                             Intrinsic::ID IntrinsicID) override;
   std::optional<LoadStoreOpcodes>
   getCombinedOpcodeUPS(const MachineInstr &MemOp, const MachineInstr &CombOp,
                        std::optional<APInt> Immediate, bool IsSigned);
@@ -3794,57 +3797,12 @@ bool AIE2PSInstructionSelector::canCombineUNPACKLoad(MachineInstr &MemOp,
       .has_value();
 }
 
-bool AIE2PSInstructionSelector::selectG_AIE_LOAD_UNPACK(
-    MachineInstr &UNPACKI, MachineRegisterInfo &MRI) {
-  Register LoadResult = (std::next(UNPACKI.uses().begin()))->getReg();
-  MachineInstr *LoadOp = getDefIgnoringCopiesAndBitcasts(LoadResult, MRI);
-  // Should we build the instruction at load's position?
-  bool ShouldAdvanceOp = false;
-
-  assert(LoadOp && "Expected SSA.");
-
-  // Do not try to combine if one of the load's defs is used by another
-  // instruction between the load and the VUNPACK or if there is a store
-  // between the load and the VUNPACK.
-  if (!canDelayMemOp(*LoadOp, UNPACKI, MRI)) {
-    // If we cannot delay the load, we can try to advance the combined
-    // instruction to the load's position.
-    if (canAdvanceOp(*LoadOp, UNPACKI, MRI))
-      ShouldAdvanceOp = true;
-    else
-      return false;
-  }
-
-  if (!canCombineUNPACKLoad(*LoadOp, UNPACKI, MRI))
-    return false;
-
-  std::optional<AddressingModeInfo> AMI =
-      getOrDefineAddressingRegister(*LoadOp, MRI);
-  if (!AMI)
-    return false;
-
-  Register DstReg = UNPACKI.getOperand(0).getReg();
-  // In this case of G_INTRINSIC operand 1 is target intrinsic
-  // In this case the operand 2 is the source register which is the loaded value
-  Register SignReg = UNPACKI.getOperand(3).getReg();
-
-  auto SignVal = getIConstantVRegValWithLookThrough(SignReg, MRI);
-  bool ConstantSign = SignVal ? true : false;
-  std::optional<LoadStoreOpcodes> LSO = getCombinedOpcodeUNPACKLoad(
-      *LoadOp, UNPACKI, AMI->ImmediateOffset,
-      ConstantSign ? SignVal.value().Value == 0x1 : false);
-
-  assert(LSO && "Unexpected VLDB.UNPACK combine failure");
-
-  if (ShouldAdvanceOp)
-    MIB.setInstr(*LoadOp);
-  else
-    MIB.setInstr(UNPACKI);
-
-  // Selects the size of the UNPACK instructions
+bool AIE2PSInstructionSelector::setUnpackSizeRegister(
+    MachineIRBuilder &MIB, Intrinsic::ID IntrinsicID) {
+  // Selects the size of the UNPACK instructions based on source size
   // 0 – Source is 4 bits
   // 1 – Source is 8 bits
-  switch (cast<GIntrinsic>(UNPACKI).getIntrinsicID()) {
+  switch (IntrinsicID) {
   case Intrinsic::aie2ps_unpack_I512_I8_I4:
   case Intrinsic::aie2ps_unpack_I1024_I8_I4:
     setCtrlRegister(MIB, AIE2PS::crUnpackSize, 0);
@@ -3852,28 +3810,11 @@ bool AIE2PSInstructionSelector::selectG_AIE_LOAD_UNPACK(
   case Intrinsic::aie2ps_unpack_I512_I16_I8:
   case Intrinsic::aie2ps_unpack_I1024_I16_I8:
     setCtrlRegister(MIB, AIE2PS::crUnpackSize, 1);
+    break;
+  default:
+    return false;
   }
-
-  auto NewInstr = MIB.buildInstr(LSO->ISelOpcode);
-
-  NewInstr.addDef(DstReg);
-
-  for (auto *Def = std::next(LoadOp->defs().begin());
-       Def != LoadOp->defs().end(); ++Def) {
-    NewInstr.addDef(Def->getReg());
-  }
-
-  addAddressingMode(NewInstr, *AMI, LSO->FitsImmediateRange, false, MRI);
-
-  NewInstr.cloneMemRefs(*LoadOp);
-
-  if (!ConstantSign)
-    setUnsetCtrlRegister(MIB, *NewInstr, MRI, AIE2PS::unpackSign0, SignReg);
-
-  UNPACKI.eraseFromParent();
-  makeDeadMI(*LoadOp, MRI);
-
-  return constrainSelectedInstRegOperands(*NewInstr.getInstr(), TII, TRI, RBI);
+  return true;
 }
 
 std::optional<LoadStoreOpcodes> AIE2PSInstructionSelector::getCombinedOpcodeUPS(
@@ -4609,8 +4550,11 @@ static unsigned int getStoreFifoOpcode(MachineInstr &I) {
 }
 
 bool AIE2PSInstructionSelector::selectVST_FIFO_CONV(MachineInstr &StoreI,
-                                                    MachineRegisterInfo &MRI) {
-  // Operand 7 is the first component (Mantissa) of the BFP384 push
+                                                    MachineRegisterInfo &MRI,
+                                                    Intrinsic::ID ConvIID,
+                                                    unsigned NumComponents,
+                                                    unsigned FusedOpcode) {
+  // Operand 7 is the first component (Mantissa) of the BFP push
   const Register Mantissa = StoreI.getOperand(7).getReg();
   MachineInstr *MantissaDef = MRI.getVRegDef(Mantissa);
 
@@ -4621,25 +4565,22 @@ bool AIE2PSInstructionSelector::selectVST_FIFO_CONV(MachineInstr &StoreI,
   if (!VConvOp)
     return false;
 
-  if (VConvOp->getIntrinsicID() != Intrinsic::aie2ps_v64accfloat_to_v64mx6)
+  if (VConvOp->getIntrinsicID() != ConvIID)
     return false;
 
-  // Verify other components come from the same VCONV and match correct outputs
-  const Register SignBit = StoreI.getOperand(8).getReg();
-  const Register SubTile = StoreI.getOperand(9).getReg();
-  const Register Exponent = StoreI.getOperand(10).getReg();
+  // Every component must be defined by that same VCONV, in def order, and be
+  // consumed only by this push: folding the VCONV away drops its defs, so any
+  // remaining user would be left reading an undefined register.
+  for (unsigned Idx = 0; Idx != NumComponents; ++Idx) {
+    const Register Component = StoreI.getOperand(7 + Idx).getReg();
+    if (VConvOp->getOperand(Idx).getReg() != Component)
+      return false;
+    if (!MRI.hasOneNonDBGUse(Component))
+      return false;
+  }
 
-  if (VConvOp->getOperand(0).getReg() != Mantissa)
-    return false;
-  if (VConvOp->getOperand(1).getReg() != SignBit)
-    return false;
-  if (VConvOp->getOperand(2).getReg() != SubTile)
-    return false;
-  if (VConvOp->getOperand(3).getReg() != Exponent)
-    return false;
-
-  // Source of intrinsic is operand 5 (4 defs + 1 ID + source)
-  const Register SrcReg = VConvOp->getOperand(5).getReg();
+  // The accumulator source follows the defs and the intrinsic ID.
+  const Register SrcReg = VConvOp->getOperand(NumComponents + 1).getReg();
 
   const Register PtrOut = StoreI.getOperand(0).getReg();
   const Register FifoOut = StoreI.getOperand(1).getReg();
@@ -4649,8 +4590,7 @@ bool AIE2PSInstructionSelector::selectVST_FIFO_CONV(MachineInstr &StoreI,
   const Register FifoIn = StoreI.getOperand(5).getReg();
   const Register AvailIn = StoreI.getOperand(6).getReg();
 
-  auto NewInstr = MIB.buildInstr(AIE2PS::VST_PUSH_384_CONV_mx6_fp32,
-                                 {FifoOut, PtrOut, AvailOut},
+  auto NewInstr = MIB.buildInstr(FusedOpcode, {FifoOut, PtrOut, AvailOut},
                                  {FifoIn, SrcReg, PtrIn, AvailIn});
   NewInstr.cloneMemRefs(StoreI);
 
@@ -4683,7 +4623,9 @@ bool AIE2PSInstructionSelector::selectVST_FIFO(MachineInstr &I,
   }
   case Intrinsic::aie2ps_fifo_st_push_BFP384: {
     // First try to match CONV combine
-    if (selectVST_FIFO_CONV(I, MRI))
+    if (selectVST_FIFO_CONV(I, MRI, Intrinsic::aie2ps_v64accfloat_to_v64mx6,
+                            /*NumComponents=*/4,
+                            AIE2PS::VST_PUSH_384_CONV_mx6_fp32))
       return true;
 
     const Register PtrIn = I.getOperand(4).getReg();
@@ -4714,6 +4656,12 @@ bool AIE2PSInstructionSelector::selectVST_FIFO(MachineInstr &I,
     return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
   }
   case Intrinsic::aie2ps_fifo_st_push_BFP640: {
+    // First try to match CONV combine
+    if (selectVST_FIFO_CONV(I, MRI, Intrinsic::aie2ps_v64accfloat_to_v64mx9,
+                            /*NumComponents=*/3,
+                            AIE2PS::VST_PUSH_576_CONV_mx9_fp32))
+      return true;
+
     const Register PtrIn = I.getOperand(4).getReg();
     const Register FifoIn = I.getOperand(5).getReg();
     const Register AvailIn = I.getOperand(6).getReg();

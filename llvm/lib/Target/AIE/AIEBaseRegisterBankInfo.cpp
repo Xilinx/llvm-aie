@@ -311,9 +311,20 @@ AIEBaseRegisterBankInfo::getVecPartialMappingIdx(const LLT &Ty) const {
   }
 }
 
+bool AIEBaseRegisterBankInfo::shouldSelectPtrAddAsAddmNc(
+    const MachineInstr &, const MachineRegisterInfo &) const {
+  return false;
+}
+
 bool AIEBaseRegisterBankInfo::requiresGPRRegBank(const MachineInstr &MI,
                                                  const MachineRegisterInfo &MRI,
                                                  unsigned Depth) const {
+  // Targets that can select a G_PTR_ADD as ADDM_NC override
+  // shouldSelectPtrAddAsAddmNc so the offset stays in the GPR file instead of
+  // the default MOD bank.
+  if (shouldSelectPtrAddAsAddmNc(MI, MRI))
+    return true;
+
   switch (MI.getOpcode()) {
   case TargetOpcode::G_ANYEXT:
   case TargetOpcode::G_SEXT:

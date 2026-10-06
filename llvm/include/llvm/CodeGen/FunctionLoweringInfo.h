@@ -299,7 +299,6 @@ public:
 
   /// Saved context when using CallLowering::preLowerReturn()
   struct SavedRetCCState {
-    const Value *RetVal = nullptr;
     SmallVector<Register, 4> AssignedRegs;
     unsigned ReservedStackSize = 0;
   };

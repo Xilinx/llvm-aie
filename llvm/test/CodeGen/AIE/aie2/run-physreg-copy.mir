@@ -4,10 +4,21 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple=aie2 -run-pass postrapseudos -verify-machineinstrs -o - %s | FileCheck %s
 
 # Verify AIE2InstrInfo.cpp: copyPhysReg()
+
+---
+name:     test_copy_scalar
+body: |
+  bb.0:
+    ; CHECK-LABEL: name: test_copy_scalar
+    ; CHECK: $r0 = MOV_SCL_pseudo $r1
+    ; CHECK-NEXT: $p0 = MOV_mv_scl $p1
+  $r0 = COPY $r1
+  $p0 = COPY $p1
+...
 
 ---
 name:     test_copy_d

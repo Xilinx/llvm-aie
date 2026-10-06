@@ -1,0 +1,81 @@
+# NOTE: Test for AIERegDefUseTracker - a super-register read must not join a
+#       live range whose lanes it consumes were already redefined below.
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+
+# RUN: llc -verify-machineinstrs --mtriple=aie2ps -O2 \
+# RUN:   --start-before=postmisched %s \
+# RUN:   --aie-postpipeliner-vreg-mode=1 \
+# RUN:   --aie-postpipeliner-phys-mode=0 \
+# RUN:   --debug-only=aie-reg-liverange \
+# RUN:   --aie-test-regdefuse-tracker \
+# RUN:   -o /dev/null 2>&1 | FileCheck %s
+# REQUIRES: asserts
+
+# Pattern (forward program order), extracted from ReduceSumC8Bf16_fp16_1:
+#   cml0 = VCONV x4        ; (A) writes the low half of dm0
+#   dm2  = VADD dm0, dm1   ; reads A in the low half
+#   cml0 = VCONV x5        ; (B) overwrites the low half of dm0
+#   dm3  = VADD dm0, dm1   ; reads B in the low half
+#
+# A and B are distinct values. The backward scan only kills the cml0 lanes at
+# (B), so the earlier dm0 read must not join (B)'s range just because the
+# untouched cmh0 lanes are still live. Doing so produces a single range with
+# one def and two uses and leaves (A) with zero uses; renaming that range then
+# makes the first VADD read B instead of A.
+
+# CHECK: Live Range {{.*}} for dm0:
+# CHECK-NEXT:   Definitions (1):
+# CHECK-NEXT:     [0] Register: cml0 {{.*}} renamable $cml0 = VCONV_fp32_fp16_mv killed renamable $x4
+# CHECK-NEXT:   Uses (1):
+# CHECK-NEXT:     [0] Register: dm0 renamable $dm2 = VADD_f_vacc_fp
+# CHECK-EMPTY:
+# CHECK-NEXT: Live Range {{.*}} for dm0:
+# CHECK-NEXT:   Definitions (1):
+# CHECK-NEXT:     [0] Register: cml0 {{.*}} renamable $cml0 = VCONV_fp32_fp16_mv killed renamable $x5
+# CHECK-NEXT:   Uses (1):
+# CHECK-NEXT:     [0] Register: dm0 renamable $dm3 = VADD_f_vacc_fp
+
+--- |
+  define void @test_partial_redef_splits_superreg_use() {
+  entry:
+    br label %loop
+  loop:
+    br label %exit
+  exit:
+    ret void
+  }
+...
+---
+name:            test_partial_redef_splits_superreg_use
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  bb.0.entry:
+    successors: %bb.1
+    liveins: $x4, $x5, $dm1, $r8, $r1
+
+    $lc = ADD_NC_add_lc_ri $r1, 0
+    MOVXM_lng_cg_ls_abs %bb.1, implicit-def $ls
+    MOVXM_lng_cg_le_abs <mcsymbol .L_LEnd0>, implicit-def $le
+
+  bb.1.loop (align 16):
+    successors: %bb.1, %bb.2
+    liveins: $x4, $x5, $dm1, $r8
+
+    renamable $cml0 = VCONV_fp32_fp16_mv killed renamable $x4
+    renamable $dm2 = VADD_f_vacc_fp renamable $dm0, renamable $dm1, renamable $r8, implicit-def dead $srfpflags, implicit $crfpmask
+    renamable $cml0 = VCONV_fp32_fp16_mv killed renamable $x5
+    renamable $dm3 = VADD_f_vacc_fp renamable $dm0, renamable $dm1, renamable $r8, implicit-def dead $srfpflags, implicit $crfpmask
+
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+
+  bb.2.exit (align 16):
+    RET implicit $lr
+    DelayedSchedBarrier
+
+...

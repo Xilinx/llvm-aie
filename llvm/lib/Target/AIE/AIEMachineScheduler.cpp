@@ -11,6 +11,8 @@
 #include "AIEMachineScheduler.h"
 #include "AIEBaseAliasAnalysis.h"
 #include "AIEBaseInstrInfo.h"
+#include "AIEBaseRegisterInfo.h"
+#include "AIEBaseSubtarget.h"
 #include "AIEBundle.h"
 #include "AIEHazardRecognizer.h"
 #include "AIEInterBlockScheduling.h"
@@ -21,8 +23,10 @@
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/MachineOptimizationRemarkEmitter.h"
 #include "llvm/CodeGen/MachineScheduler.h"
 #include "llvm/CodeGen/ResourceScoreboard.h"
+#include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/Support/Debug.h"
 #include <memory>
 
@@ -94,6 +98,15 @@ static cl::opt<bool> UseLoopHeuristics(
 static cl::opt<bool> PreSchedFollowsSkipPipeliner(
     "aie-presched-follows-skip-pipeliner", cl::init(true),
     cl::desc("Don't run the prescheduler if the pipeliner is skipped"));
+
+static cl::opt<bool> IncomingLatencyBias(
+    "aie-incoming-latency-bias", cl::init(true),
+    cl::desc("[AIE] Account for the latency produced in predecessor blocks "
+             "when ranking bottom-zone scheduling candidates"));
+
+// Declared in AIEInterBlockScheduling.cpp, which owns the option since
+// the option is primarily a scheduling-phase configuration.
+extern cl::opt<bool> SimplifyReservedRegs;
 
 namespace {
 // A sentinel value to represent an unknown SUnit.
@@ -424,16 +437,20 @@ void AIEPostRASchedStrategy::initializeTopScoreBoard() {
     TopHazardRec->emitInScoreboard(MI, MI.getDesc(), 0);
   };
 
-  const unsigned ConflictHorizon = TopHazardRec->getConflictHorizon();
+  const int ConflictHorizon = TopHazardRec->getConflictHorizon();
   ArrayRef<MachineBundle> LoopBundles = *LoopBundlesOpt;
-  const unsigned LoopSize = LoopBundles.size();
+  const int LoopSize = LoopBundles.size();
 
-  // ceil(LoopSize / ConflictHorizon)
-  const int LoopReplayTimes =
-      (LoopSize + ConflictHorizon - 1) / ConflictHorizon;
+  // Replay the SWP body N times immediately before the epilogue so the top
+  // scoreboard holds every reservation that can still affect cycle 0.
+  // One iteration contributes L = LoopSize (II) cycles of history, while
+  // instructions up to H = ConflictHorizon cycles back can still conflict:
+  //   N * L >= H  =>  N = ceil(H / L)
+  const int LoopReplayTimes = (ConflictHorizon + LoopSize - 1) / LoopSize;
 
-  // Replay SWP loop enough times (right before the epilogue) until the
-  // scoreboard reaches a steady state.
+  DEBUG_BLOCKS(dbgs() << "Replaying " << LoopReplayTimes << " iterations of "
+                      << LoopSize << " bundles into the top scoreboard\n");
+
   for (int I = 0; I < LoopReplayTimes; I++) {
     for (auto &Bundle : LoopBundles) {
       for (MachineInstr *MI : Bundle.getInstrs()) {
@@ -457,9 +474,47 @@ static MachineInstr *getDelaySlotInstr(MachineBasicBlock::iterator RegionBegin,
   return &(*It);
 }
 
+void AIEPostRASchedStrategy::computeIncomingInterBlockLatencies() {
+  assert(CurMBB && "Scheduling a region outside of a block");
+  IncomingInterBlockLatency.clear();
+  if (!IncomingLatencyBias)
+    return;
+
+  const DenseMap<const MachineInstr *, int> EdgeLatency =
+      InterBlock.getIncomingLatencies(CurMBB);
+
+  for (const SUnit &SU : DAG->SUnits) {
+    const MachineInstr *MI = SU.getInstr();
+    if (!MI)
+      continue;
+    auto EdgeIt = EdgeLatency.find(MI);
+    if (EdgeIt == EdgeLatency.end() || EdgeIt->second <= 0)
+      continue;
+    // A node with a predecessor in the region already carries that chain in
+    // its depth; adding the incoming latency would double-count it.
+    if (any_of(SU.Preds,
+               [](const SDep &D) { return !D.getSUnit()->isBoundaryNode(); }))
+      continue;
+    IncomingInterBlockLatency[MI] = EdgeIt->second;
+    LLVM_DEBUG(dbgs() << "  Incoming interblock latency " << EdgeIt->second
+                      << " for SU(" << SU.NodeNum << "): " << *MI);
+  }
+}
+
+int AIEPostRASchedStrategy::getInterBlockDepth(const SUnit &SU) const {
+  const int Depth = SU.getDepth();
+  const MachineInstr *MI = SU.getInstr();
+  if (!MI)
+    return Depth;
+  auto It = IncomingInterBlockLatency.find(MI);
+  return It == IncomingInterBlockLatency.end() ? Depth : Depth + It->second;
+}
+
 void AIEPostRASchedStrategy::initialize(ScheduleDAGMI *Dag) {
   PostGenericScheduler::initialize(Dag);
   assert(PostRADirection == MISched::Direction::Unspecified);
+
+  computeIncomingInterBlockLatencies();
 
   // Update Bot scoreboard from the scheduled top regions of successor blocks.
   // Conservativeness (whether to replay bundles or block all cycles) is
@@ -930,12 +985,15 @@ static int findInBundles(ArrayRef<AIE::MachineBundle> Bundles,
   return static_cast<unsigned>(std::distance(Bundles.begin(), It));
 }
 
-/// Return the MBB iterator at which \p BranchMI should be spliced: just after
-/// the last non-BranchMI instruction in bundles[0..\p PlacedIdx], searching
-/// backward from \p PlacedIdx.
+/// Return the MBB iterator at which \p BranchMI should be spliced so that the
+/// instructions of \p Bundles appear in bundle order: just after the last
+/// non-BranchMI instruction in bundles[0..\p PlacedIdx], or, if those bundles
+/// hold none (e.g. only empty top-fixed bundles), just before the first
+/// instruction of the following bundles.
+/// \pre \p Bundles hold an instruction other than \p BranchMI.
 static MachineBasicBlock::iterator
 computeSplicePoint(ArrayRef<AIE::MachineBundle> Bundles, unsigned PlacedIdx,
-                   MachineInstr *BranchMI, MachineBasicBlock *MBB) {
+                   MachineInstr *BranchMI) {
   for (int I = static_cast<int>(PlacedIdx); I >= 0; --I) {
     const auto &Instrs = Bundles[I].getInstrs();
     auto It =
@@ -944,7 +1002,14 @@ computeSplicePoint(ArrayRef<AIE::MachineBundle> Bundles, unsigned PlacedIdx,
     if (It != Instrs.rend())
       return getBundleEnd((*It)->getIterator());
   }
-  return MBB->end();
+  // Anchor before the next instruction so the branch stays before the region's
+  // DelayedSchedBarrier.
+  for (const AIE::MachineBundle &Bundle : drop_begin(Bundles, PlacedIdx + 1))
+    if (!Bundle.empty())
+      return getBundleStart(Bundle.getInstrs().front()->getIterator());
+  // Region::setTopFixedBundles asserts that the last top-fixed bundle is not
+  // empty.
+  llvm_unreachable("No instruction to anchor the branch to");
 }
 
 /// Remove \p MI from \p Bundle, keeping Instrs, SlotMap and OccupiedSlots
@@ -1055,8 +1120,8 @@ void AIEPostRASchedStrategy::fixupDelaySlotPosition(
   TopHR->emitInScoreboard(*BranchMI, BranchMI->getDesc(), Delta);
 
   // Physically move BranchMI to its correct position in the MBB.
-  CurMBB->splice(computeSplicePoint(TopBundles, PlacedIdx, BranchMI, CurMBB),
-                 CurMBB, BranchMI->getIterator());
+  CurMBB->splice(computeSplicePoint(TopBundles, PlacedIdx, BranchMI), CurMBB,
+                 BranchMI->getIterator());
 
   // Now that the branch's resource bookings are in the Top scoreboard,
   // re-check for inter-zone conflicts caused by the branch itself. If one is
@@ -1293,6 +1358,16 @@ bool AIEPostRASchedStrategy::tryCandidate(SchedCandidate &Cand,
           return TryCand.Reason != NoCand;
         }
       }
+    }
+
+    // Break depth ties using the part of the chain that lies in a predecessor
+    // block, which getDepth() truncates at the region boundary. Sinking such a
+    // node lets the predecessor cover the producer's latency with its own
+    // instructions instead of padding it with NOPs.
+    if (tryGreater(getInterBlockDepth(*TryCand.SU),
+                   getInterBlockDepth(*Cand.SU), TryCand, Cand,
+                   BotPathReduce)) {
+      return TryCand.Reason != NoCand;
     }
 
     // Prefer the instruction whose dependent chain is estimated to
@@ -1744,6 +1819,49 @@ void AIEScheduleDAGMILive::exitRegion() {
   ScheduleDAGMILive::exitRegion();
 }
 
+namespace {
+
+// Collect all edges in a separate vector. This allows modifying SU.Preds
+// without invalidating iterators.
+SmallVector<SDep, 4> getPreds(SUnit &SU) {
+  SmallVector<SDep, 4> Preds;
+  copy(SU.Preds, std::back_inserter(Preds));
+  return Preds;
+}
+
+// Remove all Anti (WAR) and Output (WAW) dependencies on LocalScope
+// registers unconditionally. By removing them, we give the pipeliner the
+// freedom to interchange full live ranges, which sometimes helps to interleave
+// pipeline stages. The downside it that we need to check the schedule
+// afterwards. That check is made part of postregalloc, treating these ranges
+// as any other live range.
+// Therefore, we should only call this function in the virtualized postpipeliner
+// mode where schedule correctness is verified afterwards.
+//
+// \param DAG The scheduling DAG to modify.
+void simplifyReservedRegDeps(ScheduleDAGMI &DAG) {
+  MachineFunction &MF = DAG.MF;
+  const TargetRegisterInfo *TRI = MF.getSubtarget().getRegisterInfo();
+  const auto *RI = static_cast<const AIEBaseRegisterInfo *>(TRI);
+
+  for (SUnit &SU : DAG.SUnits) {
+    for (const SDep &Dep : getPreds(SU)) {
+      if (Dep.getKind() != SDep::Anti && Dep.getKind() != SDep::Output)
+        continue;
+
+      const Register Reg = Dep.getReg();
+      if (!Reg.isPhysical() ||
+          !RI->hasPhysRegProperty(
+              Reg, AIEBaseRegisterInfo::PhysRegProperty::LocalScope))
+        continue;
+
+      SU.removePred(Dep);
+    }
+  }
+}
+
+} // namespace
+
 void llvm::AIEPostRASchedStrategy::buildGraph(ScheduleDAGMI &DAG, AAResults *AA,
                                               RegPressureTracker *RPTracker,
                                               PressureDiffs *PDiffs,
@@ -1772,6 +1890,8 @@ void llvm::AIEPostRASchedStrategy::buildGraph(ScheduleDAGMI &DAG, AAResults *AA,
     // dependences appear as forward dependences between the first and the
     // second iteration.
     NCopies = 2;
+    // Initialize pipelining.
+    BS.initPipelining();
   }
   DEBUG_BLOCKS(dbgs() << "    buildGraph, NCopies=" << NCopies << "\n");
   for (int S = 0; S < NCopies; S++) {
@@ -1792,6 +1912,18 @@ void llvm::AIEPostRASchedStrategy::buildGraph(ScheduleDAGMI &DAG, AAResults *AA,
   DAG.buildEdges(Context->AA, RPTracker, PDiffs, LIS, OverrideTrackLaneMasks,
                  AbandonSingleDefs);
   static_cast<AIEScheduleDAGMI &>(DAG).recordDbgInstrs(Region);
+
+  // Apply reserved register dependency simplification when enabled and in
+  // virtualized mode. This relaxes Anti and Output dependencies on
+  // simplifiable reserved registers to give the scheduler maximum freedom.
+  // The correctness of the resulting schedule is verified afterward.
+  const PostPipelinerMode Mode = BS.FixPoint.PipelinerMode;
+  if (SimplifyReservedRegs && (Mode == PostPipelinerMode::Virtual ||
+                               Mode == PostPipelinerMode::ReservedVirtual)) {
+    // Store the simplified registers so PostRegAlloc can verify that true
+    // live ranges on these registers don't overlap.
+    simplifyReservedRegDeps(DAG);
+  }
 }
 
 SUnit &AIEPostRASchedStrategy::addFixedSUnit(MachineInstr &MI, bool IsTop) {
@@ -1852,7 +1984,7 @@ void AIEScheduleDAGMI::schedule() {
 
     auto &PostSWP = BS.getPostSWP();
 
-    if (PostSWP.schedule(*this, BS.FixPoint.II)) {
+    if (PostSWP.schedule(*this, BS.FixPoint.II, BS.FixPoint.PipelinerMode)) {
       BS.setPipelined();
       LLVM_DEBUG(PostSWP.dump());
     }

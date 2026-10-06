@@ -5,7 +5,7 @@
 ;
 ; (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
 ;
-; RUN: llc -mtriple=aie2p -O2 -aie-enable-outer-loop-pipelining \
+; RUN: llc -mtriple=aie2p -O2 -aie-enable-outer-loop-pointer-opt=false -aie-enable-outer-loop-pipelining \
 ; RUN:     -aie-outer-loop-pipelining-speculative \
 ; RUN:     -stop-after=irtranslator -o - %s | FileCheck %s
 ;

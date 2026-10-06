@@ -263,6 +263,58 @@ func.func @arith_shift_right_index(%amount: i32) {
 
 // -----
 
+// COMMON-LABEL: arith_minsi
+// COMMON-SAME: ([[Arg0:[^ ]*]]: i32, [[Arg1:[^ ]*]]: i32)
+func.func @arith_minsi(%arg0: i32, %arg1: i32) -> i32 {
+  // COMMON: [[Cmp:[^ ]*]] = emitc.cmp lt, [[Arg0]], [[Arg1]] : (i32, i32) -> i1
+  // COMMON: [[Cond:[^ ]*]] = emitc.conditional [[Cmp]], [[Arg0]], [[Arg1]] : i32
+  %0 = arith.minsi %arg0, %arg1 : i32
+  // COMMON: return [[Cond]]
+  return %0 : i32
+}
+
+// -----
+
+// COMMON-LABEL: arith_maxsi
+// COMMON-SAME: ([[Arg0:[^ ]*]]: i32, [[Arg1:[^ ]*]]: i32)
+func.func @arith_maxsi(%arg0: i32, %arg1: i32) -> i32 {
+  // COMMON: [[Cmp:[^ ]*]] = emitc.cmp gt, [[Arg0]], [[Arg1]] : (i32, i32) -> i1
+  // COMMON: [[Cond:[^ ]*]] = emitc.conditional [[Cmp]], [[Arg0]], [[Arg1]] : i32
+  %0 = arith.maxsi %arg0, %arg1 : i32
+  // COMMON: return [[Cond]]
+  return %0 : i32
+}
+
+// -----
+
+// COMMON-LABEL: arith_minui
+// COMMON-SAME: ([[Arg0:[^ ]*]]: i32, [[Arg1:[^ ]*]]: i32)
+func.func @arith_minui(%arg0: i32, %arg1: i32) -> i32 {
+  // COMMON-DAG: [[CastArg0:[^ ]*]] = emitc.cast [[Arg0]] : i32 to ui32
+  // COMMON-DAG: [[CastArg1:[^ ]*]] = emitc.cast [[Arg1]] : i32 to ui32
+  // COMMON: [[Cmp:[^ ]*]] = emitc.cmp lt, [[CastArg0]], [[CastArg1]] : (ui32, ui32) -> i1
+  // COMMON: [[Cond:[^ ]*]] = emitc.conditional [[Cmp]], [[Arg0]], [[Arg1]] : i32
+  %0 = arith.minui %arg0, %arg1 : i32
+  // COMMON: return [[Cond]]
+  return %0 : i32
+}
+
+// -----
+
+// COMMON-LABEL: arith_maxui
+// COMMON-SAME: ([[Arg0:[^ ]*]]: i32, [[Arg1:[^ ]*]]: i32)
+func.func @arith_maxui(%arg0: i32, %arg1: i32) -> i32 {
+  // COMMON-DAG: [[CastArg0:[^ ]*]] = emitc.cast [[Arg0]] : i32 to ui32
+  // COMMON-DAG: [[CastArg1:[^ ]*]] = emitc.cast [[Arg1]] : i32 to ui32
+  // COMMON: [[Cmp:[^ ]*]] = emitc.cmp gt, [[CastArg0]], [[CastArg1]] : (ui32, ui32) -> i1
+  // COMMON: [[Cond:[^ ]*]] = emitc.conditional [[Cmp]], [[Arg0]], [[Arg1]] : i32
+  %0 = arith.maxui %arg0, %arg1 : i32
+  // COMMON: return [[Cond]]
+  return %0 : i32
+}
+
+// -----
+
 func.func @arith_select(%arg0: i1, %arg1: tensor<8xi32>, %arg2: tensor<8xi32>) -> () {
   // COMMON: [[V0:[^ ]*]] = emitc.conditional %arg0, %arg1, %arg2 : tensor<8xi32>
   %0 = arith.select %arg0, %arg1, %arg2 : i1, tensor<8xi32>

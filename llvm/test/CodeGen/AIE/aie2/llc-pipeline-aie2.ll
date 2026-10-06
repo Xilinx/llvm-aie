@@ -91,6 +91,7 @@
 ; AIE-O123-NEXT:      Scalar Evolution Analysis
 ; AIE-O123-NEXT:      GPU Load and Store Vectorizer
 ; AIE-O123-NEXT:      CodeGen Prepare
+; AIE-O0123-NEXT:      AIE Switch to OR-of-icmp Lowering
 
 ; AIE-O0123-NEXT:      Lower invoke and unwind, for unwindless code generators
 ; AIE-O0123-NEXT:      Remove unreachable blocks from the CFG
@@ -109,6 +110,8 @@
 ; AIE-O123-NEXT:      Lazy Block Frequency Analysis
 ; AIE-O123-NEXT:      Optimization Remark Emitter
 ; AIE-O123-NEXT:      Hardware Loop Insertion
+; AIE-O123-NEXT:      AIE Outer Loop Pointer Optimizer
+; AIE-O123-NEXT:      Scalar Evolution Analysis
 ; AIE-O123-NEXT:      AIE Outer Loop Pipeliner
 ; AIE-O123-NEXT:      Dominator Tree Construction
 ; AIE-O123-NEXT:      Basic Alias Analysis (stateless AA impl)
@@ -142,6 +145,7 @@
 ; AIE-O123-NEXT:      MachineDominator Tree Construction
 ; AIE-O123-NEXT:      AIE Post Legalizer Generic Combiner
 ; AIE-O123-NEXT:      AIE Base Address Clustering Optimization
+; AIE-O123-NEXT:      Machine Natural Loop Construction
 ; AIE-O123-NEXT:      AIE Pointer Modifier Optimization
 ; AIE-O123-NEXT:      AIE Post Legalizer Custom Combiner
 
@@ -238,6 +242,7 @@
 ; AIE-O123-NEXT:      AIE super-reg rewrite
 ; AIE-O123-NEXT:      Greedy Register Allocator
 ; AIE-O123-NEXT:      AIE waw-reg rewrite
+; AIE-O123-NEXT:      AIE epilogue register rewrite
 ; AIE-O123-NEXT:      Greedy Register Allocator
 ; AIE-O123-NEXT:      Virtual Register Rewriter
 ; AIE-O123-NEXT:      Stack Slot Coloring

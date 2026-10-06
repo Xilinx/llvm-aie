@@ -40,6 +40,11 @@ struct AIEConcatUnmergeCombineMatchData {
   // PHI component of the backedge
   // Register for the PHI Source operand 2 sitting in the backedge path.
   std::optional<Register> UnmergeSourceReg;
+
+  // The PHI incoming block associated with the unmerge (back-edge) operand.
+  // This is the actual CFG predecessor of the PHI for that operand, which is
+  // not necessarily the block where the unmerge source is defined.
+  MachineBasicBlock *UnmergeIncomingMBB = nullptr;
 };
 
 /// The mask is represented by a sawtooth function F with Period, Height and
@@ -494,6 +499,14 @@ bool matchPostIncLoadStorePtrAddWithTrunc(MachineInstr &MI,
                                           const AIEBaseInstrInfo &TII,
                                           GISelChangeObserver &Observer,
                                           BuildFnTy &MatchInfo);
+
+/// AIE-specific reassociation of G_PTR_ADD chains with constant offsets.
+/// Unlike the upstream reassoc_ptradd, this variant only triggers when the
+/// intermediate pointer (LHS of the root PTR_ADD) has exactly one use.
+/// This prevents breaking addressing mode opportunities for loops where the
+/// intermediate pointer feeds both memory operations and subsequent PTR_ADDs.
+bool matchAIEReassocPtrAdd(MachineInstr &MI, MachineRegisterInfo &MRI,
+                           CombinerHelper &Helper, BuildFnTy &MatchInfo);
 
 } // namespace llvm
 

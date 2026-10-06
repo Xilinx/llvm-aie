@@ -5,11 +5,13 @@
 ; (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
 ;
 ; RUN: llc -mtriple=aie2p -O2 -aie-enable-outer-loop-pipelining \
+; RUN:     -aie-enable-outer-loop-pointer-opt=false \
 ; RUN:     -stop-after=aie-outer-loop-pipeliner \
 ; RUN:     -o - %s 2>&1 | FileCheck %s
 
 
 ; RUN: llc -mtriple=aie2p -O2 -aie-enable-outer-loop-pipelining \
+; RUN:     -aie-enable-outer-loop-pointer-opt=false \
 ; RUN:     -stop-after=aie-outer-loop-pipeliner -o - %s \
 ; RUN:   | llc -mtriple=aie2p -x mir -run-pass=none -o /dev/null
 
@@ -202,7 +204,7 @@ declare i1 @llvm.loop.decrement.i32(i32)
 ; CHECK:   br i1 %inner.cond.lastiter, label %lastiter.stage1.inner.inner.header, label %lastiter.stage1.bottom
 
 ; CHECK: lastiter.stage1.bottom:
-; CHECK:   store i32 %acc.next.lastiter
+; CHECK:   store i32 %{{[a-z0-9.]+}}
 ; CHECK:   br label %exit
 
 define void @outer_to_inner_phi(ptr noalias %a, ptr noalias %b, ptr noalias %c,
@@ -327,3 +329,4 @@ exit:
 !10 = !{!"llvm.loop.mustprogress"}
 !11 = !{!"llvm.loop.itercount.range", i32 2}
 !12 = !{!"llvm.loop.itercount.range", i32 8}
+

@@ -30,8 +30,8 @@ exit:
   ret void
 }
 
-; CHECK: loop not versioned because its trip count is unknown or does not fit 32 bits
-define void @unprofitable(ptr noalias %a, ptr noalias %b, i64 %n) {
+; CHECK: loop not versioned because its trip count does not fit 32 bits
+define void @wide_trip_count(ptr noalias %a, ptr noalias %b, i64 %n) {
 entry:
   br label %loop
 loop:
@@ -43,6 +43,40 @@ loop:
   %i.next = add i64 %i, 1
   %c = icmp slt i64 %i.next, %n
   br i1 %c, label %loop, label %exit, !llvm.loop !1
+exit:
+  ret void
+}
+
+; CHECK: loop not versioned because its trip count is not computable
+define void @unknown_trip_count(ptr noalias %a, ptr noalias %b) {
+entry:
+  br label %loop
+loop:
+  %i = phi i32 [ 0, %entry ], [ %i.next, %loop ]
+  %pa = getelementptr i32, ptr %a, i32 %i
+  %x = load i32, ptr %pa, align 4
+  %pb = getelementptr i32, ptr %b, i32 %i
+  store i32 %x, ptr %pb, align 4
+  %i.next = add i32 %i, 1
+  %c = icmp ne i32 %x, 0
+  br i1 %c, label %loop, label %exit, !llvm.loop !4
+exit:
+  ret void
+}
+
+; CHECK: loop not versioned because its trip count of 2^32 wraps to zero in the 32-bit guard
+define void @wraparound_trip_count(ptr noalias %a, ptr noalias %b) {
+entry:
+  br label %loop
+loop:
+  %i = phi i32 [ 0, %entry ], [ %i.next, %loop ]
+  %pa = getelementptr i32, ptr %a, i32 %i
+  %x = load i32, ptr %pa, align 4
+  %pb = getelementptr i32, ptr %b, i32 %i
+  store i32 %x, ptr %pb, align 4
+  %i.next = add i32 %i, 1
+  %c = icmp ne i32 %i.next, 0
+  br i1 %c, label %loop, label %exit, !llvm.loop !5
 exit:
   ret void
 }
@@ -76,3 +110,5 @@ exit:
 !1 = distinct !{!1, !3}
 !2 = distinct !{!2, !3}
 !3 = !{!"llvm.loop.hint.aie-loop-versioning", i64 1}
+!4 = distinct !{!4, !3}
+!5 = distinct !{!5, !3}

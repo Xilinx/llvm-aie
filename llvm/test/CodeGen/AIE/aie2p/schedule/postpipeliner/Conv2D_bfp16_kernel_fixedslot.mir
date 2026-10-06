@@ -33,6 +33,8 @@ body:             |
   ; CHECK-NEXT:   - PrologueBundles: '17'
   ; CHECK-NEXT:   - Epilogue:        bb.2
   ; CHECK-NEXT:   - EpilogueBundles: '19'
+  ; CHECK-NEXT:   - VregMode:        Physical
+  ; CHECK-NEXT:   - SchedHeuristic:  Config_20_1_0_Latest
   ; CHECK-NEXT: ...
   bb.0.entry (align 16):
     successors: %bb.1(0x80000000)

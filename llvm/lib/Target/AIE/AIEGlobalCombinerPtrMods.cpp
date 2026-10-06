@@ -14,13 +14,20 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIEGlobalCombinerPtrMods.h"
+#include "llvm/CodeGen/GlobalISel/GenericMachineInstrs.h"
 #include "llvm/CodeGen/GlobalISel/MachineIRBuilder.h"
 #include "llvm/CodeGen/GlobalISel/Utils.h"
 #include "llvm/CodeGen/MachineDominators.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 
 namespace llvm::AIE {
 #define DEBUG_TYPE "global-combiner"
+
+static cl::opt<bool> PenalizeExtraCursorPostInc(
+    "aie-postinc-extra-cursor-penalty", cl::Hidden, cl::init(true),
+    cl::desc("Discount the PtrMod gain of a post-increment that would keep a "
+             "separately-advanced loop base live across a pointer chain."));
 
 const static int PtrModBits = 20;
 namespace {
@@ -42,6 +49,25 @@ std::optional<APInt> getImm(const MachineInstr &PtrAdd,
 
   return APInt(PtrModBits, Offset->Value.getSExtValue(), /*isSigned=*/
                true);
+}
+
+/// Walk up a chain of constant-offset G_PTR_ADDs starting at \p Ptr.
+/// \return the register the chain is rooted at and the accumulated
+/// displacement from that root.
+std::pair<Register, int64_t> getChainRoot(Register Ptr,
+                                          const MachineRegisterInfo &MRI) {
+  int64_t Offset = 0;
+  while (Ptr.isVirtual()) {
+    const MachineInstr *Def = MRI.getVRegDef(Ptr);
+    if (!Def || Def->getOpcode() != TargetOpcode::G_PTR_ADD)
+      break;
+    std::optional<APInt> Imm = getImm(*Def, MRI);
+    if (!Imm)
+      break;
+    Offset += Imm->getSExtValue();
+    Ptr = Def->getOperand(1).getReg();
+  }
+  return {Ptr, Offset};
 }
 
 } // namespace
@@ -306,6 +332,21 @@ OffsetCombiner::getPtrInstrs(MachineInstr *MemI) const {
   if (!getOpCode(PtrInc, MemI))
     return {};
 
+  // Skip if the G_PTR_ADD is inside a loop and the memory instruction is
+  // outside that loop. This avoids creating offset combines that would depend
+  // on intermediate pointer values from the loop body.
+  assert(MLI && "MachineLoopInfo must be provided");
+  const MachineBasicBlock *PtrIncMBB = PtrInc->getParent();
+  const MachineBasicBlock *MemIMBB = MemI->getParent();
+  if (PtrIncMBB != MemIMBB) {
+    const MachineLoop *PtrIncLoop = MLI->getLoopFor(PtrIncMBB);
+    if (PtrIncLoop && !PtrIncLoop->contains(MemIMBB)) {
+      LLVM_DEBUG(dbgs() << "  [OffsetCombiner] Skipping: G_PTR_ADD is in loop, "
+                           "MemI is outside\n");
+      return {};
+    }
+  }
+
   return {PtrInc};
 }
 
@@ -480,6 +521,106 @@ std::unique_ptr<GenericCombiner> PostIncCombiner::clone() const {
   return std::make_unique<PostIncCombiner>(*this);
 }
 
+// What this blocks, using a loop that reads three vectors off a base advanced
+// by a separate 2D increment. Address clustering has turned the sibling
+// offsets 384/256/128 into a chain, so every link feeds the next one:
+//
+//   %p    = G_PHI %entry, %bb.0, %next, %bb.1
+//   %p384 = G_PTR_ADD %p, 384
+//   %a    = G_LOAD %p384
+//   %p256 = G_PTR_ADD %p384, -128
+//   %b    = G_LOAD %p256
+//   %p128 = G_PTR_ADD %p256, -128
+//   %c    = G_LOAD %p128
+//   %next = add.2d(%p, ...)          <- advances %p, not part of the chain
+//
+// Post-incrementing the chain is locally cheaper (it absorbs a ptr_add per
+// link), but %p has to survive the whole walk because add.2d still reads it.
+// That needs a second cursor, which costs a copy of %p plus a padda in every
+// iteration:
+//
+//   movs p6, p4;  padda [p6], #384
+//   vldb x10, [p6], #-128;  vldb x11, [p6, #-128];  vldb x3, [p6, #0]
+//
+// Declining the post-increment leaves the chain intact for instruction
+// selection, which rebases each load onto %p and lets the chain die:
+//
+//   vldb x10, [p4, #384];  vldb x3, [p4, #256];  vldb x11, [p4, #128]
+//
+// This does not fire when the chain tail is itself the loop advance, i.e. when
+// %next is a link of the same chain. Then a single cursor walks the whole
+// group and the post-increments are strictly better, so they are left alone.
+bool PostIncCombiner::chainingForcesExtraCursor() const {
+  const MachineInstr *PtrMod = getPtrInc();
+  const MachineBasicBlock *LoopMBB = PtrMod->getParent();
+  auto InputPtrIdx = TII->getInputPtrIdx(*PtrMod, *MRI);
+  if (!InputPtrIdx)
+    return false;
+
+  auto [Root, RootOffset] =
+      getChainRoot(PtrMod->getOperand(*InputPtrIdx).getReg(), *MRI);
+
+  // The offset form is only viable if instruction selection can rebase the
+  // access onto the chain root, which needs the flattened displacement to be
+  // encodable.
+  const MachineInstr *MemI = getMemI();
+  if (!TII->isOffsetInImmediateRange(
+          TII->getOffsetMemOpcode(MemI->getOpcode()), getLoadStoreSize(*MemI),
+          APInt(PtrModBits, RootOffset, /*isSigned=*/true)))
+    return false;
+
+  // Outside a loop the extra cursor is a one-off setup cost with no
+  // per-iteration payoff, so it is not worth giving up the post-increment.
+  // Restrict to a header PHI in this block with at most two incomings
+  // (preheader + latch).
+  const MachineInstr *RootDef =
+      Root.isVirtual() ? MRI->getVRegDef(Root) : nullptr;
+  const auto *Phi = dyn_cast_or_null<GPhi>(RootDef);
+  if (!Phi || Phi->getParent() != LoopMBB || Phi->getNumIncomingValues() > 2)
+    return false;
+
+  auto GetIncomingReg =
+      [](const GPhi &P,
+         const MachineBasicBlock *MBB) -> std::optional<Register> {
+    for (unsigned I = 0, E = P.getNumIncomingValues(); I != E; ++I)
+      if (P.getIncomingBlock(I) == MBB)
+        return P.getIncomingValue(I);
+    return std::nullopt;
+  };
+
+  std::optional<Register> IncReg = GetIncomingReg(*Phi, LoopMBB);
+  if (!IncReg)
+    return false;
+
+  // If the value carried around the backedge is itself part of the chain, the
+  // walk doubles as the loop advance and one cursor is enough.
+  Register Carried = getChainRoot(*IncReg, *MRI).first;
+  if (Carried == Root)
+    return false;
+
+  // Flattening the chain leaves the advance as the only pointer modifier, so it
+  // gets folded into an access, which then has to wait for the stride:
+  //
+  //   %s        = compute ...           <- recomputed every iteration
+  //   %v, %next = POSTINC_LOAD %p, %s   <- pulled onto the critical path
+  //
+  // A stride defined outside the loop is ready on entry, so the fold is free.
+  //
+  // TODO: an add.2d/3d advance can hit the same problem when its dimension
+  // operands are computed in the loop instead of set up before it. Those
+  // operands are not checked here.
+  const MachineInstr *AdvanceMI =
+      Carried.isVirtual() ? MRI->getVRegDef(Carried) : nullptr;
+  if (AdvanceMI && AdvanceMI->getOpcode() == TargetOpcode::G_PTR_ADD) {
+    Register Stride = AdvanceMI->getOperand(2).getReg();
+    const MachineInstr *StrideDef =
+        Stride.isVirtual() ? MRI->getVRegDef(Stride) : nullptr;
+    if (!StrideDef || StrideDef->getParent() == LoopMBB)
+      return false;
+  }
+  return true;
+}
+
 void PostIncCombiner::adjustGain(const MachineDominatorTree &MDT) {
   const auto *PtrAdd = getPtrInc();
 
@@ -488,6 +629,14 @@ void PostIncCombiner::adjustGain(const MachineDominatorTree &MDT) {
 
   // Input pointer may be copied in later usages, penalize post-inc gain
   Gain.GainVector[2] = 0;
+  if (PenalizeExtraCursorPostInc && chainingForcesExtraCursor()) {
+    LLVM_DEBUG(dbgs() << "Chaining forces an extra cursor\n");
+    // Keeping the chain costs a copy of the root every iteration, while the
+    // offset form lets instruction selection rebase onto the root and drop
+    // the whole chain. Do not credit the post-increment for the ptr_add it
+    // absorbs.
+    Gain.setPtrMod(0);
+  }
   if (UserIntrinsic)
     /// prioritize user intrinsics
     Gain.setPtrMod(2);

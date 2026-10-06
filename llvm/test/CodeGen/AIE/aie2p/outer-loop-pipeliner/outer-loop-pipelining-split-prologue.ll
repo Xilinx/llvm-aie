@@ -5,10 +5,10 @@
 ;
 ; (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
 ;
-; RUN: llc -mtriple=aie2p -O2 -aie-enable-outer-loop-pipelining \
+; RUN: llc -mtriple=aie2p -O2 -aie-enable-outer-loop-pointer-opt=false -aie-enable-outer-loop-pipelining \
 ; RUN:     -aie-outer-loop-pipelining-split-prologue \
 ; RUN:     -o - %s | FileCheck %s --check-prefix=ASM
-; RUN: llc -mtriple=aie2p -O2 -aie-enable-outer-loop-pipelining \
+; RUN: llc -mtriple=aie2p -O2 -aie-enable-outer-loop-pointer-opt=false -aie-enable-outer-loop-pipelining \
 ; RUN:   -aie-outer-loop-pipelining-split-prologue \
 ; RUN:   -pass-remarks-output=- -pass-remarks-filter='pipeliner' %s -o /dev/null | FileCheck %s
 
@@ -97,7 +97,7 @@ define void @split_prologue_basic(ptr noalias %a_ptr_init,
 ; CHECK-NEXT: Function:        split_prologue_basic
 ; CHECK-NEXT: Args:
 ; CHECK-NEXT:   - String:          Schedule found
-; CHECK-NEXT:   - Pipeliner:       ''
+; CHECK-NEXT:   - Pipeliner:       loop-aware
 ; CHECK-NEXT:   - II:              '1'
 ; CHECK-NEXT:   - NS:              '1'
 ; CHECK-NEXT:   - Loop:            bb.3.steady.stage1.inner.inner.header
@@ -112,7 +112,7 @@ define void @split_prologue_basic(ptr noalias %a_ptr_init,
 ; CHECK-NEXT: Function:        split_prologue_basic
 ; CHECK-NEXT: Args:
 ; CHECK-NEXT:   - String:          Schedule found
-; CHECK-NEXT:   - Pipeliner:       ''
+; CHECK-NEXT:   - Pipeliner:       loop-aware
 ; CHECK-NEXT:   - II:              '1'
 ; CHECK-NEXT:   - NS:              '1'
 ; CHECK-NEXT:   - Loop:            bb.6.lastiter.stage1.inner.inner.header

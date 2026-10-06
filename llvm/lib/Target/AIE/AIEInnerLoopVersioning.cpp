@@ -31,23 +31,36 @@
 //          [exit]                       <exit>.lver.{low,high}.loopexit.
 //
 // The threshold is produced by a thin per-subtarget intrinsic that lowers to a
-// non-CSE-able pseudo, giving the postpipeliner a stable handle to patch. After
-// scheduling, the postpipeliner overwrites the placeholder with the required
-// stage count, so the high-trip-count copy runs exactly when the trip count is
-// large enough for its schedule.
+// non-CSE-able pseudo, giving the pipeliners a stable handle. The hint's value
+// says who owns it:
 //
-// The placeholder is UINT32_MAX (-1): the guard compare is unsigned, so until
-// the postpipeliner patches it, every trip count routes to the low-trip-count
-// (verbatim, un-pipelined) copy. This fails safe -- if the guard is never
-// patched (the high-trip-count copy is not pipelined, or updateVersionGuard
-// bails on a reshaped region), the pipelined copy is simply never entered.
+//  - A hint of 1 defers: the guard is seeded with the UINT32_MAX (-1)
+//    placeholder, and the postpipeliner overwrites it after scheduling with
+//    the stage count it needs. The compare is unsigned, so until then every
+//    trip count routes to the low-trip-count (verbatim, un-pipelined) copy.
+//    This fails safe -- if the guard is never patched (the high-trip-count
+//    copy is not pipelined, or updateVersionGuard bails on a reshaped
+//    region), the pipelined copy is simply never entered.
+//  - A hint of N >= 2 states the threshold, and it is authoritative: the
+//    guard is seeded with N and nothing rewrites it. N is restated as the
+//    high copy's llvm.loop.itercount.range minimum, which is what the guard
+//    proves, so any later pass reads it as an ordinary declared minimum.
+//    The versioned marker is deliberately left off that copy: it exists to
+//    tell the postpipeliner a placeholder is waiting, and there is none.
+//    Without it the postpipeliner treats the copy as any other loop of known
+//    minimum trip count, which also keeps its stage count within N.
+//
+// A stated threshold above MaxStatedThreshold falls back to the placeholder,
+// so an out-of-range hint degrades to the deferred case instead of truncating
+// into a guard that admits too little.
 //
 // Running before HardwareLoops lets both copies lower to ZOL uniformly.
 //
 // Preconditions, per candidate loop, in the order they are checked:
 //  - it carries the versioning request hint (a positive integer value);
 //  - it is innermost, so versioning it cannot clone another hinted loop;
-//  - its trip count is computable by SCEV and fits i32;
+//  - its exit count is computable by SCEV and at most 32 bits wide, and the
+//    resulting trip count is not the constant zero a 2^32 loop wraps to;
 //  - it reaches simplify + LCSSA form via on-demand canonicalization, with a
 //    unique exiting block and a unique exit block;
 //  - that trip count is expandable into the preheader.
@@ -58,10 +71,11 @@
 // Postconditions, per versioned loop:
 //  - the guard shape drawn above, both copies in simplify + LCSSA form with
 //    their own dedicated exit block;
-//  - the request hint is gone from both copies; the high-trip-count copy
-//    carries the versioned marker and the low-trip-count copy the fallback
-//    marker, so a later run of the pass versions neither;
-//  - the high-trip-count copy has no llvm.loop.itercount.range.
+//  - the request hint is gone from both copies, so a later run of the pass
+//    re-versions neither; the low-trip-count copy carries the fallback marker
+//    and a deferred high-trip-count copy the versioned marker;
+//  - the high-trip-count copy has no llvm.loop.itercount.range of its own,
+//    beyond the minimum a stated threshold restates.
 //
 //===----------------------------------------------------------------------===//
 
@@ -78,6 +92,7 @@
 #include "llvm/InitializePasses.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/MathExtras.h"
 #include "llvm/TargetParser/Triple.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Cloning.h"
@@ -154,19 +169,42 @@ private:
   /// later bail can still report the IR as changed.
   bool IsCanonicalized = false;
 
-  /// Whether the trip count can be computed and held by the runtime guard.
-  /// Read-only: decided solely from the trip-count SCEV.
-  bool hasVersionableTripCount() const;
+  static constexpr int32_t DeferredThreshold = -1;
+
+  /// Largest threshold a hint may state. The guard's threshold pseudo
+  /// materializes into a scalar-move immediate, narrowest simm10 across
+  /// subtargets; a round number well inside that leaves the cap stable if a
+  /// subtarget's field changes, and is far beyond any useful stage count.
+  static constexpr int64_t MaxStatedThreshold = 100;
+
+  /// The threshold the postpipeliner patches
+  int32_t Threshold = DeferredThreshold;
+
+  /// A trip count the runtime guard can hold, or the reason it cannot.
+  struct GuardTripCount {
+    /// The trip count in the i32 the guard compares in, null when unusable.
+    const SCEV *TC;
+    /// Remark name and user-facing reason, set only when TC is null.
+    StringRef RemarkName;
+    StringRef RejectionReason;
+  };
+
+  /// The trip count the guard compares, or why the guard cannot hold it.
+  /// Mutates nothing, so a rejection costs no IR churn.
+  GuardTripCount getGuardTripCount() const;
+  /// The value to seed the guard's threshold with, per the hint. Emits a
+  /// remark when a stated threshold has to be dropped.
+  int32_t computeGuardThreshold();
   /// Bring the loop into simplify + LCSSA form and check its structure supports
   /// versioning. Returns the unique exit block on success, or nullptr if the
   /// loop is unsuitable. Mutates the loop either way.
   BasicBlock *canonicalizeAndCheckStructure();
-  /// Materialize the loop trip count at InsertPt, or nullptr if it cannot be
-  /// computed / expanded there.
-  Value *expandTripCount(Instruction *InsertPt) const;
+  /// Materialize \p TC at \p InsertPt, or nullptr if it cannot be expanded
+  /// there.
+  Value *expandTripCount(const SCEV *TC, Instruction *InsertPt) const;
   /// Emit the guard condition into \p GuardBB, which it also renames: true
-  /// when \p TripCount is below the placeholder threshold, i.e. when the
-  /// low-trip-count copy must run.
+  /// when \p TripCount is below the threshold, i.e. when the low-trip-count
+  /// copy must run.
   Value *emitGuardCondition(BasicBlock &GuardBB, Value *TripCount) const;
   /// Merge loop-defined values used after the loop across the two copies, by
   /// giving every exit PHI its incoming value from \p ClonedLoop.
@@ -286,27 +324,68 @@ bool AIEInnerLoopVersioning::runOnFunction(Function &F) {
   return Changed;
 }
 
-Value *AIELoopVersioner::expandTripCount(Instruction *InsertPt) const {
-  // hasVersionableTripCount() already guaranteed the trip count is computable
-  // and fits i32.
-  const SCEV *BEC = SE.getBackedgeTakenCount(&L);
-  const SCEV *TC = SE.getTripCountFromExitCount(BEC);
+Value *AIELoopVersioner::expandTripCount(const SCEV *TC,
+                                         Instruction *InsertPt) const {
   SCEVExpander Exp(SE, InsertPt->getDataLayout(), "lver.tc");
   if (!Exp.isSafeToExpandAt(TC, InsertPt))
     return nullptr;
   return Exp.expandCodeFor(TC, TC->getType(), InsertPt);
 }
 
-bool AIELoopVersioner::hasVersionableTripCount() const {
+AIELoopVersioner::GuardTripCount AIELoopVersioner::getGuardTripCount() const {
+  const SCEV *BEC = SE.getBackedgeTakenCount(&L);
+  if (isa<SCEVCouldNotCompute>(BEC))
+    return {nullptr, "UnknownTripCount", "its trip count is not computable"};
+
   // The runtime guard compares the trip count in i32, and the pipelined
   // high-trip-count copy can only become a zero-overhead loop if its trip count
   // fits in a 32-bit register (see AIETTICommon::isHardwareLoopProfitable).
-  const SCEV *BEC = SE.getBackedgeTakenCount(&L);
-  if (isa<SCEVCouldNotCompute>(BEC))
-    return false;
+  // Gate on the exit count's type, not its range: truncating an exit count that
+  // can exceed UINT32_MAX aliases a huge trip count onto a large i32 that
+  // passes the guard, running the high copy with a wrong ZOL count.
+  // FIXME: Wide exit counts of narrow range could be versioned again, provided
+  // a range check replaces this type check; see narrow_range_i64_trip_count in
+  // inner-loop-versioning.ll.
+  if (SE.getTypeSizeInBits(BEC->getType()) > 32)
+    return {nullptr, "WideTripCount", "its trip count does not fit 32 bits"};
 
-  const SCEV *TripCount = SE.getTripCountFromExitCount(BEC);
-  return SE.getUnsignedRangeMax(TripCount).getActiveBits() <= 32;
+  // Evaluate the +1 in i32. SCEV's default evaluation type is always one bit
+  // wider than the exit count, and when the exit count's range covers all-ones
+  // (as the rotated `i < n` count of n - 1 does) the i33 result really needs
+  // that top bit, so the guard could not hold it. Wrapping in i32 instead costs
+  // only the single trip count of 2^32, which the guard routes to the fallback.
+  const SCEV *TC = SE.getTripCountFromExitCount(
+      BEC, Type::getInt32Ty(L.getHeader()->getContext()), &L);
+
+  // An always-zero trip count is one that wrapped: 2^32 iterations. It sits
+  // below every threshold, so the high copy would be unreachable.
+  if (SE.getUnsignedRangeMax(TC).isZero())
+    return {nullptr, "WrappedTripCount",
+            "its trip count of 2^32 wraps to zero in the 32-bit guard"};
+
+  return {TC, {}, {}};
+}
+
+int32_t AIELoopVersioner::computeGuardThreshold() {
+  // A VersioningMinIterCount loop has no hint, which states no threshold.
+  const int64_t Hint = AIELoopUtils::getLoopHintInt(
+                           L.getLoopID(), AIELoopUtils::LoopVersioningHintKey)
+                           .value_or(1);
+  if (Hint < 2)
+    return DeferredThreshold;
+
+  if (Hint > MaxStatedThreshold) {
+    ORE.emit([&] {
+      return OptimizationRemarkMissed(DEBUG_TYPE, "ThresholdTooLarge",
+                                      L.getStartLoc(), L.getHeader())
+             << "loop versioned without its stated threshold of "
+             << ore::NV("Threshold", Hint) << ", which exceeds the maximum of "
+             << ore::NV("Maximum", MaxStatedThreshold)
+             << "; the threshold is left to be filled in later";
+    });
+    return DeferredThreshold;
+  }
+  return static_cast<int32_t>(Hint);
 }
 
 BasicBlock *AIELoopVersioner::canonicalizeAndCheckStructure() {
@@ -334,11 +413,12 @@ BasicBlock *AIELoopVersioner::canonicalizeAndCheckStructure() {
 bool AIELoopVersioner::tryVersionLoop() {
   // Read-only gate first, so an unsuitable loop is rejected without any IR
   // mutation.
-  if (!hasVersionableTripCount()) {
+  const GuardTripCount Guard = getGuardTripCount();
+  if (!Guard.TC) {
     LLVM_DEBUG(dbgs() << "  No versionable trip count for ";
-               L.getHeader()->printAsOperand(dbgs()); dbgs() << "\n");
-    remarkNotVersioned(ORE, L, "NoVersionableTripCount",
-                       "its trip count is unknown or does not fit 32 bits");
+               L.getHeader()->printAsOperand(dbgs());
+               dbgs() << ": " << Guard.RejectionReason << "\n");
+    remarkNotVersioned(ORE, L, Guard.RemarkName, Guard.RejectionReason);
     return false;
   }
 
@@ -352,7 +432,7 @@ bool AIELoopVersioner::tryVersionLoop() {
   BasicBlock *GuardBB = L.getLoopPreheader();
   BasicBlock *HeaderBB = L.getHeader();
 
-  Value *TripCount = expandTripCount(GuardBB->getTerminator());
+  Value *TripCount = expandTripCount(Guard.TC, GuardBB->getTerminator());
   if (!TripCount) {
     LLVM_DEBUG(dbgs() << "  Trip count not expandable\n");
     remarkNotVersioned(ORE, L, "TripCountNotExpandable",
@@ -363,6 +443,8 @@ bool AIELoopVersioner::tryVersionLoop() {
   LLVM_DEBUG(dbgs() << "  Versioning loop "; HeaderBB->printAsOperand(dbgs());
              dbgs() << "\n");
 
+  // Read the hint once, before updateLoopsMetadata() consumes it.
+  Threshold = computeGuardThreshold();
   Value *TakeLow = emitGuardCondition(*GuardBB, TripCount);
 
   // Split off an empty preheader for the original (low-trip-count) copy, then
@@ -402,25 +484,23 @@ bool AIELoopVersioner::tryVersionLoop() {
 
 Value *AIELoopVersioner::emitGuardCondition(BasicBlock &GuardBB,
                                             Value *TripCount) const {
-  // The threshold is a placeholder from the thin intrinsic, patched later by
-  // the postpipeliner (see the file header for the fail-safe rationale). Seed
-  // it with -1 (UINT32_MAX): besides failing safe, -1 fits the narrow
+  assert(TripCount->getType() == Type::getInt32Ty(GuardBB.getContext()) &&
+         "trip count must be expanded in the type the guard compares in");
+
+  // The threshold comes from the thin intrinsic, either stated by the hint or
+  // left as the placeholder the postpipeliner patches (see the file header).
+  // The deferred value of -1 (UINT32_MAX) besides failing safe fits the narrow
   // scalar-move immediate the pseudo materializes into, unlike a literal
   // INT32_MAX, so the fallback move is emitted intact.
   IRBuilder<> Builder(GuardBB.getTerminator());
   const Triple TT(L.getHeader()->getModule()->getTargetTriple());
   const Intrinsic::ID ThresholdIID =
       AIEIRUtils::getLoopVersionThresholdIntrinsic(TT);
-  Value *Threshold =
-      Builder.CreateIntrinsic(ThresholdIID, {}, {Builder.getInt32(-1)},
+  Value *ThresholdVal =
+      Builder.CreateIntrinsic(ThresholdIID, {}, {Builder.getInt32(Threshold)},
                               /*FMFSource=*/nullptr, "lver.threshold");
-  // Exact in both directions: hasVersionableTripCount() bounded the trip count
-  // to 32 bits.
-  Type *I32Ty = Builder.getInt32Ty();
-  if (TripCount->getType() != I32Ty)
-    TripCount = Builder.CreateZExtOrTrunc(TripCount, I32Ty, "lver.tc.i32");
   GuardBB.setName(L.getHeader()->getName() + ".lver.guard");
-  return Builder.CreateICmpULT(TripCount, Threshold, "lver.low");
+  return Builder.CreateICmpULT(TripCount, ThresholdVal, "lver.low");
 }
 
 void AIELoopVersioner::addExitPHIs(Loop *ClonedLoop, BasicBlock *ExitBlock,
@@ -454,10 +534,8 @@ void AIELoopVersioner::nameDedicatedExits(const BasicBlock &ExitBlock,
 
 void AIELoopVersioner::updateLoopsMetadata(Loop &LowLoop, Loop &HighLoop) {
   // Consume the request hint on both copies and mark each one, so a second run
-  // of the pass re-versions neither. Only the high-trip-count copy gets the
-  // versioned marker, which is what tells the postpipeliner it may ignore the
-  // minimum trip count; the low copy gets the fallback marker, which no other
-  // pass reads.
+  // of the pass re-versions neither. The low copy gets the fallback marker,
+  // which no other pass reads.
   // A loop picked up by VersioningMinIterCount carries no request hint, so the
   // marker gets the value the hint would have had when simply enabled.
   const int64_t HintValue =
@@ -467,15 +545,26 @@ void AIELoopVersioner::updateLoopsMetadata(Loop &LowLoop, Loop &HighLoop) {
   const StringRef RequestHint = AIELoopUtils::LoopVersioningHintKey;
   AIEIRUtils::dropLoopMetadata(LowLoop, RequestHint);
   AIEIRUtils::dropLoopMetadata(HighLoop, RequestHint);
-  addStringMetadataToLoop(&HighLoop, AIELoopUtils::LoopVersionedHintKey.data(),
-                          HintValue);
   addStringMetadataToLoop(&LowLoop,
                           AIELoopUtils::LoopVersionFallbackHintKey.data(), 1);
 
-  // The runtime guard already guarantees the high copy's trip count, making its
-  // llvm.loop.itercount.range redundant. Drop it: a small minimum (e.g. 1)
-  // would otherwise make the hardware-loop profitability gate reject the ZOL
-  // the postpipeliner needs.
   AIEIRUtils::dropLoopMetadata(HighLoop,
                                StringRef("llvm.loop.itercount.range"));
+
+  if (Threshold < 2) {
+    // A deferred threshold leaves a placeholder in the guard. The versioned
+    // marker is what tells the postpipeliner to go find it, and it also lifts
+    // the minimum trip-count gate, which only the guard makes safe. No
+    // iteration-count range goes with it: a minimum of 1 would make the
+    // hardware-loop profitability gate reject the ZOL the postpipeliner needs.
+    addStringMetadataToLoop(
+        &HighLoop, AIELoopUtils::LoopVersionedHintKey.data(), HintValue);
+    return;
+  }
+
+  // A stated threshold is authoritative, so the guard needs no patching and
+  // the marker that requests it is left off. Restating the threshold as the
+  // minimum is all a later pass needs: it reads as an ordinary declared
+  // minimum, and the guard is what proves it.
+  addStringMetadataToLoop(&HighLoop, "llvm.loop.itercount.range", Threshold);
 }

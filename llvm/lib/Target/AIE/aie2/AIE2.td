@@ -32,6 +32,7 @@ class AIEGenericInstruction : GenericInstruction {
 }
 include "AIEInstrGISel.td"
 include "AIE2InstrInfo.td"
+include "AIE2CopyMaterialization.td"
 
 include "AIECombine.td"
 

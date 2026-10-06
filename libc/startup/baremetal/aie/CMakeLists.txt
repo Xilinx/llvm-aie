@@ -16,4 +16,6 @@ add_startup_object(
   crt1
   SRC
     crt1.cc
+  COMPILE_OPTIONS
+    -fstack-size-section
 )

@@ -25,6 +25,8 @@
 
 namespace llvm {
 
+class AIEBaseSubtarget;
+
 class AIEBaseTargetMachine : public CodeGenTargetMachineImpl {
 protected:
   std::unique_ptr<TargetLoweringObjectFile> TLOF;
@@ -40,6 +42,11 @@ public:
   TargetLoweringObjectFile *getObjFileLowering() const override {
     return TLOF.get();
   }
+
+  /// The single subtarget this target machine was configured with. AIE picks
+  /// its subtarget from the triple and -mcpu rather than per function, so no
+  /// Function is needed to select one.
+  virtual const AIEBaseSubtarget *getAIESubtarget() const = 0;
   yaml::MachineFunctionInfo *createDefaultFuncInfoYAML() const override;
   yaml::MachineFunctionInfo *
   convertFuncInfoToYAML(const MachineFunction &MF) const override;
@@ -63,6 +70,8 @@ public:
   virtual void setMBBPlacementOpts();
 
   virtual void setAliasAnalysisOpts();
+
+  virtual void setMemorySSAOpts();
 
   virtual void setPipelinerOpts();
 };

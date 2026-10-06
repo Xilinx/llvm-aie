@@ -91,6 +91,13 @@ public:
   bool requiresPTRRegBank(const MachineInstr &MI,
                           const MachineRegisterInfo &MRI, unsigned Depth) const;
 
+  /// Consulted while mapping a G_TRUNC / G_PTRTOINT, before the pointer add
+  /// itself is assigned banks. Override to return true when \p MI is a
+  /// G_PTR_ADD that should keep its offset in the GPR file so it can be
+  /// selected as ADDM_NC. The default is false (keep PADD / MOD).
+  virtual bool shouldSelectPtrAddAsAddmNc(const MachineInstr &MI,
+                                          const MachineRegisterInfo &MRI) const;
+
   using RegisterUsedAsSpecificBankFcn =
       std::function<bool(const MachineInstr &MI, const MachineRegisterInfo &MRI,
                          const TargetRegisterInfo &TRI, Register Reg)>;

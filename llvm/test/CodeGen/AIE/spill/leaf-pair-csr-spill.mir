@@ -1,0 +1,93 @@
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# Even/odd CSR GPRs form an L register. There is no L-to-L move, so leaf
+# functions prefer copying each half into an unused scratch GPR. When a stack
+# spill is unavoidable (calls, or a leaf with fewer than two unused scratches),
+# spill the pair as one L store instead of two GPR stores.
+# Shared by targets that call optimizeLRegCalleeSaves with L CSR pairs (AIE2PS).
+# RUN: llc -verify-machineinstrs --march=aie2ps -run-pass=prologepilog %s -o - | FileCheck %s
+
+# Leaf with free scratches: keep even/odd GPRs and copy into r0/r1.
+---
+name:            leaf_copy_csr_with_scratch
+tracksRegLiveness: true
+body:             |
+  bb.0:
+    liveins: $l1
+    ; CHECK-LABEL: name: leaf_copy_csr_with_scratch
+    ; CHECK: liveins: $l1, $r8, $r9
+    ; CHECK: $r0 = PseudoMove killed $r8
+    ; CHECK: $r1 = PseudoMove killed $r9
+    ; CHECK: $l4 = COPY $l1
+    ; CHECK: $r9 = PseudoMove killed $r1
+    ; CHECK: $r8 = PseudoMove killed $r0
+    ; CHECK-NOT: ST_dml_sts_scalar_spill
+    $l4 = COPY $l1
+    PseudoRET implicit $lr, implicit $l4
+...
+
+# Leaf with every scratch GPR already used: pair l4 as one stack spill.
+---
+name:            leaf_pair_csr_no_scratch
+tracksRegLiveness: true
+body:             |
+  bb.0:
+    liveins: $l1, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $r16, $r17, $r18, $r19, $r20, $r21, $r22, $r23, $r24, $r25, $r26, $r27, $r28, $r29, $r30, $r31
+    ; CHECK-LABEL: name: leaf_pair_csr_no_scratch
+    ; CHECK: callee-saved-register: '$l4'
+    ; CHECK: ST_dml_sts_scalar_spill killed $l4
+    ; CHECK-NOT: PseudoMove
+    ; CHECK: $l4 = COPY $l1
+    ; CHECK: $l4 = LDA_dml_lda_scalar_L_spill
+    $l4 = COPY $l1
+    PseudoRET implicit $lr, implicit $l4, implicit $r0, implicit $r1, implicit $r2, implicit $r3, implicit $r4, implicit $r5, implicit $r6, implicit $r7, implicit $r16, implicit $r17, implicit $r18, implicit $r19, implicit $r20, implicit $r21, implicit $r22, implicit $r23, implicit $r24, implicit $r25, implicit $r26, implicit $r27, implicit $r28, implicit $r29, implicit $r30, implicit $r31
+...
+
+# Leaf with only one unused scratch: that scratch absorbs a singleton CSR
+# copy ($r10), but both halves of $l4 still need saving so $l4 is L-paired.
+---
+name:            leaf_pair_csr_one_scratch
+tracksRegLiveness: true
+body:             |
+  bb.0:
+    liveins: $l1, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $r16, $r17, $r18, $r19, $r20, $r21, $r22, $r23, $r24, $r25, $r26, $r27, $r28, $r29, $r30, $r31
+    ; CHECK-LABEL: name: leaf_pair_csr_one_scratch
+    ; CHECK: callee-saved-register: '$l4'
+    ; CHECK: ST_dml_sts_scalar_spill killed $l4
+    ; CHECK: $r0 = PseudoMove killed $r10
+    ; CHECK-NOT: PseudoMove {{.*}}$r8
+    ; CHECK-NOT: PseudoMove {{.*}}$r9
+    ; CHECK: $r10 = COPY $r1
+    ; CHECK: $l4 = COPY $l1
+    ; CHECK: $r10 = PseudoMove killed $r0
+    ; CHECK: $l4 = LDA_dml_lda_scalar_L_spill
+    $r10 = COPY $r1
+    $l4 = COPY $l1
+    PseudoRET implicit $lr, implicit $l4, implicit $r10, implicit $r1, implicit $r2, implicit $r3, implicit $r4, implicit $r5, implicit $r6, implicit $r7, implicit $r16, implicit $r17, implicit $r18, implicit $r19, implicit $r20, implicit $r21, implicit $r22, implicit $r23, implicit $r24, implicit $r25, implicit $r26, implicit $r27, implicit $r28, implicit $r29, implicit $r30, implicit $r31
+...
+
+# Non-leaf: scratches are not reliable across a call, so pair even when free.
+---
+name:            call_pair_csr_with_scratch
+tracksRegLiveness: true
+frameInfo:
+  hasCalls: true
+body:             |
+  bb.0:
+    liveins: $l1, $lr
+    ; CHECK-LABEL: name: call_pair_csr_with_scratch
+    ; CHECK: callee-saved-register: '$l4'
+    ; CHECK: ST_dml_sts_scalar_spill killed $l4
+    ; CHECK-NOT: PseudoMove {{.*}}$r8
+    ; CHECK-NOT: PseudoMove {{.*}}$r9
+    ; CHECK: $l4 = COPY $l1
+    ; CHECK: PseudoJL &foo
+    ; CHECK: $l4 = LDA_dml_lda_scalar_L_spill
+    $l4 = COPY $l1
+    PseudoJL &foo, implicit-def $lr
+    PseudoRET implicit $lr, implicit $l4
+...

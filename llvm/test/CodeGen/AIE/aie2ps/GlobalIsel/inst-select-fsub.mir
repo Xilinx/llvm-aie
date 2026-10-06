@@ -10,14 +10,38 @@
 
 
 ---
-name:            test_fsub
+name:            test_fsub_1024
+legalized:       true
+regBankSelected: true
+tracksRegLiveness: true
+body:             |
+  bb.1.entry:
+    liveins: $cml0, $cml1
+    ; CHECK-LABEL: name: test_fsub_1024
+    ; CHECK: liveins: $cml0, $cml1
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ecml = COPY $cml0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ecml = COPY $cml1
+    ; CHECK-NEXT: [[MOVXM_lng_cg:%[0-9]+]]:mrv8 = MOVXM_lng_cg 60
+    ; CHECK-NEXT: [[VSUB_f_vacc_half_fp:%[0-9]+]]:ecml = VSUB_f_vacc_half_fp [[COPY]], [[COPY1]], [[MOVXM_lng_cg]], implicit-def dead $srfpflags, implicit $crfpmask
+    ; CHECK-NEXT: $cml0 = COPY [[VSUB_f_vacc_half_fp]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $cml0
+    %0:accregbank(<32 x s32>) = COPY $cml0
+    %1:accregbank(<32 x s32>) = COPY $cml1
+    %2:accregbank(<32 x s32>) = G_FSUB %0, %1
+    $cml0 = COPY %2:accregbank(<32 x s32>)
+    PseudoRET implicit $lr, implicit $cml0
+...
+
+---
+name:            test_fsub_2048
 legalized:       true
 regBankSelected: true
 tracksRegLiveness: true
 body:             |
   bb.1.entry:
     liveins: $dm0, $dm1
-    ; CHECK-LABEL: name: test_fsub
+    ; CHECK-LABEL: name: test_fsub_2048
     ; CHECK: liveins: $dm0, $dm1
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:acc2048 = COPY $dm0

@@ -913,6 +913,11 @@ static bool findUnmergeOrigin(MachineInstr &ConcatI, const unsigned UseOpIdx,
       }
       UnmergeDefReg = IncomingReg;
       UnmergeI = IncomingMI;
+      // Record the PHI's actual incoming predecessor block for this operand.
+      // The unmerge source may be defined in a different block (e.g. an inner
+      // loop), so we must use this predecessor when rebuilding the PHI rather
+      // than the unmerge source's definition block.
+      MatchData.UnmergeIncomingMBB = MBB;
     }
     return {UnmergeI, UnmergeDefReg};
   };
@@ -993,6 +998,16 @@ bool llvm::matchConcatUnmergePhis(MachineInstr &ConcatI,
 
   assert(MatchInfo.NewConcatMBB);
   assert(MatchInfo.UnmergeSourceReg);
+
+  // The transformation rebuilds a single wide value from the concat's
+  // sub-vectors and feeds it through a PHI whose back-edge value is the
+  // G_UNMERGE source. This is only valid if the concat's sub-vectors exactly
+  // reconstruct that source, i.e. the concat output type matches the unmerge
+  // source type.
+  const LLT ConcatDstTy = MRI.getType(ConcatI.getOperand(0).getReg());
+  if (ConcatDstTy != MRI.getType(*MatchInfo.UnmergeSourceReg))
+    return false;
+
   return true;
 }
 
@@ -1025,10 +1040,15 @@ void llvm::applyConcatUnmergePhis(MachineInstr &ConcatI,
   NewPHI->addOperand(MachineOperand::CreateMBB(MatchInfo.NewConcatMBB));
 
   // Add second PHI operand (unmerge Components).
+  // The incoming block must be the PHI's actual CFG predecessor for this
+  // operand (captured in findUnmergeOrigin), not the block where the unmerge
+  // source happens to be defined. These can differ when the value is produced
+  // in a nested block (e.g. an inner loop) and reaches the PHI through a
+  // different predecessor.
+  assert(MatchInfo.UnmergeIncomingMBB &&
+         "Missing PHI predecessor block for unmerge operand");
   NewPHI.addUse(*MatchInfo.UnmergeSourceReg);
-  MachineBasicBlock *UnmergeMBB =
-      MRI.getVRegDef(*MatchInfo.UnmergeSourceReg)->getParent();
-  NewPHI->addOperand(MachineOperand::CreateMBB(UnmergeMBB));
+  NewPHI->addOperand(MachineOperand::CreateMBB(MatchInfo.UnmergeIncomingMBB));
   LLVM_DEBUG(dbgs() << "Created New Instruction " << *NewPHI.getInstr());
   Observer.erasingInstr(ConcatI);
   ConcatI.eraseFromParent();
@@ -1047,6 +1067,12 @@ bool llvm::matchGlobalPtrModOptimizer(MachineInstr &MemI,
     return false;
   }
   assert(CombineRule->CombineInstrs.size() >= 2);
+  assert([&] {
+    const MachineInstr &PtrMod = *CombineRule->CombineInstrs[0];
+    const Register Addr = cast<GLoadStore>(MemI).getPointerReg();
+    return PtrMod.readsRegister(Addr, /*TRI=*/nullptr) ||
+           PtrMod.definesRegister(Addr, /*TRI=*/nullptr);
+  }() && "Pointer modifier was rewritten after the analysis");
   LLVM_DEBUG(dbgs() << "[Global Ptr Inc] Found\n" << *CombineRule);
 
   return true;
@@ -4272,6 +4298,54 @@ bool llvm::matchShuffleToExtractInsertEltToBroadcast(MachineInstr &MI,
   return true;
 }
 
+/// Return the maximum number of scalar insertions worth using to implement a
+/// shuffle before scalarization in the legalizer becomes preferable.
+static unsigned getShuffleMaxNumInsertions(const MachineFunction &MF,
+                                           unsigned NumSrcElems) {
+  // The scalarization of G_SHUFFLE_VECTOR in the legalizer is more beneficial
+  // if there are more exceptions than NumSrcElems / 2, as AIE2P's
+  // VINSERT instructions require a move to a register used for the index unlike
+  // VPUSH.
+  const Triple &T = MF.getTarget().getTargetTriple();
+  if (T.isAIE2P() || T.isAIE2PS())
+    return (ShuffleMaxNumInsertions != 0) ? ShuffleMaxNumInsertions
+                                          : NumSrcElems / 2;
+  llvm_unreachable(
+      "MaxNumInsertions unimplemented for target. Does the target's Insert "
+      "instruction take immediate indices or does it require a register for "
+      "the index?");
+}
+
+/// Insert the \p Exceptions lanes of \p Mask into \p StartReg, at their
+/// original positions, extracting each lane from whichever source it indexes.
+/// Intermediate results are fresh \p InsertTy vregs; the last insertion writes
+/// \p FinalDst when it is valid. Returns the final result register.
+static Register
+buildShuffleExceptionInserts(MachineIRBuilder &B, MachineRegisterInfo &MRI,
+                             ArrayRef<int> Mask, ArrayRef<unsigned> Exceptions,
+                             unsigned NumSrcElems, Register Src1Reg,
+                             Register Src2Reg, LLT ElemTy, LLT InsertTy,
+                             Register StartReg, Register FinalDst) {
+  Register InsertSrc = StartReg;
+  Register Result = StartReg;
+  for (unsigned I = 0, E = Exceptions.size(); I < E; ++I) {
+    const unsigned ExceptionIdx = Exceptions[I];
+    Register VecToExtract =
+        Mask[ExceptionIdx] < (int)NumSrcElems ? Src1Reg : Src2Reg;
+    int ExtractIdx = Mask[ExceptionIdx] % NumSrcElems;
+    auto ExtrElt =
+        B.buildExtractVectorElementConstant(ElemTy, VecToExtract, ExtractIdx);
+    auto ExceptionIdxReg = B.buildConstant(LLT::scalar(32), ExceptionIdx);
+    const bool IsLast = (I + 1 == E);
+    Result = (IsLast && FinalDst.isValid())
+                 ? FinalDst
+                 : MRI.createGenericVirtualRegister(InsertTy);
+    B.buildInsertVectorElement(Result, InsertSrc, ExtrElt, ExceptionIdxReg);
+    InsertSrc = Result;
+  }
+  return Result;
+}
+
 /// Match shuffle vectors that are mostly sequential (identity or extract
 /// subvector) with a few element insertions from either source.
 ///
@@ -4318,28 +4392,97 @@ bool llvm::matchMostlySequentialShuffleWithInsertions(MachineInstr &MI,
   if (DstTy.getElementType() != Src1Ty.getElementType())
     return false;
 
-  // No growing shuffles; shrinking requires divisibility
+  // Widen-by-undef case: the destination is a whole multiple of the source and
+  // every lane above the source width is undef. The lower NumSrcElems lanes are
+  // then a mostly-sequential run (from either source) plus a few insertions,
+  // and the result is widened to the destination by concatenating undef
+  // sub-vectors. This avoids scalarizing such shuffles during legalization.
+  if (NumDstElems > NumSrcElems) {
+    if (NumDstElems % NumSrcElems != 0)
+      return false;
+    if (Mask.size() != NumDstElems)
+      return false;
+    if (MaskMatch::isMaskWithAllUndefs(Mask))
+      return false;
+
+    for (unsigned I = NumSrcElems; I < NumDstElems; ++I)
+      if (Mask[I] != -1)
+        return false;
+
+    const unsigned MaxNumInsertions =
+        getShuffleMaxNumInsertions(*MI.getMF(), NumSrcElems);
+
+    ArrayRef<int> EffMask = Mask.take_front(NumSrcElems);
+
+    // Try a sequential run from either source (Src1 at Height 0, Src2 at Height
+    // NumSrcElems) and keep the base with the fewest insertions.
+    bool FoundBase = false;
+    unsigned BestHeight = 0;
+    SmallVector<unsigned, 4> BestExceptions;
+    for (unsigned Height : {0u, NumSrcElems}) {
+      MaskMatch SequentialMask{/*Height*/ Height};
+      ShuffleMaskValidity Validity =
+          SequentialMask.getShuffleMaskValidity(EffMask);
+      // A fully sequential run is a plain copy/widen; leave it to other
+      // combines.
+      if (Validity.IsValid)
+        return false;
+      if (!FoundBase ||
+          Validity.MaskExceptions.size() < BestExceptions.size()) {
+        FoundBase = true;
+        BestHeight = Height;
+        BestExceptions = Validity.MaskExceptions;
+      }
+    }
+
+    assert(FoundBase && !BestExceptions.empty() &&
+           "expected at least one insertion");
+    if (BestExceptions.size() >= MaxNumInsertions)
+      return false;
+
+    const LLT ElemTy = Src1Ty.getElementType();
+    // The sequential base selects the copy source.
+    const Register SeqSrcReg = (BestHeight == 0) ? Src1Reg : Src2Reg;
+    const SmallVector<unsigned, 4> Exceptions = BestExceptions;
+
+    MatchInfo = [=, &MRI](MachineIRBuilder &B) {
+      // Insert the exception lanes into the sequential source (built at the
+      // source width), then widen to the destination with undef sub-vectors.
+      Register Result = buildShuffleExceptionInserts(
+          B, MRI, Mask, Exceptions, NumSrcElems, Src1Reg, Src2Reg, ElemTy,
+          Src1Ty, SeqSrcReg, /*FinalDst=*/Register());
+
+      SmallVector<Register, 4> ConcatOps;
+      ConcatOps.push_back(Result);
+      const unsigned NumPads = NumDstElems / NumSrcElems - 1;
+      for (unsigned I = 0; I < NumPads; ++I)
+        ConcatOps.push_back(B.buildUndef(Src1Ty).getReg(0));
+      B.buildConcatVectors(DstReg, ConcatOps);
+    };
+
+    return true;
+  }
+
+  // Only the widen-by-undef case above grows; shrinking requires divisibility.
   if (NumSrcElems % NumDstElems != 0)
     return false;
 
   const bool IsShrinking = NumSrcElems > NumDstElems;
 
+  // Shrinking shuffles are implemented below with a G_AIE_UNPAD_VECTOR of
+  // Src1Reg. That is only valid when the source vector is a legal type to
+  // unpad.
+  if (IsShrinking) {
+    const AIEBaseInstrInfo &TII = *static_cast<const AIEBaseInstrInfo *>(
+        MI.getMF()->getSubtarget().getInstrInfo());
+    if (!TII.isLegalTypeToUnpad(Src1Ty))
+      return false;
+  }
+
   const LLT ElemTy = Src1Ty.getElementType();
 
-  unsigned MaxNumInsertions;
-  const Triple &T = MI.getMF()->getTarget().getTargetTriple();
-  if (T.isAIE2P() || T.isAIE2PS())
-    // The scalarization of G_SHUFFLE_VECTOR in the legalizer is more beneficial
-    // if there are more exceptions than NumSrcElems / 2 as AIE2P's VINSERT
-    // instructions require a move to a register used for the index unlike
-    // VPUSH.
-    MaxNumInsertions = (ShuffleMaxNumInsertions != 0) ? ShuffleMaxNumInsertions
-                                                      : NumSrcElems / 2;
-  else
-    llvm_unreachable(
-        "MaxNumInsertions unimplemented for target. Does the target's Insert "
-        "instruction take immediate indices or does it require a register for "
-        "the index?");
+  const unsigned MaxNumInsertions =
+      getShuffleMaxNumInsertions(*MI.getMF(), NumSrcElems);
 
   if (Mask.size() != NumDstElems)
     return false;
@@ -4364,35 +4507,17 @@ bool llvm::matchMostlySequentialShuffleWithInsertions(MachineInstr &MI,
     return false;
 
   MatchInfo = [=, &MRI](MachineIRBuilder &B) {
-    // For shrinking shuffles, first extract the subvector using UNPAD
-    Register InsertSrc;
+    // For shrinking shuffles, first extract the subvector using UNPAD.
+    Register InsertSrc = Src1Reg;
     if (IsShrinking) {
       InsertSrc = MRI.createGenericVirtualRegister(DstTy);
       const AIEBaseInstrInfo &TII = getAIETII(B);
       B.buildInstr(TII.getGenericUnpadVectorOpcode(), {InsertSrc}, {Src1Reg});
-    } else {
-      InsertSrc = Src1Reg;
     }
 
-    Register InsertDst;
-    for (const unsigned ExceptionIdx : Exceptions) {
-      Register VecToExtract =
-          Mask[ExceptionIdx] < (int)NumSrcElems ? Src1Reg : Src2Reg;
-
-      int ExtractIdx = Mask[ExceptionIdx] % NumSrcElems;
-      auto ExtrElt =
-          B.buildExtractVectorElementConstant(ElemTy, VecToExtract, ExtractIdx);
-
-      auto ExceptionIdxReg = B.buildConstant(LLT::scalar(32), ExceptionIdx);
-
-      InsertDst = (ExceptionIdx == Exceptions.back())
-                      ? DstReg
-                      : MRI.createGenericVirtualRegister(DstTy);
-
-      B.buildInsertVectorElement(InsertDst, InsertSrc, ExtrElt,
-                                 ExceptionIdxReg);
-      InsertSrc = InsertDst;
-    }
+    buildShuffleExceptionInserts(B, MRI, Mask, Exceptions, NumSrcElems, Src1Reg,
+                                 Src2Reg, ElemTy, DstTy, InsertSrc,
+                                 /*FinalDst=*/DstReg);
   };
 
   return true;
@@ -6439,6 +6564,34 @@ bool llvm::matchAlternatingBuildVector(
     MatchInfo.PeriodElts.push_back(MI.getOperand(1 + I).getReg());
   MatchInfo.MergedBits = Period * ElemBits;
   return true;
+}
+
+/// AIE-specific reassociation of G_PTR_ADD chains with constant offsets.
+/// Unlike the upstream reassoc_ptradd, this variant only triggers when the
+/// intermediate pointer (LHS of the root PTR_ADD) has exactly one use.
+/// This prevents breaking addressing mode opportunities for loops where the
+/// intermediate pointer feeds both memory operations and subsequent PTR_ADDs.
+bool llvm::matchAIEReassocPtrAdd(MachineInstr &MI, MachineRegisterInfo &MRI,
+                                 CombinerHelper &Helper, BuildFnTy &MatchInfo) {
+  assert(MI.getOpcode() == TargetOpcode::G_PTR_ADD && "Expected G_PTR_ADD");
+
+  // Get the LHS (base pointer) of this PTR_ADD
+  Register LHS = MI.getOperand(1).getReg();
+  // GUARD: Only allow reassociation when the intermediate pointer (LHS)
+  // has exactly one use. This prevents breaking addressing mode opportunities
+  // in loops where the intermediate pointer feeds both memory operations
+  // (loads/stores) and subsequent PTR_ADDs.
+  if (!MRI.hasOneNonDBGUse(LHS))
+    return false;
+
+  MachineInstr *LHSDef = MRI.getVRegDef(LHS);
+
+  // LHS must be defined by another G_PTR_ADD for reassociation
+  if (!LHSDef || LHSDef->getOpcode() != TargetOpcode::G_PTR_ADD)
+    return false;
+
+  // Delegate to the upstream helper for the actual constant folding logic
+  return Helper.matchReassocPtrAdd(MI, MatchInfo);
 }
 
 void llvm::applyAlternatingBuildVector(

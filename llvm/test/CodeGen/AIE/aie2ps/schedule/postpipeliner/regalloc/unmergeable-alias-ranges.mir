@@ -1,0 +1,77 @@
+# NOTE: Test for AIERegDefUseTracker - two overlapping live ranges with no
+#       common base register must be discarded without leaving stale LiveRegs
+#       entries behind.
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+
+# RUN: llc -verify-machineinstrs --mtriple=aie2ps -O2 \
+# RUN:   --start-before=postmisched %s \
+# RUN:   --aie-postpipeliner-vreg-mode=1 \
+# RUN:   --aie-postpipeliner-phys-mode=0 \
+# RUN:   --debug-only=aie-reg-liverange \
+# RUN:   --aie-test-regdefuse-tracker \
+# RUN:   -o /dev/null 2>&1 | FileCheck %s
+# REQUIRES: asserts
+
+# l12 is the r24/r25 pair and plfr0 is the {lf0, r24, p0} composite. They share
+# r24, but neither is a sub-register of the other and no register covers both.
+# The fill def of r24 grows its base to plfr0 (r24 is a sub-register of it) and
+# then cannot absorb the l12 range, because no single base register can express
+# both.
+#
+# Both ranges are dropped. r25 is only reachable through the dropped l12
+# range, so the read of r25 above the def has to start a fresh range. Leaving
+# the dropped ranges in LiveRegs instead makes that read attach to a range
+# that no longer has a base register.
+
+# CHECK: LR#[[L12:[0-9]+]] Use l12
+# CHECK: LR#[[R24:[0-9]+]] Def r24
+# CHECK-NEXT: LR#[[R24]] + LR#[[L12]] -> LR#[[R24]]
+# CHECK-NEXT: Discard LR#[[R24]] (no common base register)
+# CHECK-NEXT: Discard LR#[[L12]] (no common base register)
+# CHECK: LR#{{[0-9]+}} Use r25
+# CHECK: Base=r25 defs=0 uses=1 [RESERVED]
+# CHECK: FINAL LIVE RANGES
+
+--- |
+  define void @unmergeable_alias_ranges() {
+  entry:
+    br label %loop
+  loop:
+    br label %exit
+  exit:
+    ret void
+  }
+...
+---
+name:            unmergeable_alias_ranges
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  bb.0.entry:
+    successors: %bb.1
+    liveins: $p0, $r2, $l12, $plfr0
+
+    $lc = ADD_NC_add_lc_ri $r2, 0
+    MOVXM_lng_cg_ls_abs %bb.1, implicit-def $ls
+    MOVXM_lng_cg_le_abs <mcsymbol .L_LEnd0>, implicit-def $le
+
+  bb.1.loop (align 16):
+    successors: %bb.1, %bb.2
+    liveins: $p0, $l12, $plfr0
+
+    renamable $r0 = ADD_add_r_ri renamable $r25, -1, implicit-def dead $srcarry
+    $p0, $lf0, $r24 = VLD_FILL_512_pseudo $p0, $lf0, $r24
+    renamable $x1 = VBCST_64 renamable $l12
+
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+
+  bb.2.exit (align 16):
+    liveins: $plfr0
+    RET implicit $lr, implicit $plfr0
+    DelayedSchedBarrier
+...

@@ -37,6 +37,7 @@ tablegen(LLVM AIE2GenPostLegalizerGICustomCombiner.inc -gen-global-isel-combiner
 tablegen(LLVM AIEGenPreISelGICombiner.inc -gen-global-isel-combiner -gisel-subtarget-class AIEBaseSubtarget
               -combiners="AIEPreISelCombiner")
 tablegen(LLVM AIE2GenCallingConv.inc -gen-callingconv)
+tablegen(LLVM AIE2GenCopyMaterialization.inc -gen-aie-copy-materialization)
 tablegen(LLVM AIE2GenDisassemblerTables.inc -gen-disassembler)
 tablegen(LLVM AIE2GenFormats.inc -gen-instr-format)
 tablegen(LLVM AIE2GenInstrInfo.inc -gen-instr-info -base-instrinfo-class AIEBaseInstrInfo)
@@ -58,6 +59,7 @@ list(APPEND LLVM_TABLEGEN_FLAGS "-I${CMAKE_CURRENT_SOURCE_DIR}/aie2p")
 tablegen(LLVM AIE2PGenInstrInfo.inc -gen-instr-info -base-instrinfo-class AIEBaseInstrInfo)
 tablegen(LLVM AIE2PGenRegisterInfo.inc -gen-register-info -base-registerinfo-class AIEBaseRegisterInfo)
 tablegen(LLVM AIE2PGenCallingConv.inc -gen-callingconv)
+tablegen(LLVM AIE2PGenCopyMaterialization.inc -gen-aie-copy-materialization)
 tablegen(LLVM AIE2PGenSubtargetInfo.inc -gen-subtarget -base-subtargetinfo-class AIEBaseSubtarget)
 tablegen(LLVM AIE2PGenMemoryCycles.inc -gen-aie-memory-cycles)
 tablegen(LLVM AIE2PGenPreSchedLowering.inc -gen-aie-presched-lowering)
@@ -86,6 +88,7 @@ tablegen(LLVM AIE2PSGenInstrInfo.inc -gen-instr-info -base-instrinfo-class AIEBa
 tablegen(LLVM AIE2PSGenRegisterInfo.inc -gen-register-info -base-registerinfo-class AIEBaseRegisterInfo)
 tablegen(LLVM AIE2PSGenRegisterBank.inc -gen-register-bank -base-register-bank-class AIEBaseRegisterBankInfo)
 tablegen(LLVM AIE2PSGenCallingConv.inc -gen-callingconv)
+tablegen(LLVM AIE2PSGenCopyMaterialization.inc -gen-aie-copy-materialization)
 tablegen(LLVM AIE2PSGenGlobalISel.inc -gen-global-isel -gisel-subtarget-class AIEBaseSubtarget --warn-on-skipped-patterns)
 tablegen(LLVM AIE2PSGenSubtargetInfo.inc -gen-subtarget -base-subtargetinfo-class AIEBaseSubtarget)
 tablegen(LLVM AIE2PSGenMemoryCycles.inc -gen-aie-memory-cycles)
@@ -111,6 +114,7 @@ add_public_tablegen_target(AIECommonTableGen)
 
 add_llvm_target(AIECodeGen
    AIEAddressSpaceFlattening.cpp
+   AIESwitchLowering.cpp
    AIEBaseAliasAnalysis.cpp
    AIEBaseAsmPrinter.cpp
    AIEBaseFrameLowering.cpp
@@ -131,6 +135,7 @@ add_llvm_target(AIECodeGen
    AIEDataDependenceHelper.cpp
    AIEDumpArtifacts.cpp
    AIEEliminateDuplicatePHI.cpp
+   AIEEpilogueRegRewriter.cpp
    AIEFinalizeBundle.cpp
    AIEGlobalCombiner.cpp
    AIEGlobalCombinerPtrMods.cpp
@@ -138,7 +143,9 @@ add_llvm_target(AIECodeGen
    AIEPreISelCombiner.cpp
    AIEInterBlockScheduling.cpp
    AIEISelDAGToDAG.cpp
+   AIELivenessVector.cpp
    AIELegalizerHelper.cpp
+   AIELiveRangeUtils.cpp
    AIELiveRegs.cpp
    AIELoopClass.cpp
    AIEMachineAlignment.cpp
@@ -149,11 +156,15 @@ add_llvm_target(AIECodeGen
    AIEMIRFormatter.cpp
    AIEMultiSlotInstrMaterializer.cpp
    AIEPostPipeliner.cpp
+   AIEPostRegAlloc.cpp
    AIEPostSelectOptimize.cpp
    AIEPseudoBranchExpansion.cpp
    AIEPtrModOptimizer.cpp
    AIERegClassConstrainer.cpp
+   AIERegDefUseTracker.cpp
    AIERegMemEventTracker.cpp
+   AIEScarceRegScheduling.cpp
+   AIEScheduleInterpreter.cpp
    AIESlotCounts.cpp
    AIESpillSlotOptimization.cpp
    AIESlotStatistics.cpp
@@ -185,6 +196,7 @@ add_llvm_target(AIECodeGen
    AIETiedRegOperands.cpp
    AIEUnallocatedSuperRegRewriter.cpp
    ReservedRegsLICM.cpp
+   AIEOuterLoopPointerOptimizer.cpp
    AIEOuterLoopPipeliner.cpp
    AIEOutlineMemoryGEP.cpp
    AIEWawRegRewriter.cpp
@@ -218,6 +230,7 @@ add_llvm_target(AIECodeGen
    aie2p/AIE2PPostLegalizerGenericCombiner.cpp
    aie2p/AIE2PPreLegalizerCombiner.cpp
    # aie2ps
+   aie2ps/AIE2PSOuterLoopPipelinerConfig.cpp
    aie2ps/AIE2PSSubtarget.cpp
    aie2ps/AIE2PSTargetMachine.cpp
    aie2ps/AIE2PSTargetTransformInfo.cpp

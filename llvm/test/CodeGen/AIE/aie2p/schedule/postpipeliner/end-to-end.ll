@@ -35,6 +35,8 @@ define <32 x i16> @zol(i32 %n, ptr %p) {
 ; CHECK-NEXT:   - PrologueBundles: '9'
 ; CHECK-NEXT:   - Epilogue:        bb.2.for.cond.cleanup
 ; CHECK-NEXT:   - EpilogueBundles: '10'
+; CHECK-NEXT:   - VregMode:        Physical
+; CHECK-NEXT:   - SchedHeuristic:  Config_9_1_0_NodeNum
 ; CHECK-NEXT: ...
 entry:
   br label %for.body

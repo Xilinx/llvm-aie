@@ -47,7 +47,6 @@ public:
   std::optional<unsigned> getConstantMovOpcode(MachineRegisterInfo &MRI,
                                                unsigned int Reg,
                                                APInt &Val) const override;
-  unsigned getScalarMovOpcode(Register DstReg, Register SrcReg) const override;
   unsigned getMoveToMSOpcode(MachineInstr &I,
                              unsigned ConstTLastVal) const override;
   Register getSSStatusReg() const override;
@@ -94,6 +93,7 @@ public:
   bool isBooleanNot(unsigned Opc) const override;
   bool isConstStep(const MachineInstr &MI, int64_t &Step) const override;
   bool isGenericOffsetMemOpcode(unsigned Opcode) const override;
+  bool isGenericMemOpcode(unsigned Opcode) const override;
   bool isFifoStoreConvOpcode(unsigned Opcode) const override;
 
   int isRoundRobinSlotCandidate(MachineInstr &MI) const override;
@@ -158,11 +158,10 @@ public:
   CreateTargetMIHazardRecognizer(const InstrItineraryData *II,
                                  const ScheduleDAGMI *DAG) const override;
 
-  void copyPhysReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
-                   const DebugLoc &DL, Register DstReg, Register SrcReg,
-                   bool KillSrc, bool RenamableDest = false,
-                   bool RenamableSrc = false) const override;
+protected:
+  const CopyTableView &getCopyTable() const override;
 
+public:
   void storeRegToStackSlot(MachineBasicBlock &MBB,
                            MachineBasicBlock::iterator MBBI, Register SrcReg,
                            bool IsKill, int FrameIndex,

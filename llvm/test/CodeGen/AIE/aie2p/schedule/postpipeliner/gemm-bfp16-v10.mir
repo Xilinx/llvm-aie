@@ -65,6 +65,8 @@ body:             |
   ; CHECK-NEXT:   - PrologueBundles: '21'
   ; CHECK-NEXT:   - Epilogue:        bb.2
   ; CHECK-NEXT:   - EpilogueBundles: '30'
+  ; CHECK-NEXT:   - VregMode:        Physical
+  ; CHECK-NEXT:   - SchedHeuristic:  Config_32_0_0_Critical_LcdLatest_Run1
   ; CHECK-NEXT: ...
   bb.0.entry (align 16):
     successors: %bb.2

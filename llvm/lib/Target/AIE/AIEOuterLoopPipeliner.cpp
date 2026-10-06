@@ -56,7 +56,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIE.h"
-#include "AIEBaseInstrInfo.h"
+#include "AIEOuterLoopPipelinerConfig.h"
 #include "Utils/AIEIRUtils.h"
 #include "Utils/AIELoopOptionOverrides.h"
 #include "Utils/AIELoopUtils.h"
@@ -67,8 +67,6 @@
 #include "llvm/Analysis/DependenceAnalysis.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/ScalarEvolution.h"
-#include "llvm/Analysis/TargetTransformInfo.h"
-#include "llvm/CodeGen/TargetPassConfig.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Dominators.h"
@@ -125,11 +123,26 @@ static cl::opt<bool> LeanStage0Mode(
              "intrinsics selected for lean stage 0"),
     cl::init(false), cl::Hidden);
 
-static cl::opt<bool> EnableOuterLoopHardwareLoop(
-    "aie-outer-loop-hw-loop",
-    cl::desc("Convert downcounting outer loops to JNZD hardware loops after "
-             "outer loop pipelining"),
-    cl::init(true), cl::Hidden);
+/// Outer loop type selection after pipelining.
+enum class OuterLoopType { Soft, HW, Auto };
+
+static cl::opt<OuterLoopType> OuterLoopTypeOpt(
+    "aie-outer-loop-type",
+    cl::desc("Outer loop type selection after pipelining"),
+    cl::values(clEnumValN(OuterLoopType::Soft, "soft",
+                          "Use software loop (no JNZD conversion)"),
+               clEnumValN(OuterLoopType::HW, "hw",
+                          "Use hardware loop (JNZD conversion)"),
+               clEnumValN(OuterLoopType::Auto, "auto",
+                          "Auto-select based on pointer pressure")),
+    cl::init(OuterLoopType::Auto), cl::Hidden);
+
+static cl::opt<unsigned> OuterLoopPointerThreshold(
+    "aie-outer-loop-pointer-threshold",
+    cl::desc("Pointer pressure threshold for auto mode: if the estimated "
+             "pointer pressure "
+             ">= threshold, use soft loop; otherwise use hw loop"),
+    cl::init(6), cl::Hidden);
 
 /// Effective outer-loop-pipelining configuration for one loop. Command-line
 /// options and !llvm.loop.hint metadata are resolved once when this is built.
@@ -139,7 +152,7 @@ struct OLPOpts {
   bool SplitStagesEnabled;
   bool UseLeanStage0;
   bool EnableSpeculativeLastIteration;
-  bool UseHardwareLoop;
+  OuterLoopType LoopType;
 
   explicit OLPOpts(const AIE::LoopOptionOverrides &Overrides)
       : Enabled(Overrides.get(EnableOuterLoopPipelining)),
@@ -150,7 +163,21 @@ struct OLPOpts {
             Overrides.hasOverride(SpeculativeLastIteration)
                 ? Overrides.get(SpeculativeLastIteration)
                 : UseLeanStage0),
-        UseHardwareLoop(Overrides.get(EnableOuterLoopHardwareLoop)) {}
+        LoopType(Overrides.get(OuterLoopTypeOpt)) {}
+
+  /// Determine whether to use hardware loop based on loop type and pointer
+  /// pressure. In auto mode, use hw loop if pointers < threshold.
+  bool shouldUseHardwareLoop(unsigned NumPointerPHIs) const {
+    switch (LoopType) {
+    case OuterLoopType::Soft:
+      return false;
+    case OuterLoopType::HW:
+      return true;
+    case OuterLoopType::Auto:
+      return NumPointerPHIs < OuterLoopPointerThreshold;
+    }
+    llvm_unreachable("Unknown OuterLoopType");
+  }
 };
 
 using SplitStrategy = bool (*)(const Instruction *);
@@ -173,11 +200,6 @@ static bool isStage1SplitPoint(const Instruction *I) {
       return true;
   }
   return false;
-}
-
-static bool isSafePointerIncrementIntrinsic(const AIEBaseInstrInfo &TII,
-                                            Intrinsic::ID IID) {
-  return IID == TII.getAddrIntrinsic2D() || IID == TII.getAddrIntrinsic3D();
 }
 
 // How reroutePhiIncomings treats OldPred's existing incoming entry.
@@ -336,8 +358,6 @@ class OrigLoopStructure : public LoopStructure {
 
   explicit OrigLoopStructure(Loop *L) : OuterLoop(L) {}
 
-  Loop *getOuterLoop() const { return OuterLoop; }
-
   // Populate the inner-loop fields and top/bottom regions from
   // OuterLoop; returns false unless the loop is a supported pipelining
   // candidate.
@@ -388,13 +408,32 @@ class OrigLoopStructure : public LoopStructure {
   SmallPtrSet<Instruction *, 32>
   collectStage1Cone(function_ref<bool(const Instruction *)> IsSplitPoint) const;
 
-  // The fallback stage-0 collection (no split point): pipeline candidates
-  // backward-reachable from inner-loop uses, in program order.
-  void collectStage0FromInnerLoop();
+  // Seed helpers for different collection modes (backward closure seeding).
+  void seedFromInnerLoop(SmallVectorImpl<Instruction *> &Seeds);
+  void seedFromLoads(SmallVectorImpl<Instruction *> &Seeds,
+                     const AIEOLPTargetConfig &Config);
+
+  // Unified stage-0 collection via backward closure from seeds.
+  // PopulateStage1 controls whether remaining candidates go to Stage1Insts.
+  void collectStage0(
+      function_ref<void(SmallVectorImpl<Instruction *> &)> SeedCollector,
+      bool PopulateStage1);
+
+  // Promote \p PtrUpdateInst and the pointer-update chain under it into
+  // \p ToPromote when that chain is rooted at a stage-0 value.
+  // \p AllowOuterPhiBase is for an inner-loop start step: its base may be an
+  // outer header PHI rather than a stage-0 instruction. Outer backedge updates
+  // do not use that root, or the loop-carried stride would be pipelined too.
+  void considerPointerUpdate(Instruction *PtrUpdateInst, bool AllowOuterPhiBase,
+                             const AIEOLPTargetConfig &Config,
+                             const SmallPtrSetImpl<Instruction *> &Stage0Set,
+                             SmallPtrSetImpl<Instruction *> &ToPromote) const;
 
 public:
   // Build and validate the LS for L; nullptr if L is not a supported candidate.
   static std::unique_ptr<OrigLoopStructure> tryBuildFrom(Loop *L);
+
+  Loop *getOuterLoop() const { return OuterLoop; }
 
   Loop *getInnerLoop() const { return InnerLoop; }
 
@@ -409,6 +448,10 @@ public:
   // meets MinTripCount, and the bottom has stores.
   bool isProfitableToRotate(ScalarEvolution &SE, unsigned MinTripCount) const;
 
+  // Count the number of base pointer PHI nodes in the outer loop header.
+  // These represent distinct pointer streams that evolve across iterations.
+  unsigned countBasePointerPHIs() const;
+
   // Returns true if it is safe to reorder the top-block loads before the
   // bottom-block stores (rejects volatile/atomic memory ops).
   bool isSafeToReorderMemoryOps() const;
@@ -420,7 +463,13 @@ public:
   // Stage 0 contains each top-block load, its backward address-computation
   // chain, and its sole direct target-selected intrinsic user with the user's
   // required operand chains. All other pipeline candidates form stage 1.
-  void collectLeanStage0(const TargetTransformInfo &TTI);
+  void collectLeanStage0(const AIEOLPTargetConfig &Config);
+
+  // Extend stage-0 with pointer update instructions (GEPs and add.2d/add.3d
+  // intrinsics) in the top block that derive from stage-0 values and feed
+  // outer loop PHI backedges. These should be pipelined along with the loads
+  // they enable.
+  void collectDerivedPointerUpdates(const AIEOLPTargetConfig &Config);
 
   // Delete this (now unreachable) LS's blocks.
   void removeFromCFG() const;
@@ -497,7 +546,11 @@ public:
 class AIEOuterLoopPipeliner : public FunctionPass {
 public:
   static char ID;
-  AIEOuterLoopPipeliner() : FunctionPass(ID) {}
+  explicit AIEOuterLoopPipeliner(
+      std::unique_ptr<const AIEOLPTargetConfig> Config = nullptr)
+      : FunctionPass(ID),
+        TargetConfig(Config ? std::move(Config)
+                            : std::make_unique<AIEOLPTargetConfig>()) {}
   bool runOnFunction(Function &F) override;
   void getAnalysisUsage(AnalysisUsage &AU) const override;
   StringRef getPassName() const override { return "AIE Outer Loop Pipeliner"; }
@@ -506,8 +559,7 @@ private:
   LoopInfo *LI = nullptr;
   DominatorTree *DT = nullptr;
   ScalarEvolution *SE = nullptr;
-  const TargetTransformInfo *TTI = nullptr;
-  const AIEBaseInstrInfo *TII = nullptr;
+  const std::unique_ptr<const AIEOLPTargetConfig> TargetConfig;
 
   bool runOnLoop(Loop *L);
   // Run every pipelining precondition as a flat early-return guard and
@@ -632,21 +684,31 @@ INITIALIZE_PASS_BEGIN(AIEOuterLoopPipeliner, DEBUG_TYPE,
 INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolutionWrapperPass)
-INITIALIZE_PASS_DEPENDENCY(TargetPassConfig)
 INITIALIZE_PASS_END(AIEOuterLoopPipeliner, DEBUG_TYPE,
                     "AIE Outer Loop Pipeliner", false, false)
 
-llvm::FunctionPass *llvm::createAIEOuterLoopPipelinerPass() {
-  return new AIEOuterLoopPipeliner();
+llvm::FunctionPass *llvm::createAIEOuterLoopPipelinerPass(
+    std::unique_ptr<const AIEOLPTargetConfig> Config) {
+  return new AIEOuterLoopPipeliner(std::move(Config));
 }
 
 void AIEOuterLoopPipeliner::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<LoopInfoWrapperPass>();
   AU.addRequired<DominatorTreeWrapperPass>();
   AU.addRequired<ScalarEvolutionWrapperPass>();
-  AU.addRequired<TargetTransformInfoWrapperPass>();
-  AU.addRequired<TargetPassConfig>();
   FunctionPass::getAnalysisUsage(AU);
+}
+
+/// Simplify trivial PHI nodes in all blocks of a function.
+static void simplifyTrivialPHIsInFunction(Function &F) {
+  for (BasicBlock &BB : F) {
+    for (PHINode &PN : make_early_inc_range(BB.phis())) {
+      if (Value *V = PN.hasConstantValue()) {
+        PN.replaceAllUsesWith(V);
+        PN.eraseFromParent();
+      }
+    }
+  }
 }
 
 bool AIEOuterLoopPipeliner::runOnFunction(Function &F) {
@@ -656,17 +718,17 @@ bool AIEOuterLoopPipeliner::runOnFunction(Function &F) {
   LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   SE = &getAnalysis<ScalarEvolutionWrapperPass>().getSE();
-  TTI = &getAnalysis<TargetTransformInfoWrapperPass>().getTTI(F);
-  const TargetMachine &TM =
-      getAnalysis<TargetPassConfig>().getTM<TargetMachine>();
-  TII = static_cast<const AIEBaseInstrInfo *>(
-      TM.getSubtargetImpl(F)->getInstrInfo());
   LLVM_DEBUG(dbgs() << "AIEOuterLoopPipeliner: " << F.getName() << "\n");
 
   bool Changed = false;
   SmallVector<Loop *, 4> TopLevelLoops(LI->begin(), LI->end());
   for (Loop *L : TopLevelLoops)
     Changed |= runOnLoop(L);
+
+  // Simplify all trivial PHIs in the function
+  if (Changed)
+    simplifyTrivialPHIsInFunction(F);
+
   return Changed;
 }
 
@@ -823,6 +885,15 @@ void AIEOuterLoopPipeliner::seedHeaderPhiEdge(RemapTable &Map,
   }
 }
 
+unsigned OrigLoopStructure::countBasePointerPHIs() const {
+  unsigned Count = 0;
+  for (const PHINode &PHI : getTop()->phis()) {
+    if (PHI.getType()->isPointerTy())
+      ++Count;
+  }
+  return Count;
+}
+
 bool OrigLoopStructure::isProfitableToRotate(ScalarEvolution &SE,
                                              unsigned MinTripCount) const {
   if (!isInnerLoopHardwareLoop()) {
@@ -917,43 +988,8 @@ SmallPtrSet<Instruction *, 32> OrigLoopStructure::collectStage1Cone(
   return collectClosure(SplitPoints, /*TraverseUsers=*/true);
 }
 
-void OrigLoopStructure::collectStages(
-    function_ref<bool(const Instruction *)> IsSplitPoint) {
-  // Stage 1 is the split-point cone. With no split point every candidate
-  // backward-reachable from the inner loop is stage 0.
-  const SmallPtrSet<Instruction *, 32> Stage1Set =
-      collectStage1Cone(IsSplitPoint);
-  if (Stage1Set.empty()) {
-    collectStage0FromInnerLoop();
-    return;
-  }
-
-  // Stage 0 is every other pipeline candidate (the load/address chain).
-  topRegion().forEachInstruction([&](Instruction *I) {
-    if (!isPipelineCandidate(I))
-      return;
-    (Stage1Set.count(I) ? Stage1Insts : Stage0Insts).push_back(I);
-  });
-
-  LLVM_DEBUG(dbgs() << "    Stages: " << stage0Insts().size() << " stage-0, "
-                    << stage1Insts().size() << " stage-1 instructions\n");
-}
-
-void OrigLoopStructure::collectStage0FromInnerLoop() {
-  // The fallback only follows SSA def-use edges from the inner loop. Do not
-  // pipeline when the top contains an effectful candidate: its consumer may be
-  // connected through target state rather than SSA, so moving its operands
-  // without moving the operation would be incorrect.
-  // TODO: We might wanna fix this fallback collection later to not only follow
-  // SSA edges, if it turns out beneficial in practice. For now, we bail.
-  bool HasTopSideEffects = false;
-  topRegion().forEachInstruction([&](Instruction *I) {
-    HasTopSideEffects |= isPipelineCandidate(I) && I->mayHaveSideEffects();
-  });
-  if (HasTopSideEffects)
-    return;
-
-  SmallVector<Instruction *, 16> Seeds;
+void OrigLoopStructure::seedFromInnerLoop(
+    SmallVectorImpl<Instruction *> &Seeds) {
   auto Seed = [&](Value *V) {
     if (auto *I = dyn_cast<Instruction>(V))
       Seeds.push_back(I);
@@ -968,47 +1004,196 @@ void OrigLoopStructure::collectStage0FromInnerLoop() {
     for (unsigned I = 0; I < PHI.getNumIncomingValues(); ++I)
       if (PHI.getIncomingBlock(I) == getTop())
         Seed(PHI.getIncomingValue(I));
+}
 
-  const SmallPtrSet<Instruction *, 32> Visited =
-      collectClosure(Seeds, /*TraverseUsers=*/false);
-
-  // Emit the reached candidates in region program order.
+void OrigLoopStructure::seedFromLoads(SmallVectorImpl<Instruction *> &Seeds,
+                                      const AIEOLPTargetConfig &Config) {
   topRegion().forEachInstruction([&](Instruction *I) {
-    if (isPipelineCandidate(I) && Visited.count(I))
-      Stage0Insts.push_back(I);
+    // Target load intrinsics seed the chain the way a plain load does.
+    if (Config.isLeanStage0LoadIntrinsic(*I)) {
+      Seeds.push_back(I);
+      return;
+    }
+
+    if (!isa<LoadInst>(I))
+      return;
+    Seeds.push_back(I);
+    // Also include single-user loads' lean-stage0 intrinsic users.
+    if (I->hasOneUser()) {
+      auto *User = cast<Instruction>(*I->user_begin());
+      if (Config.isLeanStage0Intrinsic(*User))
+        Seeds.push_back(User);
+    }
   });
 }
 
-void OrigLoopStructure::collectLeanStage0(const TargetTransformInfo &TTI) {
-  SmallVector<Instruction *, 16> TopLoads;
-  SmallVector<Instruction *, 16> TopSingleUserLoads;
-  topRegion().forEachInstruction([&](Instruction *I) {
-    if (!isa<LoadInst>(I))
-      return;
-    TopLoads.push_back(I);
-    if (I->hasOneUser())
-      TopSingleUserLoads.push_back(I);
-  });
+void OrigLoopStructure::collectStage0(
+    function_ref<void(SmallVectorImpl<Instruction *> &)> SeedCollector,
+    bool PopulateStage1) {
+  SmallVector<Instruction *, 16> Seeds;
+  SeedCollector(Seeds);
 
-  SmallPtrSet<Instruction *, 32> Stage0Set =
-      collectClosure(TopLoads, /*TraverseUsers=*/false);
-  for (Instruction *Load : TopSingleUserLoads) {
-    auto *User = cast<Instruction>(*Load->user_begin());
-    if (!TTI.isLeanStage0Intrinsic(*User))
-      continue;
-    const SmallPtrSet<Instruction *, 32> IntrinsicClosure =
-        collectClosure({User}, /*TraverseUsers=*/false);
-    Stage0Set.insert(IntrinsicClosure.begin(), IntrinsicClosure.end());
-  }
+  const SmallPtrSet<Instruction *, 32> Stage0Set =
+      collectClosure(Seeds, /*TraverseUsers=*/false);
 
+  // Emit stage-0 and (optionally) stage-1 candidates in region program order.
   topRegion().forEachInstruction([&](Instruction *I) {
     if (!isPipelineCandidate(I))
       return;
-    (Stage0Set.count(I) ? Stage0Insts : Stage1Insts).push_back(I);
+    if (Stage0Set.count(I))
+      Stage0Insts.push_back(I);
+    else if (PopulateStage1)
+      Stage1Insts.push_back(I);
   });
 
   LLVM_DEBUG(dbgs() << "    Stages: " << stage0Insts().size() << " stage-0, "
                     << stage1Insts().size() << " stage-1 instructions\n");
+}
+
+void OrigLoopStructure::considerPointerUpdate(
+    Instruction *PtrUpdateInst, bool AllowOuterPhiBase,
+    const AIEOLPTargetConfig &Config,
+    const SmallPtrSetImpl<Instruction *> &Stage0Set,
+    SmallPtrSetImpl<Instruction *> &ToPromote) const {
+  // The pointer operand of a GEP or add.2d/add.3d, or nullptr otherwise.
+  auto GetPointerBase = [&](Instruction *I) -> Value * {
+    if (auto *GEP = dyn_cast<GetElementPtrInst>(I))
+      return GEP->getPointerOperand();
+    if (auto *II = dyn_cast<IntrinsicInst>(I)) {
+      if (Config.isSafePointerIncrementIntrinsic(II->getIntrinsicID()))
+        return II->getArgOperand(0); // First argument is the input pointer
+    }
+    return nullptr;
+  };
+
+  auto IsPointerUpdate = [&](Instruction *I) -> bool {
+    return GetPointerBase(I) != nullptr;
+  };
+
+  if (!PtrUpdateInst || !isInTop(PtrUpdateInst) ||
+      !IsPointerUpdate(PtrUpdateInst) || Stage0Set.count(PtrUpdateInst))
+    return;
+
+  SmallVector<Instruction *, 4> PtrUpdateChain;
+  Instruction *Current = PtrUpdateInst;
+  bool Promote = false;
+  while (Current) {
+    PtrUpdateChain.push_back(Current);
+    auto *BaseInst = dyn_cast<Instruction>(GetPointerBase(Current));
+    if (!BaseInst) {
+      Current = nullptr;
+      continue;
+    }
+    const bool OuterPhiBase =
+        AllowOuterPhiBase && isa<PHINode>(BaseInst) && isInTop(BaseInst);
+    if (Stage0Set.count(BaseInst) || OuterPhiBase) {
+      Promote = true;
+      break;
+    }
+    // Keep walking while the base is itself a pointer update in the top.
+    if (isInTop(BaseInst) && IsPointerUpdate(BaseInst))
+      Current = BaseInst;
+    else
+      Current = nullptr;
+  }
+  if (!Promote)
+    return;
+  for (Instruction *I : PtrUpdateChain)
+    if (!Stage0Set.count(I))
+      ToPromote.insert(I);
+}
+
+void OrigLoopStructure::collectDerivedPointerUpdates(
+    const AIEOLPTargetConfig &Config) {
+  // Build a set of current stage-0 instructions for fast lookup.
+  SmallPtrSet<Instruction *, 32> Stage0Set(Stage0Insts.begin(),
+                                           Stage0Insts.end());
+
+  // Track instructions to move from stage-1 to stage-0.
+  SmallPtrSet<Instruction *, 8> ToPromote;
+
+  // Consider pointer updates arriving on the edge from Pred into Block.
+  auto ConsiderIncoming = [&](BasicBlock *Block, BasicBlock *Pred,
+                              bool AllowOuterPhiBase) {
+    for (PHINode &PHI : Block->phis()) {
+      int Idx = PHI.getBasicBlockIndex(Pred);
+      if (Idx < 0)
+        continue;
+      if (auto *I = dyn_cast<Instruction>(PHI.getIncomingValue(Idx)))
+        considerPointerUpdate(I, AllowOuterPhiBase, Config, Stage0Set,
+                              ToPromote);
+    }
+  };
+
+  // Outer-header backedge updates whose base is already in stage 0.
+  ConsiderIncoming(getTop(), getBottom(), /*AllowOuterPhiBase=*/false);
+
+  // Inner-loop start steps. They sit in the header with no load beside them,
+  // so the address combiner leaves them as standalone padds. The inner header
+  // reads them through the stage-0 merge PHI instead.
+  ConsiderIncoming(getInnerHeader(), getTop(), /*AllowOuterPhiBase=*/true);
+
+  if (ToPromote.empty())
+    return;
+
+  // Move promoted instructions from Stage1Insts to Stage0Insts, preserving
+  // program order.
+  std::vector<Instruction *> NewStage0Insts;
+  std::vector<Instruction *> NewStage1Insts;
+
+  // We need to rebuild both lists in program order.
+  topRegion().forEachInstruction([&](Instruction *I) {
+    if (!isPipelineCandidate(I))
+      return;
+    if (Stage0Set.count(I) || ToPromote.count(I))
+      NewStage0Insts.push_back(I);
+    else
+      NewStage1Insts.push_back(I);
+  });
+
+  Stage0Insts = std::move(NewStage0Insts);
+  Stage1Insts = std::move(NewStage1Insts);
+
+  LLVM_DEBUG(dbgs() << "    After collectDerivedPointerUpdates: "
+                    << stage0Insts().size() << " stage-0, "
+                    << stage1Insts().size() << " stage-1 instructions\n");
+}
+
+void OrigLoopStructure::collectStages(
+    function_ref<bool(const Instruction *)> IsSplitPoint) {
+  // Stage 1 is the split-point cone. With no split point every candidate
+  // backward-reachable from the inner loop is stage 0.
+  const SmallPtrSet<Instruction *, 32> Stage1Set =
+      collectStage1Cone(IsSplitPoint);
+  if (Stage1Set.empty()) {
+    // Fallback: the fallback only follows SSA def-use edges from the inner
+    // loop. Do not pipeline when the top contains an effectful candidate: its
+    // consumer may be connected through target state rather than SSA, so moving
+    // its operands without moving the operation would be incorrect.
+    if (llvm::any_of(*getTop(), [this](Instruction &I) {
+          return isPipelineCandidate(&I) && I.mayHaveSideEffects();
+        }))
+      return;
+
+    collectStage0([this](auto &S) { seedFromInnerLoop(S); },
+                  /*PopulateStage1=*/true);
+    return;
+  }
+
+  // Stage 0 is every other pipeline candidate (the load/address chain).
+  topRegion().forEachInstruction([&](Instruction *I) {
+    if (!isPipelineCandidate(I))
+      return;
+    (Stage1Set.count(I) ? Stage1Insts : Stage0Insts).push_back(I);
+  });
+
+  LLVM_DEBUG(dbgs() << "    Stages: " << stage0Insts().size() << " stage-0, "
+                    << stage1Insts().size() << " stage-1 instructions\n");
+}
+
+void OrigLoopStructure::collectLeanStage0(const AIEOLPTargetConfig &Config) {
+  collectStage0([this, &Config](auto &S) { seedFromLoads(S, Config); },
+                /*PopulateStage1=*/true);
 }
 
 SmallVector<Instruction *, 16>
@@ -1216,6 +1401,18 @@ void OrigLoopStructure::removeFromCFG() const {
     new UnreachableInst(BB->getContext(), BB);
   }
 
+#ifndef NDEBUG
+  // Every use that survives must have been remapped to a clone:
+  // DeleteDeadBlocks turns whatever is left into poison.
+  for (BasicBlock *BB : Dead)
+    for (Instruction &I : *BB)
+      for (User *U : I.users()) {
+        auto *UI = dyn_cast<Instruction>(U);
+        assert((!UI || DeadSet.contains(UI->getParent())) &&
+               "surviving use of an original-loop value would become poison");
+      }
+#endif
+
   DeleteDeadBlocks(Dead);
 }
 
@@ -1361,12 +1558,25 @@ void AIEOuterLoopPipeliner::populateLastIterBottom(
   // JNZD hardware loop the steady counter/limit are also already erased, so it
   // MUST be elided.)
 
+  BasicBlock *OrigBottom = OrigLS.getBottom();
+  const auto IsInLoop = [&OrigLS](const Instruction *I) {
+    return OrigLS.topRegion().contains(I) ||
+           OrigLS.bottomRegion().contains(I) ||
+           is_contained(OrigLS.getInnerBlocks(), I->getParent());
+  };
+
+  const auto OutlivesPeel = [&](const Instruction *U) {
+    return !IsInLoop(U) || U->getParent() == OrigBottom;
+  };
+
   SmallVector<Instruction *, 16> OrigBottomInsts;
-  for (Instruction &I : *OrigLS.getBottom()) {
+  for (Instruction &I : *OrigBottom) {
     if (I.isTerminator())
       break;
-    // No prefetch in the last-iteration.
-    if (isa<LoadInst>(&I))
+    if (isa<LoadInst>(&I) && none_of(I.users(), [&](const User *U) {
+          const auto *UI = dyn_cast<Instruction>(U);
+          return UI && OutlivesPeel(UI);
+        }))
       continue;
     if (&I == Bound.Counter || &I == Bound.Cmp)
       continue;
@@ -1397,24 +1607,6 @@ void AIEOuterLoopPipeliner::remapExitForReplacement(
   reroutePhiIncomings(OrigExit, OrigLS.getBottom(), ReplacementLS.getBottom(),
                       PhiEdge::Repoint,
                       [&](Value *V) { return ReplacementLS.cloneOf(V); });
-
-  // Non-phi exit live-outs: when the latch dominates the exit there is no LCSSA
-  // phi, so LCSSA rematerializes the live-out as a plain instruction in the
-  // exit whose operands reference loop-internal values (e.g. the outer-header
-  // PHI and an inner-loop def). removeFromCFG deletes those originals, which
-  // would leave the exit reading poison. Remap each such operand to a live
-  // clone so the exit reads a defined value.
-  for (Instruction &I :
-       make_range(OrigExit->getFirstNonPHIIt(), OrigExit->end())) {
-    for (Use &Op : I.operands()) {
-      Value *V = Op.get();
-      // CFG successors are basic-block operands; only remap data values.
-      if (isa<BasicBlock>(V))
-        continue;
-      if (Value *Mapped = ReplacementLS.cloneOf(V); Mapped != V)
-        Op.set(Mapped);
-    }
-  }
 }
 
 bool BlockRegion::isSingleEntrySingleExit() const {
@@ -1697,10 +1889,10 @@ void CloneLoopStructure::markSpeculativePipelining() const {
 
 // An intrinsic other than a safe 2D/3D pointer increment, whose unknown side
 // effects forbid moving it out of the bottom block.
-static bool isUnsafeIntrinsicToLift(const AIEBaseInstrInfo &TII,
+static bool isUnsafeIntrinsicToLift(const AIEOLPTargetConfig &Config,
                                     const Instruction *I) {
   const auto *II = dyn_cast<IntrinsicInst>(I);
-  return II && !isSafePointerIncrementIntrinsic(TII, II->getIntrinsicID());
+  return II && !Config.isSafePointerIncrementIntrinsic(II->getIntrinsicID());
 }
 
 // True if a chain instruction is used by a bottom instruction outside the
@@ -1733,7 +1925,7 @@ AIEOuterLoopPipeliner::collectLiftableBottomChain(
   Worklist.push_back(LatchInst);
   while (!Worklist.empty()) {
     Instruction *I = Worklist.pop_back_val();
-    if (isUnsafeIntrinsicToLift(*TII, I))
+    if (isUnsafeIntrinsicToLift(*TargetConfig, I))
       return std::nullopt;
 
     for (Value *Op : I->operands()) {
@@ -1789,6 +1981,10 @@ bool AIEOuterLoopPipeliner::liftBottomPointerUpdatesToTop(
 
 bool AIEOuterLoopPipeliner::performTransformation(OrigLoopStructure &OrigLS,
                                                   const OLPOpts &Opts) {
+
+  /// Restore LCSSA if this property was invalidated.
+  formLCSSARecursively(*OrigLS.getOuterLoop(), *DT, LI, SE);
+
   liftBottomPointerUpdatesToTop(OrigLS);
 
   const auto IsSplitPoint = [&Opts](const Instruction *I) {
@@ -1796,9 +1992,15 @@ bool AIEOuterLoopPipeliner::performTransformation(OrigLoopStructure &OrigLS,
   };
 
   if (Opts.UseLeanStage0)
-    OrigLS.collectLeanStage0(*TTI);
+    OrigLS.collectLeanStage0(*TargetConfig);
   else
     OrigLS.collectStages(IsSplitPoint);
+
+  // Extend stage-0 with pointer updates (GEPs and add.2d/add.3d) that feed an
+  // outer PHI backedge from a stage-0 base, and with inner-loop start steps
+  // whose base is a stage-0 pointer or an outer pointer PHI.
+  OrigLS.collectDerivedPointerUpdates(*TargetConfig);
+
   if (OrigLS.stage0Insts().empty()) {
     LLVM_DEBUG(dbgs() << "    Could not extract Stage 0\n");
     return false;
@@ -1831,8 +2033,13 @@ bool AIEOuterLoopPipeliner::performTransformation(OrigLoopStructure &OrigLS,
   // Merge the preheader and bottom copies into the steady header via PHIs.
   createPipelinedPHIs(OrigLS, SteadyLS, PreheaderVMap, BottomVMap);
 
-  const bool OuterIsHardwareLoop =
-      Opts.UseHardwareLoop && SteadyLS.latchCondition().isDowncounting();
+  // Determine whether to use hardware loop based on pointer pressure.
+  const unsigned NumPointerPHIs = OrigLS.countBasePointerPHIs();
+  const bool OuterIsHardwareLoop = Opts.shouldUseHardwareLoop(NumPointerPHIs) &&
+                                   SteadyLS.latchCondition().isDowncounting();
+  LLVM_DEBUG(dbgs() << "    Pointer PHIs: " << NumPointerPHIs << ", threshold: "
+                    << OuterLoopPointerThreshold << ", using "
+                    << (OuterIsHardwareLoop ? "hw" : "soft") << " loop\n");
 
   // Preparation: set up the latch condition for JNZD and/or peeling.
   // - Non-speculative: adjust the loop bound from N to N-1 (peel one iteration)

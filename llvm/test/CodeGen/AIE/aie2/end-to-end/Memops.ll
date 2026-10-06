@@ -4,7 +4,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc -O2 -mtriple=aie2 --enable-pipeliner=0 %s -o - | FileCheck %s
 
 @buffer1 = dso_local local_unnamed_addr global [1000 x i32] zeroinitializer, align 4
@@ -41,24 +41,24 @@ declare void @llvm.memcpy.p0.p0.i32(ptr noalias nocapture writeonly, ptr noalias
 define dso_local void @lowerMemcpyUsingWordByte() local_unnamed_addr #0 {
 ; CHECK-LABEL: lowerMemcpyUsingWordByte:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nop ; movxm p0, #(buffer2+8)
-; CHECK-NEXT:    lda.s8 r0, [p0, #0]
-; CHECK-NEXT:    lda r1, [p0, #-4]; movxm p1, #(buffer1+8)
+; CHECK-NEXT:    movxm p0, #(buffer2+8)
+; CHECK-NEXT:    paddb [p0], #-8
+; CHECK-NEXT:    lda r0, [p0], #4
+; CHECK-NEXT:    lda r1, [p0], #4
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    movxm p1, #(buffer1+8)
+; CHECK-NEXT:    paddb [p1], #-8
+; CHECK-NEXT:    st r0, [p1], #4
+; CHECK-NEXT:    lda.s8 r0, [p0, #0]; st r1, [p1], #4
 ; CHECK-NEXT:    st.s8 r0, [p1, #0]
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    lda r0, [p0, #-8]
-; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    st r1, [p1, #-4] // Delay Slot 3
-; CHECK-NEXT:    st r0, [p1, #-8] // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   tail call void @llvm.memcpy.p0.p0.i32(ptr noundef nonnull align 4 dereferenceable(9) @buffer1, ptr noundef nonnull align 4 dereferenceable(9) @buffer2, i32 9, i1 false)
@@ -97,37 +97,31 @@ define dso_local void @lowerMemcpyUsingWordHalfByte() local_unnamed_addr #0 {
 ; CHECK-LABEL: lowerMemcpyUsingWordHalfByte:
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; movxm p0, #(buffer2+8); nopv
-; CHECK-NEXT:    lda.s16 r0, [p0, #0]; nopb ; movxm p1, #(buffer1+8)
+; CHECK-NEXT:    paddb [p0], #-8; nopx
+; CHECK-NEXT:    lda r0, [p0], #4
+; CHECK-NEXT:    lda r1, [p0], #4
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    movxm p1, #(buffer1+8)
+; CHECK-NEXT:    paddb [p1], #-8
+; CHECK-NEXT:    st r0, [p1], #4
+; CHECK-NEXT:    lda.s16 r0, [p0, #0]; st r1, [p1], #4
 ; CHECK-NEXT:    st.s16 r0, [p1, #0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    paddb [p0], #-8
-; CHECK-NEXT:    lda r0, [p0], #4
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    mova dj0, #6; paddb [p1], #-8
-; CHECK-NEXT:    lda.s8 r0, [p0, dj0]; st r0, [p1], #4
-; CHECK-NEXT:    st.s8 r0, [p1, dj0]
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    lda r0, [p0, #0]
-; CHECK-NEXT:    nop
+; CHECK-NEXT:    lda.s8 r0, [p0, #2]
+; CHECK-NEXT:    st.s8 r0, [p1, #2]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    st r0, [p1, #0] // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   tail call void @llvm.memcpy.p0.p0.i32(ptr noundef nonnull align 4 dereferenceable(11) @buffer1, ptr noundef nonnull align 4 dereferenceable(11) @buffer2, i32 11, i1 false)

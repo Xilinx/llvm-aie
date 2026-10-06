@@ -38,35 +38,33 @@ declare { ptr, <32 x i32>, i32 }
 define void @pipelined_acquire_ptr_fifo_same(ptr noalias %io, i32 %lock_id) {
 ; CHECK-LABEL: pipelined_acquire_ptr_fifo_same:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    lda r1, [p0, #4]; nopxm
+; CHECK-NEXT:    lda r1, [p0, #4]; nopb ; nopxm
 ; CHECK-NEXT:    lda r2, [p0, #8]
 ; CHECK-NEXT:    lda r27, [p0, #12]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
 ; CHECK-NEXT:    movxm ls, #.LBB0_1
 ; CHECK-NEXT:    movxm le, #.L_LEnd0
+; CHECK-NEXT:    paddxm [sp], #64
 ; CHECK-NEXT:    mova r2, #-1; sel.eqz r1, r1, r2, r27
 ; CHECK-NEXT:    acq r0, r2
-; CHECK-NEXT:    paddxm [sp], #64
 ; CHECK-NEXT:    mova r3, #16; movx r24, #0; mov p1, sp
 ; CHECK-NEXT:    padda [p1], #-64; nopb ; nops ; movx r30, #63; add.nc lc, r3, #0; nopv
 ; CHECK-NEXT:  .LBB0_1: // %for.body
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
 ; CHECK-NEXT:    nopa ; nopb ; movs p0, r1; nopxm ; nopv
+; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    nopa ; vldb.popx.512 x2, [p0, lf0, r24]; nops ; nopxm ; nopv
 ; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; mov r1, p0; nopv
 ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
-; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
+; CHECK-NEXT:    nopa ; nopx
 ; CHECK-NEXT:    st.s8 r0, [p1, #0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    vextract.8 r0, x2, #0, vaddsign1
-; CHECK-NEXT:    nop
 ; CHECK-NEXT:  .L_LEnd0:
-; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
+; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; vextract.8 r0, x2, #0, vaddsign1; nopv
 ; CHECK-NEXT:  // %bb.2: // %for.exit
 ; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5

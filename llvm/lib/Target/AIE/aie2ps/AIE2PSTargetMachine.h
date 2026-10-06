@@ -40,6 +40,9 @@ public:
   const AIE2PSSubtarget *getSubtargetImpl(const Function &) const override {
     return &Subtarget;
   }
+  const AIEBaseSubtarget *getAIESubtarget() const override {
+    return &Subtarget;
+  }
   TargetTransformInfo getTargetTransformInfo(const Function &F) const override;
   TargetPassConfig *createPassConfig(PassManagerBase &PM) override;
 

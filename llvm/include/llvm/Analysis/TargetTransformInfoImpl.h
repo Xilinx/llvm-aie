@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 /// \file
 /// This file provides helpers for the implementation of
@@ -441,10 +444,6 @@ public:
   virtual bool useColdCCForColdCall(Function &F) const { return false; }
 
   virtual bool isTargetIntrinsicTriviallyScalarizable(Intrinsic::ID ID) const {
-    return false;
-  }
-
-  virtual bool isLeanStage0Intrinsic(const Instruction &I) const {
     return false;
   }
 

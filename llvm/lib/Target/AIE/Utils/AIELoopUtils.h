@@ -166,6 +166,62 @@ findPrologueEpilogue(const MachineBasicBlock &LoopBB);
 std::optional<unsigned> getSWPStageCount(const MachineBasicBlock &LoopBB,
                                          const AIEBaseInstrInfo &TII);
 
+/// Returns true if the loop was pipelined with speculative last iteration.
+/// In speculative mode, there's no separate peeled-iteration region.
+bool isOuterLoopSpeculative(const MachineBasicBlock &LoopLatch);
+
+/// Structure representing an outer-loop-pipelined loop at MIR level.
+/// Built from the outer loop latch that has the OLP success marker.
+///
+/// OLP creates the following CFG structure (non-speculative mode):
+///   [OuterPreheader] -> [SteadyTop] -> [SteadyInner] -> [SteadyBottom/Latch]
+///                            ^                                |
+///                            |________________________________|
+///                                        |
+///                                        v
+///   [PeeledIterTop] -> [PeeledIterInner] -> [PeeledIterBottom]
+///
+/// The SteadyInner and PeeledIterInner are the sibling inner loops that
+/// execute the same code but may have different register allocations.
+struct OuterLoopStructure {
+  /// Entry block to the outer loop.
+  MachineBasicBlock *OuterPreheader = nullptr;
+
+  /// First block inside the outer loop, entered from OuterPreheader.
+  MachineBasicBlock *SteadyTop = nullptr;
+  /// The steady inner loop body.
+  MachineBasicBlock *SteadyInner = nullptr;
+  /// The outer loop latch.
+  MachineBasicBlock *SteadyBottom = nullptr;
+
+  /// First block of the peeled iteration region.
+  MachineBasicBlock *PeeledIterTop = nullptr;
+  /// The peeled iteration inner loop body.
+  MachineBasicBlock *PeeledIterInner = nullptr;
+  /// Exit block of the peeled iteration region.
+  MachineBasicBlock *PeeledIterBottom = nullptr;
+
+  /// True if speculative mode (no peeled iteration region).
+  bool Speculative = false;
+
+  /// Returns true if this has a peeled iteration region (non-speculative).
+  bool hasPeeledIterRegion() const { return !Speculative; }
+
+  /// Try to build the structure from an outer loop latch that has OLP metadata.
+  /// For speculative loops, only the steady-state region is populated and
+  /// Speculative is set to true. Returns nullopt if the CFG doesn't match
+  /// the expected OLP pattern.
+  static std::optional<OuterLoopStructure>
+  tryBuildFrom(MachineBasicBlock &OuterLatch);
+
+  /// Return true if both inner loops have matching instruction structure.
+  /// This is a basic check comparing instruction count and opcodes only.
+  /// Does NOT verify registers or bundles - intended for use before the
+  /// post-machine scheduler when these may still differ between loops.
+  /// Only valid when hasPeeledIterRegion() is true.
+  bool hasMatchingInnerLoops() const;
+};
+
 } // namespace llvm::AIELoopUtils
 
 #endif
