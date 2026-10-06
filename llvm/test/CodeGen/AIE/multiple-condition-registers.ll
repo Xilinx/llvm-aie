@@ -12,7 +12,7 @@
 ; Code generation for compares whose users are in other basic blocks. AIE has
 ; no flags register: compares write a GPR, conditional branches test any GPR,
 ; and sel.nez/sel.eqz read their condition from r27. Without
-; setHasMultipleConditionRegisters(true), CodeGenPrepare sinks every compare
+; hasMultipleConditionRegisters returning true, CodeGenPrepare sinks every compare
 ; into the blocks of its users (and deletes compares that have no users).
 ; Each function states whether its output is expected to change with the flag;
 ; @invariant_guard_nested_loop is the one that shows the intended improvement.

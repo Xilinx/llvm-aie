@@ -18,6 +18,7 @@ set(LIBS
   ${dialect_libs}
   ${test_libs}
   MLIRIR
+  MLIRRegisterAllDialects
   MLIRPDLLAST
   MLIRPDLLCodeGen
   MLIRPDLLODS

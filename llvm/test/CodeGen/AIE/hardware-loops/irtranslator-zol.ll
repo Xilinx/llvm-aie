@@ -40,8 +40,8 @@ define void @simple(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef 
   ; AIE2-NEXT:   [[PHI1:%[0-9]+]]:_(s32) = G_PHI [[C1]](s32), %bb.1, %14(s32), %bb.3
   ; AIE2-NEXT:   [[TRUNC:%[0-9]+]]:_(s20) = G_TRUNC [[PHI1]](s32)
   ; AIE2-NEXT:   [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
-  ; AIE2-NEXT:   [[MUL:%[0-9]+]]:_(s20) = G_MUL [[TRUNC]], [[C2]]
-  ; AIE2-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY1]], [[MUL]](s20)
+  ; AIE2-NEXT:   [[MUL:%[0-9]+]]:_(s20) = nsw G_MUL [[TRUNC]], [[C2]]
+  ; AIE2-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = nusw inbounds G_PTR_ADD [[COPY1]], [[MUL]](s20)
   ; AIE2-NEXT:   [[COPY3:%[0-9]+]]:_(p0) = COPY [[PTR_ADD]](p0)
   ; AIE2-NEXT:   [[LOAD1:%[0-9]+]]:_(s32) = G_LOAD [[COPY3]](p0) :: (load (s32) from %ir.arrayidx)
   ; AIE2-NEXT:   [[ADD:%[0-9]+]]:_(s32) = nsw G_ADD [[PHI]], [[LOAD1]]
@@ -75,8 +75,8 @@ define void @simple(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef 
   ; AIE2p-NEXT:   [[PHI1:%[0-9]+]]:_(s32) = G_PHI [[C1]](s32), %bb.1, %14(s32), %bb.3
   ; AIE2p-NEXT:   [[TRUNC:%[0-9]+]]:_(s20) = G_TRUNC [[PHI1]](s32)
   ; AIE2p-NEXT:   [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
-  ; AIE2p-NEXT:   [[MUL:%[0-9]+]]:_(s20) = G_MUL [[TRUNC]], [[C2]]
-  ; AIE2p-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY1]], [[MUL]](s20)
+  ; AIE2p-NEXT:   [[MUL:%[0-9]+]]:_(s20) = nsw G_MUL [[TRUNC]], [[C2]]
+  ; AIE2p-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = nusw inbounds G_PTR_ADD [[COPY1]], [[MUL]](s20)
   ; AIE2p-NEXT:   [[COPY3:%[0-9]+]]:_(p0) = COPY [[PTR_ADD]](p0)
   ; AIE2p-NEXT:   [[LOAD1:%[0-9]+]]:_(s32) = G_LOAD [[COPY3]](p0) :: (load (s32) from %ir.arrayidx)
   ; AIE2p-NEXT:   [[ADD:%[0-9]+]]:_(s32) = nsw G_ADD [[PHI]], [[LOAD1]]

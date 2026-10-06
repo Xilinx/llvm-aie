@@ -185,7 +185,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: VLD_x_idx_pseudo_diff_bank
-    ; CHECK: BUNDLE implicit-def $x0, implicit-def $wl0, implicit-def $wh0, implicit-def $x1, implicit-def $wl1, implicit-def $wh1, implicit killed $p2, implicit killed $dj2, implicit killed $p1, implicit killed $dj4 {
+    ; CHECK: BUNDLE implicit-def $x0, implicit-def $x1, implicit killed $p2, implicit killed $dj2, implicit killed $p1, implicit killed $dj4 {
     ; CHECK-NEXT:   $x0 = VLDA_dmx_lda_x_idx killed $p2, killed $dj2 :: (load (<16 x s32>), addrspace 14)
     ; CHECK-NEXT:   $x1 = VLDB_dmx_ldb_x_idx killed $p1, killed $dj4 :: (load (<16 x s32>), addrspace 9)
     ; CHECK-NEXT: }
@@ -223,7 +223,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: VLD_x_idx_imm_pseudo_diff_bank
-    ; CHECK: BUNDLE implicit-def $x0, implicit-def $wl0, implicit-def $wh0, implicit-def $x1, implicit-def $wl1, implicit-def $wh1, implicit killed $p2, implicit killed $p1 {
+    ; CHECK: BUNDLE implicit-def $x0, implicit-def $x1, implicit killed $p2, implicit killed $p1 {
     ; CHECK-NEXT:   $x0 = VLDA_dmx_lda_x_idx_imm killed $p2, 0 :: (load (<16 x s32>), addrspace 14)
     ; CHECK-NEXT:   $x1 = VLDB_dmx_ldb_x_idx_imm killed $p1, 32 :: (load (<16 x s32>), addrspace 9)
     ; CHECK-NEXT: }
@@ -261,7 +261,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: VLD_x_pstm_nrm_pseudo_diff_bank
-    ; CHECK: BUNDLE implicit-def $x0, implicit-def $wl0, implicit-def $wh0, implicit-def $p4, implicit-def $x1, implicit-def $wl1, implicit-def $wh1, implicit-def $p5, implicit killed $p4, implicit killed $m4, implicit killed $p5, implicit killed $m0 {
+    ; CHECK: BUNDLE implicit-def $x0, implicit-def $p4, implicit-def $x1, implicit-def $p5, implicit killed $p4, implicit killed $m4, implicit killed $p5, implicit killed $m0 {
     ; CHECK-NEXT:   $x0, $p4 = VLDA_dmx_lda_x_pstm_nrm killed $p4, killed $m4 :: (load (<16 x s32>), addrspace 14)
     ; CHECK-NEXT:   $x1, $p5 = VLDB_dmx_ldb_x_pstm_nrm killed $p5, killed $m0 :: (load (<16 x s32>), addrspace 9)
     ; CHECK-NEXT: }
@@ -299,7 +299,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: VLD_x_pstm_nrm_imm_pseudo_diff_bank
-    ; CHECK: BUNDLE implicit-def $x0, implicit-def $wl0, implicit-def $wh0, implicit-def $p4, implicit-def $x1, implicit-def $wl1, implicit-def $wh1, implicit-def $p5, implicit killed $p4, implicit killed $p5 {
+    ; CHECK: BUNDLE implicit-def $x0, implicit-def $p4, implicit-def $x1, implicit-def $p5, implicit killed $p4, implicit killed $p5 {
     ; CHECK-NEXT:   $x0, $p4 = VLDA_dmx_lda_x_pstm_nrm_imm killed $p4, 0 :: (load (<16 x s32>), addrspace 14)
     ; CHECK-NEXT:   $x1, $p5 = VLDB_dmx_ldb_x_pstm_nrm_imm killed $p5, 64 :: (load (<16 x s32>), addrspace 9)
     ; CHECK-NEXT: }
@@ -375,7 +375,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: VLD_2D_x_pseudo_diff_bank
-    ; CHECK: BUNDLE implicit-def $x0, implicit-def $wl0, implicit-def $wh0, implicit-def $p7, implicit-def $dc5, implicit-def $x1, implicit-def $wl1, implicit-def $wh1, implicit-def $p6, implicit-def $dc7, implicit killed $p7, implicit killed $d5, implicit killed $p6, implicit killed $d7 {
+    ; CHECK: BUNDLE implicit-def $x0, implicit-def $p7, implicit-def $dc5, implicit-def $x1, implicit-def $p6, implicit-def $dc7, implicit killed $p7, implicit killed $d5, implicit killed $p6, implicit killed $d7 {
     ; CHECK-NEXT:   $x0, $p7, $dc5 = VLDA_2D_dmx_lda_x killed $p7, killed $d5 :: (load (<16 x s32>), addrspace 14)
     ; CHECK-NEXT:   $x1, $p6, $dc7 = VLDB_2D_dmx_ldb_x killed $p6, killed $d7 :: (load (<16 x s32>), addrspace 9)
     ; CHECK-NEXT: }
@@ -451,7 +451,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: VLD_3D_x_pseudo_diff_bank
-    ; CHECK: BUNDLE implicit-def $x0, implicit-def $wl0, implicit-def $wh0, implicit-def $p5, implicit-def $dc2, implicit-def $dc6, implicit-def $x1, implicit-def $wl1, implicit-def $wh1, implicit-def $p6, implicit-def $dc0, implicit-def $dc4, implicit killed $p5, implicit killed $d2_3d, implicit killed $p6, implicit killed $d0_3d {
+    ; CHECK: BUNDLE implicit-def $x0, implicit-def $p5, implicit-def $dc2, implicit-def $dc6, implicit-def $x1, implicit-def $p6, implicit-def $dc0, implicit-def $dc4, implicit killed $p5, implicit killed $d2_3d, implicit killed $p6, implicit killed $d0_3d {
     ; CHECK-NEXT:   $x0, $p5, $dc2, $dc6 = VLDA_3D_dmx_lda_x killed $p5, killed $d2_3d :: (load (<16 x s32>), addrspace 14)
     ; CHECK-NEXT:   $x1, $p6, $dc0, $dc4 = VLDB_3D_dmx_ldb_x killed $p6, killed $d0_3d :: (load (<16 x s32>), addrspace 9)
     ; CHECK-NEXT: }

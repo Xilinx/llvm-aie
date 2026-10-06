@@ -34,9 +34,9 @@ const static std::map<unsigned, FixupFlag> AIE2PSInstrFixupFlags = {};
 /// Try to apply a PC-relative fixup with split 11-bit encoding.
 /// Returns true if the fixup was handled, false if it's not a PC-relative
 /// fixup.
-bool AIE2PSAsmBackend::tryApplyPCRelativeFixup(MCFixupKind Kind,
-                                               MutableArrayRef<char> Data,
-                                               unsigned Offset, uint64_t Value,
+bool AIE2PSAsmBackend::tryApplyPCRelativeFixup(const MCFragment &Fragment,
+                                               MCFixupKind Kind, uint8_t *Data,
+                                               uint64_t Value,
                                                const MCFixup &Fixup) const {
   // Only PC-relative (ZOL) fixups are handled here. Non-ZOL fixups (e.g.
   // regular branch fixups like jl) have isPCRel=false and must be rejected
@@ -53,8 +53,9 @@ bool AIE2PSAsmBackend::tryApplyPCRelativeFixup(MCFixupKind Kind,
     return false;
 
   const unsigned InstrSize = FormatSizeIt->second;
-  if (Offset + InstrSize > Data.size())
-    return false;
+  assert(Fixup.getOffset() <= Fragment.getSize() &&
+         InstrSize <= Fragment.getSize() - Fixup.getOffset() &&
+         "Invalid PC-relative fixup offset!");
 
   const SmallVector<FixupField> &Fields = FieldsIt->second;
   assert(Fields.size() == 2 && "PC-rel ZOL fixups must have 2 fields");
@@ -72,25 +73,22 @@ bool AIE2PSAsmBackend::tryApplyPCRelativeFixup(MCFixupKind Kind,
                                                  Twine(Value) +
                                                  " overflows 11-bit field");
 
-  uint8_t *Loc = reinterpret_cast<uint8_t *>(Data.data() + Offset);
-
-  AIE::patchNBytes(InstrSize, Loc, Value, /*Hi=*/HighSize + LowSize - 1,
+  AIE::patchNBytes(InstrSize, Data, Value, /*Hi=*/HighSize + LowSize - 1,
                    /*Lo=*/LowSize, /*Pos=*/Fields[0].Offset);
-  AIE::patchNBytes(InstrSize, Loc, Value, /*Hi=*/LowSize - 1, /*Lo=*/0,
+  AIE::patchNBytes(InstrSize, Data, Value, /*Hi=*/LowSize - 1, /*Lo=*/0,
                    /*Pos=*/Fields[1].Offset);
   return true;
 }
 
 void AIE2PSAsmBackend::applyFixup(const MCFragment &Fragment,
                                   const MCFixup &Fixup, const MCValue &Target,
-                                  MutableArrayRef<char> Data, uint64_t Value,
+                                  uint8_t *Data, uint64_t Value,
                                   bool IsResolved) {
   unsigned FixupNum = Fixup.getKind() - FirstTargetFixupKind;
   LLVM_DEBUG(dbgs() << "AIE2PS applyFixup: fixup_" << FixupNum << " Value="
                     << Value << " IsPCRel=" << Fixup.isPCRel() << "\n");
   // Try to handle PC-relative fixups
-  if (tryApplyPCRelativeFixup(Fixup.getKind(), Data, Fixup.getOffset(), Value,
-                              Fixup))
+  if (tryApplyPCRelativeFixup(Fragment, Fixup.getKind(), Data, Value, Fixup))
     return;
 
   // Delegate non-ZOL fixups to parent class

@@ -279,7 +279,7 @@ extern void foo(v8acc48);
 // CHECK-LABEL: @_Z12call_v8acc48v(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <8 x i48> @llvm.aie.v8i48undef()
-// CHECK-NEXT:    tail call void @_Z3fooDv8_u7__acc48(<8 x i48> noundef [[TMP0]])
+// CHECK-NEXT:    tail call void @_Z3fooDv8_u7__acc48(<8 x i48> noundef [[TMP0]]) #[[ATTR10:[0-9]+]]
 // CHECK-NEXT:    ret void
 //
 void call_v8acc48()
@@ -291,7 +291,7 @@ extern void bar(v8acc80);
 // CHECK-LABEL: @_Z12call_v8acc80v(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i48> @llvm.aie.v16i48undef()
-// CHECK-NEXT:    tail call void @_Z3barDv16_u7__acc48(<16 x i48> noundef [[TMP0]])
+// CHECK-NEXT:    tail call void @_Z3barDv16_u7__acc48(<16 x i48> noundef [[TMP0]]) #[[ATTR10]]
 // CHECK-NEXT:    ret void
 //
 void call_v8acc80()
@@ -303,7 +303,7 @@ extern void foo_v4acc80(v4acc80);
 // CHECK-LABEL: @_Z12call_v4acc80v(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <8 x i48> @llvm.aie.v8i48undef()
-// CHECK-NEXT:    tail call void @_Z11foo_v4acc80Dv8_u7__acc48(<8 x i48> noundef [[TMP0]])
+// CHECK-NEXT:    tail call void @_Z11foo_v4acc80Dv8_u7__acc48(<8 x i48> noundef [[TMP0]]) #[[ATTR10]]
 // CHECK-NEXT:    ret void
 //
 void call_v4acc80()
@@ -315,7 +315,7 @@ extern void foo_v16acc48(v16acc48);
 // CHECK-LABEL: @_Z13call_v16acc48v(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i48> @llvm.aie.v16i48undef()
-// CHECK-NEXT:    tail call void @_Z12foo_v16acc48Dv16_u7__acc48(<16 x i48> noundef [[TMP0]])
+// CHECK-NEXT:    tail call void @_Z12foo_v16acc48Dv16_u7__acc48(<16 x i48> noundef [[TMP0]]) #[[ATTR10]]
 // CHECK-NEXT:    ret void
 //
 void call_v16acc48()
@@ -348,10 +348,10 @@ v16uint8 ubsrs_test()
 // CHECK-LABEL: @_Z12bsrs_st_testv(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[VAL:%.*]] = alloca <16 x i8>, align 16
-// CHECK-NEXT:    call void @llvm.lifetime.start.p0(i64 16, ptr nonnull [[VAL]])
+// CHECK-NEXT:    call void @llvm.lifetime.start.p0(ptr nonnull [[VAL]])
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i8> @llvm.aie.bsrs.v16i8.v16acc48(<16 x i48> undef, i32 2)
 // CHECK-NEXT:    store volatile <16 x i8> [[TMP0]], ptr [[VAL]], align 16, !tbaa [[TBAA2]]
-// CHECK-NEXT:    call void @llvm.lifetime.end.p0(i64 16, ptr nonnull [[VAL]])
+// CHECK-NEXT:    call void @llvm.lifetime.end.p0(ptr nonnull [[VAL]])
 // CHECK-NEXT:    ret void
 //
 void bsrs_st_test()

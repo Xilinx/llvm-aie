@@ -16,7 +16,7 @@ define i32 @basic_i64_retx(i64 noundef %a) {
   ; CHECK-NEXT:   [[FRAME_INDEX:%[0-9]+]]:_(p0) = G_FRAME_INDEX %stack.0.a.addr
   ; CHECK-NEXT:   G_STORE [[COPY]](s32), [[FRAME_INDEX]](p0) :: (store (s32) into %ir.a.addr, align 8)
   ; CHECK-NEXT:   [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
-  ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[FRAME_INDEX]], [[C]](s20)
+  ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[FRAME_INDEX]], [[C]](s20)
   ; CHECK-NEXT:   G_STORE [[COPY1]](s32), [[PTR_ADD]](p0) :: (store (s32) into %ir.a.addr + 4, basealign 8)
   ; CHECK-NEXT:   [[LOAD:%[0-9]+]]:_(s32) = G_LOAD [[FRAME_INDEX]](p0) :: (dereferenceable load (s32) from %ir.a.addr, align 8)
   ; CHECK-NEXT:   $r0 = COPY [[LOAD]](s32)

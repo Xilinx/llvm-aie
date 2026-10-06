@@ -48,8 +48,8 @@ define i32 @exit_uses_latch_def(ptr noalias %a, ptr noalias %c, i32 %N, i32 %M) 
   ; CHECK-NEXT:   [[PHI4:%[0-9]+]]:_(s32) = G_PHI [[LOAD]](s32), %bb.2, %22(s32), %bb.5
   ; CHECK-NEXT:   G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.set.loop.iterations), [[COPY3]](s32)
   ; CHECK-NEXT:   [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
-  ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = nuw nusw G_PTR_ADD [[PHI1]], [[C2]](s20)
-  ; CHECK-NEXT:   [[PTR_ADD1:%[0-9]+]]:_(p0) = nuw nusw G_PTR_ADD [[PHI2]], [[C2]](s20)
+  ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = nuw nusw inbounds G_PTR_ADD [[PHI1]], [[C2]](s20)
+  ; CHECK-NEXT:   [[PTR_ADD1:%[0-9]+]]:_(p0) = nuw nusw inbounds G_PTR_ADD [[PHI2]], [[C2]](s20)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.4.steady.stage1.inner.inner.header:
   ; CHECK-NEXT:   successors: %bb.4(0x7c000000), %bb.5(0x04000000)
@@ -76,8 +76,8 @@ define i32 @exit_uses_latch_def(ptr noalias %a, ptr noalias %c, i32 %N, i32 %M) 
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.set.loop.iterations), [[COPY3]](s32)
   ; CHECK-NEXT:   [[C3:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
-  ; CHECK-NEXT:   %24:_(p0) = nuw nusw G_PTR_ADD %14, [[C3]](s20)
-  ; CHECK-NEXT:   %25:_(p0) = nuw nusw G_PTR_ADD %15, [[C3]](s20)
+  ; CHECK-NEXT:   [[PTR_ADD2:%[0-9]+]]:_(p0) = nuw nusw inbounds G_PTR_ADD [[PTR_ADD]], [[C3]](s20)
+  ; CHECK-NEXT:   [[PTR_ADD3:%[0-9]+]]:_(p0) = nuw nusw inbounds G_PTR_ADD [[PTR_ADD1]], [[C3]](s20)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.7.lastiter.stage1.inner.inner.header:
   ; CHECK-NEXT:   successors: %bb.7(0x7c000000), %bb.8(0x04000000)

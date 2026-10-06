@@ -50,7 +50,7 @@ body:             |
   ; CHECK-NEXT:   $lc = ADD_NC_add_lc_ri killed $r2, -1
   ; CHECK-NEXT:   MOVXM_lng_cg_ls_abs %bb.1, implicit-def $ls
   ; CHECK-NEXT:   MOVXM_lng_cg_le_abs <mcsymbol .L_LEnd0>, implicit-def $le
-  ; CHECK-NEXT:   BUNDLE implicit-def $x3, implicit-def $wl3, implicit-def $wh3, implicit-def $p5, implicit-def $r7, implicit killed $p5, implicit killed $r7, implicit $r1 {
+  ; CHECK-NEXT:   BUNDLE implicit-def $x3, implicit-def $p5, implicit-def $r7, implicit killed $p5, implicit killed $r7, implicit $r1 {
   ; CHECK-NEXT:     $x3, renamable $p5 = VLDB_dmx_ldb_x_pstm_nrm_imm killed renamable $p5, 64 :: (load (<16 x s32>) from %ir.in.phi, addrspace 5)
   ; CHECK-NEXT:     renamable $r7 = MUL killed renamable $r7, renamable $r1
   ; CHECK-NEXT:   }
@@ -62,7 +62,7 @@ body:             |
   ; CHECK-NEXT:   successors: %bb.1(0x7c000000), %bb.2(0x04000000)
   ; CHECK-NEXT:   liveins: $p5, $p6, $r0, $r1, $r7, $x0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   BUNDLE implicit-def $x3, implicit-def $wl3, implicit-def $wh3, implicit-def $p5, implicit-def $r7, implicit killed $p5, implicit killed $r7, implicit $r1 {
+  ; CHECK-NEXT:   BUNDLE implicit-def $x3, implicit-def $p5, implicit-def $r7, implicit killed $p5, implicit killed $r7, implicit $r1 {
   ; CHECK-NEXT:     $x3, renamable $p5 = VLDB_dmx_ldb_x_pstm_nrm_imm killed renamable $p5, 64 :: (load (<16 x s32>) from %ir.in.phi, addrspace 5)
   ; CHECK-NEXT:     renamable $r7 = MUL killed renamable $r7, renamable $r1
   ; CHECK-NEXT:   }

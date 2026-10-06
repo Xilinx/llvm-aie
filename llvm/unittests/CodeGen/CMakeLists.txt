@@ -53,6 +53,7 @@ add_llvm_unittest(CodeGenTests
   ScheduleDAGMITest.cpp
   ScheduleDAGMITestUtils.cpp
   SelectionDAGAddressAnalysisTest.cpp
+  SelectionDAGNodeConstructionTest.cpp
   SelectionDAGPatternMatchTest.cpp
   TypeTraitsTest.cpp
   TargetOptionsTest.cpp

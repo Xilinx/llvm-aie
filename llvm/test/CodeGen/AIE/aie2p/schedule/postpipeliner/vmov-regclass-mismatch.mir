@@ -1712,8 +1712,8 @@ frameInfo:
   hasTailCall:     false
   isCalleeSavedInfoValid: true
   localFrameSize:  0
-  savePoint:       ''
-  restorePoint:    ''
+  savePoint:       []
+  restorePoint:    []
 fixedStack:      []
 stack:
   - { id: 0, name: '', type: spill-slot, offset: 0, size: 128, alignment: 64, 

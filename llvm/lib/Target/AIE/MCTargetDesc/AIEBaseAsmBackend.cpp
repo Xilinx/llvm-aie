@@ -31,7 +31,7 @@ static uint64_t adjustFixupValue(const MCFixup &Fixup, uint64_t Value,
 
 void AIEBaseAsmBackend::applyFixup(const MCFragment &F, const MCFixup &Fixup,
                                    const MCValue &Target,
-                                   MutableArrayRef<char> Data, uint64_t Value,
+                                   uint8_t *Data, uint64_t Value,
                                    bool IsResolved) {
   maybeAddReloc(F, Fixup, Target, Value, IsResolved);
 
@@ -48,15 +48,12 @@ void AIEBaseAsmBackend::applyFixup(const MCFragment &F, const MCFixup &Fixup,
   // Shift the value into position.
   Value <<= Info.TargetOffset;
 
-  unsigned Offset = Fixup.getOffset();
   unsigned NumBytes = alignTo(Info.TargetSize + Info.TargetOffset, 8) / 8;
-
-  assert(Offset + NumBytes <= Data.size() && "Invalid fixup offset!");
 
   // For each byte of the fragment that the fixup touches, mask in the
   // bits from the fixup value.
   for (unsigned i = 0; i != NumBytes; ++i) {
-    Data[Offset + i] |= uint8_t((Value >> (i * 8)) & 0xff);
+    Data[i] |= uint8_t((Value >> (i * 8)) & 0xff);
   }
 }
 

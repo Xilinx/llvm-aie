@@ -130,7 +130,7 @@ body:             |
     ; AIE2P-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
     ; AIE2P-NEXT: [[LOAD:%[0-9]+]]:_(<32 x s8>) = G_LOAD [[COPY]](p0) :: (load (<32 x s8>))
     ; AIE2P-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 32
-    ; AIE2P-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C]](s20)
+    ; AIE2P-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C]](s20)
     ; AIE2P-NEXT: [[LOAD1:%[0-9]+]]:_(<32 x s8>) = G_LOAD [[PTR_ADD]](p0) :: (load (<32 x s8>) from unknown-address + 32)
     ; AIE2P-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<64 x s8>) = G_CONCAT_VECTORS [[LOAD]](<32 x s8>), [[LOAD1]](<32 x s8>)
     ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS]](<64 x s8>)
@@ -158,7 +158,7 @@ body:             |
     ; AIE2P-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
     ; AIE2P-NEXT: [[LOAD:%[0-9]+]]:_(<32 x s8>) = G_LOAD [[COPY]](p0) :: (load (<32 x s8>))
     ; AIE2P-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 32
-    ; AIE2P-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C]](s20)
+    ; AIE2P-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C]](s20)
     ; AIE2P-NEXT: [[LOAD1:%[0-9]+]]:_(<32 x s8>) = G_LOAD [[PTR_ADD]](p0) :: (load (<32 x s8>) from unknown-address + 32)
     ; AIE2P-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<64 x s8>) = G_CONCAT_VECTORS [[LOAD]](<32 x s8>), [[LOAD1]](<32 x s8>)
     ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS]](<64 x s8>)
@@ -186,7 +186,7 @@ body:             |
     ; AIE2P-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
     ; AIE2P-NEXT: [[LOAD:%[0-9]+]]:_(<16 x s16>) = G_LOAD [[COPY]](p0) :: (load (<16 x s16>))
     ; AIE2P-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 32
-    ; AIE2P-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C]](s20)
+    ; AIE2P-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C]](s20)
     ; AIE2P-NEXT: [[LOAD1:%[0-9]+]]:_(<16 x s16>) = G_LOAD [[PTR_ADD]](p0) :: (load (<16 x s16>) from unknown-address + 32)
     ; AIE2P-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s16>) = G_CONCAT_VECTORS [[LOAD]](<16 x s16>), [[LOAD1]](<16 x s16>)
     ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS]](<32 x s16>)
@@ -214,7 +214,7 @@ body:             |
     ; AIE2P-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
     ; AIE2P-NEXT: [[LOAD:%[0-9]+]]:_(<16 x s16>) = G_LOAD [[COPY]](p0) :: (load (<16 x s16>))
     ; AIE2P-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 32
-    ; AIE2P-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C]](s20)
+    ; AIE2P-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C]](s20)
     ; AIE2P-NEXT: [[LOAD1:%[0-9]+]]:_(<16 x s16>) = G_LOAD [[PTR_ADD]](p0) :: (load (<16 x s16>) from unknown-address + 32)
     ; AIE2P-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s16>) = G_CONCAT_VECTORS [[LOAD]](<16 x s16>), [[LOAD1]](<16 x s16>)
     ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS]](<32 x s16>)
@@ -242,7 +242,7 @@ body:             |
     ; AIE2P-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
     ; AIE2P-NEXT: [[LOAD:%[0-9]+]]:_(<8 x s32>) = G_LOAD [[COPY]](p0) :: (load (<8 x s32>))
     ; AIE2P-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 32
-    ; AIE2P-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C]](s20)
+    ; AIE2P-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C]](s20)
     ; AIE2P-NEXT: [[LOAD1:%[0-9]+]]:_(<8 x s32>) = G_LOAD [[PTR_ADD]](p0) :: (load (<8 x s32>) from unknown-address + 32)
     ; AIE2P-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[LOAD]](<8 x s32>), [[LOAD1]](<8 x s32>)
     ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS]](<16 x s32>)
@@ -270,7 +270,7 @@ body:             |
     ; AIE2P-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
     ; AIE2P-NEXT: [[LOAD:%[0-9]+]]:_(<8 x s32>) = G_LOAD [[COPY]](p0) :: (load (<8 x s32>))
     ; AIE2P-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 32
-    ; AIE2P-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C]](s20)
+    ; AIE2P-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C]](s20)
     ; AIE2P-NEXT: [[LOAD1:%[0-9]+]]:_(<8 x s32>) = G_LOAD [[PTR_ADD]](p0) :: (load (<8 x s32>) from unknown-address + 32)
     ; AIE2P-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[LOAD]](<8 x s32>), [[LOAD1]](<8 x s32>)
     ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS]](<16 x s32>)
@@ -298,13 +298,13 @@ body:             |
     ; AIE2P-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
     ; AIE2P-NEXT: [[LOAD:%[0-9]+]]:_(<32 x s8>) = G_LOAD [[COPY]](p0) :: (load (<32 x s8>))
     ; AIE2P-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 32
-    ; AIE2P-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C]](s20)
+    ; AIE2P-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C]](s20)
     ; AIE2P-NEXT: [[LOAD1:%[0-9]+]]:_(<32 x s8>) = G_LOAD [[PTR_ADD]](p0) :: (load (<32 x s8>) from unknown-address + 32)
     ; AIE2P-NEXT: [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 64
-    ; AIE2P-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C1]](s20)
+    ; AIE2P-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C1]](s20)
     ; AIE2P-NEXT: [[LOAD2:%[0-9]+]]:_(<32 x s8>) = G_LOAD [[PTR_ADD1]](p0) :: (load (<32 x s8>) from unknown-address + 64)
     ; AIE2P-NEXT: [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 96
-    ; AIE2P-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C2]](s20)
+    ; AIE2P-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C2]](s20)
     ; AIE2P-NEXT: [[LOAD3:%[0-9]+]]:_(<32 x s8>) = G_LOAD [[PTR_ADD2]](p0) :: (load (<32 x s8>) from unknown-address + 96)
     ; AIE2P-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<64 x s8>) = G_CONCAT_VECTORS [[LOAD]](<32 x s8>), [[LOAD1]](<32 x s8>)
     ; AIE2P-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<64 x s8>) = G_CONCAT_VECTORS [[LOAD2]](<32 x s8>), [[LOAD3]](<32 x s8>)
@@ -334,13 +334,13 @@ body:             |
     ; AIE2P-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
     ; AIE2P-NEXT: [[LOAD:%[0-9]+]]:_(<32 x s8>) = G_LOAD [[COPY]](p0) :: (load (<32 x s8>))
     ; AIE2P-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 32
-    ; AIE2P-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C]](s20)
+    ; AIE2P-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C]](s20)
     ; AIE2P-NEXT: [[LOAD1:%[0-9]+]]:_(<32 x s8>) = G_LOAD [[PTR_ADD]](p0) :: (load (<32 x s8>) from unknown-address + 32)
     ; AIE2P-NEXT: [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 64
-    ; AIE2P-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C1]](s20)
+    ; AIE2P-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C1]](s20)
     ; AIE2P-NEXT: [[LOAD2:%[0-9]+]]:_(<32 x s8>) = G_LOAD [[PTR_ADD1]](p0) :: (load (<32 x s8>) from unknown-address + 64)
     ; AIE2P-NEXT: [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 96
-    ; AIE2P-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C2]](s20)
+    ; AIE2P-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C2]](s20)
     ; AIE2P-NEXT: [[LOAD3:%[0-9]+]]:_(<32 x s8>) = G_LOAD [[PTR_ADD2]](p0) :: (load (<32 x s8>) from unknown-address + 96)
     ; AIE2P-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<64 x s8>) = G_CONCAT_VECTORS [[LOAD]](<32 x s8>), [[LOAD1]](<32 x s8>)
     ; AIE2P-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<64 x s8>) = G_CONCAT_VECTORS [[LOAD2]](<32 x s8>), [[LOAD3]](<32 x s8>)
@@ -370,13 +370,13 @@ body:             |
     ; AIE2P-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
     ; AIE2P-NEXT: [[LOAD:%[0-9]+]]:_(<16 x s16>) = G_LOAD [[COPY]](p0) :: (load (<16 x s16>))
     ; AIE2P-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 32
-    ; AIE2P-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C]](s20)
+    ; AIE2P-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C]](s20)
     ; AIE2P-NEXT: [[LOAD1:%[0-9]+]]:_(<16 x s16>) = G_LOAD [[PTR_ADD]](p0) :: (load (<16 x s16>) from unknown-address + 32)
     ; AIE2P-NEXT: [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 64
-    ; AIE2P-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C1]](s20)
+    ; AIE2P-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C1]](s20)
     ; AIE2P-NEXT: [[LOAD2:%[0-9]+]]:_(<16 x s16>) = G_LOAD [[PTR_ADD1]](p0) :: (load (<16 x s16>) from unknown-address + 64)
     ; AIE2P-NEXT: [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 96
-    ; AIE2P-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C2]](s20)
+    ; AIE2P-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C2]](s20)
     ; AIE2P-NEXT: [[LOAD3:%[0-9]+]]:_(<16 x s16>) = G_LOAD [[PTR_ADD2]](p0) :: (load (<16 x s16>) from unknown-address + 96)
     ; AIE2P-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s16>) = G_CONCAT_VECTORS [[LOAD]](<16 x s16>), [[LOAD1]](<16 x s16>)
     ; AIE2P-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<32 x s16>) = G_CONCAT_VECTORS [[LOAD2]](<16 x s16>), [[LOAD3]](<16 x s16>)
@@ -406,13 +406,13 @@ body:             |
     ; AIE2P-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
     ; AIE2P-NEXT: [[LOAD:%[0-9]+]]:_(<16 x s16>) = G_LOAD [[COPY]](p0) :: (load (<16 x s16>))
     ; AIE2P-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 32
-    ; AIE2P-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C]](s20)
+    ; AIE2P-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C]](s20)
     ; AIE2P-NEXT: [[LOAD1:%[0-9]+]]:_(<16 x s16>) = G_LOAD [[PTR_ADD]](p0) :: (load (<16 x s16>) from unknown-address + 32)
     ; AIE2P-NEXT: [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 64
-    ; AIE2P-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C1]](s20)
+    ; AIE2P-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C1]](s20)
     ; AIE2P-NEXT: [[LOAD2:%[0-9]+]]:_(<16 x s16>) = G_LOAD [[PTR_ADD1]](p0) :: (load (<16 x s16>) from unknown-address + 64)
     ; AIE2P-NEXT: [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 96
-    ; AIE2P-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C2]](s20)
+    ; AIE2P-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C2]](s20)
     ; AIE2P-NEXT: [[LOAD3:%[0-9]+]]:_(<16 x s16>) = G_LOAD [[PTR_ADD2]](p0) :: (load (<16 x s16>) from unknown-address + 96)
     ; AIE2P-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s16>) = G_CONCAT_VECTORS [[LOAD]](<16 x s16>), [[LOAD1]](<16 x s16>)
     ; AIE2P-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<32 x s16>) = G_CONCAT_VECTORS [[LOAD2]](<16 x s16>), [[LOAD3]](<16 x s16>)
@@ -442,13 +442,13 @@ body:             |
     ; AIE2P-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
     ; AIE2P-NEXT: [[LOAD:%[0-9]+]]:_(<8 x s32>) = G_LOAD [[COPY]](p0) :: (load (<8 x s32>))
     ; AIE2P-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 32
-    ; AIE2P-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C]](s20)
+    ; AIE2P-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C]](s20)
     ; AIE2P-NEXT: [[LOAD1:%[0-9]+]]:_(<8 x s32>) = G_LOAD [[PTR_ADD]](p0) :: (load (<8 x s32>) from unknown-address + 32)
     ; AIE2P-NEXT: [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 64
-    ; AIE2P-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C1]](s20)
+    ; AIE2P-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C1]](s20)
     ; AIE2P-NEXT: [[LOAD2:%[0-9]+]]:_(<8 x s32>) = G_LOAD [[PTR_ADD1]](p0) :: (load (<8 x s32>) from unknown-address + 64)
     ; AIE2P-NEXT: [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 96
-    ; AIE2P-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C2]](s20)
+    ; AIE2P-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C2]](s20)
     ; AIE2P-NEXT: [[LOAD3:%[0-9]+]]:_(<8 x s32>) = G_LOAD [[PTR_ADD2]](p0) :: (load (<8 x s32>) from unknown-address + 96)
     ; AIE2P-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[LOAD]](<8 x s32>), [[LOAD1]](<8 x s32>)
     ; AIE2P-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[LOAD2]](<8 x s32>), [[LOAD3]](<8 x s32>)
@@ -478,13 +478,13 @@ body:             |
     ; AIE2P-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
     ; AIE2P-NEXT: [[LOAD:%[0-9]+]]:_(<8 x s32>) = G_LOAD [[COPY]](p0) :: (load (<8 x s32>))
     ; AIE2P-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 32
-    ; AIE2P-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C]](s20)
+    ; AIE2P-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C]](s20)
     ; AIE2P-NEXT: [[LOAD1:%[0-9]+]]:_(<8 x s32>) = G_LOAD [[PTR_ADD]](p0) :: (load (<8 x s32>) from unknown-address + 32)
     ; AIE2P-NEXT: [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 64
-    ; AIE2P-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C1]](s20)
+    ; AIE2P-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C1]](s20)
     ; AIE2P-NEXT: [[LOAD2:%[0-9]+]]:_(<8 x s32>) = G_LOAD [[PTR_ADD1]](p0) :: (load (<8 x s32>) from unknown-address + 64)
     ; AIE2P-NEXT: [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 96
-    ; AIE2P-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C2]](s20)
+    ; AIE2P-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C2]](s20)
     ; AIE2P-NEXT: [[LOAD3:%[0-9]+]]:_(<8 x s32>) = G_LOAD [[PTR_ADD2]](p0) :: (load (<8 x s32>) from unknown-address + 96)
     ; AIE2P-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[LOAD]](<8 x s32>), [[LOAD1]](<8 x s32>)
     ; AIE2P-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[LOAD2]](<8 x s32>), [[LOAD3]](<8 x s32>)
@@ -548,7 +548,7 @@ body:             |
     ; AIE2P-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
     ; AIE2P-NEXT: [[LOAD:%[0-9]+]]:_(<4 x s64>) = G_LOAD [[COPY]](p0) :: (load (<4 x s64>))
     ; AIE2P-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 32
-    ; AIE2P-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C]](s20)
+    ; AIE2P-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C]](s20)
     ; AIE2P-NEXT: [[LOAD1:%[0-9]+]]:_(<4 x s64>) = G_LOAD [[PTR_ADD]](p0) :: (load (<4 x s64>) from unknown-address + 32)
     ; AIE2P-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<8 x s64>) = G_CONCAT_VECTORS [[LOAD]](<4 x s64>), [[LOAD1]](<4 x s64>)
     ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS]](<8 x s64>)
@@ -576,7 +576,7 @@ body:             |
     ; AIE2P-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
     ; AIE2P-NEXT: [[LOAD:%[0-9]+]]:_(<4 x s64>) = G_LOAD [[COPY]](p0) :: (load (<4 x s64>))
     ; AIE2P-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 32
-    ; AIE2P-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C]](s20)
+    ; AIE2P-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C]](s20)
     ; AIE2P-NEXT: [[LOAD1:%[0-9]+]]:_(<4 x s64>) = G_LOAD [[PTR_ADD]](p0) :: (load (<4 x s64>) from unknown-address + 32)
     ; AIE2P-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<8 x s64>) = G_CONCAT_VECTORS [[LOAD]](<4 x s64>), [[LOAD1]](<4 x s64>)
     ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS]](<8 x s64>)
@@ -604,13 +604,13 @@ body:             |
     ; AIE2P-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
     ; AIE2P-NEXT: [[LOAD:%[0-9]+]]:_(<4 x s64>) = G_LOAD [[COPY]](p0) :: (load (<4 x s64>))
     ; AIE2P-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 32
-    ; AIE2P-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C]](s20)
+    ; AIE2P-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C]](s20)
     ; AIE2P-NEXT: [[LOAD1:%[0-9]+]]:_(<4 x s64>) = G_LOAD [[PTR_ADD]](p0) :: (load (<4 x s64>) from unknown-address + 32)
     ; AIE2P-NEXT: [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 64
-    ; AIE2P-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C1]](s20)
+    ; AIE2P-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C1]](s20)
     ; AIE2P-NEXT: [[LOAD2:%[0-9]+]]:_(<4 x s64>) = G_LOAD [[PTR_ADD1]](p0) :: (load (<4 x s64>) from unknown-address + 64)
     ; AIE2P-NEXT: [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 96
-    ; AIE2P-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C2]](s20)
+    ; AIE2P-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C2]](s20)
     ; AIE2P-NEXT: [[LOAD3:%[0-9]+]]:_(<4 x s64>) = G_LOAD [[PTR_ADD2]](p0) :: (load (<4 x s64>) from unknown-address + 96)
     ; AIE2P-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<8 x s64>) = G_CONCAT_VECTORS [[LOAD]](<4 x s64>), [[LOAD1]](<4 x s64>)
     ; AIE2P-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<8 x s64>) = G_CONCAT_VECTORS [[LOAD2]](<4 x s64>), [[LOAD3]](<4 x s64>)
@@ -640,13 +640,13 @@ body:             |
     ; AIE2P-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
     ; AIE2P-NEXT: [[LOAD:%[0-9]+]]:_(<4 x s64>) = G_LOAD [[COPY]](p0) :: (load (<4 x s64>))
     ; AIE2P-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 32
-    ; AIE2P-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C]](s20)
+    ; AIE2P-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C]](s20)
     ; AIE2P-NEXT: [[LOAD1:%[0-9]+]]:_(<4 x s64>) = G_LOAD [[PTR_ADD]](p0) :: (load (<4 x s64>) from unknown-address + 32)
     ; AIE2P-NEXT: [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 64
-    ; AIE2P-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C1]](s20)
+    ; AIE2P-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C1]](s20)
     ; AIE2P-NEXT: [[LOAD2:%[0-9]+]]:_(<4 x s64>) = G_LOAD [[PTR_ADD1]](p0) :: (load (<4 x s64>) from unknown-address + 64)
     ; AIE2P-NEXT: [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 96
-    ; AIE2P-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C2]](s20)
+    ; AIE2P-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C2]](s20)
     ; AIE2P-NEXT: [[LOAD3:%[0-9]+]]:_(<4 x s64>) = G_LOAD [[PTR_ADD2]](p0) :: (load (<4 x s64>) from unknown-address + 96)
     ; AIE2P-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<8 x s64>) = G_CONCAT_VECTORS [[LOAD]](<4 x s64>), [[LOAD1]](<4 x s64>)
     ; AIE2P-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<8 x s64>) = G_CONCAT_VECTORS [[LOAD2]](<4 x s64>), [[LOAD3]](<4 x s64>)

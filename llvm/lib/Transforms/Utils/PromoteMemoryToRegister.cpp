@@ -494,20 +494,6 @@ static void convertMetadataToAssumes(LoadInst *LI, Value *Val,
     addAssumeNonNull(AC, LI);
 }
 
-// Returns true when the lifetime intrinsic II covers the entire alloca AI.
-// For scalable-vector allocas, EmitLifetimeStart uses -1 as the size argument
-// to mean "full scalable object"; for fixed-size allocas, compare the size
-// argument against the alloca's TypeAllocSize.
-static bool lifetimeCoversFullAlloca(const IntrinsicInst *II,
-                                     const AllocaInst *AI) {
-  const DataLayout &DL = AI->getModule()->getDataLayout();
-  TypeSize AllocSize = DL.getTypeAllocSize(AI->getAllocatedType());
-  auto *SizeArg = cast<ConstantInt>(II->getArgOperand(0));
-  return AllocSize.isScalable()
-             ? SizeArg->isMinusOne()
-             : SizeArg->getValue() == AllocSize.getFixedValue();
-}
-
 static void removeIntrinsicUsers(AllocaInst *AI) {
   // Knowing that this alloca is promotable, we know that it's safe to kill all
   // instructions except for load and store.
@@ -543,11 +529,9 @@ static void removeIntrinsicUsers(AllocaInst *AI) {
         // - lifetime.end: the alloca is undefined after its lifetime ends,
         //   shortening live ranges and reducing register pressure.
         //
-        // Only do this when the lifetime covers the entire alloca. A partial
-        // lifetime does not make the whole object undefined, so we must not
-        // emit a full-type store of undef for it.
-        if (lifetimeCoversFullAlloca(II, AI))
-          new StoreInst(UndefValue::get(AI->getAllocatedType()), AI, II);
+        // Lifetime always cover the complete alloca.
+        new StoreInst(UndefValue::get(AI->getAllocatedType()), AI,
+                      II->getIterator());
         II->eraseFromParent();
         continue;
       }
@@ -558,8 +542,7 @@ static void removeIntrinsicUsers(AllocaInst *AI) {
       // Follow the use/def chain to erase them now instead of leaving it for
       // dead code elimination later. Apply the same store-undef treatment as
       // for direct lifetime uses — the GEP has all-zero indices (enforced by
-      // isAllocaPromotable), so it aliases the alloca base and the size
-      // argument is comparable to the alloca's alloc size.
+      // isAllocaPromotable), so it aliases the alloca base.
       for (Use &UU : llvm::make_early_inc_range(I->uses())) {
         Instruction *Inst = cast<Instruction>(UU.getUser());
 
@@ -569,8 +552,9 @@ static void removeIntrinsicUsers(AllocaInst *AI) {
           continue;
         }
         if (auto *LII = dyn_cast<IntrinsicInst>(Inst))
-          if (LII->isLifetimeStartOrEnd() && lifetimeCoversFullAlloca(LII, AI))
-            new StoreInst(UndefValue::get(AI->getAllocatedType()), AI, LII);
+          if (LII->isLifetimeStartOrEnd())
+            new StoreInst(UndefValue::get(AI->getAllocatedType()), AI,
+                          LII->getIterator());
         Inst->eraseFromParent();
       }
     }

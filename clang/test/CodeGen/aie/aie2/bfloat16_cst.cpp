@@ -26,7 +26,7 @@ const bfloat16 inits[] = {
 // CHECK-LABEL: define dso_local noundef bfloat @_Z2lui(
 // CHECK-SAME: i32 noundef [[I:%.*]]) local_unnamed_addr #[[ATTR0:[0-9]+]] {
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = trunc i32 [[I]] to i20
+// CHECK-NEXT:    [[TMP0:%.*]] = trunc nsw i32 [[I]] to i20
 // CHECK-NEXT:    [[ARRAYIDX:%.*]] = getelementptr inbounds [7 x bfloat], ptr @_ZL5inits, i20 0, i20 [[TMP0]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load bfloat, ptr [[ARRAYIDX]], align 2, !tbaa [[TBAA2:![0-9]+]]
 // CHECK-NEXT:    ret bfloat [[TMP1]]

@@ -330,3 +330,15 @@ func.func @template_args_with_names(%arg0: i32, %arg1: f32) {
   emitc.call_opaque "kernel3"(%arg0, %arg1)  {template_arg_names = [], template_args = [#emitc.opaque<"42">]} : (i32, f32) -> ()
   return
 }
+
+emitc.class final @finalClass {
+  emitc.field @fieldName0 : !emitc.array<1xf32>
+  emitc.field @fieldName1 : !emitc.array<1xf32>
+  emitc.func @execute() {
+    %0 = "emitc.constant"() <{value = 0 : index}> : () -> !emitc.size_t
+    %1 = get_field @fieldName0 : !emitc.array<1xf32>
+    %2 = get_field @fieldName1 : !emitc.array<1xf32>
+    %3 = subscript %1[%0] : (!emitc.array<1xf32>, !emitc.size_t) -> !emitc.lvalue<f32>
+    return
+  }
+}

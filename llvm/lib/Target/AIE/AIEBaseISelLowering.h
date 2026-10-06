@@ -26,6 +26,13 @@ class AIEBaseTargetLowering : public TargetLowering {
 public:
   explicit AIEBaseTargetLowering(const TargetMachine &TM,
                                  const AIEBaseSubtarget &STI);
+
+  // There is no flags register: compares write any GPR and conditional
+  // branches test any GPR, so a compare result can stay live across blocks.
+  // This stops CodeGenPrepare from sinking compares next to their users, which
+  // would otherwise pull LICM-hoisted loop-invariant compares back into loops.
+  bool hasMultipleConditionRegisters(EVT VT) const override { return true; }
+
   // Set the preferred type for memset intrinsics.
   EVT getOptimalMemOpType(LLVMContext &, const MemOp &Op,
                           const AttributeList &FuncAttributes) const override {

@@ -25,21 +25,21 @@ define hidden fastcc void @InlineGeps(ptr nocapture readonly %lp) {
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(p0) = COPY $p0
   ; CHECK-NEXT:   [[GV:%[0-9]+]]:_(p0) = G_GLOBAL_VALUE @param
   ; CHECK-NEXT:   [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 32
-  ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = nuw G_PTR_ADD [[GV]], [[C]](s20)
+  ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C]](s20)
   ; CHECK-NEXT:   [[C1:%[0-9]+]]:_(s8) = G_CONSTANT i8 0
   ; CHECK-NEXT:   [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 7
   ; CHECK-NEXT:   [[LOAD:%[0-9]+]]:_(s32) = G_LOAD [[COPY]](p0) :: (load (s32) from %ir.lp)
   ; CHECK-NEXT:   G_STORE [[LOAD]](s32), [[GV]](p0) :: (store (s32) into @param, align 32)
   ; CHECK-NEXT:   [[C3:%[0-9]+]]:_(s20) = G_CONSTANT i20 8
-  ; CHECK-NEXT:   [[PTR_ADD1:%[0-9]+]]:_(p0) = nuw nusw G_PTR_ADD [[GV]], [[C3]](s20)
+  ; CHECK-NEXT:   [[PTR_ADD1:%[0-9]+]]:_(p0) = nuw nusw inbounds G_PTR_ADD [[GV]], [[C3]](s20)
   ; CHECK-NEXT:   [[LOAD1:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD1]](p0) :: (dereferenceable load (s32) from %ir.reverse.arrayidx)
   ; CHECK-NEXT:   [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
-  ; CHECK-NEXT:   [[PTR_ADD2:%[0-9]+]]:_(p0) = nuw nusw G_PTR_ADD [[GV]], [[C4]](s20)
+  ; CHECK-NEXT:   [[PTR_ADD2:%[0-9]+]]:_(p0) = nuw nusw inbounds G_PTR_ADD [[GV]], [[C4]](s20)
   ; CHECK-NEXT:   G_STORE [[LOAD1]](s32), [[PTR_ADD2]](p0) :: (store (s32) into %ir.reverse.arrayidx1)
-  ; CHECK-NEXT:   [[PTR_ADD3:%[0-9]+]]:_(p0) = nuw nusw G_PTR_ADD [[COPY]], [[C4]](s20)
+  ; CHECK-NEXT:   [[PTR_ADD3:%[0-9]+]]:_(p0) = nuw nusw inbounds G_PTR_ADD [[COPY]], [[C4]](s20)
   ; CHECK-NEXT:   [[LOAD2:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD3]](p0) :: (load (s32) from %ir.arrayidx1)
   ; CHECK-NEXT:   [[C5:%[0-9]+]]:_(s20) = G_CONSTANT i20 13
-  ; CHECK-NEXT:   [[PTR_ADD4:%[0-9]+]]:_(p0) = nuw nusw G_PTR_ADD [[PTR_ADD]], [[C5]](s20)
+  ; CHECK-NEXT:   [[PTR_ADD4:%[0-9]+]]:_(p0) = nuw nusw inbounds G_PTR_ADD [[PTR_ADD]], [[C5]](s20)
   ; CHECK-NEXT:   [[TRUNC:%[0-9]+]]:_(s20) = G_TRUNC [[C2]](s32)
   ; CHECK-NEXT:   G_MEMSET [[PTR_ADD4]](p0), [[C1]](s8), [[TRUNC]](s20), 1 :: (store (s8) into %ir.reverse.arrayidx2)
   ; CHECK-NEXT:   PseudoRET implicit $lr
@@ -158,7 +158,7 @@ define i32 @divergingControlflow(i1 %cmp109.not.i.i) {
   ; CHECK-NEXT:   successors: %bb.2(0x80000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 8
-  ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = nuw nusw G_PTR_ADD [[GV]], [[C1]](s20)
+  ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = nuw nusw inbounds G_PTR_ADD [[GV]], [[C1]](s20)
   ; CHECK-NEXT:   [[LOAD:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD]](p0) :: (dereferenceable load (s32) from %ir.reverse.arrayidx)
   ; CHECK-NEXT:   G_BR %bb.2
   ; CHECK-NEXT: {{  $}}
@@ -166,7 +166,7 @@ define i32 @divergingControlflow(i1 %cmp109.not.i.i) {
   ; CHECK-NEXT:   successors: %bb.2(0x80000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 8
-  ; CHECK-NEXT:   [[PTR_ADD1:%[0-9]+]]:_(p0) = nuw nusw G_PTR_ADD [[GV]], [[C2]](s20)
+  ; CHECK-NEXT:   [[PTR_ADD1:%[0-9]+]]:_(p0) = nuw nusw inbounds G_PTR_ADD [[GV]], [[C2]](s20)
   ; CHECK-NEXT:   [[LOAD1:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD1]](p0) :: (dereferenceable load (s32) from %ir.reverse.arrayidx1)
   ; CHECK-NEXT:   G_BR %bb.2
 entry:

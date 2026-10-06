@@ -21,7 +21,7 @@ body:             |
     ; CHECK-LABEL: name: VLDB_POPX_512_SHUFFLE
     ; CHECK: liveins: $p1, $lfe, $lf1, $r21, $r25, $r30, $x3, $x9
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: BUNDLE implicit-def $x3, implicit-def $wl3, implicit-def $wh3, implicit-def $p1, implicit-def $lf1, implicit-def $lfl1, implicit-def $lfh1, implicit-def $r25, implicit-def $lfe, implicit-def $srfifo_uf, implicit-def $x8, implicit-def $wl8, implicit-def $wh8, implicit killed $r30, implicit killed $p1, implicit killed $lf1, implicit killed $r25, implicit killed $lfe, implicit $x9, implicit $r21 {
+    ; CHECK-NEXT: BUNDLE implicit-def $x3, implicit-def $p1, implicit-def $lf1, implicit-def $r25, implicit-def $lfe, implicit-def $srfifo_uf, implicit-def $x8, implicit killed $r30, implicit killed $p1, implicit killed $lf1, implicit killed $r25, implicit killed $lfe, implicit $x9, implicit $r21 {
     ; CHECK-NEXT:   $x3, $p1, $lf1, $r25 = VLDB_POPX_512 killed $r30, $r30, killed $p1, killed $lf1, killed $r25, implicit-def $lfe, implicit-def $srfifo_uf, implicit killed $lfe
     ; CHECK-NEXT:   renamable $x8 = VSHUFFLE_vec_shuffle_x renamable $x9, renamable $x9, renamable $r21
     ; CHECK-NEXT: }
@@ -53,7 +53,7 @@ body:             |
     ; CHECK: liveins: $p1, $lfe, $lf1, $r21, $r25, $r30, $x3, $x9
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: renamable $x8 = VSHUFFLE_vec_shuffle_x renamable $x9, renamable $x9, renamable $r21
-    ; CHECK-NEXT: BUNDLE implicit-def $p1, implicit-def $lf1, implicit-def $lfl1, implicit-def $lfh1, implicit-def $r25, implicit-def $lfe, implicit-def $x8, implicit-def $wl8, implicit-def $wh8, implicit killed $r30, implicit killed $p1, implicit killed $lf1, implicit killed $r25, implicit killed $lfe, implicit $x9, implicit $r21 {
+    ; CHECK-NEXT: BUNDLE implicit-def $p1, implicit-def $lf1, implicit-def $r25, implicit-def $lfe, implicit-def $x8, implicit killed $r30, implicit killed $p1, implicit killed $lf1, implicit killed $r25, implicit killed $lfe, implicit $x9, implicit $r21 {
     ; CHECK-NEXT:   $p1, $lf1, $r25 = VLDB_FILLX_512 killed $r30, $r30, killed $p1, killed $lf1, killed $r25, implicit-def $lfe, implicit killed $lfe
     ; CHECK-NEXT:   renamable $x8 = VSHUFFLE_vec_shuffle_x renamable $x9, renamable $x9, renamable $r21
     ; CHECK-NEXT: }
