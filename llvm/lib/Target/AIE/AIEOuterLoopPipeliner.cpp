@@ -724,10 +724,12 @@ private:
   // --- Peel-first step helpers ---
 
   // Create the first-iteration prologue region (full top + inner + stage-1-only
-  // bottom) and wire it before the steady loop. Returns the firstiter LS whose
-  // VMap maps original inner-loop instructions to their firstiter clones.
-  CloneLoopStructure peelFirstIteration(const OrigLoopStructure &OrigLS,
-                                        CloneLoopStructure &SteadyLS);
+  // bottom) and wire it before the steady loop. Returns the firstiter LS (heap-
+  // allocated; CloneLoopStructure is non-movable) whose VMap maps original
+  // inner-loop instructions to their firstiter clones.
+  std::unique_ptr<CloneLoopStructure>
+  peelFirstIteration(const OrigLoopStructure &OrigLS,
+                     CloneLoopStructure &SteadyLS);
 
   // Clone the bottom-block stage-0 instructions (stores + inner-result users)
   // into the beginning of the steady top, creating inner_result_phi merge
@@ -2355,4 +2357,96 @@ void AIEOuterLoopPipeliner::convertOuterLoopToHardwareLoop(
   SteadyLS.clearLatchCondition();
 
   LLVM_DEBUG(dbgs() << "    Converted outer loop to JNZD hardware loop\n");
+}
+
+// --- Peel-first step helpers ------------------------------------------------
+
+std::unique_ptr<CloneLoopStructure>
+AIEOuterLoopPipeliner::peelFirstIteration(const OrigLoopStructure &OrigLS,
+                                          CloneLoopStructure &SteadyLS) {
+  // Full structural clone of the original loop body into firstiter blocks.
+  // The suffix constructor deep-clones all instructions including the inner
+  // loop, producing: firstiter.stage0.top, firstiter.stage0.inner.*, and
+  // firstiter.stage0.bottom. Heap-allocated because CloneLoopStructure is
+  // non-movable (ValueMap deletes its move constructor).
+  auto FirstIterLS = std::unique_ptr<CloneLoopStructure>(
+      new CloneLoopStructure(OrigLS, "firstiter", /*PeelFirst=*/true));
+  BasicBlock *FirstIterTop = FirstIterLS->getTop();
+  BasicBlock *FirstIterBottom = FirstIterLS->getBottom();
+
+  // The firstiter runs exactly once (no looping). Remove the back-edge
+  // incoming from every header PHI in firstiter.top, then simplify any PHI
+  // that collapses to a single incoming value.
+  for (PHINode &PHI : make_early_inc_range(FirstIterTop->phis())) {
+    int BackEdgeIdx = PHI.getBasicBlockIndex(FirstIterBottom);
+    if (BackEdgeIdx >= 0)
+      PHI.removeIncomingValue(BackEdgeIdx, /*DeletePHIIfEmpty=*/false);
+    if (Value *V = PHI.hasConstantValue()) {
+      PHI.replaceAllUsesWith(V);
+      PHI.eraseFromParent();
+    }
+  }
+
+  // Strip stage-0 instructions and latch control from firstiter.bottom.
+  // Stage-0 (stores + inner-result consumers) are deferred to the steady top
+  // by cloneStage0IntoTop(). CounterAdd and Cmp are dead in a non-looping
+  // peeled block (same filter as populateLastIterBottom). Only stage-1
+  // (ptr-updates) survive. LCSSA PHIs are preserved -- cloneStage0IntoTop()
+  // needs them to build the inner_result_phi merge nodes.
+  const LatchConditionInfo &Bound = OrigLS.latchCondition();
+  SmallVector<Instruction *, 16> ToErase;
+  for (Instruction &OrigI : *OrigLS.getBottom()) {
+    if (OrigI.isTerminator() || isa<PHINode>(&OrigI))
+      continue;
+    const bool IsLatchControl =
+        (&OrigI == Bound.Counter || &OrigI == Bound.Cmp);
+    if (IsLatchControl || OrigLS.isInStage0(&OrigI))
+      ToErase.push_back(cast<Instruction>(FirstIterLS->cloneOf(&OrigI)));
+  }
+  // Erase in reverse program order so that uses are removed before defs.
+  for (Instruction *I : reverse(ToErase)) {
+    if (!I->getType()->isVoidTy())
+      I->replaceAllUsesWith(PoisonValue::get(I->getType()));
+    I->eraseFromParent();
+  }
+
+  // Replace the conditional latch branch with an unconditional branch to the
+  // steady loop header. The firstiter always falls through.
+  FirstIterBottom->getTerminator()->eraseFromParent();
+  BranchInst::Create(SteadyLS.getTop(), FirstIterBottom);
+
+  // Wire the CFG: preheader -> firstiter.top (was preheader -> steady.top).
+  BasicBlock *Preheader = SteadyLS.getPreheader();
+  Preheader->getTerminator()->replaceSuccessorWith(SteadyLS.getTop(),
+                                                   FirstIterTop);
+
+  // Update steady header PHIs: replace the preheader incoming edge with
+  // firstiter.bottom. Non-IV PHIs receive the firstiter's back-edge values
+  // (the results of the first iteration's ptr-updates); the IV PHI keeps its
+  // original init value so that adjustLoopBound() alone accounts for the
+  // peeled iteration.
+  const PHINode *IV = Bound.IV;
+  for (PHINode &OrigPHI : OrigLS.getTop()->phis()) {
+    auto *SteadyPHI = cast<PHINode>(SteadyLS.cloneOf(&OrigPHI));
+    int PreIdx = SteadyPHI->getBasicBlockIndex(Preheader);
+    if (PreIdx < 0)
+      continue;
+    if (&OrigPHI != IV) {
+      // Advance to the value the firstiter produced for the next iteration.
+      Value *OrigBackEdge =
+          OrigPHI.getIncomingValueForBlock(OrigLS.getBottom());
+      SteadyPHI->setIncomingValue(PreIdx, FirstIterLS->cloneOf(OrigBackEdge));
+    }
+    SteadyPHI->setIncomingBlock(PreIdx, FirstIterBottom);
+  }
+
+  // Record the new preheader so SteadyLS.getPreheader() returns the right
+  // block for downstream steps (adjustLoopBound, JNZD conversion, etc.).
+  SteadyLS.recordExistingPreheader(FirstIterBottom);
+
+  LLVM_DEBUG(dbgs() << "    Created first-iteration prologue: "
+                    << FirstIterTop->getName() << " -> "
+                    << FirstIterBottom->getName() << "\n");
+
+  return FirstIterLS;
 }
