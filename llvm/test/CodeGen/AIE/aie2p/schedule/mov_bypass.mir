@@ -4,7 +4,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -march=aie2p -run-pass=postmisched %s -issue-limit=6 -o - | FileCheck %s
 
 # Tests the MOV slot bypass (MOV_Bypass)
@@ -59,7 +59,6 @@ body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: bypass_wh_from_x_with_vconv
     ; CHECK: $x0 = VBAND killed $x0, killed $x4
-    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: $bmll0 = VCONV_fp32_bf16_mv_ups_wbf killed $wh0
     ; CHECK-NEXT: NOP
     $x0 = VBAND $x0, $x4

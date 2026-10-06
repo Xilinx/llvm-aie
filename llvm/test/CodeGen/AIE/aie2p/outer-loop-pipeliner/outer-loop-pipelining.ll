@@ -72,12 +72,15 @@
 ; CHECK-NOT:  call void @llvm.set.loop.iterations
 ; CHECK:      br label %steady.stage1.top
 
-; Steady-state header: PHI nodes for pipelined values + set.loop.iterations stays
+; Steady-state header: PHI nodes for pipelined values + set.loop.iterations stays.
+; The loads feed only the multiply, which is in stage 0 too, so their PHIs are
+; dead and only the multiply's survives.
 ; CHECK: steady.stage1.top:
 ; CHECK:   phi i32 [ %i.next.steady, %steady.stage1.bottom.and.stage0.top ], [ 0, %stage0.top ]
 ; CHECK:   phi ptr [ %a.ptr.next.steady, %steady.stage1.bottom.and.stage0.top ], [ %a, %stage0.top ]
-; CHECK:   %v0.steady.phi = phi i32 [ %v0.steady.top, %stage0.top ], [ %v0.steady.bottom, %steady.stage1.bottom.and.stage0.top ]
-; CHECK:   %v1.steady.phi = phi i32 [ %v1.steady.top, %stage0.top ], [ %v1.steady.bottom, %steady.stage1.bottom.and.stage0.top ]
+; CHECK-NOT:   %v0.steady.phi
+; CHECK-NOT:   %v1.steady.phi
+; CHECK:   %.phi = phi i32 [ %.top, %stage0.top ], [ %.bottom, %steady.stage1.bottom.and.stage0.top ]
 ; CHECK:   call void @llvm.set.loop.iterations.i32(i32 %M)
 ; CHECK:   br label %steady.stage1.inner.inner.header
 
@@ -174,9 +177,10 @@ declare i1 @llvm.loop.decrement.i32(i32)
 ; CHECK-NOT: call void @llvm.set.loop.iterations
 ; CHECK:   br label %steady.stage1.top
 
-; Steady-state header: pipelined PHIs for loads AND the dependent computation
+; Steady-state header: %v1 is read inside the inner loop so it keeps its PHI,
+; while %v0 feeds only the stage-0 multiply and its PHI is dead.
 ; CHECK: steady.stage1.top:
-; CHECK:   %v0.steady.phi = phi i32 [ %v0.steady.top, %stage0.top ], [ %v0.steady.bottom, %steady.stage1.bottom.and.stage0.top ]
+; CHECK-NOT:   %v0.steady.phi
 ; CHECK:   %v1.steady.phi = phi i32 [ %v1.steady.top, %stage0.top ], [ %v1.steady.bottom, %steady.stage1.bottom.and.stage0.top ]
 ; CHECK:   %init_acc.steady.phi = phi i32 [ %init_acc.steady.top, %stage0.top ], [ %init_acc.steady.bottom, %steady.stage1.bottom.and.stage0.top ]
 ; CHECK:   call void @llvm.set.loop.iterations.i32(i32 %M)

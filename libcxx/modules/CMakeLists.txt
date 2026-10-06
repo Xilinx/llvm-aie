@@ -1,3 +1,14 @@
+#===----------------------------------------------------------------------===#
+#
+# Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+# affiliates
+#
+#===----------------------------------------------------------------------===#
+
 # The headers of Table 24: C++ library headers [tab:headers.cpp]
 # and the headers of Table 25: C++ headers for C library facilities [tab:headers.cpp.c]
 set(LIBCXX_MODULE_STD_SOURCES
@@ -150,6 +161,8 @@ else()
     "${LIBCXX_GENERATED_INCLUDE_TARGET_DIR};${LIBCXX_GENERATED_INCLUDE_DIR}"
   )
 endif()
+# See libcxx/include/CMakeLists.txt for why these configure_file calls are locked.
+file(LOCK "${LIBCXX_GENERATED_MODULE_DIR}.configure.lock" GUARD PROCESS)
 configure_file(
   "CMakeLists.txt.in"
   "${LIBCXX_GENERATED_MODULE_DIR}/CMakeLists.txt"
@@ -183,6 +196,7 @@ configure_file(
   "${LIBCXX_GENERATED_MODULE_DIR}/std.compat.cppm"
   @ONLY
 )
+file(LOCK "${LIBCXX_GENERATED_MODULE_DIR}.configure.lock" RELEASE)
 
 set(_all_modules)
 list(APPEND _all_modules "${LIBCXX_GENERATED_MODULE_DIR}/CMakeLists.txt")
