@@ -2306,7 +2306,7 @@ INTRINSIC(v128bfp16p) extract_v128bfp16p(v256bfp16p a, int idx) {
   return extract_v128mx9(a, idx);
 }
 INTRINSIC(v256mx9) insert(v256mx9 m, int idx, v64mx9 a) {
-  insert(m, idx / 2, insert(extract_v128mx9(m, idx / 2), idx % 2, a));
+  return insert(m, idx / 2, insert(extract_v128mx9(m, idx / 2), idx % 2, a));
 }
 
 // BFP13 and BFP11
