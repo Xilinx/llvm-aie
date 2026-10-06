@@ -1636,7 +1636,77 @@ v128mx9 test_extract_v128mx9 (v256mx9 a, int idx) { return extract_v128mx9(a, id
 v128bfp16p test_extract_v128bfp16p (v256bfp16p a, int idx) { return extract_v128bfp16p(a, idx); }
 // CHECK-LABEL: @_Z11test_insert7v256mx9i6v64mx9(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    unreachable
+// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V256MX9:%.*]] [[M_COERCE:%.*]], 0
+// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V256MX9]] [[M_COERCE]], 1
+// CHECK-NEXT:    [[IDX_OFF_I:%.*]] = add i32 [[IDX:%.*]], 1
+// CHECK-NEXT:    [[CMP_I_I:%.*]] = icmp ult i32 [[IDX_OFF_I]], 3
+// CHECK-NEXT:    [[DOTPN_I_I:%.*]] = select i1 [[CMP_I_I]], [[STRUCT_V128MX9:%.*]] [[TMP0]], [[STRUCT_V128MX9]] [[TMP1]]
+// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V64MX9:%.*]] [[A_COERCE:%.*]], 0
+// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 1
+// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 2
+// CHECK-NEXT:    [[TMP5:%.*]] = and i32 [[IDX]], 1
+// CHECK-NEXT:    [[CMP_I85_I:%.*]] = icmp eq i32 [[TMP5]], 0
+// CHECK-NEXT:    br i1 [[CMP_I85_I]], label [[IF_THEN_I_I:%.*]], label [[IF_END_I_I:%.*]]
+// CHECK:       if.then.i.i:
+// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue [[STRUCT_V128MX9]] [[DOTPN_I_I]], 5
+// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue [[STRUCT_V128MX9]] [[DOTPN_I_I]], 3
+// CHECK-NEXT:    [[TMP8:%.*]] = extractvalue [[STRUCT_V128MX9]] [[DOTPN_I_I]], 1
+// CHECK-NEXT:    br label [[_ZL6INSERT7V128MX9I6V64MX9_EXIT_I:%.*]]
+// CHECK:       if.end.i.i:
+// CHECK-NEXT:    [[TMP9:%.*]] = extractvalue [[STRUCT_V128MX9]] [[DOTPN_I_I]], 4
+// CHECK-NEXT:    [[TMP10:%.*]] = extractvalue [[STRUCT_V128MX9]] [[DOTPN_I_I]], 2
+// CHECK-NEXT:    [[TMP11:%.*]] = extractvalue [[STRUCT_V128MX9]] [[DOTPN_I_I]], 0
+// CHECK-NEXT:    br label [[_ZL6INSERT7V128MX9I6V64MX9_EXIT_I]]
+// CHECK:       _ZL6insert7v128mx9i6v64mx9.exit.i:
+// CHECK-NEXT:    [[RETVAL_SROA_0_0_I_I:%.*]] = phi <16 x i32> [ [[TMP2]], [[IF_THEN_I_I]] ], [ [[TMP11]], [[IF_END_I_I]] ]
+// CHECK-NEXT:    [[RETVAL_SROA_3_0_I_I:%.*]] = phi <16 x i32> [ [[TMP8]], [[IF_THEN_I_I]] ], [ [[TMP2]], [[IF_END_I_I]] ]
+// CHECK-NEXT:    [[RETVAL_SROA_6_0_I_I:%.*]] = phi <2 x i32> [ [[TMP3]], [[IF_THEN_I_I]] ], [ [[TMP10]], [[IF_END_I_I]] ]
+// CHECK-NEXT:    [[RETVAL_SROA_9_0_I_I:%.*]] = phi <2 x i32> [ [[TMP7]], [[IF_THEN_I_I]] ], [ [[TMP3]], [[IF_END_I_I]] ]
+// CHECK-NEXT:    [[RETVAL_SROA_12_0_I_I:%.*]] = phi <2 x i32> [ [[TMP4]], [[IF_THEN_I_I]] ], [ [[TMP9]], [[IF_END_I_I]] ]
+// CHECK-NEXT:    [[RETVAL_SROA_15_0_I_I:%.*]] = phi <2 x i32> [ [[TMP6]], [[IF_THEN_I_I]] ], [ [[TMP4]], [[IF_END_I_I]] ]
+// CHECK-NEXT:    br i1 [[CMP_I_I]], label [[IF_THEN_I94_I:%.*]], label [[IF_END_I87_I:%.*]]
+// CHECK:       if.then.i94.i:
+// CHECK-NEXT:    [[DOTFCA_5_EXTRACT21_I_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 5
+// CHECK-NEXT:    [[DOTFCA_4_EXTRACT19_I_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 4
+// CHECK-NEXT:    [[DOTFCA_3_EXTRACT17_I_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 3
+// CHECK-NEXT:    [[DOTFCA_2_EXTRACT15_I_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 2
+// CHECK-NEXT:    [[DOTFCA_1_EXTRACT13_I_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 1
+// CHECK-NEXT:    [[DOTFCA_0_EXTRACT11_I_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 0
+// CHECK-NEXT:    br label [[_ZL6INSERT7V256MX9I6V64MX9_EXIT:%.*]]
+// CHECK:       if.end.i87.i:
+// CHECK-NEXT:    [[DOTFCA_5_EXTRACT_I_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 5
+// CHECK-NEXT:    [[DOTFCA_4_EXTRACT_I_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 4
+// CHECK-NEXT:    [[DOTFCA_3_EXTRACT_I_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 3
+// CHECK-NEXT:    [[DOTFCA_2_EXTRACT_I_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 2
+// CHECK-NEXT:    [[DOTFCA_1_EXTRACT_I_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 1
+// CHECK-NEXT:    [[DOTFCA_0_EXTRACT_I_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 0
+// CHECK-NEXT:    br label [[_ZL6INSERT7V256MX9I6V64MX9_EXIT]]
+// CHECK:       _ZL6insert7v256mx9i6v64mx9.exit:
+// CHECK-NEXT:    [[RETVAL_SROA_0_0_I88_I:%.*]] = phi <16 x i32> [ [[RETVAL_SROA_0_0_I_I]], [[IF_THEN_I94_I]] ], [ [[DOTFCA_0_EXTRACT_I_I]], [[IF_END_I87_I]] ]
+// CHECK-NEXT:    [[RETVAL_SROA_3_0_I89_I:%.*]] = phi <16 x i32> [ [[RETVAL_SROA_3_0_I_I]], [[IF_THEN_I94_I]] ], [ [[DOTFCA_1_EXTRACT_I_I]], [[IF_END_I87_I]] ]
+// CHECK-NEXT:    [[RETVAL_SROA_6_0_I90_I:%.*]] = phi <2 x i32> [ [[RETVAL_SROA_6_0_I_I]], [[IF_THEN_I94_I]] ], [ [[DOTFCA_2_EXTRACT_I_I]], [[IF_END_I87_I]] ]
+// CHECK-NEXT:    [[RETVAL_SROA_9_0_I91_I:%.*]] = phi <2 x i32> [ [[RETVAL_SROA_9_0_I_I]], [[IF_THEN_I94_I]] ], [ [[DOTFCA_3_EXTRACT_I_I]], [[IF_END_I87_I]] ]
+// CHECK-NEXT:    [[RETVAL_SROA_12_0_I92_I:%.*]] = phi <2 x i32> [ [[RETVAL_SROA_12_0_I_I]], [[IF_THEN_I94_I]] ], [ [[DOTFCA_4_EXTRACT_I_I]], [[IF_END_I87_I]] ]
+// CHECK-NEXT:    [[RETVAL_SROA_15_0_I93_I:%.*]] = phi <2 x i32> [ [[RETVAL_SROA_15_0_I_I]], [[IF_THEN_I94_I]] ], [ [[DOTFCA_5_EXTRACT_I_I]], [[IF_END_I87_I]] ]
+// CHECK-NEXT:    [[RETVAL_SROA_18_0_I_I:%.*]] = phi <16 x i32> [ [[DOTFCA_0_EXTRACT11_I_I]], [[IF_THEN_I94_I]] ], [ [[RETVAL_SROA_0_0_I_I]], [[IF_END_I87_I]] ]
+// CHECK-NEXT:    [[RETVAL_SROA_21_0_I_I:%.*]] = phi <16 x i32> [ [[DOTFCA_1_EXTRACT13_I_I]], [[IF_THEN_I94_I]] ], [ [[RETVAL_SROA_3_0_I_I]], [[IF_END_I87_I]] ]
+// CHECK-NEXT:    [[RETVAL_SROA_24_0_I_I:%.*]] = phi <2 x i32> [ [[DOTFCA_2_EXTRACT15_I_I]], [[IF_THEN_I94_I]] ], [ [[RETVAL_SROA_6_0_I_I]], [[IF_END_I87_I]] ]
+// CHECK-NEXT:    [[RETVAL_SROA_27_0_I_I:%.*]] = phi <2 x i32> [ [[DOTFCA_3_EXTRACT17_I_I]], [[IF_THEN_I94_I]] ], [ [[RETVAL_SROA_9_0_I_I]], [[IF_END_I87_I]] ]
+// CHECK-NEXT:    [[RETVAL_SROA_30_0_I_I:%.*]] = phi <2 x i32> [ [[DOTFCA_4_EXTRACT19_I_I]], [[IF_THEN_I94_I]] ], [ [[RETVAL_SROA_12_0_I_I]], [[IF_END_I87_I]] ]
+// CHECK-NEXT:    [[RETVAL_SROA_33_0_I_I:%.*]] = phi <2 x i32> [ [[DOTFCA_5_EXTRACT21_I_I]], [[IF_THEN_I94_I]] ], [ [[RETVAL_SROA_15_0_I_I]], [[IF_END_I87_I]] ]
+// CHECK-NEXT:    [[DOTFCA_0_0_INSERT32:%.*]] = insertvalue [[STRUCT_V256MX9]] poison, <16 x i32> [[RETVAL_SROA_0_0_I88_I]], 0, 0
+// CHECK-NEXT:    [[DOTFCA_0_1_INSERT33:%.*]] = insertvalue [[STRUCT_V256MX9]] [[DOTFCA_0_0_INSERT32]], <16 x i32> [[RETVAL_SROA_3_0_I89_I]], 0, 1
+// CHECK-NEXT:    [[DOTFCA_0_2_INSERT34:%.*]] = insertvalue [[STRUCT_V256MX9]] [[DOTFCA_0_1_INSERT33]], <2 x i32> [[RETVAL_SROA_6_0_I90_I]], 0, 2
+// CHECK-NEXT:    [[DOTFCA_0_3_INSERT35:%.*]] = insertvalue [[STRUCT_V256MX9]] [[DOTFCA_0_2_INSERT34]], <2 x i32> [[RETVAL_SROA_9_0_I91_I]], 0, 3
+// CHECK-NEXT:    [[DOTFCA_0_4_INSERT36:%.*]] = insertvalue [[STRUCT_V256MX9]] [[DOTFCA_0_3_INSERT35]], <2 x i32> [[RETVAL_SROA_12_0_I92_I]], 0, 4
+// CHECK-NEXT:    [[DOTFCA_0_5_INSERT37:%.*]] = insertvalue [[STRUCT_V256MX9]] [[DOTFCA_0_4_INSERT36]], <2 x i32> [[RETVAL_SROA_15_0_I93_I]], 0, 5
+// CHECK-NEXT:    [[DOTFCA_1_0_INSERT38:%.*]] = insertvalue [[STRUCT_V256MX9]] [[DOTFCA_0_5_INSERT37]], <16 x i32> [[RETVAL_SROA_18_0_I_I]], 1, 0
+// CHECK-NEXT:    [[DOTFCA_1_1_INSERT39:%.*]] = insertvalue [[STRUCT_V256MX9]] [[DOTFCA_1_0_INSERT38]], <16 x i32> [[RETVAL_SROA_21_0_I_I]], 1, 1
+// CHECK-NEXT:    [[DOTFCA_1_2_INSERT40:%.*]] = insertvalue [[STRUCT_V256MX9]] [[DOTFCA_1_1_INSERT39]], <2 x i32> [[RETVAL_SROA_24_0_I_I]], 1, 2
+// CHECK-NEXT:    [[DOTFCA_1_3_INSERT41:%.*]] = insertvalue [[STRUCT_V256MX9]] [[DOTFCA_1_2_INSERT40]], <2 x i32> [[RETVAL_SROA_27_0_I_I]], 1, 3
+// CHECK-NEXT:    [[DOTFCA_1_4_INSERT42:%.*]] = insertvalue [[STRUCT_V256MX9]] [[DOTFCA_1_3_INSERT41]], <2 x i32> [[RETVAL_SROA_30_0_I_I]], 1, 4
+// CHECK-NEXT:    [[DOTFCA_1_5_INSERT43:%.*]] = insertvalue [[STRUCT_V256MX9]] [[DOTFCA_1_4_INSERT42]], <2 x i32> [[RETVAL_SROA_33_0_I_I]], 1, 5
+// CHECK-NEXT:    ret [[STRUCT_V256MX9]] [[DOTFCA_1_5_INSERT43]]
 //
 v256mx9 test_insert (v256mx9 m, int idx, v64mx9 a) { return insert(m, idx, a); }
 // CHECK-LABEL: @_Z19test_extract_v64mx97v128mx9i(
