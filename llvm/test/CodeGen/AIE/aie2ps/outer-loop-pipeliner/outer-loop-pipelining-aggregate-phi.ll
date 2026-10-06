@@ -10,15 +10,16 @@
 ; RUN:     -o - %s | sed 's/^  //' | FileCheck %s
 
 ; The FIFO pop is a stage-0 instruction returning a struct. Its pointer field
-; is only read in stage 1, to advance %a.ptr in the latch. The steady header
-; merges the preheader and bottom copies of the pop, and stage 1 reads the
-; pointer from that merge.
+; is only read in stage 1, to advance the pointer. Each field read in stage 1
+; gets its own merge PHI of the fields extracted in the preheader and the
+; bottom, so the pointer stays a PHI of extracts from the pop calls.
+; getUnderlyingObject only looks through extractvalue when the aggregate is
+; the AIE intrinsic call itself, so an extractvalue of a PHI of the whole
+; struct would hide the base.
 ;
-; Reading the pointer as an extractvalue of a PHI of the whole struct would
-; hide its base: getUnderlyingObject only looks through extractvalue when the
-; aggregate is the AIE intrinsic call itself. Each field read in stage 1 gets
-; its own merge PHI of the fields extracted in the preheader and the bottom
-; instead, so the pointer stays a PHI of extracts from the pop calls. See
+; Once those field PHIs exist, the aggregate merge has no reader, and neither
+; do the stage-0 values that stage 1 no longer reads through it. The dead
+; stage-0 PHI cleanup removes them. See
 ; outer-loop-pipelining-aggregate-phi-alias.ll for the effect on the drain
 ; loop that reads through that pointer.
 
@@ -45,21 +46,16 @@ define void @drain_after_olp(ptr noalias %a, ptr noalias %c, ptr %out, i32 %n, i
 ; CHECK-NEXT:    [[OUTER_CTR_INIT:%.*]] = call i32 @llvm.start.loop.iterations.i32(i32 [[OUTER_JNZD_TC]])
 ; CHECK-NEXT:    br label %[[STEADY_STAGE1_TOP:.*]]
 ; CHECK:       [[STEADY_STAGE1_TOP]]:
-; CHECK-NEXT:    [[A_PTR_STEADY:%.*]] = phi ptr [ [[A_PTR_NEXT1_STEADY:%.*]], %[[STEADY_STAGE1_BOTTOM_AND_STAGE0_TOP:.*]] ], [ [[A]], %[[STAGE0_TOP]] ]
-; CHECK-NEXT:    [[FIFO_STEADY:%.*]] = phi <32 x i32> [ [[FIFO_NEXT_STEADY:%.*]], %[[STEADY_STAGE1_BOTTOM_AND_STAGE0_TOP]] ], [ zeroinitializer, %[[STAGE0_TOP]] ]
-; CHECK-NEXT:    [[STATE_STEADY:%.*]] = phi i32 [ [[STATE_NEXT_STEADY:%.*]], %[[STEADY_STAGE1_BOTTOM_AND_STAGE0_TOP]] ], [ 0, %[[STAGE0_TOP]] ]
-; CHECK-NEXT:    [[C_PTR_STEADY:%.*]] = phi ptr [ [[C_PTR_NEXT2_STEADY:%.*]], %[[STEADY_STAGE1_BOTTOM_AND_STAGE0_TOP]] ], [ [[C]], %[[STAGE0_TOP]] ]
-; CHECK-NEXT:    [[POPPED_STEADY_PHI:%.*]] = phi { <64 x i8>, ptr, <32 x i32>, i32 } [ [[POPPED_STEADY_TOP]], %[[STAGE0_TOP]] ], [ [[POPPED_STEADY_BOTTOM:%.*]], %[[STEADY_STAGE1_BOTTOM_AND_STAGE0_TOP]] ]
-; CHECK-NEXT:    [[DATA_STEADY_PHI:%.*]] = phi <64 x i8> [ [[DATA_STEADY_TOP]], %[[STAGE0_TOP]] ], [ [[DATA_STEADY_BOTTOM:%.*]], %[[STEADY_STAGE1_BOTTOM_AND_STAGE0_TOP]] ]
+; CHECK-NEXT:    [[C_PTR_STEADY:%.*]] = phi ptr [ [[C_PTR_NEXT2_STEADY:%.*]], %[[STEADY_STAGE1_BOTTOM_AND_STAGE0_TOP:.*]] ], [ [[C]], %[[STAGE0_TOP]] ]
 ; CHECK-NEXT:    [[SCALED_STEADY_PHI:%.*]] = phi <64 x i8> [ [[SCALED_STEADY_TOP]], %[[STAGE0_TOP]] ], [ [[SCALED_STEADY_BOTTOM:%.*]], %[[STEADY_STAGE1_BOTTOM_AND_STAGE0_TOP]] ]
 ; CHECK-NEXT:    [[POPPED_PTR_STEADY:%.*]] = phi ptr [ [[POPPED_PTR_STEADY_TOP]], %[[STAGE0_TOP]] ], [ [[POPPED_PTR_STEADY_BOTTOM:%.*]], %[[STEADY_STAGE1_BOTTOM_AND_STAGE0_TOP]] ]
 ; CHECK-NEXT:    [[POPPED_FIFO_STEADY:%.*]] = phi <32 x i32> [ [[POPPED_FIFO_STEADY_TOP]], %[[STAGE0_TOP]] ], [ [[POPPED_FIFO_STEADY_BOTTOM:%.*]], %[[STEADY_STAGE1_BOTTOM_AND_STAGE0_TOP]] ]
 ; CHECK-NEXT:    [[POPPED_STATE_STEADY:%.*]] = phi i32 [ [[POPPED_STATE_STEADY_TOP]], %[[STAGE0_TOP]] ], [ [[POPPED_STATE_STEADY_BOTTOM:%.*]], %[[STEADY_STAGE1_BOTTOM_AND_STAGE0_TOP]] ]
 ; CHECK-NEXT:    [[OUTER_CTR:%.*]] = phi i32 [ [[OUTER_CTR_INIT]], %[[STAGE0_TOP]] ], [ [[OUTER_CTR_NEXT:%.*]], %[[STEADY_STAGE1_BOTTOM_AND_STAGE0_TOP]] ]
 ; CHECK-NEXT:    call void @llvm.set.loop.iterations.i32(i32 [[M]])
-; CHECK-NEXT:    [[A_PTR_NEXT1_STEADY]] = getelementptr inbounds i8, ptr [[POPPED_PTR_STEADY]], i32 64
-; CHECK-NEXT:    [[FIFO_NEXT_STEADY]] = add <32 x i32> [[POPPED_FIFO_STEADY]], zeroinitializer
-; CHECK-NEXT:    [[STATE_NEXT_STEADY]] = add i32 [[POPPED_STATE_STEADY]], 0
+; CHECK-NEXT:    [[A_PTR_NEXT1_STEADY:%.*]] = getelementptr inbounds i8, ptr [[POPPED_PTR_STEADY]], i32 64
+; CHECK-NEXT:    [[FIFO_NEXT_STEADY:%.*]] = add <32 x i32> [[POPPED_FIFO_STEADY]], zeroinitializer
+; CHECK-NEXT:    [[STATE_NEXT_STEADY:%.*]] = add i32 [[POPPED_STATE_STEADY]], 0
 ; CHECK-NEXT:    [[C_PTR_NEXT2_STEADY]] = getelementptr inbounds i8, ptr [[C_PTR_STEADY]], i32 4
 ; CHECK-NEXT:    br label %[[STEADY_STAGE1_INNER_INNER_HEADER:.*]]
 ; CHECK:       [[STEADY_STAGE1_INNER_INNER_HEADER]]:
@@ -71,8 +67,8 @@ define void @drain_after_olp(ptr noalias %a, ptr noalias %c, ptr %out, i32 %n, i
 ; CHECK-NEXT:    br i1 [[INNER_COND_STEADY]], label %[[STEADY_STAGE1_INNER_INNER_HEADER]], label %[[STEADY_STAGE1_BOTTOM_AND_STAGE0_TOP]], !llvm.loop [[LOOP0:![0-9]+]]
 ; CHECK:       [[STEADY_STAGE1_BOTTOM_AND_STAGE0_TOP]]:
 ; CHECK-NEXT:    store i32 [[RESULT_NEXT_STEADY]], ptr [[C_PTR_STEADY]], align 4
-; CHECK-NEXT:    [[POPPED_STEADY_BOTTOM]] = call { <64 x i8>, ptr, <32 x i32>, i32 } @llvm.aie2ps.fifo.ld.pop.512.unaligned.p0.p0(ptr [[A_PTR_NEXT1_STEADY]], <32 x i32> [[FIFO_NEXT_STEADY]], i32 [[STATE_NEXT_STEADY]])
-; CHECK-NEXT:    [[DATA_STEADY_BOTTOM]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[POPPED_STEADY_BOTTOM]], 0
+; CHECK-NEXT:    [[POPPED_STEADY_BOTTOM:%.*]] = call { <64 x i8>, ptr, <32 x i32>, i32 } @llvm.aie2ps.fifo.ld.pop.512.unaligned.p0.p0(ptr [[A_PTR_NEXT1_STEADY]], <32 x i32> [[FIFO_NEXT_STEADY]], i32 [[STATE_NEXT_STEADY]])
+; CHECK-NEXT:    [[DATA_STEADY_BOTTOM:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[POPPED_STEADY_BOTTOM]], 0
 ; CHECK-NEXT:    [[SCALED_STEADY_BOTTOM]] = add <64 x i8> [[DATA_STEADY_BOTTOM]], [[DATA_STEADY_BOTTOM]]
 ; CHECK-NEXT:    [[POPPED_PTR_STEADY_BOTTOM]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[POPPED_STEADY_BOTTOM]], 1
 ; CHECK-NEXT:    [[POPPED_FIFO_STEADY_BOTTOM]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[POPPED_STEADY_BOTTOM]], 2
