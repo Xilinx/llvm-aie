@@ -733,8 +733,8 @@ void SwingSchedulerDAG::schedule() {
     return;
   }
 
-  // Don't pipeline large loops.
-  if (SwpMaxMii != -1 && (int)MII > SwpMaxMii) {
+  // Don't pipeline large loops, unless an II pragma explicitly requests it.
+  if (!II_setByPragma && SwpMaxMii != -1 && (int)MII > SwpMaxMii) {
     LLVM_DEBUG(dbgs() << "MII > " << SwpMaxMii
                       << ", we don't pipeline large loops\n");
     NumFailLargeMaxMII++;
@@ -745,6 +745,21 @@ void SwingSchedulerDAG::schedule() {
              << ore::NV("MII", (int)MII) << " > "
              << ore::NV("SwpMaxMii", SwpMaxMii) << "."
              << "Refer to -pipeliner-max-mii.";
+    });
+    return;
+  }
+
+  // With -pipeliner-pragma-as-max-ii, a pragma II below the computed MII
+  // leaves no II to try.
+  if (II_setByPragma && MAX_II < MII) {
+    LLVM_DEBUG(dbgs() << "Pragma II " << II_setByPragma << " < MII " << MII
+                      << ", no II to try\n");
+    Pass.ORE->emit([&]() {
+      return MachineOptimizationRemarkAnalysis(
+                 DEBUG_TYPE, "schedule", Loop.getStartLoc(), Loop.getHeader())
+             << "Pragma initiation interval below the minimal one: "
+             << ore::NV("PragmaII", II_setByPragma) << " < "
+             << ore::NV("MII", MII) << ".";
     });
     return;
   }
