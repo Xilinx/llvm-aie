@@ -601,8 +601,8 @@ def aie2p_plus_postlegalizer_custom_shared_combines : GICombineGroup<[
   combine_redundant_widen_narrow_conversion
 ]>;
 
-// AIE2PS-specific final combines (runs after custom combiner to avoid conflicts).
-def aie2ps_postlegalizer_final_combines : GICombineGroup<[
+// AIE2PS-specific post-legalizer custom combines.
+def aie2ps_postlegalizer_custom_combines : GICombineGroup<[
   combine_chained_ptradd_with_s20_nonconst,
   combine_postincloadstore_ptradd_with_trunc
 ]>;
@@ -634,12 +634,8 @@ def AIE2PSPostLegalizerGenericCombiner
 
 def AIE2PSPostLegalizerCustomCombiner
     : GICombiner<"AIE2PSPostLegalizerCustomCombinerImpl",
-                 [aie_postlegalizer_custom_shared_combines, aie2p_plus_postlegalizer_custom_shared_combines]> {
-}
-
-def AIE2PSPostLegalizerFinalCombiner
-    : GICombiner<"AIE2PSPostLegalizerFinalCombinerImpl",
-                 [aie2ps_postlegalizer_final_combines]> {
+                 [aie_postlegalizer_custom_shared_combines, aie2p_plus_postlegalizer_custom_shared_combines,
+                  aie2ps_postlegalizer_custom_combines]> {
 }
 
 def combine_copy_of_implicit_def : GICombineRule<

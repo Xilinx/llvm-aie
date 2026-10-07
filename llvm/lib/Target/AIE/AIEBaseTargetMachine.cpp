@@ -185,7 +185,6 @@ extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeAIETarget() {
   initializeAIEPreLegalizerCombinerPass(*PR);
   initializeAIEPostLegalizerGenericCombinerPass(*PR);
   initializeAIEPostLegalizerCustomCombinerPass(*PR);
-  initializeAIEPostLegalizerFinalCombinerPass(*PR);
   initializeAIEPreISelCombinerPass(*PR);
   initializeAIEPostSelectOptimizePass(*PR);
   initializeAIEPseudoBranchExpansionPass(*PR);
