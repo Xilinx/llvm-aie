@@ -14,34 +14,6 @@ func.func @illegal_opaque_type_2() {
 
 // -----
 
-// expected-error @+1 {{expected non-function type}}
-func.func @illegal_opaque_type(%arg0: !emitc.opaque<"{}, {}", "string">) {
-    return
-}
-
-// -----
-
-// expected-error @+1 {{requires operands for each placeholder in the format string}}
-func.func @illegal_opaque_type(%arg0: !emitc.opaque<"a", f32>) {
-    return
-}
-
-// -----
-
-    // expected-error @+1 {{requires operands for each placeholder in the format string}}
-func.func @illegal_opaque_type(%arg0: !emitc.opaque<"{}, {}", f32>) {
-    return
-}
-
-// -----
-
-// expected-error @+1 {{expected '}' after unescaped '{'}}
-func.func @illegal_opaque_type(%arg0: !emitc.opaque<"{ ", i32>) {
-    return
-}
-
-// -----
-
 func.func @illegal_array_missing_spec(
     // expected-error @+1 {{expected non-function type}}
     %arg0: !emitc.array<>) {
@@ -120,57 +92,9 @@ func.func @illegal_integer_type(%arg0: i11, %arg1: i11) -> i11 {
 
 // -----
 
-func.func @illegal_f8E4M3B11FNUZ_type(%arg0: f8E4M3B11FNUZ, %arg1: f8E4M3B11FNUZ) {
-    // expected-error @+1 {{'emitc.mul' op operand #0 must be floating-point type supported by EmitC or integer, index or opaque type supported by EmitC, but got 'f8E4M3B11FNUZ'}}
-    %mul = "emitc.mul" (%arg0, %arg1) : (f8E4M3B11FNUZ, f8E4M3B11FNUZ) -> f8E4M3B11FNUZ
-    return
-}
-
-// -----
-
-func.func @illegal_f8E4M3FN_type(%arg0: f8E4M3FN, %arg1: f8E4M3FN) {
-    // expected-error @+1 {{'emitc.mul' op operand #0 must be floating-point type supported by EmitC or integer, index or opaque type supported by EmitC, but got 'f8E4M3FN'}}
-    %mul = "emitc.mul" (%arg0, %arg1) : (f8E4M3FN, f8E4M3FN) -> f8E4M3FN
-    return
-}
-
-// -----
-
-func.func @illegal_f8E4M3FNUZ_type(%arg0: f8E4M3FNUZ, %arg1: f8E4M3FNUZ) {
-    // expected-error @+1 {{'emitc.mul' op operand #0 must be floating-point type supported by EmitC or integer, index or opaque type supported by EmitC, but got 'f8E4M3FNUZ'}}
-    %mul = "emitc.mul" (%arg0, %arg1) : (f8E4M3FNUZ, f8E4M3FNUZ) -> f8E4M3FNUZ
-    return
-}
-
-// -----
-
-func.func @illegal_f8E5M2_type(%arg0: f8E5M2, %arg1: f8E5M2) {
-    // expected-error @+1 {{'emitc.mul' op operand #0 must be floating-point type supported by EmitC or integer, index or opaque type supported by EmitC, but got 'f8E5M2'}}
-    %mul = "emitc.mul" (%arg0, %arg1) : (f8E5M2, f8E5M2) -> f8E5M2
-    return
-}
-
-// -----
-
-func.func @illegal_f8E5M2FNUZ_type(%arg0: f8E5M2FNUZ, %arg1: f8E5M2FNUZ) {
-    // expected-error @+1 {{'emitc.mul' op operand #0 must be floating-point type supported by EmitC or integer, index or opaque type supported by EmitC, but got 'f8E5M2FNUZ'}}
-    %mul = "emitc.mul" (%arg0, %arg1) : (f8E5M2FNUZ, f8E5M2FNUZ) -> f8E5M2FNUZ
-    return
-}
-
-// -----
-
-func.func @illegal_f80_type(%arg0: f80, %arg1: f80) {
+func.func @illegal_float_type(%arg0: f80, %arg1: f80) {
     // expected-error @+1 {{'emitc.mul' op operand #0 must be floating-point type supported by EmitC or integer, index or opaque type supported by EmitC, but got 'f80'}}
     %mul = "emitc.mul" (%arg0, %arg1) : (f80, f80) -> f80
-    return
-}
-
-// -----
-
-func.func @illegal_f128_type(%arg0: f128, %arg1: f128) {
-    // expected-error @+1 {{'emitc.mul' op operand #0 must be floating-point type supported by EmitC or integer, index or opaque type supported by EmitC, but got 'f128'}}
-    %mul = "emitc.mul" (%arg0, %arg1) : (f128, f128) -> f128
     return
 }
 

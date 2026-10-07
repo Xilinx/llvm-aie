@@ -34,24 +34,8 @@ emitc.func @func(%arg: f32) {
   emitc.verbatim "#pragma my var={} property" args %arg : f32
   // CHECK-NEXT: #pragma my var=[[V0]] property
 
-  // Trailing '{' are printed as-is.
-  emitc.verbatim "#pragma my var={} {" args %arg : f32
-  // CHECK-NEXT: #pragma my var=[[V0]] {
-
   emitc.verbatim "#pragma my2 var={} property" args %a : !emitc.array<3x7xi32>
   // CHECK-NEXT: #pragma my2 var=[[A]] property
-  emitc.return
-}
 
-// Check that no semicolon is printed after verbatim within emitc.for
-emitc.func @in_loop(%arg: f32) {
-  %start = emitc.literal "0" : !emitc.size_t
-  %stop = emitc.literal "10" : !emitc.size_t
-  %step = emitc.literal "1" : !emitc.size_t
-  emitc.for %iter = %start to %stop step %step {
-    emitc.verbatim "#pragma"
-     // CHECK: #pragma
-    emitc.yield
-  }
   emitc.return
 }

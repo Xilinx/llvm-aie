@@ -67,19 +67,3 @@ func.func @unsupported_type_i4() {
   %0 = memref.alloca() : memref<4xi4>
   return
 }
-
-// -----
-
-func.func @memref_expand_dyn_shape(%arg: memref<?xi32>, %size: index) -> memref<?x5xi32> {
-  // expected-error@+1 {{failed to legalize operation 'memref.expand_shape'}}
-  %0 = memref.expand_shape %arg [[0, 1]] output_shape [%size, 5] : memref<?xi32> into memref<?x5xi32>
-  return %0 : memref<?x5xi32>
-}
-
-// -----
-
-func.func @memref_collapse_dyn_shape(%arg: memref<?x5xi32>) -> memref<?xi32> {
-  // expected-error@+1 {{failed to legalize operation 'memref.collapse_shape'}}
-  %0 = memref.collapse_shape %arg [[0, 1]] : memref<?x5xi32> into memref<?xi32>
-  return %0 : memref<?xi32>
-}

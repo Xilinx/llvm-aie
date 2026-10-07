@@ -14,7 +14,6 @@
 
 #include "mlir/Conversion/MemRefToEmitC/MemRefToEmitC.h"
 #include "mlir/Dialect/EmitC/IR/EmitC.h"
-#include "mlir/Dialect/EmitC/Transforms/TypeConversions.h"
 #include "mlir/Dialect/MemRef/IR/MemRef.h"
 #include "mlir/IR/Attributes.h"
 #include "mlir/Pass/Pass.h"
@@ -54,7 +53,6 @@ struct ConvertMemRefToEmitCPass
     });
 
     populateMemRefToEmitCTypeConversion(converter);
-    populateEmitCSizeTTypeConversions(converter);
 
     RewritePatternSet patterns(&getContext());
     populateMemRefToEmitCConversionPatterns(patterns, converter);
