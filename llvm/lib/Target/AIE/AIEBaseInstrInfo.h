@@ -165,6 +165,11 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
     unsigned DecTripCountOpcode;
     // Target Opcode for JNZD.
     unsigned LoopJNZDOpcode;
+    // Opcodes of the PC-relative forms, which keep the loop header as a branch
+    // target operand instead of materializing it into a pointer register.
+    // Only set by subtargets that have such an encoding.
+    std::optional<unsigned> LoopJNZPCRelOpcode;
+    std::optional<unsigned> LoopJNZDPCRelOpcode;
   };
 
   class IfConvSupport {
@@ -573,6 +578,25 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   // All opcodes etc used for JNZD lowering. If this returns none, we have no
   // JNZD support.
   virtual std::optional<JNZDSupport> getJNZDSupport() const { return {}; }
+
+  // Subtarget policy for the PC-relative JNZD form. Callers use
+  // shouldUseJNZDPCRelTarget(), which also requires the opcode pair.
+  virtual bool useJNZDPCRelTarget(const MachineFunction &MF) const {
+    return false;
+  }
+
+  // Whether \p MF should branch to a PC-relative target operand instead of a
+  // pointer register. True only when both PC-relative opcodes are set and
+  // useJNZDPCRelTarget() opts in.
+  bool shouldUseJNZDPCRelTarget(const MachineFunction &MF) const {
+    const auto JNZDSupport = getJNZDSupport();
+    if (!JNZDSupport || !useJNZDPCRelTarget(MF))
+      return false;
+    assert(JNZDSupport->LoopJNZPCRelOpcode &&
+           JNZDSupport->LoopJNZDPCRelOpcode &&
+           "PC-relative JNZD requested without both opcodes");
+    return true;
+  }
 
   // All information used for IfConversion support. If this returns none, we
   // have no IfConversion support.
