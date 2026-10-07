@@ -123,15 +123,6 @@ void AIEBasePipelinerLoopInfo::setMinTripCount(int64_t TC) {
   MinTripCount = TC;
 }
 
-std::optional<bool> AIEBasePipelinerLoopInfo::createTripCountGreaterCondition(
-    int TC, MachineBasicBlock &MBB, SmallVectorImpl<MachineOperand> &Cond) {
-  LLVM_DEBUG(dbgs() << "TripCount > " << TC << "?\n");
-  // We only accept schedules that have a stage count that can be accommodated
-  // by a statically known tripcount. Hence we don't have to guard the epilogs
-  assert(hasMoreIterationsThan(TC));
-  return true;
-}
-
 /// Modify the loop such that the trip count is
 /// OriginalTC + TripCountAdjust.
 void AIEBasePipelinerLoopInfo::adjustTripCount(int TripCountAdjust) {
