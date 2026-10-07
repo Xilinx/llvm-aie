@@ -29,6 +29,7 @@ class AIE2PSTTICommon : public AIETTICommon {
 public:
   bool isVectorExtractIntrinsicID(Intrinsic::ID ID) const override;
   bool isGetSSIntrinsicID(Intrinsic::ID ID) const override;
+  bool isAllowedInZOL(llvm::Instruction &Instr) const override;
 };
 
 class AIE2PSTTIImpl : public AIEBaseTTIImpl<AIE2PSTTIImpl> {
