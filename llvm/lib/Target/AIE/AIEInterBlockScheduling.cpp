@@ -386,60 +386,112 @@ static int calculateSchedulingSlack(const Region &EpilogueRegion,
   return std::max(0, MinSlack);
 }
 
-/// Check how many leading bundles from PrologueBundles can be merged into
-/// trailing bundles of EpilogueBundles without resource conflicts.
+/// Check how many leading bundles from both sibling prologues can be merged
+/// into trailing bundles of EpilogueBundles without resource conflicts.
+///
+/// The epilogue has two successors: the steady-state prologue and the
+/// last-iteration prologue. When prologue bundles are merged into the
+/// epilogue, the merged bundles create a denser resource footprint.
+/// This function builds a progressive scoreboard that includes both epilogue
+/// AND merged prologue resources, then validates the remaining bundles of
+/// BOTH prologues against it.
+///
 /// \param EpilogueBundles The epilogue bundles to merge into
-/// \param PrologueBundles The prologue bundles to merge from
+/// \param SteadyPrologue The steady-state prologue bundles
+/// \param LastIterPrologue The last-iteration prologue bundles
 /// \param OptimizationLimit Maximum number of bundles to try merging
 /// \param HR Hazard recognizer for resource checking
 /// \param SelectedAltDescs Selected alternate descriptors
 /// \returns The maximum number of bundles that can be merged without conflicts
 static int
 checkResourceMergeability(ArrayRef<MachineBundle> EpilogueBundles,
-                          ArrayRef<MachineBundle> PrologueBundles,
+                          ArrayRef<MachineBundle> SteadyPrologue,
+                          ArrayRef<MachineBundle> LastIterPrologue,
                           int OptimizationLimit, const AIEHazardRecognizer &HR,
                           const AIEAlternateDescriptors &SelectedAltDescs) {
 
   const int EpilogueSize = EpilogueBundles.size();
-  const int PrologueSize = PrologueBundles.size();
+  const int SteadySize = SteadyPrologue.size();
+  const int LastIterSize = LastIterPrologue.size();
 
-  // Can't merge more bundles than exist in either region
+  // Can't merge more bundles than exist in any region
   const int MaxMerge =
-      std::min({OptimizationLimit, EpilogueSize, PrologueSize});
+      std::min({OptimizationLimit, EpilogueSize, SteadySize, LastIterSize});
   if (MaxMerge <= 0)
     return 0;
 
   // Build ONE scoreboard from ALL epilogue bundles (top-down).
   // This gives us the resource state after executing the entire epilogue.
-  // We use delta cycles to check conflicts at different positions.
-  ResourceScoreboard<FuncUnitWrapper> Scoreboard =
+  ResourceScoreboard<FuncUnitWrapper> EpilogueScoreboard =
       createTopDownScoreboard(EpilogueBundles, HR, SelectedAltDescs);
 
   DEBUG_BLOCKS(dbgs() << "    checkResourceMergeability: EpilogueSize="
-                      << EpilogueSize << " PrologueSize=" << PrologueSize
+                      << EpilogueSize << " SteadySize=" << SteadySize
+                      << " LastIterSize=" << LastIterSize
                       << " MaxMerge=" << MaxMerge << "\n");
 
-  // Try mergeCount from MaxMerge down to 1
+  // Check whether a bundle has a resource conflict at a given delta.
+  auto BundleHasConflict =
+      [&](const ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
+          const MachineBundle &Bundle, int Delta) -> bool {
+    for (MachineInstr *MI : Bundle.getInstrs()) {
+      if (HR.getHazardType(Scoreboard, MI, Delta)) {
+        DEBUG_BLOCKS(dbgs()
+                     << "      Conflict (delta=" << Delta << "): " << *MI);
+        return true;
+      }
+    }
+    return false;
+  };
+
+  // Emit a bundle's resources into the scoreboard at a given delta.
+  auto EmitBundle = [&](ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
+                        const MachineBundle &Bundle, int Delta) {
+    for (MachineInstr *MI : Bundle.getInstrs())
+      HR.emitInScoreboard(Scoreboard, *MI, *SelectedAltDescs.getDesc(MI),
+                          Delta);
+  };
+
+  // Check a range of bundles [StartIdx, Bundles.size()) against a scoreboard.
+  auto HasConflictInRange =
+      [&](const ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
+          ArrayRef<MachineBundle> Bundles, int StartIdx,
+          int MergeCount) -> bool {
+    for (int I = StartIdx, E = Bundles.size(); I < E; ++I) {
+      if (BundleHasConflict(Scoreboard, Bundles[I], I - MergeCount))
+        return true;
+    }
+    return false;
+  };
+
+  // Try MergeCount from MaxMerge down to 1
   for (int MergeCount = MaxMerge; MergeCount >= 1; --MergeCount) {
     DEBUG_BLOCKS(dbgs() << "    Trying MergeCount=" << MergeCount << "\n");
 
+    // Start with a copy of the epilogue-only scoreboard for this attempt.
+    auto TrialScoreboard = EpilogueScoreboard;
     bool HasConflict = false;
 
-    // Check ALL prologue bundles with a unified delta formula:
-    // Delta = I - MergeCount
-    // - For I < MergeCount: negative deltas (merged/overlapping bundles)
-    // - For I >= MergeCount: non-negative deltas (bundles after epilogue)
-    for (int I = 0; I < PrologueSize && !HasConflict; ++I) {
+    // Phase 1: Check merged bundles and progressively emit them.
+    // Merged prologue bundles overlay the trailing epilogue bundles,
+    // creating a denser resource footprint. We emit each merged bundle
+    // into the scoreboard so subsequent checks see the combined state.
+    for (int I = 0; I < MergeCount && !HasConflict; ++I) {
       const int Delta = I - MergeCount;
-      for (MachineInstr *MI : PrologueBundles[I].getInstrs()) {
-        if (HR.getHazardType(Scoreboard, MI, Delta)) {
-          DEBUG_BLOCKS(dbgs() << "      Conflict at bundle " << I
-                              << " (delta=" << Delta << "): " << *MI);
-          HasConflict = true;
-          break;
-        }
-      }
+      HasConflict =
+          BundleHasConflict(TrialScoreboard, SteadyPrologue[I], Delta);
+      if (!HasConflict)
+        EmitBundle(TrialScoreboard, SteadyPrologue[I], Delta);
     }
+
+    // Phase 2: Check remaining bundles of BOTH prologues against the
+    // merged scoreboard (epilogue + merged prologue resources).
+    if (!HasConflict)
+      HasConflict = HasConflictInRange(TrialScoreboard, SteadyPrologue,
+                                       MergeCount, MergeCount);
+    if (!HasConflict)
+      HasConflict = HasConflictInRange(TrialScoreboard, LastIterPrologue,
+                                       MergeCount, MergeCount);
 
     if (!HasConflict) {
       DEBUG_BLOCKS(dbgs() << "    Resource mergeability check passed with "
@@ -705,7 +757,8 @@ unsigned InterBlockScheduling::getNumberOfMergeableBundles(
   const int MaxPossibleMerge = std::min(
       {static_cast<int>(MatchingBundles), SlackToSteady, SlackToLastIter});
   const int MergeableBundles = checkResourceMergeability(
-      EpilogueBundles, SteadyPrologue, MaxPossibleMerge, *HR, SelectedAltDescs);
+      EpilogueBundles, SteadyPrologue, LastIterPrologue, MaxPossibleMerge, *HR,
+      SelectedAltDescs);
 
   if (MergeableBundles == 0) {
     DEBUG_BLOCKS(dbgs() << "  Resource mergeability check failed\n");
