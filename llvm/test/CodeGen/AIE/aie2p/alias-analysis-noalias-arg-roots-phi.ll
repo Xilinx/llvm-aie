@@ -6,13 +6,13 @@
 ; (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
 ;
 ; Loop-carried noalias arg roots, with aie-aa alone so BasicAA does not hide
-; the tracer. Expectations are what the current tracer returns.
+; the tracer. A root is kept only when every leaf is the same noalias argument.
 ;
 ; RUN: opt -mtriple=aie2p -passes=aa-eval -aa-pipeline=aie-aa -print-all-alias-modref-info --aie-alias-analysis-noalias-arg-roots=true -disable-output < %s 2>&1 | FileCheck %s
 
-; A self-loop GEP is the same object, but a revisit drops the root.
+; A self-loop GEP stays inside its buffer. The back edge adds no leaf.
 ; CHECK-LABEL: Function: config_copy_loop
-; CHECK: MayAlias:{{.*}}%ip{{.*}},{{.*}}%op
+; CHECK: NoAlias:{{.*}}%ip{{.*}},{{.*}}%op
 
 define void @config_copy_loop(ptr noalias %input, ptr noalias %output) {
 entry:
@@ -38,7 +38,7 @@ exit:
 
 ; Same copy, with the step in a different block from the header.
 ; CHECK-LABEL: Function: config_copy_separate_latch
-; CHECK: MayAlias:{{.*}}%ip{{.*}},{{.*}}%op
+; CHECK: NoAlias:{{.*}}%ip{{.*}},{{.*}}%op
 
 define void @config_copy_separate_latch(ptr noalias %input,
                                         ptr noalias %output) {
@@ -85,7 +85,7 @@ exit:
 }
 
 ; CHECK-LABEL: Function: loop_carried_increment
-; CHECK: MayAlias:{{.*}}%out,{{.*}}%p{{$}}
+; CHECK: NoAlias:{{.*}}%out,{{.*}}%p{{$}}
 
 define void @loop_carried_increment(ptr noalias %in, ptr noalias %out, i1 %cond) {
 entry:
@@ -103,7 +103,7 @@ exit:
 }
 
 ; CHECK-LABEL: Function: nested_gep
-; CHECK: MayAlias:{{.*}}%ii,{{.*}}%op{{$}}
+; CHECK: NoAlias:{{.*}}%ii,{{.*}}%op{{$}}
 
 define void @nested_gep(ptr noalias %in, ptr noalias %out, i1 %c1, i1 %c2) {
 entry:
@@ -168,7 +168,7 @@ exit:
 }
 
 ; CHECK-LABEL: Function: mutual_disjoint
-; CHECK: MayAlias:{{.*}}%a,{{.*}}%b{{$}}
+; CHECK: NoAlias:{{.*}}%a,{{.*}}%b{{$}}
 
 define void @mutual_disjoint(ptr noalias %in, ptr noalias %out, i1 %c) {
 entry:
@@ -186,7 +186,7 @@ exit:
 }
 
 ; CHECK-LABEL: Function: interlocked_nested_gep
-; CHECK: MayAlias:{{.*}}%it_in.l,{{.*}}%it_out.l{{$}}
+; CHECK: NoAlias:{{.*}}%it_in.l,{{.*}}%it_out.l{{$}}
 
 define void @interlocked_nested_gep(ptr noalias %in_meta, ptr noalias %out_meta, i1 %c1, i1 %c2) {
 entry:
@@ -239,7 +239,7 @@ exit:
 }
 
 ; CHECK-LABEL: Function: three_way_ok
-; CHECK: MayAlias:{{.*}}%out,{{.*}}%p{{$}}
+; CHECK: NoAlias:{{.*}}%out,{{.*}}%p{{$}}
 
 define void @three_way_ok(ptr noalias %in, ptr noalias %out, i1 %c0, i1 %c) {
 entry:
@@ -283,7 +283,7 @@ exit:
 }
 
 ; CHECK-LABEL: Function: irreducible_ok
-; CHECK: MayAlias:{{.*}}%out,{{.*}}%p{{$}}
+; CHECK: NoAlias:{{.*}}%out,{{.*}}%p{{$}}
 
 define void @irreducible_ok(ptr noalias %in, ptr noalias %out, i1 %c1, i1 %c2, i1 %c3) {
 entry:
@@ -342,7 +342,7 @@ exit:
 }
 
 ; CHECK-LABEL: Function: three_phi_rotate_ok
-; CHECK: MayAlias:{{.*}}%a,{{.*}}%out{{$}}
+; CHECK: NoAlias:{{.*}}%a,{{.*}}%out{{$}}
 
 define void @three_phi_rotate_ok(ptr noalias %in, ptr noalias %out, i1 %cc) {
 entry:
@@ -359,7 +359,7 @@ exit:
 }
 
 ; CHECK-LABEL: Function: cycle_through_load
-; CHECK: MayAlias:{{.*}}%out,{{.*}}%p{{$}}
+; CHECK: NoAlias:{{.*}}%out,{{.*}}%p{{$}}
 
 define void @cycle_through_load(ptr noalias %in, ptr noalias %out, i1 %c) {
 entry:
@@ -407,7 +407,7 @@ j:
   ret void
 }
 
-; A covering insert of a sub-aggregate is not traced yet.
+; The covering insert replaces field {0,0}, so %p is %out.
 ; CHECK-LABEL: Function: insert_prefix_overwrite
 ; CHECK: MayAlias:{{.*}}%out,{{.*}}%p{{$}}
 
@@ -437,7 +437,7 @@ entry:
 }
 
 ; CHECK-LABEL: Function: struct_field_gep_loop
-; CHECK: MayAlias:{{.*}}%a,{{.*}}%out{{$}}
+; CHECK: NoAlias:{{.*}}%a,{{.*}}%out{{$}}
 
 define void @struct_field_gep_loop(ptr noalias %in, ptr noalias %out, i1 %c) {
 entry:
@@ -456,7 +456,7 @@ exit:
 }
 
 ; CHECK-LABEL: Function: fifo_loop_phi_data_root
-; CHECK: MayAlias:{{.*}}%pIn{{.*}},{{.*}}%pOut
+; CHECK: NoAlias:{{.*}}%pIn{{.*}},{{.*}}%pOut
 
 define void @fifo_loop_phi_data_root(ptr noalias %in, ptr noalias %out, i1 %cond) {
 entry:
