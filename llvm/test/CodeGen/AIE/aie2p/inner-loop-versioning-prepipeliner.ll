@@ -27,6 +27,17 @@
 ; RUN:   | FileCheck %s --check-prefix=REMARK \
 ; RUN:       --implicit-check-not=postpipeliner
 
+; With default options the prepipeliner leaves the four-stage schedule to the
+; postpipeliner. It only defers loops promised more than one iteration, as the
+; postpipeliner can do nothing with fewer; the runtime guard is that promise.
+; The postpipeliner then patches the guard, and threshold and peel must still
+; agree.
+; RUN: llc -mtriple=aie2p -O2 %s -o - | FileCheck %s
+; RUN: llc -mtriple=aie2p -O2 \
+; RUN:   -pass-remarks-output=- -pass-remarks-filter=pipeliner %s -o /dev/null \
+; RUN:   | FileCheck %s --check-prefix=DEFAULT-REMARK \
+; RUN:       --implicit-check-not=prepipeliner
+
 ; CHECK-LABEL: {{^}}versioned:
 ; The guard block holds the patched threshold and the unsigned trip-count
 ; compare selecting the pipelined vs fallback copy. NSTAGES is captured here and
@@ -55,6 +66,9 @@
 ; covers the other half of the claim: no remark mentions the postpipeliner.
 ; REMARK:      - Pipeliner:       prepipeliner
 ; REMARK:      - Loop:            bb.{{[0-9]+}}.loop.lver.high
+
+; DEFAULT-REMARK:      - Pipeliner:       postpipeliner
+; DEFAULT-REMARK:      - Loop:            bb.{{[0-9]+}}.loop.lver.high
 
 define void @versioned(ptr noalias %a, ptr noalias %b, i32 %n) {
 entry:
