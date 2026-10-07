@@ -423,7 +423,7 @@ entry:
 }
 
 ; CHECK-LABEL: Function: insert_prefix_same_root
-; CHECK: MayAlias:{{.*}}%out,{{.*}}%p{{$}}
+; CHECK: NoAlias:{{.*}}%out,{{.*}}%p{{$}}
 
 define void @insert_prefix_same_root(ptr noalias %in, ptr noalias %out) {
 entry:
