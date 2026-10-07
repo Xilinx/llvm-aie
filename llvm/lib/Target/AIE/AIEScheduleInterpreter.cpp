@@ -183,13 +183,14 @@ void AIEScheduleInterpreter::dumpEventSchedule(
 
   // Print header with cycle numbers.
   // Reserve 12 characters for register class names to handle long names.
-  OS << " RegClass    LRIdx |";
+  // Reserve 8 characters for the VReg name (e.g. "(%999)").
+  OS << " RegClass    LRIdx  VReg    |";
   for (unsigned Cycle = 0; Cycle < Schedule.size(); ++Cycle)
     OS << format(" %4d |", Cycle);
   OS << "\n";
 
   // Print separator.
-  OS << "-------------------+";
+  OS << "---------------------------+";
   for (unsigned Cycle = 0; Cycle < Schedule.size(); ++Cycle)
     OS << "------+";
   OS << "\n";
@@ -212,12 +213,19 @@ void AIEScheduleInterpreter::dumpEventSchedule(
                              : "unknown";
 
     // Use %-12.12s to left-align, pad to 12 chars, and truncate at 12 chars.
-    OS << format(" %-12.12s%5u |", RCName, LRIndex);
+    // Append the virtual register name in a fixed-width 8-char field so
+    // the | column stays aligned regardless of VReg index digit count.
+    std::string VRegStr;
+    if (LR->getVReg().isValid()) {
+      raw_string_ostream SS(VRegStr);
+      SS << "(" << printReg(LR->getVReg(), &TRI) << ")";
+    }
+    OS << format(" %-12.12s%5u %-8s |", RCName, LRIndex, VRegStr.c_str());
     PrintEventRow(RegEventsByLRIndex[LRIndex]);
 
     const auto &BypassEvents = BypassEventsByLRIndex[LRIndex];
     if (!BypassEvents.empty()) {
-      OS << "         bypass    |";
+      OS << "         bypass            |";
       PrintEventRow(BypassEvents);
     }
   }
@@ -370,7 +378,7 @@ DenseMap<unsigned, AIE::LivenessVector> AIEScheduleInterpreter::buildLiveLanes(
 
 void AIEScheduleInterpreter::dumpLiveLanes(
     const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex, int II,
-    raw_ostream &OS) const {
+    raw_ostream &OS, const RegLiveRangeTracker *Tracker) const {
 
   if (LiveLanesByLRIndex.empty()) {
     OS << "No live lanes data\n";
@@ -384,18 +392,26 @@ void AIEScheduleInterpreter::dumpLiveLanes(
   llvm::sort(LRIndices);
 
   OS << "Live Lanes (II=" << II << "):\n";
-  OS << "LRIdx  | ";
+  OS << "LRIdx  VReg     | ";
   for (int T = 0; T < II; ++T)
     OS << format("t%-6d ", T);
   OS << "\n";
 
-  OS << "-------+";
+  OS << "---------------+";
   for (int T = 0; T < II; ++T)
     OS << "--------";
   OS << "\n";
 
   for (unsigned LRIndex : LRIndices) {
-    OS << format("%-6u | ", LRIndex);
+    std::string LRVRegStr;
+    if (Tracker) {
+      const Register VReg = (*Tracker)[LRIndex].getVReg();
+      if (VReg.isValid()) {
+        raw_string_ostream SS(LRVRegStr);
+        SS << "(" << printReg(VReg, &TRI) << ")";
+      }
+    }
+    OS << format("%-6u %-8s | ", LRIndex, LRVRegStr.c_str());
 
     const auto &LanesByOffset = LiveLanesByLRIndex.lookup(LRIndex);
     for (int T = 0; T < II; ++T) {

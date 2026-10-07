@@ -2102,7 +2102,7 @@ ScheduleResult PostPipeliner::tryAllocateRegisters() {
     dbgs() << "\n=== Live Intervals ===\n";
     Interpreter.dumpEventSchedule(EventSched, RegTracker, dbgs());
     dbgs() << "\n";
-    Interpreter.dumpLiveLanes(LiveLanesByLRIndex, II, dbgs());
+    Interpreter.dumpLiveLanes(LiveLanesByLRIndex, II, dbgs(), &RegTracker);
     dbgs() << "=================================\n\n";
   });
 
