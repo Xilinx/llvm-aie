@@ -24,7 +24,7 @@
 ; CHECK: inner:
 ; CHECK:   %p.step = getelementptr inbounds i8, ptr %p.inner, i20 64
 ; CHECK: bottom:
-; CHECK:   %[[NEXT:.*]] = getelementptr inbounds i8, ptr %p.step, i20 512
+; CHECK:   %[[NEXT:.*]] = getelementptr inbounds i8, ptr %[[LIVE]], i20 64
 ; CHECK:   %value = load i8, ptr %[[NEXT]]
 
 define i8 @test_no_rebase_past_c10s_step64(ptr %base, i32 %N) {

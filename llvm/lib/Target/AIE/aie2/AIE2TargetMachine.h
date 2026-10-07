@@ -18,6 +18,7 @@
 #include "AIE2Subtarget.h"
 #include "AIEBaseTargetMachine.h"
 #include "AIEOuterLoopPipelinerConfig.h"
+#include "AIEOuterLoopPointerOptimizerConfig.h"
 #include "MCTargetDesc/AIE2MCTargetDesc.h"
 
 extern llvm::cl::opt<bool> EnableSubregRenaming;
@@ -62,6 +63,9 @@ public:
   bool addPreISel() override;
   /// Target policy handed to the outer-loop pipeliner when it is created.
   virtual std::unique_ptr<const AIEOLPTargetConfig> getOLPConfig() const;
+  /// Target policy handed to the outer-loop pointer optimizer when it is
+  /// created.
+  virtual std::unique_ptr<const AIEOLPOTargetConfig> getOLPOConfig() const;
   void addCodeGenPrepare() override;
   void addPreEmitPass() override;
   bool addGlobalInstructionSelect() override;
