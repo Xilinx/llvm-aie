@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -mtriple aie2 -run-pass=aie-postlegalizer-custom-combiner --aie-greedy-address-combines %s -verify-machineinstrs -o - | FileCheck %s
+# RUN: llc -mtriple aie2 -run-pass=aie-ptr-mod-opt,aie-postlegalizer-custom-combiner --aie-greedy-address-combines %s -verify-machineinstrs -o - | FileCheck %s
 
 # Without the aie-greedy-address-combines flag we would not combine in this
 # example because there is a use of the original pointer after the insertion
