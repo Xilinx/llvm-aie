@@ -19,10 +19,11 @@
 #define LLVM_LIB_TARGET_AIE_AIEPOSTREGALLOC_H
 
 #include "AIELivenessVector.h"
+#include "AIEMaxNumRegUnits.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/Register.h"
-#include "llvm/MC/LaneBitmask.h"
 #include "llvm/MC/MCRegister.h"
 #include <functional>
 #include <string>
@@ -176,10 +177,14 @@ private:
 
   /// Internal allocation state with RegUnit-based interference tracking.
   struct AllocState {
-    /// RegUnit occupancy - tracks lane masks for each register unit.
-    /// RegUnits are the fundamental units of register interference in LLVM.
-    /// Two registers interfere if they share any RegUnits.
-    DenseMap<unsigned /*RegUnit*/, AIE::LivenessVector> RegUnitOccupancy;
+    // Per-cycle RegUnit occupancy: CycleOccupancy[c] has a bit set for each
+    // RegUnit that is occupied at modulo cycle c.
+    SmallVector<PartSet, 8> CycleOccupancy;
+
+    // Pre-computed admissible RegUnit set per live range index.
+    // The admissible set is the union of RegUnits of all admissible physical
+    // registers for the live range.
+    DenseMap<unsigned, PartSet> AdmissibleRegUnits;
 
     /// Pre-computed interference graphs (reused across scoring attempts).
     WeightedAsymmetricGraph RCInterferenceGraph;
@@ -201,10 +206,11 @@ private:
               const RegLiveRangeTracker *RegTracker);
 
     /// Check if PhysReg can accommodate VRegMasks without conflicts.
-    /// This checks RegUnit conflicts to handle aliasing properly.
+    /// A conflict occurs when the candidate register's RegUnits are already
+    /// occupied at any cycle where the live range is live.
     bool canPlace(Register PhysReg, const AIE::LivenessVector &VRegMasks) const;
 
-    /// Place VReg in PhysReg (updates RegUnit occupancy).
+    /// Place VReg in PhysReg (marks PhysReg's RegUnits occupied per cycle).
     void place(Register VReg, Register PhysReg,
                const AIE::LivenessVector &VRegMasks,
                const TargetRegisterClass *RC);
@@ -265,10 +271,11 @@ private:
                            const TargetRegisterInfo &TRI);
 
   /// Build live range interference graph (symmetric).
+  /// Two live ranges interfere if their admissible RegUnit sets overlap and
+  /// they are temporally concurrent.
   static WeightedSymmetricGraph buildVRegInterferenceGraph(
       const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex,
-      const RegLiveRangeTracker &RegTracker,
-      const WeightedAsymmetricGraph &RCInterferenceGraph);
+      const DenseMap<unsigned, PartSet> &AdmissibleRegUnits);
 
   /// Predefined scoring functions.
   static unsigned scoreByArea(const VRegMetrics &M) { return M.TotalLanes; }

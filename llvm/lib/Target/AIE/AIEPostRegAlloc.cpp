@@ -32,8 +32,26 @@ void AIEPostRegAlloc::AllocState::init(
     const TargetRegisterInfo *InTRI,
     const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex,
     const RegLiveRangeTracker *RegTracker) {
-  this->RegUnitOccupancy.clear();
   this->TRI = InTRI;
+
+  // Determine II from the LivenessVector sizes and initialize cycle occupancy.
+  const unsigned II = LiveLanesByLRIndex.empty()
+                          ? 0
+                          : LiveLanesByLRIndex.begin()->second.size();
+  this->CycleOccupancy.assign(II, PartSet());
+
+  // Pre-compute the admissible RegUnit set for each live range.
+  // The admissible set is the union of RegUnits of all admissible physical
+  // registers, i.e., all RegUnits that this live range could potentially
+  // occupy.  Allocation collapses this to the specific register's RegUnits.
+  this->AdmissibleRegUnits.clear();
+  for (const RegLiveRange &LR : RegTracker->getLiveRanges()) {
+    PartSet Units;
+    for (MCRegister Reg : LR.getAdmissibleRegs())
+      for (MCRegUnitIterator UI(Reg, InTRI); UI.isValid(); ++UI)
+        Units.set(*UI);
+    this->AdmissibleRegUnits[LR.getIndex()] = Units;
+  }
 
   const auto &AvailableRegs = RegTracker->getAvailablePhysRegs();
 
@@ -46,9 +64,9 @@ void AIEPostRegAlloc::AllocState::init(
   this->RCInterferenceGraph =
       AIEPostRegAlloc::buildRCInterferenceGraph(UsedRCIds, *InTRI);
 
-  // Build live range interference graph once.
+  // Build live range interference graph once, using admissible RegUnit sets.
   this->VRegInterferenceGraph = AIEPostRegAlloc::buildVRegInterferenceGraph(
-      LiveLanesByLRIndex, *RegTracker, RCInterferenceGraph);
+      LiveLanesByLRIndex, AdmissibleRegUnits);
 
   // Pre-compute metrics for all live ranges that have been virtualized.
   // Non-virtualized ranges (RESERVED or policy-excluded) have no VReg and
@@ -72,43 +90,42 @@ void AIEPostRegAlloc::AllocState::init(
 bool AIEPostRegAlloc::AllocState::canPlace(
     Register PhysReg, const AIE::LivenessVector &VRegMasks) const {
 
-  // Check RegUnit conflicts - this handles aliasing automatically.
-  // Two registers interfere if they share any RegUnits.
+  // Compute the RegUnit set for PhysReg.
+  PartSet PhysRegUnits;
   for (MCRegUnitIterator Units(PhysReg.asMCReg(), TRI); Units.isValid();
-       ++Units) {
-    unsigned Unit = *Units;
-    auto It = RegUnitOccupancy.find(Unit);
-    if (It != RegUnitOccupancy.end()) {
-      // Use anySlotOverlap instead of overlaps: when two live ranges
-      // alias via a RegUnit but belong to different register class
-      // hierarchies (e.g., eL pair vs. mLockId_reg scalar), their lane
-      // masks live in incompatible bit domains and overlaps() returns
-      // false even when they are simultaneously live. anySlotOverlap
-      // checks temporal overlap independent of lane-bit domain, which
-      // is correct here because physical aliasing is already confirmed.
-      if (VRegMasks.anySlotOverlap(It->second))
-        return false;
-    }
+       ++Units)
+    PhysRegUnits.set(*Units);
+
+  // Check for conflicts at each cycle where the VReg is live.
+  // A conflict occurs when PhysReg's RegUnits overlap with the already-
+  // occupied RegUnits at any cycle where the incoming VReg is live.
+  for (size_t C = 0; C < VRegMasks.size(); ++C) {
+    if (VRegMasks[C].any() && PhysRegUnits.overlap(CycleOccupancy[C]))
+      return false;
   }
 
   return true;
 }
 
-// Place VReg in PhysReg (updates occupancy).
+// Place VReg in PhysReg (marks PhysReg's RegUnits occupied per live cycle).
 void AIEPostRegAlloc::AllocState::place(Register VReg, Register PhysReg,
                                         const AIE::LivenessVector &VRegMasks,
                                         const TargetRegisterClass *RC) {
 
-  // Update RegUnit occupancy - this automatically handles aliasing.
-  unsigned NumUnits = 0;
+  // Compute the RegUnit set for PhysReg.
+  PartSet PhysRegUnits;
   for (MCRegUnitIterator Units(PhysReg.asMCReg(), TRI); Units.isValid();
-       ++Units) {
-    RegUnitOccupancy[*Units] |= VRegMasks;
-    NumUnits++;
+       ++Units)
+    PhysRegUnits.set(*Units);
+
+  // Mark those RegUnits as occupied at each cycle where the VReg is live.
+  for (size_t C = 0; C < VRegMasks.size(); ++C) {
+    if (VRegMasks[C].any())
+      CycleOccupancy[C] |= PhysRegUnits;
   }
 
   LLVM_DEBUG(dbgs() << "  Placed " << printReg(VReg, TRI) << " in "
-                    << printReg(PhysReg, TRI) << " (updated " << NumUnits
+                    << printReg(PhysReg, TRI) << " (" << PhysRegUnits.count()
                     << " RegUnits)\n");
 }
 
@@ -167,11 +184,12 @@ AIEPostRegAlloc::buildRCInterferenceGraph(const DenseSet<unsigned> &UsedRCIds,
 }
 
 // Build live range interference graph (symmetric).
+// Two live ranges interfere if their admissible RegUnit sets overlap (they
+// could occupy registers sharing a RegUnit) and they are temporally concurrent.
 AIEPostRegAlloc::WeightedSymmetricGraph
 AIEPostRegAlloc::buildVRegInterferenceGraph(
     const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex,
-    const RegLiveRangeTracker &RegTracker,
-    const WeightedAsymmetricGraph &RCInterferenceGraph) {
+    const DenseMap<unsigned, PartSet> &AdmissibleRegUnits) {
 
   WeightedSymmetricGraph Graph;
 
@@ -184,26 +202,24 @@ AIEPostRegAlloc::buildVRegInterferenceGraph(
   // Use symmetry: only check pairs where I < J.
   for (size_t I = 0; I < LRIndices.size(); ++I) {
     const unsigned LRIndex1 = LRIndices[I];
-    const RegLiveRange &LR1 = RegTracker[LRIndex1];
-    if (!LR1.getRegisterClass())
+    const auto It1 = AdmissibleRegUnits.find(LRIndex1);
+    if (It1 == AdmissibleRegUnits.end() || It1->second.empty())
       continue;
     const auto &Masks1 = LiveLanesByLRIndex.find(LRIndex1)->second;
-    const unsigned RCId1 = LR1.getRegisterClass()->getID();
 
     for (size_t J = I + 1; J < LRIndices.size(); ++J) {
       const unsigned LRIndex2 = LRIndices[J];
-      const RegLiveRange &LR2 = RegTracker[LRIndex2];
-      if (!LR2.getRegisterClass())
+      const auto It2 = AdmissibleRegUnits.find(LRIndex2);
+      if (It2 == AdmissibleRegUnits.end() || It2->second.empty())
         continue;
+
+      // First check if their admissible RegUnit sets overlap.
+      if (!It1->second.overlap(It2->second))
+        continue;
+
+      // Then check temporal concurrency: are they live at the same cycle?
       const auto &Masks2 = LiveLanesByLRIndex.find(LRIndex2)->second;
-      const unsigned RCId2 = LR2.getRegisterClass()->getID();
-
-      // First check if their register classes can interfere.
-      if (!RCInterferenceGraph.interferes(RCId1, RCId2))
-        continue;
-
-      // Then check if their live ranges overlap temporally.
-      if (Masks1.overlaps(Masks2))
+      if (Masks1.anySlotOverlap(Masks2))
         Graph.addInterference(LRIndex1, LRIndex2);
     }
   }
@@ -298,8 +314,9 @@ AIEPostRegAlloc::AllocResult AIEPostRegAlloc::tryAllocate(
     AllocState &State, ScoringFunction ScoreFn,
     DenseMap<Register, MCRegister> &OutAssign) {
 
-  // Clear per-attempt state.
-  State.RegUnitOccupancy.clear();
+  // Reset per-attempt state.
+  std::fill(State.CycleOccupancy.begin(), State.CycleOccupancy.end(),
+            PartSet());
   OutAssign.clear();
 
   const auto &AvailableRegs = RegTracker->getAvailablePhysRegs();
