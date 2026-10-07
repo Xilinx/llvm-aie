@@ -467,9 +467,9 @@ AIEPostRegAlloc::AllocResult AIEPostRegAlloc::tryAllocate(
     const TargetRegisterClass *RC = LR.getRegisterClass();
     const auto &Metrics = State.AllMetrics[LRIndex];
 
-    LLVM_DEBUG(dbgs() << "Allocating LR#" << LRIndex << " class="
-                      << TRI.getRegClassName(RC) << " (score=" << Entry.Score
-                      << ", available=" << Metrics.NumAvailableRegs
+    LLVM_DEBUG(dbgs() << "Allocating LR#" << LRIndex
+                      << " class=" << TRI.getRegClassName(RC)
+                      << " (available=" << Metrics.NumAvailableRegs
                       << ", pure_int=" << Metrics.PureInterferenceDegree
                       << ", alias_int=" << Metrics.AliasingInterferenceDegree
                       << ")\n");
@@ -483,8 +483,9 @@ AIEPostRegAlloc::AllocResult AIEPostRegAlloc::tryAllocate(
     }
 
     Register ChosenPhys = Register();
+    LLVM_DEBUG(dbgs() << "  Trying ");
     for (Register PhysReg : Candidates) {
-      LLVM_DEBUG(dbgs() << "  Trying " << printReg(PhysReg, &TRI) << " ");
+      LLVM_DEBUG(dbgs() << printReg(PhysReg, &TRI) << " ");
       if (State.canPlace(PhysReg, VRegMasks)) {
         LLVM_DEBUG(dbgs() << "\n");
         ChosenPhys = PhysReg;
@@ -492,7 +493,6 @@ AIEPostRegAlloc::AllocResult AIEPostRegAlloc::tryAllocate(
       }
     }
 
-    LLVM_DEBUG(dbgs() << "\n");
     if (!ChosenPhys.isValid()) {
       LLVM_DEBUG(dbgs() << "  Failed to find suitable physreg!\n");
       return AllocResult(/*InfeasibleSchedule=*/false);
