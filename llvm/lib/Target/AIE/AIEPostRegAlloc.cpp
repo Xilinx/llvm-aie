@@ -40,17 +40,23 @@ void AIEPostRegAlloc::AllocState::init(
                           : LiveLanesByLRIndex.begin()->second.size();
   this->CycleOccupancy.assign(II, PartSet());
 
-  // Pre-compute the admissible RegUnit set for each live range.
-  // The admissible set is the union of RegUnits of all admissible physical
-  // registers, i.e., all RegUnits that this live range could potentially
-  // occupy.  Allocation collapses this to the specific register's RegUnits.
+  // Pre-compute the per-physreg PartSet cache and the per-LR admissible
+  // RegUnit set in one pass.  PhysRegUnitSets[Reg] is filled once via
+  // MCRegUnitIterator the first time a register is seen; subsequent LRs
+  // sharing the same admissible register reuse the cached value.  The per-LR
+  // admissible set is the |= union over its admissible registers.
+  this->PhysRegUnitSets.clear();
   this->AdmissibleRegUnits.clear();
   for (const RegLiveRange &LR : RegTracker->getLiveRanges()) {
-    PartSet Units;
-    for (MCRegister Reg : LR.getAdmissibleRegs())
-      for (MCRegUnitIterator UI(Reg, InTRI); UI.isValid(); ++UI)
-        Units.set(*UI);
-    this->AdmissibleRegUnits[LR.getIndex()] = Units;
+    PartSet LRUnits;
+    for (MCRegister Reg : LR.getAdmissibleRegs()) {
+      PartSet &Cached = this->PhysRegUnitSets[Reg];
+      if (Cached.empty())
+        for (MCRegUnitIterator UI(Reg, InTRI); UI.isValid(); ++UI)
+          Cached.set(*UI);
+      LRUnits |= Cached;
+    }
+    this->AdmissibleRegUnits[LR.getIndex()] = LRUnits;
   }
 
   const auto &AvailableRegs = RegTracker->getAvailablePhysRegs();
@@ -90,43 +96,55 @@ void AIEPostRegAlloc::AllocState::init(
 bool AIEPostRegAlloc::AllocState::canPlace(
     Register PhysReg, const AIE::LivenessVector &VRegMasks) const {
 
-  // Compute the RegUnit set for PhysReg.
-  PartSet PhysRegUnits;
-  for (MCRegUnitIterator Units(PhysReg.asMCReg(), TRI); Units.isValid();
-       ++Units)
-    PhysRegUnits.set(*Units);
-
-  // Check for conflicts at each cycle where the VReg is live.
-  // A conflict occurs when PhysReg's RegUnits overlap with the already-
-  // occupied RegUnits at any cycle where the incoming VReg is live.
+  // At each live cycle, compute which RegUnits of PhysReg are active via the
+  // live LaneMask: only RegUnits whose coverage LaneMask intersects with the
+  // live lanes are considered active.  This gives sub-register granularity —
+  // different sub-registers of a composite can be co-allocated without false
+  // conflicts.  Bypass cycles carry the same lane mask as the RF write (since
+  // bypass and RF address the same register from the same def), so no special
+  // bypass fallback is needed here.
   for (size_t C = 0; C < VRegMasks.size(); ++C) {
-    if (VRegMasks[C].any() && PhysRegUnits.overlap(CycleOccupancy[C]))
+    const LaneBitmask M = VRegMasks[C].getLanes();
+    if (!M.any())
+      continue;
+    PartSet ActiveUnits;
+    for (MCRegUnitMaskIterator MUI(PhysReg.asMCReg(), TRI); MUI.isValid();
+         ++MUI) {
+      auto [Unit, UnitMask] = *MUI;
+      if ((UnitMask & M).any())
+        ActiveUnits.set(Unit);
+    }
+    if (ActiveUnits.overlap(CycleOccupancy[C]))
       return false;
   }
 
   return true;
 }
 
-// Place VReg in PhysReg (marks PhysReg's RegUnits occupied per live cycle).
+// Place VReg in PhysReg (marks lane-accurate RegUnits occupied per cycle).
 void AIEPostRegAlloc::AllocState::place(Register VReg, Register PhysReg,
                                         const AIE::LivenessVector &VRegMasks,
                                         const TargetRegisterClass *RC) {
 
-  // Compute the RegUnit set for PhysReg.
-  PartSet PhysRegUnits;
-  for (MCRegUnitIterator Units(PhysReg.asMCReg(), TRI); Units.isValid();
-       ++Units)
-    PhysRegUnits.set(*Units);
-
-  // Mark those RegUnits as occupied at each cycle where the VReg is live.
+  // At each live cycle mark only the RegUnits of PhysReg that are covered by
+  // the live LaneMask.  This ensures that only the actually-used sub-register
+  // units are recorded as occupied, enabling concurrent allocation of
+  // non-overlapping sub-registers.  Bypass cycles carry the same lane mask as
+  // the RF write (same def, same register), so no special bypass handling.
   for (size_t C = 0; C < VRegMasks.size(); ++C) {
-    if (VRegMasks[C].any())
-      CycleOccupancy[C] |= PhysRegUnits;
+    const LaneBitmask M = VRegMasks[C].getLanes();
+    if (!M.any())
+      continue;
+    for (MCRegUnitMaskIterator MUI(PhysReg.asMCReg(), TRI); MUI.isValid();
+         ++MUI) {
+      auto [Unit, UnitMask] = *MUI;
+      if ((UnitMask & M).any())
+        CycleOccupancy[C].set(Unit);
+    }
   }
 
   LLVM_DEBUG(dbgs() << "  Placed " << printReg(VReg, TRI) << " in "
-                    << printReg(PhysReg, TRI) << " (" << PhysRegUnits.count()
-                    << " RegUnits)\n");
+                    << printReg(PhysReg, TRI) << "\n");
 }
 
 // Build register class interference graph with asymmetric weights.

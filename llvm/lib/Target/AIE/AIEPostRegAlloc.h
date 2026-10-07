@@ -181,9 +181,14 @@ private:
     // RegUnit that is occupied at modulo cycle c.
     SmallVector<PartSet, 8> CycleOccupancy;
 
+    // Cached RegUnit set per physical register.  Computed once in init()
+    // by iterating MCRegUnitIterator for each admissible register; reused in
+    // canPlace() and place() to avoid repeated MCRegUnitIterator walks.
+    DenseMap<MCRegister, PartSet> PhysRegUnitSets;
+
     // Pre-computed admissible RegUnit set per live range index.
-    // The admissible set is the union of RegUnits of all admissible physical
-    // registers for the live range.
+    // The admissible set is the union of PhysRegUnitSets for every admissible
+    // physical register of the live range.
     DenseMap<unsigned, PartSet> AdmissibleRegUnits;
 
     /// Pre-computed interference graphs (reused across scoring attempts).
@@ -206,11 +211,12 @@ private:
               const RegLiveRangeTracker *RegTracker);
 
     /// Check if PhysReg can accommodate VRegMasks without conflicts.
-    /// A conflict occurs when the candidate register's RegUnits are already
-    /// occupied at any cycle where the live range is live.
+    /// A conflict occurs when the candidate register's RegUnits (looked up from
+    /// PhysRegUnitSets) are already occupied at any live cycle.
     bool canPlace(Register PhysReg, const AIE::LivenessVector &VRegMasks) const;
 
-    /// Place VReg in PhysReg (marks PhysReg's RegUnits occupied per cycle).
+    /// Place VReg in PhysReg (marks PhysReg's cached RegUnits occupied per
+    /// cycle).
     void place(Register VReg, Register PhysReg,
                const AIE::LivenessVector &VRegMasks,
                const TargetRegisterClass *RC);

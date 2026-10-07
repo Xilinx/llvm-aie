@@ -298,6 +298,9 @@ DenseMap<unsigned, AIE::LivenessVector> AIEScheduleInterpreter::buildLiveLanes(
             const int BypassModuloCycle = BypassWriteCycle % II;
             LiveLanesByLRIndex[Event.LRIndex][BypassModuloCycle].addBypassWrite(
                 Event.ForwardingClass);
+            // Record the same lane mask as the RF write: bypass and RF share
+            // the same def and the same register address.
+            LiveLanesByLRIndex[Event.LRIndex][BypassModuloCycle] |= M;
 
             LLVM_DEBUG(dbgs()
                        << "    Bypass write of class " << Event.ForwardingClass
