@@ -661,7 +661,7 @@ unsigned InterBlockScheduling::getNumberOfMergeableBundles(
 
   // Create filter to stop at loop setup instructions
   auto LoopSetupFilter = [this](const MachineInstr &MI) {
-    return TII->isZeroOverheadLoopSetupInstr(MI);
+    return TII->isZeroOverheadLoopSetupInstr(MI) && !TII->isZOLTripCountDef(MI);
   };
 
   // Count matching leading bundles, stopping at loop setup instructions
