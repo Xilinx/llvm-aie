@@ -532,7 +532,7 @@ def combine_load_store_split : GICombineRule<
 def combine_offset_load_store_ptradd_matchdata: GIDefMatchData<"std::pair<Register, int64_t>">;
 def combine_offset_load_store_ptradd : GICombineRule<
   (defs root:$root, combine_offset_load_store_ptradd_matchdata:$matchinfo),
-  (match (wip_match_opcode G_AIE_OFFSET_LOAD, G_AIE_OFFSET_STORE): $root,
+  (match (wip_match_opcode G_AIE_OFFSET_LOAD, G_AIE_OFFSET_SEXTLOAD, G_AIE_OFFSET_ZEXTLOAD, G_AIE_OFFSET_STORE): $root,
   [{ return matchOffsetLoadStorePtrAdd(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
   (apply [{ applyOffsetLoadStorePtrAdd(*${root}, MRI, B, ${matchinfo}, Observer); }])
 >;
