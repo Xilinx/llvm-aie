@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -mtriple aie2 -run-pass=aie-postlegalizer-custom-combiner %s -verify-machineinstrs -o - | FileCheck %s
+# RUN: llc -mtriple aie2 -run-pass=aie-ptr-mod-opt,aie-postlegalizer-custom-combiner %s -verify-machineinstrs -o - | FileCheck %s
 
 ---
 name:            load_to_preinc

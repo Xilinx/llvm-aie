@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -mtriple aie2 -start-before=aie-postlegalizer-custom-combiner -stop-after=instruction-select %s -verify-machineinstrs -o - | FileCheck %s
+# RUN: llc -mtriple aie2 -start-before=aie-ptr-mod-opt -stop-after=instruction-select %s -verify-machineinstrs -o - | FileCheck %s
 
 # The way we currently select 512-bit offset memory operations when the offset
 # does not fit in the immediate range of the instruction leads to unnecessarily

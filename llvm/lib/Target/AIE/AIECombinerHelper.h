@@ -116,11 +116,6 @@ void applyConcatUnmergePhis(MachineInstr &ConcatI, MachineRegisterInfo &MRI,
                             AIEConcatUnmergeCombineMatchData &MatchInfo,
                             GISelChangeObserver &Observer);
 
-bool matchGlobalPtrModOptimizer(MachineInstr &MemI, MachineRegisterInfo &MRI,
-                                CombinerHelper &Helper,
-                                const TargetInstrInfo &TII,
-                                AIE::FoundCombiners *GlobalCombinerPtr);
-
 /// Look for any PtrAdd instruction that use the same base as \a MI that can be
 /// combined with it and stores it in \a GlobalCombinerPtr
 /// \return true if an instruction is found
