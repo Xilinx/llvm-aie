@@ -3,7 +3,7 @@
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-// Modifications (c) Copyright 2025 Advanced Micro Devices, Inc. or its
+// Modifications (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its
 // affiliates
 //
 //===----------------------------------------------------------------------===//
@@ -36,6 +36,7 @@ struct BlockFloatQuantizedTypeStorage;
 /// Enumeration of bit-mapped flags related to quantized types.
 namespace QuantizationFlags {
 enum FlagValue {
+  None = 0,
   // Indicates that the storage type should be interpreted as a signed
   // integer. The default is to interpret it as an unsigned value.
   Signed = 1,
