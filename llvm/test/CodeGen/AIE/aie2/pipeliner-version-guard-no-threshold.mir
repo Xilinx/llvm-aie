@@ -1,0 +1,159 @@
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc -mtriple=aie2 -run-pass=pipeliner -verify-machineinstrs %s -o - \
+# RUN:   | FileCheck %s --implicit-check-not="{{^ *bb\.[0-9]+:}}"
+#
+# A versioned loop whose guard holds no PseudoLoopVersionThreshold: the compare
+# reads a plain immediate move, as with a hand-written guard or one an earlier
+# pass has folded. The pre-RA pipeliner can only promise a minimum trip count
+# through the pseudo, so without it the high-trip-count copy is an unbounded
+# loop and stays unpipelined. The guard keeps its -1, which selects the
+# un-pipelined low-trip-count copy at runtime.
+#
+# The guard logic is target independent, so aie2 alone covers it.
+#
+# CHECK-LABEL: name: versioned
+# CHECK-LABEL: bb.0.loop.lver.guard:
+# CHECK: [[THR:%[0-9]+]]:er = MOV_RLC_imm10_pseudo -1
+# CHECK: LTU %{{[0-9]+}}, [[THR]]
+# No iterations are peeled into a prologue, and the implicit-check-not above
+# rejects the unnamed prologue/epilogue blocks the expander would create.
+# CHECK-LABEL: bb.1.loop.ph.lver.high:
+# CHECK: LoopStart %{{[0-9]+}}, 0
+# CHECK-LABEL: bb.2.loop.lver.high:
+# CHECK: PseudoLoopEnd <mcsymbol .L_LEnd1>, %bb.2
+
+--- |
+  define void @versioned(ptr noalias %a, ptr noalias %b, i32 %n) {
+  loop.lver.guard:
+    %lver.low = icmp ult i32 %n, -1
+    br i1 %lver.low, label %loop.ph, label %loop.ph.lver.high
+
+  loop.ph.lver.high:
+    call void @llvm.set.loop.iterations.i32(i32 %n)
+    br label %loop.lver.high
+
+  loop.lver.high:
+    %i.lver.high = phi i32 [ 0, %loop.ph.lver.high ], [ %i.next.lver.high, %loop.lver.high ]
+    %pa.lver.high = getelementptr i32, ptr %a, i32 %i.lver.high
+    %x.lver.high = load i32, ptr %pa.lver.high, align 4
+    %m1.lver.high = mul i32 %x.lver.high, %x.lver.high
+    %m2.lver.high = mul i32 %m1.lver.high, %x.lver.high
+    %m3.lver.high = add i32 %m2.lver.high, %m1.lver.high
+    %m4.lver.high = xor i32 %m3.lver.high, %x.lver.high
+    %pb.lver.high = getelementptr i32, ptr %b, i32 %i.lver.high
+    store i32 %m4.lver.high, ptr %pb.lver.high, align 4
+    %i.next.lver.high = add i32 %i.lver.high, 1
+    %0 = call i1 @llvm.loop.decrement.i32(i32 1)
+    br i1 %0, label %loop.lver.high, label %exit.lver.high.loopexit, !llvm.loop !0
+
+  loop.ph:
+    call void @llvm.set.loop.iterations.i32(i32 %n)
+    br label %loop
+
+  loop:
+    %i = phi i32 [ 0, %loop.ph ], [ %i.next, %loop ]
+    %pa = getelementptr i32, ptr %a, i32 %i
+    %x = load i32, ptr %pa, align 4
+    %m1 = mul i32 %x, %x
+    %m2 = mul i32 %m1, %x
+    %m3 = add i32 %m2, %m1
+    %m4 = xor i32 %m3, %x
+    %pb = getelementptr i32, ptr %b, i32 %i
+    store i32 %m4, ptr %pb, align 4
+    %i.next = add i32 %i, 1
+    %1 = call i1 @llvm.loop.decrement.i32(i32 1)
+    br i1 %1, label %loop, label %exit.lver.low.loopexit, !llvm.loop !2
+
+  exit.lver.high.loopexit:
+    br label %exit
+
+  exit.lver.low.loopexit:
+    br label %exit
+
+  exit:
+    ret void
+  }
+
+  declare void @llvm.set.loop.iterations.i32(i32)
+  declare i1 @llvm.loop.decrement.i32(i32)
+
+  !0 = distinct !{!0, !1}
+  !1 = !{!"llvm.loop.hint.aie-loop-versioned", i32 1}
+  !2 = distinct !{!2, !3}
+  !3 = !{!"llvm.loop.hint.aie-loop-version-fallback", i32 1}
+...
+---
+name:            versioned
+legalized:       true
+regBankSelected: true
+selected:        true
+tracksRegLiveness: true
+body:             |
+  bb.1.loop.lver.guard:
+    successors: %bb.4(0x40000000), %bb.2(0x40000000)
+    liveins: $p0, $p1, $r0
+
+    %0:ep = COPY $p0
+    %1:ep = COPY $p1
+    %2:er = COPY $r0
+    %36:er = MOV_RLC_imm10_pseudo 0
+    %3:er = MOV_RLC_imm10_pseudo -1
+    %52:er = LTU %2, %3
+    PseudoJNZ %52, %bb.4
+    PseudoJ_jump_imm %bb.2
+
+  bb.2.loop.ph.lver.high:
+    successors: %bb.3(0x80000000)
+
+    LoopStart %2, 0
+    %50:er = MOV_RLC_imm10_pseudo 2
+
+  bb.3.loop.lver.high:
+    successors: %bb.3(0x7c000000), %bb.8(0x04000000)
+
+    %5:er = PHI %36, %bb.2, %19, %bb.3
+    %49:er = LSHL %5, %50
+    %8:edj = COPY %49
+    %11:er = LDA_dms_lda_idx %0, %8 :: (load (s32) from %ir.pa.lver.high)
+    %12:er = MUL_mul_r_rr %11, %11
+    %13:er = MUL_mul_r_rr %12, %11
+    %14:er = ADD %13, %12, implicit-def dead $srcarry
+    %15:er = XOR %14, %11
+    ST_dms_sts_idx %15, %1, %8 :: (store (s32) into %ir.pb.lver.high)
+    %19:er = ADD_add_r_ri %5, 1, implicit-def dead $srcarry
+    PseudoLoopEnd <mcsymbol .L_LEnd1>, %bb.3
+    PseudoJ_jump_imm %bb.8
+
+  bb.4.loop.ph:
+    successors: %bb.5(0x80000000)
+
+    LoopStart %2, 0
+    %44:er = MOV_RLC_imm10_pseudo 2
+
+  bb.5.loop:
+    successors: %bb.5(0x7c000000), %bb.7(0x04000000)
+
+    %21:er = PHI %36, %bb.4, %34, %bb.5
+    %43:er = LSHL %21, %44
+    %24:edj = COPY %43
+    %27:er = LDA_dms_lda_idx %0, %24 :: (load (s32) from %ir.pa)
+    %28:er = MUL_mul_r_rr %27, %27
+    %29:er = MUL_mul_r_rr %28, %27
+    %30:er = ADD %29, %28, implicit-def dead $srcarry
+    %31:er = XOR %30, %27
+    ST_dms_sts_idx %31, %1, %24 :: (store (s32) into %ir.pb)
+    %34:er = ADD_add_r_ri %21, 1, implicit-def dead $srcarry
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.5
+    PseudoJ_jump_imm %bb.7
+
+  bb.7.exit.lver.low.loopexit:
+    successors: %bb.8(0x80000000)
+
+  bb.8.exit:
+    PseudoRET implicit $lr
+...
