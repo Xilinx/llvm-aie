@@ -5,12 +5,12 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
-// Defines a llvm-pass (AIEPtrModOptimizer) to query Combiners
-// (FoundCombiners).
+// Defines a llvm-pass (AIEPtrModOptimizer) that selects the pointer modifier
+// Combiners (FoundCombiners) of each MBB and applies them.
 //
 //===----------------------------------------------------------------------===//
 
@@ -19,7 +19,6 @@
 
 #include "AIE.h"
 #include "AIEGlobalCombiner.h"
-#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -39,17 +38,14 @@ class FoundCombiners {
   /// Keep track for which MBB Combiners were found
   std::set<MachineBasicBlock *> MBBWithSolution;
 
-  /// Pointer modifiers of the post-increment Combiners found by the Analysis
-  SmallPtrSet<const MachineInstr *, 16> PostIncPtrMods;
-
   /// The keys are to be replaced MachineInstructions, and the values the newly
   /// inserted Instructions.
   std::map<MachineInstr *, MachineInstr *> ConvertedInstrs;
 
   /// Instructions to be deleted at the end of the combining pass.
-  /// We defer deletion because analysis pass results contain raw pointers
-  /// to instructions, and later combiners may reference already-removed
-  /// instructions via remapping.
+  /// We defer deletion because the remaining Combiners contain raw pointers
+  /// to instructions, and may reference already-removed instructions via
+  /// remapping.
   SmallVector<MachineInstr *, 32> DeferredDeletes;
 
   /// If a MachineInstr is remapped to a new Instruction through a previous
@@ -82,12 +78,6 @@ public:
 
   /// \return whether Analysis Pass generated this Object
   bool hasAnalysis() const { return GeneratedFromAnalysisPass; }
-
-  /// \return whether \p MI is the pointer modifier of a post-increment
-  /// Combiner found by the Analysis
-  bool isPostIncPtrMod(const MachineInstr &MI) const {
-    return PostIncPtrMods.contains(&MI);
-  }
 
   /// Add an instruction to be deleted at the end of the combining pass.
   /// Has to be called *after* removeFromParent()
@@ -125,8 +115,6 @@ public:
   void getAnalysisUsage(AnalysisUsage &AU) const override;
 
   StringRef getPassName() const override;
-
-  AIE::FoundCombiners *getGlobalPtrCombiners() { return PtrModRes.get(); }
 
 private:
   void appendResult(std::vector<const AIE::GenericCombiner *> &Combiners);

@@ -36,6 +36,8 @@
 
 using namespace llvm;
 
+extern cl::opt<bool> EnableGlobalPtrModOptimizer;
+
 static cl::opt<unsigned> ShuffleMaxNumInsertions(
     "aie-shuffle-combine-max-inserts", cl::Hidden, cl::init(0),
     cl::desc(
@@ -1054,36 +1056,13 @@ void llvm::applyConcatUnmergePhis(MachineInstr &ConcatI,
   ConcatI.eraseFromParent();
 }
 
-bool llvm::matchGlobalPtrModOptimizer(MachineInstr &MemI,
-                                      MachineRegisterInfo &MRI,
-                                      CombinerHelper &Helper,
-                                      const TargetInstrInfo &TII,
-                                      AIE::FoundCombiners *GlobalCombinerPtr) {
-
-  AIE::Combiner *CombineRule = GlobalCombinerPtr->getCombine(&MemI);
-  if (!CombineRule) {
-    LLVM_DEBUG(dbgs() << "[Global Ptr Inc] Could not find Combine for "
-                      << MemI);
-    return false;
-  }
-  assert(CombineRule->CombineInstrs.size() >= 2);
-  assert([&] {
-    const MachineInstr &PtrMod = *CombineRule->CombineInstrs[0];
-    const Register Addr = cast<GLoadStore>(MemI).getPointerReg();
-    return PtrMod.readsRegister(Addr, /*TRI=*/nullptr) ||
-           PtrMod.definesRegister(Addr, /*TRI=*/nullptr);
-  }() && "Pointer modifier was rewritten after the analysis");
-  LLVM_DEBUG(dbgs() << "[Global Ptr Inc] Found\n" << *CombineRule);
-
-  return true;
-}
-
 bool llvm::matchLdStInc(MachineInstr &MemI, MachineRegisterInfo &MRI,
                         CombinerHelper &Helper, const TargetInstrInfo &TII,
                         AIE::FoundCombiners *GlobalCombinerPtr) {
   const AIEBaseInstrInfo &AIETII = (const AIEBaseInstrInfo &)TII;
 
-  if (GlobalCombinerPtr->hasAnalysis())
+  // aie-ptr-mod-opt selects these combines for the whole MBB instead.
+  if (EnableGlobalPtrModOptimizer)
     return false;
 
   return findPostIncMatch(MemI, MRI, Helper, AIETII, GlobalCombinerPtr) ||

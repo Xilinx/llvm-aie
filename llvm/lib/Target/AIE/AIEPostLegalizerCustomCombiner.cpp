@@ -15,7 +15,6 @@
 
 #include "AIEBaseSubtarget.h"
 #include "AIECombiners.h"
-#include "AIEPtrModOptimizer.h"
 #include "llvm/CodeGen/GlobalISel/CSEInfo.h"
 #include "llvm/CodeGen/GlobalISel/Combiner.h"
 #include "llvm/CodeGen/GlobalISel/CombinerInfo.h"
@@ -28,23 +27,18 @@
 
 using namespace llvm;
 
-extern cl::opt<bool> EnableGlobalPtrModOptimizer;
-
 // Factory functions defined in arch-specific files.
 std::unique_ptr<Combiner> createAIE2PostLegalizerCustomCombinerImpl(
     MachineFunction &MF, CombinerInfo &CInfo, const TargetPassConfig *TPC,
-    GISelValueTracking &VT, GISelCSEInfo *CSEInfo,
-    AIE::FoundCombiners *GlobalCombiners, const AIEBaseSubtarget &STI,
+    GISelValueTracking &VT, GISelCSEInfo *CSEInfo, const AIEBaseSubtarget &STI,
     MachineDominatorTree *MDT, const LegalizerInfo *LI);
 std::unique_ptr<Combiner> createAIE2PPostLegalizerCustomCombinerImpl(
     MachineFunction &MF, CombinerInfo &CInfo, const TargetPassConfig *TPC,
-    GISelValueTracking &VT, GISelCSEInfo *CSEInfo,
-    AIE::FoundCombiners *GlobalCombiners, const AIEBaseSubtarget &STI,
+    GISelValueTracking &VT, GISelCSEInfo *CSEInfo, const AIEBaseSubtarget &STI,
     MachineDominatorTree *MDT, const LegalizerInfo *LI);
 std::unique_ptr<Combiner> createAIE2PSPostLegalizerCustomCombinerImpl(
     MachineFunction &MF, CombinerInfo &CInfo, const TargetPassConfig *TPC,
-    GISelValueTracking &VT, GISelCSEInfo *CSEInfo,
-    AIE::FoundCombiners *GlobalCombiners, const AIEBaseSubtarget &STI,
+    GISelValueTracking &VT, GISelCSEInfo *CSEInfo, const AIEBaseSubtarget &STI,
     MachineDominatorTree *MDT, const LegalizerInfo *LI);
 
 namespace {
@@ -73,8 +67,6 @@ public:
     AU.addPreserved<MachineDominatorTreeWrapperPass>();
     AU.addRequired<GISelCSEAnalysisWrapperPass>();
     AU.addPreserved<GISelCSEAnalysisWrapperPass>();
-    if (EnableGlobalPtrModOptimizer)
-      AU.addRequired<AIEPtrModOptimizer>();
     MachineFunctionPass::getAnalysisUsage(AU);
   }
 };
@@ -96,10 +88,6 @@ bool AIEPostLegalizerCustomCombiner::runOnMachineFunction(MachineFunction &MF) {
   auto *VT = &getAnalysis<GISelValueTrackingAnalysisLegacy>().get(MF);
   auto *MDT = &getAnalysis<MachineDominatorTreeWrapperPass>().getDomTree();
 
-  AIE::FoundCombiners *AIEGlobalPtrIncResults = nullptr;
-  if (auto *PtrModOptPass = getAnalysisIfAvailable<AIEPtrModOptimizer>())
-    AIEGlobalPtrIncResults = PtrModOptPass->getGlobalPtrCombiners();
-
   CombinerInfo CInfo(/*AllowIllegalOps*/ true, /*ShouldLegalizeIllegal*/ false,
                      /*LegalizerInfo*/ nullptr, EnableOpt, F.hasOptSize(),
                      F.hasMinSize());
@@ -107,18 +95,16 @@ bool AIEPostLegalizerCustomCombiner::runOnMachineFunction(MachineFunction &MF) {
   const Triple &TT = ST.getTargetTriple();
   std::unique_ptr<Combiner> Impl;
   if (TT.isAIE2P())
-    Impl = createAIE2PPostLegalizerCustomCombinerImpl(
-        MF, CInfo, TPC, *VT, CSEInfo, AIEGlobalPtrIncResults, ST, MDT, LI);
+    Impl = createAIE2PPostLegalizerCustomCombinerImpl(MF, CInfo, TPC, *VT,
+                                                      CSEInfo, ST, MDT, LI);
   else if (TT.isAIE2PS())
-    Impl = createAIE2PSPostLegalizerCustomCombinerImpl(
-        MF, CInfo, TPC, *VT, CSEInfo, AIEGlobalPtrIncResults, ST, MDT, LI);
+    Impl = createAIE2PSPostLegalizerCustomCombinerImpl(MF, CInfo, TPC, *VT,
+                                                       CSEInfo, ST, MDT, LI);
   else
-    Impl = createAIE2PostLegalizerCustomCombinerImpl(
-        MF, CInfo, TPC, *VT, CSEInfo, AIEGlobalPtrIncResults, ST, MDT, LI);
+    Impl = createAIE2PostLegalizerCustomCombinerImpl(MF, CInfo, TPC, *VT,
+                                                     CSEInfo, ST, MDT, LI);
 
   const bool Changed = Impl->combineMachineInstrs();
-  if (AIEGlobalPtrIncResults)
-    AIEGlobalPtrIncResults->finalizeDeferredDeletes(MF);
   return Changed;
 }
 
