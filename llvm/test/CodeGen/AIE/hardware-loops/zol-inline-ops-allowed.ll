@@ -27,6 +27,49 @@
 ; The neighbours that still lower to libcalls must keep failing the filter;
 ; they come first so that every CHECK-NOT region ends at a later label.
 
+; An exact sdiv by a power of two is left to sdiv_by_const, which skips minsize
+; functions, so it lowers to __divsi3 there.
+; CHECK-LABEL: sdiv_exact_pow2_minsize
+; CHECK-NOT: call void @llvm.set.loop.iterations
+; LEGAL-LABEL: name: sdiv_exact_pow2_minsize
+; LEGAL: PseudoJL &__divsi3
+define dso_local i32 @sdiv_exact_pow2_minsize(i32 noundef %n) local_unnamed_addr minsize {
+entry:
+  br label %for.body
+
+for.body:
+  %i = phi i32 [ 0, %entry ], [ %inc, %for.body ]
+  %a = phi i32 [ 1024, %entry ], [ %d, %for.body ]
+  %d = sdiv exact i32 %a, 4
+  %inc = add nuw nsw i32 %i, 1
+  %exitcond.not = icmp eq i32 %inc, %n
+  br i1 %exitcond.not, label %for.cond.cleanup, label %for.body, !llvm.loop !0
+
+for.cond.cleanup:
+  ret i32 %d
+}
+
+; Same for an exact udiv, left to udiv_by_const.
+; CHECK-LABEL: udiv_exact_pow2_minsize
+; CHECK-NOT: call void @llvm.set.loop.iterations
+; LEGAL-LABEL: name: udiv_exact_pow2_minsize
+; LEGAL: PseudoJL &__udivsi3
+define dso_local i32 @udiv_exact_pow2_minsize(i32 noundef %n) local_unnamed_addr minsize {
+entry:
+  br label %for.body
+
+for.body:
+  %i = phi i32 [ 0, %entry ], [ %inc, %for.body ]
+  %a = phi i32 [ 1024, %entry ], [ %d, %for.body ]
+  %d = udiv exact i32 %a, 8
+  %inc = add nuw nsw i32 %i, 1
+  %exitcond.not = icmp eq i32 %inc, %n
+  br i1 %exitcond.not, label %for.cond.cleanup, label %for.body, !llvm.loop !0
+
+for.cond.cleanup:
+  ret i32 %d
+}
+
 ; srem by a power of two is not expanded and lowers to __modsi3.
 ; CHECK-LABEL: srem_pow2
 ; CHECK-NOT: call void @llvm.set.loop.iterations
@@ -191,6 +234,28 @@ for.body:
   %i = phi i32 [ 0, %entry ], [ %inc, %for.body ]
   %a = phi i32 [ 1000, %entry ], [ %d, %for.body ]
   %d = sdiv i32 %a, -8
+  %inc = add nuw nsw i32 %i, 1
+  %exitcond.not = icmp eq i32 %inc, %n
+  br i1 %exitcond.not, label %for.cond.cleanup, label %for.body, !llvm.loop !0
+
+for.cond.cleanup:
+  ret i32 %d
+}
+
+; sdiv_by_pow2 fires regardless of minsize, unlike the exact case above.
+; CHECK-LABEL: sdiv_pow2_minsize
+; CHECK: call void @llvm.set.loop.iterations
+; CHECK: call i1 @llvm.loop.decrement
+; LEGAL-LABEL: name: sdiv_pow2_minsize
+; LEGAL-NOT: PseudoJL
+define dso_local i32 @sdiv_pow2_minsize(i32 noundef %n) local_unnamed_addr minsize {
+entry:
+  br label %for.body
+
+for.body:
+  %i = phi i32 [ 0, %entry ], [ %inc, %for.body ]
+  %a = phi i32 [ 1000, %entry ], [ %d, %for.body ]
+  %d = sdiv i32 %a, 4
   %inc = add nuw nsw i32 %i, 1
   %exitcond.not = icmp eq i32 %inc, %n
   br i1 %exitcond.not, label %for.cond.cleanup, label %for.body, !llvm.loop !0

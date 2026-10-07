@@ -176,11 +176,16 @@ bool AIETTICommon::isAllowedInZOL(Instruction &I) const {
   case Instruction::SDiv:
   case Instruction::UDiv: {
     // Division by a constant power of two (negated, for sdiv) becomes shifts,
-    // but only through the pre-legalizer combiner's intdiv_combines; the
-    // legalizer turns any division left over into a libcall. That combiner
-    // and HardwareLoops both run only above -O0.
+    // but only through the pre-legalizer combiner's sdiv_by_pow2 and
+    // udiv_by_pow2, which fire unconditionally; the legalizer turns any
+    // division left over into a libcall. That combiner and HardwareLoops both
+    // run only above -O0. Exact divisions skip those rules and go through
+    // sdiv_by_const/udiv_by_const instead, which bail out on minsize
+    // functions, so they are rejected (InstCombine turns them into shifts
+    // anyway).
     const auto *Divisor = dyn_cast<ConstantInt>(I.getOperand(1));
-    if (!Divisor || Ty->isVectorTy() || Ty->getScalarSizeInBits() > 32)
+    if (!Divisor || I.isExact() || Ty->isVectorTy() ||
+        Ty->getScalarSizeInBits() > 32)
       return false;
     const APInt &D = Divisor->getValue();
     if (D.isPowerOf2() ||
