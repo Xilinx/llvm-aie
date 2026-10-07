@@ -29,6 +29,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIE.h"
+#include "AIEOuterLoopPointerOptimizerConfig.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Analysis/LoopInfo.h"
@@ -613,7 +614,11 @@ std::optional<LoopStructure> LoopStructure::tryBuildFrom(Loop *L,
 class AIEOuterLoopPointerOptimizer : public FunctionPass {
 public:
   static char ID;
-  AIEOuterLoopPointerOptimizer() : FunctionPass(ID) {}
+  explicit AIEOuterLoopPointerOptimizer(
+      std::unique_ptr<const AIEOLPOTargetConfig> Config = nullptr)
+      : FunctionPass(ID),
+        TargetConfig(Config ? std::move(Config)
+                            : std::make_unique<AIEOLPOTargetConfig>()) {}
 
   bool runOnFunction(Function &F) override;
 
@@ -630,6 +635,7 @@ public:
   }
 
 private:
+  const std::unique_ptr<const AIEOLPOTargetConfig> TargetConfig;
   LoopInfo *LI = nullptr;
   DominatorTree *DT = nullptr;
   ScalarEvolution *SE = nullptr;
@@ -858,8 +864,7 @@ bool AIEOuterLoopPointerOptimizer::linkBottomGEPsToInnerExitPointers(
       const APInt &DiffValue = Diff->getAPInt();
       const unsigned IndexBits =
           cast<IntegerType>(GEP->getOperand(1)->getType())->getBitWidth();
-      if (DiffValue.isNegative() || !DiffValue.isSignedIntN(IndexBits) ||
-          !DiffValue.isSignedIntN(64))
+      if (DiffValue.isNegative() || !DiffValue.isSignedIntN(IndexBits))
         continue;
 
       // Anchors a constant stride apart all match. The nearest preceding
@@ -884,20 +889,28 @@ bool AIEOuterLoopPointerOptimizer::linkBottomGEPsToInnerExitPointers(
       GetElementPtrInst *GEP = Match.GEP;
       // A later GEP with a smaller offset cannot continue the forward chain.
       // Rebase it on the anchor instead of abandoning the other GEPs.
-      if (Match.Offset < PreviousOffset) {
-        PreviousValue = Anchor;
-        PreviousOffset = 0;
+      Value *Base = PreviousValue;
+      int64_t BaseOffset = PreviousOffset;
+      if (Match.Offset < BaseOffset) {
+        Base = Anchor;
+        BaseOffset = 0;
       }
 
-      Value *Replacement = PreviousValue;
+      // The emitted step is the immediate a pointer add has to encode. A step
+      // this target cannot encode needs a modifier register, so leave that
+      // GEP on its original base.
+      const int64_t DeltaOffset = Match.Offset - BaseOffset;
+      if (!TargetConfig->isLegalPointerAddImmediate(DeltaOffset))
+        continue;
 
-      if (Match.Offset != PreviousOffset) {
+      Value *Replacement = Base;
+
+      if (DeltaOffset != 0) {
         IRBuilder<> Builder(GEP);
         Type *IndexTy = GEP->getOperand(1)->getType();
-        Value *Delta = ConstantInt::get(IndexTy, Match.Offset - PreviousOffset);
-        Replacement =
-            Builder.CreateGEP(Builder.getInt8Ty(), PreviousValue, Delta,
-                              GEP->getName() + ".inner.chained");
+        Value *Delta = ConstantInt::get(IndexTy, DeltaOffset);
+        Replacement = Builder.CreateGEP(Builder.getInt8Ty(), Base, Delta,
+                                        GEP->getName() + ".inner.chained");
         cast<GetElementPtrInst>(Replacement)->setIsInBounds(GEP->isInBounds());
       }
 
@@ -1145,7 +1158,8 @@ bool AIEOuterLoopPointerOptimizer::canonicalizeGEPAddressSpace(
 }
 
 namespace llvm {
-FunctionPass *createAIEOuterLoopPointerOptimizerPass() {
-  return new AIEOuterLoopPointerOptimizer();
+FunctionPass *createAIEOuterLoopPointerOptimizerPass(
+    std::unique_ptr<const AIEOLPOTargetConfig> Config) {
+  return new AIEOuterLoopPointerOptimizer(std::move(Config));
 }
 } // namespace llvm

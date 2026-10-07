@@ -14,6 +14,7 @@
 
 #include "AIE2PSTargetMachine.h"
 #include "AIE2PSOuterLoopPipelinerConfig.h"
+#include "AIE2PSOuterLoopPointerOptimizerConfig.h"
 #include "AIE2PSTargetTransformInfo.h"
 #include "AIECombiners.h"
 #include "AIEOuterLoopPipelinerConfig.h"
@@ -54,6 +55,9 @@ public:
   std::unique_ptr<const AIEOLPTargetConfig> getOLPConfig() const override {
     return std::make_unique<AIE2PSOLPTargetConfig>(
         getTM<AIEBaseTargetMachine>().getAIESubtarget()->getInstrInfo());
+  }
+  std::unique_ptr<const AIEOLPOTargetConfig> getOLPOConfig() const override {
+    return std::make_unique<AIE2PSOLPOTargetConfig>();
   }
   void addPreRegBankSelect() override;
   void addPreLegalizeMachineIR() override;
