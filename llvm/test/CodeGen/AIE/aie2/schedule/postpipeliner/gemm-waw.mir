@@ -75,15 +75,15 @@ body:             |
   ; CHECK-NEXT: Args:
   ; CHECK-NEXT:   - String:          Schedule found
   ; CHECK-NEXT:   - Pipeliner:       postpipeliner
-  ; CHECK-NEXT:   - II:              '17'
+  ; CHECK-NEXT:   - II:              '16'
   ; CHECK-NEXT:   - NS:              '3'
   ; CHECK-NEXT:   - Loop:            bb.2.for.body
   ; CHECK-NEXT:   - Prologue:        bb.1.for.body.preheader
-  ; CHECK-NEXT:   - PrologueBundles: '20'
+  ; CHECK-NEXT:   - PrologueBundles: '32'
   ; CHECK-NEXT:   - Epilogue:        bb.3.loop.exit
-  ; CHECK-NEXT:   - EpilogueBundles: '40'
+  ; CHECK-NEXT:   - EpilogueBundles: '23'
   ; CHECK-NEXT:   - VregMode:        Virtual
-  ; CHECK-NEXT:   - SchedHeuristic:  Config_51_0_0_NodeNum
+  ; CHECK-NEXT:   - SchedHeuristic:  DeferNth_8
   ; CHECK-NEXT:   - AllocHeuristic:  scarce register class scoring
   ; CHECK-NEXT: ...
   bb.0.entry (align 16):
