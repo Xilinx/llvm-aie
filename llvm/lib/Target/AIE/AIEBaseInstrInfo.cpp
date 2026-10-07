@@ -457,7 +457,8 @@ bool AIEBaseInstrInfo::isHardwareLoopDec(unsigned Opcode) const {
 
 bool AIEBaseInstrInfo::isHardwareLoopJNZ(unsigned Opcode) const {
   const auto JNZDSupport = getJNZDSupport();
-  return JNZDSupport && Opcode == JNZDSupport->LoopJNZOpcode;
+  return JNZDSupport && (Opcode == JNZDSupport->LoopJNZOpcode ||
+                         JNZDSupport->LoopJNZPCRelOpcode == Opcode);
 }
 
 // Look for the last LoopSetup Bundle.
