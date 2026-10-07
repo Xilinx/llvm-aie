@@ -70,6 +70,7 @@ set(LLVM_TEST_DEPENDS
           lli
           lli-child-target
           llvm-addr2line
+          llvm-aie-run
           llvm-ar
           llvm-as
           llvm-bcanalyzer
