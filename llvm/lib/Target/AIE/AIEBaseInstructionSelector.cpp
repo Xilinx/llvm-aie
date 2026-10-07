@@ -251,15 +251,27 @@ bool AIEBaseInstructionSelector::selectBrCondLoopDecrementReg(
   };
 
   if (auto Args = IsJNZDPattern(*Cond, MRI)) {
-    Register BlockAddrReg =
-        MRI.createVirtualRegister(JNZDSupport->PointerRegisterClass);
     MachineBasicBlock *DestMBB = BrCond.getOperand(1).getMBB();
-    MIB.buildInstr(JNZDSupport->MovBlockAddrOpcode, {BlockAddrReg}, {})
-        .addMBB(DestMBB);
+    // The PC-relative form branches to DestMBB directly, so it needs neither
+    // the pointer register nor the move that materializes the address.
+    const bool UsePCRelTarget = TII.shouldUseJNZDPCRelTarget(*BrCond.getMF());
+
+    Register BlockAddrReg;
+    if (!UsePCRelTarget) {
+      BlockAddrReg =
+          MRI.createVirtualRegister(JNZDSupport->PointerRegisterClass);
+      MIB.buildInstr(JNZDSupport->MovBlockAddrOpcode, {BlockAddrReg}, {})
+          .addMBB(DestMBB);
+    }
     auto LoopDec = MIB.buildInstr(JNZDSupport->LoopDecOpcode, {Args->NewLC},
                                   {Args->PrevLC});
-    MIB.buildInstr(JNZDSupport->LoopJNZOpcode, {},
-                   {LoopDec->getOperand(0).getReg(), BlockAddrReg});
+    const unsigned JNZOpcode = UsePCRelTarget ? *JNZDSupport->LoopJNZPCRelOpcode
+                                              : JNZDSupport->LoopJNZOpcode;
+    auto JNZ = MIB.buildInstr(JNZOpcode, {}, {LoopDec->getOperand(0).getReg()});
+    if (UsePCRelTarget)
+      JNZ.addMBB(DestMBB);
+    else
+      JNZ.addReg(BlockAddrReg);
 
     BrCond.eraseFromParent();
     makeDeadMI(*Args->IntrinInst, MRI);
