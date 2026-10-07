@@ -42,6 +42,12 @@ static cl::opt<unsigned> BaseObjectSearchLimit(
     cl::desc("Search depth limit for base objects in AIE alias analysis"),
     cl::init(100), cl::Hidden);
 
+static cl::opt<unsigned> MaxRootTraceNodes(
+    "aie-alias-analysis-max-root-nodes",
+    cl::desc("Value limit when tracing noalias argument roots in AIE alias "
+             "analysis"),
+    cl::init(1024), cl::Hidden);
+
 static cl::opt<bool> DisambiguateAccessSameOriginPointers(
     "aie-alias-analysis-disambiguation",
     cl::desc("Disambiguate pointers derived from the same origin"),
@@ -719,61 +725,20 @@ static bool isFifoLoadPtrOperand(const CallBase *Call, unsigned &InPtrIdx) {
   return true;
 }
 
-// Collect the leaves Node is derived from, through GEP/cast/phi/select/load,
-// and through the fields of an aggregate built by insertvalue or by a fifo
-// load. Load look-through assumes the AIE io_buffer model: pointers loaded from
-// a noalias arg's storage point to buffers disjoint from other noalias args.
+// Append the nodes \p Node is derived from in one step, through
+// GEP/cast/phi/select/load, and through the fields of an aggregate built by
+// insertvalue or by a fifo load. Returns false if \p Node is not modelled.
 //
-// Returns false if any leaf is not a noalias argument, or if two leaves are
-// different arguments. On success Root holds the one argument every leaf
-// reached, and stays null when Node has no leaf at all:
-//
-//   loop:
-//     %p      = phi ptr [ %in, %entry ], [ %p.next, %loop ]
-//     %p.next = getelementptr i8, ptr %p, i20 128
-//
-// The edge from %p.next back to %p returns to a value already on the walk, so
-// it adds no leaf and %p keeps the root of its entry edge. With
-//
-//     %p.next = select i1 %c, ptr %p.inc, ptr %out
-//
-// the leaves are %in and %out, so there is no root.
-static bool traceToNoAliasArgRoot(RootNode Node, DenseSet<RootNode> &Visited,
-                                  const Argument *&Root, unsigned Depth = 0) {
+// Load look-through assumes the AIE io_buffer model: pointers loaded from a
+// noalias arg's storage point to buffers disjoint from other noalias args.
+static bool getArgRootInputs(RootNode Node, SmallVectorImpl<RootNode> &Inputs) {
   const Value *Val = Node.first;
   const ArrayRef<unsigned> Indices = Node.second;
-  if (!Val)
-    return false;
-  // Bound recursion to avoid quadratic blowup in pathological IR.
-  if (Depth > BaseObjectSearchLimit)
-    return false;
-  // Already on the walk, so it contributes no new leaf.
-  if (!Visited.insert(Node).second)
-    return true;
-
-  auto Trace = [&](const Value *In, ArrayRef<unsigned> Idx) {
-    return traceToNoAliasArgRoot({In, Idx}, Visited, Root, Depth + 1);
-  };
-
-  if (Indices.empty()) {
-    Val = lookThroughAIEAddressingModes(Val);
-
-    // A leaf. Every leaf must be the same noalias function argument.
-    if (const auto *A = dyn_cast<Argument>(Val)) {
-      if (!A->hasNoAliasAttr())
-        return false;
-      if (Root && Root != A)
-        return false;
-      Root = A;
-      return true;
-    }
-  }
 
   // Phi: every incoming edge is followed, including back edges.
   if (const auto *Phi = dyn_cast<PHINode>(Val)) {
     for (const Value *In : Phi->incoming_values())
-      if (!Trace(In, Indices))
-        return false;
+      Inputs.emplace_back(In, Indices);
     return true;
   }
 
@@ -782,62 +747,130 @@ static bool traceToNoAliasArgRoot(RootNode Node, DenseSet<RootNode> &Visited,
     if (const auto *IV = dyn_cast<InsertValueInst>(Val)) {
       const ArrayRef<unsigned> Ins = IV->getIndices();
       // The insert writes the traced field, or an aggregate containing it.
-      if (Indices.size() >= Ins.size() && Indices.take_front(Ins.size()) == Ins)
-        return Trace(IV->getInsertedValueOperand(),
-                     Indices.drop_front(Ins.size()));
+      if (Indices.size() >= Ins.size() &&
+          Indices.take_front(Ins.size()) == Ins) {
+        Inputs.emplace_back(IV->getInsertedValueOperand(),
+                            Indices.drop_front(Ins.size()));
+        return true;
+      }
       // The insert writes part of the traced field, so the aggregate operand
       // no longer describes it.
       if (Ins.take_front(Indices.size()) == Indices)
         return false;
       // Disjoint fields.
-      return Trace(IV->getAggregateOperand(), Indices);
+      Inputs.emplace_back(IV->getAggregateOperand(), Indices);
+      return true;
     }
     if (const auto *Call = dyn_cast<CallBase>(Val)) {
       unsigned InPtrIdx = 0;
       if (Call->getIntrinsicID() != Intrinsic::not_intrinsic &&
           isFifoLoadPtrOperand(Call, InPtrIdx) && InPtrIdx < Call->arg_size() &&
-          Call->getArgOperand(InPtrIdx)->getType()->isPointerTy())
-        return Trace(Call->getArgOperand(InPtrIdx), {});
+          Call->getArgOperand(InPtrIdx)->getType()->isPointerTy()) {
+        Inputs.emplace_back(Call->getArgOperand(InPtrIdx),
+                            ArrayRef<unsigned>());
+        return true;
+      }
     }
     return false;
   }
 
   // Look through pointer arithmetic and casts.
-  if (const auto *GEP = dyn_cast<GEPOperator>(Val))
-    return Trace(GEP->getPointerOperand(), Indices);
-  if (const auto *BC = dyn_cast<BitCastInst>(Val))
-    return Trace(BC->getOperand(0), Indices);
-  if (const auto *ASC = dyn_cast<AddrSpaceCastInst>(Val))
-    return Trace(ASC->getOperand(0), Indices);
-  if (const auto *Cast = dyn_cast<CastInst>(Val))
-    if (Cast->isNoopCast(Cast->getModule()->getDataLayout()))
-      return Trace(Cast->getOperand(0), Indices);
+  if (const auto *GEP = dyn_cast<GEPOperator>(Val)) {
+    Inputs.emplace_back(GEP->getPointerOperand(), Indices);
+    return true;
+  }
+  if (const auto *Cast = dyn_cast<CastInst>(Val)) {
+    if (!isa<BitCastInst, AddrSpaceCastInst>(Cast) &&
+        !Cast->isNoopCast(Cast->getModule()->getDataLayout()))
+      return false;
+    Inputs.emplace_back(Cast->getOperand(0), Indices);
+    return true;
+  }
 
   // Select: both arms contribute leaves.
-  if (const auto *Sel = dyn_cast<SelectInst>(Val))
-    return Trace(Sel->getTrueValue(), Indices) &&
-           Trace(Sel->getFalseValue(), Indices);
+  if (const auto *Sel = dyn_cast<SelectInst>(Val)) {
+    Inputs.emplace_back(Sel->getTrueValue(), Indices);
+    Inputs.emplace_back(Sel->getFalseValue(), Indices);
+    return true;
+  }
 
   // A pointer read out of an aggregate: keep tracing that field.
   if (const auto *EV = dyn_cast<ExtractValueInst>(Val)) {
     if (!EV->getType()->isPointerTy() || EV->getIndices().empty())
       return false;
-    return Trace(EV->getAggregateOperand(), EV->getIndices());
+    Inputs.emplace_back(EV->getAggregateOperand(), EV->getIndices());
+    return true;
   }
 
   // LoadInst: not handled by getUnderlyingObject (stops at the loaded pointer).
-  if (const auto *Load = dyn_cast<LoadInst>(Val))
-    return Trace(Load->getPointerOperand(), Indices);
-
+  if (const auto *Load = dyn_cast<LoadInst>(Val)) {
+    Inputs.emplace_back(Load->getPointerOperand(), Indices);
+    return true;
+  }
   return false;
 }
 
-// Convenience wrapper that owns the visited set.
+// Collect the leaves \p Ptr is derived from, and return the one noalias
+// argument all of them reached, or null if there is none.
+//
+// The walk is the transitive closure of "derived from", like
+// getUnderlyingObjects. Each node is visited once, so a cycle terminates and
+// a loop edge back to a visited node adds no leaf:
+//
+//   loop:
+//     %p      = phi ptr [ %in, %entry ], [ %p.next, %loop ]
+//     %p.next = getelementptr i8, ptr %p, i20 128
+//
+// has the single leaf %in, so %p keeps the root of its entry edge. With
+//
+//     %p.next = select i1 %c, ptr %p.inc, ptr %out
+//
+// the leaves are %in and %out, so there is no root. Visiting each node once
+// also bounds the work, which lets the recursion depth limit become a limit
+// on the number of values visited.
 static const Argument *traceToNoAliasArgRoot(const Value *Ptr) {
-  DenseSet<RootNode> Visited;
-  const Argument *Root = nullptr;
-  if (!traceToNoAliasArgRoot({Ptr, {}}, Visited, Root, 0))
+  if (!Ptr)
     return nullptr;
+
+  SmallVector<RootNode, 16> Worklist;
+  DenseSet<RootNode> Visited;
+  SmallVector<RootNode, 4> Inputs;
+  const Argument *Root = nullptr;
+
+  auto Push = [&](RootNode Next) {
+    if (Visited.insert(Next).second)
+      Worklist.push_back(Next);
+  };
+
+  Push({Ptr, {}});
+  while (!Worklist.empty()) {
+    if (Visited.size() > MaxRootTraceNodes)
+      return nullptr;
+    const RootNode Node = Worklist.pop_back_val();
+
+    if (Node.second.empty()) {
+      if (const Value *Base = lookThroughAIEAddressingModes(Node.first);
+          Base != Node.first) {
+        Push({Base, {}});
+        continue;
+      }
+      // A leaf. Every leaf must be the same noalias function argument.
+      if (const auto *A = dyn_cast<Argument>(Node.first)) {
+        if (!A->hasNoAliasAttr())
+          return nullptr;
+        if (Root && Root != A)
+          return nullptr;
+        Root = A;
+        continue;
+      }
+    }
+
+    Inputs.clear();
+    if (!getArgRootInputs(Node, Inputs))
+      return nullptr;
+    for (const RootNode &In : Inputs)
+      Push(In);
+  }
   // A null Root means Ptr only derives from itself.
   return Root;
 }
