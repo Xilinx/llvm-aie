@@ -496,8 +496,8 @@ def combine_upd_to_concat : GICombineRule<
 def combine_load_store_increment : GICombineRule <
   (defs root:$root),
   (match (wip_match_opcode G_LOAD, G_ZEXTLOAD, G_SEXTLOAD, G_STORE):$root,
-          [{ return matchLdStInc(*${root}, MRI, Helper, B.getTII(), GlobalCombiners); }]),
-  (apply [{ applyLdStInc(*${root}, MRI, Helper, B, Observer, GlobalCombiners); }] )
+          [{ return matchLdStInc(*${root}, MRI, Helper, B.getTII(), &GlobalCombiners); }]),
+  (apply [{ applyLdStInc(*${root}, MRI, Helper, B, Observer, &GlobalCombiners); }] )
 >;
 
 def combine_add_vector_elt_undef : GICombineRule <
