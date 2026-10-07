@@ -19,7 +19,9 @@
 //    This makes pointer arithmetic explicit and helps later optimizations.
 // 3. GEP Chain Linking: Link consecutive GEPs with the same base pointer to
 //    enable post-increment addressing patterns.
-// 4. GEP Hoisting: Move GEPs from bottom (epilogue) to top (prologue) block
+// 4. Inner-Exit Pointer Reuse: Rebase epilogue GEPs on final inner-loop
+//    pointers when ScalarEvolution proves they address the same stream.
+// 5. GEP Hoisting: Move GEPs from bottom (epilogue) to top (prologue) block
 //    when safe, reducing code in the epilogue and improving scheduling. We try
 //    to avoid stand-alone pointer updates by grouping them with related memory
 //    operations.
@@ -28,7 +30,10 @@
 
 #include "AIE.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Analysis/ScalarEvolution.h"
+#include "llvm/Analysis/ScalarEvolutionExpressions.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/Function.h"
@@ -615,6 +620,7 @@ public:
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.addRequired<LoopInfoWrapperPass>();
     AU.addRequired<DominatorTreeWrapperPass>();
+    AU.addRequired<ScalarEvolutionWrapperPass>();
     AU.addPreserved<LoopInfoWrapperPass>();
     AU.addPreserved<DominatorTreeWrapperPass>();
   }
@@ -626,6 +632,7 @@ public:
 private:
   LoopInfo *LI = nullptr;
   DominatorTree *DT = nullptr;
+  ScalarEvolution *SE = nullptr;
   const DataLayout *DL = nullptr;
 
   bool runOnLoop(Loop *L);
@@ -634,6 +641,7 @@ private:
   bool canonicalizeGEPsInBlock(
       BasicBlock *BB, LoopStructure &LS,
       DenseMap<std::pair<Value *, uint64_t>, Value *> &PreheaderMuls);
+  bool linkBottomGEPsToInnerExitPointers(LoopStructure &LS);
   bool linkGEPChains(LoopStructure &LS);
   bool hoistGEPsToTop(LoopStructure &LS);
   bool canonicalizeGEPAddressSpace(LoopStructure &LS);
@@ -649,6 +657,7 @@ INITIALIZE_PASS_BEGIN(AIEOuterLoopPointerOptimizer, DEBUG_TYPE,
                       "AIE Outer Loop Pointer Optimizer", false, false)
 INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
+INITIALIZE_PASS_DEPENDENCY(ScalarEvolutionWrapperPass)
 INITIALIZE_PASS_END(AIEOuterLoopPointerOptimizer, DEBUG_TYPE,
                     "AIE Outer Loop Pointer Optimizer", false, false)
 
@@ -660,6 +669,7 @@ bool AIEOuterLoopPointerOptimizer::runOnFunction(Function &F) {
 
   LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
+  SE = &getAnalysis<ScalarEvolutionWrapperPass>().getSE();
   DL = &F.getDataLayout();
 
   bool Changed = false;
@@ -712,8 +722,10 @@ bool AIEOuterLoopPointerOptimizer::tryOptimizeLoop(LoopStructure &LS) {
     Changed |= canonicalizeGEPs(LS);
 
   // Optimization 2: Link GEP chains for post-increment addressing
-  if (EnableGEPChainLinking)
+  if (EnableGEPChainLinking) {
+    Changed |= linkBottomGEPsToInnerExitPointers(LS);
     Changed |= linkGEPChains(LS);
+  }
 
   // Optimization 3: Hoist GEPs from bottom to top
   if (EnableGEPHoisting)
@@ -784,6 +796,124 @@ bool AIEOuterLoopPointerOptimizer::canonicalizeGEPsInBlock(
     GEP->eraseFromParent();
     Changed = true;
   }
+
+  return Changed;
+}
+
+/// Rebase epilogue GEPs on pointer values produced by the final inner-loop
+/// iteration. This exposes load-plus-increment chains to the post-increment
+/// combiner instead of recomputing the same addresses from an older base.
+bool AIEOuterLoopPointerOptimizer::linkBottomGEPsToInnerExitPointers(
+    LoopStructure &LS) {
+  struct AnchorInfo {
+    Instruction *Value;
+    const SCEV *Expr;
+  };
+  struct MatchInfo {
+    GetElementPtrInst *GEP;
+    int64_t Offset;
+  };
+
+  BasicBlock *const Inner = LS.getInner();
+  BasicBlock *const Bottom = LS.getBottom();
+  Loop *const OuterLoop = LS.getOuterLoop();
+
+  SmallVector<AnchorInfo, 4> Anchors;
+  for (PHINode &PHI : Inner->phis()) {
+    if (!PHI.getType()->isPointerTy())
+      continue;
+
+    Value *BackedgeValue = PHI.getIncomingValueForBlock(Inner);
+    // The anchor is the pointer epilogue GEPs are rebased onto: the value
+    // arriving on this inner pointer PHI's backedge.
+    auto *Anchor = dyn_cast_or_null<Instruction>(BackedgeValue);
+    if (!Anchor || !Anchor->getType()->isPointerTy())
+      continue;
+
+    Anchors.push_back({Anchor, SE->getSCEVAtScope(Anchor, OuterLoop)});
+  }
+
+  if (Anchors.empty())
+    return false;
+
+  DenseMap<Instruction *, SmallVector<MatchInfo, 4>> Matches;
+  for (GetElementPtrInst *GEP : collectGEPs(Bottom)) {
+    if (!isSimpleI8GEP(GEP) || !isa<ConstantInt>(GEP->getOperand(1)))
+      continue;
+
+    const SCEV *GEPSCEV = SE->getSCEVAtScope(GEP, OuterLoop);
+    Instruction *MatchedAnchor = nullptr;
+    int64_t MatchedOffset = 0;
+
+    for (const AnchorInfo &Anchor : Anchors) {
+      if (GEP->getType()->getPointerAddressSpace() !=
+          Anchor.Value->getType()->getPointerAddressSpace())
+        continue;
+
+      const auto *Diff =
+          dyn_cast<SCEVConstant>(SE->getMinusSCEV(GEPSCEV, Anchor.Expr));
+      if (!Diff)
+        continue;
+
+      const APInt &DiffValue = Diff->getAPInt();
+      const unsigned IndexBits =
+          cast<IntegerType>(GEP->getOperand(1)->getType())->getBitWidth();
+      if (DiffValue.isNegative() || !DiffValue.isSignedIntN(IndexBits) ||
+          !DiffValue.isSignedIntN(64))
+        continue;
+
+      // Anchors a constant stride apart all match. The nearest preceding
+      // pointer is the shortest forward delta; equal offsets keep the first.
+      const int64_t Offset = DiffValue.sextOrTrunc(64).getSExtValue();
+      if (!MatchedAnchor || Offset < MatchedOffset) {
+        MatchedAnchor = Anchor.Value;
+        MatchedOffset = Offset;
+      }
+    }
+
+    if (MatchedAnchor)
+      Matches[MatchedAnchor].push_back({GEP, MatchedOffset});
+  }
+
+  SmallVector<GetElementPtrInst *, 8> ToErase;
+  bool Changed = false;
+  for (auto &[Anchor, Group] : Matches) {
+    Value *PreviousValue = Anchor;
+    int64_t PreviousOffset = 0;
+    for (const MatchInfo &Match : Group) {
+      GetElementPtrInst *GEP = Match.GEP;
+      // A later GEP with a smaller offset cannot continue the forward chain.
+      // Rebase it on the anchor instead of abandoning the other GEPs.
+      if (Match.Offset < PreviousOffset) {
+        PreviousValue = Anchor;
+        PreviousOffset = 0;
+      }
+
+      Value *Replacement = PreviousValue;
+
+      if (Match.Offset != PreviousOffset) {
+        IRBuilder<> Builder(GEP);
+        Type *IndexTy = GEP->getOperand(1)->getType();
+        Value *Delta = ConstantInt::get(IndexTy, Match.Offset - PreviousOffset);
+        Replacement =
+            Builder.CreateGEP(Builder.getInt8Ty(), PreviousValue, Delta,
+                              GEP->getName() + ".inner.chained");
+        cast<GetElementPtrInst>(Replacement)->setIsInBounds(GEP->isInBounds());
+      }
+
+      LLVM_DEBUG(dbgs() << "OLPO:   Rebased bottom GEP on inner exit:\n"
+                        << "         Old: " << *GEP << "\n"
+                        << "         New: " << *Replacement << "\n");
+      GEP->replaceAllUsesWith(Replacement);
+      ToErase.push_back(GEP);
+      PreviousValue = Replacement;
+      PreviousOffset = Match.Offset;
+      Changed = true;
+    }
+  }
+
+  for (GetElementPtrInst *GEP : reverse(ToErase))
+    GEP->eraseFromParent();
 
   return Changed;
 }
