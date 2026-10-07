@@ -104,10 +104,6 @@ public:
 
   void setMinTripCount(int64_t TC);
 
-  std::optional<bool> createTripCountGreaterCondition(
-      int TC, MachineBasicBlock &MBB,
-      SmallVectorImpl<MachineOperand> &Cond) override;
-
   /// Modify the loop such that the trip count is
   /// OriginalTC + TripCountAdjust.
   /// Note that TripCountAdjust is always negative
