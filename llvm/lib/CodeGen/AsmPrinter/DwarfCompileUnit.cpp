@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file contains support for constructing a dwarf compile unit.
@@ -493,7 +496,7 @@ void DwarfCompileUnit::attachLowHighPC(DIE &D, const MCSymbol *Begin,
   assert(End->isDefined() && "Invalid end label");
 
   addLabelAddress(D, dwarf::DW_AT_low_pc, Begin);
-  if (DD->getDwarfVersion() < 4)
+  if (DD->useAddressFormForHighPC())
     addLabelAddress(D, dwarf::DW_AT_high_pc, End);
   else
     addLabelDelta(D, dwarf::DW_AT_high_pc, End, Begin);
