@@ -1300,8 +1300,7 @@ void InterBlockScheduling::buildGraph(InterBlockEdges &DAG) {
   }
 
   // Prologue clones, fixed before the end of the predecessor. Their PreDepth
-  // is what MaxLatencyFinder reads. The finder still ignores pre-boundary
-  // successors, so recording them does not change the schedule yet.
+  // is what MaxLatencyFinder reads.
   if (!Pred.BottomInsert.empty())
     addFixedInstrs(Pred.BottomInsert, DAG, PredBB, &DAG.getPreDepths());
 

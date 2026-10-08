@@ -23,8 +23,8 @@
 #include "Utils/AIELoopUtils.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/CodeGen/MachineScheduler.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/MachineScheduler.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/CodeGen/ScheduleDAGInstrs.h"
 #include "llvm/CodeGen/ScheduleDAGMutation.h"
@@ -71,7 +71,8 @@ static cl::opt<bool> ForcePostPipeliner(
 
 // aie-latency-margin defines the latency that will be given to ExitSU edges.
 // If it is not set explicitly, it will be derived from the worst case latency
-// of the instruction at the Src of the ExitSU edge.
+// of the instruction at the Src of the ExitSU edge. When set, it also
+// overrides the latency that keeps a producer ahead of an SWP prologue.
 static cl::opt<unsigned>
     UserLatencyMargin("aie-latency-margin", cl::Hidden, cl::init(0),
                       cl::desc("Define the latency on ExitSU edges"));
@@ -468,6 +469,49 @@ class RegionEndEdges : public ScheduleDAGMutation {
 
 public:
   RegionEndEdges() {}
+};
+
+/// EntrySU latencies for free SUnits from TopFixed post-depths and pipelined
+/// loop pre-depths on the predecessor's PerSuccEdges entry. Symmetric to
+/// RegionEndEdges at the start of the region. Runs before EmitFixedSUnits so
+/// DAG->SUnits are still free only.
+class RegionStartEdges : public ScheduleDAGMutation {
+  void apply(ScheduleDAGInstrs *DAG) override {
+    MachineBasicBlock *BB = DAG->getBB();
+    if (!BB)
+      return;
+
+    auto *Scheduler = static_cast<AIEScheduleDAGMI *>(DAG)->getSchedImpl();
+    AIE::InterBlockScheduling &IB = Scheduler->getInterBlock();
+    BlockState &BS = IB.getBlockState(BB);
+    const Region &R = BS.getCurrentRegion();
+
+    if (R.getTopFixedBundles().empty())
+      return;
+
+    // makeDedicatedLoopExit gives this epilogue one predecessor, the loop.
+    // Loop bundles and epilogue clones live on that loop->epilogue edge.
+    AIE::InterBlockEdges *PredEdges = IB.getPerPredEdges(BB).front();
+
+    for (SUnit &SU : DAG->SUnits) {
+      MachineInstr &MI = *SU.getInstr();
+      const SUnit *EdgeSU = PredEdges->getPostBoundaryNode(&MI);
+      if (!EdgeSU)
+        continue;
+      int MaxDepth = AIE::computeMinEntryLatency(*EdgeSU, *PredEdges);
+      if (MaxDepth <= 0)
+        continue;
+
+      LLVM_DEBUG(dbgs() << "RegionStartEdges: SU(" << SU.NodeNum
+                        << ") EntrySU latency " << MaxDepth << ": " << MI);
+      SDep Dep(&DAG->EntrySU, SDep::Artificial);
+      Dep.setLatency(MaxDepth);
+      SU.addPred(Dep, /*Required=*/true);
+    }
+  }
+
+public:
+  RegionStartEdges() {}
 };
 
 /// This Mutator is responsible for emitting "fixed" SUnits at the top or bottom
@@ -1034,6 +1078,7 @@ AIEBaseSubtarget::getPostRAMutationsImpl(const Triple &TT, AAResults *AA) {
     Mutations.emplace_back(std::make_unique<MemoryEdges>(true));
     Mutations.emplace_back(std::make_unique<MachineSchedWAWEdges>());
     Mutations.emplace_back(std::make_unique<BiasDepth>());
+    Mutations.emplace_back(std::make_unique<RegionStartEdges>());
     Mutations.emplace_back(std::make_unique<EmitFixedSUnits>(
         EnableAAInEmitFixedSUnits ? AA : nullptr));
   }
