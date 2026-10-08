@@ -110,7 +110,7 @@ int MaxLatencyFinder::computeEffectiveLatency(MachineInstr &MI) {
                << (SE.getPred() ? SE.getPred()->getNumber() : -1) << " Succ="
                << (SE.getSucc() ? SE.getSucc()->getNumber() : -1) << "\n");
     LLVM_DEBUG(dbgs() << format("Successor %d PostRegionMaxDepth=%d\n", SuccNo,
-                                SE.getPostRegionMaxDepth()));
+                                SE.getPostDepths().getRegionMax()));
     const SUnit *Pred = SE.getPreBoundaryNode(&MI);
     if (!Pred) {
       LLVM_DEBUG(
@@ -132,8 +132,9 @@ int MaxLatencyFinder::computeEffectiveLatency(MachineInstr &MI) {
       // top region (all its cycles have elapsed before reaching ExitSU).
       // For a regular instruction node the depth is its scheduled cycle
       // within the block.
-      const int Depth = Succ->isBoundaryNode() ? SE.getPostRegionMaxDepth() + 1
-                                               : SE.getPostDepthOr(Succ, 0);
+      const int Depth = Succ->isBoundaryNode()
+                            ? SE.getPostDepths().getRegionMax() + 1
+                            : SE.getPostDepths().getValueOr(Succ, 0);
       const int EdgeLat = Dep.getSignedLatency();
       const int Remaining = EdgeLat - Depth;
       LLVM_DEBUG(

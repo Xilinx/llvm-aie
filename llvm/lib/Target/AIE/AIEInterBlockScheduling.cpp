@@ -776,14 +776,14 @@ MachineInstr *InterBlockScheduling::latencyConverged(BlockState &BS) {
   // Repopulate the post-boundary depths from the current scheduled bundles of
   // the top region, capped at the conflict horizon.  Clear first so that stale
   // values from a previous fixpoint iteration are not retained.
-  BackEdge->clearPostDepths();
+  BackEdge->getPostDepths().clear();
   int Depth = 0;
   for (auto &Bundle : Top.Bundles) {
     for (auto *MI : Bundle.getInstrs()) {
-      BackEdge->recordPostDepth(MI, Depth);
+      BackEdge->getPostDepths().record(MI, Depth);
     }
     // For empty bundles...
-    BackEdge->recordPostDepth(Depth);
+    BackEdge->getPostDepths().record(Depth);
     if (++Depth > HR->getConflictHorizon()) {
       break;
     }
@@ -813,8 +813,8 @@ MachineInstr *InterBlockScheduling::latencyConverged(BlockState &BS) {
         // Instructions beyond the conflict horizon default to ConflictHorizon,
         // so that Distance = Height + ConflictHorizon >= 1 + ConflictHorizon,
         // which is always >= Latency, naturally avoiding false positives.
-        const int SuccDepth =
-            BackEdge->getPostDepthOr(Succ, HR->getConflictHorizon());
+        const int SuccDepth = BackEdge->getPostDepths().getValueOr(
+            Succ, HR->getConflictHorizon());
         DEBUG_LOOPAWARE(dbgs() << "  Depth=" << SuccDepth << "\n");
         int Latency = SDep.getSignedLatency();
         int Distance = Height + SuccDepth;
@@ -1162,8 +1162,7 @@ void InterBlockScheduling::defineSchedulingOrder(MachineFunction *MF) {
   // Now initialize the index to the start.
   NextInOrder = 0;
   DEBUG_BLOCKS(dbgs() << "MBB scheduling sequence : ";
-               for (const auto &MBBSeq
-                    : MBBSequence) dbgs()
+               for (const auto &MBBSeq : MBBSequence) dbgs()
                << MBBSeq->getNumber() << " -> ";
                dbgs() << "\n";);
 
@@ -1355,7 +1354,7 @@ void InterBlockScheduling::recordPostDepths(MachineBasicBlock *BB) {
     const BlockState &SBS = getBlockState(SuccBB);
     assert(!SBS.getRegions().empty() &&
            "Every block in Blocks must have at least one region.");
-    SE.clearPostDepths();
+    SE.getPostDepths().clear();
     if (!SBS.isScheduled()) {
       // Compute a static lower-bound on each instruction's cycle position
       // within the successor block, using the inter-block DDG latencies.
@@ -1368,11 +1367,11 @@ void InterBlockScheduling::recordPostDepths(MachineBasicBlock *BB) {
           SUnit *PredSU = Dep.getSUnit();
           if (SE.isPostBoundaryNode(PredSU)) {
             const int NewDepth =
-                Dep.getLatency() + SE.getPostDepthOr(PredSU, 0);
+                Dep.getLatency() + SE.getPostDepths().getValueOr(PredSU, 0);
             Depth = std::max(Depth, NewDepth);
           }
         }
-        SE.recordPostDepth(SU.getInstr(), Depth);
+        SE.getPostDepths().record(SU.getInstr(), Depth);
         DEBUG_BLOCKS(dbgs() << format("     Depth=%d\n", Depth));
       }
     } else {
@@ -1380,17 +1379,17 @@ void InterBlockScheduling::recordPostDepths(MachineBasicBlock *BB) {
       int Cycle = 0;
       for (const MachineBundle &Bundle : SBS.getTop().Bundles) {
         for (MachineInstr *MI : Bundle.getInstrs())
-          SE.recordPostDepth(MI, Cycle);
+          SE.getPostDepths().record(MI, Cycle);
 
         // For empty bundles...
-        SE.recordPostDepth(Cycle);
+        SE.getPostDepths().record(Cycle);
         DEBUG_BLOCKS(dbgs() << format("     Depth=%d\n", Cycle));
         ++Cycle;
       }
     }
     DEBUG_BLOCKS(dbgs() << format("  Succ=%d MaxDepth=%d\n",
                                   SuccBB->getNumber(),
-                                  SE.getPostRegionMaxDepth()));
+                                  SE.getPostDepths().getRegionMax()));
   }
 }
 

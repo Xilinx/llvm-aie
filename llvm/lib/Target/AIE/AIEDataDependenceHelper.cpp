@@ -12,6 +12,7 @@
 #include "AIEBaseSubtarget.h"
 #include "llvm/CodeGen/ScheduleDAGInstrs.h"
 #include "llvm/Support/raw_ostream.h"
+#include <algorithm>
 
 namespace llvm::AIE {
 
@@ -73,6 +74,25 @@ void DataDependenceHelper::dumpDot(raw_ostream &OS,
   OS << "}\n";
 }
 
+void InterBlockEdges::NodeValues::clear() {
+  Values.clear();
+  RegionMax = 0;
+}
+
+void InterBlockEdges::NodeValues::record(MachineInstr *MI, int Val) {
+  RegionMax = std::max(RegionMax, Val);
+  const auto Found = Nodes.find(MI);
+  if (Found == Nodes.end())
+    return;
+  Values[Found->second] = Val;
+}
+
+std::optional<int>
+InterBlockEdges::NodeValues::getValue(const SUnit *SU) const {
+  const auto It = Values.find(SU->NodeNum);
+  return It != Values.end() ? std::optional<int>(It->second) : std::nullopt;
+}
+
 void InterBlockEdges::addNode(MachineInstr *MI) {
   const auto Index = initSUnit(*MI);
   if (!Index) {
@@ -107,47 +127,31 @@ const SUnit *InterBlockEdges::getPreBoundaryNode(MachineInstr *MI) const {
   return &SUnits.at(Found->second);
 }
 
-bool InterBlockEdges::isPostBoundaryNode(SUnit *SU) const {
-  return Boundary ? SU->NodeNum >= *Boundary : false;
+const SUnit *InterBlockEdges::getPostBoundaryNode(MachineInstr *MI) const {
+  const auto Found = SuccMap.find(MI);
+  if (Found == SuccMap.end()) {
+    return nullptr;
+  }
+  return &SUnits.at(Found->second);
 }
 
-void InterBlockEdges::clearPostDepths() {
-  PostDepths.clear();
-  PostRegionMaxDepth = 0;
+bool InterBlockEdges::isPreBoundaryNode(const SUnit *SU) const {
+  return Boundary ? SU->NodeNum < *Boundary : true;
+}
+
+bool InterBlockEdges::isPostBoundaryNode(const SUnit *SU) const {
+  return Boundary ? SU->NodeNum >= *Boundary : false;
 }
 
 void InterBlockEdges::clear() {
   clearDAG();
   Boundary = {};
-  clearPostDepths();
-}
-
-// Record code at a particular depth that is not represented
-// by a MachineInstr, for instance an empty bundle.
-void InterBlockEdges::recordPostDepth(int Depth) {
-  PostRegionMaxDepth = std::max(PostRegionMaxDepth, Depth);
-}
-
-void InterBlockEdges::recordPostDepth(MachineInstr *MI, int Depth) {
-  // Even if we can't find an index, our caller has found evidence
-  // that we have code at this depth. As a common example,
-  // consider bundles with BottomFixed instructions that are not
-  // part of the first iteration.
-  recordPostDepth(Depth);
-
-  const auto Found = SuccMap.find(MI);
-  if (Found == SuccMap.end()) {
-    // When inserting scheduled bundles, we may be interleaved with
-    // instructions from Fixed regions. It's easiest to ignore them
-    // here.
-    return;
-  }
-  PostDepths[Found->second] = Depth;
-}
-
-int InterBlockEdges::getPostDepthOr(const SUnit *SU, int Default) const {
-  const auto It = PostDepths.find(SU->NodeNum);
-  return It != PostDepths.end() ? It->second : Default;
+  // updatePerSuccEdges rebuilds this object in place. addNode uses emplace, so
+  // a stale index would keep pointing at whatever instruction now occupies it.
+  PredMap.clear();
+  SuccMap.clear();
+  PostDepths.clear();
+  PreDepths.clear();
 }
 
 std::map<unsigned, int> InterBlockEdges::computePreHeights() const {
