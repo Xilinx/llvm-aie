@@ -20,9 +20,9 @@
 ;   - Lock ptr MMOs are annotative unknown-size (getTgtMemIntrinsic for
 ;     acquire_ptr/release_ptr uses MVT::Other).
 ;   - FIFO pop/push MMOs are also unknown-size.
-;   - AA returns MayAlias when both MMOs are unknown-size, so inter-block
-;     spacing always orders locks against loop FIFO memory ops — even when IR
-;     pointers are noalias.
+;   - AA returns MayAlias when both MMOs are unknown-size, so the inter-block
+;     edge / LockDelays still order locks against loop FIFO memory ops — even
+;     when IR pointers are noalias.
 
 declare void @llvm.aie2p.acquire.ptr(ptr, i32, i32)
 declare void @llvm.aie2p.release.ptr(ptr, i32, i32)

@@ -30,6 +30,7 @@
 #include "llvm/CodeGen/MachineOptimizationRemarkEmitter.h"
 #include "llvm/CodeGen/MachineScheduler.h"
 #include "llvm/Support/ErrorHandling.h"
+#include <algorithm>
 #include <memory>
 #include <optional>
 
@@ -1289,18 +1290,19 @@ void InterBlockScheduling::buildGraph(InterBlockEdges &DAG) {
   const BlockState &Succ = getBlockState(SuccBB);
 
   // Before the boundary. A pipelined loop whose successor holds its epilogue
-  // contributes the loop bundles. Any other predecessor contributes its free
-  // instructions. Those have no pre-depth.
+  // contributes the loop bundles. Any other predecessor contributes epilogue
+  // clones that stayed in the block, if any epilogue instructions exist, then
+  // its free instructions. Neither of those has a pre-depth.
   if (Pred.isPipelined() && !Succ.TopInsert.empty() &&
       !Pred.getTop().Bundles.empty())
     addLoopBundles(DAG, Pred.getTop().Bundles, HR->getConflictHorizon());
   else {
+    addFixedInstrs(Pred.TopInsert, DAG, PredBB, /*Depths=*/nullptr);
     for (MachineInstr *MI : Pred.getBottom().getFreeInstructions())
       DAG.addNode(MI);
   }
 
-  // Prologue clones, fixed before the end of the predecessor. Their PreDepth
-  // is what MaxLatencyFinder reads.
+  // Prologue clones, fixed before the end of the predecessor.
   if (!Pred.BottomInsert.empty())
     addFixedInstrs(Pred.BottomInsert, DAG, PredBB, &DAG.getPreDepths());
 
@@ -1314,7 +1316,6 @@ void InterBlockScheduling::buildGraph(InterBlockEdges &DAG) {
     for (MachineInstr *MI : Succ.getTop().getFreeInstructions())
       DAG.addNode(MI);
   }
-
   // Prologue of a successor preheader. No post-depth: an ExitSU latency still
   // reaches it. Empty when the successor is not a preheader.
   addFixedInstrs(Succ.BottomInsert, DAG, SuccBB, /*Depths=*/nullptr);
@@ -1649,9 +1650,9 @@ void InterBlockScheduling::emitInterBlockTop(BlockState &BS) {
   // this block to be scheduled later. Some maintenance of the original block
   // state is also necessary.
   auto *DedicatedExit = makeDedicatedLoopExit(ParentLoopMBB, EpilogueBB);
-  // buildGraph may have parked epilogue clones here so dependency queries
-  // can reach the subtarget. Remove them before emitBundles, or before this
-  // region is transferred to a new dedicated exit.
+  // buildGraph may have inserted drain clones here so dependency
+  // queries can reach the subtarget. Remove them before emitBundles, or
+  // before this region is transferred to a new dedicated exit.
   for (MachineInstr *MI : BS.TopInsert.SemanticOrder) {
     if (MI && MI->getParent() == EpilogueBB)
       EpilogueBB->remove_instr(MI);
@@ -1676,7 +1677,7 @@ void InterBlockScheduling::emitInterBlockTop(BlockState &BS) {
     // there via classifyNonLoop.
     MBBSequence.push_back(DedicatedExit);
     BlockState &NewBS = getBlockState(DedicatedExit);
-    NewBS.TopInsert = BS.TopInsert;
+    NewBS.TopInsert = std::move(BS.TopInsert);
     BS.TopInsert.clear();
   }
 }
