@@ -427,7 +427,8 @@ void AIEPostRASchedStrategy::initializeTopScoreBoard() {
   if (!IsFirstRegion)
     return;
 
-  auto LoopBundlesOpt = InterBlock.getSWPLoopBundlesForEpilogue(CurMBB);
+  BlockState &BS = InterBlock.getBlockState(CurMBB);
+  auto LoopBundlesOpt = InterBlock.getSWPLoopBundlesForEpilogue(BS);
 
   if (!LoopBundlesOpt)
     return;
