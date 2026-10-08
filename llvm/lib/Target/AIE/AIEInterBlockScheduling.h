@@ -452,6 +452,13 @@ public:
                     BlockState &EpilogueBS, BlockState &LastIterTopBS,
                     unsigned NumBundles);
 
+  /// Compute how many transferred prologue bundles can be merged into the
+  /// preheader's trailing bundles. Uses both latency slack and resource
+  /// checks to determine the maximum safe overlap (best-effort).
+  unsigned getPreheaderMergeCount(const BlockState &EntryBS,
+                                  const BlockState &SteadyTopBS,
+                                  unsigned NumTransferred);
+
   /// Try to merge matching prologue bundles into the epilogue and transfer
   /// them to the entry block.
   void tryMergePrologues(BlockState &EntryBS, BlockState &SteadyTopBS,

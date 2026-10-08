@@ -229,7 +229,7 @@ define dso_local void @gemm(i32 %0, ptr addrspace(5) %1, ptr addrspace(5) %2, pt
 ;
 ; NO-PROLOGUE-SPLIT-LABEL: gemm:
 ; NO-PROLOGUE-SPLIT:       // %bb.0: // %newFuncRoot
-; NO-PROLOGUE-SPLIT-NEXT:    nopa ; nopb ; nops ; nopx ; mov m0, p5; nopv
+; NO-PROLOGUE-SPLIT-NEXT:    mov m0, p5
 ; NO-PROLOGUE-SPLIT-NEXT:    mova m1, #-4; mov p5, sp
 ; NO-PROLOGUE-SPLIT-NEXT:    padda [p5], m1
 ; NO-PROLOGUE-SPLIT-NEXT:    lda dj0, [p5], #-4
@@ -265,10 +265,8 @@ define dso_local void @gemm(i32 %0, ptr addrspace(5) %1, ptr addrspace(5) %2, pt
 ; NO-PROLOGUE-SPLIT-NEXT:    lda dn3, [p5], #-4; vshuffle x8, x3, x0, r3; vaddmac dm3, dm3, dm4, x6, x10, r10
 ; NO-PROLOGUE-SPLIT-NEXT:    lda m7, [p5], #-4; vshuffle x8, x8, x0, r4; vmul dm4, x0, x4, r12
 ; NO-PROLOGUE-SPLIT-NEXT:    lda dj7, [p5, #0]; mov dc7, dc3; vaddmac dm2, dm2, dm4, x1, x10, r10
-; NO-PROLOGUE-SPLIT-NEXT:    lda dn7, [p5, #-4]; nopb ; movs dc0, dc2; movxm p5, #.LBB0_1; vaddmac dm1, dm1, dm4, x6, x8, r10
-; NO-PROLOGUE-SPLIT-NEXT:    movs dc4, dc6; movx crsrsmode, #0; mov s1, r17; vaddmac dm0, dm0, dm4, x1, x8, r10
-; NO-PROLOGUE-SPLIT-NEXT:    vldb x1, [p1], m4
-; NO-PROLOGUE-SPLIT-NEXT:    vlda.3d x10, [p1], d1
+; NO-PROLOGUE-SPLIT-NEXT:    lda dn7, [p5, #-4]; vldb x1, [p1], m4; movs dc0, dc2; movxm p5, #.LBB0_1; vaddmac dm1, dm1, dm4, x6, x8, r10
+; NO-PROLOGUE-SPLIT-NEXT:    vlda.3d x10, [p1], d1; nopb ; movs dc4, dc6; movx crsrsmode, #0; mov s1, r17; vaddmac dm0, dm0, dm4, x1, x8, r10
 ; NO-PROLOGUE-SPLIT-NEXT:    vldb x8, [p0], #64
 ; NO-PROLOGUE-SPLIT-NEXT:    vlda.3d x6, [p0], d0
 ; NO-PROLOGUE-SPLIT-NEXT:  .LBB0_1: // %steady.stage1.top

@@ -215,6 +215,32 @@ mergeBundlesIntoMBB(MachineBasicBlock &DstMBB,
   return MergedBundles;
 }
 
+std::vector<AIE::MachineBundle> mergeAndAppendBundlesIntoMBB(
+    MachineBasicBlock &DstMBB, ArrayRef<AIE::MachineBundle> DstBundles,
+    ArrayRef<AIE::MachineBundle> SrcBundles, unsigned NumBundlesToMerge,
+    const AIEBaseInstrInfo &TII) {
+  MachineFunction &MF = *DstMBB.getParent();
+  const AIEBaseMCFormats *FormatInterface = TII.getFormatInterface();
+  const unsigned NopOpc = FormatInterface->getSlotInfo(0)->getNOPOpcode();
+
+  // Create merged bundle vector (overlapping portion)
+  auto Result = mergeBundles(MF, DstBundles, SrcBundles, NumBundlesToMerge,
+                             FormatInterface, NopOpc);
+
+  // Clone and append remaining non-merged source bundles
+  for (unsigned I = NumBundlesToMerge, E = SrcBundles.size(); I < E; ++I) {
+    AIE::MachineBundle Cloned(FormatInterface);
+    for (MachineInstr *MI : SrcBundles[I].getInstrs())
+      Cloned.add(MF.CloneMachineInstr(MI));
+    Result.push_back(std::move(Cloned));
+  }
+
+  // Replace the entire MBB content with the complete set of bundles
+  replaceMBBWithBundles(DstMBB, Result, TII);
+
+  return Result;
+}
+
 unsigned countMatchingLeadingBundles(ArrayRef<AIE::MachineBundle> BundlesA,
                                      ArrayRef<AIE::MachineBundle> BundlesB,
                                      InstrStopFilter StopFilter) {

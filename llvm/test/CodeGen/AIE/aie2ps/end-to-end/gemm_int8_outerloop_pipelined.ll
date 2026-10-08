@@ -110,8 +110,8 @@ define dso_local void @gemm(i32 %0, ptr addrspace(5) %1, ptr addrspace(5) %2, pt
 ; REMARKS-NEXT: ...
 ; ASM-LABEL: gemm:
 ; ASM:       // %bb.0: // %newFuncRoot
-; ASM-NEXT:    paddxm [sp], #64; nopb ; nopxm ; nops
-; ASM-NEXT:    movs m0, p5; mov p5, sp
+; ASM-NEXT:    paddxm [sp], #64; nopb ; nops ; nopxm ; nopv
+; ASM-NEXT:    movs m0, p5; nopx ; mov p5, sp
 ; ASM-NEXT:    st p6, [sp, #-64] // 4-byte Folded Spill
 ; ASM-NEXT:    mova m1, #-68; mov p6, p2
 ; ASM-NEXT:    vlda.ups.2x cml3, s0, upssign1, [p6], #64; paddb [p5], m1
@@ -144,8 +144,7 @@ define dso_local void @gemm(i32 %0, ptr addrspace(5) %1, ptr addrspace(5) %2, pt
 ; ASM-NEXT:    lda dn3, [p5], #-4; or r21, r8, r8; vshuffle x10, x1, x0, r4; vmul dm4, x0, x4, r10
 ; ASM-NEXT:    lda m7, [p5], #-4; movs dc3, dc0; mov dc7, dc0; vaddmac dm2, dm2, dm4, x8, x10, r12
 ; ASM-NEXT:    lda dj7, [p5, #0]; nopb ; movs dc0, dc2; add r0, r0, #-1; mov m5, #512; vaddmac dm1, dm1, dm4, x6, x10, r12
-; ASM-NEXT:    lda dn7, [p5, #-4]; nopb ; movs dc4, dc6; movx crsrsmode, #0; mov s1, r17; vaddmac dm0, dm0, dm4, x8, x10, r12
-; ASM-NEXT:    vldb x1, [p1], m4
+; ASM-NEXT:    lda dn7, [p5, #-4]; vldb x1, [p1], m4; movs dc4, dc6; movx crsrsmode, #0; mov s1, r17; vaddmac dm0, dm0, dm4, x8, x10, r12
 ; ASM-NEXT:    vlda.3d x10, [p1], d1
 ; ASM-NEXT:    vldb x8, [p0], #64
 ; ASM-NEXT:    vlda.3d x6, [p0], d0

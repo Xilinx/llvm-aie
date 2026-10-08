@@ -770,6 +770,40 @@ unsigned InterBlockScheduling::getNumberOfMergeableBundles(
   return MergeableBundles;
 }
 
+unsigned
+InterBlockScheduling::getPreheaderMergeCount(const BlockState &EntryBS,
+                                             const BlockState &SteadyTopBS,
+                                             unsigned NumTransferred) {
+  const auto &EntryBundles = EntryBS.getTop().Bundles;
+  if (EntryBundles.empty() || NumTransferred == 0)
+    return 0;
+
+  // Latency check: compute slack between preheader and steady prologue.
+  // The transferred bundles are the first N bundles of the steady prologue,
+  // so the slack tells us how many cycles of overlap are safe.
+  const int LatencySlack =
+      calculateSchedulingSlack(EntryBS.getTop(), SteadyTopBS, *Context);
+  DEBUG_BLOCKS(dbgs() << "  Preheader merge: LatencySlack=" << LatencySlack
+                      << "\n");
+  if (LatencySlack <= 0)
+    return 0;
+
+  // Resource check: use the first NumTransferred bundles of the steady
+  // prologue as the source. Pass the same array for both prologue arguments
+  // since the preheader has a single successor path.
+  const auto &SteadyPrologue = SteadyTopBS.getTop().Bundles;
+  ArrayRef<MachineBundle> TransferredSlice(SteadyPrologue.data(),
+                                           NumTransferred);
+  const int MaxLimit = std::min(static_cast<int>(NumTransferred), LatencySlack);
+  const int ResourceMerge = checkResourceMergeability(
+      EntryBundles, TransferredSlice, TransferredSlice, MaxLimit, *HR,
+      SelectedAltDescs);
+  DEBUG_BLOCKS(dbgs() << "  Preheader merge: ResourceMerge=" << ResourceMerge
+                      << "\n");
+
+  return static_cast<unsigned>(std::max(0, ResourceMerge));
+}
+
 void InterBlockScheduling::mergeBundles(BlockState &EntryBS,
                                         BlockState &SteadyTopBS,
                                         BlockState &EpilogueBS,
@@ -784,16 +818,30 @@ void InterBlockScheduling::mergeBundles(BlockState &EntryBS,
       *EpilogueBS.TheBlock, EpilogueBundles, SteadyPrologue, NumBundles, *TII);
   EpilogueBS.getTop().Bundles = std::move(MergedBundles);
 
+  // Compute preheader merge count BEFORE transfer (needs full SteadyTopBS
+  // to build inter-block DAG for latency slack computation).
+  const unsigned PreheaderMerge =
+      getPreheaderMergeCount(EntryBS, SteadyTopBS, NumBundles);
+
   // Transfer leading bundles from SteadyTop to Entry (OuterPreheader)
   auto [TransferredBundles, RemainingSteady] =
       AIEMachineBundleUtils::transferLeadingBundles(
           *EntryBS.TheBlock, *SteadyTopBS.TheBlock, SteadyPrologue, NumBundles,
           *TII);
 
-  // Update BlockStates: append transferred bundles to entry, assign remaining
-  // to steady top
+  // Update preheader: merge overlapping bundles into trailing preheader
+  // cycles, or just append if no merge is possible.
   auto &EntryBundles = EntryBS.getTop().Bundles;
-  llvm::append_range(EntryBundles, std::move(TransferredBundles));
+  if (PreheaderMerge > 0) {
+    EntryBundles = AIEMachineBundleUtils::mergeAndAppendBundlesIntoMBB(
+        *EntryBS.TheBlock, EntryBundles, TransferredBundles, PreheaderMerge,
+        *TII);
+    DEBUG_BLOCKS(dbgs() << "  Preheader merge: merged " << PreheaderMerge
+                        << " of " << NumBundles
+                        << " transferred bundles into preheader\n");
+  } else {
+    llvm::append_range(EntryBundles, std::move(TransferredBundles));
+  }
   SteadyTopBS.getTop().Bundles = std::move(RemainingSteady);
 
   // Remove leading bundles from LastIterTop and update BlockState

@@ -147,7 +147,7 @@ define void @conv2d_opt_outerloop_out_mode_1(
 ; ASM-NEXT:    and r6, r6, r18
 ; ASM-NEXT:    st r6, [p3, #-12]
 ; ASM-NEXT:  .LBB0_4: // %_Z24setup_conv2d_iter_paramsR13conv2d_params.exit
-; ASM-NEXT:    mova m0, #-20
+; ASM-NEXT:    mova m0, #-20; nopx
 ; ASM-NEXT:    mova m0, #36; paddb [p3], m0
 ; ASM-NEXT:    lda r28, [p3], m0
 ; ASM-NEXT:    lda r30, [p3], #-8; mov m0, #-104
@@ -186,8 +186,7 @@ define void @conv2d_opt_outerloop_out_mode_1(
 ; ASM-NEXT:    mova r20, #16; vldb.128 wl4, [p1, #16]; or r10, r8, r0; mov s0, r26; movs dc2, dc3
 ; ASM-NEXT:    lda dj6, [p3, #0]; vldb x8, [p7, dj3]; movx r0, #7; mov p3, p4; movs dc5, dc3
 ; ASM-NEXT:    vlda.ups.2x cml1, s0, upssign1, [p3], #64; movs dc1, dc3; lshl r0, r5, r0; mov s1, r16
-; ASM-NEXT:    vlda.ups.2x cmh1, s0, upssign1, [p3], #64; movs m3, r0; add r22, r5, #-1; vshuffle x10, x10, x1, r6
-; ASM-NEXT:    vldb.popx x8, [p0, lf0, r24]
+; ASM-NEXT:    vlda.ups.2x cmh1, s0, upssign1, [p3], #64; vldb.popx x8, [p0, lf0, r24]; add r22, r5, #-1; vshuffle x10, x10, x1, r6; movs m3, r0
 ; ASM-NEXT:    vldb.pop.3d x6, [p0, lf0, r24, d0]
 ; ASM-NEXT:    vldb.popx x8, [p0, lf0, r24]; mov p7, p2
 ; ASM-NEXT:    vlda x4, [p7, #128]; vldb.pop.3d x6, [p0, lf0, r24, d0]
