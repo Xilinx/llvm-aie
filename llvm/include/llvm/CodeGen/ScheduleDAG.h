@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// Modifications (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its
 // affiliates
 //
 //===----------------------------------------------------------------------===//
@@ -75,6 +75,7 @@ class TargetRegisterInfo;
       MayAliasMem,  ///< Nonvolatile load/Store instructions that may alias.
       MustAliasMem, ///< Nonvolatile load/Store instructions that must alias.
       Artificial,   ///< Arbitrary strong DAG edge (no real dependence).
+      Pin,          ///< Strong edge pinning a node to EntrySU or ExitSU.
       Weak,         ///< Arbitrary weak DAG edge.
       Cluster       ///< Weak DAG edge linking a chain of clustered instrs.
     };
@@ -207,6 +208,10 @@ class TargetRegisterInfo;
     bool isArtificial() const {
       return getKind() == Order && Contents.OrdKind == Artificial;
     }
+
+    /// Tests if this is an Order dependence that pins a node to EntrySU or
+    /// ExitSU.
+    bool isPin() const { return getKind() == Order && Contents.OrdKind == Pin; }
 
     /// Tests if this is an Order dependence that is marked as "cluster",
     /// meaning it is artificial and wants to be adjacent.

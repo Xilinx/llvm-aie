@@ -533,7 +533,7 @@ private:
     // We iterate over BUNDLEs or standalone instructions.
     for (MachineInstr &MI : CurRegion.top_fixed_instrs()) {
       SUnit &FixedSU = Scheduler->addFixedSUnit(MI, /*IsTop=*/true);
-      SDep Dep(Pred, SDep::Artificial);
+      SDep Dep(Pred, SDep::Pin);
       Dep.setLatency(Pred == &DAG->EntrySU ? 0 : 1);
       FixedSU.addPred(Dep);
       Pred = &FixedSU;
@@ -542,7 +542,7 @@ private:
     SUnit *Succ = &DAG->ExitSU;
     for (MachineInstr &MI : reverse(CurRegion.bot_fixed_instrs())) {
       SUnit &FixedSU = Scheduler->addFixedSUnit(MI, /*IsTop=*/false);
-      SDep Dep(&FixedSU, SDep::Artificial);
+      SDep Dep(&FixedSU, SDep::Pin);
       Dep.setLatency(Succ == &DAG->ExitSU ? 0 : 1);
       Succ->addPred(Dep);
       Succ = &FixedSU;
