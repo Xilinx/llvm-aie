@@ -542,13 +542,18 @@ class PipelineExtractor : public PipelineScheduleVisitor {
   bool InLoop = false;
   // True while visiting the prologue section.
   bool InPrologue = false;
+  // True while visiting the epilogue section.
+  bool InEpilogue = false;
   // Maps each original loop instruction to its first-iteration clone in the
   // prologue. Only the first occurrence of each original is recorded.
   DenseMap<const MachineInstr *, MachineInstr *> PrologueFirstIterClones;
+  // Maps each original loop instruction to its last-iteration clone in the
+  // epilogue. Later occurrences overwrite earlier ones.
+  DenseMap<const MachineInstr *, MachineInstr *> EpilogueLastIterClones;
 
   void startPrologue() override { InPrologue = true; }
   void startLoop() override {
-    auto &CopyTo = Prologue->BottomInsert;
+    auto &CopyTo = Prologue->BottomInsert.Bundles;
     assert(CopyTo.empty() && "PreHeader already has a timed region at Bottom.");
     bool CopyEmpty = false;
     for (auto &B : TimedRegion) {
@@ -567,8 +572,9 @@ class PipelineExtractor : public PipelineScheduleVisitor {
     for (MachineInstr *OrigMI : Loop.getTop().getFreeInstructions()) {
       const auto It = PrologueFirstIterClones.find(OrigMI);
       if (It != PrologueFirstIterClones.end())
-        Prologue->BottomInsertSemanticOrder.push_back(It->second);
+        Prologue->BottomInsert.SemanticOrder.push_back(It->second);
     }
+    Prologue->BottomInsert.rebuildCycleMapFromEnd();
 
     InPrologue = false;
     InLoop = true;
@@ -577,9 +583,10 @@ class PipelineExtractor : public PipelineScheduleVisitor {
     Loop.getTop().Bundles = TimedRegion;
     TimedRegion.clear();
     InLoop = false;
+    InEpilogue = true;
   }
   void finish() override {
-    auto &CopyTo = Epilogue->TopInsert;
+    auto &CopyTo = Epilogue->TopInsert.Bundles;
     assert(CopyTo.empty() && "Epilogue already has a timed region at Top.");
 
     // Establish the number of bundles to copy. Note that std::distance on a
@@ -592,6 +599,15 @@ class PipelineExtractor : public PipelineScheduleVisitor {
       CopyTo.push_back(TimedRegion[I]);
     }
     TimedRegion.clear();
+
+    // Last-iteration epilogue clones in original loop-body order. Only
+    // instructions that were actually cloned into the epilogue are recorded.
+    for (MachineInstr *OrigMI : Loop.getTop().getFreeInstructions()) {
+      const auto It = EpilogueLastIterClones.find(OrigMI);
+      if (It != EpilogueLastIterClones.end())
+        Epilogue->TopInsert.SemanticOrder.push_back(It->second);
+    }
+    Epilogue->TopInsert.rebuildCycleMapFromStart();
   }
   void startBundle() override { CurrentBundle.clear(); }
   void addToBundle(MachineInstr *MI) override {
@@ -606,6 +622,8 @@ class PipelineExtractor : public PipelineScheduleVisitor {
     // occurrence (i.e. the first-iteration copy) is kept.
     if (InPrologue)
       PrologueFirstIterClones.try_emplace(MI, ToBeEmitted);
+    if (InEpilogue)
+      EpilogueLastIterClones[MI] = ToBeEmitted;
   }
   void endBundle() override { TimedRegion.emplace_back(CurrentBundle); }
 
@@ -1236,7 +1254,7 @@ void InterBlockScheduling::buildGraph(InterBlockEdges &DAG) {
   // Post-boundary: BotFixed first-iteration copies (SWP prologue clones),
   // in the semantic order of the original loop instructions. This vector is
   // empty for non-pipelined blocks.
-  for (MachineInstr *MI : SuccBS.BottomInsertSemanticOrder) {
+  for (MachineInstr *MI : SuccBS.BottomInsert.SemanticOrder) {
     DAG.addNode(MI);
     // Some queries in edge building require a parent to get to SubTarget.
     // We push them in the corresponding block. edge building uses the
@@ -1420,7 +1438,7 @@ void InterBlockScheduling::enterRegion(MachineBasicBlock *BB,
   assert(!BS.getRegions().empty() &&
          "Every block in Blocks must have at least one region.");
   if (RegionBegin == BB->begin() && !BS.TopInsert.empty()) {
-    BS.getCurrentRegion().setTopFixedBundles(BS.TopInsert);
+    BS.getCurrentRegion().setTopFixedBundles(BS.TopInsert.Bundles);
     // Remember them by identity, so that a reschedule can restore the
     // positional invariant that top_fixed_instrs() relies on.
     BS.TopFixedInstrs.clear();
@@ -1428,7 +1446,7 @@ void InterBlockScheduling::enterRegion(MachineBasicBlock *BB,
       BS.TopFixedInstrs.push_back(&MI);
   }
   if (RegionEnd == BB->end() && !BS.BottomInsert.empty()) {
-    BS.getCurrentRegion().setBotFixedBundles(BS.BottomInsert);
+    BS.getCurrentRegion().setBotFixedBundles(BS.BottomInsert.Bundles);
     BS.BotFixedInstrs.clear();
     for (MachineInstr &MI : BS.getCurrentRegion().bot_fixed_instrs())
       BS.BotFixedInstrs.push_back(&MI);
@@ -1582,14 +1600,15 @@ void InterBlockScheduling::emitInterBlockTop(BlockState &BS) {
 
     // Trim excedent empty bundles. Empty TopInsert means 1-stage pipeline.
     if (!BS.TopInsert.empty()) {
-      while (BS.TopInsert.back().empty()) {
-        assert(BS.TopInsert.back().getMetaInstrs().empty());
-        BS.TopInsert.pop_back();
+      while (BS.TopInsert.Bundles.back().empty()) {
+        assert(BS.TopInsert.Bundles.back().getMetaInstrs().empty());
+        BS.TopInsert.Bundles.pop_back();
       }
     }
+    BS.TopInsert.rebuildCycleMapFromStart();
 
     // If we are in the same BB, just emit.
-    emitBundles(BS.TopInsert, DedicatedExit, DedicatedExit->begin(),
+    emitBundles(BS.TopInsert.Bundles, DedicatedExit, DedicatedExit->begin(),
                 /*Move=*/false, /*EmitNops=*/false);
   } else {
     // If not, transfer the timed region to the new block state created
@@ -1609,15 +1628,15 @@ void InterBlockScheduling::emitInterBlockBottom(const BlockState &BS) const {
   MachineBasicBlock *PreHeader = BS.TheBlock;
   assert(PreHeader->end() == PreHeader->getFirstTerminator() &&
          "PreHeader is not fall-through");
-  // BottomInsertSemanticOrder instructions may have been temporarily placed in
-  // the block by buildPerSuccEdges to enable dependency analysis. Remove them
-  // before emitBundles re-inserts all BottomInsert instructions properly.
-  for (MachineInstr *MI : BS.BottomInsertSemanticOrder) {
+  // BottomInsert instructions may have been temporarily placed in the block
+  // by buildPerSuccEdges to enable dependency analysis. Remove them before
+  // emitBundles re-inserts all BottomInsert instructions properly.
+  for (MachineInstr *MI : BS.BottomInsert.SemanticOrder) {
     if (MI->getParent() == PreHeader)
       PreHeader->remove_instr(MI);
   }
-  emitBundles(BS.BottomInsert, PreHeader, PreHeader->end(), /*Move=*/false,
-              /*EmitNops=*/false);
+  emitBundles(BS.BottomInsert.Bundles, PreHeader, PreHeader->end(),
+              /*Move=*/false, /*EmitNops=*/false);
 }
 
 int InterBlockScheduling::getCyclesToRespectTiming(
@@ -1789,6 +1808,23 @@ void Region::setBotFixedBundles(ArrayRef<MachineBundle> Bundles) {
 
 BlockState::BlockState(MachineBasicBlock *Block) : TheBlock(Block) {
   setBlockProperties();
+}
+
+void InsertDescriptor::rebuildCycleMapFromStart() {
+  CycleMap.clear();
+  for (int Cycle = 0, E = int(Bundles.size()); Cycle < E; ++Cycle) {
+    for (MachineInstr *MI : Bundles[Cycle].getInstrs())
+      CycleMap[MI] = Cycle;
+  }
+}
+
+void InsertDescriptor::rebuildCycleMapFromEnd() {
+  CycleMap.clear();
+  for (int Cycle = -1, Bundle = int(Bundles.size()) - 1; Bundle >= 0;
+       --Bundle, --Cycle) {
+    for (MachineInstr *MI : Bundles[Bundle].getInstrs())
+      CycleMap[MI] = Cycle;
+  }
 }
 
 // This safety margin is independent of the successor block, and is therefore
