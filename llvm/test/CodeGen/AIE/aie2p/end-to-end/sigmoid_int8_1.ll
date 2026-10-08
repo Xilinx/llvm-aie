@@ -22,8 +22,8 @@ define void @sigmoid_int8_1() {
 ; CHECK-NEXT:    vldb.unpack x3, unpacksign0, [p0, #0]; vmov x7, x2
 ; CHECK-NEXT:    vmov x6, x2
 ; CHECK-NEXT:    vmin_ge.16 x9, r16, x3, x0, vaddsign0
-; CHECK-NEXT:    vmax_lt.16 x8, r16, x9, x2, vaddsign0; vclr dm0
-; CHECK-NEXT:    vmov x9, x8
+; CHECK-NEXT:    vmax_lt.16 x8, r16, x9, x2, vaddsign0
+; CHECK-NEXT:    vmov x9, x8; vclr dm0
 ; CHECK-NEXT:    vldb.unpack x3, unpacksign0, [p0, #0]; mov s0, r0
 ; CHECK-NEXT:    vmov x5, x4; vmac dm3, dm0, y4, y3,r0
 ; CHECK-NEXT:    vmin_ge.16 x9, r16, x3, x0, vaddsign0

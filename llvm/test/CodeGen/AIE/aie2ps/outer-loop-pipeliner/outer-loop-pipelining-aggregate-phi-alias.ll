@@ -94,12 +94,12 @@ define void @drain_after_olp(ptr noalias %a, ptr noalias %c, ptr %out, i32 %n, i
 ; OLP-NEXT:    vldb x0, [p4], #64; nopxm
 ; OLP-NEXT:    vldb x0, [p4], #64; add.nc lc, r2, #-9
 ; OLP-NEXT:    nopa ; vldb x0, [p4], #64; nops ; add.nc le, pc, #.L_LEnd0; addm.nc ls, pc, #.LBB0_8; nopv
-; OLP-NEXT:    nopa ; vldb x0, [p4], #64; st r4, [p3, #0]; nopxm ; nopv
+; OLP-NEXT:    nopa ; vldb x0, [p4], #64; nops ; nopxm ; nopv
 ; OLP-NEXT:    nopa ; vldb x0, [p4], #64; nops ; nopxm ; nopv
 ; OLP-NEXT:    nopa ; vldb x0, [p4], #64; nops ; nopxm ; nopv
 ; OLP-NEXT:    nopa ; vldb x0, [p4], #64; nops ; nopxm ; nopv
 ; OLP-NEXT:    nopa ; vldb x0, [p4], #64; nops ; nopx ; vadd.32 x2, x0, x0; nopv
-; OLP-NEXT:    nopa ; vldb x0, [p4], #64; nops ; nopx ; vadd.32 x2, x0, x0; nopv
+; OLP-NEXT:    nopa ; vldb x0, [p4], #64; st r4, [p3, #0]; nopx ; vadd.32 x2, x0, x0; nopv
 ; OLP-NEXT:  .LBB0_8: // %drain
 ; OLP-NEXT:    // =>This Inner Loop Header: Depth=1
 ; OLP-NEXT:  .L_LEnd0:

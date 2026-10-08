@@ -128,20 +128,20 @@ define void @conv2d_outer_loop(ptr noalias %ifm, ptr noalias %wts, ptr noalias %
 ; CHECK-NEXT:  .LBB0_6: // %for.body.i68
 ; CHECK-NEXT:    // =>This Loop Header: Depth=1
 ; CHECK-NEXT:    // Child Loop BB0_7 Depth 2
-; CHECK-NEXT:    nopa ; vldb x10, [p1, #0]; nops ; nopx ; mov r0, dc6; nopv
-; CHECK-NEXT:    vlda x1, [p1, #64]; vldb.popx x4, [p0, lf0, r24]; nops ; lshl r0, r0, r2; mov dc4, dc3; nopv
+; CHECK-NEXT:    nopa ; vldb x10, [p1, #0]; nopx
+; CHECK-NEXT:    vldb x1, [p1, #64]; mov r0, dc6
+; CHECK-NEXT:    vlda.ups.2x cml1, s0, upssign1, [p4], #64; vldb.popx x4, [p0, lf0, r24]; lshl r0, r0, r2; mov dc4, dc3
 ; CHECK-NEXT:    vlda.pop.3d x6, [p0, lf0, r24, d0]; or r20, r0, r16; mov dj3, r0
 ; CHECK-NEXT:    vldb.128 wl2, [p2, dj3]; mov dj3, r20
 ; CHECK-NEXT:    vldb.128 wl8, [p2, dj3]
-; CHECK-NEXT:    vlda.ups.2x cml1, s0, upssign1, [p4], #64
-; CHECK-NEXT:    vlda.ups.2x cmh1, s0, upssign1, [p4], #64; vldb.popx x10, [p0, lf0, r24]
-; CHECK-NEXT:    vlda.ups.2x cml0, s0, upssign1, [p6], #64; vldb.pop.3d x8, [p0, lf0, r24, d0]
+; CHECK-NEXT:    vlda.ups.2x cml0, s0, upssign1, [p6], #64; vldb.popx x10, [p0, lf0, r24]
+; CHECK-NEXT:    vlda.ups.2x cmh1, s0, upssign1, [p4], #64; vldb.pop.3d x8, [p0, lf0, r24, d0]
 ; CHECK-NEXT:    vlda.ups.2x cmh0, s0, upssign1, [p6], #64; vldb.popx x10, [p0, lf0, r24]; mov p7, p1
 ; CHECK-NEXT:    vlda x6, [p7, #128]; vldb.pop.3d x8, [p0, lf0, r24, d0]
-; CHECK-NEXT:    vlda x4, [p7, #192]; vldb.popx x10, [p0, lf0, r24]; padds [p7], #128; nopx ; vshuffle x2, x4, x6, r6; vmul dm2, x0, x2, r10
-; CHECK-NEXT:    vlda x6, [p7, #128]; vldb.pop.3d x8, [p0, lf0, r24, d0]; add.nc ls, pc, #.LBB0_7; vmul dm3, x0, x8, r10
-; CHECK-NEXT:    vlda x4, [p7, #192]; vldb.popx x10, [p0, lf0, r24]; padds [p7], #128; add.nc lc, r18, #-6; addm.nc le, pc, #.L_LEnd0; vaddmac dm1, dm1, dm2, x2, x10, r12
-; CHECK-NEXT:    vlda x6, [p7, #128]; vldb.pop.3d x8, [p0, lf0, r24, d0]; nops ; nopxm ; nopv
+; CHECK-NEXT:    vlda x4, [p7, #192]; vldb.popx x10, [p0, lf0, r24]; padds [p7], #128
+; CHECK-NEXT:    vlda x6, [p7, #128]; vldb.pop.3d x8, [p0, lf0, r24, d0]; add.nc ls, pc, #.LBB0_7; vshuffle x2, x4, x6, r6; vmul dm2, x0, x2, r10
+; CHECK-NEXT:    vlda x4, [p7, #192]; vldb.popx x10, [p0, lf0, r24]; padds [p7], #128; add.nc lc, r18, #-6; addm.nc le, pc, #.L_LEnd0; vmul dm3, x0, x8, r10
+; CHECK-NEXT:    vlda x6, [p7, #128]; vldb.pop.3d x8, [p0, lf0, r24, d0]; nops ; nopxm ; vaddmac dm1, dm1, dm2, x2, x10, r12
 ; CHECK-NEXT:    vlda x4, [p7, #192]; vldb.popx x10, [p0, lf0, r24]; padds [p7], #128; nopxm ; vaddmac dm0, dm0, dm3, x2, x1, r12
 ; CHECK-NEXT:    vlda x6, [p7, #128]; vldb.pop.3d x8, [p0, lf0, r24, d0]; nops ; nopx ; vshuffle x2, x10, x8, r6; nopv
 ; CHECK-NEXT:    vlda x4, [p7, #192]; vldb.popx x10, [p0, lf0, r24]; padds [p7], #128; nopxm ; nopv
@@ -170,8 +170,8 @@ define void @conv2d_outer_loop(ptr noalias %ifm, ptr noalias %wts, ptr noalias %
 ; CHECK-NEXT:    jnz r4, #.LBB0_6
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    vst.srs.2x cml1, s1, srssign1, [p3], #64 // Delay Slot 4
-; CHECK-NEXT:    vst.srs.2x cml0, s1, srssign1, [p5], #64 // Delay Slot 3
-; CHECK-NEXT:    vst.srs.2x cmh1, s1, srssign1, [p3], #64 // Delay Slot 2
+; CHECK-NEXT:    vst.srs.2x cmh1, s1, srssign1, [p3], #64 // Delay Slot 3
+; CHECK-NEXT:    vst.srs.2x cml0, s1, srssign1, [p5], #64 // Delay Slot 2
 ; CHECK-NEXT:    vst.srs.2x cmh0, s1, srssign1, [p5], #64 // Delay Slot 1
 ; CHECK-NEXT:  .LBB0_9: // %sw.epilog
 ; CHECK-NEXT:    lda p7, [sp, #-60] // 4-byte Folded Reload
