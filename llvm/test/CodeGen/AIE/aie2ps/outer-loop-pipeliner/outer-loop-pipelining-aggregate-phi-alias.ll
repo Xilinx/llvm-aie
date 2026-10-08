@@ -27,7 +27,7 @@ declare i1 @llvm.loop.decrement.i32(i32)
 define void @drain_after_olp(ptr noalias %a, ptr noalias %c, ptr %out, i32 %n, i32 %m, i32 %k) {
 ; OLP-LABEL: drain_after_olp:
 ; OLP:       // %bb.0: // %entry
-; OLP-NEXT:    mova r4, #1; nopx
+; OLP-NEXT:    mova r4, #1; nopb ; nops ; nopxm ; nopv
 ; OLP-NEXT:    geu r4, r4, r0
 ; OLP-NEXT:    jnz r4, #.LBB0_10
 ; OLP-NEXT:    nop // Delay Slot 5
@@ -46,8 +46,7 @@ define void @drain_after_olp(ptr noalias %a, ptr noalias %c, ptr %out, i32 %n, i
 ; OLP-NEXT:    addm.nc r3, r0, #-1
 ; OLP-NEXT:    vmov x4, lfl0
 ; OLP-NEXT:    vmov x5, lfh0
-; OLP-NEXT:    mova m0, #4; movs p3, p1; vadd.8 x2, x2, x2
-; OLP-NEXT:    nopa ; nopb ; nops ; add.nc lc, r1, #0; nopm ; nopv
+; OLP-NEXT:    mova m0, #4; nopb ; movs p3, p1; add.nc lc, r1, #0; vadd.8 x2, x2, x2; nopv
 ; OLP-NEXT:  .LBB0_2: // %steady.stage1.top
 ; OLP-NEXT:    // =>This Loop Header: Depth=1
 ; OLP-NEXT:    // Child Loop BB0_3 Depth 2

@@ -226,7 +226,7 @@ define dso_local void @conv2d(i32 %0, ptr %add.ptr3, ptr %ofm, ptr %psum_0_tdm, 
 ;
 ; NO-PROLOGUE-SPLIT-LABEL: conv2d:
 ; NO-PROLOGUE-SPLIT:       // %bb.0: // %newFuncRoot
-; NO-PROLOGUE-SPLIT-NEXT:    paddxm [sp], #64; nopb ; nopxm
+; NO-PROLOGUE-SPLIT-NEXT:    paddxm [sp], #64; nopx
 ; NO-PROLOGUE-SPLIT-NEXT:    st p6, [sp, #-64] // 4-byte Folded Spill
 ; NO-PROLOGUE-SPLIT-NEXT:    mova m0, #-68; mov p6, sp
 ; NO-PROLOGUE-SPLIT-NEXT:    padda [p6], m0
@@ -260,12 +260,9 @@ define dso_local void @conv2d(i32 %0, ptr %add.ptr3, ptr %ofm, ptr %psum_0_tdm, 
 ; NO-PROLOGUE-SPLIT-NEXT:    or r22, r12, r12; mov s1, r5
 ; NO-PROLOGUE-SPLIT-NEXT:    mova r12, #264; movx crupsmode, #0; mov dc3, dc7
 ; NO-PROLOGUE-SPLIT-NEXT:    movs dc6, dc7; add r0, r0, #-1; vshuffle x2, x4, x6, r2; vmul dm2, x0, x2, r12
-; NO-PROLOGUE-SPLIT-NEXT:    movs dc2, dc7; or r10, r3, r3; addm.nc r1, r0, #-1; vmul dm3, x0, x8, r12
-; NO-PROLOGUE-SPLIT-NEXT:    mova r16, #5; nopb ; movs dc5, dc7; movxm p4, #.LBB0_1; vaddmac dm1, dm1, dm2, x2, x10, r10
-; NO-PROLOGUE-SPLIT-NEXT:    mova r18, #16; nopb ; movs dc1, dc7; movx crsrsmode, #0; mov m5, r17; vaddmac dm0, dm0, dm3, x2, x1, r10
-; NO-PROLOGUE-SPLIT-NEXT:    vldb.popx x8, [p1, lf1, r25]
-; NO-PROLOGUE-SPLIT-NEXT:    vldb.pop.3d x6, [p1, lf1, r25, d0]
-; NO-PROLOGUE-SPLIT-NEXT:    vldb.popx x8, [p1, lf1, r25]
+; NO-PROLOGUE-SPLIT-NEXT:    movs dc2, dc7; vldb.popx x8, [p1, lf1, r25]; or r10, r3, r3; addm.nc r1, r0, #-1; vmul dm3, x0, x8, r12
+; NO-PROLOGUE-SPLIT-NEXT:    mova r16, #5; vldb.pop.3d x6, [p1, lf1, r25, d0]; movs dc5, dc7; movxm p4, #.LBB0_1; vaddmac dm1, dm1, dm2, x2, x10, r10
+; NO-PROLOGUE-SPLIT-NEXT:    mova r18, #16; vldb.popx x8, [p1, lf1, r25]; movs dc1, dc7; movx crsrsmode, #0; mov m5, r17; vaddmac dm0, dm0, dm3, x2, x1, r10
 ; NO-PROLOGUE-SPLIT-NEXT:    vlda x4, [p7], #64; vldb.pop.3d x6, [p1, lf1, r25, d0]
 ; NO-PROLOGUE-SPLIT-NEXT:    vlda x2, [p7], #64; vldb.popx x8, [p1, lf1, r25]
 ; NO-PROLOGUE-SPLIT-NEXT:    vlda x4, [p7], #64; vldb.pop.3d x6, [p1, lf1, r25, d0]; nops ; add.nc lc, r4, #-6; nopm ; nopv

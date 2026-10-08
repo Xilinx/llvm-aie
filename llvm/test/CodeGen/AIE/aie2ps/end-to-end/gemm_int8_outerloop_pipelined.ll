@@ -144,8 +144,7 @@ define dso_local void @gemm(i32 %0, ptr addrspace(5) %1, ptr addrspace(5) %2, pt
 ; ASM-NEXT:    lda dn3, [p5], #-4; or r21, r8, r8; vshuffle x10, x1, x0, r4; vmul dm4, x0, x4, r10
 ; ASM-NEXT:    lda m7, [p5], #-4; movs dc3, dc0; mov dc7, dc0; vaddmac dm2, dm2, dm4, x8, x10, r12
 ; ASM-NEXT:    lda dj7, [p5, #0]; nopb ; movs dc0, dc2; add r0, r0, #-1; mov m5, #512; vaddmac dm1, dm1, dm4, x6, x10, r12
-; ASM-NEXT:    lda dn7, [p5, #-4]; nopb ; movs dc4, dc6; movx crsrsmode, #0; mov s1, r17; vaddmac dm0, dm0, dm4, x8, x10, r12
-; ASM-NEXT:    vldb x1, [p1], m4
+; ASM-NEXT:    lda dn7, [p5, #-4]; vldb x1, [p1], m4; movs dc4, dc6; movx crsrsmode, #0; mov s1, r17; vaddmac dm0, dm0, dm4, x8, x10, r12
 ; ASM-NEXT:    vlda.3d x10, [p1], d1
 ; ASM-NEXT:  .LBB0_1: // %for.body
 ; ASM-NEXT:    // =>This Loop Header: Depth=1
