@@ -1,0 +1,167 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# A function discarded by --gc-sections must not claim any code range in
+# .debug_info. DW_AT_high_pc is an address (DW_FORM_addr), so both
+# DW_AT_low_pc and DW_AT_high_pc are tombstoned and the range is empty, while
+# the live function keeps its real range.
+
+# REQUIRES: aie
+# RUN: yaml2obj -DFLAGS=EF_AIE_AIE2P -DRELOC=R_AIE_62 %s -o %t.aie2p.o
+# RUN: ld.lld --gc-sections -e live_fn -z dead-reloc-in-nonalloc=.debug_info=0xfffff %t.aie2p.o -o %t.aie2p
+# RUN: llvm-dwarfdump --debug-info %t.aie2p | FileCheck %s
+# RUN: yaml2obj -DFLAGS=EF_AIE_AIE2PS -DRELOC=R_AIE_135 %s -o %t.aie2ps.o
+# RUN: ld.lld --gc-sections -e live_fn -z dead-reloc-in-nonalloc=.debug_info=0xfffff %t.aie2ps.o -o %t.aie2ps
+# RUN: llvm-dwarfdump --debug-info %t.aie2ps | FileCheck %s
+
+# CHECK:      DW_TAG_subprogram
+# CHECK-NEXT:   DW_AT_low_pc (0x000fffff)
+# CHECK-NEXT:   DW_AT_high_pc (0x000fffff)
+# CHECK-NEXT:   DW_AT_name ("dead_fn")
+# CHECK:      DW_TAG_subprogram
+# CHECK-NEXT:   DW_AT_low_pc (0x0000{{[0-9a-f]+}})
+# CHECK-NEXT:   DW_AT_high_pc (0x0000{{[0-9a-f]+}})
+# CHECK-NEXT:   DW_AT_name ("live_fn")
+
+## Generated with llc -function-sections and obj2yaml from line-tables-only,
+## profiling debug info for:
+##   int dead_fn(int x) { return x * 3 + 1; }
+##   int live_fn(int x) { return x ^ 5; }
+## The code bytes are irrelevant to this test and replaced by zero fill.
+
+--- !ELF
+FileHeader:
+  Class:           ELFCLASS32
+  Data:            ELFDATA2LSB
+  Type:            ET_REL
+  Machine:         EM_AIE
+  Flags:           [ [[FLAGS]] ]
+Sections:
+  - Name:            .text.dead_fn
+    Type:            SHT_PROGBITS
+    Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
+    AddressAlign:    0x10
+    Size:            0x20
+  - Name:            .text.live_fn
+    Type:            SHT_PROGBITS
+    Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
+    AddressAlign:    0x10
+    Size:            0x20
+  - Name:            .debug_abbrev
+    Type:            SHT_PROGBITS
+    AddressAlign:    0x1
+    Content:         01110125081305030810171B08110155170000022E001101120103083A0B3B0B000000
+  - Name:            .debug_info
+    Type:            SHT_PROGBITS
+    AddressAlign:    0x1
+    Content:         490000000400000000000401636C616E67001D00742E6300000000002F000000000000000000020000000000000000646561645F666E0001010200000000000000006C6976655F666E00010200
+  - Name:            .debug_line
+    Type:            SHT_PROGBITS
+    AddressAlign:    0x1
+    Content:         4B00000004001B000000010101FB0E0D00010101010000000100000100742E63000000000005160A0005020000000001051F060858020A00010105160A0005020000000013051F0608AC0204000101
+  - Name:            .rela.debug_info
+    Type:            SHT_RELA
+    Flags:           [ SHF_INFO_LINK ]
+    Link:            .symtab
+    AddressAlign:    0x4
+    Info:            .debug_info
+    Relocations:
+      - Offset:          0x6
+        Symbol:          .debug_abbrev
+        Type:            [[RELOC]]
+      - Offset:          0x18
+        Symbol:          .Lline_table_start0
+        Type:            [[RELOC]]
+      - Offset:          0x22
+        Symbol:          .Ldebug_ranges0
+        Type:            [[RELOC]]
+      - Offset:          0x27
+        Symbol:          .Lfunc_begin0
+        Type:            [[RELOC]]
+      - Offset:          0x2B
+        Symbol:          .Lfunc_end0
+        Type:            [[RELOC]]
+      - Offset:          0x3A
+        Symbol:          .Lfunc_begin1
+        Type:            [[RELOC]]
+      - Offset:          0x3E
+        Symbol:          .Lfunc_end1
+        Type:            [[RELOC]]
+  - Name:            .rela.debug_ranges
+    Type:            SHT_RELA
+    Flags:           [ SHF_INFO_LINK ]
+    Link:            .symtab
+    AddressAlign:    0x4
+    Info:            .debug_ranges
+    Relocations:
+      - Symbol:          .Lfunc_begin0
+        Type:            [[RELOC]]
+      - Offset:          0x4
+        Symbol:          .Lfunc_end0
+        Type:            [[RELOC]]
+      - Offset:          0x8
+        Symbol:          .Lfunc_begin1
+        Type:            [[RELOC]]
+      - Offset:          0xC
+        Symbol:          .Lfunc_end1
+        Type:            [[RELOC]]
+  - Name:            .rela.debug_line
+    Type:            SHT_RELA
+    Flags:           [ SHF_INFO_LINK ]
+    Link:            .symtab
+    AddressAlign:    0x4
+    Info:            .debug_line
+    Relocations:
+      - Offset:          0x2B
+        Symbol:          .Ltmp0
+        Type:            [[RELOC]]
+      - Offset:          0x40
+        Symbol:          .Ltmp3
+        Type:            [[RELOC]]
+Symbols:
+  - Name:            .Lfunc_begin0
+    Section:         .text.dead_fn
+  - Name:            .Ltmp0
+    Section:         .text.dead_fn
+  - Name:            .Lfunc_end0
+    Section:         .text.dead_fn
+    Value:           0x20
+  - Name:            .Lfunc_begin1
+    Section:         .text.live_fn
+  - Name:            .Ltmp3
+    Section:         .text.live_fn
+  - Name:            .Lfunc_end1
+    Section:         .text.live_fn
+    Value:           0x20
+  - Name:            .debug_abbrev
+    Type:            STT_SECTION
+    Section:         .debug_abbrev
+  - Name:            .Lline_table_start0
+    Section:         .debug_line
+  - Name:            .Ldebug_ranges0
+    Section:         .debug_ranges
+  - Name:            dead_fn
+    Type:            STT_FUNC
+    Section:         .text.dead_fn
+    Binding:         STB_GLOBAL
+    Size:            0x20
+  - Name:            live_fn
+    Type:            STT_FUNC
+    Section:         .text.live_fn
+    Binding:         STB_GLOBAL
+    Size:            0x20
+DWARF:
+  debug_ranges:
+    - Offset:          0x0
+      AddrSize:        0x4
+      Entries:         []
+    - Offset:          0x8
+      AddrSize:        0x4
+      Entries:         []
+    - Offset:          0x10
+      AddrSize:        0x4
+      Entries:         []

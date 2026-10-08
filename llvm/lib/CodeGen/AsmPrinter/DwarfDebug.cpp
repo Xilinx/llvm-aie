@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file contains support for writing dwarf debug info into asm files.
@@ -417,6 +420,13 @@ DwarfDebug::DwarfDebug(AsmPrinter *A)
   UseGNUTLSOpcode = tuneForGDB() || DwarfVersion < 3;
 
   UseDWARF2Bitfields = DwarfVersion < 4;
+
+  // A function removed by --gc-sections keeps its DIE, and the linker only
+  // tombstones the relocated DW_AT_low_pc. An offset-form DW_AT_high_pc then
+  // still describes [tombstone, tombstone + size), which on AIE overlaps live
+  // code or runs past program memory. As an address, DW_AT_high_pc is
+  // tombstoned too and the dead range is empty.
+  UseAddressFormForHighPC = DwarfVersion < 4 || TT.isAIE();
 
   // The DWARF v5 string offsets table has - possibly shared - contributions
   // from each compile and type unit each preceded by a header. The string
