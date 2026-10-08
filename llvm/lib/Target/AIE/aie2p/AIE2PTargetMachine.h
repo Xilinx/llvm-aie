@@ -56,6 +56,7 @@ public:
   void addPreRegBankSelect() override;
   void addPreLegalizeMachineIR() override;
   bool addRegAssignAndRewriteOptimized() override;
+  std::unique_ptr<const AIEOLPOTargetConfig> getOLPOConfig() const override;
 };
 
 } // namespace llvm

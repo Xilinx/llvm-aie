@@ -23,6 +23,7 @@
 
 namespace llvm {
 class AIEOLPTargetConfig;
+class AIEOLPOTargetConfig;
 class AIESubtarget;
 class AIETargetMachine;
 class AsmPrinter;
@@ -143,7 +144,10 @@ llvm::FunctionPass *createAIEInnerLoopVersioningPass();
 // Outer Loop Pointer Optimizer (IR-level, runs before Outer Loop Pipeliner)
 extern char &AIEOuterLoopPointerOptimizerID;
 void initializeAIEOuterLoopPointerOptimizerPass(PassRegistry &);
-llvm::FunctionPass *createAIEOuterLoopPointerOptimizerPass();
+// Config carries the target policy the pass needs; see AIEOLPOTargetConfig.
+// Passing nullptr selects the default policy.
+llvm::FunctionPass *createAIEOuterLoopPointerOptimizerPass(
+    std::unique_ptr<const AIEOLPOTargetConfig> Config = nullptr);
 } // namespace llvm
 
 #endif

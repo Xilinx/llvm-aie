@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIE2TargetMachine.h"
+#include "AIE2OuterLoopPointerOptimizerConfig.h"
 #include "AIE2TargetTransformInfo.h"
 #include "AIECombiners.h"
 #include "AIEDumpArtifacts.h"
@@ -93,12 +94,17 @@ std::unique_ptr<const AIEOLPTargetConfig> AIE2PassConfig::getOLPConfig() const {
       getTM<AIEBaseTargetMachine>().getAIESubtarget()->getInstrInfo());
 }
 
+std::unique_ptr<const AIEOLPOTargetConfig>
+AIE2PassConfig::getOLPOConfig() const {
+  return std::make_unique<AIE2OLPOTargetConfig>();
+}
+
 bool AIE2PassConfig::addPreISel() {
   if (TM->getOptLevel() != CodeGenOptLevel::None) {
     if (!DisableInnerLoopVersioning)
       addPass(createAIEInnerLoopVersioningPass());
     addPass(createHardwareLoopsLegacyPass());
-    addPass(createAIEOuterLoopPointerOptimizerPass());
+    addPass(createAIEOuterLoopPointerOptimizerPass(getOLPOConfig()));
     addPass(createAIEOuterLoopPipelinerPass(getOLPConfig()));
   }
   return false;

@@ -191,6 +191,7 @@ add_llvm_target(AIECodeGen
    aie2/AIE2RegisterBankInfo.cpp
    aie2/AIE2RegisterInfo.cpp
    aie2/AIE2Subtarget.cpp
+   aie2/AIE2OuterLoopPointerOptimizerConfig.cpp
    aie2/AIE2TargetMachine.cpp
    aie2/AIE2TargetTransformInfo.cpp
    AIETiedRegOperands.cpp
@@ -217,6 +218,7 @@ add_llvm_target(AIECodeGen
    aie1/AIE1TargetMachine.cpp
    # aie2p
    aie2p/AIE2PSubtarget.cpp
+   aie2p/AIE2POuterLoopPointerOptimizerConfig.cpp
    aie2p/AIE2PTargetMachine.cpp
    aie2p/AIE2PTargetTransformInfo.cpp
    aie2p/AIE2PRegisterInfo.cpp
@@ -231,6 +233,7 @@ add_llvm_target(AIECodeGen
    aie2p/AIE2PPreLegalizerCombiner.cpp
    # aie2ps
    aie2ps/AIE2PSOuterLoopPipelinerConfig.cpp
+   aie2ps/AIE2PSOuterLoopPointerOptimizerConfig.cpp
    aie2ps/AIE2PSSubtarget.cpp
    aie2ps/AIE2PSTargetMachine.cpp
    aie2ps/AIE2PSTargetTransformInfo.cpp

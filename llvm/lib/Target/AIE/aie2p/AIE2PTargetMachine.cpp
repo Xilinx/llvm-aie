@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIE2PTargetMachine.h"
+#include "AIE2POuterLoopPointerOptimizerConfig.h"
 #include "AIE2PTargetTransformInfo.h"
 #include "AIECombiners.h"
 #include "AIESuperRegUtils.h"
@@ -44,6 +45,11 @@ AIE2PTargetMachine::AIE2PTargetMachine(const Target &T, const Triple &TT,
   setGlobalISel(true);
   setFastISel(false);
   setGlobalISelAbort(GlobalISelAbortMode::Enable);
+}
+
+std::unique_ptr<const AIEOLPOTargetConfig>
+AIE2PPassConfig::getOLPOConfig() const {
+  return std::make_unique<AIE2POLPOTargetConfig>();
 }
 
 void AIE2PPassConfig::addPreLegalizeMachineIR() {
