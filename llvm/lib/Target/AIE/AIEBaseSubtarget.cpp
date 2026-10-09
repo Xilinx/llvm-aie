@@ -487,14 +487,9 @@ class RegionEndEdges : public ScheduleDAGMutation {
     // to be able to issue in the same cycle as ExitSU (cycle #0 in bottom-up
     // scheduling).
     // Pin edges keep their latency: subtracting 1 from a BotFixed link of 1
-    // would make it 0. TopFixed edges were just added above and need the same
-    // adjustment as free edges.
-    auto Adjust = [&](const SUnit &SU) {
-      return IsFree(SU) ||
-             (Scheduler && Scheduler->isFixedSU(SU, /*IsTop=*/true));
-    };
+    // would make it 0. Every other ExitSU predecessor was added above.
     for (SDep &PredEdge : DAG->ExitSU.Preds) {
-      if (!PredEdge.isArtificial() || !Adjust(*PredEdge.getSUnit()))
+      if (PredEdge.isPin())
         continue;
       unsigned BackwardLatency =
           PredEdge.getLatency() ? PredEdge.getLatency() - 1 : 0;
