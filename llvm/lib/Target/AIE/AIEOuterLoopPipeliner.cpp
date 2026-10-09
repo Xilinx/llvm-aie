@@ -633,10 +633,11 @@ public:
 
   // Repair loop metadata (trip count changed): decrement itercount.range, drop
   // the consumed enable hint, and append the success marker.
-  void updateLoopMetadata() const;
+  void updateLoopMetadata(AIELoopUtils::OLPPeelMode Mode =
+                              AIELoopUtils::OLPPeelMode::PeelLast) const;
 
   // Mark this loop as speculatively outer-loop pipelined without adjusting its
-  // iteration-count metadata.
+  // iteration-count metadata. Speculative mode is always peel-last.
   void markSpeculativePipelining() const;
 };
 
@@ -2137,8 +2138,9 @@ void CloneLoopStructure::adjustLoopBound() const {
 // Copy Source's hint entries dropping the consumed enable hint, append the
 // pipeliner success marker and, optionally, the speculative marker, and
 // self-reference operand 0 as a loop ID requires.
-static MDNode *rebuildPipelinedLoopID(LLVMContext &Ctx, MDNode *Source,
-                                      bool IsSpeculative = false) {
+static MDNode *rebuildPipelinedLoopID(
+    LLVMContext &Ctx, MDNode *Source, bool IsSpeculative = false,
+    AIELoopUtils::OLPPeelMode Mode = AIELoopUtils::OLPPeelMode::PeelLast) {
   const std::string EnableHintKey =
       (AIE::LoopOptionOverrides::Prefix + EnableOuterLoopPipelining.ArgStr)
           .str();
@@ -2168,6 +2170,12 @@ static MDNode *rebuildPipelinedLoopID(LLVMContext &Ctx, MDNode *Source,
     MDs.push_back(SpeculativeEntry);
   }
 
+  // Append the peel-mode marker: !{!"<PeelModeKey>", !"first"} or !"last"
+  MDNode *ModeEntry = MDNode::get(
+      Ctx, {MDString::get(Ctx, AIELoopUtils::OuterLoopPeelModeKey),
+            MDString::get(Ctx, AIELoopUtils::peelModeString(Mode))});
+  MDs.push_back(ModeEntry);
+
   // Loop IDs require operand 0 to refer to the node itself; reserve that slot
   // before uniquing so replaceOperandWith does not clobber the first hint
   // entry.
@@ -2177,7 +2185,8 @@ static MDNode *rebuildPipelinedLoopID(LLVMContext &Ctx, MDNode *Source,
   return FinalLoopID;
 }
 
-void CloneLoopStructure::updateLoopMetadata() const {
+void CloneLoopStructure::updateLoopMetadata(
+    AIELoopUtils::OLPPeelMode Mode) const {
   MDNode *LoopID = getOuterLoopID();
   if (!LoopID)
     return;
@@ -2190,7 +2199,8 @@ void CloneLoopStructure::updateLoopMetadata() const {
   MDNode *Source = AdjustedID ? AdjustedID : LoopID;
 
   // Drop the consumed enable hint and append the success marker.
-  MDNode *FinalLoopID = rebuildPipelinedLoopID(Ctx, Source);
+  MDNode *FinalLoopID = rebuildPipelinedLoopID(Ctx, Source,
+                                               /*IsSpeculative=*/false, Mode);
 
   // Write onto the latch terminator (what Loop::setLoopID does internally) so
   // this works on a clone with no LoopInfo Loop.
@@ -2347,7 +2357,7 @@ bool AIEOuterLoopPipeliner::performTransformation(OrigLoopStructure &OrigLS,
 
     // Adjust the outer loop trip count: N -> N-1.
     SteadyLS.adjustLoopBound();
-    SteadyLS.updateLoopMetadata();
+    SteadyLS.updateLoopMetadata(AIELoopUtils::OLPPeelMode::PeelFirst);
 
     // Determine whether to use hardware loop based on pointer pressure.
     const unsigned NumPointerPHIs = OrigLS.countBasePointerPHIs();
