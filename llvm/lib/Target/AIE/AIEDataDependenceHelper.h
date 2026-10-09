@@ -75,6 +75,18 @@ public:
 ///               last predecessor cycle is -1.
 ///   PostDepths — top-down cycle of each post-boundary node.
 ///
+/// Both sides share one cycle axis through the CFG boundary. PreDepth grows
+/// upward through the predecessor and is stored negative, so the boundary
+/// stays at 0. PostDepth grows downward through the successor. depth + latency
+/// and latency - depth then work on either side. The last predecessor cycle
+/// is -1. Successor cycle 0 is the first cycle after the boundary.
+///
+///   ^
+///   | PreDepth   -3  -2  -1
+/// ----- Boundary
+///   | PostDepth   0   1   2
+///   v
+///
 /// Each is a NodeValues object: a per-node map plus a region maximum.
 /// Recording an instruction that is not in the matching pre/post index is
 /// ignored for the per-node map but still updates the region maximum. The
