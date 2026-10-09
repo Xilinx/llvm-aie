@@ -33,7 +33,7 @@
 //       |  (exit branch)
 //   [exit]
 //
-// Produced CFG:
+// Produced CFG (peel-last mode, default):
 //
 //   [preheader]
 //       |
@@ -50,6 +50,26 @@
 //   [lastiter.stage1.inner.*]                <- inner loop clone
 //       |
 //   [lastiter.stage1.bottom]                 <- stage 1
+//       |
+//   [exit]
+//
+// Produced CFG (peel-first mode):
+//
+//   [preheader]
+//       |
+//   [firstiter.stage0.top]                        <- full top (loads + addr)
+//       |
+//   [firstiter.stage0.inner.*]                    <- full inner loop
+//       |
+//   [firstiter.stage0.bottom]                     <- stage 1 only (ptr-updates)
+//       |
+//   [steady.stage0.bottom.and.stage1.top] <---\   <- stage 0 + stage 1
+//       |                                      |
+//   [steady.stage1.inner.*]                   |   <- inner loop
+//       |                                      |
+//   [steady.stage1.bottom]  ------------------/   <- stage 1 (ptr-updates)
+//       |  (exit branch)
+//   [lastiter.stage1.bottom]                      <- stage 0 (epilogue)
 //       |
 //   [exit]
 //
@@ -123,6 +143,25 @@ static cl::opt<bool> LeanStage0Mode(
              "intrinsics selected for lean stage 0"),
     cl::init(false), cl::Hidden);
 
+/// Pipelining algorithm: which iteration gets peeled out of the steady loop.
+enum class PipeliningMode {
+  // Stage-0 seeds the inner loop (prefetch loads); peel the last iteration
+  // (stores-only exiting block) — default.
+  PeelLast,
+  // Stage-1 is seeded from the inner loop (stores); peel the first iteration
+  // (loads-only preheader).
+  PeelFirst,
+};
+
+static cl::opt<PipeliningMode> PipeliningModeOpt(
+    "aie-outer-loop-pipelining-mode",
+    cl::desc("Select the outer-loop pipelining algorithm"),
+    cl::values(clEnumValN(PipeliningMode::PeelLast, "last",
+                          "Peel the last iteration (default)"),
+               clEnumValN(PipeliningMode::PeelFirst, "first",
+                          "Peel the first iteration")),
+    cl::init(PipeliningMode::PeelLast), cl::Hidden);
+
 /// Outer loop type selection after pipelining.
 enum class OuterLoopType { Soft, HW, Auto };
 
@@ -152,6 +191,7 @@ struct OLPOpts {
   bool SplitStagesEnabled;
   bool UseLeanStage0;
   bool EnableSpeculativeLastIteration;
+  PipeliningMode Mode;
   OuterLoopType LoopType;
 
   explicit OLPOpts(const AIE::LoopOptionOverrides &Overrides)
@@ -163,6 +203,7 @@ struct OLPOpts {
             Overrides.hasOverride(SpeculativeLastIteration)
                 ? Overrides.get(SpeculativeLastIteration)
                 : UseLeanStage0),
+        Mode(Overrides.get(PipeliningModeOpt)),
         LoopType(Overrides.get(OuterLoopTypeOpt)) {}
 
   /// Determine whether to use hardware loop based on loop type and pointer
@@ -382,11 +423,17 @@ class OrigLoopStructure : public LoopStructure {
 
   // True if I lives in the top and is a plain instruction or a
   // region-internal PHI; loop-carried PHIs are excluded.
-  bool isPipelineableValue(const Instruction *I) const;
+  // When IncludeBottom is true, non-terminator bottom-block instructions are
+  // also accepted (used for peel-first stage-1 collection).
+  bool isPipelineableValue(const Instruction *I,
+                           bool IncludeBottom = false) const;
 
   // A pipelineable value also clonable into the prefetch/last-iteration sites;
   // excludes terminators and hardware-loop setup.
-  bool isPipelineCandidate(const Instruction *I) const;
+  // When IncludeBottom is true, bottom-block instructions are also accepted
+  // (used for peel-first stage collection).
+  bool isPipelineCandidate(const Instruction *I,
+                           bool IncludeBottom = false) const;
 
   // Returns true if the inner loop is a hardware (JNZD) loop, i.e. its latch is
   // controlled by an @llvm.loop.decrement intrinsic.
@@ -400,8 +447,9 @@ class OrigLoopStructure : public LoopStructure {
 
   // Returns the pipelineable closure of Seeds: users if TraverseUsers,
   // otherwise operands.
-  SmallPtrSet<Instruction *, 32> collectClosure(ArrayRef<Instruction *> Seeds,
-                                                bool TraverseUsers) const;
+  SmallPtrSet<Instruction *, 32>
+  collectClosure(ArrayRef<Instruction *> Seeds, bool TraverseUsers,
+                 bool IncludeBottom = false) const;
 
   // The stage-1 set: the split points (IsSplitPoint, reachable from the
   // top-block loads) and their top-block descendants. Empty if none is found.
@@ -412,6 +460,12 @@ class OrigLoopStructure : public LoopStructure {
   void seedFromInnerLoop(SmallVectorImpl<Instruction *> &Seeds);
   void seedFromLoads(SmallVectorImpl<Instruction *> &Seeds,
                      const AIEOLPTargetConfig &Config);
+  
+  // Peel-first: collect the bottom-block stage-0 (consumer) seed set from the
+  // forward closure of LCSSA PHI users in the bottom block. After
+  // formLCSSARecursively every PHI in the bottom block is an LCSSA PHI.
+  // Only users that have no use outside the bottom block are seeded.
+  SmallPtrSet<Instruction *, 32> seedFromLCSSAPHIs() const;
 
   // Unified stage-0 collection via backward closure from seeds.
   // PopulateStage1 controls whether remaining candidates go to Stage1Insts.
@@ -430,6 +484,11 @@ class OrigLoopStructure : public LoopStructure {
                              SmallPtrSetImpl<Instruction *> &ToPromote) const;
 
 public:
+  // Peel-first: partition the bottom-block pipeline candidates into stage-1
+  // (forward+backward closure seeded from LCSSA PHI users) and stage-0
+  // (everything else), populating Stage1Insts and Stage0Insts in program order.
+  void collectFirstIterStages();
+
   // Build and validate the LS for L; nullptr if L is not a supported candidate.
   static std::unique_ptr<OrigLoopStructure> tryBuildFrom(Loop *L);
 
@@ -471,6 +530,10 @@ public:
   // they enable.
   void collectDerivedPointerUpdates(const AIEOLPTargetConfig &Config);
 
+  // Returns true if I is in the stage-0 (displaced) set. Used by peel-first
+  // to filter stage-0 instructions from the firstiter bottom block.
+  bool isInStage0(const Instruction *I) const;
+
   // Delete this (now unreachable) LS's blocks.
   void removeFromCFG() const;
 };
@@ -486,7 +549,12 @@ class CloneLoopStructure : public LoopStructure {
 public:
   // Deep-clone Src into "<name>.<Suffix>" IR; internal references are remapped,
   // edges leaving the LS stay at Src's externals for the caller to rewire.
-  CloneLoopStructure(const LoopStructure &Src, const Twine &Suffix);
+  // When PeelFirst is true, block names reflect the peel-first layout:
+  //   "firstiter" -> firstiter.stage0.{top,inner,bottom}
+  //   "steady"    -> steady.stage0.bottom.and.stage1.top / stage1.inner /
+  //   stage1.bottom
+  CloneLoopStructure(const LoopStructure &Src, const Twine &Suffix,
+                     bool PeelFirst = false);
 
   // Create the empty last-iteration blocks spliced before Src's exit and record
   // the Src->lastiter block mappings; the caller fills the bodies. Src is the
@@ -536,10 +604,11 @@ public:
 
   // Repair loop metadata (trip count changed): decrement itercount.range, drop
   // the consumed enable hint, and append the success marker.
-  void updateLoopMetadata() const;
+  void updateLoopMetadata(AIELoopUtils::OLPPeelMode Mode =
+                              AIELoopUtils::OLPPeelMode::PeelLast) const;
 
   // Mark this loop as speculatively outer-loop pipelined without adjusting its
-  // iteration-count metadata.
+  // iteration-count metadata. Speculative mode is always peel-last.
   void markSpeculativePipelining() const;
 };
 
@@ -672,6 +741,32 @@ private:
   // the preheader, a counter PHI in the header, loop.decrement.reg in the
   // latch. Requires latchCondition().isDowncounting().
   void convertOuterLoopToHardwareLoop(CloneLoopStructure &SteadyLS);
+
+  // --- Peel-first step helpers ---
+
+  // Create the first-iteration prologue region (full top + inner + stage-1-only
+  // bottom) and wire it before the steady loop. Returns the firstiter LS (heap-
+  // allocated; CloneLoopStructure is non-movable) whose VMap maps original
+  // inner-loop instructions to their firstiter clones.
+  std::unique_ptr<CloneLoopStructure>
+  peelFirstIteration(const OrigLoopStructure &OrigLS,
+                     CloneLoopStructure &SteadyLS);
+
+  // Clone the bottom-block stage-0 instructions (stores + inner-result users)
+  // into the beginning of the steady top, creating inner_result_phi merge
+  // nodes. Erases stage-0 clones from steady.stage1.bottom. TopVMap is output
+  // for createStage1Epilogue.
+  void cloneStage0IntoTop(const OrigLoopStructure &OrigLS,
+                          CloneLoopStructure &SteadyLS,
+                          const CloneLoopStructure &FirstIterLS,
+                          RemapTable &TopVMap);
+
+  // Create the single-block epilogue (lastiter.stage1.bottom) after the steady
+  // loop exit, containing stage-0 instructions using the last steady
+  // inner-loop results.
+  void createStage1Epilogue(const OrigLoopStructure &OrigLS,
+                            const CloneLoopStructure &SteadyLS,
+                            const RemapTable &TopVMap);
 };
 
 } // end anonymous namespace
@@ -951,13 +1046,14 @@ bool OrigLoopStructure::isSafeToReorderMemoryOps() const {
 
 SmallPtrSet<Instruction *, 32>
 OrigLoopStructure::collectClosure(ArrayRef<Instruction *> Seeds,
-                                  bool TraverseUsers) const {
+                                  bool TraverseUsers,
+                                  bool IncludeBottom) const {
   SmallPtrSet<Instruction *, 32> Closure;
   SmallVector<Instruction *, 32> Worklist;
   auto Enqueue = [&](Instruction *I) {
     if (!I)
       return;
-    if (!isPipelineableValue(I))
+    if (!isPipelineableValue(I, IncludeBottom))
       return;
     if (Closure.insert(I).second)
       Worklist.push_back(I);
@@ -1037,6 +1133,29 @@ void OrigLoopStructure::seedFromLoads(SmallVectorImpl<Instruction *> &Seeds,
         Seeds.push_back(User);
     }
   });
+}
+
+SmallPtrSet<Instruction *, 32> OrigLoopStructure::seedFromLCSSAPHIs() const {
+  // An instruction qualifies as a seed only if all of its uses are in the
+  // bottom block (i.e., it has no use outside the bottom block).
+  auto HasUseOutsideBottom = [this](const Instruction *I) -> bool {
+    return llvm::any_of(I->users(), [this](const User *U) {
+      const auto *UI = dyn_cast<Instruction>(U);
+      return UI && !isInBottom(UI);
+    });
+  };
+
+  SmallVector<Instruction *, 16> Seeds;
+  for (PHINode &PHI : getBottom()->phis()) {
+    for (User *U : PHI.users()) {
+      auto *UI = dyn_cast<Instruction>(U);
+      if (UI && isInBottom(UI) && !HasUseOutsideBottom(UI))
+        Seeds.push_back(UI);
+    }
+  }
+  // Forward closure: stores and any other bottom-block consumers of the
+  // inner-loop live-outs. The LCSSA PHIs themselves are not stage-1.
+  return collectClosure(Seeds, /*TraverseUsers=*/true, /*IncludeBottom=*/true);
 }
 
 void OrigLoopStructure::collectStage0(
@@ -1208,6 +1327,37 @@ void OrigLoopStructure::collectLeanStage0(const AIEOLPTargetConfig &Config) {
                 /*PopulateStage1=*/true);
 }
 
+void OrigLoopStructure::collectFirstIterStages() {
+  // Forward closure: bottom-block consumers of LCSSA PHIs (stores etc.).
+  const SmallPtrSet<Instruction *, 32> FwdSet = seedFromLCSSAPHIs();
+
+  // Backward closure: pulls in address computations (GEPs etc.) that feed
+  // the stores but are not reachable forward from the LCSSA PHIs.
+  SmallVector<Instruction *, 32> BwdSeeds(FwdSet.begin(), FwdSet.end());
+  // ConsumerSet: instructions displaced one iteration forward (stage-0).
+  const SmallPtrSet<Instruction *, 32> ConsumerSet =
+      collectClosure(BwdSeeds, /*TraverseUsers=*/false, /*IncludeBottom=*/true);
+
+  // Emit stage-0 (consumers, displaced forward) and stage-1 (ptr-updates,
+  // stationary) candidates from the bottom region in program order.
+  // Symmetric with peel-last: stage-0 = the displaced set, stage-1 = the rest.
+  bottomRegion().forEachInstruction([&](Instruction *I) {
+    if (!isPipelineCandidate(I, /*IncludeBottom=*/true))
+      return;
+    (ConsumerSet.count(I) ? Stage0Insts : Stage1Insts).push_back(I);
+  });
+
+  LLVM_DEBUG({
+    dbgs() << "    Peel-first: " << stage0Insts().size()
+           << " stage-0 (consumers), " << stage1Insts().size()
+           << " stage-1 (ptr-updates) in bottom\n";
+    for (Instruction *I : stage0Insts())
+      dbgs() << "      [stage-0/consumer] " << *I << "\n";
+    for (Instruction *I : stage1Insts())
+      dbgs() << "      [stage-1/ptr-update] " << *I << "\n";
+  });
+}
+
 SmallVector<Instruction *, 16>
 AIEOuterLoopPipeliner::remapToClone(ArrayRef<Instruction *> Insts,
                                     const RemapTable &VMap) {
@@ -1280,7 +1430,7 @@ SmallVector<Instruction *, 16> AIEOuterLoopPipeliner::cloneAndRemapInsts(
 }
 
 CloneLoopStructure::CloneLoopStructure(const LoopStructure &Src,
-                                       const Twine &Suffix) {
+                                       const Twine &Suffix, bool PeelFirst) {
   Function *F = Src.getTop()->getParent();
 
   // Blocks in program order; CloneBasicBlock seeds CloneMap (src->clone).
@@ -1318,12 +1468,25 @@ CloneLoopStructure::CloneLoopStructure(const LoopStructure &Src,
   // until remapBoundThroughCloneMap retargets them to this clone.
   OuterLoopCondition = Src.latchCondition();
 
-  // Label clones by <copy>.stage1.<position>; the bottom block also hosts the
-  // next iteration's stage-0 prefetch, hence the compound name.
-  getTop()->setName(SuffixStr + ".stage1.top");
-  getBottom()->setName(SuffixStr + ".stage1.bottom.and.stage0.top");
+  // Compute block names based on pipelining mode. Peel-last and peel-first
+  // use different naming to reflect which stage occupies each position.
+  const bool IsFirstIter = PeelFirst && SuffixStr == "firstiter";
+  const std::string TopName =
+      PeelFirst
+          ? (IsFirstIter ? (SuffixStr + ".stage0.top").str()
+                         : (SuffixStr + ".stage0.bottom.and.stage1.top").str())
+          : (SuffixStr + ".stage1.top").str();
+  const std::string BottomName =
+      PeelFirst ? (IsFirstIter ? (SuffixStr + ".stage0.bottom").str()
+                               : (SuffixStr + ".stage1.bottom").str())
+                : (SuffixStr + ".stage1.bottom.and.stage0.top").str();
+  const std::string InnerTag =
+      (SuffixStr + "." + (IsFirstIter ? "stage0" : "stage1") + ".inner.").str();
+
+  getTop()->setName(TopName);
+  getBottom()->setName(BottomName);
   for (auto [Orig, Clone] : zip(Src.getInnerBlocks(), getInnerBlocks()))
-    Clone->setName(SuffixStr + ".stage1.inner." + Orig->getName());
+    Clone->setName(InnerTag + Orig->getName());
 }
 
 CloneLoopStructure::CloneLoopStructure(const LoopStructure &Src) {
@@ -1394,6 +1557,10 @@ void CloneLoopStructure::remapBoundThroughCloneMap() {
   B.Limit = Map(B.Limit);
   B.Counter = cast_or_null<BinaryOperator>(Map(B.Counter));
   B.IV = cast_or_null<PHINode>(Map(B.IV));
+}
+
+bool OrigLoopStructure::isInStage0(const Instruction *I) const {
+  return llvm::is_contained(Stage0Insts, I);
 }
 
 void OrigLoopStructure::removeFromCFG() const {
@@ -1691,18 +1858,23 @@ bool OrigLoopStructure::isRegionInternalPhi(const PHINode *PHI) const {
   return true;
 }
 
-bool OrigLoopStructure::isPipelineableValue(const Instruction *I) const {
-  if (!isInTop(I))
-    return false;
-  if (const auto *PHI = dyn_cast<PHINode>(I))
-    return isRegionInternalPhi(PHI);
-  return true;
+bool OrigLoopStructure::isPipelineableValue(const Instruction *I,
+                                            bool IncludeBottom) const {
+  if (isInTop(I)) {
+    if (const auto *PHI = dyn_cast<PHINode>(I))
+      return isRegionInternalPhi(PHI);
+    return true;
+  }
+  if (IncludeBottom && isInBottom(I) && !I->isTerminator() && !isa<PHINode>(I))
+    return true;
+  return false;
 }
 
-bool OrigLoopStructure::isPipelineCandidate(const Instruction *I) const {
+bool OrigLoopStructure::isPipelineCandidate(const Instruction *I,
+                                            bool IncludeBottom) const {
   if (I->isTerminator() || AIEIRUtils::isHardwareLoopSetup(I))
     return false;
-  return isPipelineableValue(I);
+  return isPipelineableValue(I, IncludeBottom);
 }
 
 BasicBlock *LoopStructure::getInnerLatch() const {
@@ -1856,8 +2028,9 @@ void CloneLoopStructure::adjustLoopBound() const {
 // Copy Source's hint entries dropping the consumed enable hint, append the
 // pipeliner success marker and, optionally, the speculative marker, and
 // self-reference operand 0 as a loop ID requires.
-static MDNode *rebuildPipelinedLoopID(LLVMContext &Ctx, MDNode *Source,
-                                      bool IsSpeculative = false) {
+static MDNode *rebuildPipelinedLoopID(
+    LLVMContext &Ctx, MDNode *Source, bool IsSpeculative = false,
+    AIELoopUtils::OLPPeelMode Mode = AIELoopUtils::OLPPeelMode::PeelLast) {
   const std::string EnableHintKey =
       (AIE::LoopOptionOverrides::Prefix + EnableOuterLoopPipelining.ArgStr)
           .str();
@@ -1887,6 +2060,12 @@ static MDNode *rebuildPipelinedLoopID(LLVMContext &Ctx, MDNode *Source,
     MDs.push_back(SpeculativeEntry);
   }
 
+  // Append the peel-mode marker: !{!"<PeelModeKey>", !"first"} or !"last"
+  MDNode *ModeEntry = MDNode::get(
+      Ctx, {MDString::get(Ctx, AIELoopUtils::OuterLoopPeelModeKey),
+            MDString::get(Ctx, AIELoopUtils::peelModeString(Mode))});
+  MDs.push_back(ModeEntry);
+
   // Loop IDs require operand 0 to refer to the node itself; reserve that slot
   // before uniquing so replaceOperandWith does not clobber the first hint
   // entry.
@@ -1896,7 +2075,8 @@ static MDNode *rebuildPipelinedLoopID(LLVMContext &Ctx, MDNode *Source,
   return FinalLoopID;
 }
 
-void CloneLoopStructure::updateLoopMetadata() const {
+void CloneLoopStructure::updateLoopMetadata(
+    AIELoopUtils::OLPPeelMode Mode) const {
   MDNode *LoopID = getOuterLoopID();
   if (!LoopID)
     return;
@@ -1909,7 +2089,8 @@ void CloneLoopStructure::updateLoopMetadata() const {
   MDNode *Source = AdjustedID ? AdjustedID : LoopID;
 
   // Drop the consumed enable hint and append the success marker.
-  MDNode *FinalLoopID = rebuildPipelinedLoopID(Ctx, Source);
+  MDNode *FinalLoopID = rebuildPipelinedLoopID(Ctx, Source,
+                                               /*IsSpeculative=*/false, Mode);
 
   // Write onto the latch terminator (what Loop::setLoopID does internally) so
   // this works on a clone with no LoopInfo Loop.
@@ -2021,9 +2202,62 @@ bool AIEOuterLoopPipeliner::liftBottomPointerUpdatesToTop(
 
 bool AIEOuterLoopPipeliner::performTransformation(OrigLoopStructure &OrigLS,
                                                   const OLPOpts &Opts) {
-
   /// Restore LCSSA if this property was invalidated.
   formLCSSARecursively(*OrigLS.getOuterLoop(), *DT, LI, SE);
+
+  // Peel-first mode: displace bottom-block stage-0 (stores + inner-result
+  // users) into the steady top, interleaving them with the next iteration's
+  // loads. Peel the first iteration as prologue and add a single-block
+  // epilogue for the last steady iteration's deferred stores.
+  if (Opts.Mode == PipeliningMode::PeelFirst) {
+    OrigLS.collectFirstIterStages();
+    if (OrigLS.stage0Insts().empty()) {
+      LLVM_DEBUG(dbgs() << "    Peel-first: no stage-0 instructions found; "
+                           "skipping\n");
+      return false;
+    }
+
+    // Clone the LS into a steady-state copy and swap it into the original's
+    // CFG slot; transform steps run on the clone, leaving OrigLS pristine.
+    CloneLoopStructure SteadyLS(OrigLS, "steady", /*PeelFirst=*/true);
+    swapInClonedLS(OrigLS, SteadyLS);
+    SteadyLS.remapBoundThroughCloneMap();
+
+    // Create the first-iteration prologue (full top + inner + stage-1-only
+    // bottom) and wire it before the steady loop.
+    std::unique_ptr<CloneLoopStructure> FirstIterLS =
+        peelFirstIteration(OrigLS, SteadyLS);
+
+    // Clone stage-0 instructions into the beginning of the steady top,
+    // creating inner_result_phi merge PHIs and erasing stage-0 from the
+    // steady bottom.
+    RemapTable TopVMap;
+    cloneStage0IntoTop(OrigLS, SteadyLS, *FirstIterLS, TopVMap);
+
+    // Create the single-block epilogue after the steady exit for the last
+    // steady iteration's deferred stage-0 instructions.
+    createStage1Epilogue(OrigLS, SteadyLS, TopVMap);
+
+    // Adjust the outer loop trip count: N -> N-1.
+    SteadyLS.adjustLoopBound();
+    SteadyLS.updateLoopMetadata(AIELoopUtils::OLPPeelMode::PeelFirst);
+
+    // Determine whether to use hardware loop based on pointer pressure.
+    const unsigned NumPointerPHIs = OrigLS.countBasePointerPHIs();
+    const bool OuterIsHardwareLoop =
+        Opts.shouldUseHardwareLoop(NumPointerPHIs) &&
+        SteadyLS.latchCondition().isDowncounting();
+    LLVM_DEBUG(dbgs() << "    Pointer PHIs: " << NumPointerPHIs
+                      << ", threshold: " << OuterLoopPointerThreshold
+                      << ", using " << (OuterIsHardwareLoop ? "hw" : "soft")
+                      << " loop\n");
+
+    if (OuterIsHardwareLoop)
+      convertOuterLoopToHardwareLoop(SteadyLS);
+
+    OrigLS.removeFromCFG();
+    return true;
+  }
 
   liftBottomPointerUpdatesToTop(OrigLS);
 
@@ -2198,4 +2432,247 @@ void AIEOuterLoopPipeliner::convertOuterLoopToHardwareLoop(
   SteadyLS.clearLatchCondition();
 
   LLVM_DEBUG(dbgs() << "    Converted outer loop to JNZD hardware loop\n");
+}
+
+// --- Peel-first step helpers ------------------------------------------------
+
+std::unique_ptr<CloneLoopStructure>
+AIEOuterLoopPipeliner::peelFirstIteration(const OrigLoopStructure &OrigLS,
+                                          CloneLoopStructure &SteadyLS) {
+  // Full structural clone of the original loop body into firstiter blocks.
+  // The suffix constructor deep-clones all instructions including the inner
+  // loop, producing: firstiter.stage0.top, firstiter.stage0.inner.*, and
+  // firstiter.stage0.bottom. Heap-allocated because CloneLoopStructure is
+  // non-movable (ValueMap deletes its move constructor).
+  auto FirstIterLS = std::unique_ptr<CloneLoopStructure>(
+      new CloneLoopStructure(OrigLS, "firstiter", /*PeelFirst=*/true));
+  BasicBlock *FirstIterTop = FirstIterLS->getTop();
+  BasicBlock *FirstIterBottom = FirstIterLS->getBottom();
+
+  // The firstiter runs exactly once (no looping). Remove the back-edge
+  // incoming from every header PHI in firstiter.top, then simplify any PHI
+  // that collapses to a single incoming value.
+  for (PHINode &PHI : make_early_inc_range(FirstIterTop->phis())) {
+    int BackEdgeIdx = PHI.getBasicBlockIndex(FirstIterBottom);
+    if (BackEdgeIdx >= 0)
+      PHI.removeIncomingValue(BackEdgeIdx, /*DeletePHIIfEmpty=*/false);
+    if (Value *V = PHI.hasConstantValue()) {
+      PHI.replaceAllUsesWith(V);
+      PHI.eraseFromParent();
+    }
+  }
+
+  // Strip stage-0 instructions and latch control from firstiter.bottom.
+  // Stage-0 (stores + inner-result consumers) are deferred to the steady top
+  // by cloneStage0IntoTop(). CounterAdd and Cmp are dead in a non-looping
+  // peeled block (same filter as populateLastIterBottom). Only stage-1
+  // (ptr-updates) survive. LCSSA PHIs are preserved -- cloneStage0IntoTop()
+  // needs them to build the inner_result_phi merge nodes.
+  const LatchConditionInfo &Bound = OrigLS.latchCondition();
+  SmallVector<Instruction *, 16> ToErase;
+  for (Instruction &OrigI : *OrigLS.getBottom()) {
+    if (OrigI.isTerminator() || isa<PHINode>(&OrigI))
+      continue;
+    const bool IsLatchControl =
+        (&OrigI == Bound.Counter || &OrigI == Bound.Cmp);
+    if (IsLatchControl || OrigLS.isInStage0(&OrigI))
+      ToErase.push_back(cast<Instruction>(FirstIterLS->cloneOf(&OrigI)));
+  }
+  // Erase in reverse program order so that uses are removed before defs.
+  for (Instruction *I : reverse(ToErase)) {
+    if (!I->getType()->isVoidTy())
+      I->replaceAllUsesWith(PoisonValue::get(I->getType()));
+    I->eraseFromParent();
+  }
+
+  // Replace the conditional latch branch with an unconditional branch to the
+  // steady loop header. The firstiter always falls through.
+  FirstIterBottom->getTerminator()->eraseFromParent();
+  BranchInst::Create(SteadyLS.getTop(), FirstIterBottom);
+
+  // Wire the CFG: preheader -> firstiter.top (was preheader -> steady.top).
+  BasicBlock *Preheader = SteadyLS.getPreheader();
+  Preheader->getTerminator()->replaceSuccessorWith(SteadyLS.getTop(),
+                                                   FirstIterTop);
+
+  // Update steady header PHIs: replace the preheader incoming edge with
+  // firstiter.bottom. Non-IV PHIs receive the firstiter's back-edge values
+  // (the results of the first iteration's ptr-updates); the IV PHI keeps its
+  // original init value so that adjustLoopBound() alone accounts for the
+  // peeled iteration.
+  const PHINode *IV = Bound.IV;
+  for (PHINode &OrigPHI : OrigLS.getTop()->phis()) {
+    auto *SteadyPHI = cast<PHINode>(SteadyLS.cloneOf(&OrigPHI));
+    int PreIdx = SteadyPHI->getBasicBlockIndex(Preheader);
+    if (PreIdx < 0)
+      continue;
+    if (&OrigPHI != IV) {
+      // Advance to the value the firstiter produced for the next iteration.
+      Value *OrigBackEdge =
+          OrigPHI.getIncomingValueForBlock(OrigLS.getBottom());
+      SteadyPHI->setIncomingValue(PreIdx, FirstIterLS->cloneOf(OrigBackEdge));
+    }
+    SteadyPHI->setIncomingBlock(PreIdx, FirstIterBottom);
+  }
+
+  // Record the new preheader so SteadyLS.getPreheader() returns the right
+  // block for downstream steps (adjustLoopBound, JNZD conversion, etc.).
+  SteadyLS.recordExistingPreheader(FirstIterBottom);
+
+  LLVM_DEBUG(dbgs() << "    Created first-iteration prologue: "
+                    << FirstIterTop->getName() << " -> "
+                    << FirstIterBottom->getName() << "\n");
+
+  return FirstIterLS;
+}
+
+void AIEOuterLoopPipeliner::cloneStage0IntoTop(
+    const OrigLoopStructure &OrigLS, CloneLoopStructure &SteadyLS,
+    const CloneLoopStructure &FirstIterLS, RemapTable &TopVMap) {
+  BasicBlock *SteadyTop = SteadyLS.getTop();
+  BasicBlock *SteadyBottom = SteadyLS.getBottom();
+  BasicBlock *FirstIterBottom = FirstIterLS.getBottom();
+
+  // Step 1: Identify LCSSA PHIs feeding stage-0 in the original bottom that
+  // feed stage-0 instructions. After formLCSSARecursively every PHI in the
+  // bottom block is an LCSSA PHI bridging an inner-loop value into the bottom.
+  SmallVector<PHINode *, 8> Stage0LCSSAs;
+  for (PHINode &P : OrigLS.getBottom()->phis()) {
+    if (llvm::any_of(P.users(), [&](User *U) {
+          return OrigLS.isInStage0(cast<Instruction>(U));
+        }))
+      Stage0LCSSAs.push_back(&P);
+  }
+
+  LLVM_DEBUG(dbgs() << "    LCSSA PHIs feeding stage-0: " << Stage0LCSSAs.size()
+                    << "\n");
+
+  // Step 2: Create inner_result_phi PHI nodes at the very top of the steady
+  // header (before the first non-PHI), one per LCSSA PHI. Each merges the
+  // inner-loop live-out from the firstiter and the steady back-edge.
+  //   inner_result_phi = phi [firstiter.bottom: firstiter_clone(P),
+  //                           steady.bottom:   steady_clone(P)]
+  BasicBlock::iterator FirstNonPHI = SteadyTop->getFirstNonPHIIt();
+  for (PHINode *P : Stage0LCSSAs) {
+    Value *FirstIterVal = FirstIterLS.cloneOf(P);
+    Value *SteadyVal = SteadyLS.cloneOf(P);
+    PHINode *MergePHI =
+        PHINode::Create(P->getType(), 2, P->getName() + ".inner.result.phi");
+    MergePHI->insertBefore(FirstNonPHI);
+    MergePHI->addIncoming(FirstIterVal, FirstIterBottom);
+    MergePHI->addIncoming(SteadyVal, SteadyBottom);
+    TopVMap[P] = MergePHI;
+    LLVM_DEBUG(dbgs() << "    Created inner_result_phi: " << *MergePHI << "\n");
+  }
+
+  // Step 3: Seed TopVMap with outer-loop header PHI mappings so that stage-0
+  // clones' references to header PHIs (e.g. store pointer PHIs) resolve to the
+  // steady header PHIs.
+  for (PHINode &OrigPHI : OrigLS.getTop()->phis())
+    TopVMap[&OrigPHI] = SteadyLS.cloneOf(&OrigPHI);
+
+  // Step 4: Clone stage-0 instructions into the beginning of the steady top,
+  // after the PHI nodes (including the new inner_result_phi nodes) and before
+  // the existing top instructions (loads, address computations, etc.).
+  // The insertion point is the first non-PHI instruction.
+  BasicBlock::iterator InsertPt = SteadyTop->getFirstNonPHIIt();
+  SmallVector<Instruction *, 16> Clones = cloneAndRemapInsts(
+      OrigLS.stage0Insts(), *SteadyTop, InsertPt, TopVMap, ".top");
+
+  LLVM_DEBUG(dbgs() << "    Cloned " << Clones.size()
+                    << " stage-0 instructions into steady top\n");
+
+  // Step 5: Erase stage-0 clones from steady.stage1.bottom in reverse program
+  // order (uses removed before defs). These are now dead — their role is taken
+  // by the clones in the steady top.
+  SmallVector<Instruction *, 16> SteadyBottomStage0;
+  for (Instruction *OrigI : OrigLS.stage0Insts())
+    SteadyBottomStage0.push_back(cast<Instruction>(SteadyLS.cloneOf(OrigI)));
+
+  for (Instruction *I : reverse(SteadyBottomStage0)) {
+    if (!I->getType()->isVoidTy())
+      I->replaceAllUsesWith(PoisonValue::get(I->getType()));
+    I->eraseFromParent();
+  }
+
+  LLVM_DEBUG(dbgs() << "    Erased stage-0 clones from steady bottom\n");
+}
+
+void AIEOuterLoopPipeliner::createStage1Epilogue(
+    const OrigLoopStructure &OrigLS, const CloneLoopStructure &SteadyLS,
+    const RemapTable &TopVMap) {
+  BasicBlock *SteadyBottom = SteadyLS.getBottom();
+  BasicBlock *OrigExit = OrigLS.getExitBlock();
+  Function *F = SteadyBottom->getParent();
+
+  // Step 1: Create the lastiter.stage1.bottom epilogue block, inserted between
+  // the steady exit edge and the original exit block.
+  BasicBlock *EpilogueBlock = BasicBlock::Create(
+      F->getContext(), "lastiter.stage1.bottom", F, OrigExit);
+
+  // Step 2: Build the epilogue remap table. For each inner_result_phi created
+  // in cloneStage0IntoTop(), the epilogue uses its back-edge incoming value
+  // (from steady.stage1.bottom) — the inner-loop live-out of the last steady
+  // iteration. Also map outer-loop header PHIs to their steady back-edge
+  // values.
+  RemapTable EpilogueVMap;
+
+  // Map LCSSA PHIs feeding stage-0: for each original LCSSA PHI P that was
+  // mapped to an inner_result_phi in TopVMap, the epilogue uses the back-edge
+  // value of that merge PHI.
+  for (PHINode &P : OrigLS.getBottom()->phis()) {
+    auto It = TopVMap.find(&P);
+    if (It == TopVMap.end())
+      continue;
+    auto *MergePHI = cast<PHINode>(static_cast<Value *>(It->second));
+    Value *BackEdgeVal = MergePHI->getIncomingValueForBlock(SteadyBottom);
+    EpilogueVMap[&P] = BackEdgeVal;
+  }
+
+  // Map outer-loop header PHIs to their steady back-edge values (the pointer
+  // values computed on the last steady iteration's latch).
+  for (PHINode &OrigPHI : OrigLS.getTop()->phis()) {
+    auto *SteadyPHI = cast<PHINode>(SteadyLS.cloneOf(&OrigPHI));
+    int BackIdx = SteadyPHI->getBasicBlockIndex(SteadyBottom);
+    if (BackIdx >= 0)
+      EpilogueVMap[&OrigPHI] = SteadyPHI->getIncomingValue(BackIdx);
+  }
+
+  // Also seed with any stage-0 instruction mappings from TopVMap so that
+  // intra-stage-0 dependencies resolve correctly when cloning.
+  for (Instruction *OrigI : OrigLS.stage0Insts()) {
+    auto It = TopVMap.find(OrigI);
+    if (It != TopVMap.end()) {
+      // The epilogue needs a fresh clone, not the steady-top clone. But we
+      // need the intra-stage-0 ordering, so skip this — the cloneAndRemapInsts
+      // call below will build the epilogue's own mappings.
+    }
+  }
+
+  // Step 3: Clone stage-0 instructions into the epilogue block (in program
+  // order), remapping via EpilogueVMap.
+  cloneAndRemapInsts(OrigLS.stage0Insts(), *EpilogueBlock, EpilogueBlock->end(),
+                     EpilogueVMap, ".epilogue");
+
+  // Step 4: Add unconditional branch: lastiter.stage1.bottom -> original exit.
+  BranchInst::Create(OrigExit, EpilogueBlock);
+
+  // Step 5: Rewire CFG.
+  // (a) Steady bottom exit branch: change target from original exit to the
+  //     epilogue block.
+  SteadyLS.getLatchBranch()->replaceSuccessorWith(OrigExit, EpilogueBlock);
+
+  // (b) Exit-block PHIs: replace the original bottom as predecessor with
+  //     the epilogue block, remapping values through the epilogue (for stage-0
+  //     clones) or the steady clone (for stage-1 / other values).
+  reroutePhiIncomings(OrigExit, OrigLS.getBottom(), EpilogueBlock,
+                      PhiEdge::Repoint, [&](Value *V) {
+                        auto It = EpilogueVMap.find(V);
+                        if (It != EpilogueVMap.end())
+                          return static_cast<Value *>(It->second);
+                        return SteadyLS.cloneOf(V);
+                      });
+
+  LLVM_DEBUG(dbgs() << "    Created stage-1 epilogue: "
+                    << EpilogueBlock->getName() << "\n");
 }
