@@ -147,6 +147,37 @@ TEST_F(InterBlockEdgesTest, PreDepthRecording) {
   EXPECT_EQ(DAG.getPreDepths().getRegionMax(), 0);
 }
 
+TEST_F(InterBlockEdgesTest, FixedInstrBoundary) {
+  auto *Free = appendPlainInstr();
+  auto *Prologue = appendPlainInstr();
+  auto *Post = appendPlainInstr();
+  InterBlockEdges DAG = makeDAG();
+
+  DAG.addNode(Free);
+  DAG.markFixedInstrBoundary();
+  DAG.addNode(Prologue);
+  DAG.getPreDepths().record(Prologue, -1);
+  DAG.markBoundary();
+  DAG.addNode(Post);
+
+  const SUnit *FreeSU = DAG.getPreBoundaryNode(Free);
+  const SUnit *PrologueSU = DAG.getPreBoundaryNode(Prologue);
+  const SUnit *PostSU = DAG.getPostBoundaryNode(Post);
+  ASSERT_NE(FreeSU, nullptr);
+  ASSERT_NE(PrologueSU, nullptr);
+  ASSERT_NE(PostSU, nullptr);
+  EXPECT_FALSE(DAG.isFixedPreBoundaryNode(FreeSU));
+  EXPECT_TRUE(DAG.isFixedPreBoundaryNode(PrologueSU));
+  EXPECT_FALSE(DAG.isFixedPreBoundaryNode(PostSU));
+  const std::optional<int> PrologueDepth =
+      DAG.getPreDepths().getValue(PrologueSU);
+  ASSERT_TRUE(PrologueDepth.has_value());
+  EXPECT_EQ(*PrologueDepth, -1);
+
+  DAG.clear();
+  DAG.markFixedInstrBoundary();
+}
+
 TEST_F(InterBlockEdgesTest, ClearResetsDAGAndMaps) {
   auto *Pre = appendPlainInstr();
   auto *Post = appendPlainInstr();

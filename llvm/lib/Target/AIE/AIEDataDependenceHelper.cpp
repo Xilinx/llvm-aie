@@ -84,13 +84,17 @@ void InterBlockEdges::NodeValues::record(MachineInstr *MI, int Val) {
   const auto Found = Nodes.find(MI);
   if (Found == Nodes.end())
     return;
-  Values[Found->second] = Val;
+  const unsigned Idx = Found->second;
+  if (Values.size() <= Idx)
+    Values.resize(Idx + 1);
+  Values[Idx] = Val;
 }
 
 std::optional<int>
 InterBlockEdges::NodeValues::getValue(const SUnit *SU) const {
-  const auto It = Values.find(SU->NodeNum);
-  return It != Values.end() ? std::optional<int>(It->second) : std::nullopt;
+  if (SU->NodeNum >= Values.size())
+    return std::nullopt;
+  return Values[SU->NodeNum];
 }
 
 void InterBlockEdges::addNode(MachineInstr *MI) {
@@ -106,6 +110,13 @@ void InterBlockEdges::addNode(MachineInstr *MI) {
 void InterBlockEdges::markBoundary() {
   assert(!Boundary.has_value());
   Boundary = SUnits.size();
+}
+
+void InterBlockEdges::markFixedInstrBoundary() {
+  assert(!FixedInstrBoundary && "Fixed/free boundary already set");
+  assert(!Boundary &&
+         "Fixed/free boundary must be marked before the CFG boundary");
+  FixedInstrBoundary = SUnits.size();
 }
 
 bool InterBlockEdges::mayAlias(SUnit *SUa, SUnit *SUb, bool TBAA) {
@@ -139,6 +150,11 @@ bool InterBlockEdges::isPreBoundaryNode(const SUnit *SU) const {
   return Boundary ? SU->NodeNum < *Boundary : true;
 }
 
+bool InterBlockEdges::isFixedPreBoundaryNode(const SUnit *SU) const {
+  return FixedInstrBoundary && SU->NodeNum >= *FixedInstrBoundary &&
+         isPreBoundaryNode(SU);
+}
+
 bool InterBlockEdges::isPostBoundaryNode(const SUnit *SU) const {
   return Boundary ? SU->NodeNum >= *Boundary : false;
 }
@@ -152,6 +168,7 @@ void InterBlockEdges::clear() {
   SuccMap.clear();
   PostDepths.clear();
   PreDepths.clear();
+  FixedInstrBoundary.reset();
 }
 
 std::map<unsigned, int> InterBlockEdges::computePreHeights() const {
