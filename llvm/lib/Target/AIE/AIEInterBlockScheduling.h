@@ -287,6 +287,12 @@ public:
   /// during PipeliningDone.
   std::vector<MachineInstr *> BottomInsertSemanticOrder;
 
+  // Pre-built pipeliner DAGs (one per enabled mode), owned here so they
+  // outlive the AIEScheduleDAGMI::schedule() call and remain valid for
+  // PostPipeliner::materializePipeline() which runs from leaveBlock().
+  std::unique_ptr<DataDependenceHelper> PipelinePhysDAG;
+  std::unique_ptr<DataDependenceHelper> PipelineVirtDAG;
+
   void initInterBlock(const MachineSchedContext &Context,
                       const AIEHazardRecognizer &HR);
 
@@ -562,6 +568,15 @@ public:
   /// The cycle before which the delay slot instruction of \p BB may not be
   /// issued. Zero leaves it unconstrained, as in the first schedule.
   unsigned getEarliestDelaySlotCycle(MachineBasicBlock *BB) const;
+
+  /// Return the first pipeliner mode enabled by command-line options.
+  static PostPipelinerMode getFirstPipelinerMode();
+  /// Return the next pipeliner mode after \p Current, or None when exhausted.
+  static PostPipelinerMode getNextPipelinerMode(PostPipelinerMode Current);
+  /// Maximum II value to attempt during pipelining.
+  static int getPipelinerMaxII();
+  /// Maximum number of distinct II values to try during pipelining.
+  static int getPipelinerMaxIITries();
 
   // Returns the scheduled bundles of the pipelined loop body preceding
   // \p Epilogue. Returns nullopt if \p Epilogue is not the epilogue of a

@@ -1024,6 +1024,18 @@ class WAWStickyRegistersEdges : public ScheduleDAGMutation {
 } // namespace
 
 std::vector<std::unique_ptr<ScheduleDAGMutation>>
+AIEBaseSubtarget::getPostPipelinerDAGMutationsImpl(const Triple &TT,
+                                                   AAResults *AA) {
+  std::vector<std::unique_ptr<ScheduleDAGMutation>> Mutations;
+  Mutations.emplace_back(std::make_unique<LockDelays>(AA));
+  if (EnableWAWStickyRegisters)
+    Mutations.emplace_back(std::make_unique<WAWStickyRegistersEdges>());
+  Mutations.emplace_back(std::make_unique<MemoryEdges>(true));
+  Mutations.emplace_back(std::make_unique<MachineSchedWAWEdges>());
+  return Mutations;
+}
+
+std::vector<std::unique_ptr<ScheduleDAGMutation>>
 AIEBaseSubtarget::getPostRAMutationsImpl(const Triple &TT, AAResults *AA) {
   std::vector<std::unique_ptr<ScheduleDAGMutation>> Mutations;
   Mutations.emplace_back(std::make_unique<LockDelays>(AA));
