@@ -34,6 +34,12 @@
 
 namespace llvm::AIE {
 
+/// Build a top-down resource scoreboard from the given bundles.
+ResourceScoreboard<FuncUnitWrapper>
+createTopDownScoreboard(ArrayRef<MachineBundle> Bundles,
+                        const AIEHazardRecognizer &HR,
+                        const AIEAlternateDescriptors &SelectedDescriptors);
+
 /// Parameters that drive fixpoint convergence
 class FixedpointState {
 public:
@@ -440,35 +446,9 @@ public:
   std::optional<ArrayRef<MachineBundle>>
   getSWPLoopBundlesForEpilogue(MachineBasicBlock *Epilogue);
 
-  /// Compute how many leading bundles can be merged from prologues into
-  /// epilogue. Returns 0 if merging is not possible.
-  unsigned getNumberOfMergeableBundles(const BlockState &EpilogueBS,
-                                       const BlockState &SteadyTopBS,
-                                       const BlockState &LastIterTopBS);
-
-  /// Merge N leading bundles from prologues into epilogue and transfer to
-  /// entry.
-  void mergeBundles(BlockState &EntryBS, BlockState &SteadyTopBS,
-                    BlockState &EpilogueBS, BlockState &LastIterTopBS,
-                    unsigned NumBundles);
-
-  /// Compute how many transferred prologue bundles can be merged into the
-  /// preheader's trailing bundles. Uses both latency slack and resource
-  /// checks to determine the maximum safe overlap (best-effort).
-  unsigned getPreheaderMergeCount(const BlockState &EntryBS,
-                                  const BlockState &SteadyTopBS,
-                                  unsigned NumTransferred);
-
-  /// Try to merge matching prologue bundles into the epilogue and transfer
-  /// them to the entry block.
-  void tryMergePrologues(BlockState &EntryBS, BlockState &SteadyTopBS,
-                         BlockState &EpilogueBS, BlockState &LastIterTopBS);
-
-  /// Optimize sibling loops created by the outer-loop pipeliner.
-  /// For blocks with a valid OuterLoopContext (non-speculative), this merges
-  /// matching leading prologue bundles into the epilogue and transfers them
-  /// to the entry block to reduce cycles per outer iteration.
-  void optimizeSiblingLoops();
+  /// Provide access to the Blocks map for external optimizers
+  /// (e.g. SiblingLoopOptimizer).
+  auto &getBlocks() { return Blocks; }
 
   /// If \p LoopMBB is not the only Predecessor of \p CurrentMBB, create a
   /// dedicated Exit MBB by splitting the edge between LoopMBB and CurrentBB
