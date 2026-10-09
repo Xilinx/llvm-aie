@@ -1054,6 +1054,21 @@ SchedulingStage InterBlockScheduling::updateScheduling(BlockState &BS) {
   return SchedulingStage::SchedulingDone;
 }
 
+PostPipelinerMode InterBlockScheduling::getFirstPipelinerMode() {
+  return firstPipelinerMode();
+}
+
+PostPipelinerMode
+InterBlockScheduling::getNextPipelinerMode(PostPipelinerMode Current) {
+  return nextPipelinerMode(Current);
+}
+
+int InterBlockScheduling::getPipelinerMaxII() { return PostPipelinerMaxII; }
+
+int InterBlockScheduling::getPipelinerMaxIITries() {
+  return PostPipelinerMaxTryII;
+}
+
 SchedulingStage InterBlockScheduling::updatePipelining(BlockState &BS) {
   // We have been pipelining. Check whether we were successful.
   if (BS.FixPoint.Stage == SchedulingStage::PipeliningDone) {

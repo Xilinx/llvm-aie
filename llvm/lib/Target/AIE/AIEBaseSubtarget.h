@@ -72,6 +72,10 @@ public:
   static std::vector<std::unique_ptr<ScheduleDAGMutation>>
   getPostRAMutationsImpl(const Triple &TT, AAResults *AA);
 
+  /// DAG mutations for pre-built pipeliner graphs.
+  static std::vector<std::unique_ptr<ScheduleDAGMutation>>
+  getPostPipelinerDAGMutationsImpl(const Triple &TT, AAResults *AA);
+
   /// Required DAG mutations for InterBlock dependence analysis
   static std::vector<std::unique_ptr<ScheduleDAGMutation>>
   getDDGMutationsImpl(const Triple &TT, bool ExactLatencies,
