@@ -30,9 +30,8 @@
 
 # CHECK: LR#[[L12:[0-9]+]] Use l12
 # CHECK: LR#[[R24:[0-9]+]] Def r24
-# CHECK-NEXT: LR#[[R24]] + LR#[[L12]] -> LR#[[R24]]
-# CHECK-NEXT: Discard LR#[[R24]] (no common base register)
 # CHECK-NEXT: Discard LR#[[L12]] (no common base register)
+# CHECK-NEXT: Discard LR#[[R24]] (no common base register)
 # CHECK: LR#{{[0-9]+}} Use r25
 # CHECK: Base=r25 defs=0 uses=1 [RESERVED]
 # CHECK: FINAL LIVE RANGES

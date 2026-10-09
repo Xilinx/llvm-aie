@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 // This defines a class that can be used to tally up the slots required for
@@ -44,6 +44,9 @@ public:
 
   // Compute L1 distance to another SlotCounts
   int distance(const SlotCounts &Other) const;
+
+  // Return true if this and Other share at least one slot type (both > 0).
+  bool overlaps(const SlotCounts &Other) const;
 
   // Add slot counts of Other to this
   SlotCounts &operator+=(const SlotCounts &Other);

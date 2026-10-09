@@ -32,8 +32,32 @@ void AIEPostRegAlloc::AllocState::init(
     const TargetRegisterInfo *InTRI,
     const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex,
     const RegLiveRangeTracker *RegTracker) {
-  this->RegUnitOccupancy.clear();
   this->TRI = InTRI;
+
+  // Determine II from the LivenessVector sizes and initialize cycle occupancy.
+  const unsigned II = LiveLanesByLRIndex.empty()
+                          ? 0
+                          : LiveLanesByLRIndex.begin()->second.size();
+  this->CycleOccupancy.assign(II, PartSet());
+
+  // Pre-compute the per-physreg PartSet cache and the per-LR admissible
+  // RegUnit set in one pass.  PhysRegUnitSets[Reg] is filled once via
+  // MCRegUnitIterator the first time a register is seen; subsequent LRs
+  // sharing the same admissible register reuse the cached value.  The per-LR
+  // admissible set is the |= union over its admissible registers.
+  this->PhysRegUnitSets.clear();
+  this->AdmissibleRegUnits.clear();
+  for (const RegLiveRange &LR : RegTracker->getLiveRanges()) {
+    PartSet LRUnits;
+    for (MCRegister Reg : LR.getAdmissibleRegs()) {
+      PartSet &Cached = this->PhysRegUnitSets[Reg];
+      if (Cached.empty())
+        for (MCRegUnitIterator UI(Reg, InTRI); UI.isValid(); ++UI)
+          Cached.set(*UI);
+      LRUnits |= Cached;
+    }
+    this->AdmissibleRegUnits[LR.getIndex()] = LRUnits;
+  }
 
   const auto &AvailableRegs = RegTracker->getAvailablePhysRegs();
 
@@ -46,9 +70,9 @@ void AIEPostRegAlloc::AllocState::init(
   this->RCInterferenceGraph =
       AIEPostRegAlloc::buildRCInterferenceGraph(UsedRCIds, *InTRI);
 
-  // Build live range interference graph once.
+  // Build live range interference graph once, using admissible RegUnit sets.
   this->VRegInterferenceGraph = AIEPostRegAlloc::buildVRegInterferenceGraph(
-      LiveLanesByLRIndex, *RegTracker, RCInterferenceGraph);
+      LiveLanesByLRIndex, AdmissibleRegUnits);
 
   // Pre-compute metrics for all live ranges that have been virtualized.
   // Non-virtualized ranges (RESERVED or policy-excluded) have no VReg and
@@ -72,44 +96,55 @@ void AIEPostRegAlloc::AllocState::init(
 bool AIEPostRegAlloc::AllocState::canPlace(
     Register PhysReg, const AIE::LivenessVector &VRegMasks) const {
 
-  // Check RegUnit conflicts - this handles aliasing automatically.
-  // Two registers interfere if they share any RegUnits.
-  for (MCRegUnitIterator Units(PhysReg.asMCReg(), TRI); Units.isValid();
-       ++Units) {
-    unsigned Unit = *Units;
-    auto It = RegUnitOccupancy.find(Unit);
-    if (It != RegUnitOccupancy.end()) {
-      // Use anySlotOverlap instead of overlaps: when two live ranges
-      // alias via a RegUnit but belong to different register class
-      // hierarchies (e.g., eL pair vs. mLockId_reg scalar), their lane
-      // masks live in incompatible bit domains and overlaps() returns
-      // false even when they are simultaneously live. anySlotOverlap
-      // checks temporal overlap independent of lane-bit domain, which
-      // is correct here because physical aliasing is already confirmed.
-      if (VRegMasks.anySlotOverlap(It->second))
-        return false;
+  // At each live cycle, compute which RegUnits of PhysReg are active via the
+  // live LaneMask: only RegUnits whose coverage LaneMask intersects with the
+  // live lanes are considered active.  This gives sub-register granularity —
+  // different sub-registers of a composite can be co-allocated without false
+  // conflicts.  Bypass cycles carry the same lane mask as the RF write (since
+  // bypass and RF address the same register from the same def), so no special
+  // bypass fallback is needed here.
+  for (size_t C = 0; C < VRegMasks.size(); ++C) {
+    const LaneBitmask M = VRegMasks[C].getLanes();
+    if (!M.any())
+      continue;
+    PartSet ActiveUnits;
+    for (MCRegUnitMaskIterator MUI(PhysReg.asMCReg(), TRI); MUI.isValid();
+         ++MUI) {
+      auto [Unit, UnitMask] = *MUI;
+      if ((UnitMask & M).any())
+        ActiveUnits.set(Unit);
     }
+    if (ActiveUnits.overlap(CycleOccupancy[C]))
+      return false;
   }
 
   return true;
 }
 
-// Place VReg in PhysReg (updates occupancy).
+// Place VReg in PhysReg (marks lane-accurate RegUnits occupied per cycle).
 void AIEPostRegAlloc::AllocState::place(Register VReg, Register PhysReg,
                                         const AIE::LivenessVector &VRegMasks,
                                         const TargetRegisterClass *RC) {
 
-  // Update RegUnit occupancy - this automatically handles aliasing.
-  unsigned NumUnits = 0;
-  for (MCRegUnitIterator Units(PhysReg.asMCReg(), TRI); Units.isValid();
-       ++Units) {
-    RegUnitOccupancy[*Units] |= VRegMasks;
-    NumUnits++;
+  // At each live cycle mark only the RegUnits of PhysReg that are covered by
+  // the live LaneMask.  This ensures that only the actually-used sub-register
+  // units are recorded as occupied, enabling concurrent allocation of
+  // non-overlapping sub-registers.  Bypass cycles carry the same lane mask as
+  // the RF write (same def, same register), so no special bypass handling.
+  for (size_t C = 0; C < VRegMasks.size(); ++C) {
+    const LaneBitmask M = VRegMasks[C].getLanes();
+    if (!M.any())
+      continue;
+    for (MCRegUnitMaskIterator MUI(PhysReg.asMCReg(), TRI); MUI.isValid();
+         ++MUI) {
+      auto [Unit, UnitMask] = *MUI;
+      if ((UnitMask & M).any())
+        CycleOccupancy[C].set(Unit);
+    }
   }
 
   LLVM_DEBUG(dbgs() << "  Placed " << printReg(VReg, TRI) << " in "
-                    << printReg(PhysReg, TRI) << " (updated " << NumUnits
-                    << " RegUnits)\n");
+                    << printReg(PhysReg, TRI) << "\n");
 }
 
 // Build register class interference graph with asymmetric weights.
@@ -167,11 +202,12 @@ AIEPostRegAlloc::buildRCInterferenceGraph(const DenseSet<unsigned> &UsedRCIds,
 }
 
 // Build live range interference graph (symmetric).
+// Two live ranges interfere if their admissible RegUnit sets overlap (they
+// could occupy registers sharing a RegUnit) and they are temporally concurrent.
 AIEPostRegAlloc::WeightedSymmetricGraph
 AIEPostRegAlloc::buildVRegInterferenceGraph(
     const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex,
-    const RegLiveRangeTracker &RegTracker,
-    const WeightedAsymmetricGraph &RCInterferenceGraph) {
+    const DenseMap<unsigned, PartSet> &AdmissibleRegUnits) {
 
   WeightedSymmetricGraph Graph;
 
@@ -184,26 +220,24 @@ AIEPostRegAlloc::buildVRegInterferenceGraph(
   // Use symmetry: only check pairs where I < J.
   for (size_t I = 0; I < LRIndices.size(); ++I) {
     const unsigned LRIndex1 = LRIndices[I];
-    const RegLiveRange &LR1 = RegTracker[LRIndex1];
-    if (!LR1.getRegisterClass())
+    const auto It1 = AdmissibleRegUnits.find(LRIndex1);
+    if (It1 == AdmissibleRegUnits.end() || It1->second.empty())
       continue;
     const auto &Masks1 = LiveLanesByLRIndex.find(LRIndex1)->second;
-    const unsigned RCId1 = LR1.getRegisterClass()->getID();
 
     for (size_t J = I + 1; J < LRIndices.size(); ++J) {
       const unsigned LRIndex2 = LRIndices[J];
-      const RegLiveRange &LR2 = RegTracker[LRIndex2];
-      if (!LR2.getRegisterClass())
+      const auto It2 = AdmissibleRegUnits.find(LRIndex2);
+      if (It2 == AdmissibleRegUnits.end() || It2->second.empty())
         continue;
+
+      // First check if their admissible RegUnit sets overlap.
+      if (!It1->second.overlap(It2->second))
+        continue;
+
+      // Then check temporal concurrency: are they live at the same cycle?
       const auto &Masks2 = LiveLanesByLRIndex.find(LRIndex2)->second;
-      const unsigned RCId2 = LR2.getRegisterClass()->getID();
-
-      // First check if their register classes can interfere.
-      if (!RCInterferenceGraph.interferes(RCId1, RCId2))
-        continue;
-
-      // Then check if their live ranges overlap temporally.
-      if (Masks1.overlaps(Masks2))
+      if (Masks1.anySlotOverlap(Masks2))
         Graph.addInterference(LRIndex1, LRIndex2);
     }
   }
@@ -295,23 +329,22 @@ std::vector<Register> AIEPostRegAlloc::getCandidatePhysRegs(
 AIEPostRegAlloc::AllocResult AIEPostRegAlloc::tryAllocate(
     const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex,
     const RegLiveRangeTracker *RegTracker, const TargetRegisterInfo &TRI,
-    AllocState &State, ScoringFunction ScoreFn,
+    AllocState &State, ComparatorFunction OrderFn,
     DenseMap<Register, MCRegister> &OutAssign) {
 
-  // Clear per-attempt state.
-  State.RegUnitOccupancy.clear();
+  // Reset per-attempt state.
+  std::fill(State.CycleOccupancy.begin(), State.CycleOccupancy.end(),
+            PartSet());
   OutAssign.clear();
 
   const auto &AvailableRegs = RegTracker->getAvailablePhysRegs();
 
-  // A live range together with its per-cycle lane masks and allocation score.
-  // Score is populated for VReg entries only (before the sorted traversal).
+  // A live range together with its per-cycle lane masks.
   class LREntry {
   public:
     const RegLiveRange *LR;
     unsigned LRIndex;
     const AIE::LivenessVector *Masks;
-    unsigned Score = 0;
   };
 
   // Collect all live ranges that have liveness data (VReg and non-VReg).
@@ -385,23 +418,25 @@ AIEPostRegAlloc::AllocResult AIEPostRegAlloc::tryAllocate(
 
   // Build a sorted list of pointers to VReg entries in AllEntries.
   // Non-VReg ranges (non-virtualizable or excluded by overlap policy) are
-  // always choice-1 and placed by DrainForcedChoices; they do not need a
-  // score.
-  // Score is computed and stored directly into each entry.
+  // always choice-1 and placed by DrainForcedChoices; they do not participate
+  // in the ordering.
   std::vector<LREntry *> ScoredEntries;
   for (LREntry &Entry : AllEntries) {
     if (!Entry.LR->getVReg().isValid())
       continue;
-    Entry.Score = ScoreFn(State.AllMetrics[Entry.LRIndex]);
     ScoredEntries.push_back(&Entry);
   }
 
-  // Sort by descending score (hardest first).
-  // Use VReg index as tiebreaker for deterministic ordering when scores are
-  // equal.
-  llvm::sort(ScoredEntries, [](const LREntry *A, const LREntry *B) {
-    if (A->Score != B->Score)
-      return A->Score > B->Score;
+  // Sort using the ordering comparator (hardest first).
+  // Use VReg index as a deterministic tiebreaker when the comparator
+  // considers two entries equivalent (OrderFn(A,B) == OrderFn(B,A) == false).
+  llvm::sort(ScoredEntries, [&](const LREntry *A, const LREntry *B) {
+    const VRegMetrics &MA = State.AllMetrics[A->LRIndex];
+    const VRegMetrics &MB = State.AllMetrics[B->LRIndex];
+    if (OrderFn(MA, MB))
+      return true;
+    if (OrderFn(MB, MA))
+      return false;
     return A->LR->getVReg().virtRegIndex() < B->LR->getVReg().virtRegIndex();
   });
 
@@ -432,9 +467,9 @@ AIEPostRegAlloc::AllocResult AIEPostRegAlloc::tryAllocate(
     const TargetRegisterClass *RC = LR.getRegisterClass();
     const auto &Metrics = State.AllMetrics[LRIndex];
 
-    LLVM_DEBUG(dbgs() << "Allocating LR#" << LRIndex << " class="
-                      << TRI.getRegClassName(RC) << " (score=" << Entry.Score
-                      << ", available=" << Metrics.NumAvailableRegs
+    LLVM_DEBUG(dbgs() << "Allocating LR#" << LRIndex
+                      << " class=" << TRI.getRegClassName(RC)
+                      << " (available=" << Metrics.NumAvailableRegs
                       << ", pure_int=" << Metrics.PureInterferenceDegree
                       << ", alias_int=" << Metrics.AliasingInterferenceDegree
                       << ")\n");
@@ -448,8 +483,9 @@ AIEPostRegAlloc::AllocResult AIEPostRegAlloc::tryAllocate(
     }
 
     Register ChosenPhys = Register();
+    LLVM_DEBUG(dbgs() << "  Trying ");
     for (Register PhysReg : Candidates) {
-      LLVM_DEBUG(dbgs() << "  Trying " << printReg(PhysReg, &TRI) << " ");
+      LLVM_DEBUG(dbgs() << printReg(PhysReg, &TRI) << " ");
       if (State.canPlace(PhysReg, VRegMasks)) {
         LLVM_DEBUG(dbgs() << "\n");
         ChosenPhys = PhysReg;
@@ -457,7 +493,6 @@ AIEPostRegAlloc::AllocResult AIEPostRegAlloc::tryAllocate(
       }
     }
 
-    LLVM_DEBUG(dbgs() << "\n");
     if (!ChosenPhys.isValid()) {
       LLVM_DEBUG(dbgs() << "  Failed to find suitable physreg!\n");
       return AllocResult(/*InfeasibleSchedule=*/false);
@@ -566,19 +601,19 @@ void AIEPostRegAlloc::dumpVRegMetrics(
 }
 
 // Main allocation entry point.
-bool AIEPostRegAlloc::allocate(
+PostRegAllocResult AIEPostRegAlloc::allocate(
     const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex, int II,
-    const RegLiveRangeTracker &RegTracker, const TargetRegisterInfo &TRI,
-    DenseMap<Register, MCRegister> &OutAssign,
-    std::string &OutWinningStrategyName) {
+    const RegLiveRangeTracker &RegTracker, const TargetRegisterInfo &TRI) {
 
   LLVM_DEBUG(dbgs() << "AIEPostRegAlloc::allocate for "
                     << LiveLanesByLRIndex.size() << " live ranges, II=" << II
                     << "\n");
 
+  DenseMap<Register, MCRegister> Assignments;
+
   if (LiveLanesByLRIndex.empty()) {
     LLVM_DEBUG(dbgs() << "No live ranges to allocate\n");
-    return true;
+    return PostRegAllocResult("Trivial", std::move(Assignments));
   }
 
   LLVM_DEBUG(dbgs() << "Available " << RegTracker.getAvailablePhysRegs().size()
@@ -594,27 +629,31 @@ bool AIEPostRegAlloc::allocate(
   // Define the allocation strategies to try.
   struct AllocationStrategy {
     const char *Name;
-    ScoringFunction ScoreFn;
+    ComparatorFunction OrderFn;
   };
 
   std::vector<AllocationStrategy> Strategies = {
-      // Try scarce register class priority scoring first.
-      {"scarce register class scoring", scoreByScarceRegClass},
-      // Try interference-based scoring (graph coloring inspired).
-      {"interference degree scoring", scoreByInterference},
-      // Try with area+width scoring (original).
-      {"area+width scoring", scoreByAreaPlusWidth},
-      // Try with pure area scoring.
-      {"area scoring", scoreByArea},
-      // Try with width-priority scoring.
-      {"width scoring", scoreByWidth},
-      // Try with duration scoring.
-      {"duration scoring", scoreByDuration},
-      // Try a custom non-linear scoring function.
+      // Scarce register class first: fewer available registers → first.
+      // Within the same scarceness, highest interference degree wins.
+      {"scarce register class scoring", orderByScarceRegClass},
+      // Lexicographic: widest register class first (absolute precedence),
+      // then highest interference degree within the same width tier.
+      {"width then interference scoring", orderByWidthThenInterference},
+      // Pure interference degree (graph-coloring inspired).
+      {"interference degree scoring", orderByInterference},
+      // Area + width combined.
+      {"area+width scoring", orderByAreaPlusWidth},
+      // Pure area (total lane-cycles).
+      {"area scoring", orderByArea},
+      // Width only.
+      {"width scoring", orderByWidth},
+      // Duration only.
+      {"duration scoring", orderByDuration},
+      // Quadratic width + duration.
       {"quadratic width scoring",
-       [](const VRegMetrics &M) {
-         // Quadratic penalty for width, linear for duration.
-         return M.MaxWidth * M.MaxWidth + M.Duration;
+       [](const VRegMetrics &A, const VRegMetrics &B) {
+         return (A.MaxWidth * A.MaxWidth + A.Duration) >
+                (B.MaxWidth * B.MaxWidth + B.Duration);
        }},
   };
 
@@ -623,13 +662,12 @@ bool AIEPostRegAlloc::allocate(
     LLVM_DEBUG(dbgs() << "Trying allocation with " << Strategy.Name << "\n");
 
     AllocResult Result = tryAllocate(LiveLanesByLRIndex, &RegTracker, TRI,
-                                     State, Strategy.ScoreFn, OutAssign);
+                                     State, Strategy.OrderFn, Assignments);
 
     if (Result) {
-      OutWinningStrategyName = Strategy.Name;
       LLVM_DEBUG(dbgs() << "Allocation succeeded with " << Strategy.Name
                         << "\n");
-      return true;
+      return PostRegAllocResult(Strategy.Name, std::move(Assignments));
     }
 
     LLVM_DEBUG(dbgs() << Strategy.Name << " failed\n");
@@ -643,5 +681,5 @@ bool AIEPostRegAlloc::allocate(
   }
 
   LLVM_DEBUG(dbgs() << "All allocation attempts failed\n");
-  return false;
+  return PostRegAllocResult();
 }

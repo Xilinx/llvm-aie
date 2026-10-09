@@ -1160,28 +1160,22 @@ bool PostPipeliner::tryScarceRangePacking() {
   // Enumerate orders and try scheduling with different orderings.
   return enumerateRangeOrders(
       ScarceRanges, [this, &Strategy](const SmallVector<int, 4> &Order) {
-        // Reset before each attempt.
         resetSchedule(/*FullReset=*/false);
-
-        // Initialize the strategy with this order.
         Strategy.init(Order);
-
-        // Try scheduling with this strategy.
-        return scheduleWithStrategy(Strategy);
+        return scheduleWithStrategy(Strategy).succeeded();
       });
 }
 
-bool PostPipeliner::scheduleWithStrategy(PostPipelinerStrategy &S) {
-  // Always update so the name is correct on the first successful return.
+ScheduleResult PostPipeliner::scheduleWithStrategy(PostPipelinerStrategy &S) {
   CurrentStrategyName = S.name();
   DEBUG_SUMMARY(dbgs() << "Starting " << CurrentStrategyName << "\n");
   if (!scheduleFirstIteration(S)) {
-    return false;
+    return ScheduleResult(false);
   }
   DEBUG_SUMMARY(dbgs() << "   First iteration successful\n");
   if (!scheduleOtherIterations(S)) {
     Info.resetRotation();
-    return false;
+    return ScheduleResult(false);
   }
   DEBUG_SUMMARY(dbgs() << "   Other iterations successful\n");
 
@@ -1191,12 +1185,16 @@ bool PostPipeliner::scheduleWithStrategy(PostPipelinerStrategy &S) {
   Info.applyRotation(II);
   Info.resetRotation();
 
-  if (!tryAllocateRegisters()) {
-    DEBUG_SUMMARY(dbgs() << "   Register allocation failed\n");
-    return false;
-  }
-  DEBUG_SUMMARY(dbgs() << "   Register allocation successful\n");
-  return true;
+  // Capture the cycle assignment before attempting register allocation.
+  // On allocation failure the caller can use this to reconstruct the
+  // same instruction placement with a different allocation strategy.
+  NodeSchedule Schedule = Info.toSchedule(NInstr);
+
+  const ScheduleResult AllocResult = tryAllocateRegisters();
+  DEBUG_SUMMARY(dbgs() << (AllocResult ? "   Register allocation successful\n"
+                                       : "   Register allocation failed\n"));
+  return ScheduleResult(AllocResult.succeeded(), std::move(Schedule),
+                        AllocResult.getRegAllocResult());
 }
 
 namespace {
@@ -1225,7 +1223,7 @@ public:
 // latest so as to have no slack.
 // It still checks latencies and resources
 class CheckFixedSchedule : public PostPipelinerStrategy {
-  std::vector<int> Schedule;
+  NodeSchedule Schedule;
   std::string Name;
 
   // We schedule in strict top-down order, and we leave only one cycle
@@ -1235,7 +1233,7 @@ class CheckFixedSchedule : public PostPipelinerStrategy {
   }
   int earliest(const SUnit &N) override {
     int Result = PostPipelinerStrategy::earliest(N);
-    unsigned NodeNum = N.NodeNum;
+    const int NodeNum = static_cast<int>(N.NodeNum);
     if (NodeNum < Schedule.size()) {
       Result = std::max(Result, Schedule[NodeNum]);
     }
@@ -1243,7 +1241,7 @@ class CheckFixedSchedule : public PostPipelinerStrategy {
   }
   int latest(const SUnit &N) override {
     int Result = PostPipelinerStrategy::latest(N);
-    unsigned NodeNum = N.NodeNum;
+    const int NodeNum = static_cast<int>(N.NodeNum);
     if (NodeNum < Schedule.size()) {
       Result = std::min(Result, Schedule[NodeNum]);
     }
@@ -1252,9 +1250,9 @@ class CheckFixedSchedule : public PostPipelinerStrategy {
 
 public:
   CheckFixedSchedule(ScheduleDAGInstrs &DAG, ScheduleInfo &Info, int Length,
-                     std::vector<int> Schedule,
+                     NodeSchedule Schedule,
                      std::string Name = "CheckFixedSchedule")
-      : PostPipelinerStrategy(DAG, Info, Length), Schedule(Schedule),
+      : PostPipelinerStrategy(DAG, Info, Length), Schedule(std::move(Schedule)),
         Name(std::move(Name)) {}
   std::string name() override { return Name; }
 };
@@ -1552,15 +1550,28 @@ static const ConfigStrategy::Configuration Heuristics[] = {
     {1, false, false, 1, {Prio::NodeNum}, {}}, // pure bottom up
 };
 
-/// Spreads independent instructions apart by deferring one instruction per
-/// run to first-fit+1, cycling through all NodeNums in scheduling order.
-/// Construction initializes state for the first run (DeferAt=0). nextRun()
-/// increments the deferred node index and returns true until all instructions
-/// have been tried. Lone-root nodes (sole Depth=0 entry point) are skipped.
-class DeferNthNodeStrategy : public MultiRunPostPipelinerStrategy {
-  unsigned DeferAt = 0;
-  const unsigned NInstr;
-  unsigned NumRoots = 0;
+/// Base class for strategies that defer a selected subset of nodes from their
+/// first-fit slot to first-fit+1 in order to create resource-layout diversity.
+///
+/// The base class holds:
+/// - \p Candidates: the pre-filtered list of NodeNums eligible for deferral,
+///   built once at construction time by buildCandidates(). Lone-root nodes
+///   (the unique node with getDepth()==0 when NumRoots==1) are excluded here,
+///   so subclasses are free of per-call lone-root guards.
+/// - \p CurrentDeferred: the subset of NodeNums being deferred in the current
+///   run. Subclasses populate this in their constructor (run 0) and update it
+///   in nextRun() (subsequent runs).
+///
+/// Candidate selection (which nodes enter Candidates) and subset enumeration
+/// (how CurrentDeferred advances through Candidates) are both
+/// subclass-specific.
+class DeferSelectionStrategyBase : public MultiRunPostPipelinerStrategy {
+protected:
+  /// NodeNums eligible for deferral. Populated once by buildCandidates().
+  SmallVector<unsigned, 16> Candidates;
+
+  /// NodeNums being deferred in the current run. Updated by nextRun().
+  SmallVector<unsigned, 4> CurrentDeferred;
 
   bool fromTop() override { return true; }
 
@@ -1568,66 +1579,272 @@ class DeferNthNodeStrategy : public MultiRunPostPipelinerStrategy {
     return A.NodeNum < B.NodeNum;
   }
 
+  /// Populate Candidates with all non-lone-root nodes from [0, NInstr).
+  /// Subclasses may call this as their starting point, then further filter.
+  void buildCandidates(unsigned NInstr) {
+    unsigned NumRoots = 0;
+    for (unsigned K = 0; K < NInstr; ++K)
+      if (DAG.SUnits[K].getDepth() == 0)
+        ++NumRoots;
+    const bool HasLoneRoot = (NumRoots == 1);
+    for (unsigned K = 0; K < NInstr; ++K) {
+      if (HasLoneRoot && DAG.SUnits[K].getDepth() == 0)
+        continue;
+      Candidates.push_back(K);
+    }
+  }
+
 public:
-  std::string name() override { return "DeferNth_" + std::to_string(DeferAt); }
+  DeferSelectionStrategyBase(ScheduleDAGInstrs &DAG, ScheduleInfo &Info,
+                             int Length)
+      : MultiRunPostPipelinerStrategy(DAG, Info, Length) {}
 
-  DeferNthNodeStrategy(ScheduleDAGInstrs &DAG, ScheduleInfo &Info, int Length,
-                       unsigned NInstr)
-      : MultiRunPostPipelinerStrategy(DAG, Info, Length), NInstr(NInstr) {
-    for (const SUnit &SU : DAG.SUnits)
-      if (SU.getDepth() == 0)
-        NumRoots++;
-  }
-
-  bool nextRun() override {
-    ++DeferAt;
-    return DeferAt < NInstr;
-  }
+  /// Return true if there is at least one node to defer in the first run.
+  bool isApplicable() const { return !CurrentDeferred.empty(); }
 
   std::optional<int>
   fitInInterval(const SUnit &SU, int Earliest, int Latest, int II,
                 const AIEHazardRecognizer &HR,
                 ResourceScoreboard<FuncUnitWrapper> &Scoreboard) override {
-    const bool IsLoneRoot = (SU.getDepth() == 0 && NumRoots == 1);
-    if (SU.NodeNum == DeferAt && !IsLoneRoot) {
-      // Find the first admissible cycle, then try to place the node after
-      // that first fit. The intention is to leave a gap in the resource usage
-      // that can be exploited by later stages of the pipeline.
-      // nextRun() ensures DeferAt changes only between
-      // runs, never mid-run. Falls back to the first-fit if Latest is exceeded.
+    if (llvm::is_contained(CurrentDeferred, SU.NodeNum)) {
+      // Find the first admissible cycle, then try to place the node one cycle
+      // later to leave a gap in the resource usage that later pipeline stages
+      // can exploit. Falls back to first-fit if Latest is exceeded.
       auto FirstFit = PostPipelinerStrategy::fitInInterval(SU, Earliest, Latest,
                                                            II, HR, Scoreboard);
       if (!FirstFit)
         return std::nullopt;
-      std::optional<int> LaterFit;
-      if (*FirstFit + 1 <= Latest)
-        LaterFit = PostPipelinerStrategy::fitInInterval(
+      if (*FirstFit + 1 <= Latest) {
+        auto LaterFit = PostPipelinerStrategy::fitInInterval(
             SU, *FirstFit + 1, Latest, II, HR, Scoreboard);
-      return LaterFit ? LaterFit : FirstFit;
+        if (LaterFit)
+          return LaterFit;
+      }
+      return FirstFit;
     }
     return PostPipelinerStrategy::fitInInterval(SU, Earliest, Latest, II, HR,
                                                 Scoreboard);
   }
 };
 
-bool MultiRunPostPipelinerStrategy::scheduleAllRuns(PostPipeliner &PP,
-                                                    int MaxRuns) {
+/// Defers K-tuples of candidate nodes per run to first-fit+1. Starts with
+/// K=1 (single-node deferral) and automatically grows K when the current
+/// K-simplex (all C(|Candidates|,K) combinations) has been exhausted.
+///
+/// The run budget is shared across all K values. With enough budget, the
+/// strategy moves from single-node deferral (K=1) through pairs (K=2),
+/// triples (K=3), etc. For small loops whose K=1 simplex fits within the
+/// budget, this naturally progresses into tuple deferral at no extra cost.
+///
+/// K=1 names use the "DeferNth_N" convention for compatibility with existing
+/// debug output. K>=2 names use "DeferTuple_K_N1_N2_..." to indicate the
+/// active tuple size and the NodeNums being deferred.
+class DeferTupleStrategy : public DeferSelectionStrategyBase {
+  unsigned K = 1;
+  SmallVector<unsigned, 8> Indices; // K indices into Candidates
+
+  void updateCurrentDeferred() {
+    CurrentDeferred.clear();
+    for (unsigned Idx : Indices)
+      CurrentDeferred.push_back(Candidates[Idx]);
+  }
+
+public:
+  std::string name() override {
+    // K==1: use DeferNth naming for backward compatibility with debug output.
+    if (K == 1)
+      return "DeferNth_" + std::to_string(Candidates[Indices[0]]);
+    std::string N = "DeferTuple_" + std::to_string(K);
+    for (unsigned Idx : Indices)
+      N += "_" + std::to_string(Candidates[Idx]);
+    return N;
+  }
+
+protected:
+  // Initialize the K-tuple state from the already-populated Candidates vector.
+  // Subclasses that build their own Candidates list must call this after
+  // filling Candidates.
+  void initFromCandidates() {
+    if (!Candidates.empty()) {
+      Indices = {0};
+      updateCurrentDeferred();
+    }
+  }
+
+  // Protected constructor for subclasses that build their own candidate list.
+  // The subclass is responsible for populating Candidates and calling
+  // initFromCandidates() before the object is used.
+  DeferTupleStrategy(ScheduleDAGInstrs &DAG, ScheduleInfo &Info, int Length)
+      : DeferSelectionStrategyBase(DAG, Info, Length) {}
+
+public:
+  DeferTupleStrategy(ScheduleDAGInstrs &DAG, ScheduleInfo &Info, int Length,
+                     unsigned NInstr)
+      : DeferSelectionStrategyBase(DAG, Info, Length) {
+    buildCandidates(NInstr);
+    initFromCandidates();
+  }
+
+  /// Advance to the next K-tuple. When the current K-simplex is exhausted,
+  /// K grows by one and enumeration restarts from the first (K+1)-tuple.
+  /// Returns false only when K exceeds the number of candidates.
+  bool nextRun() override {
+    // Find the rightmost index that can be incremented within the current K.
+    int I = static_cast<int>(K) - 1;
+    while (I >= 0 &&
+           Indices[I] == static_cast<unsigned>(Candidates.size() - K + I))
+      --I;
+
+    if (I >= 0) {
+      // Advance within the current K-simplex.
+      ++Indices[I];
+      for (unsigned J = I + 1; J < K; ++J)
+        Indices[J] = Indices[J - 1] + 1;
+    } else {
+      // All C(|Candidates|, K) tuples exhausted: grow K.
+      ++K;
+      if (Candidates.size() < K)
+        return false;
+      Indices.resize(K);
+      for (unsigned J = 0; J < K; ++J)
+        Indices[J] = J;
+    }
+    updateCurrentDeferred();
+    return true;
+  }
+};
+
+/// Derives from DeferTupleStrategy, reusing its full K-tuple enumeration and
+/// deferral mechanics. The only difference is candidate ordering: instead of
+/// trying nodes in NodeNum order, nodes are ranked by a two-factor score:
+///
+///   score = contention + leverage
+///
+/// Contention measures competitive pressure on K's slots from the rest of the
+/// loop. For each slot type that K uses, it counts how many slot-uses other
+/// nodes contribute to that type. This is computed by first summing all nodes'
+/// SlotCounts into a TotalSlots vector (mirroring SlotStatistics::Fixed), then
+/// reading off TotalSlots[s] - KSlots[s] for each slot s that K occupies.
+///
+/// Leverage counts nodes reachable from K via latency-1, same-slot data edges
+/// (detected with SlotCounts::overlaps). Because a top-down schedule places a
+/// latency-1 successor exactly one cycle after its predecessor, deferring K by
+/// one cycle implicitly shifts the entire downstream chain.
+///
+/// With ranked candidates, nextRun() from DeferTupleStrategy naturally
+/// progresses from the highest-scored singleton to the highest-scored pair,
+/// triple, and so on — focusing the tuple search on the most impactful nodes.
+class DeferContendedStrategy : public DeferTupleStrategy {
+
+  // For each slot s that K uses, count slot-uses of that type by other nodes.
+  static int computeContention(unsigned K, const ScheduleInfo &Info,
+                               const SlotCounts &TotalSlots) {
+    const SlotCounts &KSlots = Info[K].Slots;
+    int Score = 0;
+    const int N = std::max(KSlots.size(), TotalSlots.size());
+    for (int S = 0; S < N; ++S) {
+      const int Mine = KSlots.at(S);
+      if (Mine > 0)
+        Score += TotalSlots.at(S) - Mine;
+    }
+    return Score;
+  }
+
+  // Count nodes reachable from K via tight, latency-1, same-slot data edges.
+  // A latency-1 edge A->B is tight when Depth(B) == Depth(A) + 1: B has no
+  // other predecessor providing a longer path, so deferring A by one cycle
+  // necessarily shifts B by one cycle as well. If Depth(B) > Depth(A) + 1, B
+  // is already driven later by another predecessor and a scheduling gap may
+  // exist anyway, so deferring A need not move B.
+  static int computeLeverage(unsigned K, unsigned NInstr,
+                             const ScheduleDAGInstrs &DAG,
+                             const ScheduleInfo &Info) {
+    const SlotCounts &KSlots = Info[K].Slots;
+    SmallSet<unsigned, 8> Visited;
+    SmallVector<unsigned, 8> WorkList;
+    WorkList.push_back(K);
+    while (!WorkList.empty()) {
+      const unsigned N = WorkList.pop_back_val();
+      for (const SDep &Dep : DAG.SUnits[N].Succs) {
+        if (Dep.getKind() != SDep::Data || Dep.getSignedLatency() != 1)
+          continue;
+        const unsigned S = Dep.getSUnit()->NodeNum;
+        if (S >= NInstr || !Visited.insert(S).second)
+          continue;
+        if (DAG.SUnits[S].getDepth() != DAG.SUnits[N].getDepth() + 1)
+          continue;
+        if (KSlots.overlaps(Info[S].Slots))
+          WorkList.push_back(S);
+      }
+    }
+    return static_cast<int>(Visited.size());
+  }
+
+public:
+  DeferContendedStrategy(ScheduleDAGInstrs &DAG, ScheduleInfo &Info, int Length,
+                         unsigned NInstr)
+      : DeferTupleStrategy(DAG, Info, Length) {
+    buildCandidates(NInstr);
+
+    // Aggregate slot usage across all nodes once, mirroring how
+    // SlotStatistics::Fixed accumulates per-MBB slot counts.
+    SlotCounts TotalSlots;
+    for (unsigned K = 0; K < NInstr; ++K)
+      TotalSlots += Info[K].Slots;
+
+    // Compute scores, sort Candidates highest-score-first, then truncate to
+    // the largest N for which the K=1, K=2, and K=3 tuple phases each
+    // complete within the run budget. Lower-K tuples of the highest-scored
+    // candidates are the most impactful; K>=4 phases may receive only partial
+    // coverage.
+    SmallVector<int, 16> Score(NInstr, 0);
+    for (const unsigned K : Candidates)
+      Score[K] = computeContention(K, Info, TotalSlots) +
+                 computeLeverage(K, NInstr, DAG, Info);
+    llvm::sort(Candidates, [&Score](unsigned A, unsigned B) {
+      return Score[A] > Score[B];
+    });
+    // Runs consumed by the K=1, K=2, and K=3 phases for N candidates:
+    // C(N,1) + C(N,2) + C(N,3).
+    auto RunsForK123 = [](unsigned N) {
+      return N + N * (N - 1) / 2 + N * (N - 1) * (N - 2) / 6;
+    };
+    const unsigned Budget = static_cast<unsigned>(2 * HeuristicRuns);
+    unsigned Cap = 2;
+    while (RunsForK123(Cap + 1) <= Budget)
+      ++Cap;
+    if (Candidates.size() > Cap)
+      Candidates.resize(Cap);
+
+    initFromCandidates();
+  }
+
+  std::string name() override {
+    // Prefix with "Contended_" to distinguish from plain DeferTuple runs,
+    // while still encoding the active K-tuple via the parent's naming.
+    return "Contended_" + DeferTupleStrategy::name();
+  }
+};
+
+ScheduleResult MultiRunPostPipelinerStrategy::scheduleAllRuns(PostPipeliner &PP,
+                                                              int MaxRuns) {
   PP.resetSchedule(/*FullReset=*/true);
   for (int Run = 0; Run < MaxRuns; ++Run) {
     DEBUG_SUMMARY(dbgs() << "--- Strategy " << name() << " run=" << Run
                          << " trying II=" << PP.II << "\n");
-    if (PP.scheduleWithStrategy(*this)) {
+    const ScheduleResult R = PP.scheduleWithStrategy(*this);
+    if (R) {
       DEBUG_SUMMARY(dbgs() << "    Strategy " << PP.CurrentStrategyName
                            << " found NS=" << PP.NStages << " II=" << PP.II
                            << "\n");
-      return true;
+      return R;
     }
     if (!nextRun())
       break;
     PP.resetSchedule(/*FullReset=*/false);
   }
   DEBUG_SUMMARY(dbgs() << "    Strategy " << name() << " failed\n");
-  return false;
+  return ScheduleResult(false);
 }
 
 bool PostPipelinerStrategy::isEnabled() {
@@ -1688,12 +1905,27 @@ bool PostPipeliner::tryApproaches() {
     }
   }
 
-  // DeferNthNode: try deferring each instruction one cycle after its first-fit
-  // slot, one instruction per run. Runs after all standard heuristics and
-  // IterCountSlackStrategy to avoid short-circuiting them.
+  // DeferTuple: starts at K=1 (single-node deferral, named DeferNth_N) and
+  // automatically progresses to K=2, K=3, ... as each K-simplex is exhausted.
+  // The doubled budget gives more coverage of the K=1 space for typical loops
+  // and lets small loops reach pair/tuple deferral within the same call.
   {
-    DeferNthNodeStrategy S(*DAG, Info, MinLength + II, NInstr);
-    if (S.isEnabled() && S.scheduleAllRuns(*this, HeuristicRuns))
+    DeferTupleStrategy S(*DAG, Info, MinLength + II, NInstr);
+    if (S.isEnabled() && S.isApplicable() &&
+        S.scheduleAllRuns(*this, 2 * HeuristicRuns))
+      return true;
+  }
+
+  // DeferContended: like DeferTuple but ranks candidates by slot contention
+  // and latency-1 chain leverage, so the most impactful tuples are explored
+  // first. Placed after DeferTuple so that it only fires when all preceding
+  // strategies have failed for the current II — at that point, a success here
+  // means a schedule was found at a lower II than any earlier strategy could
+  // achieve.
+  {
+    DeferContendedStrategy S(*DAG, Info, MinLength + II, NInstr);
+    if (S.isEnabled() && S.isApplicable() &&
+        S.scheduleAllRuns(*this, 2 * HeuristicRuns))
       return true;
   }
 
@@ -1779,12 +2011,11 @@ bool PostPipeliner::applySolver(const SolverData &Data, SWPSolver &Solver,
   // We have a solution of our model, but this is missing some constraints, in
   // order to save solver time. We extract the cycles, and make a final check
   // for all constraints using a dedicated strategy.
-  auto Schedule = Solver.getSUCycles();
-  DEBUG_SUMMARY(dbgs() << "Solver found "; for (auto C
-                                                : Schedule) dbgs()
-                                           << C << ", ";
+  NodeSchedule Schedule = Solver.getSUCycles();
+  DEBUG_SUMMARY(dbgs() << "Solver found ";
+                for (int C : Schedule.getCycles()) dbgs() << C << ", ";
                 dbgs() << "\n";);
-  CheckFixedSchedule S{*DAG, Info, II * NS, Schedule, "Solver"};
+  CheckFixedSchedule S{*DAG, Info, II * NS, std::move(Schedule), "Solver"};
   resetSchedule(/*FullReset=*/true);
   DEBUG_SUMMARY(dbgs() << "--- Strategy " << S.name() << "\n");
   if (scheduleWithStrategy(S)) {
@@ -1845,17 +2076,18 @@ bool PostPipeliner::schedule(ScheduleDAGMI &TheDAG, int InitiationInterval,
   return true;
 }
 
-bool PostPipeliner::tryAllocateRegisters() {
+ScheduleResult PostPipeliner::tryAllocateRegisters() {
   // Clear the alloc strategy name so a stale name from a previous VirtReg
   // attempt does not bleed into a subsequent physical-mode success.
   CurrentAllocStrategyName.clear();
 
-  // In physical mode, registers are not virtualized and no allocation is
-  // needed.
+  // In physical mode, registers are not virtualized; return a trivial success.
   if (!RegTracker.areRegistersVirtualized()) {
     LLVM_DEBUG(
         dbgs() << "PostPipeliner: Physical mode - no allocation needed\n");
-    return true;
+    DenseMap<Register, MCRegister> Empty;
+    return ScheduleResult(true,
+                          PostRegAllocResult("Physical", std::move(Empty)));
   }
 
   const auto *TRI = DAG->MF.getSubtarget().getRegisterInfo();
@@ -1870,31 +2102,31 @@ bool PostPipeliner::tryAllocateRegisters() {
     dbgs() << "\n=== Live Intervals ===\n";
     Interpreter.dumpEventSchedule(EventSched, RegTracker, dbgs());
     dbgs() << "\n";
-    Interpreter.dumpLiveLanes(LiveLanesByLRIndex, II, dbgs());
+    Interpreter.dumpLiveLanes(LiveLanesByLRIndex, II, dbgs(), RegTracker);
     dbgs() << "=================================\n\n";
   });
 
   // Perform register allocation.
-  DenseMap<Register, MCRegister> VRegToPhysReg;
-  const bool Success =
-      AIEPostRegAlloc::allocate(LiveLanesByLRIndex, II, RegTracker, *TRI,
-                                VRegToPhysReg, CurrentAllocStrategyName);
+  PostRegAllocResult Result =
+      AIEPostRegAlloc::allocate(LiveLanesByLRIndex, II, RegTracker, *TRI);
 
-  if (!Success) {
+  if (!Result) {
     LLVM_DEBUG(dbgs() << "PostPipeliner: Register allocation failed\n");
-    return false;
+    return ScheduleResult(false);
   }
 
   LLVM_DEBUG(dbgs() << "PostPipeliner: Register allocation succeeded with "
-                    << VRegToPhysReg.size() << " assignments\n");
+                    << Result.getAssignments().size() << " assignments\n");
+
+  CurrentAllocStrategyName = Result.getWinningStrategyName();
 
   // Apply the register assignments through RegTracker.
-  RegTracker.rewriteToPhysRegs(VRegToPhysReg);
+  RegTracker.rewriteToPhysRegs(Result.getAssignments());
 
   LLVM_DEBUG(dbgs() << "PostPipeliner: Applied register allocation through "
                        "RegTracker\n");
 
-  return true;
+  return ScheduleResult(true, std::move(Result));
 }
 
 // Pipelining reduces the iteration count by NS - 1
