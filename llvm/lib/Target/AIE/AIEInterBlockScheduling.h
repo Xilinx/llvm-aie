@@ -231,6 +231,35 @@ public:
   std::vector<MachineBundle> Bundles;
 };
 
+/// Bundles inserted at one end of a block, plus the program-order list and
+/// cycle map derived from them. Top and bottom inserts share this layout; the
+/// cycle map's meaning differs and is set by the rebuild method.
+struct InsertDescriptor {
+  std::vector<MachineBundle> Bundles;
+
+  /// Instructions drawn from Bundles, in original program order. Instructions
+  /// with no clone at this end are omitted.
+  std::vector<MachineInstr *> SemanticOrder;
+
+  /// Cycle of each instruction in Bundles. Epilogue: bundle index from the
+  /// start. Prologue: depth before the end (last bundle is -1).
+  DenseMap<MachineInstr *, int> CycleMap;
+
+  bool empty() const { return Bundles.empty(); }
+  size_t size() const { return Bundles.size(); }
+
+  void clear() {
+    Bundles.clear();
+    SemanticOrder.clear();
+    CycleMap.clear();
+  }
+
+  /// Record the bundle index as the cycle.
+  void rebuildCycleMapFromStart();
+  /// Record the bundle index minus the bundle count as the cycle.
+  void rebuildCycleMapFromEnd();
+};
+
 class BlockState {
   /// This vector is created during the first fixpoint iteration, triggered
   /// by the enterRegion callback
@@ -238,9 +267,14 @@ class BlockState {
   /// Maintain the index of the region that is currently being updated.
   unsigned CurrentRegion = 0;
 
-  /// Per-CFG-successor inter-block DDG edges, built during the DAG mutation
-  /// phase by MaxLatencyFinder::buildInterBlockEdges(). Persists into the
-  /// initialize() phase so that initializeBotScoreBoard() can also use them.
+  /// Per-CFG-successor inter-block DDG edges. One entry per successor.
+  /// An edge spans the predecessor's bottom region and the successor's top
+  /// region. TopInsert and BottomInsert are both in that region only when
+  /// the block has a single region, ordered TopInsert, free, BottomInsert.
+  /// A one-region epilogue predecessor therefore places all three before the
+  /// boundary. A single-region pipelined loop predecessor contributes the
+  /// tail of its scheduled bundles in place of TopInsert and the free
+  /// instructions.
   std::vector<std::unique_ptr<InterBlockEdges>> PerSuccEdges;
 
   // This holds an instance of the PostPipeliner for candidate loops.
@@ -266,12 +300,12 @@ public:
   BlockType Kind = BlockType::Regular;
   LivePhysRegs LiveOuts;
 
-  /// These are owned bundles of instructions that need to be inserted
-  /// in the top and the bottom of the block respectively.
-  /// PostPipelined loops use these to push out the epilogue and prologue
-  /// in the preheader and exit block.
-  std::vector<MachineBundle> TopInsert;
-  std::vector<MachineBundle> BottomInsert;
+  /// SWP epilogue inserted at the top of the exit block. CycleMap is the
+  /// depth from the start of the epilogue.
+  InsertDescriptor TopInsert;
+  /// SWP prologue inserted at the bottom of the preheader. CycleMap is the
+  /// depth before the end of the prologue.
+  InsertDescriptor BottomInsert;
 
   /// The top-level instructions (BUNDLEs or standalone) that TopInsert and
   /// BottomInsert were emitted as, in block order. top_fixed_instrs() and
@@ -279,13 +313,6 @@ public:
   /// the bottom of the block before a reschedule.
   SmallVector<MachineInstr *, 8> TopFixedInstrs;
   SmallVector<MachineInstr *, 8> BotFixedInstrs;
-
-  /// For pipelined loop preheaders: a parallel array to the loop body's
-  /// SemanticOrder. Each entry is the first-iteration clone from BottomInsert
-  /// for the corresponding original loop instruction, or nullptr when that
-  /// instruction has no copy in the prologue. Populated by PipelineExtractor
-  /// during PipeliningDone.
-  std::vector<MachineInstr *> BottomInsertSemanticOrder;
 
   void initInterBlock(const MachineSchedContext &Context,
                       const AIEHazardRecognizer &HR);
@@ -567,7 +594,7 @@ public:
   // \p Epilogue. Returns nullopt if \p Epilogue is not the epilogue of a
   // pipelined loop.
   std::optional<ArrayRef<MachineBundle>>
-  getSWPLoopBundlesForEpilogue(MachineBasicBlock *Epilogue);
+  getSWPLoopBundlesForEpilogue(BlockState &Epilogue);
 
   /// If \p LoopMBB is not the only Predecessor of \p CurrentMBB, create a
   /// dedicated Exit MBB by splitting the edge between LoopMBB and CurrentBB

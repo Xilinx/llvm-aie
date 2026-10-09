@@ -199,10 +199,16 @@ body:             |
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   renamable $r5 = MUL killed renamable $r5, renamable $r1
   ; CHECK-NEXT:   renamable $x1 = VSHIFT killed $x3, renamable $x0, renamable $r1
-  ; CHECK-NEXT:   renamable $r5 = MUL killed renamable $r5, renamable $r1
-  ; CHECK-NEXT:   renamable $x2 = VSHIFT killed renamable $x1, killed renamable $x0, renamable $r1
-  ; CHECK-NEXT:   renamable $r5 = MUL killed renamable $r5, killed renamable $r1
-  ; CHECK-NEXT:   renamable $p6 = VST_dmx_sts_x_st_pstm_nrm_imm killed renamable $x2, killed renamable $p6, 64 :: (store (<16 x s32>), addrspace 6)
+  ; CHECK-NEXT:   BUNDLE implicit-def $r5, implicit-def $x2, implicit killed $r5, implicit $r1, implicit killed $x1, implicit killed $x0 {
+  ; CHECK-NEXT:     renamable $r5 = MUL killed renamable $r5, renamable $r1
+  ; CHECK-NEXT:     renamable $x2 = VSHIFT killed renamable $x1, killed renamable $x0, renamable $r1
+  ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   BUNDLE implicit-def $p6, implicit-def $r5, implicit killed $x2, implicit killed $p6, implicit killed $r5, implicit killed $r1 {
+  ; CHECK-NEXT:     renamable $p6 = VST_dmx_sts_x_st_pstm_nrm_imm killed renamable $x2, killed renamable $p6, 64 :: (store (<16 x s32>), addrspace 6)
+  ; CHECK-NEXT:     renamable $r5 = MUL killed renamable $r5, killed renamable $r1
+  ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   JNZ killed $r5, %bb.4
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP

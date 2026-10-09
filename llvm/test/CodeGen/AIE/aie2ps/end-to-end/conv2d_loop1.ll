@@ -203,15 +203,15 @@ define dso_local void @conv2d.for.body.i(i32 %0, ptr %add.ptr.i.i, ptr %add.ptr4
 ; ASM-NEXT:  .L_LEnd0:
 ; ASM-NEXT:    nopa ; nopb ; nops ; nopxm ; vmac dm3, dm3, x7, x2, r8
 ; ASM-NEXT:  // %bb.6: // %lastiter.stage1.bottom
-; ASM-NEXT:    lda p7, [sp, #-60]; movs m0, r17; vmac dm2, dm2, x9, x2, r8 // 4-byte Folded Reload
+; ASM-NEXT:    lda p7, [sp, #-60]; nopb ; movs m0, r17; nopxm ; vmac dm2, dm2, x9, x2, r8 // 4-byte Folded Reload
 ; ASM-NEXT:    lda p6, [sp, #-64]; nopb ; movs dj0, r17; movx crsrsmode, #0; mov srssign0, r7; vmac dm1, dm1, x7, x0, r8 // 4-byte Folded Reload
-; ASM-NEXT:    paddxm [sp], #-64; or r12, r24, r24; vshift.align x7, x7, s0, x6, r30; vmac dm0, dm0, x9, x0, r8
-; ASM-NEXT:    or r10, r23, r23; vshift.align x9, x9, s0, x4, r30
+; ASM-NEXT:    paddxm [sp], #-64; nopb ; nops ; or r12, r24, r24; vshift.align x7, x7, s0, x6, r30; vmac dm0, dm0, x9, x0, r8
+; ASM-NEXT:    nopa ; or r10, r23, r23; vshift.align x9, x9, s0, x4, r30
 ; ASM-NEXT:    mov s0, r6; vmac dm3, dm3, x7, x2, r8
 ; ASM-NEXT:    vmac dm2, dm2, x9, x2, r8
 ; ASM-NEXT:    vmac dm1, dm1, x7, x0, r8
-; ASM-NEXT:    vmac dm0, dm0, x9, x0, r8
-; ASM-NEXT:    mov r8, r22
+; ASM-NEXT:    mov r8, r22; vmac dm0, dm0, x9, x0, r8
+; ASM-NEXT:    nop
 ; ASM-NEXT:    nop
 ; ASM-NEXT:    vst.srs.4x dm3, s0, srssign0, [p2], m0
 ; ASM-NEXT:    vst.srs.4x dm2, s0, srssign0, [p2], m4; ret lr

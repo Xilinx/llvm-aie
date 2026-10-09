@@ -373,7 +373,7 @@ void AIEPostRASchedStrategy::initializeBotScoreBoard() {
           MachineInstr *MI = SU.getInstr();
           if (!MI)
             continue;
-          const int StaticDepth = SE.getPostDepthOr(&SU, 0);
+          const int StaticDepth = SE.getPostDepths().getValueOr(&SU, 0);
           // Insert at every cycle from StaticDepth to FirstBlockedCycle-1.
           for (int C = StaticDepth; C < FirstBlockedCycle; C++)
             InsertInCycle(*MI, C);
@@ -427,7 +427,8 @@ void AIEPostRASchedStrategy::initializeTopScoreBoard() {
   if (!IsFirstRegion)
     return;
 
-  auto LoopBundlesOpt = InterBlock.getSWPLoopBundlesForEpilogue(CurMBB);
+  BlockState &BS = InterBlock.getBlockState(CurMBB);
+  auto LoopBundlesOpt = InterBlock.getSWPLoopBundlesForEpilogue(BS);
 
   if (!LoopBundlesOpt)
     return;

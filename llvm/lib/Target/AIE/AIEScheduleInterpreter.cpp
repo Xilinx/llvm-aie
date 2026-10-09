@@ -54,7 +54,7 @@ int AIEScheduleInterpreter::getOperandCycle(unsigned SchedClass,
   // Any operand index derived from an actual instruction is admissible within
   // the AIE family.  On older AIE architectures, implicit operand indices may
   // fall outside the itinerary table; return 0 (issue cycle) as the
-  // established fallback, consistent with AIERegMemEventTracker.
+  // established fallback.
   return static_cast<int>(Itin->getOperandCycle(SchedClass, OpIdx).value_or(0));
 }
 

@@ -12,6 +12,7 @@
 #include "AIEBaseSubtarget.h"
 #include "llvm/CodeGen/ScheduleDAGInstrs.h"
 #include "llvm/Support/raw_ostream.h"
+#include <algorithm>
 
 namespace llvm::AIE {
 
@@ -73,6 +74,29 @@ void DataDependenceHelper::dumpDot(raw_ostream &OS,
   OS << "}\n";
 }
 
+void InterBlockEdges::NodeValues::clear() {
+  Values.clear();
+  RegionMax = 0;
+}
+
+void InterBlockEdges::NodeValues::record(MachineInstr *MI, int Val) {
+  RegionMax = std::max(RegionMax, Val);
+  const auto Found = Nodes.find(MI);
+  if (Found == Nodes.end())
+    return;
+  const unsigned Idx = Found->second;
+  if (Values.size() <= Idx)
+    Values.resize(Idx + 1);
+  Values[Idx] = Val;
+}
+
+std::optional<int>
+InterBlockEdges::NodeValues::getValue(const SUnit *SU) const {
+  if (SU->NodeNum >= Values.size())
+    return std::nullopt;
+  return Values[SU->NodeNum];
+}
+
 void InterBlockEdges::addNode(MachineInstr *MI) {
   const auto Index = initSUnit(*MI);
   if (!Index) {
@@ -86,6 +110,13 @@ void InterBlockEdges::addNode(MachineInstr *MI) {
 void InterBlockEdges::markBoundary() {
   assert(!Boundary.has_value());
   Boundary = SUnits.size();
+}
+
+void InterBlockEdges::markFixedInstrBoundary() {
+  assert(!FixedInstrBoundary && "Fixed/free boundary already set");
+  assert(!Boundary &&
+         "Fixed/free boundary must be marked before the CFG boundary");
+  FixedInstrBoundary = SUnits.size();
 }
 
 bool InterBlockEdges::mayAlias(SUnit *SUa, SUnit *SUb, bool TBAA) {
@@ -107,47 +138,37 @@ const SUnit *InterBlockEdges::getPreBoundaryNode(MachineInstr *MI) const {
   return &SUnits.at(Found->second);
 }
 
-bool InterBlockEdges::isPostBoundaryNode(SUnit *SU) const {
-  return Boundary ? SU->NodeNum >= *Boundary : false;
+const SUnit *InterBlockEdges::getPostBoundaryNode(MachineInstr *MI) const {
+  const auto Found = SuccMap.find(MI);
+  if (Found == SuccMap.end()) {
+    return nullptr;
+  }
+  return &SUnits.at(Found->second);
 }
 
-void InterBlockEdges::clearPostDepths() {
-  PostDepths.clear();
-  PostRegionMaxDepth = 0;
+bool InterBlockEdges::isPreBoundaryNode(const SUnit *SU) const {
+  return Boundary ? SU->NodeNum < *Boundary : true;
+}
+
+bool InterBlockEdges::isFixedPreBoundaryNode(const SUnit *SU) const {
+  return FixedInstrBoundary && SU->NodeNum >= *FixedInstrBoundary &&
+         isPreBoundaryNode(SU);
+}
+
+bool InterBlockEdges::isPostBoundaryNode(const SUnit *SU) const {
+  return Boundary ? SU->NodeNum >= *Boundary : false;
 }
 
 void InterBlockEdges::clear() {
   clearDAG();
   Boundary = {};
-  clearPostDepths();
-}
-
-// Record code at a particular depth that is not represented
-// by a MachineInstr, for instance an empty bundle.
-void InterBlockEdges::recordPostDepth(int Depth) {
-  PostRegionMaxDepth = std::max(PostRegionMaxDepth, Depth);
-}
-
-void InterBlockEdges::recordPostDepth(MachineInstr *MI, int Depth) {
-  // Even if we can't find an index, our caller has found evidence
-  // that we have code at this depth. As a common example,
-  // consider bundles with BottomFixed instructions that are not
-  // part of the first iteration.
-  recordPostDepth(Depth);
-
-  const auto Found = SuccMap.find(MI);
-  if (Found == SuccMap.end()) {
-    // When inserting scheduled bundles, we may be interleaved with
-    // instructions from Fixed regions. It's easiest to ignore them
-    // here.
-    return;
-  }
-  PostDepths[Found->second] = Depth;
-}
-
-int InterBlockEdges::getPostDepthOr(const SUnit *SU, int Default) const {
-  const auto It = PostDepths.find(SU->NodeNum);
-  return It != PostDepths.end() ? It->second : Default;
+  // updatePerSuccEdges rebuilds this object in place. addNode uses emplace, so
+  // a stale index would keep pointing at whatever instruction now occupies it.
+  PredMap.clear();
+  SuccMap.clear();
+  PostDepths.clear();
+  PreDepths.clear();
+  FixedInstrBoundary.reset();
 }
 
 std::map<unsigned, int> InterBlockEdges::computePreHeights() const {
