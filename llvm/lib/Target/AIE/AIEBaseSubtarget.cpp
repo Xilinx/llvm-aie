@@ -504,8 +504,7 @@ public:
 
 /// EntrySU latencies for free SUnits from TopFixed post-depths and pipelined
 /// loop pre-depths on the predecessor's PerSuccEdges entry. Symmetric to
-/// RegionEndEdges at the start of the region. Runs before EmitFixedSUnits so
-/// DAG->SUnits are still free only.
+/// RegionEndEdges at the start of the region. Fixed SUnits are skipped.
 class RegionStartEdges : public ScheduleDAGMutation {
   void apply(ScheduleDAGInstrs *DAG) override {
     MachineBasicBlock *BB = DAG->getBB();
@@ -525,6 +524,8 @@ class RegionStartEdges : public ScheduleDAGMutation {
     AIE::InterBlockEdges *PredEdges = IB.getPerPredEdges(BB).front();
 
     for (SUnit &SU : DAG->SUnits) {
+      if (!Scheduler->isFreeSU(SU))
+        continue;
       MachineInstr &MI = *SU.getInstr();
       const SUnit *EdgeSU = PredEdges->getPostBoundaryNode(&MI);
       if (!EdgeSU)
@@ -952,8 +953,8 @@ AIEBaseSubtarget::getPostRAMutationsImpl(const Triple &TT, AAResults *AA) {
     Mutations.emplace_back(std::make_unique<MemoryEdges>(true));
     Mutations.emplace_back(std::make_unique<MachineSchedWAWEdges>());
     Mutations.emplace_back(std::make_unique<BiasDepth>());
-    Mutations.emplace_back(std::make_unique<RegionStartEdges>());
     Mutations.emplace_back(std::make_unique<EmitFixedSUnits>());
+    Mutations.emplace_back(std::make_unique<RegionStartEdges>());
     Mutations.emplace_back(std::make_unique<RegionEndEdges>());
   }
   return Mutations;
