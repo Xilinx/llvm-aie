@@ -108,7 +108,7 @@ define void @drain_after_olp(ptr noalias %a, ptr noalias %c, ptr %out, i32 %n, i
 ; CHECK-NEXT:    [[P_NEXT]] = getelementptr inbounds <16 x i32>, ptr [[P]], i32 1
 ; CHECK-NEXT:    [[Q_NEXT]] = getelementptr inbounds <16 x i32>, ptr [[Q]], i32 1
 ; CHECK-NEXT:    [[DRAIN_COND:%.*]] = call i1 @llvm.loop.decrement.i32(i32 1)
-; CHECK-NEXT:    br i1 [[DRAIN_COND]], label %[[DRAIN]], label %[[EXIT]], !llvm.loop [[LOOP5:![0-9]+]]
+; CHECK-NEXT:    br i1 [[DRAIN_COND]], label %[[DRAIN]], label %[[EXIT]], !llvm.loop [[LOOP6:![0-9]+]]
 ; CHECK:       [[EXIT]]:
 ; CHECK-NEXT:    ret void
 ;
@@ -178,9 +178,10 @@ exit:
 ;.
 ; CHECK: [[LOOP0]] = distinct !{[[LOOP0]], [[META1:![0-9]+]]}
 ; CHECK: [[META1]] = !{!"llvm.loop.mustprogress"}
-; CHECK: [[LOOP2]] = distinct !{[[LOOP2]], [[META1]], [[META3:![0-9]+]], [[META4:![0-9]+]]}
+; CHECK: [[LOOP2]] = distinct !{[[LOOP2]], [[META1]], [[META3:![0-9]+]], [[META4:![0-9]+]], [[META5:![0-9]+]]}
 ; CHECK: [[META3]] = !{!"llvm.loop.itercount.range", i32 1}
 ; CHECK: [[META4]] = !{!"llvm.loop.hint.aie_outerloop_pipeliner_success", i64 1}
-; CHECK: [[LOOP5]] = distinct !{[[LOOP5]], [[META1]], [[META6:![0-9]+]]}
-; CHECK: [[META6]] = !{!"llvm.loop.itercount.range", i32 16}
+; CHECK: [[META5]] = !{!"llvm.loop.hint.aie_outerloop_pipeliner_peel_mode", !"last"}
+; CHECK: [[LOOP6]] = distinct !{[[LOOP6]], [[META1]], [[META7:![0-9]+]]}
+; CHECK: [[META7]] = !{!"llvm.loop.itercount.range", i32 16}
 ;.
