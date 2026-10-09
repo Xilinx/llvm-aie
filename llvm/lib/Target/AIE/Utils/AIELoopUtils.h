@@ -43,6 +43,18 @@ constexpr StringLiteral OuterLoopPipelinedKey{
 constexpr StringLiteral OuterLoopSpeculativeKey{
     "llvm.loop.hint.aie_outerloop_pipeliner_speculative"};
 
+/// Pipelining mode used by the outer-loop pipeliner.
+enum class OLPPeelMode { PeelLast, PeelFirst };
+
+/// Loop-hint key recording which pipelining mode was used.
+constexpr StringLiteral OuterLoopPeelModeKey{
+    "llvm.loop.hint.aie_outerloop_pipeliner_peel_mode"};
+
+/// Returns the peel mode string for embedding in loop metadata.
+inline StringRef peelModeString(OLPPeelMode Mode) {
+  return Mode == OLPPeelMode::PeelFirst ? "first" : "last";
+}
+
 bool isOuterLoopPipelined(const MachineBasicBlock &LoopLatch);
 
 /// Loop-hint key that requests AIE loop versioning. It is the user-facing hint
@@ -179,16 +191,37 @@ std::optional<unsigned> getSWPStageCount(const MachineBasicBlock &LoopBB,
 /// In speculative mode, there's no separate peeled-iteration region.
 bool isOuterLoopSpeculative(const MachineBasicBlock &LoopLatch);
 
+/// Returns the peel mode from the loop metadata, if the loop was pipelined.
+std::optional<OLPPeelMode>
+getOuterLoopPeelMode(const MachineBasicBlock &LoopLatch);
+
 /// Structure representing an outer-loop-pipelined loop at MIR level.
 /// Built from the outer loop latch that has the OLP success marker.
 ///
-/// OLP creates the following CFG structure (non-speculative mode):
-///   [OuterPreheader] -> [SteadyTop] -> [SteadyInner] -> [SteadyBottom/Latch]
-///                            ^                                |
-///                            |________________________________|
-///                                        |
-///                                        v
+/// Peel-last mode (default) creates this CFG:
+///
+///   [OuterPreheader] -> [SteadyTop] -> [SteadyInner] -> [SteadyBottom]
+///                            ^                               |
+///                            |_______________________________|
+///                                         |
+///                                         v
 ///   [PeeledIterTop] -> [PeeledIterInner] -> [PeeledIterBottom]
+///
+/// Peel-first mode creates this CFG:
+///
+///   [OuterPreheader] -> [PeeledIterTop] -> [PeeledIterInner]
+///                            -> [PeeledIterBottom]
+///                                    |
+///                                    v
+///                       [SteadyTop] -> [SteadyInner] -> [SteadyBottom]
+///                            ^                               |
+///                            |_______________________________|
+///                                         |
+///                                         v
+///                                   [Epilogue]
+///
+/// In speculative mode (peel-last only), there is no peeled iteration
+/// region; only the steady-state loop is populated.
 ///
 /// The SteadyInner and PeeledIterInner are the sibling inner loops that
 /// execute the same code but may have different register allocations.

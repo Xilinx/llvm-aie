@@ -114,7 +114,8 @@ exit:
 ;.
 ; CHECK: [[LOOP0]] = distinct !{[[LOOP0]], [[META1:![0-9]+]]}
 ; CHECK: [[META1]] = !{!"llvm.loop.mustprogress"}
-; CHECK: [[LOOP2]] = distinct !{[[LOOP2]], [[META1]], [[META3:![0-9]+]], [[META4:![0-9]+]]}
+; CHECK: [[LOOP2]] = distinct !{[[LOOP2]], [[META1]], [[META3:![0-9]+]], [[META4:![0-9]+]], [[META5:![0-9]+]]}
 ; CHECK: [[META3]] = !{!"llvm.loop.itercount.range", i32 1}
 ; CHECK: [[META4]] = !{!"llvm.loop.hint.aie_outerloop_pipeliner_success", i64 1}
+; CHECK: [[META5]] = !{!"llvm.loop.hint.aie_outerloop_pipeliner_peel_mode", !"first"}
 ;.

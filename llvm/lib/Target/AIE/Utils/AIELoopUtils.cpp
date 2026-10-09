@@ -363,6 +363,16 @@ bool isOuterLoopSpeculative(const MachineBasicBlock &LoopLatch) {
       .has_value();
 }
 
+std::optional<OLPPeelMode>
+getOuterLoopPeelMode(const MachineBasicBlock &LoopLatch) {
+  auto Val = getLoopHintString(LoopLatch, OuterLoopPeelModeKey);
+  if (!Val)
+    return std::nullopt;
+  if (*Val == "first")
+    return OLPPeelMode::PeelFirst;
+  return OLPPeelMode::PeelLast;
+}
+
 std::optional<OuterLoopStructure>
 OuterLoopStructure::tryBuildFrom(MachineBasicBlock &OuterLatch) {
   // Verify this is an OLP latch
