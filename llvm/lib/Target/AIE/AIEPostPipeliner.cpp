@@ -1796,7 +1796,7 @@ bool PostPipeliner::applySolver(const SolverData &Data, SWPSolver &Solver,
   return false;
 }
 
-bool PostPipeliner::schedule(ScheduleDAGMI &TheDAG, int InitiationInterval,
+bool PostPipeliner::schedule(ScheduleDAGInstrs &TheDAG, int InitiationInterval,
                              PostPipelinerMode PipelinerMode) {
 
   II = InitiationInterval;
