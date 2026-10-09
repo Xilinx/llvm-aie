@@ -268,8 +268,13 @@ class BlockState {
   unsigned CurrentRegion = 0;
 
   /// Per-CFG-successor inter-block DDG edges. One entry per successor.
-  /// Prologue clones of this block sit before the CFG boundary; epilogue
-  /// clones of the successor sit just after it.
+  /// An edge spans the predecessor's bottom region and the successor's top
+  /// region. TopInsert and BottomInsert are both in that region only when
+  /// the block has a single region, ordered TopInsert, free, BottomInsert.
+  /// A one-region epilogue predecessor therefore places all three before the
+  /// boundary. A single-region pipelined loop predecessor contributes the
+  /// tail of its scheduled bundles in place of TopInsert and the free
+  /// instructions.
   std::vector<std::unique_ptr<InterBlockEdges>> PerSuccEdges;
 
   // This holds an instance of the PostPipeliner for candidate loops.
