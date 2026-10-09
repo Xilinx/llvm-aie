@@ -136,9 +136,8 @@ std::string RFEvent::toString() const {
     raw_string_ostream Stream(ActionStr);
     Stream << format("%c%02d", Action, SubRegIdx);
   } else {
-    // No subreg, just the action with padding.
+    // No subreg: return a compact single-character string.
     ActionStr = Action;
-    ActionStr += "  ";
   }
   return ActionStr;
 }
@@ -166,7 +165,7 @@ void AIEScheduleInterpreter::dumpEventSchedule(
     const auto &CycleEvents = Schedule[Cycle];
     for (const auto &Event : CycleEvents) {
       if (!RegEventsByLRIndex[Event.LRIndex][Cycle].empty())
-        RegEventsByLRIndex[Event.LRIndex][Cycle] += " ";
+        RegEventsByLRIndex[Event.LRIndex][Cycle] += "/";
       RegEventsByLRIndex[Event.LRIndex][Cycle] += Event.toString();
 
       if (Event.ForwardingClass != 0) {
@@ -174,7 +173,7 @@ void AIEScheduleInterpreter::dumpEventSchedule(
             (Event.Type == EventType::Write) ? Cycle - 1 : Cycle;
         if (BypassCycle >= 0) {
           if (!BypassEventsByLRIndex[Event.LRIndex][BypassCycle].empty())
-            BypassEventsByLRIndex[Event.LRIndex][BypassCycle] += " ";
+            BypassEventsByLRIndex[Event.LRIndex][BypassCycle] += "/";
           BypassEventsByLRIndex[Event.LRIndex][BypassCycle] += Event.toString();
         }
       }
@@ -186,20 +185,22 @@ void AIEScheduleInterpreter::dumpEventSchedule(
   // Reserve 8 characters for the VReg name (e.g. "(%999)").
   OS << " RegClass    LRIdx  VReg    |";
   for (unsigned Cycle = 0; Cycle < Schedule.size(); ++Cycle)
-    OS << format(" %4d |", Cycle);
+    OS << format(" %7d |", Cycle);
   OS << "\n";
 
   // Print separator.
-  OS << "---------------------------+";
+  OS << "----------------------------+";
   for (unsigned Cycle = 0; Cycle < Schedule.size(); ++Cycle)
-    OS << "------+";
+    OS << "---------+";
   OS << "\n";
 
   // Helper lambda to print a row of events.
+  // Each cell uses 7 characters, wide enough for two events with subreg info
+  // separated by "/" (e.g. "R01/W01").
   auto PrintEventRow = [&](const std::map<unsigned, std::string> &Events) {
     for (unsigned Cycle = 0; Cycle < Schedule.size(); ++Cycle) {
       auto It = Events.find(Cycle);
-      OS << format(" %-4s |", It != Events.end() ? It->second.c_str() : "");
+      OS << format(" %-7s |", It != Events.end() ? It->second.c_str() : "");
     }
     OS << "\n";
   };
@@ -225,7 +226,7 @@ void AIEScheduleInterpreter::dumpEventSchedule(
 
     const auto &BypassEvents = BypassEventsByLRIndex[LRIndex];
     if (!BypassEvents.empty()) {
-      OS << "         bypass            |";
+      OS << "          bypass            |";
       PrintEventRow(BypassEvents);
     }
   }
@@ -378,7 +379,7 @@ DenseMap<unsigned, AIE::LivenessVector> AIEScheduleInterpreter::buildLiveLanes(
 
 void AIEScheduleInterpreter::dumpLiveLanes(
     const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex, int II,
-    raw_ostream &OS, const RegLiveRangeTracker *Tracker) const {
+    raw_ostream &OS, const RegLiveRangeTracker &Tracker) const {
 
   if (LiveLanesByLRIndex.empty()) {
     OS << "No live lanes data\n";
@@ -392,62 +393,62 @@ void AIEScheduleInterpreter::dumpLiveLanes(
   llvm::sort(LRIndices);
 
   OS << "Live Lanes (II=" << II << "):\n";
+  OS << "  Legend: # = all lanes occupied, + = partial lanes occupied, "
+        "R = bypass read, W = bypass write, .. = empty\n";
   OS << "LRIdx  VReg     | ";
   for (int T = 0; T < II; ++T)
-    OS << format("t%-6d ", T);
+    OS << format("t%-3d ", T);
   OS << "\n";
 
-  OS << "---------------+";
+  // 16 dashes align the '+' with the '|' in the header above.
+  OS << "----------------+";
   for (int T = 0; T < II; ++T)
-    OS << "--------";
+    OS << "-----";
   OS << "\n";
 
   for (unsigned LRIndex : LRIndices) {
     std::string LRVRegStr;
-    if (Tracker) {
-      const Register VReg = (*Tracker)[LRIndex].getVReg();
-      if (VReg.isValid()) {
-        raw_string_ostream SS(LRVRegStr);
-        SS << "(" << printReg(VReg, &TRI) << ")";
-      }
+    const Register VReg = Tracker[LRIndex].getVReg();
+    if (VReg.isValid()) {
+      raw_string_ostream SS(LRVRegStr);
+      SS << printReg(VReg, &TRI);
     }
     OS << format("%-6u %-8s | ", LRIndex, LRVRegStr.c_str());
 
+    const TargetRegisterClass *RC = Tracker[LRIndex].getRegisterClass();
     const auto &LanesByOffset = LiveLanesByLRIndex.lookup(LRIndex);
     for (int T = 0; T < II; ++T) {
       const AIE::Liveness &L = LanesByOffset[T];
       if (L.any()) {
-        // Build indicator showing lanes and bypass classes.
-        // Format examples:
-        //   "##    " = lanes only
-        //   "#R1   " = lanes + bypass read class 1
-        //   "#W2   " = lanes + bypass write class 2
-        //   "R1W2  " = bypass read class 1 + bypass write class 2
-        //   "#R1W2 " = lanes + bypass read class 1 + bypass write class 2
+        // Build indicator showing lanes and bypass access.
+        // Format examples (padded to 3 chars):
+        //   "#  " = all lanes occupied
+        //   "+  " = partial lanes occupied
+        //   "#R " = all lanes occupied + bypass read
+        //   "+W " = partial lanes + bypass write
+        //   "RW " = bypass read + bypass write (no RF lanes)
+        //   "#RW" = all lanes + bypass read + bypass write
         std::string Indicator;
-        if (L.getLanes().any())
-          Indicator = "#";
+        if (L.getLanes().any()) {
+          // '#' = all lanes of the RC are occupied; '+' = partial occupancy.
+          const bool IsComplete = RC && (L.getLanes() == RC->getLaneMask());
+          Indicator += IsComplete ? '#' : '+';
+        }
 
-        // Add bypass read classes.
-        if (!L.getBypassReads().empty()) {
+        // Add bypass read indicator.
+        if (!L.getBypassReads().empty())
           Indicator += "R";
-          for (unsigned FC : L.getBypassReads())
-            Indicator += std::to_string(FC);
-        }
 
-        // Add bypass write classes.
-        if (!L.getBypassWrites().empty()) {
+        // Add bypass write indicator.
+        if (!L.getBypassWrites().empty())
           Indicator += "W";
-          for (unsigned FC : L.getBypassWrites())
-            Indicator += std::to_string(FC);
-        }
 
-        // Pad to 6 characters for alignment.
-        while (Indicator.size() < 6)
+        // Pad to 3 characters for alignment.
+        while (Indicator.size() < 3)
           Indicator += " ";
         OS << " " << Indicator << " ";
       } else {
-        OS << " ..     ";
+        OS << " ..  ";
       }
     }
     OS << "\n";

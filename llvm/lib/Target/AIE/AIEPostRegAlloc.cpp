@@ -329,7 +329,7 @@ std::vector<Register> AIEPostRegAlloc::getCandidatePhysRegs(
 AIEPostRegAlloc::AllocResult AIEPostRegAlloc::tryAllocate(
     const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex,
     const RegLiveRangeTracker *RegTracker, const TargetRegisterInfo &TRI,
-    AllocState &State, ScoringFunction ScoreFn,
+    AllocState &State, ComparatorFunction OrderFn,
     DenseMap<Register, MCRegister> &OutAssign) {
 
   // Reset per-attempt state.
@@ -339,14 +339,12 @@ AIEPostRegAlloc::AllocResult AIEPostRegAlloc::tryAllocate(
 
   const auto &AvailableRegs = RegTracker->getAvailablePhysRegs();
 
-  // A live range together with its per-cycle lane masks and allocation score.
-  // Score is populated for VReg entries only (before the sorted traversal).
+  // A live range together with its per-cycle lane masks.
   class LREntry {
   public:
     const RegLiveRange *LR;
     unsigned LRIndex;
     const AIE::LivenessVector *Masks;
-    unsigned Score = 0;
   };
 
   // Collect all live ranges that have liveness data (VReg and non-VReg).
@@ -420,23 +418,25 @@ AIEPostRegAlloc::AllocResult AIEPostRegAlloc::tryAllocate(
 
   // Build a sorted list of pointers to VReg entries in AllEntries.
   // Non-VReg ranges (non-virtualizable or excluded by overlap policy) are
-  // always choice-1 and placed by DrainForcedChoices; they do not need a
-  // score.
-  // Score is computed and stored directly into each entry.
+  // always choice-1 and placed by DrainForcedChoices; they do not participate
+  // in the ordering.
   std::vector<LREntry *> ScoredEntries;
   for (LREntry &Entry : AllEntries) {
     if (!Entry.LR->getVReg().isValid())
       continue;
-    Entry.Score = ScoreFn(State.AllMetrics[Entry.LRIndex]);
     ScoredEntries.push_back(&Entry);
   }
 
-  // Sort by descending score (hardest first).
-  // Use VReg index as tiebreaker for deterministic ordering when scores are
-  // equal.
-  llvm::sort(ScoredEntries, [](const LREntry *A, const LREntry *B) {
-    if (A->Score != B->Score)
-      return A->Score > B->Score;
+  // Sort using the ordering comparator (hardest first).
+  // Use VReg index as a deterministic tiebreaker when the comparator
+  // considers two entries equivalent (OrderFn(A,B) == OrderFn(B,A) == false).
+  llvm::sort(ScoredEntries, [&](const LREntry *A, const LREntry *B) {
+    const VRegMetrics &MA = State.AllMetrics[A->LRIndex];
+    const VRegMetrics &MB = State.AllMetrics[B->LRIndex];
+    if (OrderFn(MA, MB))
+      return true;
+    if (OrderFn(MB, MA))
+      return false;
     return A->LR->getVReg().virtRegIndex() < B->LR->getVReg().virtRegIndex();
   });
 
@@ -467,9 +467,9 @@ AIEPostRegAlloc::AllocResult AIEPostRegAlloc::tryAllocate(
     const TargetRegisterClass *RC = LR.getRegisterClass();
     const auto &Metrics = State.AllMetrics[LRIndex];
 
-    LLVM_DEBUG(dbgs() << "Allocating LR#" << LRIndex << " class="
-                      << TRI.getRegClassName(RC) << " (score=" << Entry.Score
-                      << ", available=" << Metrics.NumAvailableRegs
+    LLVM_DEBUG(dbgs() << "Allocating LR#" << LRIndex
+                      << " class=" << TRI.getRegClassName(RC)
+                      << " (available=" << Metrics.NumAvailableRegs
                       << ", pure_int=" << Metrics.PureInterferenceDegree
                       << ", alias_int=" << Metrics.AliasingInterferenceDegree
                       << ")\n");
@@ -483,8 +483,9 @@ AIEPostRegAlloc::AllocResult AIEPostRegAlloc::tryAllocate(
     }
 
     Register ChosenPhys = Register();
+    LLVM_DEBUG(dbgs() << "  Trying ");
     for (Register PhysReg : Candidates) {
-      LLVM_DEBUG(dbgs() << "  Trying " << printReg(PhysReg, &TRI) << " ");
+      LLVM_DEBUG(dbgs() << printReg(PhysReg, &TRI) << " ");
       if (State.canPlace(PhysReg, VRegMasks)) {
         LLVM_DEBUG(dbgs() << "\n");
         ChosenPhys = PhysReg;
@@ -492,7 +493,6 @@ AIEPostRegAlloc::AllocResult AIEPostRegAlloc::tryAllocate(
       }
     }
 
-    LLVM_DEBUG(dbgs() << "\n");
     if (!ChosenPhys.isValid()) {
       LLVM_DEBUG(dbgs() << "  Failed to find suitable physreg!\n");
       return AllocResult(/*InfeasibleSchedule=*/false);
@@ -629,27 +629,31 @@ PostRegAllocResult AIEPostRegAlloc::allocate(
   // Define the allocation strategies to try.
   struct AllocationStrategy {
     const char *Name;
-    ScoringFunction ScoreFn;
+    ComparatorFunction OrderFn;
   };
 
   std::vector<AllocationStrategy> Strategies = {
-      // Try scarce register class priority scoring first.
-      {"scarce register class scoring", scoreByScarceRegClass},
-      // Try interference-based scoring (graph coloring inspired).
-      {"interference degree scoring", scoreByInterference},
-      // Try with area+width scoring (original).
-      {"area+width scoring", scoreByAreaPlusWidth},
-      // Try with pure area scoring.
-      {"area scoring", scoreByArea},
-      // Try with width-priority scoring.
-      {"width scoring", scoreByWidth},
-      // Try with duration scoring.
-      {"duration scoring", scoreByDuration},
-      // Try a custom non-linear scoring function.
+      // Scarce register class first: fewer available registers → first.
+      // Within the same scarceness, highest interference degree wins.
+      {"scarce register class scoring", orderByScarceRegClass},
+      // Lexicographic: widest register class first (absolute precedence),
+      // then highest interference degree within the same width tier.
+      {"width then interference scoring", orderByWidthThenInterference},
+      // Pure interference degree (graph-coloring inspired).
+      {"interference degree scoring", orderByInterference},
+      // Area + width combined.
+      {"area+width scoring", orderByAreaPlusWidth},
+      // Pure area (total lane-cycles).
+      {"area scoring", orderByArea},
+      // Width only.
+      {"width scoring", orderByWidth},
+      // Duration only.
+      {"duration scoring", orderByDuration},
+      // Quadratic width + duration.
       {"quadratic width scoring",
-       [](const VRegMetrics &M) {
-         // Quadratic penalty for width, linear for duration.
-         return M.MaxWidth * M.MaxWidth + M.Duration;
+       [](const VRegMetrics &A, const VRegMetrics &B) {
+         return (A.MaxWidth * A.MaxWidth + A.Duration) >
+                (B.MaxWidth * B.MaxWidth + B.Duration);
        }},
   };
 
@@ -658,7 +662,7 @@ PostRegAllocResult AIEPostRegAlloc::allocate(
     LLVM_DEBUG(dbgs() << "Trying allocation with " << Strategy.Name << "\n");
 
     AllocResult Result = tryAllocate(LiveLanesByLRIndex, &RegTracker, TRI,
-                                     State, Strategy.ScoreFn, Assignments);
+                                     State, Strategy.OrderFn, Assignments);
 
     if (Result) {
       LLVM_DEBUG(dbgs() << "Allocation succeeded with " << Strategy.Name
