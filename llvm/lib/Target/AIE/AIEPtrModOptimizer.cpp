@@ -8,20 +8,21 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// Implements the llvm-pass AIEPtrModOptimizer to query Combiners
-// (FoundCombiners).
+// Implements the llvm-pass AIEPtrModOptimizer, which selects the pointer
+// modifier Combiners (FoundCombiners) of each MBB and applies them.
 //
 //===----------------------------------------------------------------------===//
 
 #include "AIEPtrModOptimizer.h"
 #include "AIE.h"
 #include "AIEBaseInstrInfo.h"
+#include "AIECombinerHelper.h"
 #include "AIEDataDependenceHelper.h"
 #include "AIEGlobalCombiner.h"
 #include "AIEGlobalCombinerPtrMods.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/CodeGen/GlobalISel/CSEInfo.h"
-#include "llvm/CodeGen/GlobalISel/GenericMachineInstrs.h"
+#include "llvm/CodeGen/GlobalISel/GISelValueTracking.h"
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -35,8 +36,6 @@
 
 #define DEBUG_TYPE "aie-ptr-mod-opt"
 
-extern cl::opt<bool> EnableGlobalPtrModOptimizer;
-
 using namespace llvm;
 
 static const char AIE_PTR_MOD_OPTIMIZER[] = "AIE Pointer Modifier Optimization";
@@ -47,14 +46,14 @@ StringRef AIEPtrModOptimizer::getPassName() const {
 namespace llvm {
 
 bool AIEPtrModOptimizer::runOnMachineFunction(MachineFunction &MF) {
-  PtrModRes = std::make_unique<AIE::FoundCombiners>(
-      /*Analysis=*/true);
+  PtrModRes = std::make_unique<AIE::FoundCombiners>();
 
   MachineRegisterInfo &MRI = MF.getRegInfo();
   const auto *TII =
       static_cast<const AIEBaseInstrInfo *>(MF.getSubtarget().getInstrInfo());
 
-  const MachineDominatorTree *MDT = &getAnalysis<MachineDominatorTreeWrapperPass>().getDomTree();
+  MachineDominatorTree *MDT =
+      &getAnalysis<MachineDominatorTreeWrapperPass>().getDomTree();
   const MachineLoopInfo *MLI =
       &getAnalysis<MachineLoopInfoWrapperPass>().getLI();
 
@@ -92,7 +91,29 @@ bool AIEPtrModOptimizer::runOnMachineFunction(MachineFunction &MF) {
     appendResult(FoundCombiners);
   }
 
-  return false;
+  // Apply the Combiners here, so that no other combine rewrites their
+  // instructions first. Apply them top-down: a Combiner referring to an
+  // instruction an earlier one replaced is remapped to the replacement. Skip
+  // dead loads, which would stay alive if combined with a live pointer update.
+  SmallVector<MachineInstr *> MemInstrs;
+  for (MachineBasicBlock &MBB : MF)
+    for (MachineInstr &MI : MBB)
+      if (PtrModRes->getInstrCombines().count(&MI) && !isTriviallyDead(MI, MRI))
+        MemInstrs.push_back(&MI);
+  if (MemInstrs.empty())
+    return false;
+
+  GISelCSEInfo &CSEInfo =
+      getAnalysis<GISelCSEAnalysisWrapperPass>().getCSEWrapper().get(
+          getAnalysis<TargetPassConfig>().getCSEConfig());
+  MachineIRBuilder B(MF);
+  B.setChangeObserver(CSEInfo);
+  CombinerHelper Helper(CSEInfo, B, /*IsPreLegalize=*/false, /*VT=*/nullptr,
+                        MDT);
+  for (MachineInstr *MemI : MemInstrs)
+    applyLdStInc(*MemI, MRI, Helper, B, CSEInfo, PtrModRes.get());
+  PtrModRes->finalizeDeferredDeletes(MF);
+  return true;
 }
 
 void AIEPtrModOptimizer::appendResult(
@@ -104,15 +125,19 @@ void AIEPtrModOptimizer::appendResult(
 }
 
 void AIEPtrModOptimizer::getAnalysisUsage(AnalysisUsage &AU) const {
+  AU.setPreservesCFG();
+  getSelectionDAGFallbackAnalysisUsage(AU);
   AU.addRequired<MachineModuleInfoWrapperPass>();
   AU.addRequired<GISelCSEAnalysisWrapperPass>();
+  AU.addPreserved<GISelCSEAnalysisWrapperPass>();
+  AU.addPreserved<GISelValueTrackingAnalysisLegacy>();
   AU.addRequired<TargetPassConfig>();
   AU.addRequired<MachineDominatorTreeWrapperPass>();
   AU.addPreserved<MachineDominatorTreeWrapperPass>();
   AU.addRequired<MachineLoopInfoWrapperPass>();
   AU.addPreserved<MachineLoopInfoWrapperPass>();
   AU.addRequired<AAResultsWrapperPass>();
-  AU.setPreservesAll();
+  MachineFunctionPass::getAnalysisUsage(AU);
 }
 
 } // namespace llvm
@@ -122,14 +147,6 @@ void FoundCombiners::append(const AIE::Combiner &CombineResult) {
   assert(CombineResult.CombineRoot);
   InstrCombines[CombineResult.CombineRoot] = CombineResult;
   LLVM_DEBUG(dbgs() << "[Solution] "; CombineResult.dumpFull());
-
-  if (!GeneratedFromAnalysisPass)
-    return;
-  const MachineInstr *PtrMod = CombineResult.CombineInstrs[0];
-  const Register Addr =
-      cast<GLoadStore>(CombineResult.CombineRoot)->getPointerReg();
-  if (PtrMod->readsRegister(Addr, /*TRI=*/nullptr))
-    PostIncPtrMods.insert(PtrMod);
 }
 
 AIE::Combiner *FoundCombiners::getCombine(MachineInstr *CombineRoot) {

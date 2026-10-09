@@ -106,3 +106,45 @@ body:             |
     %68:_(p0) = nuw G_PTR_ADD %1, %67(s20)
     G_AIE_OFFSET_STORE %0, %68, %293
 ...
+
+# Case 5: Can be combined (sign-extending load).
+---
+name:            combine_offset_sextload_ptradd_const
+body:             |
+  bb.0:
+    liveins: $p0
+    ; CHECK-LABEL: name: combine_offset_sextload_ptradd_const
+    ; CHECK: liveins: $p0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 -2
+    ; CHECK-NEXT: [[AIE_OFFSET_SEXTLOAD:%[0-9]+]]:_(s32) = G_AIE_OFFSET_SEXTLOAD [[COPY]](p0), [[C]](s20) :: (load (s16))
+    ; CHECK-NEXT: $r0 = COPY [[AIE_OFFSET_SEXTLOAD]](s32)
+    %1:_(p0) = COPY $p0
+    %293:_(s20) = G_CONSTANT i20 2
+    %67:_(s20) = G_CONSTANT i20 -4
+    %68:_(p0) = nuw G_PTR_ADD %1, %67(s20)
+    %295:_(s32) = G_AIE_OFFSET_SEXTLOAD %68(p0), %293(s20) :: (load (s16))
+    $r0 = COPY %295:_(s32)
+...
+
+# Case 6: Can be combined (zero-extending load).
+---
+name:            combine_offset_zextload_ptradd_const
+body:             |
+  bb.0:
+    liveins: $p0
+    ; CHECK-LABEL: name: combine_offset_zextload_ptradd_const
+    ; CHECK: liveins: $p0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 -2
+    ; CHECK-NEXT: [[AIE_OFFSET_ZEXTLOAD:%[0-9]+]]:_(s32) = G_AIE_OFFSET_ZEXTLOAD [[COPY]](p0), [[C]](s20) :: (load (s16))
+    ; CHECK-NEXT: $r0 = COPY [[AIE_OFFSET_ZEXTLOAD]](s32)
+    %1:_(p0) = COPY $p0
+    %293:_(s20) = G_CONSTANT i20 2
+    %67:_(s20) = G_CONSTANT i20 -4
+    %68:_(p0) = nuw G_PTR_ADD %1, %67(s20)
+    %295:_(s32) = G_AIE_OFFSET_ZEXTLOAD %68(p0), %293(s20) :: (load (s16))
+    $r0 = COPY %295:_(s32)
+...

@@ -496,8 +496,8 @@ def combine_upd_to_concat : GICombineRule<
 def combine_load_store_increment : GICombineRule <
   (defs root:$root),
   (match (wip_match_opcode G_LOAD, G_ZEXTLOAD, G_SEXTLOAD, G_STORE):$root,
-          [{ return matchLdStInc(*${root}, MRI, Helper, B.getTII(), GlobalCombiners); }]),
-  (apply [{ applyLdStInc(*${root}, MRI, Helper, B, Observer, GlobalCombiners); }] )
+          [{ return matchLdStInc(*${root}, MRI, Helper, B.getTII(), &GlobalCombiners); }]),
+  (apply [{ applyLdStInc(*${root}, MRI, Helper, B, Observer, &GlobalCombiners); }] )
 >;
 
 def combine_add_vector_elt_undef : GICombineRule <
@@ -532,7 +532,7 @@ def combine_load_store_split : GICombineRule<
 def combine_offset_load_store_ptradd_matchdata: GIDefMatchData<"std::pair<Register, int64_t>">;
 def combine_offset_load_store_ptradd : GICombineRule<
   (defs root:$root, combine_offset_load_store_ptradd_matchdata:$matchinfo),
-  (match (wip_match_opcode G_AIE_OFFSET_LOAD, G_AIE_OFFSET_STORE): $root,
+  (match (wip_match_opcode G_AIE_OFFSET_LOAD, G_AIE_OFFSET_SEXTLOAD, G_AIE_OFFSET_ZEXTLOAD, G_AIE_OFFSET_STORE): $root,
   [{ return matchOffsetLoadStorePtrAdd(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
   (apply [{ applyOffsetLoadStorePtrAdd(*${root}, MRI, B, ${matchinfo}, Observer); }])
 >;
@@ -570,28 +570,12 @@ def combine_redundant_widen_narrow_conversion : GICombineRule<
   (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])
 >;
 
-def combine_global_load_store_increment : GICombineRule <
-  (defs root:$root),
-  (match (wip_match_opcode G_LOAD, G_ZEXTLOAD, G_SEXTLOAD, G_STORE):$root,
-          [{ return matchGlobalPtrModOptimizer(*${root}, MRI, Helper, B.getTII(), GlobalCombiners); }]),
-  (apply [{ applyLdStInc(*${root}, MRI, Helper, B, Observer, GlobalCombiners); }] )>;
-
-// ptr_add_immed_chain, keeping the pointer modifiers of the post-increment
-// combines found by aie-ptr-mod-opt.
-def aie_ptr_add_immed_chain : GICombineRule<
-  (defs root:$d, ptr_add_immed_matchdata:$matchinfo),
-  (match (wip_match_opcode G_PTR_ADD):$d,
-         [{ return !GlobalCombiners->isPostIncPtrMod(*${d}) &&
-                   Helper.matchPtrAddImmedChain(*${d}, ${matchinfo}); }]),
-  (apply [{ Helper.applyPtrAddImmedChain(*${d}, ${matchinfo}); }])>;
-
 
 // Post-legalizer custom combines: shared base plus per-target additions.
 def aie_postlegalizer_custom_shared_combines : GICombineGroup<[
   combine_broadcast_extract_to_copy,
-  combine_global_load_store_increment,
   combine_load_store_increment,
-  aie_ptr_add_immed_chain,
+  ptr_add_immed_chain,
   combine_offset_load_store_ptradd,
   combine_offset_load_store_share_ptradd,
   combine_add_vector_elt_undef,
@@ -617,8 +601,8 @@ def aie2p_plus_postlegalizer_custom_shared_combines : GICombineGroup<[
   combine_redundant_widen_narrow_conversion
 ]>;
 
-// AIE2PS-specific final combines (runs after custom combiner to avoid conflicts).
-def aie2ps_postlegalizer_final_combines : GICombineGroup<[
+// AIE2PS-specific post-legalizer custom combines.
+def aie2ps_postlegalizer_custom_combines : GICombineGroup<[
   combine_chained_ptradd_with_s20_nonconst,
   combine_postincloadstore_ptradd_with_trunc
 ]>;
@@ -650,12 +634,8 @@ def AIE2PSPostLegalizerGenericCombiner
 
 def AIE2PSPostLegalizerCustomCombiner
     : GICombiner<"AIE2PSPostLegalizerCustomCombinerImpl",
-                 [aie_postlegalizer_custom_shared_combines, aie2p_plus_postlegalizer_custom_shared_combines]> {
-}
-
-def AIE2PSPostLegalizerFinalCombiner
-    : GICombiner<"AIE2PSPostLegalizerFinalCombinerImpl",
-                 [aie2ps_postlegalizer_final_combines]> {
+                 [aie_postlegalizer_custom_shared_combines, aie2p_plus_postlegalizer_custom_shared_combines,
+                  aie2ps_postlegalizer_custom_combines]> {
 }
 
 def combine_copy_of_implicit_def : GICombineRule<

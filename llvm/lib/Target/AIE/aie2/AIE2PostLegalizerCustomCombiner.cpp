@@ -34,8 +34,6 @@
 
 using namespace llvm;
 
-extern cl::opt<bool> EnableGlobalPtrModOptimizer;
-
 namespace {
 
 #define GET_GICOMBINER_TYPES
@@ -45,14 +43,12 @@ namespace {
 class AIE2PostLegalizerCustomCombinerImpl
     : public AIECombinerBase<AIE2PostLegalizerCustomCombinerImplRuleConfig> {
 protected:
-  AIE::FoundCombiners EmptyGlobalCombiner;
-  AIE::FoundCombiners *GlobalCombiners = nullptr;
+  mutable AIE::FoundCombiners GlobalCombiners;
 
 public:
   AIE2PostLegalizerCustomCombinerImpl(
       MachineFunction &MF, CombinerInfo &CInfo, const TargetPassConfig *TPC,
       GISelValueTracking &VT, GISelCSEInfo *CSEInfo,
-      AIE::FoundCombiners *GlobalCombiner,
       const AIE2PostLegalizerCustomCombinerImplRuleConfig &RuleConfig,
       const AIEBaseSubtarget &STI, MachineDominatorTree *MDT,
       const LegalizerInfo *LI);
@@ -74,26 +70,21 @@ private:
 AIE2PostLegalizerCustomCombinerImpl::AIE2PostLegalizerCustomCombinerImpl(
     MachineFunction &MF, CombinerInfo &CInfo, const TargetPassConfig *TPC,
     GISelValueTracking &VT, GISelCSEInfo *CSEInfo,
-    AIE::FoundCombiners *GlobalCombiner,
     const AIE2PostLegalizerCustomCombinerImplRuleConfig &RuleConfig,
     const AIEBaseSubtarget &STI, MachineDominatorTree *MDT,
     const LegalizerInfo *LI)
     : AIECombinerBase(MF, CInfo, TPC, VT, CSEInfo, RuleConfig, STI, MDT, LI,
                       /*IsPreLegalize=*/false),
-      GlobalCombiners(GlobalCombiner),
 #define GET_GICOMBINER_CONSTRUCTOR_INITS
 #include "AIE2GenPostLegalizerGICustomCombiner.inc"
 #undef GET_GICOMBINER_CONSTRUCTOR_INITS
 {
-  if (!GlobalCombiner)
-    GlobalCombiners = &EmptyGlobalCombiner;
 }
 } // end anonymous namespace
 
 std::unique_ptr<Combiner> createAIE2PostLegalizerCustomCombinerImpl(
     MachineFunction &MF, CombinerInfo &CInfo, const TargetPassConfig *TPC,
-    GISelValueTracking &VT, GISelCSEInfo *CSEInfo,
-    AIE::FoundCombiners *GlobalCombiners, const AIEBaseSubtarget &STI,
+    GISelValueTracking &VT, GISelCSEInfo *CSEInfo, const AIEBaseSubtarget &STI,
     MachineDominatorTree *MDT, const LegalizerInfo *LI) {
   static AIE2PostLegalizerCustomCombinerImplRuleConfig RuleConfig;
   static bool Parsed = [] {
@@ -103,5 +94,5 @@ std::unique_ptr<Combiner> createAIE2PostLegalizerCustomCombinerImpl(
   }();
   (void)Parsed;
   return std::make_unique<AIE2PostLegalizerCustomCombinerImpl>(
-      MF, CInfo, TPC, VT, CSEInfo, GlobalCombiners, RuleConfig, STI, MDT, LI);
+      MF, CInfo, TPC, VT, CSEInfo, RuleConfig, STI, MDT, LI);
 }

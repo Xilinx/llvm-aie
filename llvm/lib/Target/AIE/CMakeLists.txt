@@ -105,8 +105,6 @@ tablegen(LLVM AIE2PSGenPostLegalizerGIGenericCombiner.inc -gen-global-isel-combi
               -combiners="AIE2PSPostLegalizerGenericCombiner")
 tablegen(LLVM AIE2PSGenPostLegalizerGICustomCombiner.inc -gen-global-isel-combiner -gisel-subtarget-class AIEBaseSubtarget
               -combiners="AIE2PSPostLegalizerCustomCombiner")
-tablegen(LLVM AIE2PSGenPostLegalizerGIFinalCombiner.inc -gen-global-isel-combiner -gisel-subtarget-class AIEBaseSubtarget
-              -combiners="AIE2PSPostLegalizerFinalCombiner")
 tablegen(LLVM AIE2PSGenAsmMatcher.inc -gen-asm-matcher)
 list(REMOVE_ITEM LLVM_TABLEGEN_FLAGS "-I${CMAKE_CURRENT_SOURCE_DIR}/aie2ps")
 
@@ -186,7 +184,6 @@ add_llvm_target(AIECodeGen
    aie2/AIE2PreLegalizerCombiner.cpp
    AIEPostLegalizerCustomCombiner.cpp
    AIEPostLegalizerGenericCombiner.cpp
-   AIEPostLegalizerFinalCombiner.cpp
    AIEPreLegalizerCombiner.cpp
    aie2/AIE2RegisterBankInfo.cpp
    aie2/AIE2RegisterInfo.cpp
@@ -243,7 +240,6 @@ add_llvm_target(AIECodeGen
    aie2ps/AIE2PSInstructionSelector.cpp
    aie2ps/AIE2PSPostLegalizerCustomCombiner.cpp
    aie2ps/AIE2PSPostLegalizerGenericCombiner.cpp
-   aie2ps/AIE2PSPostLegalizerFinalCombiner.cpp
    aie2ps/AIE2PSPreLegalizerCombiner.cpp
    aie2ps/AIE2PSConvertFP16Operation.cpp
 
