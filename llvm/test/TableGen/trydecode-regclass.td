@@ -47,13 +47,11 @@ def InstB : TestInstruction {
   let AsmString = "InstB";
 }
 
-// CHECK:      /* 0 */       MCD::OPC_ExtractField, 0, 5,  // Inst{4-0} ...
-// CHECK-NEXT: /* 3 */       MCD::OPC_FilterValueOrFail, 8,
-// CHECK-NEXT: /* 5 */       MCD::OPC_CheckField, 5, 1, 0, 6, 0, // Skip to: 17
-// CHECK-NEXT: /* 11 */      MCD::OPC_TryDecode, {{[0-9]+}}, {{[0-9]+}}, 0, 0, 0, // Opcode: InstA, DecodeIdx: 0, Skip to: 17
-// CHECK-NEXT: /* 17 */      MCD::OPC_CheckFieldOrFail, 7, 1, 0,
-// CHECK-NEXT: /* 21 */      MCD::OPC_Decode, {{[0-9]+}}, {{[0-9]+}}, 1, // Opcode: InstB, DecodeIdx: 1
-// CHECK-NEXT: /* 25 */      MCD::OPC_Fail,
+// CHECK:      /* 0 */       MCD::OPC_CheckFieldOrFail, 0, 5, 8,
+// CHECK-NEXT: /* 4 */       MCD::OPC_CheckField, 5, 1, 0, 6, 0, // Skip to: 16
+// CHECK-NEXT: /* 10 */      MCD::OPC_TryDecode, {{[0-9]+}}, {{[0-9]+}}, 0, 0, 0, // Opcode: InstA, DecodeIdx: 0, Skip to: 16
+// CHECK-NEXT: /* 16 */      MCD::OPC_CheckFieldOrFail, 7, 1, 0,
+// CHECK-NEXT: /* 20 */      MCD::OPC_Decode, {{[0-9]+}}, {{[0-9]+}}, 1, // Opcode: InstB, DecodeIdx: 1
 
 // CHECK: if (!Check(S, DecodeRCIncompleteRegisterClass(MI, tmp, Address, Decoder))) { DecodeComplete = false; return MCDisassembler::Fail; }
 // CHECK: if (!Check(S, DecodeRCCompleteRegisterClass(MI, tmp, Address, Decoder))) { return MCDisassembler::Fail; }

@@ -168,7 +168,7 @@ static void populateDialectQuantSubmodule(const nb::module_ &m) {
                          quantizedType.get_class());
   anyQuantizedType.def_classmethod(
       "get",
-      [](nb::object cls, unsigned flags, MlirType storageType,
+      [](const nb::object &cls, unsigned flags, MlirType storageType,
          MlirType expressedType, int64_t storageTypeMin,
          int64_t storageTypeMax) {
         return cls(mlirAnyQuantizedTypeGet(flags, storageType, expressedType,
@@ -240,7 +240,7 @@ static void populateDialectQuantSubmodule(const nb::module_ &m) {
       quantizedType.get_class());
   uniformQuantizedType.def_classmethod(
       "get",
-      [](nb::object cls, unsigned flags, MlirType storageType,
+      [](const nb::object &cls, unsigned flags, MlirType storageType,
          MlirType expressedType, double scale, int64_t zeroPoint,
          int64_t storageTypeMin, int64_t storageTypeMax) {
         return cls(mlirUniformQuantizedTypeGet(flags, storageType,
@@ -275,7 +275,7 @@ static void populateDialectQuantSubmodule(const nb::module_ &m) {
       quantizedType.get_class());
   uniformQuantizedPerAxisType.def_classmethod(
       "get",
-      [](nb::object cls, unsigned flags, MlirType storageType,
+      [](const nb::object &cls, unsigned flags, MlirType storageType,
          MlirType expressedType, std::vector<double> scales,
          std::vector<int64_t> zeroPoints, int32_t quantizedDimension,
          int64_t storageTypeMin, int64_t storageTypeMax) {
@@ -347,7 +347,7 @@ static void populateDialectQuantSubmodule(const nb::module_ &m) {
       mlirTypeIsAUniformQuantizedSubChannelType, quantizedType.get_class());
   uniformQuantizedSubChannelType.def_classmethod(
       "get",
-      [](nb::object cls, unsigned flags, MlirType storageType,
+      [](const nb::object &cls, unsigned flags, MlirType storageType,
          MlirType expressedType, MlirAttribute scales, MlirAttribute zeroPoints,
          std::vector<int32_t> quantizedDimensions,
          std::vector<int64_t> blockSizes, int64_t storageTypeMin,
@@ -421,7 +421,8 @@ static void populateDialectQuantSubmodule(const nb::module_ &m) {
       quantizedType.get_class());
   calibratedQuantizedType.def_classmethod(
       "get",
-      [](nb::object cls, MlirType expressedType, double min, double max) {
+      [](const nb::object &cls, MlirType expressedType, double min,
+         double max) {
         return cls(mlirCalibratedQuantizedTypeGet(expressedType, min, max));
       },
       "Gets an instance of CalibratedQuantizedType in the same context as the "
