@@ -1481,12 +1481,12 @@ v2uint32 test_insert(v2uint32 v, int idx, unsigned int val)
 // CHECK-LABEL: define dso_local noundef range(i32 -8, 8) i32 @_Z17test_extract_elemDB8_i(
 // CHECK-SAME: i8 noundef [[V:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[CONV_I:%.*]] = sext i8 [[V]] to i32
+// CHECK-NEXT:    [[CONV1_I:%.*]] = zext i8 [[V]] to i32
 // CHECK-NEXT:    [[AND_I_I_I:%.*]] = and i32 [[IDX]], 1
 // CHECK-NEXT:    [[ADD_NEG_I_I_I:%.*]] = xor i32 [[AND_I_I_I]], -1
 // CHECK-NEXT:    [[MUL_NEG_I_I_I:%.*]] = shl nsw i32 [[ADD_NEG_I_I_I]], 2
 // CHECK-NEXT:    [[SUB1_I_I_I:%.*]] = add nsw i32 [[MUL_NEG_I_I_I]], 32
-// CHECK-NEXT:    [[SHL_I_I_I:%.*]] = shl i32 [[CONV_I]], [[SUB1_I_I_I]]
+// CHECK-NEXT:    [[SHL_I_I_I:%.*]] = shl i32 [[CONV1_I]], [[SUB1_I_I_I]]
 // CHECK-NEXT:    [[SHR_I_I_I:%.*]] = ashr i32 [[SHL_I_I_I]], 28
 // CHECK-NEXT:    ret i32 [[SHR_I_I_I]]
 //
@@ -1498,12 +1498,12 @@ int test_extract_elem( v2int4 v, int idx)
 // CHECK-SAME: <2 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <2 x i8> [[V]] to i16
-// CHECK-NEXT:    [[CONV_I:%.*]] = sext i16 [[TMP0]] to i32
+// CHECK-NEXT:    [[CONV1_I:%.*]] = zext i16 [[TMP0]] to i32
 // CHECK-NEXT:    [[AND_I_I_I:%.*]] = and i32 [[IDX]], 3
 // CHECK-NEXT:    [[ADD_NEG_I_I_I:%.*]] = xor i32 [[AND_I_I_I]], -1
 // CHECK-NEXT:    [[MUL_NEG_I_I_I:%.*]] = shl nsw i32 [[ADD_NEG_I_I_I]], 2
 // CHECK-NEXT:    [[SUB1_I_I_I:%.*]] = add nsw i32 [[MUL_NEG_I_I_I]], 32
-// CHECK-NEXT:    [[SHL_I_I_I:%.*]] = shl i32 [[CONV_I]], [[SUB1_I_I_I]]
+// CHECK-NEXT:    [[SHL_I_I_I:%.*]] = shl i32 [[CONV1_I]], [[SUB1_I_I_I]]
 // CHECK-NEXT:    [[SHR_I_I_I:%.*]] = ashr i32 [[SHL_I_I_I]], 28
 // CHECK-NEXT:    ret i32 [[SHR_I_I_I]]
 //
@@ -1547,12 +1547,12 @@ int test_extract_elem(v16int4 v, int idx)
 // CHECK-SAME: <2 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <2 x i8> [[V]] to i16
-// CHECK-NEXT:    [[CONV_I:%.*]] = sext i16 [[TMP0]] to i32
+// CHECK-NEXT:    [[CONV1_I:%.*]] = zext i16 [[TMP0]] to i32
 // CHECK-NEXT:    [[AND_I_I_I:%.*]] = and i32 [[IDX]], 1
 // CHECK-NEXT:    [[ADD_NEG_I_I_I:%.*]] = xor i32 [[AND_I_I_I]], -1
 // CHECK-NEXT:    [[MUL_NEG_I_I_I:%.*]] = shl nsw i32 [[ADD_NEG_I_I_I]], 3
 // CHECK-NEXT:    [[SUB1_I_I_I:%.*]] = add nsw i32 [[MUL_NEG_I_I_I]], 32
-// CHECK-NEXT:    [[SHL_I_I_I:%.*]] = shl i32 [[CONV_I]], [[SUB1_I_I_I]]
+// CHECK-NEXT:    [[SHL_I_I_I:%.*]] = shl i32 [[CONV1_I]], [[SUB1_I_I_I]]
 // CHECK-NEXT:    [[SHR_I_I_I:%.*]] = ashr i32 [[SHL_I_I_I]], 24
 // CHECK-NEXT:    ret i32 [[SHR_I_I_I]]
 //
@@ -1793,7 +1793,7 @@ unsigned int test_extract_elem(v2uint32 v, int idx)
 
 //!   @name Scalar updates and extracts
 // CHECK-LABEL: define dso_local noundef i64 @_Z11test_insertyij(
-// CHECK-SAME: i64 noundef [[A:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1:[0-9]+]] {
+// CHECK-SAME: i64 noundef [[A:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[CMP_I:%.*]] = icmp eq i32 [[IDX]], 0
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast i64 [[A]] to <2 x i32>
@@ -1814,7 +1814,7 @@ unsigned long long test_insert(unsigned long long a, int idx, unsigned int b)
     return insert(a, idx, b);
 }
 // CHECK-LABEL: define dso_local noundef i64 @_Z15test_set_uint64ij(
-// CHECK-SAME: i32 noundef [[IDX:%.*]], i32 noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// CHECK-SAME: i32 noundef [[IDX:%.*]], i32 noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[CMP_I:%.*]] = icmp eq i32 [[IDX]], 0
 // CHECK-NEXT:    br i1 [[CMP_I]], label [[IF_THEN_I:%.*]], label [[IF_ELSE_I:%.*]]
@@ -1834,7 +1834,7 @@ unsigned long long test_set_uint64(int idx, unsigned int b)
     return set_uint64(idx, b);
 }
 // CHECK-LABEL: define dso_local noundef i32 @_Z19test_extract_uint32yi(
-// CHECK-SAME: i64 noundef [[A:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// CHECK-SAME: i64 noundef [[A:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[CMP_I:%.*]] = icmp eq i32 [[IDX]], 0
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast i64 [[A]] to <2 x i32>
@@ -1854,7 +1854,7 @@ unsigned int test_extract_uint32(unsigned long long a, int idx)
     return extract_uint32(a, idx);
 }
 // CHECK-LABEL: define dso_local noundef i64 @_Z11test_concatjj(
-// CHECK-SAME: i32 noundef [[A:%.*]], i32 noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// CHECK-SAME: i32 noundef [[A:%.*]], i32 noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[CMP_I_I:%.*]] = icmp eq i32 [[A]], 0
 // CHECK-NEXT:    br i1 [[CMP_I_I]], label [[IF_THEN_I_I:%.*]], label [[IF_ELSE_I_I:%.*]]

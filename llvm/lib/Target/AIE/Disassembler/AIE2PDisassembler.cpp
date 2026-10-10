@@ -17,6 +17,7 @@
 #include "MCTargetDesc/aie2p/AIE2PMCTargetDesc.h"
 #include "aie2p/AIE2PRegisterInfo.h"
 #include "llvm/MC/MCDecoderOps.h"
+#include "llvm/MC/MCDecoder.h"
 #include "llvm/MC/MCDisassembler/MCDisassembler.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCSubtargetInfo.h"
@@ -66,6 +67,7 @@ SLOTDECODERDecl(Nop);
 
 #include "AIE2PGenDecoderMethods.h"
 
+using namespace llvm::MCD;
 #include "AIE2PGenDisassemblerTables.inc"
 
 #include "AIE2PGenDecoderMethods.inc"

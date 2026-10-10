@@ -837,7 +837,7 @@ public:
     return ScheduledInstrs[cycle];
   }
 
-  SmallSet<SUnit *, 8>
+  SmallPtrSet<SUnit *, 8>
   computeUnpipelineableNodes(SwingSchedulerDAG *SSD,
                              TargetInstrInfo::PipelinerLoopInfo *PLI);
 

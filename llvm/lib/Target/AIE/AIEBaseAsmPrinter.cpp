@@ -275,10 +275,9 @@ void AIEBaseAsmPrinter::emitXXStructorList(const DataLayout &DL,
   // don't pick up the ctors/dtors sections
   const char *const Name = IsCtor ? ".ctors" : ".dtors";
   auto *Symbol = static_cast<MCSymbolELF *>(Context.getOrCreateSymbol(Name));
-  Symbol->setUndefined();
+  Symbol->setFragment(nullptr);
   Symbol->setType(ELF::STT_OBJECT);
   Symbol->setBinding(ELF::STB_LOCAL);
-  Symbol->setExternal(false);
   Symbol->setSize(MCConstantExpr::create(Size, Context));
   OutStreamer->emitLabel(Symbol);
 
