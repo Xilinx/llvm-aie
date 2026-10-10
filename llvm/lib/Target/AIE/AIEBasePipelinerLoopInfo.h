@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -38,6 +38,24 @@ protected:
   // guarding them.
   // The value 0 is certain to reject the schedule.
   int64_t MinTripCount = 0;
+
+  // The threshold pseudo of the runtime guard in front of a versioned loop,
+  // or nullptr when there is none. Only set when the guard was located, so
+  // that dropping the static trip-count requirements always comes with the
+  // means to raise the guard to match the schedule we settle on.
+  MachineInstr *VersionThreshold = nullptr;
+
+  bool isVersionGuarded() const { return VersionThreshold != nullptr; }
+
+  /// Whether the loop is known to run more than \p TC times, either from its
+  /// static minimum or because a runtime guard can be made to promise it.
+  bool hasMoreIterationsThan(int64_t TC) const;
+
+  /// Raise the runtime guard of a versioned loop so that it only admits trip
+  /// counts that can feed \p NumStages pipeline stages; no-op for an
+  /// unguarded loop. Call once the final stage count is known, i.e. no
+  /// earlier than the trip-count adjustment.
+  void patchVersionThreshold(int NumStages);
 
   /// Find the defining instruction for operand \p Idx of \p MI
   MachineInstr *getDefInstr(MachineInstr *MI, unsigned Idx);
@@ -85,10 +103,6 @@ public:
                 const ScheduleDAGTopologicalSort &Topo) override;
 
   void setMinTripCount(int64_t TC);
-
-  std::optional<bool> createTripCountGreaterCondition(
-      int TC, MachineBasicBlock &MBB,
-      SmallVectorImpl<MachineOperand> &Cond) override;
 
   /// Modify the loop such that the trip count is
   /// OriginalTC + TripCountAdjust.

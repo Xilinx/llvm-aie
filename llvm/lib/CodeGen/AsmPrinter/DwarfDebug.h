@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file contains support for writing dwarf debug info into asm files.
@@ -424,6 +427,10 @@ class DwarfDebug : public DebugHandlerBase {
   /// Whether to use DWARF 2 bitfields (instead of the DWARF 4 format).
   bool UseDWARF2Bitfields;
 
+  /// Whether to emit DW_AT_high_pc as an address rather than as an offset
+  /// from DW_AT_low_pc.
+  bool UseAddressFormForHighPC;
+
   /// Whether to emit all linkage names, or just abstract subprograms.
   bool UseAllLinkageNames;
 
@@ -776,6 +783,10 @@ public:
   /// Returns whether to use the DWARF2 format for bitfields instyead of the
   /// DWARF4 format.
   bool useDWARF2Bitfields() const { return UseDWARF2Bitfields; }
+
+  /// Returns whether DW_AT_high_pc is emitted as an address rather than as an
+  /// offset from DW_AT_low_pc.
+  bool useAddressFormForHighPC() const { return UseAddressFormForHighPC; }
 
   /// Returns whether to use inline strings.
   bool useInlineStrings() const { return UseInlineStrings; }

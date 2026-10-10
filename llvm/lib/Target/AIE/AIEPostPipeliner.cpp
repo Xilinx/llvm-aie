@@ -2055,28 +2055,6 @@ void PostPipeliner::updateTripCount() const {
   TII->adjustTripCount(*TripCountDef, -Delta);
 }
 
-// The threshold placeholder of \p GuardMBB, or nullptr if the block does not
-// hold exactly one. A guard block holds a single placeholder: the IR pass emits
-// one per versioned loop and the pseudo is isNotDuplicable, so several of them
-// mean an earlier pass merged two guards. See PseudoLoopVersionThreshold for
-// why scanning the guard block alone is sufficient.
-static MachineInstr *findVersionThreshold(MachineBasicBlock &GuardMBB,
-                                          const AIEBaseInstrInfo &TII) {
-  MachineInstr *ThresholdMI = nullptr;
-  for (MachineInstr &MI : GuardMBB.instrs()) {
-    if (!TII.isLoopVersionThresholdDef(MI))
-      continue;
-    if (ThresholdMI) {
-      LLVM_DEBUG(dbgs() << "AIE loop versioning: multiple threshold pseudos in "
-                        << printMBBReference(GuardMBB) << "\n");
-      assert(false && "at most one threshold pseudo per guard block");
-      return nullptr;
-    }
-    ThresholdMI = &MI;
-  }
-  return ThresholdMI;
-}
-
 void PostPipeliner::updateVersionGuard() const {
   if (!IsVersionGuarded)
     return;
@@ -2114,7 +2092,8 @@ void PostPipeliner::updateVersionGuard() const {
     return;
   }
 
-  MachineInstr *ThresholdMI = findVersionThreshold(*GuardMBB, *TII);
+  MachineInstr *ThresholdMI =
+      AIELoopUtils::findVersionThreshold(*GuardMBB, *TII);
   if (!ThresholdMI) {
     BailWithMsg("guard threshold pseudo not found");
     return;

@@ -513,10 +513,23 @@ void AIEBaseHardwareLoops::expandLoopEnd(LowOverheadLoop &LoLoop) {
   assert(Dec->getOperand(0).getReg() == End->getOperand(0).getReg() &&
          "LoopDec not feeding into LoopEnd!?");
   MachineBasicBlock *MBB = End->getParent();
-  BuildMI(*MBB, End, End->getDebugLoc(), TII->get(LoweringData->LoopJNZDOpcode))
-      .addDef(Dec->getOperand(0).getReg())
-      .addReg(Dec->getOperand(1).getReg())
-      .addReg(End->getOperand(1).getReg());
+  // An MBB target means the branch carries the loop header itself rather than
+  // a pointer register holding its address.
+  const MachineOperand &Target = End->getOperand(1);
+  const bool HasMBBTarget = Target.isMBB();
+  unsigned JNZDOpcode = LoweringData->LoopJNZDOpcode;
+  if (HasMBBTarget) {
+    assert(LoweringData->LoopJNZDPCRelOpcode &&
+           "PC-relative LoopJNZ needs a matching JNZD opcode");
+    JNZDOpcode = *LoweringData->LoopJNZDPCRelOpcode;
+  }
+  auto JNZD = BuildMI(*MBB, End, End->getDebugLoc(), TII->get(JNZDOpcode))
+                  .addDef(Dec->getOperand(0).getReg())
+                  .addReg(Dec->getOperand(1).getReg());
+  if (HasMBBTarget)
+    JNZD.addMBB(Target.getMBB());
+  else
+    JNZD.addReg(Target.getReg());
   LoLoop.remove(End);
   LoLoop.remove(LoLoop.Dec);
 }

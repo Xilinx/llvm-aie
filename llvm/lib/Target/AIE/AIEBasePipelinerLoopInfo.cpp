@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -71,6 +71,30 @@ AIEBasePipelinerLoopInfo::AIEBasePipelinerLoopInfo(MachineInstr *EndLoop,
   if (HasIIPragma) {
     LLVM_DEBUG(dbgs() << "PLI: II specified by pragma\n");
   }
+
+  if (AIELoopUtils::isLoopVersioned(*LoopBlock)) {
+    MachineBasicBlock *Preheader = getLoopStartBlock();
+    MachineBasicBlock *Guard =
+        Preheader ? AIELoopUtils::getGuardBlock(*Preheader) : nullptr;
+    if (Guard)
+      VersionThreshold = AIELoopUtils::findVersionThreshold(*Guard, TII);
+    LLVM_DEBUG(dbgs() << "PLI: versioned loop, guard threshold "
+                      << (isVersionGuarded() ? "found" : "NOT found") << "\n");
+  }
+}
+
+bool AIEBasePipelinerLoopInfo::hasMoreIterationsThan(int64_t TC) const {
+  // A versioned loop has no static minimum, but patchVersionThreshold() raises
+  // its runtime guard to whatever the accepted schedule needs, so any bound
+  // asked about here holds by construction.
+  return isVersionGuarded() || MinTripCount > TC;
+}
+
+void AIEBasePipelinerLoopInfo::patchVersionThreshold(int NumStages) {
+  if (!isVersionGuarded())
+    return;
+  LLVM_DEBUG(dbgs() << "PLI: Guard threshold = " << NumStages << "\n");
+  TII.setLoopVersionThreshold(*VersionThreshold, NumStages);
 }
 
 SmallVector<ArrayRef<SUnit *>, 4> AIEBasePipelinerLoopInfo::getNodeOrders(
@@ -99,19 +123,13 @@ void AIEBasePipelinerLoopInfo::setMinTripCount(int64_t TC) {
   MinTripCount = TC;
 }
 
-std::optional<bool> AIEBasePipelinerLoopInfo::createTripCountGreaterCondition(
-    int TC, MachineBasicBlock &MBB, SmallVectorImpl<MachineOperand> &Cond) {
-  LLVM_DEBUG(dbgs() << "TripCount > " << TC << "?\n");
-  // We only accept schedules that have a stage count that can be accommodated
-  // by a statically known tripcount. Hence we don't have to guard the epilogs
-  assert(MinTripCount > TC);
-  return true;
-}
-
 /// Modify the loop such that the trip count is
 /// OriginalTC + TripCountAdjust.
 void AIEBasePipelinerLoopInfo::adjustTripCount(int TripCountAdjust) {
   LLVM_DEBUG(dbgs() << "TripCountAdjust =  " << TripCountAdjust << "\n");
+  // TripCountAdjust is -(NumStages - 1), the iterations the expander peeled
+  // into the prologue. Anything shorter must stay on the fallback copy.
+  patchVersionThreshold(1 - TripCountAdjust);
 }
 
 /// Called when the loop's preheader has been modified to NewPreheader.
@@ -537,7 +555,7 @@ bool DownCountLoop::shouldUseSchedule(SwingSchedulerDAG &SSD, SMSchedule &SMS) {
   ConditionStage = SMS.stageScheduled(&(*ConditionSU));
 
   // The easy case: a static tripcount
-  if (PrologCount < MinTripCount) {
+  if (hasMoreIterationsThan(PrologCount)) {
     LLVM_DEBUG(dbgs() << "PLI: Accepting schedule for StageCount=" << StageCount
                       << " (static TC)\n");
     return true;
@@ -560,7 +578,7 @@ std::optional<bool> DownCountLoop::createTripCountGreaterCondition(
 
   LLVM_DEBUG(dbgs() << "Check TC > " << TC << "\n");
   // The static case. We know we don't have to guard.
-  if (MinTripCount > TC) {
+  if (hasMoreIterationsThan(TC)) {
     return true;
   }
 
@@ -687,14 +705,16 @@ bool ZeroOverheadLoop::preferPostPipeliner() {
 }
 
 ZeroOverheadLoop::Assessment ZeroOverheadLoop::accept(MachineInstr *EndLoop) {
-  if (!MinTripCount) {
-    LLVM_DEBUG(dbgs() << "Unbounded loop detected!\n");
-    return Assessment::UnboundedLoop;
-  }
+  if (!isVersionGuarded()) {
+    if (!MinTripCount) {
+      LLVM_DEBUG(dbgs() << "Unbounded loop detected!\n");
+      return Assessment::UnboundedLoop;
+    }
 
-  if (MinTripCount <= 1) {
-    LLVM_DEBUG(dbgs() << "Not interesting MinTripCount (<=1)!\n");
-    return Assessment::TooLowMinTripCount;
+    if (MinTripCount <= 1) {
+      LLVM_DEBUG(dbgs() << "Not interesting MinTripCount (<=1)!\n");
+      return Assessment::TooLowMinTripCount;
+    }
   }
 
   if (!TII.isHardwareLoopEnd(EndLoop->getOpcode())) {
@@ -753,7 +773,7 @@ std::optional<bool> ZeroOverheadLoop::createTripCountGreaterCondition(
   LLVM_DEBUG(dbgs() << "Check TC > " << TC << "\n");
   // The static case. We know we don't have to guard.
   // Clarification: do we really care about this?
-  if (MinTripCount > TC) {
+  if (hasMoreIterationsThan(TC)) {
     return true;
   }
   llvm_unreachable("We can't reverse ZOL condition");
@@ -761,7 +781,7 @@ std::optional<bool> ZeroOverheadLoop::createTripCountGreaterCondition(
 }
 
 void ZeroOverheadLoop::adjustTripCount(int TripCountAdjust) {
-  LLVM_DEBUG(dbgs() << "TripCountAdjust =  " << TripCountAdjust << "\n");
+  AIEBasePipelinerLoopInfo::adjustTripCount(TripCountAdjust);
 
   // LoopStart has a small immediate addend that can accommodate the adjustment
   Init->getOperand(1).setImm(TripCountAdjust);
@@ -772,7 +792,7 @@ bool ZeroOverheadLoop::preferPostPipeliner(SMSchedule &SMS) {
   // job on multi-stage live-ranges without spilling or moving.
 
   // PostPipeliner can do nothing without tripcount > 1
-  if (MinTripCount <= 1 || HasIIPragma) {
+  if (!hasMoreIterationsThan(1) || HasIIPragma) {
     return false;
   }
 
@@ -806,7 +826,7 @@ bool ZeroOverheadLoop::preferPostPipeliner(SMSchedule &SMS) {
 
 bool ZeroOverheadLoop::canAcceptII(SMSchedule &SMS) {
 
-  if (SMS.getMaxStageCount() >= MinTripCount) {
+  if (!hasMoreIterationsThan(SMS.getMaxStageCount())) {
     LLVM_DEBUG(dbgs() << "PLI: Rejected schedule MaxStageCount="
                       << SMS.getMaxStageCount()
                       << " MinTripCount=" << MinTripCount << ")\n");
@@ -853,7 +873,9 @@ bool AIEBasePipelinerLoopInfo::canAcceptII(SMSchedule &SMS) {
   bool ExtraAllowedGuard =
       LoopWholeLoopGuard && LoopMaxGuardCount >= int(PrologueCount);
   int MaxGuards = LoopMaxGuardCount + int(ExtraAllowedGuard);
-  int NumGuards = int(NumStages) - MinTripCount;
+  // A version-guarded loop never needs a prologue guard: the trip counts that
+  // would need one are the ones the runtime guard keeps on the fallback copy.
+  int NumGuards = isVersionGuarded() ? 0 : int(NumStages) - MinTripCount;
   if (NumGuards > MaxGuards) {
     LLVM_DEBUG(
         dbgs() << "PLI: Rejected schedule (Too many stages for TC, TotStages="

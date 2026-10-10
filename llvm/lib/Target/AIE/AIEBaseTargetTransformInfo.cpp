@@ -12,6 +12,7 @@
 #include "Utils/AIELoopUtils.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/CodeGen/BasicTTIImpl.h"
+#include "llvm/IR/Constants.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Intrinsics.h"
@@ -128,8 +129,13 @@ bool AIETTICommon::isAllowedInZOL(Instruction &I) const {
   switch (I.getOpcode()) {
   case Instruction::FAdd:
   case Instruction::FSub:
-  case Instruction::FMul:
   case Instruction::FNeg:
+    // Scalar f32 add/sub lower to a float adder (the vector one where there
+    // is no scalar one) and neg to a sign-mask xor, never to a libcall.
+    if (Ty->isFloatTy())
+      break;
+    [[fallthrough]];
+  case Instruction::FMul:
     if (!Ty->getScalarType()->isBFloatTy()) {
       return false;
     }
@@ -168,7 +174,25 @@ bool AIETTICommon::isAllowedInZOL(Instruction &I) const {
   case Instruction::SIToFP:
     return false;
   case Instruction::SDiv:
-  case Instruction::UDiv:
+  case Instruction::UDiv: {
+    // Division by a constant power of two (negated, for sdiv) becomes shifts,
+    // but only through the pre-legalizer combiner's sdiv_by_pow2 and
+    // udiv_by_pow2, which fire unconditionally; the legalizer turns any
+    // division left over into a libcall. That combiner and HardwareLoops both
+    // run only above -O0. Exact divisions skip those rules and go through
+    // sdiv_by_const/udiv_by_const instead, which bail out on minsize
+    // functions, so they are rejected (InstCombine turns them into shifts
+    // anyway).
+    const auto *Divisor = dyn_cast<ConstantInt>(I.getOperand(1));
+    if (!Divisor || I.isExact() || Ty->isVectorTy() ||
+        Ty->getScalarSizeInBits() > 32)
+      return false;
+    const APInt &D = Divisor->getValue();
+    if (D.isPowerOf2() ||
+        (I.getOpcode() == Instruction::SDiv && D.isNegatedPowerOf2()))
+      break;
+    return false;
+  }
   case Instruction::SRem:
   case Instruction::URem:
     return false;

@@ -53,16 +53,16 @@ constexpr StringLiteral LoopVersioningHintKey =
     "llvm.loop.hint.aie-loop-versioning";
 
 /// Loop-hint key that marks an already-versioned loop. It is set by the IR
-/// versioning pass on the pipelined (high-trip-count) copy and consumed by the
-/// post-pipeliner. Kept separate from LoopVersioningHintKey so a second run of
-/// the versioning pass does not re-version an already-versioned loop.
+/// versioning pass on the pipelined (high-trip-count) copy and consumed by
+/// both pipeliners. Kept separate from LoopVersioningHintKey so a second run
+/// of the versioning pass does not re-version an already-versioned loop.
 constexpr StringLiteral LoopVersionedHintKey =
     "llvm.loop.hint.aie-loop-versioned";
 
 /// Loop-hint key that marks the verbatim (low-trip-count) copy of a versioned
 /// loop. Only the IR versioning pass reads it, so that a later run leaves the
 /// fallback alone. Deliberately distinct from LoopVersionedHintKey: that one
-/// lifts the post-pipeliner's minimum trip-count requirement, which is only
+/// lifts a pipeliner's minimum trip-count requirement, which is only
 /// safe for the copy the runtime guard protects.
 constexpr StringLiteral LoopVersionFallbackHintKey =
     "llvm.loop.hint.aie-loop-version-fallback";
@@ -86,6 +86,15 @@ getDedicatedFallThroughPreheader(const MachineBasicBlock &LoopBlock);
 /// fail closed instead of acting on an unrelated block. For a versioned loop
 /// this is the block holding the trip-count guard.
 MachineBasicBlock *getGuardBlock(const MachineBasicBlock &Preheader);
+
+/// The threshold placeholder of \p GuardBlock, or nullptr if the block does
+/// not hold exactly one. A guard block holds a single placeholder: the IR
+/// versioning pass emits one per versioned loop and the pseudo is
+/// isNotDuplicable, so several of them mean an earlier pass merged two guards.
+/// See PseudoLoopVersionThreshold for why scanning the guard block alone is
+/// sufficient.
+MachineInstr *findVersionThreshold(MachineBasicBlock &GuardBlock,
+                                   const AIEBaseInstrInfo &TII);
 
 // get all the Machine Basic Blocks (MBBs) that contain a Single Block Loop,
 // which is defined by having 2 Successors, where one of the succesors, is the
