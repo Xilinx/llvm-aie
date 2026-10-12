@@ -2171,11 +2171,13 @@ static void rewriteLatchToDecrement(const CloneLoopStructure &SteadyLS,
 }
 
 // Break the dead counter/IV use cycle that trivial-DCE cannot: poison the IV's
-// latch slot when it feeds only the counter, then DCE the add.
+// latch slot when the IV and the counter only feed each other, then DCE the
+// add. The counter can outlive the IV's other users: the bottom stage-0 clones
+// read the next-iteration IV through it.
 static void eraseOldCounterCycle(const CloneLoopStructure &SteadyLS,
                                  const LatchConditionInfo &Info) {
   PHINode *IV = Info.IV;
-  if (IV->hasOneUse()) {
+  if (IV->hasOneUse() && Info.Counter->hasOneUse()) {
     int LatchIdx = IV->getBasicBlockIndex(SteadyLS.getBottom());
     const bool HasLatchIncoming = LatchIdx >= 0;
     if (HasLatchIncoming)
