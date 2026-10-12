@@ -78,6 +78,7 @@
 #include "llvm/InitializePasses.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/Local.h"
@@ -1413,17 +1414,18 @@ void OrigLoopStructure::removeFromCFG() const {
     new UnreachableInst(BB->getContext(), BB);
   }
 
-#ifndef NDEBUG
   // Every use that survives must have been remapped to a clone:
-  // DeleteDeadBlocks turns whatever is left into poison.
+  // DeleteDeadBlocks turns whatever is left into poison. Check in every build,
+  // since release builds would otherwise miscompile silently.
   for (BasicBlock *BB : Dead)
     for (Instruction &I : *BB)
       for (User *U : I.users()) {
         auto *UI = dyn_cast<Instruction>(U);
-        assert((!UI || DeadSet.contains(UI->getParent())) &&
-               "surviving use of an original-loop value would become poison");
+        if (UI && !DeadSet.contains(UI->getParent()))
+          reportFatalInternalError(
+              "AIE outer loop pipeliner: surviving use of an original-loop "
+              "value would become poison");
       }
-#endif
 
   DeleteDeadBlocks(Dead);
 }
