@@ -383,6 +383,12 @@ public:
   bool isPipelined() const {
     return FixPoint.Stage == SchedulingStage::PipeliningDone;
   }
+  /// Number of back-to-back executions of this block's top region that are
+  /// known to happen once control enters it: the guaranteed steady-state
+  /// iterations of a postpipelined loop, one for any other block.
+  int getGuaranteedIterations() const {
+    return isPipelined() ? getPostSWP().getMinSteadyStateTripCount() : 1;
+  }
   bool pipeliningFailed() const {
     return FixPoint.Stage == SchedulingStage::PipeliningFailed;
   }
