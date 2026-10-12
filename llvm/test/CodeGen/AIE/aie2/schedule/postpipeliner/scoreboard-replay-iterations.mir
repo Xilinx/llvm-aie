@@ -12,6 +12,8 @@
 # of the block replays the loop's steady-state body once per iteration that is
 # guaranteed to run. A two-stage pipeline peels one iteration, so the loop body
 # runs at least MinTripCount - 1 times, but never fewer than once.
+# The same number of iterations of the body is the depth of the ExitSU of the
+# edge from the preheader into the loop.
 
 --- |
   define void @minTC2(ptr addrspace(5) noalias %d, i32 %n) {
@@ -202,16 +204,22 @@ body:             |
 
 # CHECK-LABEL: >> enterFunction minTC2
 # The loop needs a minimum of two iterations: one is peeled, one remains.
+# CHECK: Processing InterBlockEdge: Pred=1 Succ=2
+# CHECK: ExitSU depth 1
 # CHECK: Compute bottom scoreboard of MBB 1
 # CHECK: SuccBB 2
 # CHECK: Replay iterations: 1
 
 # CHECK-LABEL: >> enterFunction minTC3
+# CHECK: Processing InterBlockEdge: Pred=1 Succ=2
+# CHECK: ExitSU depth 2
 # CHECK: Compute bottom scoreboard of MBB 1
 # CHECK: SuccBB 2
 # CHECK: Replay iterations: 2
 
 # CHECK-LABEL: >> enterFunction minTC5
+# CHECK: Processing InterBlockEdge: Pred=1 Succ=2
+# CHECK: ExitSU depth 4
 # CHECK: Compute bottom scoreboard of MBB 1
 # CHECK: SuccBB 2
 # CHECK: Replay iterations: 4
