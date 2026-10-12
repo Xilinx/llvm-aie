@@ -423,6 +423,15 @@ public:
   // Quick query for the achieved initiation interval.
   int getII() const { return II; }
 
+  /// Lower bound on the number of steady-state iterations per loop entry.
+  /// updateTripCount() peels NStages - 1 iterations off the trip count.
+  /// Without a static minimum (versioned loops), updateVersionGuard() makes
+  /// the guard admit at least NStages iterations, which leaves one.
+  /// \pre A schedule has been materialized.
+  int getMinSteadyStateTripCount() const {
+    return std::max(1, MinTripCount - (NStages - 1));
+  }
+
   // Quick query for the pipeliner mode used.
   PostPipelinerMode getMode() const { return Mode; }
 
