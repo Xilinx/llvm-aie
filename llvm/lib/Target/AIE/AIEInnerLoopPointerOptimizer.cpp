@@ -120,8 +120,8 @@ bool collectValidUsers(Value *V, GetElementPtrInst *ExcludeGEP,
     } else if (isa<AddrSpaceCastInst>(U)) {
       if (!collectValidUsers(U, ExcludeGEP, Body, SiblingGEPs))
         return false;
-    } else if (!isa<LoadInst>(U) && !isa<StoreInst>(U)) {
-      return false; // Unrecognized user type.
+    } else if (!AIEIRUtils::isMemoryAddressOperand(V, U)) {
+      return false; // Not a memory-address use (or unrecognized user type).
     }
   }
   return true;
