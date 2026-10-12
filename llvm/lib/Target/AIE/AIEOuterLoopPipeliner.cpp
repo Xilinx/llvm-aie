@@ -1547,12 +1547,11 @@ void AIEOuterLoopPipeliner::seedLastIterInputs(
       Map[I] = SteadyLS.lastIterInputFor(I);
 
   // Each loop-carried header PHI enters as its steady next-iteration value.
-  // The outer IV is dead in the single last iteration, and for a JNZD hardware
-  // loop its steady clone has been erased (eraseOldCounterCycle), so always
-  // skip it.
-  const PHINode *IV = OrigLS.latchCondition().IV;
+  // The JNZD conversion erases the steady IV when it and its counter only feed
+  // each other (eraseOldCounterCycle), leaving a null clone; nothing in the
+  // last iteration reads that IV.
   for (PHINode &PHI : OrigLS.getTop()->phis())
-    if (&PHI != IV)
+    if (SteadyLS.cloneOf(&PHI))
       Map[&PHI] = SteadyLS.lastIterInputFor(&PHI);
 }
 
