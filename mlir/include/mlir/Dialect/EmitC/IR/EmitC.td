@@ -304,7 +304,6 @@ def EmitC_CallOpaqueOp : EmitC_Op<"call_opaque", [CExpressionInterface]> {
     Arg<StrAttr, "the C++ function to call">:$callee,
     Arg<OptionalAttr<ArrayAttr>, "the order of operands and further attributes">:$args,
     Arg<OptionalAttr<ArrayAttr>, "template arguments">:$template_args,
-    Arg<OptionalAttr<StrArrayAttr>, "template argument names">:$template_arg_names,
     Variadic<EmitCType>:$operands
   );
   let results = (outs Variadic<EmitCType>);
@@ -314,9 +313,8 @@ def EmitC_CallOpaqueOp : EmitC_Op<"call_opaque", [CExpressionInterface]> {
       "::llvm::StringRef":$callee,
       "::mlir::ValueRange":$operands,
       CArg<"::mlir::ArrayAttr", "{}">:$args,
-      CArg<"::mlir::ArrayAttr", "{}">:$template_args,
-      CArg<"::mlir::ArrayAttr", "{}">:$template_arg_names), [{
-        build($_builder, $_state, resultTypes, callee, args, template_args, template_arg_names,
+      CArg<"::mlir::ArrayAttr", "{}">:$template_args), [{
+        build($_builder, $_state, resultTypes, callee, args, template_args,
             operands);
       }]
     >
@@ -349,11 +347,9 @@ def EmitC_CastOp : EmitC_Op<"cast",
     ```
   }];
 
-  let arguments = (ins EmitCType:$source,
-                       UnitAttr:$reference);
+  let arguments = (ins EmitCType:$source);
   let results = (outs EmitCType:$dest);
-  let assemblyFormat = "$source attr-dict `:` type($source) `to` type($dest) (`ref` $reference^)?";
-  let hasVerifier = 1;
+  let assemblyFormat = "$source attr-dict `:` type($source) `to` type($dest)";
 
   let extraClassDeclaration = [{
     bool hasSideEffects() {
@@ -789,11 +785,6 @@ def EmitC_FuncOp : EmitC_Op<"func", [
     ArrayRef<Type> getResultTypes() { return getFunctionType().getResults(); }
 
     //===------------------------------------------------------------------===//
-    // SymbolOpInterface Methods
-    //===------------------------------------------------------------------===//
-
-    bool isDeclaration() { return isExternal(); }
-    
     // OpAsmOpInterface Methods
     //===------------------------------------------------------------------===//
 
@@ -1245,8 +1236,7 @@ def EmitC_GlobalOp : EmitC_Op<"global", [Symbol]> {
                        OptionalAttr<EmitC_OpaqueOrTypedAttr>:$initial_value,
                        UnitAttr:$extern_specifier,
                        UnitAttr:$static_specifier,
-                       UnitAttr:$const_specifier,
-                       UnitAttr:$reference);
+                       UnitAttr:$const_specifier);
 
   let assemblyFormat = [{
        (`extern` $extern_specifier^)?
@@ -1254,7 +1244,6 @@ def EmitC_GlobalOp : EmitC_Op<"global", [Symbol]> {
        (`const` $const_specifier^)?
        $sym_name
        `:` custom<EmitCGlobalOpTypeAndInitialValue>($type, $initial_value)
-       (`ref` $reference^)?
        attr-dict
   }];
 

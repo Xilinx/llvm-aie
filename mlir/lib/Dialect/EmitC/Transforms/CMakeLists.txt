@@ -1,10 +1,6 @@
-# Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
-# affiliates
-
 add_mlir_dialect_library(MLIREmitCTransforms
   Transforms.cpp
   FormExpressions.cpp
-  EliminateLibm.cpp
   TypeConversions.cpp
   WrapFuncInClass.cpp
 
@@ -13,7 +9,6 @@ add_mlir_dialect_library(MLIREmitCTransforms
 
   DEPENDS
   MLIREmitCTransformsIncGen
-  MLIRFuncOpsIncGen
 
   LINK_LIBS PUBLIC
   MLIRIR

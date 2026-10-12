@@ -1907,8 +1907,7 @@ using ControlFusionFn = std::function<bool(OpOperand *fusedOperand)>;
 /// when both operations are fusable elementwise operations.
 void populateElementwiseOpsFusionPatterns(
     RewritePatternSet &patterns,
-    const ControlFusionFn &controlElementwiseOpFusion,
-    bool replaceOutsDependency = true);
+    const ControlFusionFn &controlElementwiseOpFusion);
 
 /// Function type which is used to control propagation of linalg.pack/unpack
 /// ops.

@@ -1017,39 +1017,10 @@ module {
 
 // -----
 
-#map = affine_map<(d0, d1, d2) -> (d1, d2)>
-#map1 = affine_map<(d0, d1, d2) -> (d0, d1, d2)>
-#map2 = affine_map<(d0, d1) -> (d0, d1 floordiv 4, d1 mod 4)>
-#map3 = affine_map<(d0, d1) -> (d0, d1)>
-
-// CHECK-DAG: [[$MAP0:#[a-zA-Z0-9_]*]] = affine_map<(d0, d1) -> (d0, d1)>
-// CHECK-DAG: [[$MAP1:#[a-zA-Z0-9_]*]] = affine_map<(d0) -> (d0 floordiv 4)>
-
-func.func @fuse_and_collapse(%arg0: tensor<3x4xindex>) -> tensor<2x12xindex> {
-  %1 = tensor.empty() : tensor<2x3x4xindex>
-  // CHECK: linalg.generic {
-  // CHECK: %[[INDEX1:[a-zA-Z0-9_]+]] = linalg.index 1 : index
-  // CHECK-NEXT: %[[MAP:[a-zA-Z0-9_]+]] = affine.apply #map1(%[[INDEX1]])
-  // CHECK-NEXT: linalg.yield %[[MAP]] : index
-  %2 = linalg.generic {indexing_maps = [#map, #map1], iterator_types = ["parallel", "parallel", "parallel"]} ins(%arg0: tensor<3x4xindex>) outs(%1 : tensor<2x3x4xindex>) {
-  ^bb0(%in: index, %out: index):
-    %3 = linalg.index 1 : index
-    linalg.yield %3: index
-  } -> tensor<2x3x4xindex>
-  %7 = tensor.empty() : tensor<2x12xindex>
-  %8 = linalg.generic {indexing_maps = [#map2, #map3], iterator_types = ["parallel", "parallel"]} ins(%2 : tensor<2x3x4xindex>) outs(%7 : tensor<2x12xindex>) {
-  ^bb0(%in: index, %out: index):
-    linalg.yield %in : index
-  } -> tensor<2x12xindex>
-  return %8 : tensor<2x12xindex>
-}
-
-// -----
-
-// In this test we expect the first two linalg.generic operations to be fused into one, but the third one (the matmul) to remain separate.
-// The reason is that when the pattern is applied the 1st time, the fusion of the first two operations produces a fused operation with
-// an additional result and ana dditional output indexing map that is not a permutation / not invertible.
-// The fused op will still produce also the original result (and its output indexing map), which is preserved because the new indexing map
+// In this test we expect the first two linalg.generic operations to be fused into one, but the third one (the matmul) to remain separate. 
+// The reason is that when the pattern is applied the 1st time, the fusion of the first two operations produces a fused operation with 
+// an additional result and ana dditional output indexing map that is not a permutation / not invertible. 
+// The fused op will still produce also the original result (and its output indexing map), which is preserved because the new indexing map 
 // is not invertible. Thus the fused op will have 2 results, but only the 2nd one will be used by the following matmul op as an input argument.
 // When trying to apply the fusion pattern again, the matmul op won't be fused because the operand to fuse was not produced with an invertible indexing map.
 
