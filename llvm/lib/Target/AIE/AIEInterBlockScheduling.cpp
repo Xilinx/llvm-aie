@@ -78,14 +78,6 @@ static cl::opt<bool>
               cl::desc("[AIE] Try to bias the depth for hazard avoidance in "
                        "iterative loop scheduling"));
 
-static cl::opt<int> PostPipelinerMinII(
-    "aie-postpipeliner-minii", cl::init(1),
-    cl::desc("[AIE] Minimum II to be tried in the post-ra pipeliner"));
-
-static cl::opt<int> PostPipelinerMaxII(
-    "aie-postpipeliner-maxii", cl::init(60),
-    cl::desc("[AIE] Maximum II to be tried in the post-ra pipeliner"));
-
 static cl::opt<bool> EnableMultiSlotInstrMaterialization(
     "aie-preassign-multi-slot-instr", cl::Hidden, cl::init(true),
     cl::desc("Statically materialize Multi-Slot Pseudo Instructions in "
@@ -95,10 +87,6 @@ static cl::opt<bool> MaterializePipeline(
     "aie-materialize-pipeline", cl::Hidden, cl::init(true),
     cl::desc("Materialize all Multi-Slot Pseudo Instructions in "
              "post-pipeline candidate loops."));
-
-static cl::opt<int> PostPipelinerMaxTryII(
-    "aie-postpipeliner-maxtry-ii", cl::init(20),
-    cl::desc("[AIE] Maximum II steps to be tried in the post-ra pipeliner"));
 
 static cl::opt<bool> PostSchedIgnoreMemoryDeps(
     "aie-safe-to-ignore-memory-deps", cl::init(false),
@@ -113,24 +101,6 @@ cl::opt<bool> SimplifyReservedRegs(
     "aie-simplify-reserved-regs", cl::init(false),
     cl::desc("Remove anti and output dependencies on simplifiable reserved "
              "registers to give the scheduler maximum freedom"));
-
-// Option for enabling virtual register mode in the postpipeliner
-static cl::opt<bool> PostPipelinerVRegMode(
-    "aie-postpipeliner-vreg-mode", cl::Hidden, cl::init(true),
-    cl::desc("[AIE] Enable virtual register mode for the postpipeliner "
-             "(replaces filtered physical registers with virtual registers)"));
-
-// Option for enabling physical register mode in the postpipeliner
-static cl::opt<bool> PostPipelinerPhysMode(
-    "aie-postpipeliner-phys-mode", cl::Hidden, cl::init(true),
-    cl::desc("[AIE] Enable physical register mode for the postpipeliner "
-             "(use physical registers without virtualization)"));
-
-// Option for enabling reserved virtual register mode in the postpipeliner
-static cl::opt<bool> PostPipelinerVRegReservedMode(
-    "aie-postpipeliner-vreg-reserved-mode", cl::Hidden, cl::init(false),
-    cl::desc("[AIE] Enable reserved virtual register mode for the "
-             "postpipeliner (virtualizes ranges overlapping RESERVED bases)"));
 
 namespace llvm::AIE {
 
@@ -499,8 +469,7 @@ void InterBlockScheduling::enterBlock(MachineBasicBlock *BB) {
   CurrentBlockState->resetRegion();
   DEBUG_BLOCKS(dbgs() << "  >> enterBlock " << BB->getNumber() << " "
                       << CurrentBlockState->kindAsString() << " FixPointIter="
-                      << CurrentBlockState->FixPoint.NumIters
-                      << " II=" << CurrentBlockState->FixPoint.II << "\n");
+                      << CurrentBlockState->FixPoint.NumIters << "\n");
 
   if (IsGatheringPhase) {
     return;
@@ -970,34 +939,6 @@ InterBlockScheduling::getEarliestDelaySlotCycle(MachineBasicBlock *BB) const {
   return getBlockState(BB).FixPoint.EarliestDelaySlotCycle;
 }
 
-// Get the first pipeliner mode to try based on command line options.
-static PostPipelinerMode firstPipelinerMode() {
-  if (PostPipelinerPhysMode) {
-    return PostPipelinerMode::Physical;
-  }
-  if (PostPipelinerVRegMode) {
-    return PostPipelinerMode::Virtual;
-  }
-  if (PostPipelinerVRegReservedMode) {
-    return PostPipelinerMode::ReservedVirtual;
-  }
-  return PostPipelinerMode::None;
-}
-
-// Get the next pipeliner mode to try after the current one.
-// Returns None when past the last mode.
-static PostPipelinerMode nextPipelinerMode(PostPipelinerMode Current) {
-  if (Current == PostPipelinerMode::Physical && PostPipelinerVRegMode) {
-    return PostPipelinerMode::Virtual;
-  }
-  if ((Current == PostPipelinerMode::Physical ||
-       Current == PostPipelinerMode::Virtual) &&
-      PostPipelinerVRegReservedMode) {
-    return PostPipelinerMode::ReservedVirtual;
-  }
-  return PostPipelinerMode::None;
-}
-
 SchedulingStage InterBlockScheduling::updateScheduling(BlockState &BS) {
   if (BS.FixPoint.NumIters >
       MaxExpensiveIterations + 2 * HR->getConflictHorizon()) {
@@ -1067,82 +1008,23 @@ SchedulingStage InterBlockScheduling::updateScheduling(BlockState &BS) {
                          << " ResourceExtent=" << BS.FixPoint.MaxResourceExtent
                          << "\n");
 
-  // The loop schedule has converged, so we could declare our work done.
-  // But first try SWP if we have a single region and pipelining is enabled
+  // The loop schedule has converged. Try SWP if we have a single region.
   if (BS.getRegions().size() == 1) {
     auto &PostSWP = BS.getPostSWP();
-    if (PostSWP.isPostPipelineCandidate(*BS.TheBlock)) {
-      // Determine which pipelining mode to use
-      BS.FixPoint.PipelinerMode = firstPipelinerMode();
-      if (BS.FixPoint.PipelinerMode == PostPipelinerMode::None) {
-        return SchedulingStage::SchedulingDone;
-      }
-
-      const int ResMII = PostSWP.getResMII(*BS.TheBlock);
-      const int StartII = std::max(ResMII, PostPipelinerMinII.getValue());
-      if (StartII <= PostPipelinerMaxII) {
-        BS.FixPoint.II = StartII;
-        BS.FixPoint.IITries = 1;
-        return SchedulingStage::Pipelining;
-      }
-    }
+    if (PostSWP.isPostPipelineCandidate(*BS.TheBlock))
+      return SchedulingStage::Pipelining;
   }
   return SchedulingStage::SchedulingDone;
 }
 
-PostPipelinerMode InterBlockScheduling::getFirstPipelinerMode() {
-  return firstPipelinerMode();
-}
-
-PostPipelinerMode
-InterBlockScheduling::getNextPipelinerMode(PostPipelinerMode Current) {
-  return nextPipelinerMode(Current);
-}
-
-int InterBlockScheduling::getPipelinerMaxII() { return PostPipelinerMaxII; }
-
-int InterBlockScheduling::getPipelinerMaxIITries() {
-  return PostPipelinerMaxTryII;
-}
-
 SchedulingStage InterBlockScheduling::updatePipelining(BlockState &BS) {
-  // We have been pipelining. Check whether we were successful.
-  if (BS.FixPoint.Stage == SchedulingStage::PipeliningDone) {
+  // The full II x Mode search runs inside AIEScheduleDAGMI::schedule(). By the
+  // time we are called, it has either marked the block as pipelined (success)
+  // or left it in the Pipelining stage (failure).
+  if (BS.isPipelined())
     return SchedulingStage::PipeliningDone;
-  }
-
-  // If pipelining is disabled, we shouldn't be here
-  if (BS.FixPoint.PipelinerMode == PostPipelinerMode::None) {
-    return SchedulingStage::PipeliningFailed;
-  }
-
-  // We failed. undo all changes that were required for this attempt.
-  BS.restorePipelining();
-
-  // Try the next mode at the same II.
-  const PostPipelinerMode NextMode =
-      nextPipelinerMode(BS.FixPoint.PipelinerMode);
-  if (NextMode != PostPipelinerMode::None) {
-    BS.FixPoint.PipelinerMode = NextMode;
-    DEBUG_LOOPAWARE(dbgs() << "Trying next mode at II=" << BS.FixPoint.II
-                           << "\n");
-    return SchedulingStage::Pipelining;
-  }
-
-  // We progressed through all pipeliner modes and failed.
-  // Try a larger II.
-  // We cut off at larger IIs to prevent excessive compilation time.
-  if (++BS.FixPoint.II <= PostPipelinerMaxII &&
-      ++BS.FixPoint.IITries <= PostPipelinerMaxTryII) {
-    BS.FixPoint.PipelinerMode = firstPipelinerMode();
-    if (BS.FixPoint.PipelinerMode != PostPipelinerMode::None) {
-      return SchedulingStage::Pipelining;
-    }
-  }
-
-  // Fall back to the loop schedule. Note that we can only enter pipeline mode
-  // after the loop schedule has stabilized. Failure is observable by the
-  // absence of a "Schedule found" remark on this loop.
+  // Fall back to the loop schedule. Failure is observable by the absence of
+  // a "Schedule found" remark on this loop.
   return SchedulingStage::PipeliningFailed;
 }
 
@@ -1242,8 +1124,7 @@ MachineBasicBlock *InterBlockScheduling::nextBlock() {
   }
 
   auto &BS = getBlockState(MBBSequence[NextInOrder]);
-  if (!BS.isScheduled() ||
-      (BS.FixPoint.II && !BS.isPipelined() && !BS.pipeliningFailed())) {
+  if (!BS.isScheduled()) {
     return MBBSequence[NextInOrder];
   }
 
@@ -1999,52 +1880,28 @@ void BlockState::setPipelined() {
   FixPoint.Stage = SchedulingStage::PipeliningDone;
 }
 
-void BlockState::initPipelining() {
-  // Should only be called when actually pipelining.
-  assert(FixPoint.PipelinerMode != PostPipelinerMode::None &&
-         "initPipelining called when not pipelining");
-
-  DEBUG_REGALLOC(dbgs() << "initPipelining called with mode="
-                        << getPostPipelinerModeName(FixPoint.PipelinerMode)
-                        << " II=" << FixPoint.II << "\n");
+void BlockState::initPipelining(PostPipelinerMode Mode) {
+  assert(Mode != PostPipelinerMode::None &&
+         "initPipelining called with None mode");
 
   // For virtual modes, virtualize the already-analyzed live ranges.
-  if (FixPoint.PipelinerMode == PostPipelinerMode::Virtual ||
-      FixPoint.PipelinerMode == PostPipelinerMode::ReservedVirtual) {
+  // The analysis is invariant and will be reused for the next attempt.
+  if (Mode == PostPipelinerMode::Virtual ||
+      Mode == PostPipelinerMode::ReservedVirtual) {
     assert(RegTracker && "RegTracker must exist in virtual modes");
-
-    // The analysis was already performed once in initInterBlock.
-    // We just need to virtualize the physical registers for this attempt.
     const RegLiveRangeTracker::OverlapPolicy Policy =
-        (FixPoint.PipelinerMode == PostPipelinerMode::Virtual)
+        (Mode == PostPipelinerMode::Virtual)
             ? RegLiveRangeTracker::OverlapPolicy::
                   DisallowOverlapWithReservedBase
             : RegLiveRangeTracker::OverlapPolicy::AllowOverlapWithReservedBase;
-
     RegTracker->virtualizeFilteredPhysRegs(Policy);
-    DEBUG_REGALLOC(dbgs() << "Virtualized with policy="
-                          << (Policy == RegLiveRangeTracker::OverlapPolicy::
-                                            DisallowOverlapWithReservedBase
-                                  ? "DisallowOverlap"
-                                  : "AllowOverlap")
-                          << " for pipelining attempt at II=" << FixPoint.II
-                          << "\n");
   }
 }
 
 void BlockState::restorePipelining() {
-  // Restore to the original allocation of the virtual registers.
-  if (FixPoint.PipelinerMode == PostPipelinerMode::Virtual ||
-      FixPoint.PipelinerMode == PostPipelinerMode::ReservedVirtual) {
-    assert(RegTracker && "RegTracker must exist in virtual modes");
-
-    // Only restore if registers are still virtualized.
-    if (RegTracker->areRegistersVirtualized()) {
-      // Restore physical registers but keep the analysis results.
-      // The analysis is invariant and will be reused for the next attempt.
-      RegTracker->restoreOriginalPhysRegs();
-    }
-  }
+  // Restore physical registers if virtualized.
+  if (RegTracker && RegTracker->areRegistersVirtualized())
+    RegTracker->restoreOriginalPhysRegs();
 }
 
 int BlockState::getScheduleLength() const {
@@ -2103,10 +1960,6 @@ void BlockState::initInterBlock(const MachineSchedContext &Context,
                 }) &&
          "Loop cannot have fixed instructions");
 
-  // Start with None - we'll determine the actual mode after scheduling
-  // converges
-  FixPoint.PipelinerMode = PostPipelinerMode::None;
-
   if (Regions.size() == 1) {
     // Create the persistent tracker that will be used throughout pipelining
     RegTracker = std::make_unique<RegLiveRangeTracker>(*TheBlock->getParent());
@@ -2117,11 +1970,8 @@ void BlockState::initInterBlock(const MachineSchedContext &Context,
                                               *TheBlock->getParent());
 
     // Only proceed if at least one pipelining mode is enabled.
-    const bool PipeliningEnabled = PostPipelinerVRegMode ||
-                                   PostPipelinerPhysMode ||
-                                   PostPipelinerVRegReservedMode;
     const bool IsPipelineCandidate =
-        PipeliningEnabled && PostSWP->isPostPipelineCandidate(*TheBlock);
+        PostSWP->isPostPipelineCandidate(*TheBlock);
 
     if (IsPipelineCandidate) {
       // Perform static assignment of multi-slot pseudos before register

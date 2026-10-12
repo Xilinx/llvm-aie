@@ -131,17 +131,11 @@ public:
 class FixedpointState {
 public:
   SchedulingStage Stage = SchedulingStage::Scheduling;
-  // PostPipeliner mode - physical or virtual register mode
-  PostPipelinerMode PipelinerMode = PostPipelinerMode::None;
   // Parameters of the loop-aware convergence
   int LatencyMargin = 0;
   SmallMapVector<MachineInstr *, int, 8> PerMILatencyMargin;
   SmallMapVector<MachineInstr *, int, 8> PerMIExtraDepth;
   int ResourceMargin = 0;
-  // The II of the modulo schedule we are trying.
-  int II = 0;
-  // The number of II steps we've made from the minimum
-  int IITries = 0;
   // Results from the convergence test
   int MaxLatencyExtent = 0;
   int MaxResourceExtent = 0;
@@ -332,6 +326,13 @@ public:
   void initInterBlock(const MachineSchedContext &Context,
                       const AIEHazardRecognizer &HR);
 
+  /// Initialize for pipelining - virtualizes registers if in virtual mode.
+  /// \p Mode specifies which virtualization policy to apply.
+  void initPipelining(PostPipelinerMode Mode);
+
+  /// Restore after pipelining - restores physical registers if virtualized.
+  void restorePipelining();
+
   // Concatenate Bundles to the current region
   void addBundles(const std::vector<MachineBundle> &Bundles) {
     auto &TheBundles = Regions.at(CurrentRegion).Bundles;
@@ -381,13 +382,6 @@ public:
   void clearSchedule();
 
   void setPipelined();
-
-  /// Initialize for pipelining - virtualizes registers if in virtual mode
-  void initPipelining();
-
-  /// Restore after failed pipelining - restores physical registers if
-  /// virtualized
-  void restorePipelining();
 
   bool isScheduled() const {
     return FixPoint.Stage == SchedulingStage::SchedulingDone || isPipelined() ||
@@ -610,15 +604,6 @@ public:
   /// The cycle before which the delay slot instruction of \p BB may not be
   /// issued. Zero leaves it unconstrained, as in the first schedule.
   unsigned getEarliestDelaySlotCycle(MachineBasicBlock *BB) const;
-
-  /// Return the first pipeliner mode enabled by command-line options.
-  static PostPipelinerMode getFirstPipelinerMode();
-  /// Return the next pipeliner mode after \p Current, or None when exhausted.
-  static PostPipelinerMode getNextPipelinerMode(PostPipelinerMode Current);
-  /// Maximum II value to attempt during pipelining.
-  static int getPipelinerMaxII();
-  /// Maximum number of distinct II values to try during pipelining.
-  static int getPipelinerMaxIITries();
 
   // Returns the scheduled bundles of the pipelined loop body preceding
   // \p Epilogue. Returns nullopt if \p Epilogue is not the epilogue of a

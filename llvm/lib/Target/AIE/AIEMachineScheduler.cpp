@@ -1926,8 +1926,7 @@ public:
 };
 
 /// Build a two-copy pipeliner graph directly into \p DAG for the given mode.
-/// The caller must have set \p BS.FixPoint.PipelinerMode and called
-/// \p BS.initPipelining() (for register virtualization) before calling this.
+/// For virtual modes, the caller must have called initPipelining() first.
 static void buildPipelinerDAG(AIEPipelinerDAG &DAG, const BlockState &BS,
                               AAResults *AA, bool SimplifyReserved) {
   const auto &Region = BS.getCurrentRegion();
@@ -1976,15 +1975,12 @@ void llvm::AIEPostRASchedStrategy::buildGraph(ScheduleDAGMI &DAG, AAResults *AA,
     const MachineSchedContext &Ctx = *InterBlock.getContext();
 
     // Build the Physical DAG (no virtualization).
-    BS.FixPoint.PipelinerMode = PostPipelinerMode::Physical;
     BS.PipelinePhysDAG = std::make_unique<AIEPipelinerDAG>(Ctx, BS, AA);
     buildPipelinerDAG(static_cast<AIEPipelinerDAG &>(*BS.PipelinePhysDAG), BS,
                       AA, /*SimplifyReserved=*/false);
 
-    // Build the Virtual DAG: set Mode so initPipelining() virtualizes
-    // correctly.
-    BS.FixPoint.PipelinerMode = PostPipelinerMode::Virtual;
-    BS.initPipelining();
+    // Build the Virtual DAG with register virtualization applied.
+    BS.initPipelining(PostPipelinerMode::Virtual);
     BS.PipelineVirtDAG = std::make_unique<AIEPipelinerDAG>(Ctx, BS, AA);
     buildPipelinerDAG(static_cast<AIEPipelinerDAG &>(*BS.PipelineVirtDAG), BS,
                       AA, /*SimplifyReserved=*/SimplifyReservedRegs);
@@ -2008,18 +2004,6 @@ void llvm::AIEPostRASchedStrategy::buildGraph(ScheduleDAGMI &DAG, AAResults *AA,
   DAG.buildEdges(Context->AA, RPTracker, PDiffs, LIS, OverrideTrackLaneMasks,
                  AbandonSingleDefs);
   static_cast<AIEScheduleDAGMI &>(DAG).recordDbgInstrs(Region);
-
-  // Apply reserved register dependency simplification when enabled and in
-  // virtualized mode. This relaxes Anti and Output dependencies on
-  // simplifiable reserved registers to give the scheduler maximum freedom.
-  // The correctness of the resulting schedule is verified afterward.
-  const PostPipelinerMode Mode = BS.FixPoint.PipelinerMode;
-  if (SimplifyReservedRegs && (Mode == PostPipelinerMode::Virtual ||
-                               Mode == PostPipelinerMode::ReservedVirtual)) {
-    // Store the simplified registers so PostRegAlloc can verify that true
-    // live ranges on these registers don't overlap.
-    simplifyReservedRegDeps(DAG);
-  }
 }
 
 SUnit &AIEPostRASchedStrategy::addFixedSUnit(MachineInstr &MI, bool IsTop) {
@@ -2077,51 +2061,11 @@ void AIEScheduleDAGMI::schedule() {
     getSchedImpl()->buildGraph(*this, AA, nullptr, nullptr, nullptr,
                                /*TrackLaneMasks=*/false);
     auto &PostSWP = BS.getPostSWP();
-    // Phase 2: II outer / Mode inner search using the pre-built DAGs.
-    // getFirstPipelinerMode()/getNextPipelinerMode() control which modes are
-    // enabled. Physical mode uses PipelinePhysDAG; all others use
-    // PipelineVirtDAG.
-    const PostPipelinerMode FirstMode =
-        InterBlockScheduling::getFirstPipelinerMode();
-    const int MaxII = InterBlockScheduling::getPipelinerMaxII();
-    const int MaxIITries = InterBlockScheduling::getPipelinerMaxIITries();
-    bool Found = false;
-    int IITried = 0;
-
-    for (int II = BS.FixPoint.II; II <= MaxII && IITried < MaxIITries && !Found;
-         ++II, ++IITried) {
-      BS.FixPoint.II = II;
-      for (PostPipelinerMode Mode = FirstMode;
-           Mode != PostPipelinerMode::None && !Found;
-           Mode = InterBlockScheduling::getNextPipelinerMode(Mode)) {
-        BS.FixPoint.PipelinerMode = Mode;
-        ScheduleDAGInstrs &ModeDAG = (Mode == PostPipelinerMode::Physical)
-                                         ? *BS.PipelinePhysDAG
-                                         : *BS.PipelineVirtDAG;
-
-        // For non-Physical modes: re-apply register virtualization (O(n),
-        // no edge rebuild). The deterministic analysis guarantees the same IDs.
-        if (Mode != PostPipelinerMode::Physical)
-          BS.initPipelining();
-
-        if (PostSWP.schedule(ModeDAG, II, Mode)) {
-          Found = true;
-          break;
-        }
-
-        if (Mode != PostPipelinerMode::Physical)
-          BS.restorePipelining();
-      }
-    }
-
-    if (Found) {
+    // The full II×Mode search is owned by PostPipeliner::trySchedule().
+    // It uses both pre-built DAGs and handles all register virtualization.
+    if (PostSWP.trySchedule(*BS.TheBlock, *BS.PipelinePhysDAG,
+                            *BS.PipelineVirtDAG))
       BS.setPipelined();
-      LLVM_DEBUG(PostSWP.dump());
-    } else {
-      // Ensure registers are restored and signal failure.
-      BS.restorePipelining();
-      BS.FixPoint.PipelinerMode = PostPipelinerMode::None;
-    }
     return;
   }
   default:

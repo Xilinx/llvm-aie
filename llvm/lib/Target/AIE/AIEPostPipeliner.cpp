@@ -45,6 +45,36 @@
 namespace llvm::AIE {
 using namespace Solver;
 
+static cl::opt<int> PostPipelinerMinII(
+    "aie-postpipeliner-minii", cl::init(1),
+    cl::desc("[AIE] Minimum II to be tried in the post-ra pipeliner"));
+
+static cl::opt<int> PostPipelinerMaxII(
+    "aie-postpipeliner-maxii", cl::init(60),
+    cl::desc("[AIE] Maximum II to be tried in the post-ra pipeliner"));
+
+static cl::opt<int> PostPipelinerMaxTryII(
+    "aie-postpipeliner-maxtry-ii", cl::init(20),
+    cl::desc("[AIE] Maximum II steps to be tried in the post-ra pipeliner"));
+
+// Option for enabling virtual register mode in the postpipeliner
+static cl::opt<bool> PostPipelinerVRegMode(
+    "aie-postpipeliner-vreg-mode", cl::Hidden, cl::init(true),
+    cl::desc("[AIE] Enable virtual register mode for the postpipeliner "
+             "(replaces filtered physical registers with virtual registers)"));
+
+// Option for enabling physical register mode in the postpipeliner
+static cl::opt<bool> PostPipelinerPhysMode(
+    "aie-postpipeliner-phys-mode", cl::Hidden, cl::init(true),
+    cl::desc("[AIE] Enable physical register mode for the postpipeliner "
+             "(use physical registers without virtualization)"));
+
+// Option for enabling reserved virtual register mode in the postpipeliner
+static cl::opt<bool> PostPipelinerVRegReservedMode(
+    "aie-postpipeliner-vreg-reserved-mode", cl::Hidden, cl::init(false),
+    cl::desc("[AIE] Enable reserved virtual register mode for the "
+             "postpipeliner (virtualizes ranges overlapping RESERVED bases)"));
+
 static cl::opt<int>
     Heuristic("aie-postpipeliner-heuristic",
               cl::desc("Select one specific post-pipeliner heuristic"),
@@ -125,7 +155,34 @@ PostPipeliner::PostPipeliner(const AIEHazardRecognizer &HR, int NInstr,
                              const MachineFunction &MF)
     : HR(HR), RegTracker(RegTracker), Interpreter(MF), NInstr(NInstr) {}
 
+// Get the first pipeliner mode to try based on command line options.
+static PostPipelinerMode firstPipelinerMode() {
+  if (PostPipelinerPhysMode)
+    return PostPipelinerMode::Physical;
+  if (PostPipelinerVRegMode)
+    return PostPipelinerMode::Virtual;
+  if (PostPipelinerVRegReservedMode)
+    return PostPipelinerMode::ReservedVirtual;
+  return PostPipelinerMode::None;
+}
+
+// Get the next pipeliner mode to try after the current one.
+// Returns None when past the last enabled mode.
+static PostPipelinerMode nextPipelinerMode(PostPipelinerMode Current) {
+  if (Current == PostPipelinerMode::Physical && PostPipelinerVRegMode)
+    return PostPipelinerMode::Virtual;
+  if ((Current == PostPipelinerMode::Physical ||
+       Current == PostPipelinerMode::Virtual) &&
+      PostPipelinerVRegReservedMode)
+    return PostPipelinerMode::ReservedVirtual;
+  return PostPipelinerMode::None;
+}
+
 bool PostPipeliner::isPostPipelineCandidate(MachineBasicBlock &LoopBlock) {
+  // Bail out immediately if all pipelining modes are disabled.
+  if (firstPipelinerMode() == PostPipelinerMode::None)
+    return false;
+
   // We leave the single-block loop criterion to our caller. It is fulfilled
   // by being a loopaware scheduling candidate.
   // First get us some instruments
@@ -258,6 +315,56 @@ int PostPipeliner::getResMII(MachineBasicBlock &LoopBlock) {
 
   LLVM_DEBUG(dbgs() << "PostPipeliner: ResMII=" << MII << "\n");
   return MII;
+}
+
+bool PostPipeliner::trySchedule(MachineBasicBlock &LoopBlock,
+                                ScheduleDAGInstrs &PhysDAG,
+                                ScheduleDAGInstrs &VirtDAG) {
+  const int ResMII = getResMII(LoopBlock);
+  const int StartII = std::max(ResMII, PostPipelinerMinII.getValue());
+
+  if (StartII > PostPipelinerMaxII)
+    return false;
+
+  const PostPipelinerMode FirstMode = firstPipelinerMode();
+  if (FirstMode == PostPipelinerMode::None)
+    return false;
+
+  int IITried = 0;
+  for (int TryII = StartII;
+       TryII <= PostPipelinerMaxII && IITried < PostPipelinerMaxTryII;
+       ++TryII, ++IITried) {
+    for (PostPipelinerMode Mode = FirstMode; Mode != PostPipelinerMode::None;
+         Mode = nextPipelinerMode(Mode)) {
+      ScheduleDAGInstrs &ModeDAG =
+          (Mode == PostPipelinerMode::Physical) ? PhysDAG : VirtDAG;
+
+      // Re-apply register virtualization for non-Physical modes. The
+      // deterministic analysis guarantees the same virtual register IDs across
+      // re-virtualizations, so the pre-built VirtDAG remains valid.
+      if (Mode != PostPipelinerMode::Physical) {
+        const RegLiveRangeTracker::OverlapPolicy Policy =
+            (Mode == PostPipelinerMode::Virtual)
+                ? RegLiveRangeTracker::OverlapPolicy::
+                      DisallowOverlapWithReservedBase
+                : RegLiveRangeTracker::OverlapPolicy::
+                      AllowOverlapWithReservedBase;
+        RegTracker.virtualizeFilteredPhysRegs(Policy);
+      }
+
+      if (schedule(ModeDAG, TryII, Mode)) {
+        LLVM_DEBUG(dump());
+        return true;
+      }
+
+      // Restore physical registers before trying the next mode or II.
+      if (Mode != PostPipelinerMode::Physical &&
+          RegTracker.areRegistersVirtualized())
+        RegTracker.restoreOriginalPhysRegs();
+    }
+  }
+
+  return false;
 }
 
 // This assigns Cycle of SU, Earliest of its successors and Latest of its
