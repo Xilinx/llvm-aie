@@ -75,6 +75,7 @@
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/Metadata.h"
+#include "llvm/IR/ValueHandle.h"
 #include "llvm/InitializePasses.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/Debug.h"
@@ -2178,13 +2179,21 @@ static void rewriteLatchToDecrement(const CloneLoopStructure &SteadyLS,
 static void eraseOldCounterCycle(const CloneLoopStructure &SteadyLS,
                                  const LatchConditionInfo &Info) {
   PHINode *IV = Info.IV;
+  WeakVH PoisonedIV;
   if (IV->hasOneUse() && Info.Counter->hasOneUse()) {
     int LatchIdx = IV->getBasicBlockIndex(SteadyLS.getBottom());
     const bool HasLatchIncoming = LatchIdx >= 0;
-    if (HasLatchIncoming)
+    if (HasLatchIncoming) {
       IV->setIncomingValue(LatchIdx, PoisonValue::get(IV->getType()));
+      PoisonedIV = IV;
+    }
   }
   RecursivelyDeleteTriviallyDeadInstructions(Info.Counter);
+  // The poison is only sound if nothing can read it. Check in every build,
+  // since a surviving IV would feed poison into the loop silently.
+  if (PoisonedIV)
+    reportFatalInternalError("AIE outer loop pipeliner: the old outer IV was "
+                             "poisoned but survived the counter cleanup");
 }
 
 void AIEOuterLoopPipeliner::convertOuterLoopToHardwareLoop(
