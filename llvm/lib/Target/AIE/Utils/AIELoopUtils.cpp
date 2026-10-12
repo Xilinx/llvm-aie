@@ -382,7 +382,7 @@ getOuterLoopPeelMode(const MachineBasicBlock &LoopLatch) {
 
 std::optional<OuterLoopStructure>
 OuterLoopStructure::tryBuildFrom(MachineBasicBlock &OuterLatch) {
-  // Verify this is an OLP latch
+  // Verify this is an OLP latch.
   if (!isOuterLoopPipelined(OuterLatch))
     return std::nullopt;
 
@@ -400,57 +400,117 @@ OuterLoopStructure::tryBuildFrom(MachineBasicBlock &OuterLatch) {
   OLS.SteadyBottom = &OuterLatch;
   OLS.Speculative = isOuterLoopSpeculative(OuterLatch);
 
+  // -- Common steady-state discovery (shared by both peel modes) --
+
   // SteadyInner is the single predecessor of the latch - always a single-block
   // loop in valid OLP output.
   OLS.SteadyInner = *OuterLatch.pred_begin();
   assert(isSingleMBBLoop(OLS.SteadyInner) &&
          "OLP latch predecessor must be a single-block inner loop");
 
-  // Find SteadyTop: predecessor of SteadyInner (not the loop back-edge)
+  // Find SteadyTop: predecessor of SteadyInner (not the loop back-edge).
   OLS.SteadyTop = FindOther(OLS.SteadyInner->predecessors(), OLS.SteadyInner);
   if (!OLS.SteadyTop)
     return std::nullopt;
   assert(OLS.SteadyTop->isPredecessor(&OuterLatch) &&
          "SteadyTop must have OuterLatch as back-edge predecessor");
 
-  // Find OuterPreheader: predecessor of SteadyTop that is not SteadyBottom
-  // (the back-edge). This is the entry block to the outer loop.
-  OLS.OuterPreheader =
-      FindOther(OLS.SteadyTop->predecessors(), OLS.SteadyBottom);
-  // OuterPreheader is optional - don't fail if not found
-
-  // For speculative loops, we're done - no peeled iteration region exists
+  // For speculative loops, we're done - no peeled iteration region exists.
+  // OuterPreheader is the non-back-edge predecessor of SteadyTop.
   if (OLS.Speculative) {
+    OLS.OuterPreheader =
+        FindOther(OLS.SteadyTop->predecessors(), OLS.SteadyBottom);
     LLVM_DEBUG(dbgs() << "Built speculative OLP structure: SteadyInner="
                       << OLS.SteadyInner->getName() << "\n");
     return OLS;
   }
 
-  // Find PeeledIterTop: non-looping successor of the outer latch
-  OLS.PeeledIterTop = FindOther(OuterLatch.successors(), OLS.SteadyTop);
-  if (!OLS.PeeledIterTop)
-    return std::nullopt;
+  // Read the peel mode from the latch metadata.
+  OLS.PeelMode =
+      getOuterLoopPeelMode(OuterLatch).value_or(OLPPeelMode::PeelLast);
 
-  // Find PeeledIterInner: successor of PeeledIterTop that is a single-block
-  // loop
-  for (MachineBasicBlock *Succ : OLS.PeeledIterTop->successors()) {
-    if (isSingleMBBLoop(Succ)) {
-      OLS.PeeledIterInner = Succ;
-      break;
+  // -- Discover peeled-iteration region and preheader per peel mode --
+
+  // Helper to discover the peeled-iteration triple (Top, Inner, Bottom) by
+  // walking backwards from the bottom block of the peeled region.
+  auto DiscoverPeeledRegionBackward =
+      [&](MachineBasicBlock *PeeledBottom) -> bool {
+    OLS.PeeledIterBottom = PeeledBottom;
+
+    // PeeledIterInner: the single-block-loop predecessor of PeeledIterBottom.
+    for (MachineBasicBlock *Pred : PeeledBottom->predecessors()) {
+      if (isSingleMBBLoop(Pred)) {
+        OLS.PeeledIterInner = Pred;
+        break;
+      }
     }
+    if (!OLS.PeeledIterInner)
+      return false;
+
+    // PeeledIterTop: non-self predecessor of PeeledIterInner.
+    OLS.PeeledIterTop =
+        FindOther(OLS.PeeledIterInner->predecessors(), OLS.PeeledIterInner);
+    return OLS.PeeledIterTop != nullptr;
+  };
+
+  // Helper to discover the peeled-iteration triple (Top, Inner, Bottom) by
+  // walking forward from the top block of the peeled region.
+  auto DiscoverPeeledRegionForward = [&](MachineBasicBlock *PeeledTop) -> bool {
+    OLS.PeeledIterTop = PeeledTop;
+
+    // PeeledIterInner: successor of PeeledIterTop that is a single-block loop.
+    for (MachineBasicBlock *Succ : PeeledTop->successors()) {
+      if (isSingleMBBLoop(Succ)) {
+        OLS.PeeledIterInner = Succ;
+        break;
+      }
+    }
+    if (!OLS.PeeledIterInner)
+      return false;
+
+    // PeeledIterBottom: exit successor of PeeledIterInner.
+    OLS.PeeledIterBottom =
+        FindOther(OLS.PeeledIterInner->successors(), OLS.PeeledIterInner);
+    return OLS.PeeledIterBottom != nullptr;
+  };
+
+  if (OLS.PeelMode == OLPPeelMode::PeelFirst) {
+    // Peel-first: the peeled iteration sits before the steady loop.
+    // PeeledIterBottom is the non-back-edge predecessor of SteadyTop.
+    MachineBasicBlock *PeeledBottom =
+        FindOther(OLS.SteadyTop->predecessors(), OLS.SteadyBottom);
+    if (!PeeledBottom || !DiscoverPeeledRegionBackward(PeeledBottom))
+      return std::nullopt;
+
+    // OuterPreheader: predecessor of PeeledIterTop (not PeeledIterBottom,
+    // which is the firstiter's own back-edge / fall-through).
+    OLS.OuterPreheader =
+        FindOther(OLS.PeeledIterTop->predecessors(), OLS.PeeledIterBottom);
+
+    // ExitBlock: the epilogue after the steady latch exit.
+    OLS.ExitBlock = FindOther(OuterLatch.successors(), OLS.SteadyTop);
+  } else {
+    // Peel-last: the peeled iteration sits after the steady loop.
+    // OuterPreheader is the non-back-edge predecessor of SteadyTop.
+    OLS.OuterPreheader =
+        FindOther(OLS.SteadyTop->predecessors(), OLS.SteadyBottom);
+
+    // PeeledIterTop: non-looping successor of the outer latch.
+    MachineBasicBlock *PeeledTop =
+        FindOther(OuterLatch.successors(), OLS.SteadyTop);
+    if (!PeeledTop || !DiscoverPeeledRegionForward(PeeledTop))
+      return std::nullopt;
+
+    // ExitBlock: successor of PeeledIterBottom.
+    if (OLS.PeeledIterBottom->succ_size() == 1)
+      OLS.ExitBlock = *OLS.PeeledIterBottom->succ_begin();
   }
-  if (!OLS.PeeledIterInner)
-    return std::nullopt;
 
-  // Find PeeledIterBottom: exit successor of PeeledIterInner
-  OLS.PeeledIterBottom =
-      FindOther(OLS.PeeledIterInner->successors(), OLS.PeeledIterInner);
-  if (!OLS.PeeledIterBottom)
-    return std::nullopt;
-
-  LLVM_DEBUG(dbgs() << "Built OLP structure: SteadyInner="
-                    << OLS.SteadyInner->getName() << " PeeledIterInner="
-                    << OLS.PeeledIterInner->getName() << "\n");
+  LLVM_DEBUG(
+      dbgs() << "Built OLP structure (peel-"
+             << (OLS.PeelMode == OLPPeelMode::PeelFirst ? "first" : "last")
+             << "): SteadyInner=" << OLS.SteadyInner->getName()
+             << " PeeledIterInner=" << OLS.PeeledIterInner->getName() << "\n");
   return OLS;
 }
 

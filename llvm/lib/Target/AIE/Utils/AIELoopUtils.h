@@ -206,7 +206,8 @@ getOuterLoopPeelMode(const MachineBasicBlock &LoopLatch);
 ///                            |_______________________________|
 ///                                         |
 ///                                         v
-///   [PeeledIterTop] -> [PeeledIterInner] -> [PeeledIterBottom]
+///                       [PeeledIterTop] -> [PeeledIterInner]
+///                            -> [PeeledIterBottom] -> [ExitBlock]
 ///
 /// Peel-first mode creates this CFG:
 ///
@@ -219,7 +220,7 @@ getOuterLoopPeelMode(const MachineBasicBlock &LoopLatch);
 ///                            |_______________________________|
 ///                                         |
 ///                                         v
-///                                   [Epilogue]
+///                                   [ExitBlock]
 ///
 /// In speculative mode (peel-last only), there is no peeled iteration
 /// region; only the steady-state loop is populated.
@@ -227,28 +228,44 @@ getOuterLoopPeelMode(const MachineBasicBlock &LoopLatch);
 /// The SteadyInner and PeeledIterInner are the sibling inner loops that
 /// execute the same code but may have different register allocations.
 struct OuterLoopStructure {
-  /// Entry block to the outer loop.
+  /// Block before the first peeled iteration.
+  /// In peel-last mode this is the predecessor of SteadyTop (the stage-0
+  /// preheader block). In peel-first mode this is the predecessor of
+  /// PeeledIterTop (the true entry before the first-iteration prologue).
   MachineBasicBlock *OuterPreheader = nullptr;
 
-  /// First block inside the outer loop, entered from OuterPreheader.
+  /// First block inside the steady-state loop.
   MachineBasicBlock *SteadyTop = nullptr;
   /// The steady inner loop body.
   MachineBasicBlock *SteadyInner = nullptr;
-  /// The outer loop latch.
+  /// The outer loop latch (carries the OLP metadata).
   MachineBasicBlock *SteadyBottom = nullptr;
 
   /// First block of the peeled iteration region.
   MachineBasicBlock *PeeledIterTop = nullptr;
   /// The peeled iteration inner loop body.
   MachineBasicBlock *PeeledIterInner = nullptr;
-  /// Exit block of the peeled iteration region.
+  /// Last block of the peeled iteration region.
   MachineBasicBlock *PeeledIterBottom = nullptr;
+
+  /// Block reached after the steady loop exits.
+  /// In peel-last mode this is the successor of PeeledIterBottom.
+  /// In peel-first mode this is the epilogue block after the steady latch.
+  MachineBasicBlock *ExitBlock = nullptr;
+
+  /// Peel mode used by the pipeliner.
+  OLPPeelMode PeelMode = OLPPeelMode::PeelLast;
 
   /// True if speculative mode (no peeled iteration region).
   bool Speculative = false;
 
   /// Returns true if this has a peeled iteration region (non-speculative).
   bool hasPeeledIterRegion() const { return !Speculative; }
+
+  /// Returns true if the first iteration was peeled (peel-first mode).
+  bool isFirstIterationPeeled() const {
+    return !Speculative && PeelMode == OLPPeelMode::PeelFirst;
+  }
 
   /// Try to build the structure from an outer loop latch that has OLP metadata.
   /// For speculative loops, only the steady-state region is populated and
