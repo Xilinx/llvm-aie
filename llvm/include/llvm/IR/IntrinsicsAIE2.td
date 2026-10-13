@@ -466,7 +466,7 @@ class AIEV2I32I32I32I32I32I32 : DefaultAttrsIntrinsic<[llvm_i32_ty],
                                                        [llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
                                                        [IntrInaccessibleMemOnly]>;
 
-class AIEV2ReadTM : DefaultAttrsIntrinsic<[llvm_i32_ty], [llvm_ptr_ty], [IntrReadMem]>;
+class AIEV2ReadTM : DefaultAttrsIntrinsic<[llvm_i32_ty], [llvm_ptr_ty], [IntrArgMemOnly]>;
 class AIEV2WriteTM : DefaultAttrsIntrinsic<[], [llvm_i32_ty, llvm_ptr_ty], [IntrWriteMem]>;
 
 // Mode Settings
