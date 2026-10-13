@@ -160,6 +160,10 @@ protected:
     return make_range(CurArray, EndPointer());
   }
 
+  iterator_range<const void *const *> buckets() const {
+    return make_range(CurArray, EndPointer());
+  }
+
   /// insert_imp - This returns true if the pointer was new to the set, false if
   /// it was already in the set.  This is hidden from the client so that the
   /// derived class can check that the right type of pointer is passed in.
@@ -168,14 +172,14 @@ protected:
       // Check to see if it is already in the set.
       for (const void *&Bucket : small_buckets()) {
         if (Bucket == Ptr)
-          return std::make_pair(&Bucket, false);
+          return {&Bucket, false};
       }
 
       // Nope, there isn't.  If we stay small, just 'pushback' now.
       if (NumEntries < CurArraySize) {
         CurArray[NumEntries++] = Ptr;
         incrementEpoch();
-        return std::make_pair(CurArray + (NumEntries - 1), true);
+        return {CurArray + (NumEntries - 1), true};
       }
       // Otherwise, hit the big set case, which will call grow.
     }
@@ -396,7 +400,7 @@ public:
   /// the element equal to Ptr.
   std::pair<iterator, bool> insert(PtrType Ptr) {
     auto p = insert_imp(PtrTraits::getAsVoidPointer(Ptr));
-    return std::make_pair(makeIterator(p.first), p.second);
+    return {makeIterator(p.first), p.second};
   }
 
   /// Insert the given pointer with an iterator hint that is ignored. This is
@@ -431,7 +435,8 @@ public:
   bool remove_if(UnaryPredicate P) {
     bool Removed = false;
     if (isSmall()) {
-      const void **APtr = CurArray, **E = CurArray + NumEntries;
+      auto Buckets = small_buckets();
+      const void **APtr = Buckets.begin(), **E = Buckets.end();
       while (APtr != E) {
         PtrType Ptr = PtrTraits::getFromVoidPointer(const_cast<void *>(*APtr));
         if (P(Ptr)) {

@@ -17,6 +17,7 @@
 #include "MCTargetDesc/AIE2MCTargetDesc.h"
 #include "aie2/AIE2RegisterInfo.h"
 #include "llvm/MC/MCDecoderOps.h"
+#include "llvm/MC/MCDecoder.h"
 #include "llvm/MC/MCDisassembler/MCDisassembler.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCSubtargetInfo.h"
@@ -484,6 +485,7 @@ static DecodeStatus DecodeLDA_Q_3DInstruction(MCInst &MI, InsnType &Insn,
                                               uint64_t Address,
                                               const MCDisassembler *Decoder);
 
+using namespace llvm::MCD;
 #include "AIE2GenDisassemblerTables.inc"
 
 /// Slot decoders

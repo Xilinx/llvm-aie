@@ -594,8 +594,6 @@ void TGInstrLayout::resolveMCOperandNumber() {
     if (auto OpIdx = CGI->Operands.findOperandNamed(Field->Label)) {
       // Get the machine operand number for the indicated operand.
       unsigned MIOpIdx = CGI->Operands[*OpIdx].MIOperandNo;
-      assert(!CGI->Operands.isFlatOperandNotEmitted(MIOpIdx) &&
-             "Explicitly used operand also marked as not emitted!");
       Field->setMCOperandIndex(MIOpIdx);
     }
   }

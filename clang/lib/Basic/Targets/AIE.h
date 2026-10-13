@@ -106,7 +106,7 @@ public:
               const TargetInfo *Aux) override {
     TargetInfo::adjust(Diags, Opts, Aux);
     // Enable native half type operations when we have legal half type support
-    if (hasLegalHalfType())
+    if (hasFastHalfType())
       Opts.NativeHalfType = true;
   }
 
@@ -142,7 +142,7 @@ public:
     return isAIE2(getTriple()) || isAIE2P(getTriple()) || isAIE2PS(getTriple());
   }
   bool hasFloat16Type() const override { return isAIE2PS(getTriple()); }
-  bool hasLegalHalfType() const override { return hasFloat16Type(); }
+  bool hasFastHalfType() const override { return hasFloat16Type(); }
   bool hasInt128Type() const override { return isAIE2(getTriple()); }
   bool isCLZForZeroUndef() const override {
     if (isAIE2(getTriple()) || isAIE2P(getTriple()) || isAIE2PS(getTriple()))
