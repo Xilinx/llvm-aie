@@ -104,6 +104,13 @@ static cl::opt<bool> IncomingLatencyBias(
     cl::desc("[AIE] Account for the latency produced in predecessor blocks "
              "when ranking bottom-zone scheduling candidates"));
 
+static cl::opt<bool> WARSlotAvoidance(
+    "aie-war-slot-avoidance", cl::Hidden, cl::init(true),
+    cl::desc("When selecting a slot for a multi-slot pseudo instruction, "
+             "prefer slots that do not conflict with WAR (Anti) predecessor "
+             "slots, increasing the chance of co-issuing them in the same "
+             "VLIW bundle (bottom-up scheduling only)."));
+
 // Declared in AIEInterBlockScheduling.cpp, which owns the option since
 // the option is primarily a scheduling-phase configuration.
 extern cl::opt<bool> SimplifyReservedRegs;
@@ -780,6 +787,68 @@ bool AIEPostRASchedStrategy::isFreeSU(const SUnit &SU) const {
          SU.NodeNum < FirstBotFixedSU.value_or(NumUpperBound);
 }
 
+/// Compute a bitmask of slots to avoid when selecting an alternate opcode for
+/// a multi-slot pseudo instruction. In bottom-up scheduling, the Write (W)
+/// part of a WAR (Anti) dependency is scheduled before the Read (R) part. If
+/// W is assigned the same slot as R, they cannot be co-issued in the same VLIW
+/// bundle. This function returns the union of slot sets used by all unscheduled
+/// Anti predecessors of \p SU that have a statically known slot, so that the
+/// caller can prefer alternatives that avoid those slots.
+static SlotBits computeWARAvoidSlots(const SUnit *SU,
+                                     const AIEAlternateDescriptors &AltDescs,
+                                     const AIEBaseMCFormats *Formats) {
+  // Returns true if all data (RAW) successors of PredSU are already scheduled.
+  // Only when this holds is the predecessor's slot considered "committed" and
+  // worth avoiding. This is the most expensive check, so it is applied last.
+  auto AllDataSuccsScheduled = [](const SUnit *PredSU) {
+    return all_of(PredSU->Succs, [](const SDep &Succ) {
+      return Succ.getKind() != SDep::Data || Succ.getSUnit()->isScheduled;
+    });
+  };
+
+  SlotBits AvoidSlots = 0;
+  for (const SDep &Pred : SU->Preds) {
+    // Only consider WAR (Anti) dependencies.
+    if (Pred.getKind() != SDep::Anti)
+      continue;
+    const SUnit *const PredSU = Pred.getSUnit();
+    if (!PredSU || !PredSU->getInstr())
+      continue;
+    // Bottom-up only: R (predecessor) must not yet be scheduled.
+    if (PredSU->isScheduled)
+      continue;
+    // Skip multi-slot pseudos with unresolved slot.
+    MachineInstr *PredMI = PredSU->getInstr();
+    const unsigned PredOpcode = AltDescs.getOpcode(PredMI);
+    if (Formats->getAlternateInstsOpcode(PredOpcode))
+      continue;
+    // Early skip: if the predecessor has no known slot, nothing to avoid.
+    const MCSlotKind PredSlotKind = Formats->getSlotKind(PredOpcode);
+    if (PredSlotKind == MCSlotKind())
+      continue;
+    const MCSlotInfo *const PredSlotInfo = Formats->getSlotInfo(PredSlotKind);
+    if (!PredSlotInfo)
+      continue;
+    // Most expensive check last: only constrain if R's slot is committed
+    // (all its data successors are already scheduled).
+    if (!AllDataSuccsScheduled(PredSU))
+      continue;
+    AvoidSlots |= PredSlotInfo->getSlotSet();
+  }
+  return AvoidSlots;
+}
+
+/// Check whether \p SU has a hazard at \p DeltaCycles using the AIE hazard
+/// recognizer, passing the given \p AvoidSlots for multi-slot pseudo
+/// alternate selection.
+static bool checkHazardWithAvoidSlots(SchedBoundary &Zone, SUnit *SU,
+                                      int DeltaCycles, SlotBits AvoidSlots) {
+  AIEHazardRecognizer *HR = getAIEHazardRecognizer(Zone);
+  assert(HR->isEnabled());
+  return HR->getHazardType(SU, DeltaCycles, AvoidSlots) !=
+         ScheduleHazardRecognizer::NoHazard;
+}
+
 bool AIEPostRASchedStrategy::isAvailableNode(SUnit &SU, SchedBoundary &Zone,
                                              bool /*VerifyReadyCycle*/) {
   // Note we use signed integers to avoid wrap-around behavior.
@@ -824,7 +893,8 @@ bool AIEPostRASchedStrategy::isAvailableNode(SUnit &SU, SchedBoundary &Zone,
       // TopReadyCycle is always less or equal to the current cycle here,
       // (if not, we could violate dependencies) so DeltaCycles will
       // always be less or equal to 0.
-      if (Zone.checkHazard(&SU, DeltaCycles))
+      if (checkHazardWithAvoidSlots(Zone, &SU, DeltaCycles,
+                                    /*AvoidSlots=*/SlotBits(0)))
         continue;
       SU.TopReadyCycle = CurrCycle + DeltaCycles;
       return true;
@@ -835,11 +905,21 @@ bool AIEPostRASchedStrategy::isAvailableNode(SUnit &SU, SchedBoundary &Zone,
     return false;
   }
 
+  // Compute slots to avoid based on WAR (Anti) predecessors with a known
+  // static slot assignment. This steers the alternate opcode selection away
+  // from slots that would prevent co-issuing W and R in the same bundle.
+  AIEHazardRecognizer *HR = getAIEHazardRecognizer(Zone);
+  const SlotBits BotAvoidSlots =
+      WARSlotAvoidance
+          ? computeWARAvoidSlots(&SU, HR->getSelectedAltDescs(),
+                                 getTII(*DAG)->getFormatInterface())
+          : SlotBits(0);
+
   for (int DeltaCycles = CurrCycle - BotReadyCycle; DeltaCycles >= MinDelta;
        --DeltaCycles) {
     // ReadyCycle is always greater or equal to the current cycle,
     // so DeltaCycles will always be less or equal to 0.
-    if (Zone.checkHazard(&SU, DeltaCycles))
+    if (checkHazardWithAvoidSlots(Zone, &SU, DeltaCycles, BotAvoidSlots))
       continue;
     SU.BotReadyCycle = CurrCycle - DeltaCycles;
     return true;

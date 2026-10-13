@@ -4,7 +4,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc -O2 -mtriple=aie2 --issue-limit=1 %s -o - | FileCheck %s
 
 define i64 @test_ge_v64uint8(<64 x i8> %a, <64 x i8> %b) {
@@ -96,11 +96,11 @@ entry:
 define i64 @test_ge_v64int8_sgn(<64 x i8> %a, <64 x i8> %b, i1 zeroext %sgn) {
 ; CHECK-LABEL: test_ge_v64int8_sgn:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopx ; mov crVaddSign, r2
+; CHECK-NEXT:    nopx ; mov crVaddSign, r2
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vge.d8 r25:r24, x0, x2 // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 3
+; CHECK-NEXT:    movxm crVaddSign, #0 // Delay Slot 3
 ; CHECK-NEXT:    mov r0, r24 // Delay Slot 2
 ; CHECK-NEXT:    mov r1, r25 // Delay Slot 1
 entry:
@@ -113,11 +113,11 @@ entry:
 define i32 @test_ge_v32uint16_sgn(<32 x i16> %a, <32 x i16> %b, i1 zeroext %sgn) {
 ; CHECK-LABEL: test_ge_v32uint16_sgn:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopx ; mov crVaddSign, r1
+; CHECK-NEXT:    nopa ; mov crVaddSign, r1
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vge.d16 r16, x0, x2 // Delay Slot 5
 ; CHECK-NEXT:    or r2, r16, r16 // Delay Slot 4
-; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 3
+; CHECK-NEXT:    movxm crVaddSign, #0 // Delay Slot 3
 ; CHECK-NEXT:    mov r0, r16 // Delay Slot 2
 ; CHECK-NEXT:    mov r16, r2 // Delay Slot 1
 entry:
@@ -129,11 +129,11 @@ entry:
 define i32 @test_ge_v16int32_sgn(<16 x i32> %a, <16 x i32> %b, i1 zeroext %sgn) {
 ; CHECK-LABEL: test_ge_v16int32_sgn:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopx ; mov crVaddSign, r1
+; CHECK-NEXT:    nopa ; mov crVaddSign, r1
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vge.d32 r16, x0, x2 // Delay Slot 5
 ; CHECK-NEXT:    or r2, r16, r16 // Delay Slot 4
-; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 3
+; CHECK-NEXT:    movxm crVaddSign, #0 // Delay Slot 3
 ; CHECK-NEXT:    mov r0, r16 // Delay Slot 2
 ; CHECK-NEXT:    mov r16, r2 // Delay Slot 1
 entry:
@@ -231,11 +231,11 @@ entry:
 define i64 @test_lt_v64uint8_sgn(<64 x i8> %a, <64 x i8> %b, i1 zeroext %sgn) {
 ; CHECK-LABEL: test_lt_v64uint8_sgn:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopx ; mov crVaddSign, r2
+; CHECK-NEXT:    nopx ; mov crVaddSign, r2
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vlt.d8 r25:r24, x0, x2 // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 3
+; CHECK-NEXT:    movxm crVaddSign, #0 // Delay Slot 3
 ; CHECK-NEXT:    mov r0, r24 // Delay Slot 2
 ; CHECK-NEXT:    mov r1, r25 // Delay Slot 1
 entry:
@@ -248,11 +248,11 @@ entry:
 define i32 @test_lt_v32int16_sgn(<32 x i16> %a, <32 x i16> %b, i1 zeroext %sgn) {
 ; CHECK-LABEL: test_lt_v32int16_sgn:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopx ; mov crVaddSign, r1
+; CHECK-NEXT:    nopa ; mov crVaddSign, r1
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vlt.d16 r16, x0, x2 // Delay Slot 5
 ; CHECK-NEXT:    or r2, r16, r16 // Delay Slot 4
-; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 3
+; CHECK-NEXT:    movxm crVaddSign, #0 // Delay Slot 3
 ; CHECK-NEXT:    mov r0, r16 // Delay Slot 2
 ; CHECK-NEXT:    mov r16, r2 // Delay Slot 1
 entry:
@@ -264,11 +264,11 @@ entry:
 define i32 @test_lt_v16uint32_sgn(<16 x i32> %a, <16 x i32> %b, i1 zeroext %sgn) {
 ; CHECK-LABEL: test_lt_v16uint32_sgn:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopx ; mov crVaddSign, r1
+; CHECK-NEXT:    nopa ; mov crVaddSign, r1
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vlt.d32 r16, x0, x2 // Delay Slot 5
 ; CHECK-NEXT:    or r2, r16, r16 // Delay Slot 4
-; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 3
+; CHECK-NEXT:    movxm crVaddSign, #0 // Delay Slot 3
 ; CHECK-NEXT:    mov r0, r16 // Delay Slot 2
 ; CHECK-NEXT:    mov r16, r2 // Delay Slot 1
 entry:

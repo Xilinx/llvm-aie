@@ -4,19 +4,19 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc -O2 -mtriple=aie2 --issue-limit=1 %s -o - | FileCheck %s
 
 define dso_local noundef <64 x i8> @_Z20test_abs_gtz_v64int8Dv64_abRy(<64 x i8> noundef %a, i1 noundef zeroext %sgn, ptr nocapture nonnull writeonly align 4 dereferenceable(8) %cmp) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z20test_abs_gtz_v64int8Dv64_abRy:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopx ; mov crVaddSign, r0
+; CHECK-NEXT:    nopx ; mov crVaddSign, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vabs_gtz.d8 x0, r25:r24, x2 // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    st r24, [p0, #0] // Delay Slot 3
 ; CHECK-NEXT:    st r25, [p0, #4] // Delay Slot 2
-; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 1
+; CHECK-NEXT:    movxm crVaddSign, #0 // Delay Slot 1
 entry:
   %conv.i = zext i1 %sgn to i32
   %0 = tail call { <64 x i8>, <2 x i32> } @llvm.aie2.vabs.gtz8(<64 x i8> %a, i32 %conv.i)
@@ -63,11 +63,11 @@ entry:
 define dso_local noundef <32 x i16> @_Z22test_abs_gtz_v32uint16Dv32_tbRj(<32 x i16> noundef %a, i1 noundef zeroext %sgn, ptr nocapture nonnull writeonly align 4 dereferenceable(4) %cmp) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z22test_abs_gtz_v32uint16Dv32_tbRj:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopx ; mov crVaddSign, r0
+; CHECK-NEXT:    nopa ; mov crVaddSign, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vabs_gtz.d16 x0, r16, x2 // Delay Slot 5
 ; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 4
-; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 3
+; CHECK-NEXT:    movxm crVaddSign, #0 // Delay Slot 3
 ; CHECK-NEXT:    st r16, [p0, #0] // Delay Slot 2
 ; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
 entry:
@@ -116,11 +116,11 @@ entry:
 define dso_local noundef <16 x i32> @_Z21test_abs_gtz_v16int32Dv16_ibRj(<16 x i32> noundef %a, i1 noundef zeroext %sgn, ptr nocapture nonnull writeonly align 4 dereferenceable(4) %cmp) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z21test_abs_gtz_v16int32Dv16_ibRj:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopx ; mov crVaddSign, r0
+; CHECK-NEXT:    nopa ; mov crVaddSign, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vabs_gtz.d32 x0, r16, x2 // Delay Slot 5
 ; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 4
-; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 3
+; CHECK-NEXT:    movxm crVaddSign, #0 // Delay Slot 3
 ; CHECK-NEXT:    st r16, [p0, #0] // Delay Slot 2
 ; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
 entry:

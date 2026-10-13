@@ -4,17 +4,16 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc -O2 -mtriple=aie2 --issue-limit=1 %s -o - | FileCheck %s
 define dso_local noundef signext i8 @_Z21test_ext_v2int4_sign1Dv64_DB8_i(<64 x i8> noundef %v, i32 noundef %idx) {
 ; CHECK-LABEL: _Z21test_ext_v2int4_sign1Dv64_DB8_i:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopx ; mov r1, r16
-; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    mova r16, #6 // Delay Slot 5
-; CHECK-NEXT:    vextract.s8 r0, x0, r16 // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 2
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm
+; CHECK-NEXT:    mov r1, r16 // Delay Slot 5
+; CHECK-NEXT:    mova r16, #6 // Delay Slot 4
+; CHECK-NEXT:    vextract.s8 r0, x0, r16 // Delay Slot 3
+; CHECK-NEXT:    or r16, r1, r1 // Delay Slot 2
 ; CHECK-NEXT:    extend.s8 r0, r0 // Delay Slot 1
 entry:
   %0 = tail call i32 @llvm.aie2.vextract.elem8.I512(<64 x i8> %v, i32 6, i32 1)
@@ -24,12 +23,12 @@ entry:
 define dso_local noundef <16 x i32> @_Z17test_max_v16int32Dv16_iS_b(<16 x i32> noundef %a, <16 x i32> noundef %b, i1 noundef zeroext %sgn) {
 ; CHECK-LABEL: _Z17test_max_v16int32Dv16_iS_b:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    mov r1, r16
-; CHECK-NEXT:    mov crVaddSign, r0
+; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; mov r1, r16; nopv
+; CHECK-NEXT:    nopa ; mov crVaddSign, r0
 ; CHECK-NEXT:    vmax_lt.d32 x0, r16, x2, x4
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 4
+; CHECK-NEXT:    movxm crVaddSign, #0 // Delay Slot 4
 ; CHECK-NEXT:    vmax_lt.s32 x0, r16, x0, x4 // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    mov r16, r1 // Delay Slot 1

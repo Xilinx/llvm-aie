@@ -4,7 +4,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc -O2 -mtriple=aie2 --issue-limit=1 %s -o - | FileCheck %s
 
 define  <8 x i32> @test_extract_v4int32(i32 noundef %idx, <16 x i32> noundef %a)  {
@@ -64,7 +64,7 @@ define <64 x i8> @insert_128_in_512(<64 x i8> noundef %v, i32 noundef %idx, <16 
 ; CHECK-NEXT:    lshl r16, r4, r0 // Delay Slot 4
 ; CHECK-NEXT:    vshift x0, x0, x4, r1 // Delay Slot 3
 ; CHECK-NEXT:    vsel.32 x0, x2, x0, r16 // Delay Slot 2
-; CHECK-NEXT:    mov r16, r5 // Delay Slot 1
+; CHECK-NEXT:    or r16, r5, r5 // Delay Slot 1
 entry:
   %0 = bitcast <16 x i8> %b to <4 x i32>
   %1 = tail call <16 x i32> @llvm.aie2.set.I512.I128(<4 x i32> %0)
@@ -95,7 +95,7 @@ define dso_local noundef <32 x i8> @insert_128_in_256(<32 x i8> noundef %v, i32 
 ; CHECK-NEXT:    lshl r16, r4, r0 // Delay Slot 4
 ; CHECK-NEXT:    vshift x0, x0, x4, r1 // Delay Slot 3
 ; CHECK-NEXT:    vsel.32 x0, x2, x0, r16 // Delay Slot 2
-; CHECK-NEXT:    mov r16, r5 // Delay Slot 1
+; CHECK-NEXT:    or r16, r5, r5 // Delay Slot 1
 entry:
   %0 = bitcast <32 x i8> %v to <8 x i32>
   %1 = tail call <16 x i32> @llvm.aie2.set.I512.I256(<8 x i32> %0, i32 0)
@@ -128,13 +128,13 @@ define <64 x i8> @test_concat_4_v32uint4(<16 x i8> noundef %v0, <16 x i8> nounde
 ; CHECK-NEXT:    vshift x0, x0, x4, r0
 ; CHECK-NEXT:    vshift x4, x0, x6, r1
 ; CHECK-NEXT:    vsel.32 x0, x0, x4, r16
-; CHECK-NEXT:    mov r16, r3
+; CHECK-NEXT:    or r16, r3, r3
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vshift x4, x0, x8, r2 // Delay Slot 5
 ; CHECK-NEXT:    vsel.32 x0, x0, x4, r17 // Delay Slot 4
-; CHECK-NEXT:    mov r17, r4 // Delay Slot 3
+; CHECK-NEXT:    or r17, r4, r4 // Delay Slot 3
 ; CHECK-NEXT:    vsel.32 x0, x0, x2, r18 // Delay Slot 2
-; CHECK-NEXT:    mov r18, r5 // Delay Slot 1
+; CHECK-NEXT:    or r18, r5, r5 // Delay Slot 1
 entry:
   %0 = bitcast <16 x i8> %v1 to <4 x i32>
   %1 = tail call <16 x i32> @llvm.aie2.set.I512.I128(<4 x i32> %0)
@@ -164,7 +164,7 @@ define <32 x i8> @test_concat_2_v32uint4(<16 x i8> noundef %v0, <16 x i8> nounde
 ; CHECK-NEXT:    mova r16, #15 // Delay Slot 4
 ; CHECK-NEXT:    vshift x0, x0, x4, r0 // Delay Slot 3
 ; CHECK-NEXT:    vsel.32 x0, x0, x2, r16 // Delay Slot 2
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
+; CHECK-NEXT:    or r16, r1, r1 // Delay Slot 1
 entry:
   %0 = bitcast <16 x i8> %v1 to <4 x i32>
   %1 = tail call <16 x i32> @llvm.aie2.set.I512.I128(<4 x i32> %0)

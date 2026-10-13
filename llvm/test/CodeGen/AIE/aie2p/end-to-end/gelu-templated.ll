@@ -49,9 +49,9 @@ define void @gelu_fn(ptr noalias %ifm, ptr noalias %ofm, ptr nonnull align 64 de
 ; CHECK-NEXT:    vlda.conv.fp32.bf16 cml2, [p0], #64; vfloor.s32.bf16 x1, wl8, s0
 ; CHECK-NEXT:    vconv.bf16.fp32 x5, cml2; vmul.f dm3, x7, x2, r2
 ; CHECK-NEXT:    vfloor.s32.bf16 x3, wh8, s0; movxm ls, #.LBB0_1
-; CHECK-NEXT:    mova r4, #-5; nopb ; vconv.bf16.fp32 x10, cml4; movxm le, #.L_LEnd0; vmul.f dm4, x5, x4, r2
-; CHECK-NEXT:    vconv.bf16.fp32 x7, cml1; lshl r4, r1, r4; vadd.f dm2, dm2, dm0, r0
-; CHECK-NEXT:    vlda.conv.fp32.bf16 cml1, [p0], #64; movx r1, #2; vbcst.16 x6, r3
+; CHECK-NEXT:    vconv.bf16.fp32 x10, cml4; movxm le, #.L_LEnd0; vmul.f dm4, x5, x4, r2
+; CHECK-NEXT:    mova r4, #-5; vconv.bf16.fp32 x7, cml1; vbcst.16 x6, r3; vadd.f dm2, dm2, dm0, r0
+; CHECK-NEXT:    vlda.conv.fp32.bf16 cml1, [p0], #64; lshl r4, r1, r4; mov r1, #2
 ; CHECK-NEXT:    vfloor.s32.bf16 x9, wl10, s0; vshuffle x1, x1, x3, r1; vmul.f dm4, x7, x2, r2
 ; CHECK-NEXT:    vconv.bf16.fp32 x5, cml3; vmin_ge.16 x3, r16, x1, x0, vaddsign1
 ; CHECK-NEXT:    nopa ; nopb ; vfloor.s32.bf16 x3, wh10, s0; nopx ; add.nc lc, r4, #-7; nopv

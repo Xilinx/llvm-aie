@@ -185,6 +185,12 @@ public:
 
   void Reset() override;
   HazardType getHazardType(SUnit *SU, int DeltaCycles) override;
+
+  /// Variant that accepts a pre-computed set of slots to avoid when selecting
+  /// an alternate opcode for multi-slot pseudo instructions. The two-pass
+  /// alternate selection first tries opcodes whose slot is not in
+  /// \p AvoidSlots, then falls back to any hazard-free alternative.
+  HazardType getHazardType(SUnit *SU, int DeltaCycles, SlotBits AvoidSlots);
   void EmitInstruction(SUnit *) override;
   void EmitInstruction(SUnit *, int DeltaCycles) override;
   void AdvanceCycle() override;
