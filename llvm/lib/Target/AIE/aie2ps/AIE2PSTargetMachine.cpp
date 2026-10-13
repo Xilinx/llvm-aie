@@ -73,7 +73,6 @@ void AIE2PSPassConfig::addPreRegBankSelect() {
     if (EnableGlobalPtrModOptimizer)
       addPass(createAIEPtrModOptimizer());
     addPass(createAIEPostLegalizerCustomCombiner());
-    addPass(createAIEPostLegalizerFinalCombiner());
   }
 }
 
