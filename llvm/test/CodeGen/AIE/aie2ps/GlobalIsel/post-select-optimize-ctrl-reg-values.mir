@@ -23,6 +23,7 @@ body:             |
     ; CHECK-NEXT: %v:er = COPY $r1
     ; CHECK-NEXT: $crsat = COPY %v
     ; CHECK-NEXT: PseudoJL 32, csr_aie2ps, implicit-def $lr
+    ; CHECK-NEXT: $crsat = COPY %v
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $crsat
     %v:er = COPY $r1
     $crsat = COPY %v
@@ -47,6 +48,7 @@ body:             |
     ; CHECK-NEXT: %v:er = COPY $r1
     ; CHECK-NEXT: $crsat = COPY %v
     ; CHECK-NEXT: INLINEASM &nop, 1 /* sideeffect attdialect */
+    ; CHECK-NEXT: $crsat = COPY %v
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $crsat
     %v:er = COPY $r1
     $crsat = COPY %v
@@ -68,8 +70,9 @@ body:             |
     ; CHECK-LABEL: name: copy_out_after_call
     ; CHECK: %a:er = COPY $crsat
     ; CHECK-NEXT: PseudoJL 32, csr_aie2ps, implicit-def $lr
+    ; CHECK-NEXT: %b:er = COPY $crsat
     ; CHECK-NEXT: $r0 = COPY %a
-    ; CHECK-NEXT: $r1 = COPY %a
+    ; CHECK-NEXT: $r1 = COPY %b
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0, implicit $r1
     %a:er = COPY $crsat
     PseudoJL 32, csr_aie2ps, implicit-def $lr
