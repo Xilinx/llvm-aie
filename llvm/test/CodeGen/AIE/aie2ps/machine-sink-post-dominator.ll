@@ -126,7 +126,6 @@ join:
 
 ; %a and the PHI initial value are used only in the loop, and MachineSink does
 ; not sink into a loop header, so moving them into join skips no path.
-; FIXME: the PHI initial value is sunk into join.
 define void @use_in_loop_after_join(ptr noalias %p, ptr noalias %out, i32 %c, i32 %n) {
   ; CHECK-LABEL: name: use_in_loop_after_join
   ; CHECK: bb.1.entry:
@@ -137,6 +136,7 @@ define void @use_in_loop_after_join(ptr noalias %p, ptr noalias %out, i32 %c, i3
   ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:ep = COPY $p1
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r0
   ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:er = COPY $r1
+  ; CHECK-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 0
   ; CHECK-NEXT:   [[LDA_dms_lda_scalar_ld_idx_imm:%[0-9]+]]:mlockid_reg = LDA_dms_lda_scalar_ld_idx_imm [[COPY]], 0 :: (load (s32) from %ir.p)
   ; CHECK-NEXT:   PseudoJZ [[COPY2]], %bb.3
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
@@ -144,20 +144,19 @@ define void @use_in_loop_after_join(ptr noalias %p, ptr noalias %out, i32 %c, i3
   ; CHECK-NEXT: bb.2.then:
   ; CHECK-NEXT:   successors: %bb.3(0x80000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 1
-  ; CHECK-NEXT:   ST_dms_sts_scalar_st_idx_imm [[MOV_RLC_imm11_pseudo]], [[COPY1]], 0 :: (store (s32) into %ir.out)
+  ; CHECK-NEXT:   [[MOV_RLC_imm11_pseudo1:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 1
+  ; CHECK-NEXT:   ST_dms_sts_scalar_st_idx_imm [[MOV_RLC_imm11_pseudo1]], [[COPY1]], 0 :: (store (s32) into %ir.out)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3.join:
   ; CHECK-NEXT:   successors: %bb.4(0x80000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[MOV_RLC_imm11_pseudo1:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 0
   ; CHECK-NEXT:   LoopStart [[COPY3]], 0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.4.loop:
   ; CHECK-NEXT:   successors: %bb.4(0x7c000000), %bb.5(0x04000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:mlockid_reg = PHI %11, %bb.4, [[MOV_RLC_imm11_pseudo1]], %bb.3
-  ; CHECK-NEXT:   [[PHI1:%[0-9]+]]:mlockid_reg = PHI [[MOV_RLC_imm11_pseudo1]], %bb.3, %10, %bb.4
+  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:mlockid_reg = PHI %11, %bb.4, [[MOV_RLC_imm11_pseudo]], %bb.3
+  ; CHECK-NEXT:   [[PHI1:%[0-9]+]]:mlockid_reg = PHI [[MOV_RLC_imm11_pseudo]], %bb.3, %10, %bb.4
   ; CHECK-NEXT:   [[ADD_alu_r_rr:%[0-9]+]]:mlockid_reg = ADD_alu_r_rr [[PHI1]], [[PHI]], implicit-def dead $srcarry
   ; CHECK-NEXT:   [[ADD_alu_r_rr1:%[0-9]+]]:mlockid_reg = ADD_alu_r_rr [[PHI]], [[LDA_dms_lda_scalar_ld_idx_imm]], implicit-def dead $srcarry
   ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.4
@@ -194,7 +193,6 @@ exit:
 
 ; %a is used only after the loop, and MachineSink does not sink into a loop
 ; header, so moving %a or the PHI initial value into join skips no path.
-; FIXME: both are sunk into join.
 define void @use_after_loop(ptr noalias %p, ptr noalias %out, ptr noalias %out2, i32 %c, i32 %n) {
   ; CHECK-LABEL: name: use_after_loop
   ; CHECK: bb.1.entry:
@@ -206,26 +204,26 @@ define void @use_after_loop(ptr noalias %p, ptr noalias %out, ptr noalias %out2,
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:ep = COPY $p2
   ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:er = COPY $r0
   ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:er = COPY $r1
+  ; CHECK-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 0
+  ; CHECK-NEXT:   [[LDA_dms_lda_scalar_ld_idx_imm:%[0-9]+]]:er = LDA_dms_lda_scalar_ld_idx_imm [[COPY]], 0 :: (load (s32) from %ir.p)
   ; CHECK-NEXT:   PseudoJZ [[COPY3]], %bb.3
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2.then:
   ; CHECK-NEXT:   successors: %bb.3(0x80000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 1
-  ; CHECK-NEXT:   ST_dms_sts_scalar_st_idx_imm [[MOV_RLC_imm11_pseudo]], [[COPY1]], 0 :: (store (s32) into %ir.out)
+  ; CHECK-NEXT:   [[MOV_RLC_imm11_pseudo1:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 1
+  ; CHECK-NEXT:   ST_dms_sts_scalar_st_idx_imm [[MOV_RLC_imm11_pseudo1]], [[COPY1]], 0 :: (store (s32) into %ir.out)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3.join:
   ; CHECK-NEXT:   successors: %bb.4(0x80000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[MOV_RLC_imm11_pseudo1:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 0
-  ; CHECK-NEXT:   [[LDA_dms_lda_scalar_ld_idx_imm:%[0-9]+]]:er = LDA_dms_lda_scalar_ld_idx_imm [[COPY]], 0 :: (load (s32) from %ir.p)
   ; CHECK-NEXT:   LoopStart [[COPY4]], 0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.4.loop:
   ; CHECK-NEXT:   successors: %bb.4(0x7c000000), %bb.5(0x04000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:mlockid_reg = PHI [[MOV_RLC_imm11_pseudo1]], %bb.3, %10, %bb.4
+  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:mlockid_reg = PHI [[MOV_RLC_imm11_pseudo]], %bb.3, %10, %bb.4
   ; CHECK-NEXT:   ST_dms_sts_scalar_st_idx_imm [[PHI]], [[COPY1]], 0 :: (volatile store (s32) into %ir.out)
   ; CHECK-NEXT:   [[ADD_add_r_ri:%[0-9]+]]:mlockid_reg = ADD_add_r_ri [[PHI]], 1, implicit-def dead $srcarry
   ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd1>, %bb.4

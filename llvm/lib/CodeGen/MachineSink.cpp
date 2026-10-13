@@ -1298,9 +1298,12 @@ bool MachineSinking::isProfitableToSinkTo(Register Reg, MachineInstr &MI,
   // can further profitably sinked into another block in next round.
   bool BreakPHIEdge = false;
   // FIXME - If finding successor is compile time expensive then cache results.
+  // A later round never sinks into a deeper cycle, so a path through one does
+  // not make this step profitable.
   if (MachineBasicBlock *MBB2 =
           FindSuccToSinkTo(MI, SuccToSinkTo, BreakPHIEdge, AllSuccessors))
-    return isProfitableToSinkTo(Reg, MI, SuccToSinkTo, MBB2, AllSuccessors);
+    if (CI->getCycleDepth(MBB2) <= CI->getCycleDepth(SuccToSinkTo))
+      return isProfitableToSinkTo(Reg, MI, SuccToSinkTo, MBB2, AllSuccessors);
 
   MachineCycle *MCycle = CI->getCycle(MBB);
 
