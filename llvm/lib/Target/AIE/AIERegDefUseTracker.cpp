@@ -1476,8 +1476,36 @@ void RegLiveRangeTracker::computeRegisterClass(RegLiveRange &LR) const {
       // the live range cannot be safely virtualized.
       if (OpInfo.getSubRegIdx() != 0) {
         const TargetRegisterClass *OrigOpRC = OpRC;
+        // Start from the largest legal superclass so that
+        // getMatchingSuperRegClass can return a wider class (e.g. mEXa) when
+        // the sub-register constraint is satisfied by all registers in that
+        // class, not just odd or even ones. refineRegisterClassesForSchedClass
+        // will narrow back if schedule-class determinism requires it.
+        //
+        // Two steps are needed because superclass relationships in LLVM can
+        // be asymmetric for classes with identical register sets (e.g. mEXow
+        // and mEXoa both contain eEXo_s, but only the canonical class has the
+        // declared superclass path leading to mEXa). We therefore first
+        // canonicalize to the lowest-ID equivalent class before widening.
         const TargetRegisterClass *BaseRC =
-            CommonRC ? CommonRC : TRI->getMinimalPhysRegClass(LR.getBaseReg());
+            [&]() -> const TargetRegisterClass * {
+          if (CommonRC)
+            return CommonRC;
+          const TargetRegisterClass *MinRC =
+              TRI->getMinimalPhysRegClass(LR.getBaseReg());
+          // Canonicalize: among all classes with the same number of registers,
+          // pick the one with the lowest ID that is a subclass of MinRC.
+          for (const TargetRegisterClass *RC : TRI->regclasses()) {
+            if (RC->getNumRegs() != MinRC->getNumRegs())
+              continue;
+            if (RC->getID() >= MinRC->getID())
+              continue;
+            const TargetRegisterClass *Sub = TRI->getCommonSubClass(MinRC, RC);
+            if (Sub == RC)
+              MinRC = RC;
+          }
+          return TRI->getLargestLegalSuperClass(MinRC, *MF);
+        }();
         OpRC =
             TRI->getMatchingSuperRegClass(BaseRC, OpRC, OpInfo.getSubRegIdx());
         LLVM_DEBUG(dbgs() << "      getMatchingSuperRegClass("

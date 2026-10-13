@@ -144,76 +144,76 @@ define weak_odr dso_local void @nested_vmac_loop(ptr noalias %arg, ptr noalias %
 ; ASM-NEXT:    vlda.fill [p0, lf0, r24]; vldb.fill [p1, lf1, r25]
 ; ASM-NEXT:    vlda.pop ex2, [p0, lf0, r24]; vldb.pop ex11, [p1, lf1, r25]
 ; ASM-NEXT:    vlda.pop ex11, [p0, lf0, r24]
-; ASM-NEXT:    vlda.pop ex1, [p0, lf0, r24]
-; ASM-NEXT:    vlda.pop ex8, [p0, lf0, r24]; vldb.pop ex9, [p1, lf1, r25]
-; ASM-NEXT:    vldb.pop ex11, [p1, lf1, r25]
-; ASM-NEXT:    vldb.pop ex10, [p1, lf1, r25]
+; ASM-NEXT:    vlda.pop ex8, [p0, lf0, r24]
+; ASM-NEXT:    vlda.pop ex3, [p0, lf0, r24]; vldb.pop ex11, [p1, lf1, r25]
+; ASM-NEXT:    vldb.pop ex1, [p1, lf1, r25]
+; ASM-NEXT:    vldb.pop ex9, [p1, lf1, r25]
 ; ASM-NEXT:    padds [p1], m3; or r25, r3, r3; addm.nc ls, pc, #.LBB0_3
 ; ASM-NEXT:    vlda.fill [p0, lf0, r24]; vldb.fill [p1, lf1, r25]; add.nc le, pc, #.L_LEnd0; mov r8, r16
-; ASM-NEXT:    vlda.pop ex5, [p0, lf0, r24]; vldb.pop ex4, [p1, lf1, r25]; add.nc lc, r1, #-2; vshuffle ex4, ex11, ex10, r2
+; ASM-NEXT:    vlda.pop ex8, [p0, lf0, r24]; vldb.pop ex4, [p1, lf1, r25]; add.nc lc, r1, #-2; vshuffle ex4, ex11, ex9, r2
 ; ASM-NEXT:  .LBB0_3: // %bb102
 ; ASM-NEXT:    // Parent Loop BB0_2 Depth=1
 ; ASM-NEXT:    // => This Inner Loop Header: Depth=2
-; ASM-NEXT:    vlda.pop ex0, [p0, lf0, r24]; nopb ; nopx ; vshuffle ex6, ex2, ex11, r4; nops
-; ASM-NEXT:    vlda.pop ex1, [p0, lf0, r24]; vshuffle ex2, ex2, ex11, r6
-; ASM-NEXT:    vlda.pop.3d ex11, [p0, lf0, r24, d1]; vshuffle ex7, ex1, ex8, r4
-; ASM-NEXT:    vshuffle ex3, ex1, ex8, r6
-; ASM-NEXT:    vldb.pop ex2, [p1, lf1, r25]; vshuffle ex8, ex9, ex10, r2; vmac.f dm7, dm7, ex4, ey3, ey1, r8
-; ASM-NEXT:    vshuffle ex11, ex11, ex10, r2
-; ASM-NEXT:    vldb.pop ex9, [p1, lf1, r25]; vshuffle ex9, ex10, ex10, r2; vmac.f dm6, dm6, ex8, ey3, ey1, r8
-; ASM-NEXT:    vshuffle ex8, ex4, ex10, r2
-; ASM-NEXT:    vldb.pop.3d ex2, [p1, lf1, r25, d0]; vshuffle ex4, ex5, ex0, r4; vmac.f dm5, dm5, ex11, ey3, ey1, r8
-; ASM-NEXT:    vlda.fill [p0, lf0, r24]; vldb.fill [p1, lf1, r25]; vshuffle ex0, ex5, ex0, r6
-; ASM-NEXT:    vlda.pop ex2, [p0, lf0, r24]; vldb.pop ex11, [p1, lf1, r25]; vshuffle ex5, ex1, ex11, r4; vmac.f dm4, dm4, ex9, ey3, ey1, r8
-; ASM-NEXT:    vlda.pop ex11, [p0, lf0, r24]; vshuffle ex1, ex1, ex11, r6
-; ASM-NEXT:    vlda.pop ex1, [p0, lf0, r24]; vshuffle ex2, ex2, ex10, r2; vmac.f dm3, dm3, ex8, ey2, ey0, r8
-; ASM-NEXT:    vlda.pop ex8, [p0, lf0, r24]; vldb.pop ex9, [p1, lf1, r25]
-; ASM-NEXT:    vldb.pop ex11, [p1, lf1, r25]; vshuffle ex6, ex9, ex10, r2; vmac.f dm2, dm2, ex2, ey2, ey0, r8
-; ASM-NEXT:    vldb.pop ex10, [p1, lf1, r25]
-; ASM-NEXT:    padds [p1], m3; or r25, r3, r3; vshuffle ex9, ex2, ex10, r2; vmac.f dm1, dm1, ex6, ey2, ey0, r8
+; ASM-NEXT:    vlda.pop ex5, [p0, lf0, r24]; nopb ; nopx ; vshuffle ex6, ex2, ex11, r4; nops
+; ASM-NEXT:    vlda.pop ex10, [p0, lf0, r24]; vshuffle ex2, ex2, ex11, r6
+; ASM-NEXT:    vlda.pop.3d ex8, [p0, lf0, r24, d1]; vshuffle ex7, ex8, ex3, r4
+; ASM-NEXT:    vshuffle ex3, ex8, ex3, r6
+; ASM-NEXT:    vldb.pop ex2, [p1, lf1, r25]; vshuffle ex11, ex11, ex9, r2; vmac.f dm7, dm7, ex4, ey3, ey1, r8
+; ASM-NEXT:    vshuffle ex0, ex1, ex9, r2
+; ASM-NEXT:    vldb.pop ex11, [p1, lf1, r25]; vshuffle ex1, ex9, ex9, r2; vmac.f dm6, dm6, ex11, ey3, ey1, r8
+; ASM-NEXT:    vshuffle ex11, ex4, ex9, r2
+; ASM-NEXT:    vldb.pop.3d ex2, [p1, lf1, r25, d0]; vshuffle ex4, ex8, ex5, r4; vmac.f dm5, dm5, ex0, ey3, ey1, r8
+; ASM-NEXT:    vlda.fill [p0, lf0, r24]; vldb.fill [p1, lf1, r25]; vshuffle ex0, ex8, ex5, r6
+; ASM-NEXT:    vlda.pop ex2, [p0, lf0, r24]; vldb.pop ex11, [p1, lf1, r25]; vshuffle ex5, ex10, ex8, r4; vmac.f dm4, dm4, ex1, ey3, ey1, r8
+; ASM-NEXT:    vlda.pop ex11, [p0, lf0, r24]; vshuffle ex1, ex10, ex8, r6
+; ASM-NEXT:    vlda.pop ex8, [p0, lf0, r24]; vshuffle ex2, ex2, ex9, r2; vmac.f dm3, dm3, ex11, ey2, ey0, r8
+; ASM-NEXT:    vlda.pop ex3, [p0, lf0, r24]; vldb.pop ex11, [p1, lf1, r25]
+; ASM-NEXT:    vldb.pop ex1, [p1, lf1, r25]; vshuffle ex11, ex11, ex9, r2; vmac.f dm2, dm2, ex2, ey2, ey0, r8
+; ASM-NEXT:    vldb.pop ex9, [p1, lf1, r25]
+; ASM-NEXT:    padds [p1], m3; or r25, r3, r3; vshuffle ex6, ex2, ex9, r2; vmac.f dm1, dm1, ex11, ey2, ey0, r8
 ; ASM-NEXT:    vlda.fill [p0, lf0, r24]; vldb.fill [p1, lf1, r25]
 ; ASM-NEXT:  .L_LEnd0:
-; ASM-NEXT:    vlda.pop ex5, [p0, lf0, r24]; vldb.pop ex4, [p1, lf1, r25]; nops ; movx r8, #972; vshuffle ex4, ex11, ex10, r2; vmac.f dm0, dm0, ex9, ey2, ey0, r8
+; ASM-NEXT:    vlda.pop ex8, [p0, lf0, r24]; vldb.pop ex4, [p1, lf1, r25]; nops ; movx r8, #972; vshuffle ex4, ex11, ex9, r2; vmac.f dm0, dm0, ex6, ey2, ey0, r8
 ; ASM-NEXT:  // %bb.4: // %bb90
 ; ASM-NEXT:    // in Loop: Header=BB0_2 Depth=1
-; ASM-NEXT:    vlda.pop ex0, [p0, lf0, r24]; nopb ; nops ; add r0, r0, #-1; vshuffle ex6, ex2, ex11, r4; nopv
-; ASM-NEXT:    vlda.pop ex1, [p0, lf0, r24]; nopb ; nopx ; vshuffle ex2, ex2, ex11, r6
-; ASM-NEXT:    vlda.pop.3d ex11, [p0, lf0, r24, d1]; vshuffle ex7, ex1, ex8, r4
-; ASM-NEXT:    vshuffle ex3, ex1, ex8, r6
-; ASM-NEXT:    vldb.pop ex2, [p1, lf1, r25]; vshuffle ex8, ex9, ex10, r2; vmac.f dm7, dm7, ex4, ey3, ey1, r8
-; ASM-NEXT:    vshuffle ex11, ex11, ex10, r2
-; ASM-NEXT:    vldb.pop ex9, [p1, lf1, r25]; vshuffle ex9, ex10, ex10, r2; vmac.f dm6, dm6, ex8, ey3, ey1, r8
-; ASM-NEXT:    vshuffle ex8, ex4, ex10, r2
-; ASM-NEXT:    vldb.pop.3d ex2, [p1, lf1, r25, d0]; vshuffle ex4, ex5, ex0, r4; vmac.f dm5, dm5, ex11, ey3, ey1, r8
-; ASM-NEXT:    vlda.fill [p0, lf0, r24]; vldb.fill [p1, lf1, r25]; vshuffle ex0, ex5, ex0, r6
-; ASM-NEXT:    vlda.pop ex2, [p0, lf0, r24]; vldb.pop ex11, [p1, lf1, r25]; vshuffle ex5, ex1, ex11, r4; vmac.f dm4, dm4, ex9, ey3, ey1, r8
-; ASM-NEXT:    vlda.pop ex11, [p0, lf0, r24]; vshuffle ex1, ex1, ex11, r6
-; ASM-NEXT:    vlda.pop ex1, [p0, lf0, r24]; vshuffle ex2, ex2, ex10, r2; vmac.f dm3, dm3, ex8, ey2, ey0, r8
-; ASM-NEXT:    vlda.pop ex8, [p0, lf0, r24]; vldb.pop ex9, [p1, lf1, r25]
-; ASM-NEXT:    vldb.pop ex11, [p1, lf1, r25]; vshuffle ex6, ex9, ex10, r2; vmac.f dm2, dm2, ex2, ey2, ey0, r8
-; ASM-NEXT:    vldb.pop ex10, [p1, lf1, r25]
-; ASM-NEXT:    padds [p1], m3; or r25, r3, r3; vshuffle ex9, ex2, ex10, r2; vmac.f dm1, dm1, ex6, ey2, ey0, r8
+; ASM-NEXT:    vlda.pop ex5, [p0, lf0, r24]; nopb ; nops ; add r0, r0, #-1; vshuffle ex6, ex2, ex11, r4; nopv
+; ASM-NEXT:    vlda.pop ex10, [p0, lf0, r24]; nopb ; nopx ; vshuffle ex2, ex2, ex11, r6
+; ASM-NEXT:    vlda.pop.3d ex8, [p0, lf0, r24, d1]; vshuffle ex7, ex8, ex3, r4
+; ASM-NEXT:    vshuffle ex3, ex8, ex3, r6
+; ASM-NEXT:    vldb.pop ex2, [p1, lf1, r25]; vshuffle ex11, ex11, ex9, r2; vmac.f dm7, dm7, ex4, ey3, ey1, r8
+; ASM-NEXT:    vshuffle ex0, ex1, ex9, r2
+; ASM-NEXT:    vldb.pop ex11, [p1, lf1, r25]; vshuffle ex1, ex9, ex9, r2; vmac.f dm6, dm6, ex11, ey3, ey1, r8
+; ASM-NEXT:    vshuffle ex11, ex4, ex9, r2
+; ASM-NEXT:    vldb.pop.3d ex2, [p1, lf1, r25, d0]; vshuffle ex4, ex8, ex5, r4; vmac.f dm5, dm5, ex0, ey3, ey1, r8
+; ASM-NEXT:    vlda.fill [p0, lf0, r24]; vldb.fill [p1, lf1, r25]; vshuffle ex0, ex8, ex5, r6
+; ASM-NEXT:    vlda.pop ex2, [p0, lf0, r24]; vldb.pop ex11, [p1, lf1, r25]; vshuffle ex5, ex10, ex8, r4; vmac.f dm4, dm4, ex1, ey3, ey1, r8
+; ASM-NEXT:    vlda.pop ex11, [p0, lf0, r24]; vshuffle ex1, ex10, ex8, r6
+; ASM-NEXT:    vlda.pop ex8, [p0, lf0, r24]; vshuffle ex2, ex2, ex9, r2; vmac.f dm3, dm3, ex11, ey2, ey0, r8
+; ASM-NEXT:    vlda.pop ex3, [p0, lf0, r24]; vldb.pop ex11, [p1, lf1, r25]
+; ASM-NEXT:    vldb.pop ex1, [p1, lf1, r25]; vshuffle ex11, ex11, ex9, r2; vmac.f dm2, dm2, ex2, ey2, ey0, r8
+; ASM-NEXT:    vldb.pop ex9, [p1, lf1, r25]
+; ASM-NEXT:    padds [p1], m3; or r25, r3, r3; vshuffle ex6, ex2, ex9, r2; vmac.f dm1, dm1, ex11, ey2, ey0, r8
 ; ASM-NEXT:    vlda.fill [p0, lf0, r24]; vldb.fill [p1, lf1, r25]
-; ASM-NEXT:    vlda.pop ex5, [p0, lf0, r24]; vldb.pop ex4, [p1, lf1, r25]; movx r8, #972; vshuffle ex4, ex11, ex10, r2; vmac.f dm0, dm0, ex9, ey2, ey0, r8
-; ASM-NEXT:    vlda.pop ex0, [p0, lf0, r24]; vshuffle ex6, ex2, ex11, r4
-; ASM-NEXT:    vlda.pop ex1, [p0, lf0, r24]; vshuffle ex2, ex2, ex11, r6
-; ASM-NEXT:    vlda.pop.3d ex11, [p0, lf0, r24, d1]; vshuffle ex7, ex1, ex8, r4
-; ASM-NEXT:    vshuffle ex3, ex1, ex8, r6
-; ASM-NEXT:    vldb.pop ex2, [p1, lf1, r25]; vshuffle ex8, ex9, ex10, r2; vmac.f dm7, dm7, ex4, ey3, ey1, r8
-; ASM-NEXT:    vshuffle ex11, ex11, ex10, r2
-; ASM-NEXT:    vldb.pop ex9, [p1, lf1, r25]; vshuffle ex9, ex10, ex10, r2; vmac.f dm6, dm6, ex8, ey3, ey1, r8
-; ASM-NEXT:    vshuffle ex8, ex4, ex10, r2
-; ASM-NEXT:    vldb.pop.3d ex2, [p1, lf1, r25, d0]; vshuffle ex4, ex5, ex0, r4; vmac.f dm5, dm5, ex11, ey3, ey1, r8
-; ASM-NEXT:    vshuffle ex0, ex5, ex0, r6
-; ASM-NEXT:    vshuffle ex5, ex1, ex11, r4; vmac.f dm4, dm4, ex9, ey3, ey1, r8
-; ASM-NEXT:    vst bmhh7, [p2, #192]; vshuffle ex1, ex1, ex11, r6
-; ASM-NEXT:    vst bmhl7, [p2, #128]; vshuffle ex2, ex2, ex10, r2; vmac.f dm3, dm3, ex8, ey2, ey0, r8
+; ASM-NEXT:    vlda.pop ex8, [p0, lf0, r24]; vldb.pop ex4, [p1, lf1, r25]; movx r8, #972; vshuffle ex4, ex11, ex9, r2; vmac.f dm0, dm0, ex6, ey2, ey0, r8
+; ASM-NEXT:    vlda.pop ex5, [p0, lf0, r24]; vshuffle ex6, ex2, ex11, r4
+; ASM-NEXT:    vlda.pop ex10, [p0, lf0, r24]; vshuffle ex2, ex2, ex11, r6
+; ASM-NEXT:    vlda.pop.3d ex8, [p0, lf0, r24, d1]; vshuffle ex7, ex8, ex3, r4
+; ASM-NEXT:    vshuffle ex3, ex8, ex3, r6
+; ASM-NEXT:    vldb.pop ex2, [p1, lf1, r25]; vshuffle ex11, ex11, ex9, r2; vmac.f dm7, dm7, ex4, ey3, ey1, r8
+; ASM-NEXT:    vshuffle ex0, ex1, ex9, r2
+; ASM-NEXT:    vldb.pop ex11, [p1, lf1, r25]; vshuffle ex1, ex9, ex9, r2; vmac.f dm6, dm6, ex11, ey3, ey1, r8
+; ASM-NEXT:    vshuffle ex11, ex4, ex9, r2
+; ASM-NEXT:    vldb.pop.3d ex2, [p1, lf1, r25, d0]; vshuffle ex4, ex8, ex5, r4; vmac.f dm5, dm5, ex0, ey3, ey1, r8
+; ASM-NEXT:    vshuffle ex0, ex8, ex5, r6
+; ASM-NEXT:    vshuffle ex5, ex10, ex8, r4; vmac.f dm4, dm4, ex1, ey3, ey1, r8
+; ASM-NEXT:    vst bmhh7, [p2, #192]; vshuffle ex1, ex10, ex8, r6
+; ASM-NEXT:    vst bmhl7, [p2, #128]; vshuffle ex2, ex2, ex9, r2; vmac.f dm3, dm3, ex11, ey2, ey0, r8
 ; ASM-NEXT:    vst bmlh7, [p2, #64]
-; ASM-NEXT:    vst bmll7, [p2], m2; vshuffle ex6, ex9, ex10, r2; vmac.f dm2, dm2, ex2, ey2, ey0, r8
+; ASM-NEXT:    vst bmll7, [p2], m2; vshuffle ex11, ex11, ex9, r2; vmac.f dm2, dm2, ex2, ey2, ey0, r8
 ; ASM-NEXT:    vst bmhh6, [p2, #192]
-; ASM-NEXT:    vst bmhl6, [p2, #128]; vshuffle ex9, ex2, ex10, r2; vmac.f dm1, dm1, ex6, ey2, ey0, r8
+; ASM-NEXT:    vst bmhl6, [p2, #128]; vshuffle ex6, ex2, ex9, r2; vmac.f dm1, dm1, ex11, ey2, ey0, r8
 ; ASM-NEXT:    vst bmlh6, [p2, #64]
-; ASM-NEXT:    vst bmll6, [p2], m2; movx r8, #972; vmac.f dm0, dm0, ex9, ey2, ey0, r8
+; ASM-NEXT:    vst bmll6, [p2], m2; movx r8, #972; vmac.f dm0, dm0, ex6, ey2, ey0, r8
 ; ASM-NEXT:    vst bmhh3, [p5, #192]
 ; ASM-NEXT:    vst bmhl3, [p5, #128]
 ; ASM-NEXT:    vst bmlh3, [p5, #64]
