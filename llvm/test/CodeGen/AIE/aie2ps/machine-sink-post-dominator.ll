@@ -126,7 +126,7 @@ join:
 
 ; %a and the PHI initial value are used only in the loop, and MachineSink does
 ; not sink into a loop header, so moving them into join skips no path.
-; FIXME: both are sunk into join.
+; FIXME: the PHI initial value is sunk into join.
 define void @use_in_loop_after_join(ptr noalias %p, ptr noalias %out, i32 %c, i32 %n) {
   ; CHECK-LABEL: name: use_in_loop_after_join
   ; CHECK: bb.1.entry:
@@ -137,6 +137,7 @@ define void @use_in_loop_after_join(ptr noalias %p, ptr noalias %out, i32 %c, i3
   ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:ep = COPY $p1
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r0
   ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:er = COPY $r1
+  ; CHECK-NEXT:   [[LDA_dms_lda_scalar_ld_idx_imm:%[0-9]+]]:mlockid_reg = LDA_dms_lda_scalar_ld_idx_imm [[COPY]], 0 :: (load (s32) from %ir.p)
   ; CHECK-NEXT:   PseudoJZ [[COPY2]], %bb.3
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
   ; CHECK-NEXT: {{  $}}
@@ -150,7 +151,6 @@ define void @use_in_loop_after_join(ptr noalias %p, ptr noalias %out, i32 %c, i3
   ; CHECK-NEXT:   successors: %bb.4(0x80000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[MOV_RLC_imm11_pseudo1:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 0
-  ; CHECK-NEXT:   [[LDA_dms_lda_scalar_ld_idx_imm:%[0-9]+]]:mlockid_reg = LDA_dms_lda_scalar_ld_idx_imm [[COPY]], 0 :: (load (s32) from %ir.p)
   ; CHECK-NEXT:   LoopStart [[COPY3]], 0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.4.loop:
