@@ -206,7 +206,6 @@
 ; AIE-O1-NEXT:      Machine Natural Loop Construction
 ; AIE-O1-NEXT:      AIE Pointer Modifier Optimization
 ; AIE-O1-NEXT:      AIE Post Legalizer Custom Combiner
-; AIE-O1-NEXT:      AIE Post Legalizer Final Combiner
 ; AIE-O1-NEXT:      RegBankSelect
 ; AIE-O1-NEXT:      Analysis for ComputingKnownBits
 ; AIE-O1-NEXT:      MachineDominator Tree Construction
@@ -445,7 +444,6 @@
 ; AIE-O23-NEXT:      Machine Natural Loop Construction
 ; AIE-O23-NEXT:      AIE Pointer Modifier Optimization
 ; AIE-O23-NEXT:      AIE Post Legalizer Custom Combiner
-; AIE-O23-NEXT:      AIE Post Legalizer Final Combiner
 ; AIE-O23-NEXT:      RegBankSelect
 ; AIE-O23-NEXT:      Analysis for ComputingKnownBits
 ; AIE-O23-NEXT:      MachineDominator Tree Construction

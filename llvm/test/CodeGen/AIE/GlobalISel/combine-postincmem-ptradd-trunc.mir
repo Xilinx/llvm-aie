@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -mtriple=aie2ps -run-pass=aie-postlegalizer-final-combiner -verify-machineinstrs %s -o - | FileCheck %s
+# RUN: llc -mtriple=aie2ps -run-pass=aie-postlegalizer-custom-combiner -verify-machineinstrs %s -o - | FileCheck %s
 
 ---
 name: test_postincload_ptradd_with_trunc
