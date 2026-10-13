@@ -14,10 +14,12 @@ define void @aie2_write_tm_twice(ptr %q) {
 ; EARLYCSE-LABEL: define void @aie2_write_tm_twice(
 ; EARLYCSE-SAME: ptr [[Q:%.*]]) {
 ; EARLYCSE-NEXT:    call void @llvm.aie2.write.tm(i32 16711680, ptr [[Q]])
+; EARLYCSE-NEXT:    call void @llvm.aie2.write.tm(i32 16711680, ptr [[Q]])
 ; EARLYCSE-NEXT:    ret void
 ;
 ; O2-LABEL: define void @aie2_write_tm_twice(
 ; O2-SAME: ptr [[Q:%.*]]) local_unnamed_addr #[[ATTR0:[0-9]+]] {
+; O2-NEXT:    tail call void @llvm.aie2.write.tm(i32 16711680, ptr [[Q]])
 ; O2-NEXT:    tail call void @llvm.aie2.write.tm(i32 16711680, ptr [[Q]])
 ; O2-NEXT:    ret void
 ;
@@ -30,10 +32,12 @@ define void @aie2p_write_tm_twice(ptr %q) {
 ; EARLYCSE-LABEL: define void @aie2p_write_tm_twice(
 ; EARLYCSE-SAME: ptr [[Q:%.*]]) {
 ; EARLYCSE-NEXT:    call void @llvm.aie2p.write.tm(i32 16711680, ptr [[Q]])
+; EARLYCSE-NEXT:    call void @llvm.aie2p.write.tm(i32 16711680, ptr [[Q]])
 ; EARLYCSE-NEXT:    ret void
 ;
 ; O2-LABEL: define void @aie2p_write_tm_twice(
 ; O2-SAME: ptr [[Q:%.*]]) local_unnamed_addr #[[ATTR0]] {
+; O2-NEXT:    tail call void @llvm.aie2p.write.tm(i32 16711680, ptr [[Q]])
 ; O2-NEXT:    tail call void @llvm.aie2p.write.tm(i32 16711680, ptr [[Q]])
 ; O2-NEXT:    ret void
 ;
@@ -46,10 +50,12 @@ define void @aie2ps_write_tm_twice(ptr %q) {
 ; EARLYCSE-LABEL: define void @aie2ps_write_tm_twice(
 ; EARLYCSE-SAME: ptr [[Q:%.*]]) {
 ; EARLYCSE-NEXT:    call void @llvm.aie2ps.write.tm(i32 16711680, ptr [[Q]])
+; EARLYCSE-NEXT:    call void @llvm.aie2ps.write.tm(i32 16711680, ptr [[Q]])
 ; EARLYCSE-NEXT:    ret void
 ;
 ; O2-LABEL: define void @aie2ps_write_tm_twice(
 ; O2-SAME: ptr [[Q:%.*]]) local_unnamed_addr #[[ATTR0]] {
+; O2-NEXT:    tail call void @llvm.aie2ps.write.tm(i32 16711680, ptr [[Q]])
 ; O2-NEXT:    tail call void @llvm.aie2ps.write.tm(i32 16711680, ptr [[Q]])
 ; O2-NEXT:    ret void
 ;
