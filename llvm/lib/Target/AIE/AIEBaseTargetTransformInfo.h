@@ -41,6 +41,10 @@ public:
   virtual bool isLoweredToCall(const Function *F) const;
   virtual bool isAllowedInZOL(llvm::Instruction &Instr) const;
 
+  /// Whether a loop spanning several blocks may still become a hardware loop.
+  /// Such a loop cannot be a ZOL, so it ends on a JNZD instead.
+  virtual bool allowMultiBlockHardwareLoops() const { return false; }
+
   virtual bool isVectorExtractIntrinsicID(Intrinsic::ID ID) const {
     return false;
   }
