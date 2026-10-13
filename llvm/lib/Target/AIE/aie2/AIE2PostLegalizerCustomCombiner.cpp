@@ -16,7 +16,6 @@
 #include "AIECombinerBase.h"
 #include "AIECombinerHelper.h"
 #include "AIECombiners.h"
-#include "AIEPtrModOptimizer.h"
 #include "llvm/CodeGen/GlobalISel/CSEInfo.h"
 #include "llvm/CodeGen/GlobalISel/Combiner.h"
 #include "llvm/CodeGen/GlobalISel/CombinerHelper.h"
@@ -34,8 +33,6 @@
 
 using namespace llvm;
 
-extern cl::opt<bool> EnableGlobalPtrModOptimizer;
-
 namespace {
 
 #define GET_GICOMBINER_TYPES
@@ -44,10 +41,6 @@ namespace {
 
 class AIE2PostLegalizerCustomCombinerImpl
     : public AIECombinerBase<AIE2PostLegalizerCustomCombinerImplRuleConfig> {
-protected:
-  AIE::FoundCombiners EmptyGlobalCombiner;
-  AIE::FoundCombiners *GlobalCombiners = &EmptyGlobalCombiner;
-
 public:
   AIE2PostLegalizerCustomCombinerImpl(
       MachineFunction &MF, CombinerInfo &CInfo, const TargetPassConfig *TPC,

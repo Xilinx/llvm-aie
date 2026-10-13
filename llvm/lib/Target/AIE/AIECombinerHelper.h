@@ -117,16 +117,21 @@ void applyConcatUnmergePhis(MachineInstr &ConcatI, MachineRegisterInfo &MRI,
                             GISelChangeObserver &Observer);
 
 /// Look for any PtrAdd instruction that use the same base as \a MI that can be
-/// combined with it and stores it in \a GlobalCombinerPtr
+/// combined with it and stores the combine in \a MatchInfo
 /// \return true if an instruction is found
 bool matchLdStInc(MachineInstr &MI, MachineRegisterInfo &MRI,
                   CombinerHelper &Helper, const TargetInstrInfo &TII,
-                  AIE::FoundCombiners *GlobalCombinerPtr);
+                  AIE::Combiner &MatchInfo);
 /// Combines \a MI and the instruction stored in \a GlobalCombinerPtr
 void applyLdStInc(MachineInstr &MI, MachineRegisterInfo &MRI,
                   CombinerHelper &Helper, MachineIRBuilder &B,
                   GISelChangeObserver &Observer,
                   AIE::FoundCombiners *GlobalCombinerPtr);
+/// Applies \a MatchInfo, the combine that matchLdStInc found for \a MI
+void applyLdStInc(MachineInstr &MI, MachineRegisterInfo &MRI,
+                  CombinerHelper &Helper, MachineIRBuilder &B,
+                  GISelChangeObserver &Observer,
+                  const AIE::Combiner &MatchInfo);
 /// Look for  with G_IMPLICIT_DEF source operands
 /// \return true if such an instruction is found
 bool matchAddVecEltUndef(MachineInstr &MI, MachineRegisterInfo &MRI,
