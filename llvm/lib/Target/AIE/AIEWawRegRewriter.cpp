@@ -562,7 +562,9 @@ void AIEWawRegRewriter::sortSWPAware(
     const MachineInstr *IB = LastVRegDef[B.first];
     return ModuloCycle[IA] < ModuloCycle[IB];
   };
-  llvm::sort(Candidates, ModuloCycleLess);
+  // Candidates are collected in instruction order; keep that order for equal
+  // modulo cycles so the result does not depend on the host's std::sort.
+  llvm::stable_sort(Candidates, ModuloCycleLess);
 }
 
 bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
