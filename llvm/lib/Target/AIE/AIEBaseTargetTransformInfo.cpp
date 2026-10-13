@@ -9,6 +9,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIEBaseTargetTransformInfo.h"
+#include "Utils/AIELoopOptionOverrides.h"
 #include "Utils/AIELoopUtils.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/CodeGen/BasicTTIImpl.h"
@@ -21,20 +22,37 @@ using namespace llvm;
 
 #define DEBUG_TYPE "aietti"
 
-static cl::opt<bool>
-    EnableAIEHardwareLoops("enable-aie-hardware-loops",
-                           cl::desc("Enable hardware loops on AIE"),
-                           cl::init(true), cl::Hidden);
+static cl::opt<bool> EnableAIEHardwareLoops(
+    "enable-aie-hardware-loops",
+    cl::desc("Enable hardware loops on AIE. When disabled, no loop becomes a "
+             "hardware loop, whatever the ZOL and JNZD options say"),
+    cl::init(true), cl::Hidden);
 
 static cl::opt<bool> EnableZOLForLoopsWithoutMinIterCount(
     "enable-aie-zol-without-minitercount",
     cl::desc("Enable zol for loops without minitercount"), cl::init(true),
     cl::Hidden);
 
-static cl::opt<bool>
-    AllowAIEZOL("enable-aie-zero-overhead-loops",
-                cl::desc("Enable true zero overhead hardware loops on AIE"),
-                cl::init(true), cl::Hidden);
+static cl::opt<bool> AllowAIEZOL(
+    "enable-aie-zero-overhead-loops",
+    cl::desc("Enable zero-overhead hardware loops (ZOL) on AIE. Only "
+             "single-block innermost loops qualify; other hardware loops use "
+             "JNZD"),
+    cl::init(true), cl::Hidden);
+
+// Defined by the outer loop pipeliner; read here so a run-wide request is
+// honoured as well as a per-loop one.
+extern cl::opt<bool> EnableOuterLoopPipelining;
+
+// Kill switch on top of allowMultiBlockHardwareLoops(), which is what decides
+// per subtarget whether multi-block JNZD loops are available at all. Also
+// honoured as a per-loop hint, AIE_LOOP_HINT(aie-multiblock-jnzd-loops, 0).
+static cl::opt<bool> AllowAIEJNZD(
+    "aie-multiblock-jnzd-loops",
+    cl::desc("Enable JNZD hardware loops spanning several blocks, on "
+             "subtargets that support them. Single-block loops still use "
+             "JNZD when ZOL is disabled, whatever this option says"),
+    cl::init(true), cl::Hidden);
 
 /// We currently override MinIterCountHLReject == 1 to
 /// a) remove loop guards and
@@ -338,10 +356,29 @@ bool AIETTICommon::isHardwareLoopProfitable(
     return false;
   }
 
-  // For now, we'll handle only single BB loops for AIE
-  // zero-overhead loop.
-  if (L->getNumBlocks() > 1)
-    return false;
+  // A zero-overhead loop runs between a fixed start and end address, so its
+  // body has to be a single block. JNZD is an ordinary decrementing branch
+  // and carries no such restriction, which is what lets a multi-block loop
+  // become a hardware loop at all.
+  if (L->getNumBlocks() > 1) {
+    const AIE::LoopOptionOverrides Overrides(L->getLoopID());
+    if (!Overrides.get(AllowAIEJNZD) || !allowMultiBlockHardwareLoops()) {
+      LLVM_DEBUG(dbgs() << "AIE Loops: Multi-block loop, JNZD loops "
+                           "unavailable\n");
+      return false;
+    }
+    // The outer loop pipeliner cannot take a hardware loop as input yet: it
+    // needs a latch that still compares an induction variable. Reject here so
+    // a loop headed for pipelining reaches it in that form, whether it was
+    // requested per loop or for the whole run. The metadata key is
+    // llvm.loop.hint. plus the option name, see AIELoopOptionOverrides.h.
+    const std::optional<int64_t> PipelineHint = AIELoopUtils::getLoopHintInt(
+        L->getLoopID(), "llvm.loop.hint.aie-enable-outer-loop-pipelining");
+    if (EnableOuterLoopPipelining || (PipelineHint && *PipelineHint > 0)) {
+      LLVM_DEBUG(dbgs() << "AIE Loops: Left to the outer loop pipeliner\n");
+      return false;
+    }
+  }
 
   if (!ForceHLGeneration) {
     std::optional<int64_t> MinTripCount = getMinTripCount(L, &SE);
@@ -372,20 +409,17 @@ bool AIETTICommon::isHardwareLoopProfitable(
     }
   }
 
-  // We don't want to use ZOL in these cases
   LLVMContext &C = L->getHeader()->getContext();
   HWLoopInfo.CountType = Type::getInt32Ty(C);
   HWLoopInfo.LoopDecrement = ConstantInt::get(HWLoopInfo.CountType, 1);
-  // We always allow nested hardware loops, but only the innermost loop
-  // can use actual zero overhead loop instructions
+  // We always allow nested hardware loops, but only a single-block innermost
+  // loop can use actual zero overhead loop instructions. Everything else
+  // keeps its counter in a register and ends on a JNZD.
   HWLoopInfo.IsNestingLegal = true;
-  if (L->isInnermost() && AllowAIEZOL) {
-    LLVM_DEBUG(dbgs() << "AIE Loops: Loop is ZOL candidate\n");
-    HWLoopInfo.CounterInReg = false;
-  } else {
-    LLVM_DEBUG(dbgs() << "AIE Loops: Loop is JNZD candidate\n");
-    HWLoopInfo.CounterInReg = true;
-  }
+  const bool UseZOL = AllowAIEZOL && L->isInnermost() && L->getNumBlocks() == 1;
+  HWLoopInfo.CounterInReg = !UseZOL;
+  LLVM_DEBUG(dbgs() << "AIE Loops: Loop is " << (UseZOL ? "ZOL" : "JNZD")
+                    << " candidate\n");
   return true;
 }
 
