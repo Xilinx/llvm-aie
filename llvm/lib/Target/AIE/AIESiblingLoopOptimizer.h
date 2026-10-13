@@ -17,6 +17,9 @@
 #ifndef LLVM_LIB_TARGET_AIE_AIESIBLINGLOOPOPTIMIZER_H
 #define LLVM_LIB_TARGET_AIE_AIESIBLINGLOOPOPTIMIZER_H
 
+#include "AIEBundle.h"
+#include "llvm/ADT/ArrayRef.h"
+
 namespace llvm {
 
 class AIEAlternateDescriptors;
@@ -60,6 +63,7 @@ class SiblingLoopOptimizer {
   /// preheader's trailing bundles (best-effort, resource + latency safe).
   unsigned getPreheaderMergeCount(const BlockState &EntryBS,
                                   const BlockState &SteadyTopBS,
+                                  ArrayRef<MachineBundle> SteadyInnerBundles,
                                   unsigned NumTransferred);
 
   /// Merge N leading bundles from prologues into epilogue and transfer to

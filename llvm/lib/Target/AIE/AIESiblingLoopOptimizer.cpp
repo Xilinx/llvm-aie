@@ -145,19 +145,64 @@ static int calculateSchedulingSlack(const Region &EpilogueRegion,
   return std::max(0, MinSlack);
 }
 
+/// Build a top-down resource scoreboard seeded with the trailing resources
+/// of a preceding loop body. The loop body is replayed enough times to fill
+/// the conflict horizon, then the block's own bundles are replayed on top.
+/// This mirrors initializeTopScoreBoard in the machine scheduler.
+///
+/// \param BlockBundles The bundles of the block (e.g. epilogue)
+/// \param LoopBodyBundles The inner loop body that precedes the block.
+///        Pass empty to get the same result as createTopDownScoreboard.
+/// \param HR Hazard recognizer
+/// \param SelectedAltDescs Alternate descriptor map
+static ResourceScoreboard<FuncUnitWrapper>
+createTopDownScoreboardWithLoopContext(
+    ArrayRef<MachineBundle> BlockBundles,
+    ArrayRef<MachineBundle> LoopBodyBundles, const AIEHazardRecognizer &HR,
+    const AIEAlternateDescriptors &SelectedAltDescs) {
+  ResourceScoreboard<FuncUnitWrapper> Scoreboard;
+  Scoreboard.reset(HR.getMaxLookAhead());
+
+  // Replay the loop body N times so that trailing resources that extend
+  // into the block are captured, just like initializeTopScoreBoard.
+  if (!LoopBodyBundles.empty()) {
+    const int LoopSize = LoopBodyBundles.size();
+    const int ReplayTimes = (HR.getConflictHorizon() + LoopSize - 1) / LoopSize;
+    for (int I = 0; I < ReplayTimes; I++) {
+      for (const auto &Bundle : LoopBodyBundles) {
+        for (MachineInstr *MI : Bundle.getInstrs())
+          HR.emitInScoreboard(Scoreboard, *MI, *SelectedAltDescs.getDesc(MI),
+                              0);
+        Scoreboard.advance();
+      }
+    }
+  }
+
+  // Then replay the block's own bundles on top.
+  for (const auto &Bundle : BlockBundles) {
+    for (MachineInstr *MI : Bundle.getInstrs())
+      HR.emitInScoreboard(Scoreboard, *MI, *SelectedAltDescs.getDesc(MI), 0);
+    Scoreboard.advance();
+  }
+
+  return Scoreboard;
+}
+
 /// Check how many leading bundles from both sibling prologues can be merged
 /// into trailing bundles of EpilogueBundles without resource conflicts.
 ///
-/// The epilogue has two successors: the steady-state prologue and the
-/// last-iteration prologue. When prologue bundles are merged into the
-/// epilogue, the merged bundles create a denser resource footprint.
-/// This function builds a progressive scoreboard that includes both epilogue
-/// AND merged prologue resources, then validates the remaining bundles of
-/// BOTH prologues against it.
+/// The epilogue is preceded by an inner loop whose trailing resources extend
+/// into the epilogue, and each prologue is followed by its own inner loop.
+/// The scoreboard is seeded with the preceding loop context and the check
+/// also validates that the remaining prologue bundles do not conflict with
+/// the inner loop that follows them.
 ///
 /// \param EpilogueBundles The epilogue bundles to merge into
 /// \param SteadyPrologue The steady-state prologue bundles
 /// \param LastIterPrologue The last-iteration prologue bundles
+/// \param PrecedingLoopBundles Inner loop body preceding the epilogue
+/// \param SteadyInnerBundles Inner loop body following the steady prologue
+/// \param PeeledInnerBundles Inner loop body following the last-iter prologue
 /// \param OptimizationLimit Maximum number of bundles to try merging
 /// \param HR Hazard recognizer for resource checking
 /// \param SelectedAltDescs Selected alternate descriptors
@@ -166,6 +211,9 @@ static int
 checkResourceMergeability(ArrayRef<MachineBundle> EpilogueBundles,
                           ArrayRef<MachineBundle> SteadyPrologue,
                           ArrayRef<MachineBundle> LastIterPrologue,
+                          ArrayRef<MachineBundle> PrecedingLoopBundles,
+                          ArrayRef<MachineBundle> SteadyInnerBundles,
+                          ArrayRef<MachineBundle> PeeledInnerBundles,
                           int OptimizationLimit, const AIEHazardRecognizer &HR,
                           const AIEAlternateDescriptors &SelectedAltDescs) {
 
@@ -179,10 +227,11 @@ checkResourceMergeability(ArrayRef<MachineBundle> EpilogueBundles,
   if (MaxMerge <= 0)
     return 0;
 
-  // Build ONE scoreboard from ALL epilogue bundles (top-down).
-  // This gives us the resource state after executing the entire epilogue.
+  // Build the epilogue scoreboard WITH the preceding inner loop context.
+  // This captures resources from the loop body that extend into the epilogue.
   ResourceScoreboard<FuncUnitWrapper> EpilogueScoreboard =
-      createTopDownScoreboard(EpilogueBundles, HR, SelectedAltDescs);
+      createTopDownScoreboardWithLoopContext(
+          EpilogueBundles, PrecedingLoopBundles, HR, SelectedAltDescs);
 
   DEBUG_BLOCKS(dbgs() << "    checkResourceMergeability: EpilogueSize="
                       << EpilogueSize << " SteadySize=" << SteadySize
@@ -211,13 +260,39 @@ checkResourceMergeability(ArrayRef<MachineBundle> EpilogueBundles,
                           Delta);
   };
 
-  // Check a range of bundles [StartIdx, Bundles.size()) against a scoreboard.
+  // Check a range of bundles [StartIdx, EndIdx) against a scoreboard,
+  // using offsets relative to MergeCount.
   auto HasConflictInRange =
       [&](const ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
-          ArrayRef<MachineBundle> Bundles, int StartIdx,
+          ArrayRef<MachineBundle> Bundles, int StartIdx, int EndIdx,
           int MergeCount) -> bool {
-    for (int I = StartIdx, E = Bundles.size(); I < E; ++I) {
+    for (int I = StartIdx; I < EndIdx; ++I) {
       if (BundleHasConflict(Scoreboard, Bundles[I], I - MergeCount))
+        return true;
+    }
+    return false;
+  };
+
+  // Check a prologue path: remaining prologue bundles followed by the
+  // successor inner loop bundles (up to conflict horizon).
+  auto HasConflictInProloguePath =
+      [&](const ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
+          ArrayRef<MachineBundle> Prologue, ArrayRef<MachineBundle> InnerLoop,
+          int MergeCount) -> bool {
+    const int PrologueSize = Prologue.size();
+    // Check remaining prologue bundles [MergeCount, PrologueSize)
+    if (HasConflictInRange(Scoreboard, Prologue, MergeCount, PrologueSize,
+                           MergeCount))
+      return true;
+    // Check the inner loop bundles that follow the remaining prologue,
+    // up to the conflict horizon.
+    const int ConflictHorizon = HR.getConflictHorizon();
+    const int RemainingPrologueLen = PrologueSize - MergeCount;
+    const int InnerBundlesToCheck =
+        std::min(static_cast<int>(InnerLoop.size()),
+                 std::max(0, ConflictHorizon - RemainingPrologueLen));
+    for (int I = 0; I < InnerBundlesToCheck; ++I) {
+      if (BundleHasConflict(Scoreboard, InnerLoop[I], RemainingPrologueLen + I))
         return true;
     }
     return false;
@@ -227,7 +302,7 @@ checkResourceMergeability(ArrayRef<MachineBundle> EpilogueBundles,
   for (int MergeCount = MaxMerge; MergeCount >= 1; --MergeCount) {
     DEBUG_BLOCKS(dbgs() << "    Trying MergeCount=" << MergeCount << "\n");
 
-    // Start with a copy of the epilogue-only scoreboard for this attempt.
+    // Start with a copy of the epilogue scoreboard (with loop context).
     auto TrialScoreboard = EpilogueScoreboard;
     bool HasConflict = false;
 
@@ -243,14 +318,15 @@ checkResourceMergeability(ArrayRef<MachineBundle> EpilogueBundles,
         EmitBundle(TrialScoreboard, SteadyPrologue[I], Delta);
     }
 
-    // Phase 2: Check remaining bundles of BOTH prologues against the
-    // merged scoreboard (epilogue + merged prologue resources).
+    // Phase 2: Check remaining bundles of BOTH prologue paths against the
+    // merged scoreboard. Each path includes the remaining prologue bundles
+    // followed by the inner loop bundles that succeed them.
     if (!HasConflict)
-      HasConflict = HasConflictInRange(TrialScoreboard, SteadyPrologue,
-                                       MergeCount, MergeCount);
+      HasConflict = HasConflictInProloguePath(TrialScoreboard, SteadyPrologue,
+                                              SteadyInnerBundles, MergeCount);
     if (!HasConflict)
-      HasConflict = HasConflictInRange(TrialScoreboard, LastIterPrologue,
-                                       MergeCount, MergeCount);
+      HasConflict = HasConflictInProloguePath(TrialScoreboard, LastIterPrologue,
+                                              PeeledInnerBundles, MergeCount);
 
     if (!HasConflict) {
       DEBUG_BLOCKS(dbgs() << "    Resource mergeability check passed with "
@@ -312,11 +388,21 @@ unsigned SiblingLoopOptimizer::getNumberOfMergeableBundles(
     return 0;
   }
 
+  // Get the inner loop body bundles for resource context.
+  // SteadyInner precedes the epilogue and follows SteadyTop.
+  // PeeledIterInner follows PeeledIterTop.
+  const auto &OLS = *EpilogueBS.getOuterLoopContext();
+  const auto &SteadyInnerBundles =
+      IBS.getBlockState(OLS.SteadyInner).getTop().Bundles;
+  const auto &PeeledInnerBundles =
+      IBS.getBlockState(OLS.PeeledIterInner).getTop().Bundles;
+
   // Check resource mergeability (for correctness, do last)
   const int MaxPossibleMerge = std::min(
       {static_cast<int>(MatchingBundles), SlackToSteady, SlackToLastIter});
   const int MergeableBundles = checkResourceMergeability(
-      EpilogueBundles, SteadyPrologue, LastIterPrologue, MaxPossibleMerge, HR,
+      EpilogueBundles, SteadyPrologue, LastIterPrologue, SteadyInnerBundles,
+      SteadyInnerBundles, PeeledInnerBundles, MaxPossibleMerge, HR,
       SelectedAltDescs);
 
   if (MergeableBundles == 0) {
@@ -329,10 +415,9 @@ unsigned SiblingLoopOptimizer::getNumberOfMergeableBundles(
   return MergeableBundles;
 }
 
-unsigned
-SiblingLoopOptimizer::getPreheaderMergeCount(const BlockState &EntryBS,
-                                             const BlockState &SteadyTopBS,
-                                             unsigned NumTransferred) {
+unsigned SiblingLoopOptimizer::getPreheaderMergeCount(
+    const BlockState &EntryBS, const BlockState &SteadyTopBS,
+    ArrayRef<MachineBundle> SteadyInnerBundles, unsigned NumTransferred) {
   const auto &EntryBundles = EntryBS.getTop().Bundles;
   if (EntryBundles.empty() || NumTransferred == 0)
     return 0;
@@ -350,13 +435,17 @@ SiblingLoopOptimizer::getPreheaderMergeCount(const BlockState &EntryBS,
   // Resource check: use the first NumTransferred bundles of the steady
   // prologue as the source. Pass the same array for both prologue arguments
   // since the preheader has a single successor path.
+  // No loop precedes the preheader, so PrecedingLoopBundles is empty.
+  // The inner loop that follows the remaining prologue is passed as follow-up
+  // context to detect resource conflicts that extend into the loop.
   const auto &SteadyPrologue = SteadyTopBS.getTop().Bundles;
   ArrayRef<MachineBundle> TransferredSlice(SteadyPrologue.data(),
                                            NumTransferred);
   const int MaxLimit = std::min(static_cast<int>(NumTransferred), LatencySlack);
+  ArrayRef<MachineBundle> NoPrecedingLoop;
   const int ResourceMerge = checkResourceMergeability(
-      EntryBundles, TransferredSlice, TransferredSlice, MaxLimit, HR,
-      SelectedAltDescs);
+      EntryBundles, TransferredSlice, TransferredSlice, NoPrecedingLoop,
+      SteadyInnerBundles, SteadyInnerBundles, MaxLimit, HR, SelectedAltDescs);
   DEBUG_BLOCKS(dbgs() << "  Preheader merge: ResourceMerge=" << ResourceMerge
                       << "\n");
 
@@ -377,10 +466,15 @@ void SiblingLoopOptimizer::mergeBundles(BlockState &EntryBS,
       *EpilogueBS.TheBlock, EpilogueBundles, SteadyPrologue, NumBundles, TII);
   EpilogueBS.getTop().Bundles = std::move(MergedBundles);
 
+  // Get inner loop bundles for preheader merge resource check.
+  const auto &OLS = *EpilogueBS.getOuterLoopContext();
+  const auto &SteadyInnerBundles =
+      IBS.getBlockState(OLS.SteadyInner).getTop().Bundles;
+
   // Compute preheader merge count BEFORE transfer (needs full SteadyTopBS
   // to build inter-block DAG for latency slack computation).
-  const unsigned PreheaderMerge =
-      getPreheaderMergeCount(EntryBS, SteadyTopBS, NumBundles);
+  const unsigned PreheaderMerge = getPreheaderMergeCount(
+      EntryBS, SteadyTopBS, SteadyInnerBundles, NumBundles);
 
   // Transfer leading bundles from SteadyTop to Entry (OuterPreheader)
   auto [TransferredBundles, RemainingSteady] =
