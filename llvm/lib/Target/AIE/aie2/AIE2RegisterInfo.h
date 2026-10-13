@@ -44,8 +44,8 @@ struct AIE2RegisterInfo : public AIE2GenRegisterInfo {
 
   Register getFrameRegister(const MachineFunction &MF) const override;
 
-  const TargetRegisterClass *getPointerRegClass(const MachineFunction &MF,
-                                                unsigned Kind) const override;
+  const TargetRegisterClass *
+  getPointerRegClass(unsigned Kind = 0) const override;
 
   bool requiresRegisterScavenging(const MachineFunction &MF) const override {
     return true;

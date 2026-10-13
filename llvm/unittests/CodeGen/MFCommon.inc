@@ -91,6 +91,11 @@ public:
   }
 };
 
+class BogusTargetInstrInfo : public TargetInstrInfo {
+public:
+  BogusTargetInstrInfo() : TargetInstrInfo() {}
+};
+
 template <typename TIIClass> class TestSubTarget : public TargetSubtargetInfo {
 public:
   TestSubTarget(TargetMachine &TM, StringRef CPU = "", StringRef TuneCPU = "",
@@ -115,7 +120,7 @@ private:
   BogusTargetLowering TL;
   TIIClass TII;
 };
-using BogusSubTarget = TestSubTarget<TargetInstrInfo>;
+using BogusSubTarget = TestSubTarget<BogusTargetInstrInfo>;
 
 static TargetOptions getTargetOptionsForBogusMachine() {
   TargetOptions Opts;

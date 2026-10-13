@@ -36,8 +36,8 @@ namespace {
 const AIEMCFormats AIE1Formats;
 } // namespace
 
-AIEInstrInfo::AIEInstrInfo()
-    : AIEGenInstrInfo(AIE::ADJCALLSTACKUP, AIE::ADJCALLSTACKDOWN) {
+AIEInstrInfo::AIEInstrInfo(const TargetSubtargetInfo &STI)
+    : AIEGenInstrInfo(STI, AIE::ADJCALLSTACKUP, AIE::ADJCALLSTACKDOWN) {
   FormatInterface = &AIE1Formats;
   FuncUnitWrapper::setFormatInterface(FormatInterface);
 }

@@ -4,8 +4,6 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-//
 //===----------------------------------------------------------------------===//
 
 //===----------------------------------------------------------------------===//
@@ -360,8 +358,7 @@ let RegAltNameIndices = [ABIRegAltName] in {
   }
 }
 
-let RegInfos = XLenPairRI, CopyCost = 2,
-    DecoderMethod = "DecodeGPRPairRegisterClass" in {
+let RegInfos = XLenPairRI, CopyCost = 2 in {
 def GPRPair : RISCVRegisterClass<[XLenPairVT, XLenPairFVT], 64, (add
     X10_X11, X12_X13, X14_X15, X16_X17,
     X6_X7,
@@ -372,12 +369,11 @@ def GPRPair : RISCVRegisterClass<[XLenPairVT, XLenPairFVT], 64, (add
 )>;
 
 def GPRPairNoX0 : RISCVRegisterClass<[XLenPairVT, XLenPairFVT], 64, (sub GPRPair, X0_Pair)>;
-} // let RegInfos = XLenPairRI, DecoderMethod = "DecodeGPRPairRegisterClass"
 
-let RegInfos = XLenPairRI, CopyCost = 2 in
 def GPRPairC : RISCVRegisterClass<[XLenPairVT, XLenPairFVT], 64, (add
   X10_X11, X12_X13, X14_X15, X8_X9
 )>;
+} // let RegInfos = XLenPairRI, CopyCost = 2
 
 //===----------------------------------------------------------------------===//
 // Floating Point registers
@@ -803,9 +799,7 @@ def VRM8 : VReg<VM8VTs, (add V8M8, V16M8, V24M8, V0M8), 8>;
 
 def VRM8NoV0 : VReg<VM8VTs, (sub VRM8, V0M8), 8>;
 
-def VMV0 : VReg<VMaskVTs, (add V0), 1> {
-  let DecodeZeroBitOperand = true;
-}
+def VMV0 : VReg<VMaskVTs, (add V0), 1>;
 
 // The register class is added for inline assembly for vector mask types.
 def VM : VReg<VMaskVTs, (add VR), 1>;

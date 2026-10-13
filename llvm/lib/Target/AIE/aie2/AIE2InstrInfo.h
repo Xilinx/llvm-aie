@@ -29,7 +29,7 @@ namespace llvm {
 
 class AIE2InstrInfo : public AIE2GenInstrInfo {
 public:
-  AIE2InstrInfo();
+  explicit AIE2InstrInfo(const TargetSubtargetInfo &STI);
 
   unsigned getReturnOpcode() const override;
   unsigned getCallOpcode(const MachineFunction &CallerF, bool IsIndirect,

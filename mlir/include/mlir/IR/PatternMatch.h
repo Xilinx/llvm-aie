@@ -314,6 +314,9 @@ struct OpOrInterfaceRewritePatternBase : public RewritePattern {
 template <typename SourceOp>
 struct OpRewritePattern
     : public mlir::detail::OpOrInterfaceRewritePatternBase<SourceOp> {
+  /// Type alias to allow derived classes to inherit constructors with
+  /// `using Base::Base;`.
+  using Base = OpRewritePattern;
 
   /// Patterns must specify the root operation name they match against, and can
   /// also specify the benefit of the pattern matching and a list of generated
@@ -330,6 +333,9 @@ struct OpRewritePattern
 template <typename SourceOp>
 struct OpInterfaceRewritePattern
     : public mlir::detail::OpOrInterfaceRewritePatternBase<SourceOp> {
+  /// Type alias to allow derived classes to inherit constructors with
+  /// `using Base::Base;`.
+  using Base = OpInterfaceRewritePattern;
 
   OpInterfaceRewritePattern(MLIRContext *context, PatternBenefit benefit = 1)
       : mlir::detail::OpOrInterfaceRewritePatternBase<SourceOp>(
@@ -343,6 +349,10 @@ struct OpInterfaceRewritePattern
 template <template <typename> class TraitType>
 class OpTraitRewritePattern : public RewritePattern {
 public:
+  /// Type alias to allow derived classes to inherit constructors with
+  /// `using Base::Base;`.
+  using Base = OpTraitRewritePattern;
+
   OpTraitRewritePattern(MLIRContext *context, PatternBenefit benefit = 1)
       : RewritePattern(Pattern::MatchTraitOpTypeTag(), TypeID::get<TraitType>(),
                        benefit, context) {}
@@ -645,7 +655,7 @@ public:
 
   /// Find uses of `from` and replace them with `to`. Also notify the listener
   /// about every in-place op modification (for every use that was replaced).
-  void replaceAllUsesWith(Value from, Value to) {
+  virtual void replaceAllUsesWith(Value from, Value to) {
     if (auto *fromOp = from.getDefiningOp())
       getContext()->executeAction<ReplaceOpAction>(
           /*actionFn=*/[]() {}, ArrayRef<IRUnit>{fromOp}, to);

@@ -91,15 +91,18 @@ def Inst4 : Arch1TestInstruction {
 //   If this succeeds, we try check the 2 bits in Inst{20-21} and we try to decode Inst3
 //   then Inst4 if the latter fails. If both fails we try Inst1. If it fails we skip to OPC_FAIL.
 
-// CHECK:      /* 0 */       MCD::OPC_CheckFieldOrFail, 0, 10, 9,
-// CHECK-NEXT: /* 4 */       MCD::OPC_CheckFieldOrFail, 22, 10, 0,
-// CHECK-NEXT: /* 8 */       MCD::OPC_CheckField, 18, 4, 14, 6, 0, // Skip to: 20
-// CHECK-NEXT: /* 14 */      MCD::OPC_TryDecode, {{[0-9]+}}, {{[0-9]+}}, 0, 0, 0, // Opcode: Inst1, DecodeIdx: 0, Skip to: 20
-// CHECK-NEXT: /* 20 */      MCD::OPC_CheckField, 16, 2, 3, 18, 0, // Skip to: 44
-// CHECK-NEXT: /* 26 */      MCD::OPC_CheckField, 20, 2, 3, 6, 0, // Skip to: 38
-// CHECK-NEXT: /* 32 */      MCD::OPC_TryDecode, {{[0-9]+}}, {{[0-9]+}}, 1, 0, 0, // Opcode: Inst3, DecodeIdx: 1, Skip to: 38
-// CHECK-NEXT: /* 38 */      MCD::OPC_TryDecode, {{[0-9]+}}, {{[0-9]+}}, 2, 0, 0, // Opcode: Inst4, DecodeIdx: 2, Skip to: 44
-// CHECK-NEXT: /* 44 */      MCD::OPC_TryDecodeOrFail, {{[0-9]+}}, {{[0-9]+}}, 3,
+// CHECK:      /* 0 */       MCD::OPC_CheckField, 0, 10, 9,
+// CHECK-NEXT: /* 4 */       MCD::OPC_CheckField, 22, 10, 0,
+// CHECK-NEXT: /* 8 */       MCD::OPC_Scope, 8, 0, // Skip to: 19
+// CHECK-NEXT: /* 11 */      MCD::OPC_CheckField, 18, 4, 14,
+// CHECK-NEXT: /* 15 */      MCD::OPC_TryDecode, {{[0-9]+}}, {{[0-9]+}}, 0,
+// CHECK-NEXT: /* 19 */      MCD::OPC_Scope, 19, 0, // Skip to: 41
+// CHECK-NEXT: /* 22 */      MCD::OPC_CheckField, 16, 2, 3,
+// CHECK-NEXT: /* 26 */      MCD::OPC_Scope, 8, 0, // Skip to: 37
+// CHECK-NEXT: /* 29 */      MCD::OPC_CheckField, 20, 2, 3,
+// CHECK-NEXT: /* 33 */      MCD::OPC_TryDecode, {{[0-9]+}}, {{[0-9]+}}, 1,
+// CHECK-NEXT: /* 37 */      MCD::OPC_TryDecode, {{[0-9]+}}, {{[0-9]+}}, 2,
+// CHECK-NEXT: /* 41 */      MCD::OPC_TryDecode, {{[0-9]+}}, {{[0-9]+}}, 3,
 
 // CHECK: if (!Check(S, DecodeAIncompleteRegisterClass(MI, tmp, Address, Decoder))) { DecodeComplete = false; return MCDisassembler::Fail; }
 // CHECK: if (!Check(S, DecodeDIncompleteRegisterClass(MI, tmp, Address, Decoder))) { DecodeComplete = false; return MCDisassembler::Fail; }

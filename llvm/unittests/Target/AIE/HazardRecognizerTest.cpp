@@ -17,6 +17,7 @@
 #include "llvm/CodeGen/ResourceScoreboard.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
 #include "llvm/CodeGen/TargetOpcodes.h"
+#include "llvm/CodeGen/TargetSubtargetInfo.h"
 #include "llvm/IR/Module.h"
 #include "llvm/MC/MCInstrItineraries.h"
 #include "llvm/MC/TargetRegistry.h"
@@ -123,8 +124,19 @@ public:
   }
 };
 
+namespace {
+// AIE InstrInfo needs a subtarget to construct; none of its hooks are used.
+struct DummySubtarget : public TargetSubtargetInfo {
+  DummySubtarget()
+      : TargetSubtargetInfo(Triple(""), "", "", "", {}, {}, {}, nullptr, nullptr,
+                            nullptr, nullptr, nullptr, nullptr) {}
+  const TargetRegisterInfo *getRegisterInfo() const override { return nullptr; }
+};
+DummySubtarget DummySTI;
+} // namespace
+
 // Not really used, except to get a FormatInterface.
-AIE2InstrInfo DummyInstrInfo;
+AIE2InstrInfo DummyInstrInfo(DummySTI);
 
 MockItineraries Itins;
 
@@ -468,7 +480,7 @@ TEST(HazardRecognizer, slotHazard) {
   // interface is set up correctly. Note that other unit tests in this
   // same executable seem to instantiate the AIE1 interface, and they clash
   // on a static implementation pointer.
-  AIE2InstrInfo InstrInfo;
+  AIE2InstrInfo InstrInfo(DummySTI);
   MockHR HR(InstrInfo);
 
   HR.emit(1, -2, /*SlotSet=*/0b01);
@@ -504,7 +516,7 @@ TEST(HazardRecognizer, composeConflicting) {
 
 /// Check scoreboard conflicts from bank utilization
 TEST(HazardRecognizer, bankConflictHazard) {
-  AIE2InstrInfo InstrInfo;
+  AIE2InstrInfo InstrInfo(DummySTI);
   MockHR HR(InstrInfo);
 
   HR.emit(1, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0b1010, /*ObjectsBits=*/0,
@@ -553,7 +565,7 @@ TEST(HazardRecognizer, bankConflictHazard) {
 
 /// Check scoreboard conflicts from bank utilization in multiple cycles
 TEST(HazardRecognizer, bankConflictHazardMultiCycle) {
-  AIE2InstrInfo InstrInfo;
+  AIE2InstrInfo InstrInfo(DummySTI);
   MockHR HR(InstrInfo);
 
   HR.emit(1, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0b1010, /*ObjectsBits=*/0,
@@ -641,7 +653,7 @@ TEST(HazardRecognizer, bankConflictHazardMultiCycle) {
 
 /// Check scoreboard to show blockResources does not touch MemoryBanks
 TEST(HazardRecognizer, blockResourcesMemoryBanks) {
-  AIE2InstrInfo InstrInfo;
+  AIE2InstrInfo InstrInfo(DummySTI);
   MockHR HR(InstrInfo);
 
   HR.blockResources(0);
@@ -657,7 +669,7 @@ TEST(HazardRecognizer, blockResourcesMemoryBanks) {
 
 /// Check scoreboard conflicts from object sharing
 TEST(HazardRecognizer, objectConflictHazard) {
-  AIE2InstrInfo InstrInfo;
+  AIE2InstrInfo InstrInfo(DummySTI);
   MockHR HR(InstrInfo);
 
   HR.emit(1, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0, /*ObjectsBits=*/0b101,
@@ -709,7 +721,7 @@ TEST(HazardRecognizer, objectConflictHazard) {
 /// shared store-port resource (and the slot in real AIE), even with
 /// MemoryBanks=0.
 TEST(HazardRecognizer, storeStoreSameMemoryCycleSerializes) {
-  AIE2InstrInfo InstrInfo;
+  AIE2InstrInfo InstrInfo(DummySTI);
   MockHR HR(InstrInfo);
 
   HR.emit(13, 0, /*SlotSet=*/0b1, /*MemoryBanks=*/0, /*ObjectsBits=*/0,
@@ -734,7 +746,7 @@ TEST(HazardRecognizer, storeStoreSameMemoryCycleSerializes) {
 /// the same emission cycle, and on the shared resource at delta=-1
 /// where their resource cycles align at scoreboard cycle 4.
 TEST(HazardRecognizer, storeStoreDifferentMemoryCycleSerializes) {
-  AIE2InstrInfo InstrInfo;
+  AIE2InstrInfo InstrInfo(DummySTI);
   MockHR HR(InstrInfo);
 
   // Emit's resource lands at scoreboard cycle 4.
@@ -760,7 +772,7 @@ TEST(HazardRecognizer, storeStoreDifferentMemoryCycleSerializes) {
 
 /// Check that two loads accessing the same object at the same cycle conflict.
 TEST(HazardRecognizer, loadLoadObjectConflictHazard) {
-  AIE2InstrInfo InstrInfo;
+  AIE2InstrInfo InstrInfo(DummySTI);
   MockHR HR(InstrInfo);
 
   // Emit a load with object bits 0b101 at memory cycle 5
@@ -794,7 +806,7 @@ TEST(HazardRecognizer, loadLoadObjectConflictHazard) {
 
 /// Check that two stores accessing the same object at the same cycle conflict.
 TEST(HazardRecognizer, storeStoreObjectConflictHazard) {
-  AIE2InstrInfo InstrInfo;
+  AIE2InstrInfo InstrInfo(DummySTI);
   MockHR HR(InstrInfo);
 
   // Emit a store with object bits 0b101 at memory cycle 5
@@ -829,7 +841,7 @@ TEST(HazardRecognizer, storeStoreObjectConflictHazard) {
 /// Check that a load and a store accessing the same object at the same cycle
 /// do NOT conflict. AIE has separate HW ports for loads and stores.
 TEST(HazardRecognizer, loadStoreObjectNoConflict) {
-  AIE2InstrInfo InstrInfo;
+  AIE2InstrInfo InstrInfo(DummySTI);
   MockHR HR(InstrInfo);
 
   // Emit a load with object bits 0b101 at memory cycle 5
@@ -868,7 +880,7 @@ TEST(HazardRecognizer, loadStoreObjectNoConflict) {
 /// Emit a load to object A and a store to object B, then verify all four
 /// probe combinations match only their respective bitmaps.
 TEST(HazardRecognizer, loadStoreBitmapsCoexistIndependently) {
-  AIE2InstrInfo InstrInfo;
+  AIE2InstrInfo InstrInfo(DummySTI);
   MockHR HR(InstrInfo);
 
   // Use different objects for Load vs Store:
@@ -905,7 +917,7 @@ TEST(HazardRecognizer, loadStoreBitmapsCoexistIndependently) {
 /// part-word stores which may have mayLoad() && mayStore()) conflicts
 /// with both a later load and a later store to the same object.
 TEST(HazardRecognizer, bothBitmapsFilledConflictsBoth) {
-  AIE2InstrInfo InstrInfo;
+  AIE2InstrInfo InstrInfo(DummySTI);
   MockHR HR(InstrInfo);
 
   // Simulate part-word store: both Load and Store set to same object bits.

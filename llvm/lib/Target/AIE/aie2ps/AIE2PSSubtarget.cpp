@@ -46,7 +46,7 @@ AIE2PSSubtarget::AIE2PSSubtarget(const Triple &TT, StringRef CPU,
                                  StringRef ABIName, const TargetMachine &TM)
     : AIE2PSGenSubtargetInfo(TT, CPU, TuneCPU, FS),
       FrameLowering(initializeSubtargetDependencies(TT, CPU, FS, ABIName)),
-      InstrInfo(), RegInfo(getHwMode()),
+      InstrInfo(*this), RegInfo(getHwMode()),
       TLInfo(TM, initializeSubtargetDependencies(TT, CPU, FS, ABIName)),
       InstrItins(getInstrItineraryForCPU(StringRef(CPU))) {
   LLVM_DEBUG(dbgs() << "CPU:" << CPU << "." << CPUName << "." << FS << "."

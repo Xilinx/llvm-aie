@@ -2,15 +2,15 @@
 // RUN: mlir-translate -mlir-to-cpp -declare-variables-at-top %s | FileCheck --match-full-lines %s -check-prefix=CPP-DECLTOP
 
 func.func @test_for(%arg0 : !emitc.size_t, %arg1 : !emitc.size_t, %arg2 : !emitc.size_t) {
-  %lb = emitc.expression : !emitc.size_t {
+  %lb = emitc.expression %arg0, %arg1 : (!emitc.size_t, !emitc.size_t) -> !emitc.size_t {
     %a = emitc.add %arg0, %arg1 : (!emitc.size_t, !emitc.size_t) -> !emitc.size_t
     emitc.yield %a : !emitc.size_t
   }
-  %ub = emitc.expression : !emitc.size_t {
+  %ub = emitc.expression %arg1, %arg2 : (!emitc.size_t, !emitc.size_t) -> !emitc.size_t {
     %a = emitc.mul %arg1, %arg2 : (!emitc.size_t, !emitc.size_t) -> !emitc.size_t
     emitc.yield %a : !emitc.size_t
   }
-  %step = emitc.expression : !emitc.size_t {
+  %step = emitc.expression %arg0, %arg2 : (!emitc.size_t, !emitc.size_t) -> !emitc.size_t {
     %a = emitc.div %arg0, %arg2 : (!emitc.size_t, !emitc.size_t) -> !emitc.size_t
     emitc.yield %a : !emitc.size_t
   }
