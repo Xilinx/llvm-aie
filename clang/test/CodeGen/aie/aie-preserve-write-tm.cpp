@@ -20,6 +20,7 @@
 // CHECK-AIE2-NEXT:    [[CONV_I:%.*]] = trunc i32 [[TMP0]] to i20
 // CHECK-AIE2-NEXT:    [[TMP1:%.*]] = inttoptr i20 [[CONV_I]] to ptr
 // CHECK-AIE2-NEXT:    tail call void @llvm.aie2.write.tm(i32 [[TASK]], ptr [[TMP1]])
+// CHECK-AIE2-NEXT:    tail call void @llvm.aie2.write.tm(i32 [[TASK]], ptr [[TMP1]])
 // CHECK-AIE2-NEXT:    ret void
 //
 // CHECK-AIE2P-LABEL: define dso_local void @_Z17preserve_write_tmjj(
@@ -29,6 +30,7 @@
 // CHECK-AIE2P-NEXT:    [[CONV_I:%.*]] = trunc i32 [[TMP0]] to i20
 // CHECK-AIE2P-NEXT:    [[TMP1:%.*]] = inttoptr i20 [[CONV_I]] to ptr
 // CHECK-AIE2P-NEXT:    tail call void @llvm.aie2p.write.tm(i32 [[TASK]], ptr [[TMP1]])
+// CHECK-AIE2P-NEXT:    tail call void @llvm.aie2p.write.tm(i32 [[TASK]], ptr [[TMP1]])
 // CHECK-AIE2P-NEXT:    ret void
 //
 // CHECK-AIE2PS-LABEL: define dso_local void @_Z17preserve_write_tmjj(
@@ -37,6 +39,7 @@
 // CHECK-AIE2PS-NEXT:    [[TMP0:%.*]] = xor i32 [[QUEUE]], 524288
 // CHECK-AIE2PS-NEXT:    [[CONV_I:%.*]] = trunc i32 [[TMP0]] to i20
 // CHECK-AIE2PS-NEXT:    [[TMP1:%.*]] = inttoptr i20 [[CONV_I]] to ptr
+// CHECK-AIE2PS-NEXT:    tail call void @llvm.aie2ps.write.tm(i32 [[TASK]], ptr [[TMP1]])
 // CHECK-AIE2PS-NEXT:    tail call void @llvm.aie2ps.write.tm(i32 [[TASK]], ptr [[TMP1]])
 // CHECK-AIE2PS-NEXT:    ret void
 //
