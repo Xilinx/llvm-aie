@@ -364,15 +364,19 @@ MaskMatch::getFrequentIndexResult(const ArrayRef<int> Mask,
   SmallDenseMap<int, unsigned> FrequencyMap = getMaskFrequencyMap(Mask);
   unsigned DontCareCount = getNumMaskUndefs(Mask, 0);
 
-  // Walk the mask rather than the map so that equally frequent values resolve
-  // to the one that occurs first, independently of hash-table iteration order.
+  // Walk the mask rather than the map so that ties do not depend on
+  // hash-table iteration order. Among equally frequent values, avoid the one in
+  // lane 0: inserting into lane 0 has an immediate form, other lanes need their
+  // index in a register. Otherwise the first value in the mask wins.
   unsigned FrequentIdx = 0;
   unsigned HighestFrequency = 0;
   for (unsigned I = 0; I < Mask.size(); I++) {
     if (Mask[I] == -1)
       continue;
     unsigned Frequency = FrequencyMap.lookup(Mask[I]);
-    if (Frequency > HighestFrequency) {
+    bool AvoidsLaneZero = Frequency == HighestFrequency &&
+                          Mask[FrequentIdx] == Mask[0] && Mask[I] != Mask[0];
+    if (Frequency > HighestFrequency || AvoidsLaneZero) {
       HighestFrequency = Frequency;
       FrequentIdx = I;
     }
