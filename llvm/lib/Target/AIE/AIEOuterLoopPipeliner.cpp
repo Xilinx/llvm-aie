@@ -75,9 +75,11 @@
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/Metadata.h"
+#include "llvm/IR/ValueHandle.h"
 #include "llvm/InitializePasses.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/Local.h"
@@ -1413,17 +1415,18 @@ void OrigLoopStructure::removeFromCFG() const {
     new UnreachableInst(BB->getContext(), BB);
   }
 
-#ifndef NDEBUG
   // Every use that survives must have been remapped to a clone:
-  // DeleteDeadBlocks turns whatever is left into poison.
+  // DeleteDeadBlocks turns whatever is left into poison. Check in every build,
+  // since release builds would otherwise miscompile silently.
   for (BasicBlock *BB : Dead)
     for (Instruction &I : *BB)
       for (User *U : I.users()) {
         auto *UI = dyn_cast<Instruction>(U);
-        assert((!UI || DeadSet.contains(UI->getParent())) &&
-               "surviving use of an original-loop value would become poison");
+        if (UI && !DeadSet.contains(UI->getParent()))
+          reportFatalInternalError(
+              "AIE outer loop pipeliner: surviving use of an original-loop "
+              "value would become poison");
       }
-#endif
 
   DeleteDeadBlocks(Dead);
 }
@@ -1547,12 +1550,11 @@ void AIEOuterLoopPipeliner::seedLastIterInputs(
       Map[I] = SteadyLS.lastIterInputFor(I);
 
   // Each loop-carried header PHI enters as its steady next-iteration value.
-  // The outer IV is dead in the single last iteration, and for a JNZD hardware
-  // loop its steady clone has been erased (eraseOldCounterCycle), so always
-  // skip it.
-  const PHINode *IV = OrigLS.latchCondition().IV;
+  // The JNZD conversion erases the steady IV when it and its counter only feed
+  // each other (eraseOldCounterCycle), leaving a null clone; nothing in the
+  // last iteration reads that IV.
   for (PHINode &PHI : OrigLS.getTop()->phis())
-    if (&PHI != IV)
+    if (SteadyLS.cloneOf(&PHI))
       Map[&PHI] = SteadyLS.lastIterInputFor(&PHI);
 }
 
@@ -2171,17 +2173,27 @@ static void rewriteLatchToDecrement(const CloneLoopStructure &SteadyLS,
 }
 
 // Break the dead counter/IV use cycle that trivial-DCE cannot: poison the IV's
-// latch slot when it feeds only the counter, then DCE the add.
+// latch slot when the IV and the counter only feed each other, then DCE the
+// add. The counter can outlive the IV's other users: the bottom stage-0 clones
+// read the next-iteration IV through it.
 static void eraseOldCounterCycle(const CloneLoopStructure &SteadyLS,
                                  const LatchConditionInfo &Info) {
   PHINode *IV = Info.IV;
-  if (IV->hasOneUse()) {
+  WeakVH PoisonedIV;
+  if (IV->hasOneUse() && Info.Counter->hasOneUse()) {
     int LatchIdx = IV->getBasicBlockIndex(SteadyLS.getBottom());
     const bool HasLatchIncoming = LatchIdx >= 0;
-    if (HasLatchIncoming)
+    if (HasLatchIncoming) {
       IV->setIncomingValue(LatchIdx, PoisonValue::get(IV->getType()));
+      PoisonedIV = IV;
+    }
   }
   RecursivelyDeleteTriviallyDeadInstructions(Info.Counter);
+  // The poison is only sound if nothing can read it. Check in every build,
+  // since a surviving IV would feed poison into the loop silently.
+  if (PoisonedIV)
+    reportFatalInternalError("AIE outer loop pipeliner: the old outer IV was "
+                             "poisoned but survived the counter cleanup");
 }
 
 void AIEOuterLoopPipeliner::convertOuterLoopToHardwareLoop(
