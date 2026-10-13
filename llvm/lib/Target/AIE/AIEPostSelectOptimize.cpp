@@ -93,6 +93,12 @@ public:
 
   /// Invalidate copies for any reg defined by \p MI
   void invalidateDefCopies(const MachineInstr &MI) {
+    // A callee may write the reserved registers, which are not callee-saved,
+    // and so may inline assembly.
+    if (MI.isCall() || MI.isInlineAsm()) {
+      LastAssigns.clear();
+      return;
+    }
     for (const MachineOperand &MO : MI.all_defs()) {
       if (MO.getReg().isPhysical()) {
         invalidateCopies(MO.getReg());
