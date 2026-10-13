@@ -12,6 +12,7 @@
 #include "AIE.h"
 #include "AIEBaseInstrInfo.h"
 #include "AIEBaseSubtarget.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/VectorUtils.h"
@@ -339,10 +340,10 @@ std::optional<int> MaskMatch::getUniqueIndex(ArrayRef<int> Mask) {
   return UniqOpIdx;
 }
 
-static std::unordered_map<int, unsigned>
+static SmallDenseMap<int, unsigned>
 getMaskFrequencyMap(const ArrayRef<int> Mask) {
   assert(!MaskMatch::isMaskWithAllUndefs(Mask));
-  std::unordered_map<int, unsigned> FrequencyMap;
+  SmallDenseMap<int, unsigned> FrequencyMap;
   for (int Idx : Mask) {
     if (Idx == -1)
       continue;
@@ -360,14 +361,22 @@ MaskMatch::getFrequentIndexResult(const ArrayRef<int> Mask,
     MinFrequency = Mask.size() / 2;
   }
 
-  std::unordered_map<int, unsigned> FrequencyMap = getMaskFrequencyMap(Mask);
+  SmallDenseMap<int, unsigned> FrequencyMap = getMaskFrequencyMap(Mask);
   unsigned DontCareCount = getNumMaskUndefs(Mask, 0);
 
-  auto [FrequentValue, HighestFrequency] = *std::max_element(
-      FrequencyMap.begin(), FrequencyMap.end(),
-      [](const std::pair<int, unsigned> p1, const std::pair<int, unsigned> p2) {
-        return p1.second < p2.second;
-      });
+  // Walk the mask rather than the map so that equally frequent values resolve
+  // to the one that occurs first, independently of hash-table iteration order.
+  unsigned FrequentIdx = 0;
+  unsigned HighestFrequency = 0;
+  for (unsigned I = 0; I < Mask.size(); I++) {
+    if (Mask[I] == -1)
+      continue;
+    unsigned Frequency = FrequencyMap.lookup(Mask[I]);
+    if (Frequency > HighestFrequency) {
+      HighestFrequency = Frequency;
+      FrequentIdx = I;
+    }
+  }
 
   unsigned HighestAdjustedFrequency = HighestFrequency + DontCareCount;
   if (HighestAdjustedFrequency < MinFrequency) {
@@ -375,15 +384,6 @@ MaskMatch::getFrequentIndexResult(const ArrayRef<int> Mask,
   }
 
   unsigned NonMatchingCount = Mask.size() - HighestAdjustedFrequency;
-
-  unsigned FrequentIdx = 0;
-  for (unsigned I = 0; I < Mask.size(); I++) {
-    int MaskValue = Mask[I];
-    if (MaskValue == FrequentValue) {
-      FrequentIdx = I;
-      break;
-    }
-  }
 
   return FrequentIndexResult{FrequentIdx, NonMatchingCount};
 }

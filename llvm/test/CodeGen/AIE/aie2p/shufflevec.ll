@@ -775,6 +775,36 @@ entry:
   ret <16 x i32> %shuffle
 }
 
+; b[1] and a[0] are equally frequent; whichever is not broadcast is inserted
+; into its lanes.
+define <16 x i32> @shuffle_vector_to_extract_insert_elt_frequency_tie(<16 x i32> noundef %a, <16 x i32> noundef %b) {
+; CHECK-LABEL: shuffle_vector_to_extract_insert_elt_frequency_tie:
+; CHECK:       // %bb.0: // %entry
+; CHECK-NEXT:    nopx ; vextbcst.32 x0, x4, #1
+; CHECK-NEXT:    vextract.32 r0, x2, #0, vaddsign1
+; CHECK-NEXT:    mova r29, #8
+; CHECK-NEXT:    vinsert.32 x0, x0, r29, r0
+; CHECK-NEXT:    mova r29, #9
+; CHECK-NEXT:    vinsert.32 x0, x0, r29, r0
+; CHECK-NEXT:    mova r29, #10
+; CHECK-NEXT:    vinsert.32 x0, x0, r29, r0
+; CHECK-NEXT:    mova r29, #11
+; CHECK-NEXT:    vinsert.32 x0, x0, r29, r0
+; CHECK-NEXT:    mova r29, #12
+; CHECK-NEXT:    vinsert.32 x0, x0, r29, r0
+; CHECK-NEXT:    mova r29, #13
+; CHECK-NEXT:    vinsert.32 x0, x0, r29, r0
+; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    mova r29, #14 // Delay Slot 5
+; CHECK-NEXT:    vinsert.32 x0, x0, r29, r0 // Delay Slot 4
+; CHECK-NEXT:    mova r29, #15 // Delay Slot 3
+; CHECK-NEXT:    vinsert.32 x0, x0, r29, r0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
+entry:
+  %shuffle = shufflevector <16 x i32> %a, <16 x i32> %b, <16 x i32> <i32 17, i32 17, i32 17, i32 17, i32 17, i32 17, i32 17, i32 17, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0>
+  ret <16 x i32> %shuffle
+}
+
 define <16 x i32> @shuffle_concat_extracted_subvectors_vecToExtract_sameSize1(<16 x i32> %a, <16 x i32> %b) {
 ; CHECK-LABEL: shuffle_concat_extracted_subvectors_vecToExtract_sameSize1:
 ; CHECK:       // %bb.0:
