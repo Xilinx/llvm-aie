@@ -36,8 +36,6 @@
 
 #define DEBUG_TYPE "aie-ptr-mod-opt"
 
-extern cl::opt<bool> EnableGlobalPtrModOptimizer;
-
 using namespace llvm;
 
 static const char AIE_PTR_MOD_OPTIMIZER[] = "AIE Pointer Modifier Optimization";
@@ -48,8 +46,7 @@ StringRef AIEPtrModOptimizer::getPassName() const {
 namespace llvm {
 
 bool AIEPtrModOptimizer::runOnMachineFunction(MachineFunction &MF) {
-  PtrModRes = std::make_unique<AIE::FoundCombiners>(
-      /*Analysis=*/true);
+  PtrModRes = std::make_unique<AIE::FoundCombiners>();
 
   MachineRegisterInfo &MRI = MF.getRegInfo();
   const auto *TII =
@@ -123,6 +120,7 @@ void AIEPtrModOptimizer::appendResult(
     std::vector<const AIE::GenericCombiner *> &Combiners) {
 
   for (auto *Combine : Combiners) {
+    LLVM_DEBUG(dbgs() << "[Solution] "; Combine->CombinerData.dumpFull());
     PtrModRes->append(Combine->CombinerData);
   }
 }
@@ -149,7 +147,6 @@ namespace llvm::AIE {
 void FoundCombiners::append(const AIE::Combiner &CombineResult) {
   assert(CombineResult.CombineRoot);
   InstrCombines[CombineResult.CombineRoot] = CombineResult;
-  LLVM_DEBUG(dbgs() << "[Solution] "; CombineResult.dumpFull());
 }
 
 AIE::Combiner *FoundCombiners::getCombine(MachineInstr *CombineRoot) {

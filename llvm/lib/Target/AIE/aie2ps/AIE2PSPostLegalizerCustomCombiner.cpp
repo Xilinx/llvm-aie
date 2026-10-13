@@ -33,8 +33,6 @@
 
 using namespace llvm;
 
-extern cl::opt<bool> EnableGlobalPtrModOptimizer;
-
 namespace {
 
 #define GET_GICOMBINER_TYPES
@@ -43,10 +41,6 @@ namespace {
 
 class AIE2PSPostLegalizerCustomCombinerImpl
     : public AIECombinerBase<AIE2PSPostLegalizerCustomCombinerImplRuleConfig> {
-protected:
-  AIE::FoundCombiners EmptyGlobalCombiner;
-  AIE::FoundCombiners *GlobalCombiners = &EmptyGlobalCombiner;
-
 public:
   AIE2PSPostLegalizerCustomCombinerImpl(
       MachineFunction &MF, CombinerInfo &CInfo, const TargetPassConfig *TPC,

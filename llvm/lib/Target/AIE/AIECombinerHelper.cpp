@@ -392,7 +392,7 @@ static MachineInstr *findPreIncMatch(MachineInstr &MemI,
                                      MachineRegisterInfo &MRI,
                                      CombinerHelper &Helper,
                                      const AIEBaseInstrInfo &TII,
-                                     AIE::FoundCombiners *GlobalCombinerPtr) {
+                                     AIE::Combiner &MatchInfo) {
   // This is currently done with patterns in instruction selection.
   // No need to do it here.
   const unsigned VecSize =
@@ -408,12 +408,12 @@ static MachineInstr *findPreIncMatch(MachineInstr &MemI,
   if (AddrDef->getOpcode() == TargetOpcode::G_PTR_ADD) {
     // 2 Instructions are in the Combiner
     BitVector RemoveInstrs(2);
-    GlobalCombinerPtr->append(AIE::Combiner(
+    MatchInfo = AIE::Combiner(
         /*CombineInstrs=*/std::vector<MachineInstr *>{AddrDef, &MemI},
         /*CombinedInstrOpcode=*/TII.getOffsetMemOpcode(MemI.getOpcode()),
         /*InsertionPoint=*/&MemI, /*CombineRoot=*/&MemI,
         /*MoveUpInstrsToInsertionPoint=*/std::vector<MachineInstr *>{},
-        /*RemoveInstrs=*/RemoveInstrs, /*Name=*/"Offset-legacy"));
+        /*RemoveInstrs=*/RemoveInstrs, /*Name=*/"Offset-legacy");
     return AddrDef;
   }
   return nullptr;
@@ -773,7 +773,7 @@ static MachineInstr *findPostIncMatch(MachineInstr &MemI,
                                       MachineRegisterInfo &MRI,
                                       CombinerHelper &Helper,
                                       const AIEBaseInstrInfo &TII,
-                                      AIE::FoundCombiners *GlobalCombinerPtr) {
+                                      AIE::Combiner &MatchInfo) {
   if (!EnablePostIncCombine)
     return nullptr;
 
@@ -850,7 +850,7 @@ static MachineInstr *findPostIncMatch(MachineInstr &MemI,
     bool AddrUsesDominatesInsertPoint =
         checkRegUsesDominate(Addr, *InsertionPoint, PtrInc, MRI, Helper, TII);
     if (EnableGreedyAddressCombine || AddrUsesDominatesInsertPoint) {
-      GlobalCombinerPtr->append(TempCombiner);
+      MatchInfo = TempCombiner;
       return &PtrInc;
     }
   }
@@ -1058,15 +1058,15 @@ void llvm::applyConcatUnmergePhis(MachineInstr &ConcatI,
 
 bool llvm::matchLdStInc(MachineInstr &MemI, MachineRegisterInfo &MRI,
                         CombinerHelper &Helper, const TargetInstrInfo &TII,
-                        AIE::FoundCombiners *GlobalCombinerPtr) {
+                        AIE::Combiner &MatchInfo) {
   const AIEBaseInstrInfo &AIETII = (const AIEBaseInstrInfo &)TII;
 
   // aie-ptr-mod-opt selects these combines for the whole MBB instead.
   if (EnableGlobalPtrModOptimizer)
     return false;
 
-  return findPostIncMatch(MemI, MRI, Helper, AIETII, GlobalCombinerPtr) ||
-         findPreIncMatch(MemI, MRI, Helper, AIETII, GlobalCombinerPtr);
+  return findPostIncMatch(MemI, MRI, Helper, AIETII, MatchInfo) ||
+         findPreIncMatch(MemI, MRI, Helper, AIETII, MatchInfo);
 }
 
 void llvm::applyLdStInc(MachineInstr &MemI, MachineRegisterInfo &MRI,
@@ -1178,6 +1178,17 @@ void llvm::applyLdStInc(MachineInstr &MemI, MachineRegisterInfo &MRI,
   Observer.erasingInstr(MemI);
   MemI.removeFromParent();
   GlobalCombinerPtr->deferDelete(&MemI);
+}
+
+void llvm::applyLdStInc(MachineInstr &MemI, MachineRegisterInfo &MRI,
+                        CombinerHelper &Helper, MachineIRBuilder &B,
+                        GISelChangeObserver &Observer,
+                        const AIE::Combiner &MatchInfo) {
+  MachineFunction &MF = *MemI.getMF();
+  AIE::FoundCombiners Combiners;
+  Combiners.append(MatchInfo);
+  applyLdStInc(MemI, MRI, Helper, B, Observer, &Combiners);
+  Combiners.finalizeDeferredDeletes(MF);
 }
 
 // Match all equivalents of these:
