@@ -32,7 +32,7 @@ class AIEV2PBF16ToInt : DefaultAttrsIntrinsic<[llvm_i32_ty],
 
 // TM
 class AIE2PReadTM : DefaultAttrsIntrinsic<[llvm_i32_ty], [llvm_ptr_ty], [IntrArgMemOnly]>;
-class AIE2PWriteTM : DefaultAttrsIntrinsic<[], [llvm_i32_ty, llvm_ptr_ty], [IntrWriteMem]>;
+class AIE2PWriteTM : DefaultAttrsIntrinsic<[], [llvm_i32_ty, llvm_ptr_ty], [IntrArgMemOnly]>;
 // FLT2FX, FX2FLT
 class AIE2PFX2FLT : DefaultAttrsIntrinsic<[llvm_float_ty], [llvm_i32_ty, llvm_i32_ty], 
       [IntrNoMem]>;
