@@ -3,6 +3,8 @@
 # similar although simpler functionality. We should figure out how to merge
 # the two files.
 
+# Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+
 set(COMMON_CMAKE_ARGS "-DHAVE_LLVM_LIT=ON;-DCLANG_RESOURCE_DIR=${CLANG_RESOURCE_DIR}")
 foreach(proj ${LLVM_ENABLE_RUNTIMES})
   set(proj_dir "${CMAKE_CURRENT_SOURCE_DIR}/../../${proj}")
@@ -467,6 +469,7 @@ if(build_runtimes)
   # The runtimes target is a configuration of all the runtime libraries
   # together in a single CMake invocation.
   set(extra_deps "")
+  set(runtime_test_deps "")
   set(extra_cmake_args "")
   set(extra_args "")
 
@@ -498,7 +501,7 @@ if(build_runtimes)
                 llvm_gtest
                 split-file)
       if(TARGET ${dep})
-        list(APPEND extra_deps ${dep})
+        list(APPEND runtime_test_deps ${dep})
       endif()
     endforeach()
     if(WIN32)
@@ -568,7 +571,7 @@ if(build_runtimes)
 
   if(NOT LLVM_RUNTIME_TARGETS)
     runtime_default_target(
-      DEPENDS ${builtins_dep} ${extra_deps}
+      DEPENDS ${builtins_dep} ${extra_deps} ${runtime_test_deps}
       CMAKE_ARGS ${extra_cmake_args}
       PREFIXES ${prefixes}
       EXTRA_ARGS ${extra_args})
@@ -576,7 +579,7 @@ if(build_runtimes)
   else()
     if("default" IN_LIST LLVM_RUNTIME_TARGETS)
       runtime_default_target(
-        DEPENDS ${builtins_dep} ${extra_deps}
+        DEPENDS ${builtins_dep} ${extra_deps} ${runtime_test_deps}
         CMAKE_ARGS ${extra_cmake_args}
         PREFIXES ${prefixes}
         EXTRA_ARGS ${extra_args})
@@ -623,8 +626,18 @@ if(build_runtimes)
 
       check_apple_target(${name} runtime)
 
+      set(runtime_include_tests ${LLVM_INCLUDE_TESTS})
+      if(DEFINED RUNTIMES_${name}_LLVM_INCLUDE_TESTS)
+        set(runtime_include_tests ${RUNTIMES_${name}_LLVM_INCLUDE_TESTS})
+      endif()
+
+      set(runtime_deps ${extra_deps})
+      if(runtime_include_tests)
+        list(APPEND runtime_deps ${runtime_test_deps})
+      endif()
+
       runtime_register_target(${name}
-        DEPENDS ${builtins_dep_name} ${extra_deps}
+        DEPENDS ${builtins_dep_name} ${runtime_deps}
         CMAKE_ARGS -DLLVM_DEFAULT_TARGET_TRIPLE=${name} ${extra_cmake_args}
         EXTRA_ARGS TARGET_TRIPLE ${name} ${extra_args})
     endforeach()
@@ -666,9 +679,9 @@ if(build_runtimes)
     set_property(GLOBAL APPEND PROPERTY LLVM_ALL_ADDITIONAL_TEST_DEPENDS runtimes-test-depends)
 
     foreach(target ${test_targets} ${SUB_CHECK_TARGETS})
-      add_dependencies(${target} ${extra_deps})
+      add_dependencies(${target} ${extra_deps} ${runtime_test_deps})
     endforeach()
 
-    set_property(GLOBAL APPEND PROPERTY LLVM_ALL_ADDITIONAL_TEST_TARGETS runtimes ${extra_deps})
+    set_property(GLOBAL APPEND PROPERTY LLVM_ALL_ADDITIONAL_TEST_TARGETS runtimes ${extra_deps} ${runtime_test_deps})
   endif()
 endif()
