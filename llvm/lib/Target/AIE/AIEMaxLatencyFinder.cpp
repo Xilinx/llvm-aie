@@ -123,15 +123,16 @@ int MaxLatencyFinder::computeEffectiveLatency(MachineInstr &MI) {
       SUnit *Succ = Dep.getSUnit();
       int Depth;
       if (SE.isPreBoundaryNode(Succ)) {
-        // A pre-boundary node with a depth is an SWP prologue clone, fixed
-        // before the end of this block. Other pre-boundary nodes are free
-        // instructions of this region, ordered by the region DAG.
-        std::optional<int> PreDepth = SE.getPreDepths().getValue(Succ);
-        if (!PreDepth) {
+        // FixedInstrBoundary separates free instructions from the fixed
+        // suffix: prologue clones, or the pipelined loop tail. Free
+        // instructions are ordered by the region DAG.
+        if (!SE.isFixedPreBoundaryNode(Succ)) {
           LLVM_DEBUG(dbgs() << "   SU" << Succ->NodeNum
                             << " is a free pre-boundary node, skip\n");
           continue;
         }
+        const std::optional<int> PreDepth = SE.getPreDepths().getValue(Succ);
+        assert(PreDepth && "Fixed pre-boundary node has no recorded depth");
         Depth = *PreDepth;
       } else {
         // For ExitSU the depth is the full length of the successor block's

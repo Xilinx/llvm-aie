@@ -1298,13 +1298,17 @@ void InterBlockScheduling::buildGraph(InterBlockEdges &DAG) {
   // predecessor contributes only those free instructions. Neither of those
   // has a pre-depth.
   const bool PredOneRegion = &Pred.getTop() == &Pred.getBottom();
-  if (Pred.isPipelined() && PredOneRegion && !Succ.TopInsert.empty())
+  if (Pred.isPipelined() && PredOneRegion && !Succ.TopInsert.empty()) {
+    // The loop tail is the fixed pre-boundary suffix, numbered from here.
+    DAG.markFixedInstrBoundary();
     addLoopBundles(DAG, Pred.getBottom().Bundles, HR->getConflictHorizon());
-  else {
+  } else {
     if (PredOneRegion)
       addFixedInstrs(Pred.TopInsert, DAG, PredBB, /*Depths=*/nullptr);
     for (MachineInstr *MI : Pred.getBottom().getFreeInstructions())
       DAG.addNode(MI);
+    // Prologue clones follow. Free nodes above have no stored cycle.
+    DAG.markFixedInstrBoundary();
   }
 
   // Prologue clones. They are fixed at the end of the block, so they always

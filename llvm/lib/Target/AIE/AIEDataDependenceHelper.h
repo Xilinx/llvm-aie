@@ -15,6 +15,7 @@
 #ifndef LLVM_LIB_TARGET_AIE_AIEDATADEPENDENCEHELPER_H
 #define LLVM_LIB_TARGET_AIE_AIEDATADEPENDENCEHELPER_H
 
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/MachineScheduler.h"
 #include "llvm/CodeGen/ScheduleDAGInstrs.h"
 #include <algorithm>
@@ -87,9 +88,22 @@ public:
 ///   | PostDepth   0   1   2
 ///   v
 ///
-/// Each is a NodeValues object: a per-node map plus a region maximum.
+/// FixedInstrBoundary is a second cut, above the CFG boundary. It is the
+/// NodeNum where fixed instructions start. Nodes above it are free and have
+/// no stored cycle. Nodes between it and the CFG boundary are fixed and carry
+/// PreDepth: prologue clones, or the whole loop tail when that tail is fixed
+/// from the first node.
+///
+///   ^
+///   | free
+/// ----- FixedInstrBoundary
+///   | fixed   -3  -2  -1
+/// ----- Boundary
+///
+/// Each is a NodeValues object: a vector indexed by NodeNum, plus a region
+/// maximum. An absent entry means that node has no stored cycle.
 /// Recording an instruction that is not in the matching pre/post index is
-/// ignored for the per-node map but still updates the region maximum. The
+/// ignored for the vector but still updates the region maximum. The
 /// no-instruction overload exists for empty bundles (NOPs). Negative values
 /// are allowed.
 ///
@@ -103,12 +117,12 @@ class InterBlockEdges : public DataDependenceHelper {
   using IndexMap = std::map<MachineInstr *, unsigned>;
 
 public:
-  /// Per-node integers for one side of the boundary, plus the maximum value
-  /// recorded for that region. \p Nodes maps a MachineInstr to its SUnit
-  /// NodeNum.
+  /// Per-node integers for one side of the boundary, indexed by SUnit NodeNum,
+  /// plus the maximum value recorded for that region. \p Nodes maps a
+  /// MachineInstr to its SUnit NodeNum.
   class NodeValues {
     const IndexMap &Nodes;
-    std::map<unsigned, int> Values;
+    SmallVector<std::optional<int>, 8> Values;
     int RegionMax = 0;
 
   public:
@@ -117,7 +131,7 @@ public:
     void clear();
 
     /// Record \p Val for \p MI. An instruction missing from Nodes is ignored
-    /// for the per-node map, but the region maximum is still updated: the
+    /// for the vector, but the region maximum is still updated: the
     /// caller has found code at this cycle (a bundle interleaved with Fixed
     /// instructions, or a BottomFixed instruction outside the first
     /// iteration).
@@ -147,6 +161,11 @@ private:
   // The boundary between Pred and Succ nodes. Boundary holds the index of
   // the first post-boundary node. This is equal to its NodeNum.
   std::optional<unsigned> Boundary;
+  // NodeNum that separates free instructions from fixed ones. Nodes before it
+  // are free. Today the fixed side is the pre-boundary suffix
+  // [FixedInstrBoundary, Boundary): prologue clones. The same split can mark
+  // epilogue clones.
+  std::optional<unsigned> FixedInstrBoundary;
   // When true, memory edges crossing the boundary are suppressed.
   bool SafeToIgnoreMemDeps = false;
 
@@ -179,6 +198,9 @@ public:
   /// part of the successor.
   void markBoundary();
 
+  /// Record the NodeNum that separates free instructions from fixed ones.
+  void markFixedInstrBoundary();
+
   /// To iterate forward across the SUnits of the underlying DDG.
   auto begin() { return SUnits.begin(); }
   auto begin() const { return SUnits.begin(); }
@@ -199,6 +221,10 @@ public:
 
   /// Check whether SU represents an instruction before the boundary.
   bool isPreBoundaryNode(const SUnit *SU) const;
+
+  /// True when SU is a fixed pre-boundary node: its NodeNum is at or after
+  /// FixedInstrBoundary and still before the CFG boundary.
+  bool isFixedPreBoundaryNode(const SUnit *SU) const;
 
   /// Check whether SU represents an instruction after the boundary.
   bool isPostBoundaryNode(const SUnit *SU) const;
