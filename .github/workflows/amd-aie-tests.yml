@@ -27,7 +27,7 @@ jobs:
     name: Test AIE llvm,clang,lld
     uses: ./.github/workflows/llvm-project-tests.yml
     with:
-      build_target: check-llvm-aie check-clang-aie check-lld-aie builtins
+      build_target: check-llvm-aie check-clang-aie check-lld-aie builtins runtimes-aie-none-unknown-elf runtimes-aie2p-none-unknown-elf
       projects: clang;lld
       cache-key: amd-aie
       extra_cmake_args: '-DLLVM_USE_LINKER=gold -C clang/cmake/caches/Peano-AIE.cmake'
