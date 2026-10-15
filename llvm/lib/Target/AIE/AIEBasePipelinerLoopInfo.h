@@ -28,6 +28,8 @@ protected:
   MachineRegisterInfo &MRI;
   MachineInstr *EndLoop;
   MachineBasicBlock *LoopBlock;
+  /// The last prologue block of the expanded loop, passed to setPreheader().
+  MachineBasicBlock *LastPrologue = nullptr;
   bool Negated = false;
   bool HasIIPragma = false;
 

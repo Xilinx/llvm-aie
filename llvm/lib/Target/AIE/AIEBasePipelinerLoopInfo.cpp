@@ -15,6 +15,7 @@
 #include "AIEBasePipelinerLoopInfo.h"
 #include "AIEBaseInstrInfo.h"
 #include "AIELoopClass.h"
+#include "AIEMachineFunctionInfo.h"
 #include "AIESlotStatistics.h"
 #include "Utils/AIELoopUtils.h"
 #include "llvm/ADT/SmallVector.h"
@@ -129,14 +130,26 @@ void AIEBasePipelinerLoopInfo::adjustTripCount(int TripCountAdjust) {
   LLVM_DEBUG(dbgs() << "TripCountAdjust =  " << TripCountAdjust << "\n");
   // TripCountAdjust is -(NumStages - 1), the iterations the expander peeled
   // into the prologue. Anything shorter must stay on the fallback copy.
-  patchVersionThreshold(1 - TripCountAdjust);
+  const int NumStages = 1 - TripCountAdjust;
+  patchVersionThreshold(NumStages);
+
+  // The expander announces the last prologue block just before; the kernel is
+  // its successor that loops to itself.
+  if (!LastPrologue)
+    return;
+  auto *MFI = LastPrologue->getParent()->getInfo<AIEMachineFunctionInfo>();
+  for (const MachineBasicBlock *Succ : LastPrologue->successors())
+    if (Succ->isSuccessor(Succ))
+      MFI->setSWPStageCount(*Succ, NumStages);
 }
 
 /// Called when the loop's preheader has been modified to NewPreheader.
 /// This may be used to move the loop setup here, either because loopstart is
 /// implicitly taken as the next instruction, or to minimise life range of
 /// loop state registers.
-void AIEBasePipelinerLoopInfo::setPreheader(MachineBasicBlock *NewPreheader) {}
+void AIEBasePipelinerLoopInfo::setPreheader(MachineBasicBlock *NewPreheader) {
+  LastPrologue = NewPreheader;
+}
 
 MachineInstr *AIEBasePipelinerLoopInfo::getDefInstr(MachineInstr *MI,
                                                     unsigned Idx) {
