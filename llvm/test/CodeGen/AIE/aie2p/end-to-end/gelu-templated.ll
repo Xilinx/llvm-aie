@@ -29,7 +29,7 @@ define void @gelu_fn(ptr noalias %ifm, ptr noalias %ofm, ptr nonnull align 64 de
 ; CHECK-NEXT:    movxm r2, #15821
 ; CHECK-NEXT:    mova r2, #255; movx r4, #1; vbcst.16 x4, r2; vadd.f dm3, dm2, dm0, r0
 ; CHECK-NEXT:    vlda.conv.fp32.bf16 cml1, [p0], #64; vconv.bf16.fp32 x8, cml3; lshl r2, r1, r4; vbcst.16 x0, r2
-; CHECK-NEXT:    mova r2, #828; mov m0, r2
+; CHECK-NEXT:    mova r2, #828; movs m0, r2
 ; CHECK-NEXT:    vmul.f dm2, x8, x2, r2
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -55,7 +55,7 @@ define void @gelu_fn(ptr noalias %ifm, ptr noalias %ofm, ptr nonnull align 64 de
 ; CHECK-NEXT:    vfloor.s32.bf16 x9, wl10, s0; vshuffle x1, x1, x3, r1; vmul.f dm4, x7, x2, r2
 ; CHECK-NEXT:    vconv.bf16.fp32 x5, cml3; vmin_ge.16 x3, r16, x1, x0, vaddsign1
 ; CHECK-NEXT:    nopa ; nopb ; vfloor.s32.bf16 x3, wh10, s0; nopx ; add.nc lc, r4, #-7; nopv
-; CHECK-NEXT:    padda [p1], m0; nopb ; vconv.bf16.fp32 x8, cml4; nopx ; vmax_lt.16 x11, r16, x3, x6, vaddsign1; vmul.f dm3, x5, x4, r2
+; CHECK-NEXT:    nopa ; paddb [p1], m0; vconv.bf16.fp32 x8, cml4; nopx ; vmax_lt.16 x11, r16, x3, x6, vaddsign1; vmul.f dm3, x5, x4, r2
 ; CHECK-NEXT:  .LBB0_1: // %for.body
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
 ; CHECK-NEXT:    nopa ; nopb ; vconv.bf16.fp32 x10, cml2; nopxm ; nopv

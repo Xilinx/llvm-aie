@@ -37,7 +37,7 @@ define void @drain_after_olp(ptr noalias %a, ptr noalias %c, ptr %out, i32 %n, i
 ; OLP-NEXT:    nop // Delay Slot 1
 ; OLP-NEXT:  // %bb.1: // %outer.header.preheader
 ; OLP-NEXT:    mova r4, #0
-; OLP-NEXT:    mov r24, r4
+; OLP-NEXT:    or r24, r4, r4
 ; OLP-NEXT:    vldb.pop x2, [p0, lf0, r24]
 ; OLP-NEXT:    vbcst.32 x0, r4
 ; OLP-NEXT:    vmov x1, x0
@@ -52,7 +52,7 @@ define void @drain_after_olp(ptr noalias %a, ptr noalias %c, ptr %out, i32 %n, i
 ; OLP-NEXT:    // =>This Loop Header: Depth=1
 ; OLP-NEXT:    // Child Loop BB0_3 Depth 2
 ; OLP-NEXT:    nopa ; nopb ; nops ; add.nc lc, r1, #0; nopm ; nopv
-; OLP-NEXT:    nopa ; nopb ; nops ; add.nc le, pc, #.L_LEnd2; addm.nc ls, pc, #.LBB0_3; nopv
+; OLP-NEXT:    nopa ; nopb ; nops ; add.nc ls, pc, #.LBB0_3; addm.nc le, pc, #.L_LEnd2; nopv
 ; OLP-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
 ; OLP-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
 ; OLP-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
@@ -66,7 +66,7 @@ define void @drain_after_olp(ptr noalias %a, ptr noalias %c, ptr %out, i32 %n, i
 ; OLP-NEXT:    nopa ; nopb ; nops ; add r25, r25, r0; nopm ; nopv
 ; OLP-NEXT:  // %bb.4: // %steady.stage1.bottom.and.stage0.top
 ; OLP-NEXT:    // in Loop: Header=BB0_2 Depth=1
-; OLP-NEXT:    nopa ; nopb ; nops ; nopx ; mov p0, p4; nopv
+; OLP-NEXT:    nopa ; nopb ; movs p0, p4; nopxm ; nopv
 ; OLP-NEXT:    vldb.pop x2, [p0, lf0, r24]; nopx
 ; OLP-NEXT:    nop
 ; OLP-NEXT:    nop
@@ -79,7 +79,7 @@ define void @drain_after_olp(ptr noalias %a, ptr noalias %c, ptr %out, i32 %n, i
 ; OLP-NEXT:    movs p1, p3; vadd.8 x2, x2, x2 // Delay Slot 1
 ; OLP-NEXT:  // %bb.5: // %lastiter.stage1.top
 ; OLP-NEXT:    add.nc lc, r1, #0
-; OLP-NEXT:    nopa ; nopb ; nops ; add.nc le, pc, #.L_LEnd1; addm.nc ls, pc, #.LBB0_6; nopv
+; OLP-NEXT:    nopa ; nopb ; nops ; add.nc ls, pc, #.LBB0_6; addm.nc le, pc, #.L_LEnd1; nopv
 ; OLP-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
 ; OLP-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
 ; OLP-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
@@ -93,7 +93,7 @@ define void @drain_after_olp(ptr noalias %a, ptr noalias %c, ptr %out, i32 %n, i
 ; OLP-NEXT:  // %bb.7: // %lastiter.stage1.bottom
 ; OLP-NEXT:    vldb x0, [p4], #64; nopxm
 ; OLP-NEXT:    vldb x0, [p4], #64; add.nc lc, r2, #-9
-; OLP-NEXT:    nopa ; vldb x0, [p4], #64; nops ; add.nc le, pc, #.L_LEnd0; addm.nc ls, pc, #.LBB0_8; nopv
+; OLP-NEXT:    nopa ; vldb x0, [p4], #64; nops ; add.nc ls, pc, #.LBB0_8; addm.nc le, pc, #.L_LEnd0; nopv
 ; OLP-NEXT:    nopa ; vldb x0, [p4], #64; nops ; nopxm ; nopv
 ; OLP-NEXT:    nopa ; vldb x0, [p4], #64; nops ; nopxm ; nopv
 ; OLP-NEXT:    nopa ; vldb x0, [p4], #64; nops ; nopxm ; nopv
@@ -141,12 +141,12 @@ define void @drain_after_olp(ptr noalias %a, ptr noalias %c, ptr %out, i32 %n, i
 ; NOOLP-NEXT:  .LBB0_2: // %outer.header
 ; NOOLP-NEXT:    // =>This Loop Header: Depth=1
 ; NOOLP-NEXT:    // Child Loop BB0_3 Depth 2
-; NOOLP-NEXT:    vldb.pop x2, [p0, lf0, r24]; mov p3, p0
+; NOOLP-NEXT:    vldb.pop x2, [p0, lf0, r24]; movs p3, p0
 ; NOOLP-NEXT:    nop
 ; NOOLP-NEXT:    nop
 ; NOOLP-NEXT:    nop
 ; NOOLP-NEXT:    add.nc lc, r1, #0
-; NOOLP-NEXT:    nopa ; nopb ; nops ; add.nc le, pc, #.L_LEnd1; addm.nc ls, pc, #.LBB0_3; nopv
+; NOOLP-NEXT:    nopa ; nopb ; nops ; add.nc ls, pc, #.LBB0_3; addm.nc le, pc, #.L_LEnd1; nopv
 ; NOOLP-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
 ; NOOLP-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
 ; NOOLP-NEXT:    nopa ; nopb ; nops ; nopx ; vadd.8 x2, x2, x2; nopv
@@ -170,7 +170,7 @@ define void @drain_after_olp(ptr noalias %a, ptr noalias %c, ptr %out, i32 %n, i
 ; NOOLP-NEXT:  // %bb.5: // %drain.preheader
 ; NOOLP-NEXT:    vldb x0, [p3], #64
 ; NOOLP-NEXT:    vldb x0, [p3], #64; add.nc lc, r2, #-9
-; NOOLP-NEXT:    nopa ; vldb x0, [p3], #64; nops ; add.nc le, pc, #.L_LEnd0; addm.nc ls, pc, #.LBB0_6; nopv
+; NOOLP-NEXT:    nopa ; vldb x0, [p3], #64; nops ; add.nc ls, pc, #.LBB0_6; addm.nc le, pc, #.L_LEnd0; nopv
 ; NOOLP-NEXT:    nopa ; vldb x0, [p3], #64; nops ; nopxm ; nopv
 ; NOOLP-NEXT:    nopa ; vldb x0, [p3], #64; nops ; nopxm ; nopv
 ; NOOLP-NEXT:    nopa ; vldb x0, [p3], #64; nops ; nopxm ; nopv

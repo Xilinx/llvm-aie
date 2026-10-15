@@ -12,7 +12,7 @@ define <32 x i8> @_Z5test0Dv64_a(<64 x i8> %b) {
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    paddb [sp], #32; nopa ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    mov p0, sp
-; CHECK-NEXT:    paddb [p0], #-32
+; CHECK-NEXT:    padds [p0], #-32
 ; CHECK-NEXT:    vst.pack.d4.d8 x2, [p0, #0]
 ; CHECK-NEXT:    vlda wl0, [sp, #-32]
 ; CHECK-NEXT:    ret lr
@@ -41,7 +41,7 @@ define <32 x i8> @_Z5test2Dv32_s(<32 x i16> %b) {
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    paddb [sp], #32; nopa ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    mov p0, sp
-; CHECK-NEXT:    paddb [p0], #-32
+; CHECK-NEXT:    padds [p0], #-32
 ; CHECK-NEXT:    vst.pack.d8.d16 x2, [p0, #0]
 ; CHECK-NEXT:    vlda wl0, [sp, #-32]
 ; CHECK-NEXT:    ret lr
@@ -65,7 +65,7 @@ define <32 x i8> @_Z5test1Dv64_a(<64 x i8> %b) {
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    paddb [sp], #32; nopa ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    mov p0, sp
-; CHECK-NEXT:    paddb [p0], #-32
+; CHECK-NEXT:    padds [p0], #-32
 ; CHECK-NEXT:    vst.pack.s4.s8 x2, [p0, #0]
 ; CHECK-NEXT:    vlda wl0, [sp, #-32]
 ; CHECK-NEXT:    ret lr
@@ -90,7 +90,7 @@ define <32 x i8> @_Z5test3Dv32_s(<32 x i16> %b) {
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    paddb [sp], #32; nopa ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    mov p0, sp
-; CHECK-NEXT:    paddb [p0], #-32
+; CHECK-NEXT:    padds [p0], #-32
 ; CHECK-NEXT:    vst.pack.s8.s16 x2, [p0, #0]
 ; CHECK-NEXT:    vlda wl0, [sp, #-32]
 ; CHECK-NEXT:    ret lr
@@ -114,7 +114,7 @@ define <32 x i8> @_Z5test4Dv64_a(<64 x i8> %b) {
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    paddb [sp], #32; nopa ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    mov p0, sp
-; CHECK-NEXT:    paddb [p0], #-32
+; CHECK-NEXT:    padds [p0], #-32
 ; CHECK-NEXT:    vst.pack.s4.s8 x2, [p0, #0]
 ; CHECK-NEXT:    vlda wl0, [sp, #-32]
 ; CHECK-NEXT:    ret lr
@@ -139,7 +139,7 @@ define <32 x i8> @_Z5test6Dv32_s(<32 x i16> %b) {
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    paddb [sp], #32; nopa ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    mov p0, sp
-; CHECK-NEXT:    paddb [p0], #-32
+; CHECK-NEXT:    padds [p0], #-32
 ; CHECK-NEXT:    vst.pack.s8.s16 x2, [p0, #0]
 ; CHECK-NEXT:    vlda wl0, [sp, #-32]
 ; CHECK-NEXT:    ret lr

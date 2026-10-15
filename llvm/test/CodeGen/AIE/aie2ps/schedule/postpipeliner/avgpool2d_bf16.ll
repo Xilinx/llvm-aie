@@ -40,9 +40,9 @@ define weak_odr dso_local void @_Z9avgpool2dILh1E8bfloat16Qsr5mllib5utilsE11is_o
 ; CHECK-NEXT:    st lr, [sp, #-56]; movxm r8, #50332476 // 4-byte Folded Spill Delay Slot 3
 ; CHECK-NEXT:    st r12, [sp, #-48]; vbcst.16 x0, r2 // 4-byte Folded Spill Delay Slot 2
 ; CHECK-NEXT:    mova r10, #1; movs p7, p1; add r1, r0, #-2; mov r9, p2 // Delay Slot 1
-; CHECK-NEXT:    vinsert.32 x2, x0, #0, r0
+; CHECK-NEXT:    nopx ; vinsert.32 x2, x0, #0, r0
 ; CHECK-NEXT:    vmov bmll0, x2
-; CHECK-NEXT:    mova m0, #24; mov p0, r9
+; CHECK-NEXT:    mova m0, #24; movs p0, r9
 ; CHECK-NEXT:    lda.u16 r26, [p0], m0; vconv.bf16.fp32 wl2, bmll0
 ; CHECK-NEXT:    lda.s16 r22, [p0], #12
 ; CHECK-NEXT:    lda.s8 r2, [p0], #1; movxm r12, #50331708
@@ -52,7 +52,7 @@ define weak_odr dso_local void @_Z9avgpool2dILh1E8bfloat16Qsr5mllib5utilsE11is_o
 ; CHECK-NEXT:    lda.s8 r18, [p0], #1; vldb x4, [p6], #64
 ; CHECK-NEXT:    lda.s8 r20, [p0], #1; vldb x6, [p6], #64
 ; CHECK-NEXT:    lda.s8 r24, [p0], #1; vldb x8, [p6], #64
-; CHECK-NEXT:    lda.s8 r28, [p0], #1; vldb x10, [p6], #64; mov m1, r22
+; CHECK-NEXT:    lda.s8 r28, [p0], #1; vldb x10, [p6], #64; movs m1, r22
 ; CHECK-NEXT:    vlda x7, [p6], m1; vconv.bf16.fp32 x2, cml0
 ; CHECK-NEXT:    vlda x10, [p6], #64; mov m0, #-9
 ; CHECK-NEXT:    lda.s8 r30, [p0], m0

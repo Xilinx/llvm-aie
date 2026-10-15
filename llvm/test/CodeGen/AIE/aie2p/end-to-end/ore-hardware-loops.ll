@@ -64,16 +64,16 @@ define weak_odr dso_local void @convert_bf16_to_bfp16(ptr noalias %in, ptr noali
 ;
 ; ASM-LABEL: convert_bf16_to_bfp16:
 ; ASM:       // %bb.0: // %entry
-; ASM-NEXT:    lda r0, [p2, #0]; nopb ; nops ; nopx ; mov m0, #4; nopv
-; ASM-NEXT:    padda [p2], m0; nopx
+; ASM-NEXT:    mova m0, #4; nopb ; nops ; nopxm ; nopv
+; ASM-NEXT:    lda r0, [p2, #0]; paddb [p2], m0; nopx
 ; ASM-NEXT:    lda dn0, [p2], #4
 ; ASM-NEXT:    lda m1, [p2, #0]
 ; ASM-NEXT:    nop
 ; ASM-NEXT:    nop
 ; ASM-NEXT:    nop
-; ASM-NEXT:    mova r24, #0; mov dj0, #0
-; ASM-NEXT:    movs dj1, dj0; vldb.fill.512 [p0, lf0, r24]; mov r26, r24
-; ASM-NEXT:    vlda.pop.512 x6, [p0, lf0, r24]; movs dc1, dj0; mov dn1, dn0
+; ASM-NEXT:    mova dj0, #0; movx r24, #0
+; ASM-NEXT:    movs dj1, dj0; vldb.fill.512 [p0, lf0, r24]; or r26, r24, r24
+; ASM-NEXT:    vlda.pop.512 x6, [p0, lf0, r24]; movs dn1, dn0; mov dc1, dj0
 ; ASM-NEXT:    vldb.pop.512.2d x4, [p0, lf0, r24, d1]
 ; ASM-NEXT:    nop
 ; ASM-NEXT:    vldb.fill.512 [p0, lf0, r24]
@@ -83,7 +83,7 @@ define weak_odr dso_local void @convert_bf16_to_bfp16(ptr noalias %in, ptr noali
 ; ASM-NEXT:    nopa ; vldb.fill.512 [p0, lf0, r24]; nops ; nopx ; add.nc lc, r0, #-3; nopv
 ; ASM-NEXT:    vlda.pop.512 x6, [p0, lf0, r24]; nopb ; nops ; nopx ; vconv.fp32.bf16 cml1, x6; nopv
 ; ASM-NEXT:    nopa ; vldb.pop.512.2d x4, [p0, lf0, r24, d1]; nops ; nopx ; vconv.fp32.bf16 cmh1, x4; nopv
-; ASM-NEXT:    nopa ; nopb ; movs dc0, dj0; nopx ; mov p2, p1; nopv
+; ASM-NEXT:    nopa ; nopb ; movs p2, p1; nopx ; mov dc0, dj0; nopv
 ; ASM-NEXT:  .LBB0_1: // %for.body
 ; ASM-NEXT:    // =>This Inner Loop Header: Depth=1
 ; ASM-NEXT:    nopa ; vldb.fill.512 [p0, lf0, r24]; vst.push.576.conv.bfp16ebs8.fp32 dm1, [p2, sf, r26]; nopxm ; nopv

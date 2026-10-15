@@ -74,7 +74,7 @@ define <32 x i16> @test_vmaxdiff_lt_v32uint16_tbRj(<32 x i16>  %a, <32 x i16>  %
 ; CHECK-NEXT:    or r2, r16, r16 // Delay Slot 4
 ; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 3
 ; CHECK-NEXT:    st r16, [p0, #0] // Delay Slot 2
-; CHECK-NEXT:    mov r16, r2 // Delay Slot 1
+; CHECK-NEXT:    or r16, r2, r2 // Delay Slot 1
 entry:
   %conv.i = zext i1 %sgn to i32
   %0 = tail call { <32 x i16>, i32 } @llvm.aie2.vmaxdiff.lt16(<32 x i16> %a, <32 x i16>  %b, i32 %conv.i)
@@ -92,7 +92,7 @@ define <32 x i16> @test_vmaxdiff_lt_v32uint16_sign0(<32 x i16>  %a, <32 x i16>  
 ; CHECK-NEXT:    vmaxdiff_lt.d16 x0, r16, x2, x4 // Delay Slot 4
 ; CHECK-NEXT:    or r0, r16, r16 // Delay Slot 3
 ; CHECK-NEXT:    st r16, [p0, #0] // Delay Slot 2
-; CHECK-NEXT:    mov r16, r0 // Delay Slot 1
+; CHECK-NEXT:    or r16, r0, r0 // Delay Slot 1
 entry:
   %0 = tail call { <32 x i16>, i32 } @llvm.aie2.vmaxdiff.lt16(<32 x i16> %a, <32 x i16>  %b, i32 0)
   %1 = extractvalue { <32 x i16>, i32 } %0, 1
@@ -109,7 +109,7 @@ define <32 x i16> @test_vmaxdiff_lt_v32uint16_sign1(<32 x i16>  %a, <32 x i16>  
 ; CHECK-NEXT:    vmaxdiff_lt.s16 x0, r16, x2, x4 // Delay Slot 4
 ; CHECK-NEXT:    or r0, r16, r16 // Delay Slot 3
 ; CHECK-NEXT:    st r16, [p0, #0] // Delay Slot 2
-; CHECK-NEXT:    mov r16, r0 // Delay Slot 1
+; CHECK-NEXT:    or r16, r0, r0 // Delay Slot 1
 entry:
   %0 = tail call { <32 x i16>, i32 } @llvm.aie2.vmaxdiff.lt16(<32 x i16> %a, <32 x i16>  %b, i32 1)
   %1 = extractvalue { <32 x i16>, i32 } %0, 1
@@ -129,7 +129,7 @@ define <16 x i32> @test_vmaxdiff_lt_v16int32(<16 x i32>  %a, <16 x i32> %b, i1 %
 ; CHECK-NEXT:    or r2, r16, r16 // Delay Slot 4
 ; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 3
 ; CHECK-NEXT:    st r16, [p0, #0] // Delay Slot 2
-; CHECK-NEXT:    mov r16, r2 // Delay Slot 1
+; CHECK-NEXT:    or r16, r2, r2 // Delay Slot 1
 entry:
   %conv.i = zext i1 %sgn to i32
   %0 = tail call { <16 x i32>, i32 } @llvm.aie2.vmaxdiff.lt32(<16 x i32> %a, <16 x i32> %b, i32 %conv.i)
@@ -147,7 +147,7 @@ define <16 x i32> @test_vmaxdiff_lt_v16int32_sign0(<16 x i32>  %a, <16 x i32> %b
 ; CHECK-NEXT:    vmaxdiff_lt.d32 x0, r16, x2, x2 // Delay Slot 4
 ; CHECK-NEXT:    or r0, r16, r16 // Delay Slot 3
 ; CHECK-NEXT:    st r16, [p0, #0] // Delay Slot 2
-; CHECK-NEXT:    mov r16, r0 // Delay Slot 1
+; CHECK-NEXT:    or r16, r0, r0 // Delay Slot 1
 entry:
   %0 = tail call { <16 x i32>, i32 } @llvm.aie2.vmaxdiff.lt32(<16 x i32> %a, <16 x i32> %a, i32 0)
   %1 = extractvalue { <16 x i32>, i32 } %0, 1
@@ -164,7 +164,7 @@ define <16 x i32> @test_vmaxdiff_lt_v16int32_sign1(<16 x i32>  %a, <16 x i32>  %
 ; CHECK-NEXT:    vmaxdiff_lt.s32 x0, r16, x2, x4 // Delay Slot 4
 ; CHECK-NEXT:    or r0, r16, r16 // Delay Slot 3
 ; CHECK-NEXT:    st r16, [p0, #0] // Delay Slot 2
-; CHECK-NEXT:    mov r16, r0 // Delay Slot 1
+; CHECK-NEXT:    or r16, r0, r0 // Delay Slot 1
 entry:
   %0 = tail call { <16 x i32>, i32 } @llvm.aie2.vmaxdiff.lt32(<16 x i32> %a, <16 x i32> %b, i32 1)
   %1 = extractvalue { <16 x i32>, i32 } %0, 1

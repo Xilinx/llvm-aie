@@ -14,6 +14,7 @@
 
 #include "AIEHazardRecognizer.h"
 #include "AIEBaseSubtarget.h"
+#include "AIESlotStatistics.h"
 #include "MCTargetDesc/AIEMCFormats.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -388,7 +389,18 @@ AIEHazardRecognizer::getHazardType(SUnit *SU, int DeltaCycles) {
   const std::vector<unsigned int> *AlternateInsts =
       TII->getFormatInterface()->getAlternateInstsOpcode(MI->getOpcode());
   if (AlternateInsts) {
-    for (const auto AltInstOpcode : *AlternateInsts) {
+    SmallVector<unsigned, 4> Order(AlternateInsts->begin(),
+                                   AlternateInsts->end());
+    if (SlotDemand) {
+      SlotDemand->orderAlternatives(Order, TII->getFormatInterface());
+      DEBUG_WITH_TYPE("aie-slot-demand", {
+        dbgs() << "  delta " << DeltaCycles << ":";
+        for (unsigned Opcode : Order)
+          dbgs() << " " << TII->getName(Opcode);
+        dbgs() << " : " << *MI;
+      });
+    }
+    for (const auto AltInstOpcode : Order) {
       ScheduleHazardRecognizer::HazardType Haz =
           getHazardType(Scoreboard, MI, TII->get(AltInstOpcode), DeltaCycles);
       // Check if there is NoHazard, If there is a Hazard or NoopHazard check

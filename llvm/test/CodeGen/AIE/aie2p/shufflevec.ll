@@ -987,7 +987,7 @@ define <64 x i8> @shuffle_concat_extracted_subvectors_exceptions_not_contiguous_
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mov p0, sp
-; CHECK-NEXT:    padda [p0], #-64
+; CHECK-NEXT:    paddb [p0], #-64
 ; CHECK-NEXT:    vlda bmll1, [p0, #-64]
 ; CHECK-NEXT:    vmov x0, bmll0
 ; CHECK-NEXT:    vextract.64 r1:r0, x0, #0, vaddsign1

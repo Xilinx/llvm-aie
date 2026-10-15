@@ -110,9 +110,9 @@ define dso_local void @gemm(i32 %0, ptr addrspace(5) %1, ptr addrspace(5) %2, pt
 ; REMARKS-NEXT: ...
 ; ASM-LABEL: gemm:
 ; ASM:       // %bb.0: // %newFuncRoot
-; ASM-NEXT:    nopa ; nopb ; nopx ; mov m0, p5; nops
+; ASM-NEXT:    nopa ; nopb ; nopxm ; movs m0, p5
 ; ASM-NEXT:    mova m1, #-4; mov p5, sp
-; ASM-NEXT:    padda [p5], m1
+; ASM-NEXT:    paddb [p5], m1
 ; ASM-NEXT:    lda dj0, [p5], #-4
 ; ASM-NEXT:    lda dj4, [p5], #-4
 ; ASM-NEXT:    lda dn0, [p5], #-4
@@ -135,7 +135,7 @@ define dso_local void @gemm(i32 %0, ptr addrspace(5) %1, ptr addrspace(5) %2, pt
 ; ASM-NEXT:    vlda.ups.2x cmh3, s0, upssign1, [p2], #64; vldb x8, [p1], m4; movx r22, #0; mov dc0, #0
 ; ASM-NEXT:    vlda.ups.2x cml2, s0, upssign1, [p2], #64; add r0, r0, #-1; vbcst.32 x2, r22
 ; ASM-NEXT:    vlda.ups.2x cmh2, s0, upssign1, [p2], #64; or r23, r10, r10; mov s0, r22
-; ASM-NEXT:    vlda.ups.2x cml1, s0, upssign1, [p2], #64; movs dc1, dc0; or r10, r5, r5; mov dc5, dc0
+; ASM-NEXT:    vlda.ups.2x cml1, s0, upssign1, [p2], #64; movs dc5, dc0; or r10, r5, r5; mov dc1, dc0
 ; ASM-NEXT:    lda m2, [p5], #-4; vldb.3d x10, [p1], d1; movx r22, #15; addm.nc r5, r0, #-1
 ; ASM-NEXT:    lda dj2, [p5], #-4; movx crupsmode, #0; vsel.32 x4, x2, x4, r22
 ; ASM-NEXT:    lda dn2, [p5], #-4; vsel.32 x2, x2, x6, r22
@@ -229,9 +229,9 @@ define dso_local void @gemm(i32 %0, ptr addrspace(5) %1, ptr addrspace(5) %2, pt
 ;
 ; NO-PROLOGUE-SPLIT-LABEL: gemm:
 ; NO-PROLOGUE-SPLIT:       // %bb.0: // %newFuncRoot
-; NO-PROLOGUE-SPLIT-NEXT:    nopa ; nopb ; nops ; nopx ; mov m0, p5; nopv
+; NO-PROLOGUE-SPLIT-NEXT:    nopa ; nopb ; nopxm ; movs m0, p5
 ; NO-PROLOGUE-SPLIT-NEXT:    mova m1, #-4; mov p5, sp
-; NO-PROLOGUE-SPLIT-NEXT:    padda [p5], m1
+; NO-PROLOGUE-SPLIT-NEXT:    paddb [p5], m1
 ; NO-PROLOGUE-SPLIT-NEXT:    lda dj0, [p5], #-4
 ; NO-PROLOGUE-SPLIT-NEXT:    lda dj4, [p5], #-4
 ; NO-PROLOGUE-SPLIT-NEXT:    lda dn0, [p5], #-4
@@ -248,23 +248,23 @@ define dso_local void @gemm(i32 %0, ptr addrspace(5) %1, ptr addrspace(5) %2, pt
 ; NO-PROLOGUE-SPLIT-NEXT:    lda r8, [p5], #-4
 ; NO-PROLOGUE-SPLIT-NEXT:    lda r17, [p5], #-4
 ; NO-PROLOGUE-SPLIT-NEXT:    lda r19, [p5], #-4
-; NO-PROLOGUE-SPLIT-NEXT:    lda m5, [p5], #-4; mov r23, r10
-; NO-PROLOGUE-SPLIT-NEXT:    add r0, r0, #-1; mov r22, #0
-; NO-PROLOGUE-SPLIT-NEXT:    mova dc3, #0; or r10, r5, r5; addm.nc r5, r0, #-1
-; NO-PROLOGUE-SPLIT-NEXT:    mova dc0, #0; vldb.128 wl2, [p4, #0]; or r21, r8, r8; vbcst.32 x4, r22
-; NO-PROLOGUE-SPLIT-NEXT:    vlda.ups.2x cml3, s0, upssign1, [p2], #64; vldb x10, [p1], m4; mov dc2, dc0
-; NO-PROLOGUE-SPLIT-NEXT:    vlda.ups.2x cmh3, s0, upssign1, [p2], #64; vldb.128 wl8, [p4, #16]; movs dc6, dc0; mov m2, m0
-; NO-PROLOGUE-SPLIT-NEXT:    vlda.ups.2x cml2, s0, upssign1, [p2], #64; vldb x6, [p0], #64; movs dc1, dc0; mov dc5, dc0
-; NO-PROLOGUE-SPLIT-NEXT:    vlda.ups.2x cmh2, s0, upssign1, [p2], #64; vldb.3d x3, [p1], d1; movs dj2, dj0; mov dn2, dn0
-; NO-PROLOGUE-SPLIT-NEXT:    vlda.ups.2x cml1, s0, upssign1, [p2], #64; movs dj6, dj4; or r24, r12, r12; mov dn6, dn4
+; NO-PROLOGUE-SPLIT-NEXT:    lda m5, [p5], #-4
+; NO-PROLOGUE-SPLIT-NEXT:    nop
+; NO-PROLOGUE-SPLIT-NEXT:    mova dc3, #0
+; NO-PROLOGUE-SPLIT-NEXT:    mova dc0, #0; vldb.128 wl2, [p4, #0]; or r21, r8, r8; mov r22, #0
+; NO-PROLOGUE-SPLIT-NEXT:    vlda.ups.2x cml3, s0, upssign1, [p2], #64; vldb x10, [p1], m4; movs dc2, dc0; vbcst.32 x4, r22
+; NO-PROLOGUE-SPLIT-NEXT:    vlda.ups.2x cmh3, s0, upssign1, [p2], #64; vldb.128 wl8, [p4, #16]; movs m2, m0; mov dc6, dc0
+; NO-PROLOGUE-SPLIT-NEXT:    vlda.ups.2x cml2, s0, upssign1, [p2], #64; vldb x6, [p0], #64; movs dc5, dc0; mov dc1, dc0
+; NO-PROLOGUE-SPLIT-NEXT:    vlda.ups.2x cmh2, s0, upssign1, [p2], #64; vldb.3d x3, [p1], d1; movs dn2, dn0; mov dj2, dj0
+; NO-PROLOGUE-SPLIT-NEXT:    vlda.ups.2x cml1, s0, upssign1, [p2], #64; movs dn6, dn4; or r24, r12, r12; mov dj6, dj4
 ; NO-PROLOGUE-SPLIT-NEXT:    vlda.ups.2x cmh1, s0, upssign1, [p2], #64; vldb.3d x1, [p0], d2; movx r22, #15; mov s0, r22
 ; NO-PROLOGUE-SPLIT-NEXT:    vlda.ups.2x cml0, s0, upssign1, [p2], #64; movx crupsmode, #0; vsel.32 x2, x4, x2, r22
 ; NO-PROLOGUE-SPLIT-NEXT:    vlda.ups.2x cmh0, s0, upssign1, [p2], #64; movx r12, #776; vshuffle x10, x10, x0, r1
-; NO-PROLOGUE-SPLIT-NEXT:    lda m3, [p5], #-4; vshuffle x10, x10, x0, r2; vmul dm4, x0, x2, r12
-; NO-PROLOGUE-SPLIT-NEXT:    lda dj3, [p5], #-4; vsel.32 x4, x4, x8, r22
+; NO-PROLOGUE-SPLIT-NEXT:    lda m3, [p5], #-4; or r23, r10, r10; vshuffle x10, x10, x0, r2; vmul dm4, x0, x2, r12
+; NO-PROLOGUE-SPLIT-NEXT:    lda dj3, [p5], #-4; or r10, r5, r5; vsel.32 x4, x4, x8, r22
 ; NO-PROLOGUE-SPLIT-NEXT:    lda dn3, [p5], #-4; vshuffle x8, x3, x0, r3; vaddmac dm3, dm3, dm4, x6, x10, r10
-; NO-PROLOGUE-SPLIT-NEXT:    lda m7, [p5], #-4; vshuffle x8, x8, x0, r4; vmul dm4, x0, x4, r12
-; NO-PROLOGUE-SPLIT-NEXT:    lda dj7, [p5, #0]; mov dc7, dc3; vaddmac dm2, dm2, dm4, x1, x10, r10
+; NO-PROLOGUE-SPLIT-NEXT:    lda m7, [p5], #-4; add r0, r0, #-1; vshuffle x8, x8, x0, r4; vmul dm4, x0, x4, r12
+; NO-PROLOGUE-SPLIT-NEXT:    lda dj7, [p5, #0]; movs dc7, dc3; addm.nc r5, r0, #-1; vaddmac dm2, dm2, dm4, x1, x10, r10
 ; NO-PROLOGUE-SPLIT-NEXT:    lda dn7, [p5, #-4]; nopb ; movs dc0, dc2; movxm p5, #.LBB0_1; vaddmac dm1, dm1, dm4, x6, x8, r10
 ; NO-PROLOGUE-SPLIT-NEXT:    movs dc4, dc6; movx crsrsmode, #0; mov s1, r17; vaddmac dm0, dm0, dm4, x1, x8, r10
 ; NO-PROLOGUE-SPLIT-NEXT:  .LBB0_1: // %steady.stage1.top
@@ -355,9 +355,9 @@ define dso_local void @gemm(i32 %0, ptr addrspace(5) %1, ptr addrspace(5) %2, pt
 ;
 ; NO-JNZD-LABEL: gemm:
 ; NO-JNZD:       // %bb.0: // %newFuncRoot
-; NO-JNZD-NEXT:    mov m0, p5
+; NO-JNZD-NEXT:    movs m0, p5
 ; NO-JNZD-NEXT:    mova m1, #-4; mov p5, sp
-; NO-JNZD-NEXT:    padda [p5], m1
+; NO-JNZD-NEXT:    paddb [p5], m1
 ; NO-JNZD-NEXT:    lda dj0, [p5], #-4
 ; NO-JNZD-NEXT:    lda dj4, [p5], #-4
 ; NO-JNZD-NEXT:    lda dn0, [p5], #-4
@@ -380,7 +380,7 @@ define dso_local void @gemm(i32 %0, ptr addrspace(5) %1, ptr addrspace(5) %2, pt
 ; NO-JNZD-NEXT:    vlda.ups.2x cmh3, s0, upssign1, [p2], #64; vldb.128 wl6, [p4, #16]; mov r21, r8
 ; NO-JNZD-NEXT:    vlda.ups.2x cml2, s0, upssign1, [p2], #64; vldb x8, [p1], m4; mov dc2, #0
 ; NO-JNZD-NEXT:    vlda.ups.2x cmh2, s0, upssign1, [p2], #64; mov dc0, #0
-; NO-JNZD-NEXT:    vlda.ups.2x cml1, s0, upssign1, [p2], #64; movs dc1, dc0; movx r24, #0; mov dc5, dc0
+; NO-JNZD-NEXT:    vlda.ups.2x cml1, s0, upssign1, [p2], #64; movs dc5, dc0; movx r24, #0; mov dc1, dc0
 ; NO-JNZD-NEXT:    vlda.ups.2x cmh1, s0, upssign1, [p2], #64; vldb.3d x1, [p1], d1; movx crupsmode, #0; mov s0, r24
 ; NO-JNZD-NEXT:    vlda.ups.2x cml0, s0, upssign1, [p2], #64; movx r24, #15; vbcst.32 x2, r24
 ; NO-JNZD-NEXT:    vlda.ups.2x cmh0, s0, upssign1, [p2], #64; vsel.32 x4, x2, x4, r24

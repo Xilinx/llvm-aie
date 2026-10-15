@@ -43,7 +43,7 @@ define void @caller_pack_two_bytes(i16 %a, i16 %b, ptr %p) {
 ; AIE2P-NEXT:    paddxm [sp], #64 // Delay Slot 4
 ; AIE2P-NEXT:    mova r2, #8; st lr, [sp, #-64]; extend.u8 r0, r0 // 4-byte Folded Spill Delay Slot 3
 ; AIE2P-NEXT:    st p6, [sp, #-60]; lshl r1, r1, r2 // 4-byte Folded Spill Delay Slot 2
-; AIE2P-NEXT:    or r1, r0, r1; mov p6, p0 // Delay Slot 1
+; AIE2P-NEXT:    movs p6, p0; or r1, r0, r1 // Delay Slot 1
 ; AIE2P-NEXT:    st.s16 r0, [p6, #0]; nopb ; nops ; nopxm ; nopv
 ; AIE2P-NEXT:    nop
 ; AIE2P-NEXT:    nop

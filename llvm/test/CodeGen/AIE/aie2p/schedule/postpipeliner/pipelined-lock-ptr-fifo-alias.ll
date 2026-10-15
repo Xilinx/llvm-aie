@@ -39,7 +39,7 @@ declare { ptr, <32 x i32>, i32 }
 define void @pipelined_acquire_ptr_fifo_same(ptr noalias %io, i32 %lock_id) {
 ; CHECK-LABEL: pipelined_acquire_ptr_fifo_same:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    lda r1, [p0, #4]; nopb ; nopxm
+; CHECK-NEXT:    lda r1, [p0, #4]; nopb ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    lda r2, [p0, #8]
 ; CHECK-NEXT:    lda r27, [p0, #12]
 ; CHECK-NEXT:    nop
@@ -48,9 +48,9 @@ define void @pipelined_acquire_ptr_fifo_same(ptr noalias %io, i32 %lock_id) {
 ; CHECK-NEXT:    movxm ls, #.LBB0_1
 ; CHECK-NEXT:    movxm le, #.L_LEnd0
 ; CHECK-NEXT:    paddxm [sp], #64
-; CHECK-NEXT:    mova r2, #-1; sel.eqz r1, r1, r2, r27; mov r24, #0
+; CHECK-NEXT:    mova r2, #-1; sel.eqz r1, r1, r2, r27
 ; CHECK-NEXT:    mova r3, #16; acq r0, r2; mov p1, sp
-; CHECK-NEXT:    padda [p1], #-64; nopb ; nops ; movx r30, #63; add.nc lc, r3, #0; nopv
+; CHECK-NEXT:    mova r30, #63; paddb [p1], #-64; nops ; movx r24, #0; add.nc lc, r3, #0; nopv
 ; CHECK-NEXT:  .LBB0_1: // %for.body
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
 ; CHECK-NEXT:    nopa ; nopb ; movs p0, r1; nopxm ; nopv
@@ -111,12 +111,12 @@ for.exit:
 define void @pipelined_acquire_ptr_fifo_disjoint(ptr noalias %lock_io, ptr noalias %in_port, i32 %lock_id) {
 ; CHECK-LABEL: pipelined_acquire_ptr_fifo_disjoint:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopb ; nops ; movxm ls, #.LBB1_1; nopv
-; CHECK-NEXT:    mova r1, #-1; nopb ; movxm le, #.L_LEnd1
+; CHECK-NEXT:    movxm ls, #.LBB1_1
+; CHECK-NEXT:    mova r1, #-1; movxm le, #.L_LEnd1
 ; CHECK-NEXT:    acq r0, r1
 ; CHECK-NEXT:    paddxm [sp], #64
-; CHECK-NEXT:    mova r2, #16; movx r25, #0; mov p0, sp
-; CHECK-NEXT:    padda [p0], #-64; nopb ; nops ; movx r30, #63; add.nc lc, r2, #0; nopv
+; CHECK-NEXT:    mova r2, #16; mov p0, sp
+; CHECK-NEXT:    mova r30, #63; paddb [p0], #-64; nops ; movx r25, #0; add.nc lc, r2, #0; nopv
 ; CHECK-NEXT:  .LBB1_1: // %for.body
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
 ; CHECK-NEXT:    nopa ; vldb.popx.512 x2, [p1, lf1, r25]; nops ; nopxm ; nopv

@@ -23,7 +23,7 @@
   ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    add.nc lc, r0, #0
-  ; CHECK-NEXT:    nopa ; nopb ; nops ; add.nc le, pc, #.L_LEnd0; addm.nc ls, pc, #.LBB0_2; nopv
+  ; CHECK-NEXT:    nopa ; nopb ; nops ; add.nc ls, pc, #.LBB0_2; addm.nc le, pc, #.L_LEnd0; nopv
   ; CHECK-NEXT:  .LBB0_2: // %loop
   ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
   ; CHECK-NEXT:    nopa ; vldb x6, [p2, #0]; nops ; nopx ; vmax_lt.bf16 x6, r16, x0, x0; nopv

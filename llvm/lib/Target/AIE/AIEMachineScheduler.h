@@ -18,6 +18,7 @@
 #include "AIEHazardRecognizer.h"
 #include "AIEInterBlockScheduling.h"
 #include "AIEPostPipeliner.h"
+#include "AIESlotStatistics.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineScheduler.h"
@@ -36,6 +37,10 @@ std::vector<AIE::MachineBundle> computeAndFinalizeBundles(SchedBoundary &Zone);
 class AIEPostRASchedStrategy : public PostGenericScheduler {
   /// Maintain the state of interblock/loop-aware scheduling
   AIE::InterBlockScheduling InterBlock;
+
+  /// The slot demand of the free instructions of the current region that is
+  /// not scheduled yet.
+  AIE::SlotDemandTracker SlotDemand;
 
 public:
   AIEPostRASchedStrategy(const MachineSchedContext *C);

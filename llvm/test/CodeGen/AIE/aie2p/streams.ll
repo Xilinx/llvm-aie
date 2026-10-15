@@ -73,7 +73,7 @@ define dso_local noundef i32 @_Z14test_get_ss_nbRbS_(ptr nocapture nonnull write
 ; CHECK-NEXT:    st.s8 r1, [p0, #0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    mova r3, #-1; extend.u8 r1, r1 // Delay Slot 5
+; CHECK-NEXT:    extend.u8 r1, r1; mov r3, #-1 // Delay Slot 5
 ; CHECK-NEXT:    lshl r1, r1, r3 // Delay Slot 4
 ; CHECK-NEXT:    and r1, r1, r2 // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2

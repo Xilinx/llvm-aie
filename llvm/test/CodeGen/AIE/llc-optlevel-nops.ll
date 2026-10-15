@@ -4,7 +4,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc -mtriple=aie2 -O0 < %s | FileCheck %s --check-prefix=AIE2-O0
 ; RUN: llc -mtriple=aie2 -O2 < %s | FileCheck %s --check-prefix=AIE2-O2
 ; RUN: llc -mtriple=aie2p -O0 < %s | FileCheck %s --check-prefix=AIE2P-O0
