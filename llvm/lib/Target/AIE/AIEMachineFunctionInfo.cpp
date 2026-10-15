@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -34,7 +34,14 @@ MachineFunctionInfo *AIEMachineFunctionInfo::clone(
     BumpPtrAllocator &Allocator, MachineFunction &DestMF,
     const DenseMap<MachineBasicBlock *, MachineBasicBlock *> &Src2DstMBB)
     const {
-  return DestMF.cloneInfo<AIEMachineFunctionInfo>(*this);
+  auto *Info = DestMF.cloneInfo<AIEMachineFunctionInfo>(*this);
+  Info->LoopSchedules.clear();
+  for (const auto &[SrcMBB, DstMBB] : Src2DstMBB) {
+    auto It = LoopSchedules.find(SrcMBB);
+    if (It != LoopSchedules.end())
+      Info->LoopSchedules[DstMBB] = It->second;
+  }
+  return Info;
 }
 
 namespace llvm {
