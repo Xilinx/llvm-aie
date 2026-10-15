@@ -15,6 +15,7 @@
 
 #include "AIE2AsmPrinter.h"
 #include "AIE2TargetMachine.h"
+#include "AIEMachineFunctionInfo.h"
 #include "InstPrinter/AIE2InstPrinter.h"
 #include "llvm/Analysis/OptimizationRemarkEmitter.h"
 #include "llvm/CodeGen/AsmPrinter.h"
@@ -164,19 +165,29 @@ void AIE2AsmPrinter::emitRegionRemarks(const MachineBasicBlock &MBB) {
   auto *TII = static_cast<const AIEBaseInstrInfo *>(
       MBB.getParent()->getSubtarget().getInstrInfo());
 
+  // The pipeliner "schedule" remark names its loop by MBB number, but blocks
+  // are renumbered after scheduling and several MBBs can share an IR name (a
+  // pipelined loop and its prologue), so report the schedule on the loop block
+  // itself.
+  const std::optional<AIEMachineFunctionInfo::LoopSchedule> Schedule =
+      MBB.getParent()->getInfo<AIEMachineFunctionInfo>()->getLoopSchedule(MBB);
+
   // One remark per region; RegionIndex distinguishes a multi-region block.
   unsigned RegionIndex = 0;
   for (const BundleRegion &Region : partitionIntoRegions(MBB, *TII)) {
     const unsigned Offset = LayoutByteOffset;
     LayoutByteOffset += Region.getByteCount();
     ORE->emit([&]() {
-      return MachineOptimizationRemarkAnalysis(DEBUG_TYPE, "analysis",
-                                               MBB.begin()->getDebugLoc(), &MBB)
-             << ore::NV("BasicBlock", MBB.getName())
-             << ore::NV("RegionIndex", RegionIndex)
-             << ore::NV("BundleCount", Region.getBundleCount())
-             << ore::NV("ByteCount", Region.getByteCount())
-             << ore::NV("Offset", Offset);
+      MachineOptimizationRemarkAnalysis R(DEBUG_TYPE, "analysis",
+                                          MBB.begin()->getDebugLoc(), &MBB);
+      R << ore::NV("BasicBlock", MBB.getName())
+        << ore::NV("RegionIndex", RegionIndex)
+        << ore::NV("BundleCount", Region.getBundleCount())
+        << ore::NV("ByteCount", Region.getByteCount())
+        << ore::NV("Offset", Offset);
+      if (Schedule && RegionIndex == 0)
+        R << ore::NV("II", Schedule->II) << ore::NV("NS", Schedule->NS);
+      return R;
     });
     RegionIndex++;
   }
