@@ -51,6 +51,10 @@ static cl::opt<bool> EnablePipelinerSchedPropagateIncomingLatencies(
     "aie-pipeliner-propagate-incoming-latencies", cl::Hidden, cl::init(true),
     cl::desc(
         "Move input latency of copy-like instructions to their successors"));
+static cl::opt<unsigned> IfConversionCritPathLimit(
+    "aie-if-conv-critical-path-limit",
+    cl::desc("Specify the critical path extension we accept for if conversion"),
+    cl::init(10), cl::Hidden);
 // The following options are also testing options
 static cl::opt<bool> EnableWAWStickyRegisters(
     "aie-pipeliner-waw-sticky-registers", cl::Hidden, cl::init(true),
@@ -61,7 +65,7 @@ static cl::opt<bool> ForcePostPipeliner(
     cl::desc(
         "Force using AIE's post-pipeliner instead of the MachinePipeliner"),
     cl::init(false), cl::Hidden);
-// These are debugging/testing options.
+// This is a debugging/testing option.
 
 // aie-latency-margin defines the latency that will be given to ExitSU edges.
 // If it is not set explicitly, it will be derived from the worst case latency
@@ -70,11 +74,6 @@ static cl::opt<bool> ForcePostPipeliner(
 static cl::opt<unsigned>
     UserLatencyMargin("aie-latency-margin", cl::Hidden, cl::init(0),
                       cl::desc("Define the latency on ExitSU edges"));
-
-static cl::opt<unsigned> IfConversionCritPathLimit(
-    "aie-if-conv-critical-path-limit",
-    cl::desc("Specify the critical path extension we accept for if conversion"),
-    cl::init(10), cl::Hidden);
 
 #define DEBUG_TYPE "aie-subtarget"
 
