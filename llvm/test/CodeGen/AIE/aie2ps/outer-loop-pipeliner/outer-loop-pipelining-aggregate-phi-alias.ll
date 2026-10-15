@@ -105,8 +105,8 @@ define void @drain_after_olp(ptr noalias %a, ptr noalias %c, ptr %out, i32 %n, i
 ; OLP-NEXT:  .L_LEnd0:
 ; OLP-NEXT:    nopa ; vldb x0, [p4], #64; vst x2, [p2], #64; nopx ; vadd.32 x2, x0, x0; nopv
 ; OLP-NEXT:  // %bb.9: // %exit
-; OLP-NEXT:    nopa ; nopb ; vst x2, [p2], #64; nopx ; vadd.32 x2, x0, x0; nopv
-; OLP-NEXT:    nopa ; nopb ; nopx ; vadd.32 x2, x0, x0; vst x2, [p2], #64
+; OLP-NEXT:    vst x2, [p2], #64; vadd.32 x2, x0, x0
+; OLP-NEXT:    vst x2, [p2], #64; vadd.32 x2, x0, x0
 ; OLP-NEXT:    vst x2, [p2], #64; vadd.32 x2, x0, x0
 ; OLP-NEXT:    vst x2, [p2], #64; vadd.32 x2, x0, x0
 ; OLP-NEXT:    vst x2, [p2], #64; vadd.32 x2, x0, x0
@@ -114,7 +114,6 @@ define void @drain_after_olp(ptr noalias %a, ptr noalias %c, ptr %out, i32 %n, i
 ; OLP-NEXT:    vst x2, [p2], #64; vadd.32 x2, x0, x0
 ; OLP-NEXT:    vst x2, [p2], #64
 ; OLP-NEXT:    vst x2, [p2], #64
-; OLP-NEXT:    nop
 ; OLP-NEXT:  .LBB0_10: // %exit
 ; OLP-NEXT:    nopa ; ret lr
 ; OLP-NEXT:    nop // Delay Slot 5
@@ -183,8 +182,8 @@ define void @drain_after_olp(ptr noalias %a, ptr noalias %c, ptr %out, i32 %n, i
 ; NOOLP-NEXT:  .L_LEnd0:
 ; NOOLP-NEXT:    nopa ; vldb x0, [p3], #64; vst x2, [p2], #64; nopx ; vadd.32 x2, x0, x0; nopv
 ; NOOLP-NEXT:  // %bb.7: // %exit
-; NOOLP-NEXT:    nopa ; nopb ; vst x2, [p2], #64; nopx ; vadd.32 x2, x0, x0; nopv
-; NOOLP-NEXT:    nopa ; nopb ; nopx ; vadd.32 x2, x0, x0; vst x2, [p2], #64
+; NOOLP-NEXT:    vst x2, [p2], #64; vadd.32 x2, x0, x0
+; NOOLP-NEXT:    vst x2, [p2], #64; vadd.32 x2, x0, x0
 ; NOOLP-NEXT:    vst x2, [p2], #64; vadd.32 x2, x0, x0
 ; NOOLP-NEXT:    vst x2, [p2], #64; vadd.32 x2, x0, x0
 ; NOOLP-NEXT:    vst x2, [p2], #64; vadd.32 x2, x0, x0
@@ -192,7 +191,6 @@ define void @drain_after_olp(ptr noalias %a, ptr noalias %c, ptr %out, i32 %n, i
 ; NOOLP-NEXT:    vst x2, [p2], #64; vadd.32 x2, x0, x0
 ; NOOLP-NEXT:    vst x2, [p2], #64
 ; NOOLP-NEXT:    vst x2, [p2], #64
-; NOOLP-NEXT:    nop
 ; NOOLP-NEXT:  .LBB0_8: // %exit
 ; NOOLP-NEXT:    nopa ; ret lr
 ; NOOLP-NEXT:    nop // Delay Slot 5

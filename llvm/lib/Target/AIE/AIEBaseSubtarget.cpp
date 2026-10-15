@@ -19,7 +19,6 @@
 #include "AIEMachineFunctionInfo.h"
 #include "AIEMachineScheduler.h"
 #include "AIEMaxLatencyFinder.h"
-#include "Utils/AIELoopUtils.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
@@ -387,23 +386,59 @@ class FuncArgCopyEdges : public ScheduleDAGMutation {
 class RegionEndEdges : public ScheduleDAGMutation {
   void removeExitSUPreds(ScheduleDAGInstrs *DAG) {
     SUnit &ExitSU = DAG->ExitSU;
-    while (!ExitSU.Preds.empty()) {
-      ExitSU.removePred(ExitSU.Preds.back());
+    SmallVector<SDep, 8> ToRemove;
+    for (const SDep &Pred : ExitSU.Preds) {
+      if (Pred.isPin())
+        continue;
+      ToRemove.push_back(Pred);
     }
+    for (const SDep &Pred : ToRemove)
+      ExitSU.removePred(Pred);
   }
   void apply(ScheduleDAGInstrs *DAG) override {
     AIE::MaxLatencyFinder MaxLatency(DAG);
     MachineBasicBlock *PrologueMBB = DAG->getBB();
     unsigned int ZOLBundlesCount = 0;
 
+    // DDG mutations have no scheduler and no prologue, and every SUnit is free.
+    AIEPostRASchedStrategy *Scheduler = nullptr;
+    if (PrologueMBB)
+      Scheduler = static_cast<AIEScheduleDAGMI *>(DAG)->getSchedImpl();
+
+    auto IsFree = [Scheduler](const SUnit &SU) {
+      return !Scheduler || Scheduler->isFreeSU(SU);
+    };
+
     // Default edges to ExitSU are conservative, and can't be shrunk.
-    // We really should know what we're doing here, so just remove and
-    // recompute all of them.
+    // Remove and recompute them. Pin edges stay. TopFixed has no ExitSU edge
+    // yet; the add-loop attaches remaining latency.
     removeExitSUPreds(DAG);
 
     const auto *TII = static_cast<const AIEBaseInstrInfo *>(DAG->TII);
     bool UserSetLatencyMargin = UserLatencyMargin.getNumOccurrences() > 0;
+
     for (SUnit &SU : DAG->SUnits) {
+      const bool TopFixed =
+          Scheduler && Scheduler->isFixedSU(SU, /*IsTop=*/true);
+      if (!IsFree(SU) && !TopFixed)
+        continue; // BotFixed position pins
+
+      // A TopFixed ExitSU edge carries only remaining successor latency.
+      if (TopFixed) {
+        auto RemainingLatency = [&](MachineInstr &MI) {
+          if (!MI.isBundle())
+            return MaxLatency(MI);
+          unsigned BundleLatency = 0;
+          for (MachineInstr &BundledMI : bundled_instrs(MI))
+            BundleLatency = std::max(BundleLatency, MaxLatency(BundledMI));
+          return BundleLatency;
+        };
+        SDep ExitDep(&SU, SDep::Artificial);
+        ExitDep.setLatency(RemainingLatency(*SU.getInstr()));
+        DAG->ExitSU.addPred(ExitDep, /*Required=*/true);
+        continue;
+      }
+
       MachineInstr &MI = *SU.getInstr();
 
       SDep ExitDep(&SU, SDep::Artificial);
@@ -414,10 +449,9 @@ class RegionEndEdges : public ScheduleDAGMutation {
                                  : MaxLatency(MI);
       // Extend the edge latency if MI requires delay slots. This makes sure
       // there are at least getNumDelaySlots() cycles between MI and ExitSU.
-      if (DelaySlots) {
-        assert(EdgeLatency <= DelaySlots + 1);
-        EdgeLatency = DelaySlots + 1;
-      }
+      // An SWP prologue consumer of MI can require more.
+      if (DelaySlots)
+        EdgeLatency = std::max(EdgeLatency, DelaySlots + 1);
 
       // "Implicit" latency for special instructions.
       const unsigned ImplicitLatency = TII->getImplicitLatency(MI);
@@ -443,6 +477,7 @@ class RegionEndEdges : public ScheduleDAGMutation {
           EdgeLatency = std::max(EdgeLatency, ZOLSupport->LoopSetupDistance -
                                                   ZOLBundlesCount);
       }
+
       ExitDep.setLatency(EdgeLatency);
       DAG->ExitSU.addPred(ExitDep, /*Required=*/true);
     }
@@ -452,8 +487,15 @@ class RegionEndEdges : public ScheduleDAGMutation {
     // The backward edge gets (Latency - 1) because we want instructions
     // to be able to issue in the same cycle as ExitSU (cycle #0 in bottom-up
     // scheduling).
+    // Pin edges keep their latency: subtracting 1 from a BotFixed link of 1
+    // would make it 0. TopFixed edges were just added above and need the same
+    // adjustment as free edges.
+    auto Adjust = [&](const SUnit &SU) {
+      return IsFree(SU) ||
+             (Scheduler && Scheduler->isFixedSU(SU, /*IsTop=*/true));
+    };
     for (SDep &PredEdge : DAG->ExitSU.Preds) {
-      if (!PredEdge.isArtificial())
+      if (!PredEdge.isArtificial() || !Adjust(*PredEdge.getSUnit()))
         continue;
       unsigned BackwardLatency =
           PredEdge.getLatency() ? PredEdge.getLatency() - 1 : 0;
@@ -517,8 +559,7 @@ public:
 /// Region::bot_fixed_instrs() and are chained from EntrySU / to ExitSU so the
 /// scheduler places them at their fixed depth or height. That chain is
 /// position only. Free vs TopFixed EntrySU spacing is RegionStartEdges.
-/// ExitSU latency for free instructions is RegionEndEdges. TopFixed to ExitSU
-/// still uses itinerary maxLatency.
+/// ExitSU latency for free instructions and TopFixed is RegionEndEdges.
 class EmitFixedSUnits : public ScheduleDAGMutation {
 private:
   void createFixedSUDAGNodes(ScheduleDAGInstrs *DAG,
@@ -550,41 +591,16 @@ private:
     DAG->makeMaps();
   }
 
-  void establishSafeFixedSUToExitSUDistances(
-      ScheduleDAGInstrs *DAG, AIEPostRASchedStrategy *Scheduler,
-      const AIEBaseInstrInfo *TII, const InstrItineraryData *ItinData) {
-
-    auto IsTopFixedSU = [Scheduler](const SUnit &SU) {
-      return Scheduler->isFixedSU(SU, true);
-    };
-    // TODO: this is pessimistic, we can handle this in RegionEndEdges after
-    // a mutation reordering.
-    // Establish dependencies to ExitSU for each top-fixed sched. unit by taking
-    // into account MaxLatency.
-    for (SUnit &FixedSU : make_filter_range(DAG->SUnits, IsTopFixedSU)) {
-      const MachineInstr &MI = *FixedSU.getInstr();
-      SDep Dep(&FixedSU, SDep::Artificial);
-      Dep.setLatency(
-          AIE::maxLatency(&MI, *TII, *ItinData, /*IncludeStages=*/true));
-      DAG->ExitSU.addPred(Dep, /*Required=*/true);
-    }
-  }
-
 public:
   EmitFixedSUnits() {}
 
   void apply(ScheduleDAGInstrs *DAG) override {
     AIEPostRASchedStrategy *Scheduler =
         static_cast<AIEScheduleDAGMI *>(DAG)->getSchedImpl();
-    auto *TII = static_cast<const AIEBaseInstrInfo *>(DAG->TII);
-    auto *ItinData = DAG->MF.getSubtarget().getInstrItineraryData();
-    const BlockState &BS =
-        Scheduler->getInterBlock().getBlockState(DAG->getBB());
-    const Region &CurRegion = BS.getCurrentRegion();
-
+    const Region &CurRegion = Scheduler->getInterBlock()
+                                  .getBlockState(DAG->getBB())
+                                  .getCurrentRegion();
     createFixedSUDAGNodes(DAG, Scheduler, CurRegion);
-
-    establishSafeFixedSUToExitSUDistances(DAG, Scheduler, TII, ItinData);
   }
 };
 
@@ -939,12 +955,12 @@ AIEBaseSubtarget::getPostRAMutationsImpl(const Triple &TT, AAResults *AA) {
   if (!TT.isAIE1()) {
     if (EnableWAWStickyRegisters)
       Mutations.emplace_back(std::make_unique<WAWStickyRegistersEdges>());
-    Mutations.emplace_back(std::make_unique<RegionEndEdges>());
     Mutations.emplace_back(std::make_unique<MemoryEdges>(true));
     Mutations.emplace_back(std::make_unique<MachineSchedWAWEdges>());
     Mutations.emplace_back(std::make_unique<BiasDepth>());
     Mutations.emplace_back(std::make_unique<RegionStartEdges>());
     Mutations.emplace_back(std::make_unique<EmitFixedSUnits>());
+    Mutations.emplace_back(std::make_unique<RegionEndEdges>());
   }
   return Mutations;
 }

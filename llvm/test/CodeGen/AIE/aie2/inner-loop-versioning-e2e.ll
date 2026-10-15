@@ -94,8 +94,7 @@ define void @versioned(ptr noalias %a, ptr noalias %b, i32 %n) {
 ; CHECK-NEXT:  .L_LEnd0:
 ; CHECK-NEXT:    nopb ; nopa ; nops ; xor r2, r3, r2; nopm ; nopv
 ; CHECK-NEXT:  // %bb.5: // %exit
-; CHECK-NEXT:    nopa ; nopb ; nopxm ; st r2, [p1, dj0]
-; CHECK-NEXT:    nop
+; CHECK-NEXT:    nopb ; nopa ; st r2, [p1, dj0]; nopxm ; nopv
 ; CHECK-NEXT:  .LBB0_6: // %exit
 ; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
