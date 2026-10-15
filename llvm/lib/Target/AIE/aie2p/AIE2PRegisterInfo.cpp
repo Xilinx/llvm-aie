@@ -116,6 +116,45 @@ const uint32_t *AIE2PRegisterInfo::getNoPreservedMask() const {
   return CSR_NoRegs_RegMask;
 }
 
+namespace {
+/// Scale of the SP-relative immediate offset of a *_spill opcode, in bytes.
+/// All of them use a 9-bit negative field scaled by Step -- the
+/// c12n_step4 / c14n_step16 / c15n_step32 / c16n_step64 operand classes in
+/// AIE2PImmOperands.td -- so the offset must be a multiple of Step and lie in
+/// [-512 * Step, -Step]. Outside that, the MC encoder aborts, so the caller has
+/// to fall back to the register-offset form instead.
+unsigned getSpillImmOffsetStep(unsigned Opc) {
+  switch (Opc) {
+  case AIE2P::LDA_dms_lda_spill:
+  case AIE2P::ST_dms_sts_spill:
+    return 4;
+  case AIE2P::LDA_dmv_lda_q_spill:
+  case AIE2P::ST_dmv_sts_q_spill:
+  case AIE2P::VLDA_128_dmv_lda_w_spill:
+  case AIE2P::VST_128_dmv_sts_w_spill:
+    return 16;
+  case AIE2P::VLDA_dmw_lda_w_spill:
+  case AIE2P::VST_dmw_sts_w_spill:
+    return 32;
+  case AIE2P::VLDA_dmx_lda_bm_spill:
+  case AIE2P::VST_dmx_sts_bm_spill:
+  case AIE2P::VLDA_dmx_lda_fifohl_spill:
+  case AIE2P::VST_dmx_sts_fifohl_spill:
+  case AIE2P::VLDA_dmx_lda_x_spill:
+  case AIE2P::VST_dmx_sts_x_spill:
+    return 64;
+  }
+  llvm_unreachable("Not a spill opcode with an immediate offset");
+}
+
+/// Whether \p Offset can be encoded in \p Opc's immediate offset field.
+bool fitsSpillImmOffset(unsigned Opc, int Offset) {
+  const unsigned Step = getSpillImmOffsetStep(Opc);
+  return Offset % static_cast<int>(Step) == 0 &&
+         isIntN(9 + Log2_32(Step) + 1, Offset);
+}
+} // namespace
+
 bool AIE2PRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
                                             int SPAdj, unsigned FIOperandNum,
                                             RegScavenger *RS) const {
@@ -186,9 +225,46 @@ bool AIE2PRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   case AIE2P::VST_dmx_sts_fifohl_spill:
   case AIE2P::VST_dmx_sts_x_spill:
   case AIE2P::VLDA_512_COMPOSED_REG_SPILL:
-  case AIE2P::VST_512_COMPOSED_REG_SPILL:
-    MI.getOperand(FIOperandNum).ChangeToImmediate(Offset);
-    return false;
+  case AIE2P::VST_512_COMPOSED_REG_SPILL: {
+    // The composed pseudos are retagged to a concrete opcode in
+    // expandPostRAPseudo, which runs after this pass; resolve them the same way
+    // here so the offset is checked against the field it ends up encoded in.
+    const MachineOperand &DataOp = MI.getOperand(0);
+    const unsigned EncodedOpc =
+        (Opc == AIE2P::VLDA_512_COMPOSED_REG_SPILL ||
+         Opc == AIE2P::VST_512_COMPOSED_REG_SPILL)
+            ? TII->getComposed512SpillOpcode(Opc, DataOp.getReg())
+            : Opc;
+    if (fitsSpillImmOffset(EncodedOpc, Offset)) {
+      MI.getOperand(FIOperandNum).ChangeToImmediate(Offset);
+      return false;
+    }
+    // Out of range: address the slot through a register instead. SP is
+    // reserved and cannot be a general operand, so copy it into an allocatable
+    // pointer register, materialize the offset, and use the indexed form.
+    const auto RegOffsetInfo = TII->getRegOffsetSpillInstrInfoFromImmOffset(
+        EncodedOpc);
+    Register BaseReg = MRI.createVirtualRegister(&AIE2P::ePRegClass);
+    BuildMI(MBB, II, DL, TII->get(TII->getMvSclOpcode()), BaseReg)
+        .addReg(getStackPointerRegister());
+    Register OffsetReg = MRI.createVirtualRegister(RegOffsetInfo.OffsetRC);
+    BuildMI(MBB, II, DL, TII->get(RegOffsetInfo.AdjustOffsetOpcode), OffsetReg)
+        .addImm(Offset);
+    if (DataOp.isDef())
+      BuildMI(MBB, II, DL, TII->get(RegOffsetInfo.SpillOpCode),
+              DataOp.getReg())
+          .addReg(BaseReg)
+          .addReg(OffsetReg)
+          .cloneMemRefs(MI);
+    else
+      BuildMI(MBB, II, DL, TII->get(RegOffsetInfo.SpillOpCode))
+          .addReg(DataOp.getReg(), getRegState(DataOp))
+          .addReg(BaseReg)
+          .addReg(OffsetReg)
+          .cloneMemRefs(MI);
+    MI.eraseFromParent();
+    return true;
+  }
   case AIE2P::LDA_R_SPILL:
   case AIE2P::ST_R_SPILL:
   case AIE2P::VLDA_L_SPILL:
@@ -200,14 +276,36 @@ bool AIE2PRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   case AIE2P::VST_EX_SPILL:
   case AIE2P::VST_E_SPILL:
   case AIE2P::VLDA_E_SPILL:
-  case AIE2P::VLDA_EX_SPILL:
-  case AIE2P::VLDA_PLFR_SPILL:
-  case AIE2P::VST_PLFR_SPILL: {
+  case AIE2P::VLDA_EX_SPILL: {
     // When a pseudo instruction expands to multiple instructions, this case
     // looks for the smallest encodable offset that can be used.
     // The stack grows upward so if Offset is in range, the offsets of its
     // sub-register spills should also be fine.
     if (isEncodableAsNegativeInt<9, 4>(Offset)) {
+      MI.getOperand(FIOperandNum).ChangeToImmediate(Offset);
+      TII->expandSpillPseudo(MI, TRI, /*SubRegOffsetAlign=*/Align(4));
+    } else {
+      Register SPReg =
+          MF.getRegInfo().createVirtualRegister(&AIE2P::ePRegClass);
+      BuildMI(MBB, II, DL, TII->get(TII->getMvSclOpcode()), SPReg)
+          .addReg(getStackPointerRegister());
+      TII->expandSpillPseudo(MI, TRI, /*SubRegOffsetAlign=*/Align(4), SPReg,
+                             Offset);
+    }
+    return true;
+  }
+  case AIE2P::VLDA_PLFR_SPILL:
+  case AIE2P::VST_PLFR_SPILL: {
+    // Slot layout: [sub_fifo 128B][sub_avail 4B][sub_ptr 4B]. sub_fifo moves
+    // through the FIFO path, whose SP offset must be a multiple of 64, and
+    // ePSRFLdF's spill alignment guarantees it -- so a misaligned offset means
+    // a wrong frame object, and must reach the emitter, which rejects it. The
+    // indexed form would encode cleanly and write to a truncated address.
+    // <9,4> is sub_fifo's field, the tightest of the three.
+    const bool Aligned = Offset % 64 == 0;
+    assert(Aligned &&
+           "ePSRFLdF composite spill needs a 64-byte aligned offset");
+    if (!Aligned || isEncodableAsNegativeInt<9, 4>(Offset)) {
       MI.getOperand(FIOperandNum).ChangeToImmediate(Offset);
       TII->expandSpillPseudo(MI, TRI, /*SubRegOffsetAlign=*/Align(4));
     } else {
@@ -227,10 +325,22 @@ bool AIE2PRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   case AIE2P::VLDA_DM_SPILL:
   case AIE2P::VLDA_CM_SPILL:
   case AIE2P::VLDA_FIFO_SPILL:
-  case AIE2P::VLDA_Y_SPILL:
-    MI.getOperand(FIOperandNum).ChangeToImmediate(Offset);
-    TII->expandSpillPseudo(MI, TRI, /*SubRegOffsetAlign=*/Align(4));
+  case AIE2P::VLDA_Y_SPILL: {
+    // These all bottom out in 64-byte sub-register spills, so the first
+    // sub-offset is the one to check; the rest run towards zero and stay in
+    // range, as in the case above.
+    if (Offset % 64 == 0 && isEncodableAsNegativeInt<9, 64>(Offset)) {
+      MI.getOperand(FIOperandNum).ChangeToImmediate(Offset);
+      TII->expandSpillPseudo(MI, TRI, /*SubRegOffsetAlign=*/Align(4));
+    } else {
+      Register SPReg = MRI.createVirtualRegister(&AIE2P::ePRegClass);
+      BuildMI(MBB, II, DL, TII->get(TII->getMvSclOpcode()), SPReg)
+          .addReg(getStackPointerRegister());
+      TII->expandSpillPseudo(MI, TRI, /*SubRegOffsetAlign=*/Align(4), SPReg,
+                             Offset);
+    }
     return true;
+  }
   case AIE2P::PseudoFI: {
     // DstReg = FI;
     // Replace with DstReg = FrameReg, DstReg += Offset;
