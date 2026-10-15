@@ -91,10 +91,10 @@ static cl::opt<bool> EnableMultiSlotInstrMaterialization(
     cl::desc("Statically materialize Multi-Slot Pseudo Instructions in "
              "loops."));
 
-static cl::opt<bool> MaterializePipeline(
-    "aie-materialize-pipeline", cl::Hidden, cl::init(true),
+static cl::opt<bool> MinimizeSlotTotals(
+    "aie-minimize-slot-totals", cl::Hidden, cl::init(true),
     cl::desc("Materialize all Multi-Slot Pseudo Instructions in "
-             "post-pipeline candidate loops."));
+             "post-pipeline candidate loops to minimize the slot totals."));
 
 static cl::opt<int> PostPipelinerMaxTryII(
     "aie-postpipeliner-maxtry-ii", cl::init(20),
@@ -1564,10 +1564,22 @@ void InterBlockScheduling::enterRegion(MachineBasicBlock *BB,
     return;
   }
 
-  // Loops have no fixed bundles, and on a reschedule they are already set.
-  if (BS.Kind == BlockType::Loop || BS.FixPoint.NumIters > 0) {
+  if (BS.Kind == BlockType::Loop) {
+    // Loops have no fixed bundles. Materialize on the first pass only.
+    if (BS.FixPoint.NumIters == 0) {
+      const Region &R = BS.getCurrentRegion();
+      SmallVector<MachineInstr *> RegionInstrs;
+      for (MachineInstr *MI : R.getFreeInstructions())
+        RegionInstrs.push_back(MI);
+      // Statistics only. Pipeline candidates were already fully materialized
+      // in initInterBlock (gathering phase) before register analysis.
+      reportSlotStatistics(BB->getName(), RegionInstrs, TII);
+    }
     return;
   }
+
+  if (BS.FixPoint.NumIters > 0)
+    return;
 
   // Scheduling pass for non-loop blocks: set fixed bundles on the
   // pre-gathered region now that emitInterBlockTop / emitInterBlockBottom
@@ -1588,6 +1600,18 @@ void InterBlockScheduling::enterRegion(MachineBasicBlock *BB,
     for (MachineInstr &MI : BS.getCurrentRegion().bot_fixed_instrs())
       BS.BotFixedInstrs.push_back(&MI);
   }
+
+  // Report the slot statistics of the region now that all fixed instructions
+  // are present.
+  const Region &R = BS.getCurrentRegion();
+  SmallVector<MachineInstr *> RegionInstrs;
+  for (MachineInstr *MI : R.getFreeInstructions())
+    RegionInstrs.push_back(MI);
+  for (MachineInstr &MI : R.top_fixed_instrs())
+    RegionInstrs.push_back(&MI);
+  for (MachineInstr &MI : R.bot_fixed_instrs())
+    RegionInstrs.push_back(&MI);
+  reportSlotStatistics(BB->getName(), RegionInstrs, TII);
 }
 
 namespace {
@@ -2078,6 +2102,27 @@ const InterBlockEdges *BlockState::getLoopSelfEdge() const {
   return nullptr;
 }
 
+/// Materialize the multi-slot pseudos of the post-pipeline candidate \p Loop,
+/// first by memory bank, then to minimize the slot totals.
+static void materializePipelineCandidate(MachineBasicBlock &Loop,
+                                         const Region &Top,
+                                         const AIEHazardRecognizer &HR) {
+  materializeLoadsByMemoryBank(Loop, HR);
+
+  if (!MinimizeSlotTotals)
+    return;
+
+  SmallVector<MachineInstr *> Instrs(Top.getFreeInstructions());
+  SmallVector<MachineInstr *> BiasInstrs;
+  if (auto *PH = AIELoopUtils::getDedicatedFallThroughPreheader(Loop)) {
+    for (MachineInstr &MI : *PH)
+      BiasInstrs.push_back(&MI);
+  }
+  const auto *TII = static_cast<const AIEBaseInstrInfo *>(
+      Loop.getParent()->getSubtarget().getInstrInfo());
+  materializeToMinimizeSlotTotals(Loop.getName(), Instrs, BiasInstrs, TII);
+}
+
 void BlockState::initInterBlock(const MachineSchedContext &Context,
                                 const AIEHazardRecognizer &HR) {
   assert(Kind == BlockType::Loop);
@@ -2108,14 +2153,10 @@ void BlockState::initInterBlock(const MachineSchedContext &Context,
     const bool IsPipelineCandidate =
         PipeliningEnabled && PostSWP->isPostPipelineCandidate(*TheBlock);
 
-    if (IsPipelineCandidate) {
-      // Perform static assignment of multi-slot pseudos before register
-      // live range analysis so the tracker sees the materialized state.
-      if (EnableMultiSlotInstrMaterialization) {
-        staticallyMaterializeMultiSlotInstructions(*TheBlock, HR,
-                                                   MaterializePipeline);
-      }
-    }
+    // Materialize during the gathering phase so that RegTracker analysis
+    // sees the fully-materialized state.
+    if (IsPipelineCandidate && EnableMultiSlotInstrMaterialization)
+      materializePipelineCandidate(*TheBlock, getTop(), HR);
 
     // Run register live range analysis if pipelining is active or in test
     // mode. In test mode the loop is not a pipeline candidate but the tracker

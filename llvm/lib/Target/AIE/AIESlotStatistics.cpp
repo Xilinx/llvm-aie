@@ -72,6 +72,14 @@ SlotStatistics computeSlotStatistics(MachineBasicBlock &MBB,
   return Result;
 }
 
+SlotStatistics computeSlotStatistics(ArrayRef<MachineInstr *> Instrs,
+                                     const AIEBaseInstrInfo *TII) {
+  SlotStatistics Result;
+  for (auto *MI : Instrs)
+    Result.addInstruction(*MI, TII);
+  return Result;
+}
+
 int SlotStatistics::getMinII() const {
   SlotCounts Total = Fixed + Free;
   // This rounds down, but any fractional part results from a probability
