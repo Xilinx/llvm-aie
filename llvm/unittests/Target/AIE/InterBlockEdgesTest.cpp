@@ -9,6 +9,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIEDataDependenceHelper.h"
+#include "AIEMaxLatencyFinder.h"
 #include "AIETestTarget.h"
 #include "ScheduleDAGMITestUtils.h"
 
@@ -26,6 +27,20 @@ protected:
   void SetUp() override { SchedCtx.MF = MF.get(); }
 
   InterBlockEdges makeDAG() { return InterBlockEdges(SchedCtx); }
+
+  static void addDep(SUnit &Pred, SUnit &Succ, int Latency) {
+    SDep Dep(&Pred, SDep::Artificial);
+    Dep.setLatency(Latency);
+    Succ.addPred(Dep, /*Required=*/true);
+  }
+
+  /// Latency adds into the successor's depth and the predecessor's height.
+  /// This holds for every edge, on either side of the boundary and across it.
+  static void expectDep(const SUnit &Pred, const SUnit &Succ,
+                        unsigned Latency) {
+    EXPECT_GE(Succ.getDepth(), Pred.getDepth() + Latency);
+    EXPECT_GE(Pred.getHeight(), Succ.getHeight() + Latency);
+  }
 };
 
 TEST_F(InterBlockEdgesTest, PreVsPostClassification) {
@@ -161,6 +176,93 @@ TEST_F(InterBlockEdgesTest, ClearResetsDAGAndMaps) {
   const SUnit *Rebuilt = DAG.getPostBoundaryNode(Post);
   ASSERT_TRUE(Rebuilt);
   EXPECT_EQ(Rebuilt->getInstr(), Post);
+}
+
+TEST_F(InterBlockEdgesTest, ComputeMinEntryLatencyFromKnownDepths) {
+  auto *LoopD = appendPlainInstr();
+  auto *Top0 = appendPlainInstr();
+  auto *Top2 = appendPlainInstr();
+  auto *OtherFree = appendPlainInstr();
+  auto *Free = appendPlainInstr();
+  InterBlockEdges DAG = makeDAG();
+
+  DAG.addNode(LoopD);
+  DAG.getPreDepths().record(LoopD, 3);
+  DAG.markBoundary();
+  DAG.addNode(Top0);
+  DAG.addNode(Top2);
+  DAG.addNode(OtherFree);
+  DAG.addNode(Free);
+  DAG.getPostDepths().record(Top0, 0);
+  DAG.getPostDepths().record(Top2, 2);
+
+  SUnit *LoopDSU = const_cast<SUnit *>(DAG.getPreBoundaryNode(LoopD));
+  SUnit *Top0SU = const_cast<SUnit *>(DAG.getPostBoundaryNode(Top0));
+  SUnit *Top2SU = const_cast<SUnit *>(DAG.getPostBoundaryNode(Top2));
+  SUnit *OtherFreeSU = const_cast<SUnit *>(DAG.getPostBoundaryNode(OtherFree));
+  SUnit *FreeSU = const_cast<SUnit *>(DAG.getPostBoundaryNode(Free));
+  ASSERT_NE(LoopDSU, nullptr);
+  ASSERT_NE(Top0SU, nullptr);
+  ASSERT_NE(Top2SU, nullptr);
+  ASSERT_NE(OtherFreeSU, nullptr);
+  ASSERT_NE(FreeSU, nullptr);
+
+  // No preds: unconstrained, free to issue alongside the fixed region.
+  EXPECT_EQ(computeMinEntryLatency(*FreeSU, DAG), 0);
+
+  // A pred without a recorded depth carries no position information.
+  addDep(*OtherFreeSU, *FreeSU, 10);
+  EXPECT_EQ(computeMinEntryLatency(*FreeSU, DAG), 0);
+
+  addDep(*Top0SU, *FreeSU, 1);
+  EXPECT_EQ(computeMinEntryLatency(*FreeSU, DAG), 1);
+
+  addDep(*Top2SU, *FreeSU, 2);
+  EXPECT_EQ(computeMinEntryLatency(*FreeSU, DAG), 4);
+
+  addDep(*LoopDSU, *FreeSU, 2);
+  EXPECT_EQ(computeMinEntryLatency(*FreeSU, DAG), 5);
+
+  expectDep(*OtherFreeSU, *FreeSU, 10);
+  expectDep(*Top0SU, *FreeSU, 1);
+  expectDep(*Top2SU, *FreeSU, 2);
+  expectDep(*LoopDSU, *FreeSU, 2);
+}
+
+TEST_F(InterBlockEdgesTest, ComputeMinEntryLatencyFromEpilogueLoopPreBoundary) {
+  // Loop bundles on the loop-to-latch edge are recorded at Depth = I - L;
+  // the last bundle is -1 (one cycle before epilogue cycle 0).
+  auto *LoopEarlier = appendPlainInstr();
+  auto *LoopLast = appendPlainInstr();
+  auto *Free = appendPlainInstr();
+  InterBlockEdges DAG = makeDAG();
+
+  DAG.addNode(LoopEarlier);
+  DAG.getPreDepths().record(LoopEarlier, -2);
+  DAG.addNode(LoopLast);
+  DAG.getPreDepths().record(LoopLast, -1);
+  DAG.markBoundary();
+  DAG.addNode(Free);
+
+  SUnit *EarlierSU = const_cast<SUnit *>(DAG.getPreBoundaryNode(LoopEarlier));
+  SUnit *LastSU = const_cast<SUnit *>(DAG.getPreBoundaryNode(LoopLast));
+  SUnit *FreeSU = const_cast<SUnit *>(DAG.getPostBoundaryNode(Free));
+  ASSERT_NE(EarlierSU, nullptr);
+  ASSERT_NE(LastSU, nullptr);
+  ASSERT_NE(FreeSU, nullptr);
+
+  // Latency 1 from depth -1 does not push past EntrySU cycle 0.
+  addDep(*LastSU, *FreeSU, 1);
+  EXPECT_EQ(computeMinEntryLatency(*FreeSU, DAG), 0);
+
+  addDep(*LastSU, *FreeSU, 4);
+  EXPECT_EQ(computeMinEntryLatency(*FreeSU, DAG), 3);
+
+  addDep(*EarlierSU, *FreeSU, 6);
+  EXPECT_EQ(computeMinEntryLatency(*FreeSU, DAG), 4);
+
+  expectDep(*LastSU, *FreeSU, 4);
+  expectDep(*EarlierSU, *FreeSU, 6);
 }
 
 } // namespace

@@ -95,7 +95,6 @@ MaxLatencyFinder::MaxLatencyFinder(ScheduleDAGInstrs *DAG)
   // Update post-depths now that the scheduler may have produced bundles.
   if (CurBB && Scheduler && IsBottomRegion)
     Scheduler->getInterBlock().recordPostDepths(CurBB);
-  ReduceLatency = IsBottomRegion && !HasUnknownSuccessors && InterBlockLatency;
 }
 
 int MaxLatencyFinder::computeEffectiveLatency(MachineInstr &MI) {
@@ -122,19 +121,26 @@ int MaxLatencyFinder::computeEffectiveLatency(MachineInstr &MI) {
 
     for (const SDep &Dep : Pred->Succs) {
       SUnit *Succ = Dep.getSUnit();
-      if (!SE.isPostBoundaryNode(Succ)) {
-        LLVM_DEBUG(dbgs() << "   SU" << Succ->NodeNum
-                          << " is not a post-boundary node, skip\n");
-        continue;
+      int Depth;
+      if (SE.isPreBoundaryNode(Succ)) {
+        // A pre-boundary node with a depth is an SWP prologue clone, fixed
+        // before the end of this block. Other pre-boundary nodes are free
+        // instructions of this region, ordered by the region DAG.
+        std::optional<int> PreDepth = SE.getPreDepths().getValue(Succ);
+        if (!PreDepth) {
+          LLVM_DEBUG(dbgs() << "   SU" << Succ->NodeNum
+                            << " is a free pre-boundary node, skip\n");
+          continue;
+        }
+        Depth = *PreDepth;
+      } else {
+        // For ExitSU the depth is the full length of the successor block's
+        // top region (all its cycles have elapsed before reaching ExitSU).
+        // For a regular instruction node the depth is its scheduled cycle
+        // within the block.
+        Depth = Succ->isBoundaryNode() ? SE.getPostDepths().getRegionMax() + 1
+                                       : SE.getPostDepths().getValueOr(Succ, 0);
       }
-
-      // For ExitSU the depth is the full length of the successor block's
-      // top region (all its cycles have elapsed before reaching ExitSU).
-      // For a regular instruction node the depth is its scheduled cycle
-      // within the block.
-      const int Depth = Succ->isBoundaryNode()
-                            ? SE.getPostDepths().getRegionMax() + 1
-                            : SE.getPostDepths().getValueOr(Succ, 0);
       const int EdgeLat = Dep.getSignedLatency();
       const int Remaining = EdgeLat - Depth;
       LLVM_DEBUG(
@@ -180,15 +186,32 @@ unsigned MaxLatencyFinder::operator()(MachineInstr &MI) {
     }
   }
 
-  LLVM_DEBUG(dbgs() << format("ReduceLatency=%d\n", ReduceLatency));
-
-  if (ReduceLatency) {
+  if (IsBottomRegion) {
+    // A free MI may feed an SWP prologue instruction at the bottom of this
+    // block. There is no DAG edge between them, so this ExitSU latency is
+    // what keeps MI early enough. It can exceed MI's worst-case latency, so
+    // keep it even when interblock latency is disabled.
     int EffectiveLatency = computeEffectiveLatency(MI);
-    Latency = std::max(0, EffectiveLatency);
+    Latency = InterBlockLatency ? std::max(0, EffectiveLatency)
+                                : std::max(Latency, EffectiveLatency);
     LLVM_DEBUG(dbgs() << "   EffectiveLatency=" << EffectiveLatency << "\n");
   }
 
   return Latency;
+}
+
+int computeMinEntryLatency(const SUnit &EdgeSU, const InterBlockEdges &Edges) {
+  int MaxDepth = 0;
+  for (const SDep &PredEdge : EdgeSU.Preds) {
+    const SUnit *PredSU = PredEdge.getSUnit();
+    const InterBlockEdges::NodeValues &Depths = Edges.isPreBoundaryNode(PredSU)
+                                                    ? Edges.getPreDepths()
+                                                    : Edges.getPostDepths();
+    const std::optional<int> PredDepth = Depths.getValue(PredSU);
+    MaxDepth = std::max(
+        MaxDepth, PredDepth ? *PredDepth + PredEdge.getSignedLatency() : 0);
+  }
+  return MaxDepth;
 }
 
 } // namespace llvm::AIE
