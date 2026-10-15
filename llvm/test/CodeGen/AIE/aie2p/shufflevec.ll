@@ -639,7 +639,7 @@ define fastcc void @shuffle_match_extracted_load_idx_non_zero() {
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    vbcst.16 x0, r0 // Delay Slot 4
-; CHECK-NEXT:    mova p0, #0 // Delay Slot 3
+; CHECK-NEXT:    mov p0, #0 // Delay Slot 3
 ; CHECK-NEXT:    vst x0, [p0, #0] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
@@ -987,7 +987,7 @@ define <64 x i8> @shuffle_concat_extracted_subvectors_exceptions_not_contiguous_
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mov p0, sp
-; CHECK-NEXT:    padda [p0], #-64
+; CHECK-NEXT:    paddb [p0], #-64
 ; CHECK-NEXT:    vlda bmll1, [p0, #-64]
 ; CHECK-NEXT:    vmov x0, bmll0
 ; CHECK-NEXT:    vextract.64 r1:r0, x0, #0, vaddsign1

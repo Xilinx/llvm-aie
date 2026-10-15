@@ -69,7 +69,7 @@ define dso_local noundef <32 x i8> @_Z30test_extract_v64uint4_256_1024Dv128_DU8_
 ; CHECK-LABEL: _Z30test_extract_v64uint4_256_1024Dv128_DU8_i:
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    paddb [sp], #160; nopx
-; CHECK-NEXT:    mova r2, #4
+; CHECK-NEXT:    movx r2, #4
 ; CHECK-NEXT:    mov r1, r0
 ; CHECK-NEXT:    st r16, [sp, #-28] // 4-byte Folded Spill
 ; CHECK-NEXT:    vst wl4, [sp, #-160] // 32-byte Folded Spill
@@ -414,7 +414,7 @@ define dso_local noundef <4 x i64> @_Z20test_extract_v8acc32Dv32_u7__acc32i(<16 
 ; CHECK-LABEL: _Z20test_extract_v8acc32Dv32_u7__acc32i:
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    paddb [sp], #160; nopx
-; CHECK-NEXT:    mova r2, #4
+; CHECK-NEXT:    movx r2, #4
 ; CHECK-NEXT:    mov r1, r0
 ; CHECK-NEXT:    st r16, [sp, #-28] // 4-byte Folded Spill
 ; CHECK-NEXT:    vst amll1, [sp, #-160] // 32-byte Folded Spill
@@ -634,7 +634,7 @@ define dso_local noundef <4 x i64> @_Z20test_extract_v4acc64Dv16_u7__acc64i(<16 
 ; CHECK-LABEL: _Z20test_extract_v4acc64Dv16_u7__acc64i:
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    paddb [sp], #160; nopx
-; CHECK-NEXT:    mova r2, #4
+; CHECK-NEXT:    movx r2, #4
 ; CHECK-NEXT:    mov r1, r0
 ; CHECK-NEXT:    st r16, [sp, #-28] // 4-byte Folded Spill
 ; CHECK-NEXT:    vst amll1, [sp, #-160] // 32-byte Folded Spill

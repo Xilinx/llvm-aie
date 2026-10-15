@@ -49,8 +49,12 @@ public:
   // The slot counts of each MSP
   std::unordered_map<MachineInstr *, SlotCounts> MSPSlotCounts;
 
-  // Add an instruction to the statistics
-  void addInstruction(MachineInstr &MI, const AIEBaseInstrInfo *TII);
+  // Add an instruction to the statistics. A multi-slot pseudo spreads its
+  // demand uniformly over its alternatives. With SkipDominatedAlternatives,
+  // alternatives whose conflict set strictly contains another alternative's
+  // conflict set get no share.
+  void addInstruction(MachineInstr &MI, const AIEBaseInstrInfo *TII,
+                      bool SkipDominatedAlternatives = false);
 
   // The number of represented slots
   int size() const { return std::max(Fixed.size(), Free.size()); }
@@ -75,7 +79,8 @@ SlotStatistics computeSlotStatistics(MachineBasicBlock &MBB,
 
 // Compute slot statistics for an explicit list of instructions.
 SlotStatistics computeSlotStatistics(ArrayRef<MachineInstr *> Instrs,
-                                     const AIEBaseInstrInfo *TII);
+                                     const AIEBaseInstrInfo *TII,
+                                     bool SkipDominatedAlternatives = false);
 
 } // namespace llvm::AIE
 

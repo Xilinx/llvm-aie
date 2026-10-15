@@ -45,7 +45,7 @@ define <2 x i8> @load_v2i8_align2(ptr %p) {
 define <2 x i8> @load_v2i8_align1(ptr %p) {
 ; AIE2-LABEL: load_v2i8_align1:
 ; AIE2:       // %bb.0:
-; AIE2-NEXT:    lda.s8 r0, [p0, #1]; nopb ; nopxm ; nops
+; AIE2-NEXT:    lda.s8 r0, [p0, #1]; nopb ; nopxm
 ; AIE2-NEXT:    lda.u8 r1, [p0, #0]
 ; AIE2-NEXT:    nop
 ; AIE2-NEXT:    nop
@@ -54,7 +54,7 @@ define <2 x i8> @load_v2i8_align1(ptr %p) {
 ; AIE2-NEXT:    movx r2, #8
 ; AIE2-NEXT:    lshl r0, r0, r2
 ; AIE2-NEXT:    or r0, r0, r1
-; AIE2-NEXT:    mova r1, #-8; ret lr
+; AIE2-NEXT:    ret lr ; mov r1, #-8
 ; AIE2-NEXT:    lshl r1, r0, r1 // Delay Slot 5
 ; AIE2-NEXT:    extend.u8 r0, r0 // Delay Slot 4
 ; AIE2-NEXT:    extend.u8 r1, r1 // Delay Slot 3
@@ -72,7 +72,7 @@ define <2 x i8> @load_v2i8_align1(ptr %p) {
 ; AIE2PS-NEXT:    movx r4, #8
 ; AIE2PS-NEXT:    lshl r0, r0, r4
 ; AIE2PS-NEXT:    or r0, r0, r2
-; AIE2PS-NEXT:    mova r2, #-8; ret lr
+; AIE2PS-NEXT:    ret lr; mov r2, #-8
 ; AIE2PS-NEXT:    lshl r2, r0, r2 // Delay Slot 5
 ; AIE2PS-NEXT:    extend.u8 r0, r0 // Delay Slot 4
 ; AIE2PS-NEXT:    extend.u8 r2, r2 // Delay Slot 3

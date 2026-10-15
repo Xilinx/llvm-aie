@@ -66,14 +66,14 @@ define i32 @_Z13test_alignas1v() {
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    paddb [sp], #2048
 ; CHECK-NEXT:    mov p2, sp
-; CHECK-NEXT:    padda [p2], #-2048
+; CHECK-NEXT:    padds [p2], #-2048
 ; CHECK-NEXT:    lda r0, [p2, #0]
 ; CHECK-NEXT:    movxm p0, #n9
 ; CHECK-NEXT:    lda r0, [p0, #0]
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    mov p1, sp // Delay Slot 4
-; CHECK-NEXT:    padda [p1], #-1792 // Delay Slot 3
+; CHECK-NEXT:    padds [p1], #-1792 // Delay Slot 3
 ; CHECK-NEXT:    st r0, [p1, #0] // Delay Slot 2
 ; CHECK-NEXT:    paddb [sp], #-2048 // Delay Slot 1
 entry:

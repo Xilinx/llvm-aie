@@ -14,6 +14,7 @@
 
 #include "AIEHazardRecognizer.h"
 #include "AIEBaseSubtarget.h"
+#include "AIESlotStatistics.h"
 #include "MCTargetDesc/AIEMCFormats.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -53,6 +54,16 @@ static cl::opt<bool>
     PointerHazardRecognition("aie-recognize-pointer-hazards", cl::Hidden,
                              cl::init(true),
                              cl::desc("Recognize pointer hazards"));
+
+static cl::opt<int> SlotDemandMargin(
+    "aie-slot-demand-margin", cl::Hidden, cl::init(30),
+    cl::desc("Remaining slot demand (60 per instruction) by which another "
+             "alternative must beat the default to be tried first"));
+
+static cl::opt<bool> SlotDemandSortAll(
+    "aie-slot-demand-sort-all", cl::Hidden, cl::init(true),
+    cl::desc("Order all alternatives of a multi-slot instruction by remaining "
+             "slot demand, not only the first one"));
 
 const AIEBaseMCFormats *FuncUnitWrapper::FormatInterface = nullptr;
 void FuncUnitWrapper::setFormatInterface(const AIEBaseMCFormats *Formats) {
@@ -388,7 +399,35 @@ AIEHazardRecognizer::getHazardType(SUnit *SU, int DeltaCycles) {
   const std::vector<unsigned int> *AlternateInsts =
       TII->getFormatInterface()->getAlternateInstsOpcode(MI->getOpcode());
   if (AlternateInsts) {
-    for (const auto AltInstOpcode : *AlternateInsts) {
+    SmallVector<unsigned, 4> Order(AlternateInsts->begin(),
+                                   AlternateInsts->end());
+    if (RemainingSlotDemand) {
+      const AIEBaseMCFormats *Formats = TII->getFormatInterface();
+      auto Demand = [&](unsigned Opcode) {
+        return RemainingSlotDemand->at(int(Formats->getSlotKind(Opcode)));
+      };
+      // Fill each position with the least demanded remaining alternative if
+      // it beats the next one in TableGen order by at least the margin.
+      // Otherwise that one keeps its place. A margin-based comparator is not
+      // a strict weak ordering, so this is a selection procedure. Without
+      // SlotDemandSortAll, only the first position is decided this way.
+      auto *const End = SlotDemandSortAll ? Order.end() : Order.begin() + 1;
+      for (auto *Pos = Order.begin(); Pos != End; ++Pos) {
+        auto *Best =
+            std::min_element(Pos, Order.end(), [&](unsigned A, unsigned B) {
+              return Demand(A) < Demand(B);
+            });
+        if (Demand(*Pos) - Demand(*Best) >= SlotDemandMargin)
+          std::rotate(Pos, Best, Best + 1);
+      }
+      DEBUG_WITH_TYPE("aie-slot-demand", {
+        dbgs() << "  delta " << DeltaCycles << ":";
+        for (unsigned Opcode : Order)
+          dbgs() << " " << TII->getName(Opcode) << "=" << Demand(Opcode);
+        dbgs() << " : " << *MI;
+      });
+    }
+    for (const auto AltInstOpcode : Order) {
       ScheduleHazardRecognizer::HazardType Haz =
           getHazardType(Scoreboard, MI, TII->get(AltInstOpcode), DeltaCycles);
       // Check if there is NoHazard, If there is a Hazard or NoopHazard check
