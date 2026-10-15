@@ -267,9 +267,9 @@ class BlockState {
   /// Maintain the index of the region that is currently being updated.
   unsigned CurrentRegion = 0;
 
-  /// Per-CFG-successor inter-block DDG edges, built during the DAG mutation
-  /// phase by MaxLatencyFinder::buildInterBlockEdges(). Persists into the
-  /// initialize() phase so that initializeBotScoreBoard() can also use them.
+  /// Per-CFG-successor inter-block DDG edges. One entry per successor.
+  /// Prologue clones of this block sit before the CFG boundary; epilogue
+  /// clones of the successor sit just after it.
   std::vector<std::unique_ptr<InterBlockEdges>> PerSuccEdges;
 
   // This holds an instance of the PostPipeliner for candidate loops.
@@ -589,7 +589,7 @@ public:
   // \p Epilogue. Returns nullopt if \p Epilogue is not the epilogue of a
   // pipelined loop.
   std::optional<ArrayRef<MachineBundle>>
-  getSWPLoopBundlesForEpilogue(MachineBasicBlock *Epilogue);
+  getSWPLoopBundlesForEpilogue(BlockState &Epilogue);
 
   /// If \p LoopMBB is not the only Predecessor of \p CurrentMBB, create a
   /// dedicated Exit MBB by splitting the edge between LoopMBB and CurrentBB
