@@ -45,6 +45,10 @@ using namespace llvm::AIE;
 static cl::opt<bool> InsertCycleSeparators(
     "aie-prera-cycle-separators", cl::init(false),
     cl::desc("[AIE] Insert CYCLE_SEPARATOR meta instructions"));
+static cl::opt<bool> MultiSlotSlotPreference(
+    "aie-multislot-slot-preference", cl::Hidden, cl::init(true),
+    cl::desc("Let multi-slot instructions outside of loops try the slot that "
+             "the rest of their region needs least first"));
 static cl::opt<bool>
     EnableFinerRPTracking("aie-premisched-finer-rp-tracking", cl::init(true),
                           cl::desc("Track reg pressure more accurately and "
@@ -539,8 +543,24 @@ void AIEPostRASchedStrategy::initialize(ScheduleDAGMI *Dag) {
   initializeTopScoreBoard();
 
   // Compute RegionTopDownCycles first so the delay slot logic can inspect it.
-  const Region &Reg = InterBlock.getBlockState(CurMBB).getCurrentRegion();
+  const BlockState &BS = InterBlock.getBlockState(CurMBB);
+  const Region &Reg = BS.getCurrentRegion();
   RegionTopDownCycles = Reg.getTopFixedBundles().size();
+
+  // Loops get their slots from the multi-slot materializer and the pipeliner,
+  // if they are pipeline candidates. Other loops keep the TableGen order.
+  SlotDemand.reset();
+  if (MultiSlotSlotPreference && BS.Kind != BlockType::Loop) {
+    SlotDemand.init(Reg.getFreeInstructions(), getTII(CurMBB));
+    DEBUG_WITH_TYPE("aie-slot-demand",
+                    dbgs() << "Slot demand for " << CurMBB->getName()
+                           << (IsBottomRegion ? " (bottom)" : "") << ": "
+                           << SlotDemand.getRemainingDemand() << "\n");
+  }
+  const AIE::SlotDemandTracker *Tracker =
+      SlotDemand.isActive() ? &SlotDemand : nullptr;
+  getAIEHazardRecognizer(Top)->setSlotDemandTracker(Tracker);
+  getAIEHazardRecognizer(Bot)->setSlotDemandTracker(Tracker);
 
   // Delay slots are normally scheduled bottom-up so the control-flow
   // instruction is issued exactly TII->getNumDelaySlots() before the end of
@@ -869,6 +889,11 @@ bool AIEPostRASchedStrategy::isAvailableNode(SUnit &SU, SchedBoundary &Zone,
 /// Called after ScheduleDAGMI has scheduled an instruction and updated
 /// scheduled/remaining flags in the DAG nodes.
 void AIEPostRASchedStrategy::schedNode(SUnit *SU, bool IsTopNode) {
+  // The demand only covers the free instructions of the region. Fixed
+  // instructions are scheduled here too, but were never counted.
+  if (isFreeSU(*SU))
+    SlotDemand.removeDemand(*SU->getInstr(), getTII(CurMBB));
+
   if (IsTopNode) {
     const int DeltaCycles = int(SU->TopReadyCycle) - int(Top.getCurrCycle());
     assert(DeltaCycles <= 0);

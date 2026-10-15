@@ -85,9 +85,8 @@ define dso_local void @gemm_int8_1(ptr noalias %p_a, ptr noalias %p_b, ptr noali
 ; REMARKS-NEXT: ...
 ; ASM-LABEL: gemm_int8_1:
 ; ASM:       // %bb.0: // %entry
-; ASM-NEXT:    mova dj0, #37; nopb ; nopx
-; ASM-NEXT:    lda.u8 r2, [p5, dj0]; mov m0, #48
-; ASM-NEXT:    padda [p5], m0
+; ASM-NEXT:    mova m0, #48; nopb ; nopx ; mov dj0, #37; nops
+; ASM-NEXT:    lda.u8 r2, [p5, dj0]; paddb [p5], m0
 ; ASM-NEXT:    lda.u8 r7, [p5], #4; mov m0, #-48
 ; ASM-NEXT:    lda.u8 r24, [p5], m0
 ; ASM-NEXT:    mova m0, #68
@@ -100,29 +99,26 @@ define dso_local void @gemm_int8_1(ptr noalias %p_a, ptr noalias %p_b, ptr noali
 ; ASM-NEXT:    mova m1, #76
 ; ASM-NEXT:    lda m3, [p5], m1
 ; ASM-NEXT:    nop
-; ASM-NEXT:    lda m1, [p5], #-8; movx r0, #0
-; ASM-NEXT:    lda dn1, [p5], #-8; movxm p2, ##_ShuffleMode
-; ASM-NEXT:    lda dj1, [p5], #12; sub r4, r0, r2
-; ASM-NEXT:    lda dn5, [p5], #-8; and r27, r2, r4; mov m2, #-40
-; ASM-NEXT:    lda dj5, [p5], m2; clz r2, r27; mov r1, #32
-; ASM-NEXT:    mova m2, #15; sel.eqz r2, r1, r2, r27; mov r4, #31
-; ASM-NEXT:    lda.u8 r28, [p5], m2; sub r2, r4, r2
-; ASM-NEXT:    mova m2, #-47; movx r4, #3
-; ASM-NEXT:    lda.u8 r17, [p5], m2; lshl r2, r2, r4; mov m4, #120
-; ASM-NEXT:    lda r1, [p5], m4; mov m4, r2
-; ASM-NEXT:    lda m2, [p5], #-4; paddb [p2], m4
-; ASM-NEXT:    lda r16, [p2, #0]
-; ASM-NEXT:    lda r18, [p2, #4]; or r19, r8, r8; mov r21, r10
-; ASM-NEXT:    lda dn2, [p5, #0]; vldb.128 wl0, [p3, #0]; or r23, r12, r12; mov dc2, #0
+; ASM-NEXT:    mova r0, #0
+; ASM-NEXT:    lda m1, [p5], #-8; sub r4, r0, r2; mov m2, #-40
+; ASM-NEXT:    lda dn1, [p5], #-8; and r27, r2, r4; mov r1, #32
+; ASM-NEXT:    lda dj1, [p5], #12; clz r2, r27; mov m4, #120
+; ASM-NEXT:    lda dn5, [p5], #-8; sel.eqz r2, r1, r2, r27; mov r4, #31
+; ASM-NEXT:    lda dj5, [p5], m2; sub r2, r4, r2; mov m2, #15
+; ASM-NEXT:    lda.u8 r28, [p5], m2; movx r4, #3; mov m2, #-47
+; ASM-NEXT:    lda.u8 r17, [p5], m2; lshl r2, r2, r4
+; ASM-NEXT:    lda r1, [p5], m4; movs m4, r2; movxm p2, ##_ShuffleMode
+; ASM-NEXT:    lda m2, [p5], #-4; padds [p2], m4; mov r19, r8
+; ASM-NEXT:    lda r16, [p2, #0]; or r21, r10, r10; mov r23, r12
+; ASM-NEXT:    lda dn2, [p5, #0]; vldb.128 wl0, [p3, #0]; movx crupsmode, #0; mov dc2, #0
 ; ASM-NEXT:    lda dj2, [p5, #-4]; vldb.128 wl4, [p3, #16]; movxm p5, ##_ShuffleMode
-; ASM-NEXT:    padda [p5], m4; movx crupsmode, #0; mov dc0, #0
-; ASM-NEXT:    lda r6, [p5, #0]; movxm p2, ##_ShuffleMode
-; ASM-NEXT:    lda r24, [p5, #4]; paddb [p2], m4; movx r3, #1; vbcst.32 x8, r0
-; ASM-NEXT:    lda r20, [p2, #0]; movx r26, #15; mov s0, r0
-; ASM-NEXT:    lda r22, [p2, #4]; movxm p2, ##_ShuffleMode
-; ASM-NEXT:    padda [p2], m4; vldb x10, [p1], m3; movx r12, #776; vsel.32 x2, x8, x0, r26; movs dc1, dc0
-; ASM-NEXT:    lda r2, [p2, #0]; movs dc5, dc0; movx crsrsmode, #0; vsel.32 x0, x8, x4, r26
-; ASM-NEXT:    lda r4, [p2, #4]; vldb.3d x1, [p1], d1; lshl r5, r3, r24; mov p2, p4
+; ASM-NEXT:    lda r18, [p2, #4]; padds [p5], m4; movxm p2, ##_ShuffleMode
+; ASM-NEXT:    lda r6, [p5, #0]; padds [p2], m4; movx r3, #1; mov dc0, #0
+; ASM-NEXT:    lda r20, [p2, #0]; movx r12, #776; vbcst.32 x8, r0
+; ASM-NEXT:    lda r22, [p2, #4]; movs dc1, dc0; movxm p2, ##_ShuffleMode
+; ASM-NEXT:    lda r24, [p5, #4]; vldb x10, [p1], m3; movx r26, #15; mov s0, r0; padds [p2], m4
+; ASM-NEXT:    lda r2, [p2, #0]; movs dc5, dc0; movx crsrsmode, #0; vsel.32 x2, x8, x0, r26
+; ASM-NEXT:    lda r4, [p2, #4]; vldb.3d x1, [p1], d1; lshl r5, r3, r24; vsel.32 x0, x8, x4, r26; movs p2, p4
 ; ASM-NEXT:    vlda.ups.2x cml3, s0, upssign1, [p2], #64; add r30, r30, #-1; mov r27, r7
 ; ASM-NEXT:    vlda.ups.2x cmh3, s0, upssign1, [p2], #64; sel.eqz r5, r5, r0, r27; mov r7, #768
 ; ASM-NEXT:    vlda.ups.2x cmh2, s0, upssign1, [p2, #64]; movxm p5, #.LBB0_1
@@ -206,7 +202,7 @@ define dso_local void @gemm_int8_1(ptr noalias %p_a, ptr noalias %p_b, ptr noali
 ; ASM-NEXT:    vshuffle x0, x2, x0, r24; vmac dm3, dm3, x10, x4, r8
 ; ASM-NEXT:    mov s0, r0; vmac dm2, dm2, x8, x4, r8
 ; ASM-NEXT:    vmac dm1, dm1, x10, x0, r8
-; ASM-NEXT:    mov r8, r19; vmac dm0, dm0, x8, x0, r8
+; ASM-NEXT:    or r8, r19, r19; vmac dm0, dm0, x8, x0, r8
 ; ASM-NEXT:    nop
 ; ASM-NEXT:    nop
 ; ASM-NEXT:    vst.srs.2x cml3, s0, srssign1, [p4], #64

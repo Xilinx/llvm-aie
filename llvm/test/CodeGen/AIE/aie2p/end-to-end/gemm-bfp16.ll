@@ -36,20 +36,20 @@ define dso_local void @gemm_bfp16(ptr %ofm_ptr, ptr %ifm_ptr, ptr %wts_ptr, ptr 
 ; CHECK:       // %bb.0: // %newFuncRoot
 ; CHECK-NEXT:    nopa ; movs m2, p4; paddxm [sp], #64
 ; CHECK-NEXT:    mova m0, #-68; mov p4, sp
-; CHECK-NEXT:    padda [p4], m0; mov dj6, #68
-; CHECK-NEXT:    lda dn2, [p4], #-4; movxm r2, #16256
+; CHECK-NEXT:    paddb [p4], m0; movxm r2, #16256
+; CHECK-NEXT:    lda dn2, [p4], #-4; mov dj6, #68
 ; CHECK-NEXT:    lda m0, [p4], #-4; movs dj2, p5; mov dc5, #0
-; CHECK-NEXT:    movs dj3, p5; mov dc1, dc5
-; CHECK-NEXT:    lda dj0, [p4], #-4; movs dc2, dc5; movx r0, #52; mov dc3, dc5
-; CHECK-NEXT:    lda dj4, [p4], #-4; movs dc4, dc5; movx r1, #53; mov dc0, dc5
+; CHECK-NEXT:    movs dc1, dc5; mov dj3, p5
+; CHECK-NEXT:    lda dj0, [p4], #-4; movs dc3, dc5; movx r0, #52; mov dc2, dc5
+; CHECK-NEXT:    lda dj4, [p4], #-4; movs dc0, dc5; movx r1, #53; mov dc4, dc5
 ; CHECK-NEXT:    lda dn0, [p4], #-4; st p6, [sp, #-64]; movx r3, #780; vbcst.16 x0, r2 // 4-byte Folded Spill
 ; CHECK-NEXT:    lda m4, [p4, #-4]; st p7, [sp, #-60]; movx r4, #0; vmov x1, x0 // 4-byte Folded Spill
-; CHECK-NEXT:    lda dn4, [p4, #0]; movs p4, p0; movx r2, #60; mov dn3, dn2
+; CHECK-NEXT:    lda dn4, [p4, #0]; movs dn3, dn2; movx r2, #60; mov p4, p0
 ; CHECK-NEXT:  .LBB0_1: // %for.body.i
 ; CHECK-NEXT:    // =>This Loop Header: Depth=1
 ; CHECK-NEXT:    // Child Loop BB0_2 Depth 2
-; CHECK-NEXT:    mova m1, #80; nopb ; nopx ; mov p5, p3
-; CHECK-NEXT:    mova m1, #72; paddb [p5], m1; mov p6, p3
+; CHECK-NEXT:    mova m1, #80; movs p5, p3
+; CHECK-NEXT:    mova m1, #72; paddb [p5], m1; movs p6, p3
 ; CHECK-NEXT:    lda m3, [p5], #4; paddb [p6], m1; mov m1, #88
 ; CHECK-NEXT:    lda r5, [p6], m1
 ; CHECK-NEXT:    lda m6, [p5], #4
@@ -58,21 +58,18 @@ define dso_local void @gemm_bfp16(ptr %ofm_ptr, ptr %ifm_ptr, ptr %wts_ptr, ptr 
 ; CHECK-NEXT:    lda m7, [p5], m1
 ; CHECK-NEXT:    lda dj1, [p6], #4
 ; CHECK-NEXT:    lda dn5, [p6, #0]
-; CHECK-NEXT:    lda dj5, [p6, #4]
-; CHECK-NEXT:    lda m1, [p5, #0]; mov p7, p4
-; CHECK-NEXT:    padda [p7], m3
+; CHECK-NEXT:    lda dj5, [p6, #4]; movs p7, p4
+; CHECK-NEXT:    lda m1, [p5, #0]; paddb [p7], m3
 ; CHECK-NEXT:    vlda bmll1, [p7, #0]
-; CHECK-NEXT:    vlda bmlh1, [p7, #64]
-; CHECK-NEXT:    vlda bmhl1, [p7, #128]
-; CHECK-NEXT:    vlda bmhh1, [p7, #192]; mov p6, p4
-; CHECK-NEXT:    padda [p6], m6
+; CHECK-NEXT:    vlda bmlh1, [p7, #64]; movs p6, p4
+; CHECK-NEXT:    vlda bmhl1, [p7, #128]; paddb [p6], m6
 ; CHECK-NEXT:    vlda bmll0, [p6, #0]
 ; CHECK-NEXT:    vlda bmlh0, [p6, #64]
 ; CHECK-NEXT:    vlda bmhl0, [p6, #128]
 ; CHECK-NEXT:    lda m7, [p5, #4]; movs p5, p2
 ; CHECK-NEXT:    vlda bmhh0, [p6, #192]; vldb.3d x9, [p2], d0
-; CHECK-NEXT:    padda [p5], m4; vldb x8, [p5, #64]; mov p6, p4
-; CHECK-NEXT:    padda [p6], m7; vldb x7, [p5, #0]
+; CHECK-NEXT:    padda [p5], m4; vldb x8, [p5, #64]; movs p6, p4
+; CHECK-NEXT:    vlda bmhh1, [p7, #192]; vldb x7, [p5, #0]; padds [p6], m7
 ; CHECK-NEXT:    vlda bmll3, [p6, #0]; vldb x5, [p5, #64]
 ; CHECK-NEXT:    vlda bmlh3, [p6, #64]
 ; CHECK-NEXT:    vlda bmhl3, [p6, #128]
@@ -133,7 +130,7 @@ define dso_local void @gemm_bfp16(ptr %ofm_ptr, ptr %ifm_ptr, ptr %wts_ptr, ptr 
 ; CHECK-NEXT:    vst bmlh1, [p5, #64]
 ; CHECK-NEXT:    vst bmhl1, [p5, #128]
 ; CHECK-NEXT:    vst bmhh1, [p5, #192]; mov p5, p3
-; CHECK-NEXT:    padda [p5], m1
+; CHECK-NEXT:    paddb [p5], m1
 ; CHECK-NEXT:    lda m1, [p5], #4
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -141,7 +138,7 @@ define dso_local void @gemm_bfp16(ptr %ofm_ptr, ptr %ifm_ptr, ptr %wts_ptr, ptr 
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    padda [p6], m1
+; CHECK-NEXT:    paddb [p6], m1
 ; CHECK-NEXT:    vst bmll0, [p6, #0]
 ; CHECK-NEXT:    vst bmlh0, [p6, #64]
 ; CHECK-NEXT:    vst bmhl0, [p6, #128]
@@ -153,7 +150,7 @@ define dso_local void @gemm_bfp16(ptr %ofm_ptr, ptr %ifm_ptr, ptr %wts_ptr, ptr 
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    padda [p6], m1
+; CHECK-NEXT:    paddb [p6], m1
 ; CHECK-NEXT:    vst bmll4, [p6, #0]
 ; CHECK-NEXT:    vst bmlh4, [p6, #64]
 ; CHECK-NEXT:    vst bmhl4, [p6, #128]
@@ -165,7 +162,7 @@ define dso_local void @gemm_bfp16(ptr %ofm_ptr, ptr %ifm_ptr, ptr %wts_ptr, ptr 
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    padda [p5], m1
+; CHECK-NEXT:    paddb [p5], m1
 ; CHECK-NEXT:    vst bmll3, [p5, #0]
 ; CHECK-NEXT:    vst bmlh3, [p5, #64]
 ; CHECK-NEXT:    vst bmhl3, [p5, #128]

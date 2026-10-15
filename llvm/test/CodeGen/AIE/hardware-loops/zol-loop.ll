@@ -96,7 +96,7 @@ define void @simple_loop(i32 noundef %n, ptr nocapture readonly %in, ptr nocaptu
 ; AIE2PS-NEXT:    nop // Delay Slot 1
 ; AIE2PS-NEXT:  // %bb.1: // %for.body.preheader
 ; AIE2PS-NEXT:    mova r4, #1; add.nc lc, r0, #0
-; AIE2PS-NEXT:    mova r0, #2; nopb ; nops ; add.nc le, pc, #.L_LEnd0; addm.nc ls, pc, #.LBB0_2; nopv
+; AIE2PS-NEXT:    mova r0, #2; nopb ; nops ; add.nc ls, pc, #.LBB0_2; addm.nc le, pc, #.L_LEnd0; nopv
 ; AIE2PS-NEXT:  .LBB0_2: // %for.body
 ; AIE2PS-NEXT:    // =>This Inner Loop Header: Depth=1
 ; AIE2PS-NEXT:    lda r6, [p0, #0]; nopb ; nops ; nopxm ; nopv

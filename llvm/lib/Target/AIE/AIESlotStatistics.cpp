@@ -10,7 +10,9 @@
 
 #include "AIEBaseInstrInfo.h"
 #include "AIESlotUtils.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/Support/CommandLine.h"
 
 namespace llvm::AIE {
 
@@ -78,6 +80,52 @@ SlotStatistics computeSlotStatistics(ArrayRef<MachineInstr *> Instrs,
   for (auto *MI : Instrs)
     Result.addInstruction(*MI, TII);
   return Result;
+}
+
+static cl::opt<int> SlotDemandMargin(
+    "aie-slot-demand-margin", cl::Hidden, cl::init(30),
+    cl::desc("Remaining slot demand (60 per instruction) by which another "
+             "alternative must beat the default to be tried first"));
+
+void SlotDemandTracker::init(ArrayRef<MachineInstr *> FreeInstrs,
+                             const AIEBaseInstrInfo *TII) {
+  Stats = computeSlotStatistics(FreeInstrs, TII);
+  Remaining = Stats.Fixed + Stats.Free;
+  Active = true;
+}
+
+void SlotDemandTracker::removeDemand(MachineInstr &MI,
+                                     const AIEBaseInstrInfo *TII) {
+  if (!Active)
+    return;
+  // A multi-slot pseudo leaves the demand it spread over its alternatives,
+  // any other instruction the demand of its own conflict set.
+  if (auto It = Stats.MSPSlotCounts.find(&MI); It != Stats.MSPSlotCounts.end())
+    Remaining -= It->second;
+  else
+    Remaining -= SlotStatistics::Unit * getConflictCounts(MI.getOpcode(), TII);
+}
+
+void SlotDemandTracker::orderAlternatives(
+    SmallVectorImpl<unsigned> &Alternatives,
+    const AIEBaseMCFormats *Formats) const {
+  if (!Active)
+    return;
+  auto Demand = [&](unsigned Opcode) {
+    return Remaining.at(int(Formats->getSlotKind(Opcode)));
+  };
+  // Fill each position with the least demanded remaining alternative if it
+  // beats the next one in TableGen order by at least the margin. Otherwise
+  // that one keeps its place. A margin-based comparator is not a strict weak
+  // ordering, so this is a selection procedure.
+  for (auto *Pos = Alternatives.begin(); Pos != Alternatives.end(); ++Pos) {
+    auto *Best =
+        std::min_element(Pos, Alternatives.end(), [&](unsigned A, unsigned B) {
+          return Demand(A) < Demand(B);
+        });
+    if (Demand(*Pos) - Demand(*Best) >= SlotDemandMargin)
+      std::rotate(Pos, Best, Best + 1);
+  }
 }
 
 int SlotStatistics::getMinII() const {

@@ -61,7 +61,7 @@ body:             |
     ; CHECK-NEXT: }
     ; CHECK-NEXT: $ex8, $p0, $lf0, $r24 = VLDA_POP_dmx_lda_fifo_ex_bfp16_normal_pop killed $p0, killed $lf0, killed $r24, implicit-def $srfifo_uf :: (load unknown-size, align 1, addrspace 6)
     ; CHECK-NEXT: BUNDLE implicit-def $ex5, implicit-def $p0, implicit-def $lf0, implicit-def $r24, implicit-def $srfifo_uf, implicit-def $dm6, implicit-def $srfpflags, implicit killed $p0, implicit killed $lf0, implicit killed $r24, implicit killed $dm6, implicit killed $ewl11, implicit $ey3, implicit $ey0, implicit killed $ewh11, implicit $r8, implicit $crfpmask {
-    ; CHECK-NEXT:   $ex5, $p0, $lf0, $r24 = VLDA_POP_dmx_lda_fifo_ex_bfp16_normal_pop killed $p0, killed $lf0, killed $r24, implicit-def $srfifo_uf :: (load unknown-size, align 1, addrspace 6)
+    ; CHECK-NEXT:   $ex5, $p0, $lf0, $r24 = VLDB_POP_dmx_ldb_fifo_ex_bfp16_normal_pop killed $p0, killed $lf0, killed $r24, implicit-def $srfifo_uf :: (load unknown-size, align 1, addrspace 6)
     ; CHECK-NEXT:   $dm6 = VMAC_f_vmac_bfp16 killed $dm6, killed $ewl11, $ey3, $ey0, killed $ewh11, $r8, implicit-def $srfpflags, implicit $crfpmask
     ; CHECK-NEXT: }
     ; CHECK-NEXT: $ex3, $p0, $lf0, $r24, $dc1, $dc5 = VLDB_POP_3D_dmx_ldb_fifo_ex_bfp16 killed $p0, killed $lf0, killed $r24, killed $d1_3d, implicit-def $srfifo_uf :: (load unknown-size, align 1, addrspace 6)

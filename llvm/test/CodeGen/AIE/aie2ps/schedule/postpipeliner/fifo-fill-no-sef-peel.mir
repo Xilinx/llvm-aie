@@ -33,8 +33,8 @@
   define void @maxpool_fifo_5instr(ptr addrspace(5) noalias %ifm, ptr addrspace(6) noalias %ofm_load, ptr addrspace(6) noalias %ofm_write, i32 %n) {
   ; CHECK-LABEL: maxpool_fifo_5instr:
   ; CHECK:       // %bb.0: // %preheader
-  ; CHECK-NEXT:    vldb.fill [p0, lf0, r24]; mov p6, p1
-  ; CHECK-NEXT:    vlda x4, [p6], #64; vldb.pop.3d x6, [p0, lf0, r24, d0]; nopx
+  ; CHECK-NEXT:    movs p6, p1; vldb.fill [p0, lf0, r24]; nopx
+  ; CHECK-NEXT:    vlda x4, [p6], #64; vldb.pop.3d x6, [p0, lf0, r24, d0]
   ; CHECK-NEXT:    vldb.fill [p0, lf0, r24]; add.nc lc, r2, #-5
   ; CHECK-NEXT:    vlda x4, [p6], #64; vldb.pop.3d x6, [p0, lf0, r24, d0]; movxm ls, #.LBB0_1
   ; CHECK-NEXT:    nopa ; vldb.fill [p0, lf0, r24]; nops ; movxm le, #.L_LEnd0; nopv
