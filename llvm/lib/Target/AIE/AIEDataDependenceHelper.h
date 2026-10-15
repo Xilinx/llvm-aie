@@ -68,6 +68,16 @@ public:
 /// When SafeToIgnoreMemDeps is set, memory-alias edges that cross the
 /// pre/post boundary are suppressed via a mayAlias() override.
 ///
+/// The nodes are laid out as follows:
+///
+///   [pre-boundary free] Boundary [post-boundary free] PostBotFixedBoundary
+///   [post-boundary bottom-fixed]
+///
+/// Free nodes are in program order. Post-boundary bottom-fixed nodes are the
+/// SWP prologue clones at the bottom of the successor and have a fixed cycle.
+/// They are listed in loop-body order, which need not match the order of their
+/// register accesses.
+///
 /// The class also provides a depth map (keyed by SUnit NodeNum) that represents
 /// the depth of an instruction after the boundary.
 ///
@@ -87,6 +97,9 @@ class InterBlockEdges : public DataDependenceHelper {
   // The boundary between Pred and Succ nodes. 'Boundary holds the index of
   // the first post-boundary node. This is equal to its NodeNum.
   std::optional<unsigned> Boundary;
+  // The NodeNum of the first post-boundary bottom-fixed node. All nodes from
+  // here to the end are post-boundary bottom-fixed. It is at or after Boundary.
+  std::optional<unsigned> PostBotFixedBoundary;
   // When true, memory edges crossing the boundary are suppressed.
   bool SafeToIgnoreMemDeps = false;
 
@@ -103,6 +116,13 @@ class InterBlockEdges : public DataDependenceHelper {
   int PostRegionMaxDepth = 0;
 
   bool mayAlias(SUnit *SUa, SUnit *SUb, bool TBAA) override;
+
+  /// Pruning by transitivity assumes that a def accesses its register no
+  /// later than the later-listed nodes it stands in for. Post-boundary
+  /// bottom-fixed nodes give no such guarantee, so they keep the dependences
+  /// of all later accesses.
+  bool shouldRetainAllPhysRegDeps(const SUnit &SU,
+                                  MCRegister Reg) const override;
 
 public:
   InterBlockEdges(const MachineSchedContext &Context,
@@ -123,6 +143,14 @@ public:
   /// Nodes added before are part of the predecessor, nodes added after are
   /// part of the successor.
   void markBoundary();
+
+  /// Mark the start of the post-boundary bottom-fixed nodes. Nodes added
+  /// after are post-boundary bottom-fixed.
+  /// \pre markBoundary() has been called.
+  void markPostBotFixedBoundary();
+
+  /// Check whether SU is a post-boundary bottom-fixed node.
+  bool isPostBotFixedNode(const SUnit &SU) const;
 
   /// To iterate forward across the SUnits of the underlying DDG.
   auto begin() { return SUnits.begin(); }

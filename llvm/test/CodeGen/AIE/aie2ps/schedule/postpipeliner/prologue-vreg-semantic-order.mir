@@ -8,10 +8,11 @@
 # RUN:   -aie-postpipeliner-phys-mode=false -aie-postpipeliner-minii=8 \
 # RUN:   -verify-machineinstrs -o - | FileCheck %s
 
-# TODO: Miscompile. With register virtualization in the post-pipeliner, the
-# semantic order of the prologue clones no longer matches their register
-# accesses. The vldb into x8 in the last delay slot of bb.0 lands after the
-# prologue's vmax_lt.bf16 into x8, so the vst to [p7] stores the wrong value.
+# With register virtualization in the post-pipeliner, the semantic order of the
+# prologue clones no longer matches their register accesses: the vldb into x8
+# from [p4] is listed before the vmax_lt.bf16 into x8, but writes x8 after it.
+# The vldb into x8 in bb.0 must land before the vmax_lt.bf16 writes x8, or the
+# vst to [p7] stores the wrong value. It is placed in delay slot 3 for that.
 
 --- |
   define void @f(ptr noalias %a, ptr noalias %b, ptr noalias %c, ptr noalias %d, ptr noalias %e, ptr noalias %f, ptr noalias %g, ptr noalias %h, ptr noalias %z, ptr noalias %y, i32 %n, i32 %skip) {
@@ -20,9 +21,9 @@
   ; CHECK-NEXT:    nopa ; nopb ; nops ; jnz r1, #.LBB0_4; nopv
   ; CHECK-NEXT:    nop // Delay Slot 5
   ; CHECK-NEXT:    nop // Delay Slot 4
-  ; CHECK-NEXT:    nop // Delay Slot 3
+  ; CHECK-NEXT:    vldb x8, [p5, #0] // Delay Slot 3
   ; CHECK-NEXT:    nop // Delay Slot 2
-  ; CHECK-NEXT:    vldb x8, [p5, #0] // Delay Slot 1
+  ; CHECK-NEXT:    nop // Delay Slot 1
   ; CHECK-NEXT:  // %bb.1: // %preheader
   ; CHECK-NEXT:    vlda x6, [p2, #0]; vldb x8, [p4, #0]
   ; CHECK-NEXT:    vldb x8, [p1, #0]; vmax_lt.bf16 x6, r16, x0, x0
