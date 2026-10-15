@@ -123,12 +123,11 @@ int MaxLatencyFinder::computeEffectiveLatency(MachineInstr &MI) {
       SUnit *Succ = Dep.getSUnit();
       int Depth;
       if (SE.isPreBoundaryNode(Succ)) {
-        // FixedInstrBoundary separates free instructions from the fixed
-        // suffix: prologue clones, or the pipelined loop tail. Free
-        // instructions are ordered by the region DAG.
+        // Remaining latency is EdgeLat minus a recorded cycle. Only
+        // the loop tail and the prologue clones have a pre-depth.
         if (!SE.isFixedPreBoundaryNode(Succ)) {
           LLVM_DEBUG(dbgs() << "   SU" << Succ->NodeNum
-                            << " is a free pre-boundary node, skip\n");
+                            << " has no pre-depth, skip\n");
           continue;
         }
         const std::optional<int> PreDepth = SE.getPreDepths().getValue(Succ);

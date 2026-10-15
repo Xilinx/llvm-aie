@@ -88,17 +88,22 @@ public:
 ///   | PostDepth   0   1   2
 ///   v
 ///
-/// FixedInstrBoundary is a second cut, above the CFG boundary. It is the
-/// NodeNum where fixed instructions start. Nodes above it are free and have
-/// no stored cycle. Nodes between it and the CFG boundary are fixed and carry
-/// PreDepth: prologue clones, or the whole loop tail when that tail is fixed
-/// from the first node.
+/// Each side is further cut into TopFixed, Free and BotFixed by its FreeRange:
+/// the NodeNums of its first free node (Begin) and of its first BotFixed node
+/// (End). Any range may be empty. An unset marker leaves the free range open
+/// at that end, so a side without markers is all free.
 ///
-///   ^
-///   | free
-/// ----- FixedInstrBoundary
-///   | fixed   -3  -2  -1
+///   | TopFixed   epilogue clones of a one-region predecessor, no depth
+/// ----- PreFree.Begin
+///   | Free       predecessor bottom-region instructions
+/// ----- PreFree.End
+///   | BotFixed   prologue clones or the loop tail, PreDepth -3 -2 -1
 /// ----- Boundary
+///   | TopFixed   epilogue clones, PostDepth 0 1 2
+/// ----- PostFree.Begin
+///   | Free       successor top-region instructions
+/// ----- PostFree.End
+///   | BotFixed   prologue clones of a one-region successor, no depth
 ///
 /// Each is a NodeValues object: a vector indexed by NodeNum, plus a region
 /// maximum. An absent entry means that node has no stored cycle.
@@ -161,11 +166,28 @@ private:
   // The boundary between Pred and Succ nodes. Boundary holds the index of
   // the first post-boundary node. This is equal to its NodeNum.
   std::optional<unsigned> Boundary;
-  // NodeNum that separates free instructions from fixed ones. Nodes before it
-  // are free. Today the fixed side is the pre-boundary suffix
-  // [FixedInstrBoundary, Boundary): prologue clones. The same split can mark
-  // epilogue clones.
-  std::optional<unsigned> FixedInstrBoundary;
+  /// Free range of one side, [Begin, End). Nodes of that side outside it are
+  /// fixed. An unset end leaves the range open there.
+  struct FreeRange {
+    std::optional<unsigned> Begin;
+    std::optional<unsigned> End;
+
+    bool isFixed(unsigned NodeNum) const {
+      return (Begin && NodeNum < *Begin) || (End && NodeNum >= *End);
+    }
+    void clear() {
+      Begin.reset();
+      End.reset();
+    }
+  };
+
+  FreeRange PreFree;
+  FreeRange PostFree;
+
+  FreeRange &currentFreeRange() { return Boundary ? PostFree : PreFree; }
+  const FreeRange &freeRangeOf(const SUnit &SU) const {
+    return isPreBoundaryNode(&SU) ? PreFree : PostFree;
+  }
   // When true, memory edges crossing the boundary are suppressed.
   bool SafeToIgnoreMemDeps = false;
 
@@ -178,6 +200,12 @@ private:
   NodeValues PostDepths{SuccMap};
 
   bool mayAlias(SUnit *SUa, SUnit *SUb, bool TBAA) override;
+
+  /// Pruning by transitivity assumes that a def issues and lands no earlier
+  /// than the earlier-listed defs it stands in for. Fixed nodes have their
+  /// cycles set by the pipeliner, which need not follow that order.
+  bool shouldRetainAllPhysRegDeps(const SUnit &SU,
+                                  MCRegister Reg) const override;
 
 public:
   InterBlockEdges(const MachineSchedContext &Context,
@@ -198,8 +226,11 @@ public:
   /// part of the successor.
   void markBoundary();
 
-  /// Record the NodeNum that separates free instructions from fixed ones.
-  void markFixedInstrBoundary();
+  /// Start and end the free range of the current side: the predecessor
+  /// before markBoundary(), the successor after it. Nodes added before
+  /// markFreeBegin() are TopFixed, nodes added after markFreeEnd() BotFixed.
+  void markFreeBegin();
+  void markFreeEnd();
 
   /// To iterate forward across the SUnits of the underlying DDG.
   auto begin() { return SUnits.begin(); }
@@ -222,9 +253,12 @@ public:
   /// Check whether SU represents an instruction before the boundary.
   bool isPreBoundaryNode(const SUnit *SU) const;
 
-  /// True when SU is a fixed pre-boundary node: its NodeNum is at or after
-  /// FixedInstrBoundary and still before the CFG boundary.
+  /// True when SU is a BotFixed pre-boundary node: its NodeNum is at or after
+  /// PreFree.End and still before the CFG boundary. These carry PreDepth.
   bool isFixedPreBoundaryNode(const SUnit *SU) const;
+
+  /// True when SU lies outside the free range of its side.
+  bool isFixedNode(const SUnit &SU) const;
 
   /// Check whether SU represents an instruction after the boundary.
   bool isPostBoundaryNode(const SUnit *SU) const;

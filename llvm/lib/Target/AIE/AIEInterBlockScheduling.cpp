@@ -1290,44 +1290,48 @@ void InterBlockScheduling::buildGraph(InterBlockEdges &DAG) {
   const BlockState &Pred = getBlockState(PredBB);
   const BlockState &Succ = getBlockState(SuccBB);
 
-  // Before the boundary. This edge meets the predecessor's bottom region.
-  // A single-region pipelined loop whose successor holds the epilogue
-  // contributes that region's scheduled bundles. Any other one-region
-  // predecessor contributes its epilogue clones, which sit in that same
+  // Each side is TopFixed, Free, BotFixed. Before the boundary, this edge
+  // meets the predecessor's bottom region. A single-region pipelined loop
+  // whose successor holds the epilogue contributes the tail of that region's
+  // scheduled bundles, all BotFixed. Any other one-region predecessor
+  // contributes its epilogue clones as TopFixed, which sit in that same
   // region, then the bottom region's free instructions. A multi-region
   // predecessor contributes only those free instructions. Neither of those
   // has a pre-depth.
   const bool PredOneRegion = &Pred.getTop() == &Pred.getBottom();
   if (Pred.isPipelined() && PredOneRegion && !Succ.TopInsert.empty()) {
-    // The loop tail is the fixed pre-boundary suffix, numbered from here.
-    DAG.markFixedInstrBoundary();
+    DAG.markFreeBegin();
+    DAG.markFreeEnd();
     addLoopBundles(DAG, Pred.getBottom().Bundles, HR->getConflictHorizon());
   } else {
     if (PredOneRegion)
       addFixedInstrs(Pred.TopInsert, DAG, PredBB, /*Depths=*/nullptr);
+    DAG.markFreeBegin();
     for (MachineInstr *MI : Pred.getBottom().getFreeInstructions())
       DAG.addNode(MI);
-    // Prologue clones follow. Free nodes above have no stored cycle.
-    DAG.markFixedInstrBoundary();
+    DAG.markFreeEnd();
   }
 
-  // Prologue clones. They are fixed at the end of the block, so they always
-  // belong to the bottom region and sit on this edge.
+  // Prologue clones, BotFixed. They are fixed at the end of the block, so
+  // they always belong to the bottom region and sit on this edge.
   addFixedInstrs(Pred.BottomInsert, DAG, PredBB, &DAG.getPreDepths());
 
   DAG.markBoundary();
 
-  // After the boundary. Epilogue clones, then the successor's top-region
-  // free instructions. An empty region is an empty block, so it contributes
-  // no free nodes.
+  // After the boundary. Epilogue clones as TopFixed, then the successor's
+  // top-region free instructions. An empty region is an empty block, so it
+  // contributes no free nodes.
   addFixedInstrs(Succ.TopInsert, DAG, SuccBB, &DAG.getPostDepths());
+  DAG.markFreeBegin();
   if (!Succ.getRegions().empty()) {
     for (MachineInstr *MI : Succ.getTop().getFreeInstructions())
       DAG.addNode(MI);
   }
-  // Prologue clones at the bottom of the successor. They share its top
-  // region, and so this edge, only when the successor is a single region.
-  // No post-depth: an ExitSU latency still reaches them.
+  DAG.markFreeEnd();
+  // Prologue clones at the bottom of the successor, BotFixed. They share its
+  // top region, and so this edge, only when the successor is a single
+  // region. Their cycle from the top is not known until the successor is
+  // scheduled, so they have no post-depth here; recordPostDepths fills it in.
   if (&Succ.getTop() == &Succ.getBottom())
     addFixedInstrs(Succ.BottomInsert, DAG, SuccBB, /*Depths=*/nullptr);
 

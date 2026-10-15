@@ -112,11 +112,27 @@ void InterBlockEdges::markBoundary() {
   Boundary = SUnits.size();
 }
 
-void InterBlockEdges::markFixedInstrBoundary() {
-  assert(!FixedInstrBoundary && "Fixed/free boundary already set");
-  assert(!Boundary &&
-         "Fixed/free boundary must be marked before the CFG boundary");
-  FixedInstrBoundary = SUnits.size();
+void InterBlockEdges::markFreeBegin() {
+  FreeRange &Free = currentFreeRange();
+  assert(!Free.Begin && "Free range already started on this side");
+  Free.Begin = SUnits.size();
+}
+
+void InterBlockEdges::markFreeEnd() {
+  FreeRange &Free = currentFreeRange();
+  assert(Free.Begin && "Free range must start before it ends");
+  assert(!Free.End && "Free range already ended on this side");
+  Free.End = SUnits.size();
+}
+
+bool InterBlockEdges::isFixedNode(const SUnit &SU) const {
+  return freeRangeOf(SU).isFixed(SU.NodeNum);
+}
+
+bool InterBlockEdges::shouldRetainAllPhysRegDeps(const SUnit &SU,
+                                                 MCRegister Reg) const {
+  return isFixedNode(SU) ||
+         DataDependenceHelper::shouldRetainAllPhysRegDeps(SU, Reg);
 }
 
 bool InterBlockEdges::mayAlias(SUnit *SUa, SUnit *SUb, bool TBAA) {
@@ -151,8 +167,7 @@ bool InterBlockEdges::isPreBoundaryNode(const SUnit *SU) const {
 }
 
 bool InterBlockEdges::isFixedPreBoundaryNode(const SUnit *SU) const {
-  return FixedInstrBoundary && SU->NodeNum >= *FixedInstrBoundary &&
-         isPreBoundaryNode(SU);
+  return PreFree.End && SU->NodeNum >= *PreFree.End && isPreBoundaryNode(SU);
 }
 
 bool InterBlockEdges::isPostBoundaryNode(const SUnit *SU) const {
@@ -168,7 +183,8 @@ void InterBlockEdges::clear() {
   SuccMap.clear();
   PostDepths.clear();
   PreDepths.clear();
-  FixedInstrBoundary.reset();
+  PreFree.clear();
+  PostFree.clear();
 }
 
 std::map<unsigned, int> InterBlockEdges::computePreHeights() const {

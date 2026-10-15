@@ -16,8 +16,7 @@
 # stage 0, so its last instance is in the loop bundles. The VMIN_GE is in
 # stage 2, so its last instance is an epilogue clone. The VLD issues earlier
 # but lands later. The exit block's VMAX_LT must read x10 after the last VLD
-# lands, but the VMIN_GE clone stands in for the VLD, so it only waits for the
-# VMIN_GE.
+# lands, so the VMIN_GE clone must not stand in for the VLD.
 
 --- |
   define void @loop_liveout(ptr %buf, i32 %n) {
@@ -40,12 +39,14 @@
   ; CHECK-NEXT:  .L_LEnd0:
   ; CHECK-NEXT:    nopa ; vldb x10, [p1, #0]; vst x10, [p0, #0]; nopx ; vmin_ge.bf16 x10, r16, x6, x0; nopv
   ; CHECK-NEXT:  // %bb.2: // %exit
-  ; CHECK-NEXT:    nopa ; nopb ; nopx ; vmax_lt.bf16 x6, r16, x0, x4
+  ; CHECK-NEXT:    nops ; vmax_lt.bf16 x6, r16, x0, x4
   ; CHECK-NEXT:    vst x10, [p0, #0]; vmin_ge.bf16 x10, r16, x6, x0
-  ; CHECK-NEXT:    ret lr; vmax_lt.bf16 x6, r16, x0, x4
-  ; CHECK-NEXT:    vst x10, [p0, #0]; vmin_ge.bf16 x10, r16, x6, x0 // Delay Slot 5
+  ; CHECK-NEXT:    vmax_lt.bf16 x6, r16, x0, x4
+  ; CHECK-NEXT:    vst x10, [p0, #0]; vmin_ge.bf16 x10, r16, x6, x0
+  ; CHECK-NEXT:    ret lr
+  ; CHECK-NEXT:    vst x10, [p0, #0] // Delay Slot 5
   ; CHECK-NEXT:    vmax_lt.bf16 x2, r16, x0, x10 // Delay Slot 4
-  ; CHECK-NEXT:    vst x10, [p0, #0] // Delay Slot 3
+  ; CHECK-NEXT:    nop // Delay Slot 3
   ; CHECK-NEXT:    vst x2, [p0, #0] // Delay Slot 2
   ; CHECK-NEXT:    nop // Delay Slot 1
   entry:

@@ -147,35 +147,70 @@ TEST_F(InterBlockEdgesTest, PreDepthRecording) {
   EXPECT_EQ(DAG.getPreDepths().getRegionMax(), 0);
 }
 
-TEST_F(InterBlockEdgesTest, FixedInstrBoundary) {
-  auto *Free = appendPlainInstr();
-  auto *Prologue = appendPlainInstr();
-  auto *Post = appendPlainInstr();
+TEST_F(InterBlockEdgesTest, FreeRangeMarkers) {
+  auto *PreTop = appendPlainInstr();
+  auto *PreFree = appendPlainInstr();
+  auto *PreBot = appendPlainInstr();
+  auto *PostTop = appendPlainInstr();
+  auto *PostFree = appendPlainInstr();
+  auto *PostBot = appendPlainInstr();
   InterBlockEdges DAG = makeDAG();
 
-  DAG.addNode(Free);
-  DAG.markFixedInstrBoundary();
-  DAG.addNode(Prologue);
-  DAG.getPreDepths().record(Prologue, -1);
+  DAG.addNode(PreTop);
+  DAG.markFreeBegin();
+  DAG.addNode(PreFree);
+  DAG.markFreeEnd();
+  DAG.addNode(PreBot);
+  DAG.getPreDepths().record(PreBot, -1);
   DAG.markBoundary();
-  DAG.addNode(Post);
+  DAG.addNode(PostTop);
+  DAG.markFreeBegin();
+  DAG.addNode(PostFree);
+  DAG.markFreeEnd();
+  DAG.addNode(PostBot);
 
-  const SUnit *FreeSU = DAG.getPreBoundaryNode(Free);
-  const SUnit *PrologueSU = DAG.getPreBoundaryNode(Prologue);
-  const SUnit *PostSU = DAG.getPostBoundaryNode(Post);
-  ASSERT_NE(FreeSU, nullptr);
-  ASSERT_NE(PrologueSU, nullptr);
-  ASSERT_NE(PostSU, nullptr);
-  EXPECT_FALSE(DAG.isFixedPreBoundaryNode(FreeSU));
-  EXPECT_TRUE(DAG.isFixedPreBoundaryNode(PrologueSU));
-  EXPECT_FALSE(DAG.isFixedPreBoundaryNode(PostSU));
-  const std::optional<int> PrologueDepth =
-      DAG.getPreDepths().getValue(PrologueSU);
-  ASSERT_TRUE(PrologueDepth.has_value());
-  EXPECT_EQ(*PrologueDepth, -1);
+  const SUnit *PreTopSU = DAG.getPreBoundaryNode(PreTop);
+  const SUnit *PreFreeSU = DAG.getPreBoundaryNode(PreFree);
+  const SUnit *PreBotSU = DAG.getPreBoundaryNode(PreBot);
+  const SUnit *PostTopSU = DAG.getPostBoundaryNode(PostTop);
+  const SUnit *PostFreeSU = DAG.getPostBoundaryNode(PostFree);
+  const SUnit *PostBotSU = DAG.getPostBoundaryNode(PostBot);
+  ASSERT_NE(PreTopSU, nullptr);
+  ASSERT_NE(PreFreeSU, nullptr);
+  ASSERT_NE(PreBotSU, nullptr);
+  ASSERT_NE(PostTopSU, nullptr);
+  ASSERT_NE(PostFreeSU, nullptr);
+  ASSERT_NE(PostBotSU, nullptr);
 
+  EXPECT_TRUE(DAG.isFixedNode(*PreTopSU));
+  EXPECT_FALSE(DAG.isFixedNode(*PreFreeSU));
+  EXPECT_TRUE(DAG.isFixedNode(*PreBotSU));
+  EXPECT_TRUE(DAG.isFixedNode(*PostTopSU));
+  EXPECT_FALSE(DAG.isFixedNode(*PostFreeSU));
+  EXPECT_TRUE(DAG.isFixedNode(*PostBotSU));
+
+  // Only the predecessor's BotFixed range carries a pre-depth.
+  EXPECT_FALSE(DAG.isFixedPreBoundaryNode(PreTopSU));
+  EXPECT_FALSE(DAG.isFixedPreBoundaryNode(PreFreeSU));
+  EXPECT_TRUE(DAG.isFixedPreBoundaryNode(PreBotSU));
+  EXPECT_FALSE(DAG.isFixedPreBoundaryNode(PostTopSU));
+  EXPECT_FALSE(DAG.isFixedPreBoundaryNode(PostBotSU));
+  const std::optional<int> PreBotDepth = DAG.getPreDepths().getValue(PreBotSU);
+  ASSERT_TRUE(PreBotDepth.has_value());
+  EXPECT_EQ(*PreBotDepth, -1);
+
+  // Without markers, both sides are all free.
   DAG.clear();
-  DAG.markFixedInstrBoundary();
+  DAG.addNode(PreTop);
+  DAG.markBoundary();
+  DAG.addNode(PostBot);
+  EXPECT_FALSE(DAG.isFixedNode(*DAG.getPreBoundaryNode(PreTop)));
+  EXPECT_FALSE(DAG.isFixedNode(*DAG.getPostBoundaryNode(PostBot)));
+
+  // The markers can be set again after clear().
+  DAG.clear();
+  DAG.markFreeBegin();
+  DAG.markFreeEnd();
 }
 
 TEST_F(InterBlockEdgesTest, ClearResetsDAGAndMaps) {
