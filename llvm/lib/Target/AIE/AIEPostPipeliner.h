@@ -256,7 +256,7 @@ class PostPipeliner {
 
   const AIEHazardRecognizer &HR;
   RegLiveRangeTracker &RegTracker;
-  ScheduleDAGMI *DAG = nullptr;
+  ScheduleDAGInstrs *DAG = nullptr;
   const AIEBaseInstrInfo *TII = nullptr;
 
   // Schedule interpreter for computing modulo live ranges
@@ -414,7 +414,8 @@ public:
   /// Schedule using the given InitiationInterval. Return true when successful.
   /// In that case calls to the query methods below are legitimate.
   /// \param PipelinerMode The mode the postpipeliner is operating in.
-  bool schedule(ScheduleDAGMI &DAG, int InitiationInterval,
+  /// \p DAG must be a pre-built two-copy pipeliner graph for the given mode.
+  bool schedule(ScheduleDAGInstrs &DAG, int InitiationInterval,
                 PostPipelinerMode PipelinerMode);
 
   // Quick query for the stage count.

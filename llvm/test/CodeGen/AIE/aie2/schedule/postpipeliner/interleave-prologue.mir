@@ -42,9 +42,9 @@ body:             |
   ; CHECK-NEXT:   successors: %bb.1(0x7c000000), %bb.2(0x04000000)
   ; CHECK-NEXT:   liveins: $p0, $p1, $r0, $m0, $x0, $x2, $x4
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   BUNDLE implicit-def $x6, implicit-def $p0, implicit-def $x0, implicit killed $p0, implicit $m0, implicit killed $x0 {
+  ; CHECK-NEXT:   BUNDLE implicit-def dead $x6, implicit-def $p0, implicit-def $x0, implicit killed $p0, implicit $m0, implicit killed $x0 {
   ; CHECK-NEXT:     $x6, $p0 = VLDB_UNPACK_S16_S8_ag_pstm_nrm killed $p0, $m0
-  ; CHECK-NEXT:     $x0 = VADD_16 killed $x0, internal $x6
+  ; CHECK-NEXT:     $x0 = VADD_16 killed $x0, internal killed $x6
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
   ; CHECK-NEXT: {{  $}}
@@ -144,19 +144,19 @@ body:             |
   ; CHECK-NEXT:   successors: %bb.1(0x7c000000), %bb.2(0x04000000)
   ; CHECK-NEXT:   liveins: $p0, $p1, $r0, $m0, $x0, $x2, $x4
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   BUNDLE implicit-def $wl4, implicit-def $p0, implicit-def $x6, implicit-def $x0, implicit killed $p0, implicit $m0, implicit killed $x0 {
+  ; CHECK-NEXT:   BUNDLE implicit-def $wl4, implicit-def $p0, implicit-def dead $x6, implicit-def $x0, implicit killed $p0, implicit $m0, implicit killed $x0 {
   ; CHECK-NEXT:     $wl4, $p0 = VLDA_dmw_lda_w_ag_pstm_nrm_imm killed $p0, $m0
   ; CHECK-NEXT:     $x6 = VUNPACK_S16_S8 internal $wl4
-  ; CHECK-NEXT:     $x0 = VADD_16 killed $x0, internal $x6
+  ; CHECK-NEXT:     $x0 = VADD_16 killed $x0, internal killed $x6
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   liveins: $p0, $p1, $x0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   BUNDLE implicit-def $x6, implicit-def $x0, implicit killed $wl4, implicit killed $x0 {
+  ; CHECK-NEXT:   BUNDLE implicit-def dead $x6, implicit-def $x0, implicit killed $wl4, implicit killed $x0 {
   ; CHECK-NEXT:     $x6 = VUNPACK_S16_S8 killed $wl4
-  ; CHECK-NEXT:     $x0 = VADD_16 killed $x0, internal $x6
+  ; CHECK-NEXT:     $x0 = VADD_16 killed $x0, internal killed $x6
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   $x0 = VADD_16 killed $x0, $x6
   ; CHECK-NEXT:   $x0 = VADD_16 killed $x0, $x6
@@ -252,7 +252,7 @@ body:             |
   ; CHECK-NEXT:   BUNDLE implicit-def $wh6, implicit-def $wl6, implicit-def $p0, implicit-def $x0, implicit killed $p0, implicit killed $x0 {
   ; CHECK-NEXT:     $wh6 = VLDA_dmw_lda_w_ag_idx_imm $p0, 32 :: (load (<16 x s16>))
   ; CHECK-NEXT:     $wl6, $p0 = VLDB_dmw_ldb_ag_pstm_nrm_imm killed $p0, 64 :: (load (<16 x s16>))
-  ; CHECK-NEXT:     $x0 = VADD_16 killed $x0, internal $x6
+  ; CHECK-NEXT:     $x0 = VADD_16 killed $x0, internal killed $x6
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
   ; CHECK-NEXT: {{  $}}
@@ -357,10 +357,10 @@ body:             |
   ; CHECK-NEXT:     $wh6 = VLDA_dmw_lda_w_ag_idx_imm $p0, 32
   ; CHECK-NEXT:     $x5 = VSHUFFLE killed $x6, $x1, $r8
   ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   BUNDLE implicit-def $wl6, implicit-def $p0, implicit-def $x5, implicit-def $cm2, implicit killed $p0, implicit $m0, implicit killed $x5, implicit $x2, implicit $r8, implicit killed $cm2, implicit $x0, implicit $r4 {
+  ; CHECK-NEXT:   BUNDLE implicit-def $wl6, implicit-def $p0, implicit-def dead $x5, implicit-def $cm2, implicit killed $p0, implicit $m0, implicit killed $x5, implicit $x2, implicit $r8, implicit killed $cm2, implicit $x0, implicit $r4 {
   ; CHECK-NEXT:     $wl6, $p0 = VLDA_dmw_lda_w_ag_pstm_nrm_imm killed $p0, $m0
   ; CHECK-NEXT:     $x5 = VSHUFFLE killed $x5, $x2, $r8
-  ; CHECK-NEXT:     $cm2 = VMAC_vmac_cm_core_dense killed $cm2, internal $x5, $x0, $r4
+  ; CHECK-NEXT:     $cm2 = VMAC_vmac_cm_core_dense killed $cm2, internal killed $x5, $x0, $r4
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
   ; CHECK-NEXT: {{  $}}
@@ -368,24 +368,24 @@ body:             |
   ; CHECK-NEXT:   liveins: $p0, $p1, $cm2, $s0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   $x5 = VSHUFFLE $x6, $x1, $r8
-  ; CHECK-NEXT:   BUNDLE implicit-def $x5, implicit-def $cm2, implicit killed $x5, implicit $x2, implicit $r8, implicit killed $cm2, implicit $x0, implicit $r4 {
+  ; CHECK-NEXT:   BUNDLE implicit-def dead $x5, implicit-def $cm2, implicit killed $x5, implicit $x2, implicit $r8, implicit killed $cm2, implicit $x0, implicit $r4 {
   ; CHECK-NEXT:     $x5 = VSHUFFLE killed $x5, $x2, $r8
-  ; CHECK-NEXT:     $cm2 = VMAC_vmac_cm_core_dense killed $cm2, internal $x5, $x0, $r4
+  ; CHECK-NEXT:     $cm2 = VMAC_vmac_cm_core_dense killed $cm2, internal killed $x5, $x0, $r4
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   $x5 = VSHUFFLE $x6, $x1, $r8
-  ; CHECK-NEXT:   BUNDLE implicit-def $x5, implicit-def $cm2, implicit killed $x5, implicit $x2, implicit $r8, implicit killed $cm2, implicit $x0, implicit $r4 {
+  ; CHECK-NEXT:   BUNDLE implicit-def dead $x5, implicit-def $cm2, implicit killed $x5, implicit $x2, implicit $r8, implicit killed $cm2, implicit $x0, implicit $r4 {
   ; CHECK-NEXT:     $x5 = VSHUFFLE killed $x5, $x2, $r8
-  ; CHECK-NEXT:     $cm2 = VMAC_vmac_cm_core_dense killed $cm2, internal $x5, $x0, $r4
+  ; CHECK-NEXT:     $cm2 = VMAC_vmac_cm_core_dense killed $cm2, internal killed $x5, $x0, $r4
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   $x5 = VSHUFFLE $x6, $x1, $r8
-  ; CHECK-NEXT:   BUNDLE implicit-def $x5, implicit-def $cm2, implicit killed $x5, implicit $x2, implicit $r8, implicit killed $cm2, implicit $x0, implicit $r4 {
+  ; CHECK-NEXT:   BUNDLE implicit-def dead $x5, implicit-def $cm2, implicit killed $x5, implicit $x2, implicit $r8, implicit killed $cm2, implicit $x0, implicit $r4 {
   ; CHECK-NEXT:     $x5 = VSHUFFLE killed $x5, $x2, $r8
-  ; CHECK-NEXT:     $cm2 = VMAC_vmac_cm_core_dense killed $cm2, internal $x5, $x0, $r4
+  ; CHECK-NEXT:     $cm2 = VMAC_vmac_cm_core_dense killed $cm2, internal killed $x5, $x0, $r4
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   $x5 = VSHUFFLE killed $x6, killed $x1, $r8
-  ; CHECK-NEXT:   BUNDLE implicit-def $x5, implicit-def $cm2, implicit killed $x5, implicit killed $x2, implicit killed $r8, implicit killed $cm2, implicit $x0, implicit $r4 {
+  ; CHECK-NEXT:   BUNDLE implicit-def dead $x5, implicit-def $cm2, implicit killed $x5, implicit killed $x2, implicit killed $r8, implicit killed $cm2, implicit $x0, implicit $r4 {
   ; CHECK-NEXT:     $x5 = VSHUFFLE killed $x5, killed $x2, killed $r8
-  ; CHECK-NEXT:     $cm2 = VMAC_vmac_cm_core_dense killed $cm2, internal $x5, $x0, $r4
+  ; CHECK-NEXT:     $cm2 = VMAC_vmac_cm_core_dense killed $cm2, internal killed $x5, $x0, $r4
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   $cm2 = VMAC_vmac_cm_core_dense killed $cm2, killed $x5, killed $x0, killed $r4
@@ -467,9 +467,9 @@ body:             |
   ; CHECK-NEXT:   successors: %bb.1(0x7c000000), %bb.2(0x04000000)
   ; CHECK-NEXT:   liveins: $p0, $p1, $r0, $m0, $x0, $x2, $x4
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   BUNDLE implicit-def $x6, implicit-def $p0, implicit-def $x0, implicit killed $p0, implicit $m0, implicit killed $x0 {
+  ; CHECK-NEXT:   BUNDLE implicit-def dead $x6, implicit-def $p0, implicit-def $x0, implicit killed $p0, implicit $m0, implicit killed $x0 {
   ; CHECK-NEXT:     $x6, $p0 = VLDB_UNPACK_S16_S8_ag_pstm_nrm killed $p0, $m0
-  ; CHECK-NEXT:     $x0 = VADD_16 killed $x0, internal $x6
+  ; CHECK-NEXT:     $x0 = VADD_16 killed $x0, internal killed $x6
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
   ; CHECK-NEXT: {{  $}}
