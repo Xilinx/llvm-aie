@@ -32,6 +32,16 @@ class StringRef;
 
 class AIE2PSubtarget : public AIE2PGenSubtargetInfo {
   virtual void anchor();
+
+  // Subtarget capability bits generated from the AIEFeatures.td
+  // SubtargetFeatures and assigned by ParseSubtargetFeatures. Declared ahead of
+  // the members whose initialization runs ParseSubtargetFeatures (FrameLowering
+  // et al.) so the in-class default initializer cannot clobber a parsed value.
+#define GET_SUBTARGETINFO_MACRO(ATTRIBUTE, DEFAULT, GETTER)                    \
+  bool ATTRIBUTE = DEFAULT;
+#include "AIE2PGenSubtargetInfo.inc"
+#undef GET_SUBTARGETINFO_MACRO
+
   std::string CPUName;
   // FIXME: Do we need a custom AIE2PAddrSpaceInfo?
   AIE2AddrSpaceInfo AddrSpaceInfo;
@@ -57,6 +67,13 @@ public:
   bool enableEarlyIfConversion() const override { return true; }
 
   void ParseSubtargetFeatures(StringRef CPU, StringRef TuneCPU, StringRef FS);
+
+  // Capability queries generated from AIEFeatures.td (e.g. hasBFP16(),
+  // hasAcc2048()). Prefer these over checking the CPU name or an arch macro.
+#define GET_SUBTARGETINFO_MACRO(ATTRIBUTE, DEFAULT, GETTER)                    \
+  bool GETTER() const { return ATTRIBUTE; }
+#include "AIE2PGenSubtargetInfo.inc"
+#undef GET_SUBTARGETINFO_MACRO
 
   const AIE2PFrameLowering *getFrameLowering() const override {
     return &FrameLowering;
