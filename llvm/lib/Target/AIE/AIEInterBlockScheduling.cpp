@@ -1236,7 +1236,10 @@ void InterBlockScheduling::buildGraph(InterBlockEdges &DAG) {
 
   // Post-boundary: BotFixed first-iteration copies (SWP prologue clones),
   // in the semantic order of the original loop instructions. This vector is
-  // empty for non-pipelined blocks.
+  // empty for non-pipelined blocks. Their cycles are fixed, and with register
+  // virtualization their register accesses need not follow that order, so they
+  // are added after the post-boundary bottom-fixed boundary.
+  DAG.markPostBotFixedBoundary();
   for (MachineInstr *MI : SuccBS.BottomInsertSemanticOrder) {
     DAG.addNode(MI);
     // Some queries in edge building require a parent to get to SubTarget.

@@ -88,6 +88,25 @@ void InterBlockEdges::markBoundary() {
   Boundary = SUnits.size();
 }
 
+void InterBlockEdges::markPostBotFixedBoundary() {
+  assert(Boundary &&
+         "Post-boundary bottom-fixed nodes follow the CFG boundary");
+  assert(!PostBotFixedBoundary &&
+         "Post-boundary bottom-fixed boundary already set");
+  PostBotFixedBoundary = SUnits.size();
+}
+
+bool InterBlockEdges::isPostBotFixedNode(const SUnit &SU) const {
+  return PostBotFixedBoundary && SU.NodeNum >= *PostBotFixedBoundary &&
+         SU.NodeNum < SUnits.size();
+}
+
+bool InterBlockEdges::shouldRetainAllPhysRegDeps(const SUnit &SU,
+                                                 MCRegister Reg) const {
+  return isPostBotFixedNode(SU) ||
+         DataDependenceHelper::shouldRetainAllPhysRegDeps(SU, Reg);
+}
+
 bool InterBlockEdges::mayAlias(SUnit *SUa, SUnit *SUb, bool TBAA) {
   if (SafeToIgnoreMemDeps && Boundary) {
     // Suppress memory edges that cross the pre/post boundary.
@@ -119,7 +138,12 @@ void InterBlockEdges::clearPostDepths() {
 void InterBlockEdges::clear() {
   clearDAG();
   Boundary = {};
+  // updatePerSuccEdges rebuilds this object in place. addNode uses emplace, so
+  // a stale index would keep pointing at whatever instruction now occupies it.
+  PredMap.clear();
+  SuccMap.clear();
   clearPostDepths();
+  PostBotFixedBoundary.reset();
 }
 
 // Record code at a particular depth that is not represented

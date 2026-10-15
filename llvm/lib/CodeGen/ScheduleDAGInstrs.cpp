@@ -375,11 +375,14 @@ void ScheduleDAGInstrs::addPhysRegDeps(SUnit *SU, unsigned OperIdx) {
   } else {
     addPhysRegDataDeps(SU, OperIdx);
 
-    // Clear previous uses and defs of this register and its subregisters.
-    for (MCRegUnit Unit : TRI->regunits(Reg)) {
-      Uses.eraseAll(Unit);
-      if (!MO.isDead())
-        Defs.eraseAll(Unit);
+    // Clear previous uses and defs of this register and its subregisters,
+    // unless this def must keep the dependences of all later accesses.
+    if (!shouldRetainAllPhysRegDeps(*SU, Reg)) {
+      for (MCRegUnit Unit : TRI->regunits(Reg)) {
+        Uses.eraseAll(Unit);
+        if (!MO.isDead())
+          Defs.eraseAll(Unit);
+      }
     }
 
     if (MO.isDead() && SU->isCall) {
