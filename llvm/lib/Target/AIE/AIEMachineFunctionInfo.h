@@ -98,6 +98,10 @@ private:
   /// Keyed by the loop block, since block numbers change after scheduling.
   DenseMap<const MachineBasicBlock *, LoopSchedule> LoopSchedules;
 
+  /// Stage count of each loop kernel the MachinePipeliner created. A loop that
+  /// is not a zero-overhead loop keeps no other trace of it.
+  DenseMap<const MachineBasicBlock *, unsigned> SWPStageCounts;
+
 public:
   //  AIEMachineFunctionInfo() = default;
 
@@ -139,6 +143,18 @@ public:
   getLoopSchedule(const MachineBasicBlock &LoopMBB) const {
     auto It = LoopSchedules.find(&LoopMBB);
     if (It == LoopSchedules.end())
+      return std::nullopt;
+    return It->second;
+  }
+
+  void setSWPStageCount(const MachineBasicBlock &Kernel, unsigned NS) {
+    SWPStageCounts[&Kernel] = NS;
+  }
+
+  std::optional<unsigned>
+  getSWPStageCount(const MachineBasicBlock &Kernel) const {
+    auto It = SWPStageCounts.find(&Kernel);
+    if (It == SWPStageCounts.end())
       return std::nullopt;
     return It->second;
   }

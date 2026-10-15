@@ -56,9 +56,9 @@ define void @shared_name(ptr %p) {
 ; CHECK-NEXT: Function:        shared_name
 ; CHECK-NEXT: Args:
 ; CHECK-NEXT:   - String:          Schedule found
-; CHECK-NEXT:   - Pipeliner:       loop-aware
+; CHECK-NEXT:   - Pipeliner:       prepipeliner
 ; CHECK-NEXT:   - II:              '7'
-; CHECK-NEXT:   - NS:              '1'
+; CHECK-NEXT:   - NS:              '2'
 ; CHECK-NEXT:   - Loop:            bb.3.inner
 ; CHECK-NEXT:   - Prologue:        bb.2.inner
 ; CHECK-NEXT:   - PrologueBundles: '7'
@@ -98,7 +98,7 @@ define void @shared_name(ptr %p) {
 ; CHECK-NEXT:   - ByteCount:       '32'
 ; CHECK-NEXT:   - Offset:          '64'
 ; CHECK-NEXT:   - II:              '7'
-; CHECK-NEXT:   - NS:              '1'
+; CHECK-NEXT:   - NS:              '2'
 ; CHECK-NEXT: ...
 ; CHECK: --- !Analysis
 ; CHECK-NEXT: Pass:            aie-asm-printer

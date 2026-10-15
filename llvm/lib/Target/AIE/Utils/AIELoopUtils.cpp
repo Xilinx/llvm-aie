@@ -9,6 +9,7 @@
 //===----------------------------------------------------------------------===//
 #include "AIELoopUtils.h"
 #include "AIEBaseInstrInfo.h"
+#include "AIEMachineFunctionInfo.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Metadata.h"
@@ -334,6 +335,12 @@ findPrologueEpilogue(const MachineBasicBlock &LoopBB) {
 
 std::optional<unsigned> getSWPStageCount(const MachineBasicBlock &LoopBB,
                                          const AIEBaseInstrInfo &TII) {
+  if (auto NS = LoopBB.getParent()
+                    ->getInfo<AIEMachineFunctionInfo>()
+                    ->getSWPStageCount(LoopBB))
+    return NS;
+
+  // Without the MachinePipeliner's record, e.g. on MIR input, only a ZOL tells.
   // The lowered LoopStart in the preheader holds the trip-count adjustment
   // applied by SWP. For an NS-stage pipelined loop, Adj == -(NS - 1)
   // (negative because SWP peels NS-1 iterations into the prologue). Adj == 0
