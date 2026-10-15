@@ -17,7 +17,6 @@
 #include "AIEHazardRecognizer.h"
 #include "AIESlotStatistics.h"
 #include "AIESlotUtils.h"
-#include "Utils/AIELoopUtils.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineInstr.h"
@@ -382,10 +381,25 @@ void removeReachedNeighborBias(const SlotStatistics &Statistics,
   }
 }
 
-void materializeToMinimizeSlotTotals(MachineBasicBlock &MBB,
+} // namespace
+
+void reportSlotStatistics(StringRef RegionName, ArrayRef<MachineInstr *> Instrs,
+                          const AIEBaseInstrInfo *TII) {
+  // The statistics are only computed when the debug type is enabled.
+  DEBUG_WITH_TYPE("slot-statistics", {
+    dbgs() << "Slot statistics for " << RegionName << ":\n";
+    computeSlotStatistics(Instrs, TII).dump();
+  });
+}
+
+void materializeToMinimizeSlotTotals(StringRef RegionName,
+                                     ArrayRef<MachineInstr *> Instrs,
+                                     ArrayRef<MachineInstr *> BiasInstrs,
                                      const AIEBaseInstrInfo *TII) {
-  SlotStatistics Statistics = computeSlotStatistics(MBB, TII);
-  LLVM_DEBUG(dbgs() << "Materializing multi-slot pseudos for " << MBB.getName()
+  reportSlotStatistics(RegionName, Instrs, TII);
+  SlotStatistics Statistics = computeSlotStatistics(Instrs, TII);
+
+  LLVM_DEBUG(dbgs() << "Materializing multi-slot pseudos for " << RegionName
                     << "\n");
 
   SlotCounts NeighborFixed;
@@ -393,16 +407,14 @@ void materializeToMinimizeSlotTotals(MachineBasicBlock &MBB,
   // materialization. This provides a stable baseline for the fair-share
   // threshold that does not shift as MSPs are materialized.
   const SlotCounts InitialTotal = Statistics.Fixed + Statistics.Free;
-  if (const auto *Preheader =
-          AIELoopUtils::getDedicatedFallThroughPreheader(MBB)) {
-    const SlotStatistics PreheaderStats =
-        computeSlotStatistics(const_cast<MachineBasicBlock &>(*Preheader), TII);
-    NeighborFixed = PreheaderStats.Fixed;
+  if (!BiasInstrs.empty()) {
+    const SlotStatistics BiasStats = computeSlotStatistics(BiasInstrs, TII);
+    NeighborFixed = BiasStats.Fixed;
     LLVM_DEBUG(dbgs() << "Neighbor Fixed:\n  " << NeighborFixed << "\n");
   }
 
   const AIEBaseMCFormats *Formats = TII->getFormatInterface();
-  // Sort the list by increasing alternative count
+  // Sort the list by increasing alternative count.
   llvm::sort(Statistics.MSPs, [Formats](MachineInstr *A, MachineInstr *B) {
     const auto *AltA = Formats->getAlternateInstsOpcode(A->getOpcode());
     const auto *AltB = Formats->getAlternateInstsOpcode(B->getOpcode());
@@ -421,8 +433,6 @@ void materializeToMinimizeSlotTotals(MachineBasicBlock &MBB,
                                 *Alternatives, Formats);
   }
 }
-
-} // namespace
 
 /// Materialise \p MI into its slot assigned by \p SlotToBanks .
 void materializeInstr(MachineInstr &MI, const SlotMapping &SlotToBanks,
@@ -457,15 +467,15 @@ void materializeSlots(const SlotMapping &SlotToBanks, MachineBasicBlock &MBB,
   }
 }
 
-void staticallyMaterializeMultiSlotInstructions(MachineBasicBlock &MBB,
-                                                const AIEHazardRecognizer &HR,
-                                                bool MaterializePipeline) {
-  LLVM_DEBUG(dbgs() << "Statically Assigning multi slot pseudos for "
+void materializeLoadsByMemoryBank(MachineBasicBlock &MBB,
+                                  const AIEHazardRecognizer &HR) {
+  LLVM_DEBUG(dbgs() << "Applying PostPipeliner memory bank slot assignment for "
                     << MBB.getName() << "\n");
 
   const AIEBaseInstrInfo *TII = static_cast<const AIEBaseInstrInfo *>(
       MBB.getParent()->getSubtarget().getInstrInfo());
 
+  // Bank-based assignment, with round-robin as fallback.
   auto SlotToBanks = getAssignedSlots(MBB, TII, HR);
 
   if (assignSlots(SlotToBanks, MBB, TII, HR)) {
@@ -474,13 +484,7 @@ void staticallyMaterializeMultiSlotInstructions(MachineBasicBlock &MBB,
     LLVM_DEBUG(
         dbgs()
         << "Could not find slot assignments, skipping bank materialization\n");
-    // Apply round-robin slot assignment to eligible pseudos. Remaining
-    // multi-slot pseudos are left for the pipeliner or MaterializePipeline.
     applyRoundRobinSlotAssignment(MBB, TII);
-  }
-
-  if (MaterializePipeline) {
-    materializeToMinimizeSlotTotals(MBB, TII);
   }
 }
 } // namespace llvm::AIE
