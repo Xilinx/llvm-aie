@@ -383,19 +383,28 @@ void AIEPostRASchedStrategy::initializeBotScoreBoard() {
       DEBUG_BLOCKS(dbgs() << " Replay bundles\n");
       int Cycle = 0;
       const std::vector<MachineBundle> &TopBundles = SBS.getTop().Bundles;
-      for (auto &Bundle : TopBundles) {
-        // There's only so much future we need.
-        if (Cycle >= FirstBlockedCycle) {
-          break;
+      // A postpipelined loop's bundles are its steady-state loop body. Replay
+      // only the iterations guaranteed to run; later cycles stay blocked.
+      const int NumIterations =
+          SBS.isPipelined() ? SBS.getPostSWP().getMinSteadyStateTripCount() : 1;
+      DEBUG_BLOCKS(dbgs() << " Replay iterations: " << NumIterations << "\n");
+      for (int Iteration = 0;
+           Iteration < NumIterations && Cycle < FirstBlockedCycle;
+           Iteration++) {
+        for (auto &Bundle : TopBundles) {
+          // There's only so much future we need.
+          if (Cycle >= FirstBlockedCycle) {
+            break;
+          }
+          DEBUG_BLOCKS(dbgs() << "Cycle " << Cycle << " has "
+                              << Bundle.getInstrs().size() << " instrs\n");
+          for (MachineInstr *MI : Bundle.getInstrs()) {
+            assert(!TheTII->isMultiSlotPseudo(*MI) &&
+                   "Scheduled bundles must not contain MultiSlotPseudos");
+            InsertInCycle(*MI, Cycle);
+          }
+          Cycle++;
         }
-        DEBUG_BLOCKS(dbgs() << "Cycle " << Cycle << " has "
-                            << Bundle.getInstrs().size() << " instrs\n");
-        for (MachineInstr *MI : Bundle.getInstrs()) {
-          assert(!TheTII->isMultiSlotPseudo(*MI) &&
-                 "Scheduled bundles must not contain MultiSlotPseudos");
-          InsertInCycle(*MI, Cycle);
-        }
-        Cycle++;
       }
       FirstBlockedCycle = std::min(FirstBlockedCycle, Cycle);
     }
