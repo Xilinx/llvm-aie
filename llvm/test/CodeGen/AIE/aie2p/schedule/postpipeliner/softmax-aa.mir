@@ -280,7 +280,7 @@ body:             |
   ; CHECK-NEXT:   - Prologue:        bb.2.for.cond2.preheader
   ; CHECK-NEXT:   - PrologueBundles: '12'
   ; CHECK-NEXT:   - Epilogue:        bb.4.for.cond.cleanup4
-  ; CHECK-NEXT:   - EpilogueBundles: '11'
+  ; CHECK-NEXT:   - EpilogueBundles: '10'
   ; CHECK-NEXT:   - VregMode:        Physical
   ; CHECK-NEXT:   - SchedHeuristic:  Config_20_1_0_NodeNum
   ; CHECK-NEXT: ...
@@ -400,7 +400,7 @@ body:             |
   ; CHECK-NEXT:   - Prologue:        bb.2.for.cond2.preheader
   ; CHECK-NEXT:   - PrologueBundles: '13'
   ; CHECK-NEXT:   - Epilogue:        bb.4.for.cond.cleanup4
-  ; CHECK-NEXT:   - EpilogueBundles: '11'
+  ; CHECK-NEXT:   - EpilogueBundles: '10'
   ; CHECK-NEXT:   - VregMode:        Physical
   ; CHECK-NEXT:   - SchedHeuristic:  Config_20_1_0_NodeNum
   ; CHECK-NEXT: ...

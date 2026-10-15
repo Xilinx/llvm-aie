@@ -106,9 +106,9 @@ define dso_local void @loop_3_biased_conv_mx6x6_ebs16_unroll_impl_s2_initial(i32
 ; ASM-NEXT:    vlda.pop fex1, [p1, lf1, r25]; vldb.pop.3d fex8, [p0, lf0, r24, d1]; vmov.d dm1, dm0
 ; ASM-NEXT:    vmov cmh0, cml0; vmov.d dm2, dm0
 ; ASM-NEXT:    vlda.fill [p1, lf1, r25]; vldb.fill [p0, lf0, r24]; vmov bmlh4, bmll4; vmov.d dm3, dm0
-; ASM-NEXT:    vldb.fill [p0, lf0, r24]; vmov.d dm7, dm4
-; ASM-NEXT:    vlda.pop fex2, [p1, lf1, r25]; vldb.pop fex7, [p0, lf0, r24]; vmov cmh4, cml4; vmov.d dm6, dm4
-; ASM-NEXT:    vlda.pop fex3, [p1, lf1, r25]; vldb.pop fex5, [p0, lf0, r24]; vshuffle fex6, fex7, fex5, r2; vmov.d dm5, dm4
+; ASM-NEXT:    vldb.fill [p0, lf0, r24]; vmov.d dm5, dm4
+; ASM-NEXT:    vlda.pop fex2, [p1, lf1, r25]; vldb.pop fex7, [p0, lf0, r24]; vmov cmh4, cml4; vmov.d dm7, dm4
+; ASM-NEXT:    vlda.pop fex3, [p1, lf1, r25]; vldb.pop fex5, [p0, lf0, r24]; vshuffle fex6, fex7, fex5, r2; vmov.d dm6, dm4
 ; ASM-NEXT:    vlda.fill [p1, lf1, r25]; vldb.fill [p0, lf0, r24]; or r8, r17, r17; vmov fewl9, fewh6
 ; ASM-NEXT:    vlda.pop fex0, [p1, lf1, r25]; vldb.pop fex10, [p0, lf0, r24]; add.nc lc, r7, #-2; vmac.f dm7, dm7, fex6, fey1, r8
 ; ASM-NEXT:    vlda.pop fex1, [p1, lf1, r25]; vldb.pop.3d fex8, [p0, lf0, r24, d1]; add.nc ls, pc, #.LBB0_2; vshuffle fex4, fex10, fex8, r2; vmac.f dm6, dm6, fex9, fey1, r8

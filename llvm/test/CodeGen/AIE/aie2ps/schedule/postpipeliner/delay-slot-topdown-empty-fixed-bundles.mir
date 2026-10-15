@@ -76,10 +76,9 @@ body:             |
   ; CHECK-NEXT:   liveins: $p6, $r0, $r1, $x0, $x1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   JNZ killed $r0, %bb.4
-  ; CHECK-NEXT:   renamable $x1 = VSHIFT killed $x3, renamable $x0, renamable $r1
   ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   renamable $x1 = VSHIFT killed $x3, renamable $x0, renamable $r1
   ; CHECK-NEXT:   renamable $x2 = VSHIFT killed renamable $x1, killed renamable $x0, killed renamable $r1
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   renamable $p6 = VST_dmx_sts_x_st_pstm_nrm_imm killed renamable $x2, killed renamable $p6, 64 :: (store (<16 x s32>), addrspace 6)

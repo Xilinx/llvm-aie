@@ -39,8 +39,7 @@
   ; CHECK-NEXT:  .L_LEnd0:
   ; CHECK-NEXT:    nopb ; nopa ; st r1, [p0], #4; add r1, r1, #1; nopm ; nopv
   ; CHECK-NEXT:  // %bb.3: // %for.cond.cleanup
-  ; CHECK-NEXT:    nopa ; nopb ; nopxm ; st r1, [p0], #4
-  ; CHECK-NEXT:    nop
+  ; CHECK-NEXT:    nopb ; nopa ; st r1, [p0], #4; nopxm ; nopv
   ; CHECK-NEXT:    .p2align 4
   ; CHECK-NEXT:  .LBB0_4: // %for.cond.cleanup
   ; CHECK-NEXT:    nopa ; ret lr

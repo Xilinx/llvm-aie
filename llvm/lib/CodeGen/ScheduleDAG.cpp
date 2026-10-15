@@ -103,6 +103,7 @@ LLVM_DUMP_METHOD void SDep::dump(const TargetRegisterInfo *TRI) const {
     case MayAliasMem:
     case MustAliasMem: dbgs() << " Memory"; break;
     case Artificial:   dbgs() << " Artificial"; break;
+    case Pin:          dbgs() << " Pin"; break;
     case Weak:         dbgs() << " Weak"; break;
     case Cluster:      dbgs() << " Cluster"; break;
     }

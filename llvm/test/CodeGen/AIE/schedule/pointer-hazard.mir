@@ -17,8 +17,7 @@
   ; CHECK-LABEL: _Z16scale_vectorizedPsS_ii:
   ; CHECK:         .p2align 4
   ; CHECK-NEXT:  // %bb.0: // %entry
-  ; CHECK-NEXT:    nopa ; event #0; nopm
-  ; CHECK-NEXT:    vldb wh2, [p0, #32]
+  ; CHECK-NEXT:    nopa ; vldb wh2, [p0, #32]; event #0; nopm ; nops
   ; CHECK-NEXT:    vlda wl2, [p0], #64
   ; CHECK-NEXT:    vldb wh2, [p0, #32]
   ; CHECK-NEXT:    vlda wl2, [p0], #64
@@ -51,8 +50,8 @@
   ; CHECK-NEXT:    vst.srs.s16.s32 bmh0, s0, [p1, #32]
   ; CHECK-NEXT:    vst.srs.s16.s32 bml0, s0, [p1], #64; ret lr
   ; CHECK-NEXT:    vst.srs.s16.s32 bmh0, s0, [p1, #32] // Delay Slot 5
-  ; CHECK-NEXT:    vst.srs.s16.s32 bml0, s0, [p1], #64 // Delay Slot 4
-  ; CHECK-NEXT:    event #1 // Delay Slot 3
+  ; CHECK-NEXT:    vst.srs.s16.s32 bml0, s0, [p1], #64; event #1 // Delay Slot 4
+  ; CHECK-NEXT:    nop // Delay Slot 3
   ; CHECK-NEXT:    nop // Delay Slot 2
   ; CHECK-NEXT:    nop // Delay Slot 1
   entry:

@@ -202,7 +202,7 @@ define dso_local void @loop_2_biased_conv_mx6x6_ebs16_unroll_impl_accumulate(i32
 ; ASM-NEXT:  .L_LEnd0:
 ; ASM-NEXT:    vlda.pop fex4, [p1, lf1, r25]; nopb ; nops ; nopx ; vmov fewl0, fewh0; vmac.f dm1, dm1, fex0, fey2, r8
 ; ASM-NEXT:  // %bb.6: // %lastiter.stage1.bottom
-; ASM-NEXT:    vlda.pop fex5, [p1, lf1, r25]; nopx ; vmac.f dm2, dm2, fex2, fey2, r8
+; ASM-NEXT:    vlda.pop fex5, [p1, lf1, r25]; vmac.f dm2, dm2, fex2, fey2, r8
 ; ASM-NEXT:    vshuffle fex8, fex6, fex2, r2; vmac.f dm0, dm0, fex0, fey2, r8
 ; ASM-NEXT:    vshuffle fex0, fex8, fex2, r16
 ; ASM-NEXT:    vmov fewl2, fewh8; vmac.f dm3, dm3, fex8, fey2, r8
@@ -213,8 +213,8 @@ define dso_local void @loop_2_biased_conv_mx6x6_ebs16_unroll_impl_accumulate(i32
 ; ASM-NEXT:    vmov fewl2, fewh8; vmac.f dm3, dm3, fex8, fey2, r8
 ; ASM-NEXT:    vmov fewl0, fewh0; vmac.f dm1, dm1, fex0, fey2, r8
 ; ASM-NEXT:    vmac.f dm2, dm2, fex2, fey2, r8
-; ASM-NEXT:    vmac.f dm0, dm0, fex0, fey2, r8
-; ASM-NEXT:    mov r8, r17
+; ASM-NEXT:    mov r8, r17; vmac.f dm0, dm0, fex0, fey2, r8
+; ASM-NEXT:    nop
 ; ASM-NEXT:    lda p7, [sp, #-60] // 4-byte Folded Reload
 ; ASM-NEXT:    vst.conv.bf16.fp32 cml3, [p7], #64
 ; ASM-NEXT:    lda p6, [sp, #-64]; vst.conv.bf16.fp32 cmh3, [p7], m3 // 4-byte Folded Reload

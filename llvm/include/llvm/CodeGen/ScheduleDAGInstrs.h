@@ -456,6 +456,12 @@ namespace llvm {
                                   int DstIdx,
                                   const TargetSchedModel *SchedModel);
 
+    /// Whether a def of \p Reg in \p SU keeps the dependences of all later
+    /// defs and uses of \p Reg, instead of standing in for them by
+    /// transitivity.
+    virtual bool shouldRetainAllPhysRegDeps(const SUnit &SU,
+                                            MCRegister Reg) const;
+
     // Create the SUnits vector
     void initSUnits();
 

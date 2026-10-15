@@ -30,6 +30,12 @@ namespace llvm::AIE {
 int maxLatency(const MachineInstr *MI, const AIEBaseInstrInfo &InstrInfo,
                const InstrItineraryData &Itineraries, bool IncludeStages);
 
+/// Minimum EntrySU latency for a free post-boundary node on an inter-block
+/// edge: the largest PredDepth + edge latency over the preds that have a
+/// recorded pre- or post-depth. Zero when there is no such pred, which leaves
+/// the instruction free to issue alongside the fixed region.
+int computeMinEntryLatency(const SUnit &EdgeSU, const InterBlockEdges &Edges);
+
 class MaxLatencyFinder {
   AIEPostRASchedStrategy *const Scheduler;
   const AIEBaseInstrInfo *const TII;
@@ -44,10 +50,6 @@ class MaxLatencyFinder {
   /// True when CurBB has no CFG successors (e.g. a return block), requiring
   /// the conservative raw latency as a floor.
   bool HasUnknownSuccessors = false;
-
-  /// Reflects opportunity to reduce maxLatency and wires in the commandline
-  /// flag
-  bool ReduceLatency;
 
   // Check whether this region connects to the successor blocks.
   bool isBottomRegion(MachineInstr *ExitMI);

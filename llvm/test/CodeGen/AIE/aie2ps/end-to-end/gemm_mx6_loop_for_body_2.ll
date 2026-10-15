@@ -222,7 +222,7 @@ define dso_local void @gemm.if.else(ptr %add.ptr, ptr %tdm1) #5 {
 ; ASM-NEXT:  .L_LEnd0:
 ; ASM-NEXT:    nopa ; nopb ; nops ; nopxm ; vmac.f dm2, dm2, fex0, fey3, r8
 ; ASM-NEXT:  // %bb.6: // %lastiter.stage1.bottom
-; ASM-NEXT:    mova m0, #-32; nopx ; vmac.f dm0, dm0, fex0, fey3, r8
+; ASM-NEXT:    mova m0, #-32; nopb ; nopx ; vmac.f dm0, dm0, fex0, fey3, r8
 ; ASM-NEXT:    padda [p7], m0; vmov fewl4, fewh4; vmac.f dm1, dm1, fex8, fey3, r8
 ; ASM-NEXT:    lda p7, [sp, #-60]; st dc0, [p7], #4; vmac.f dm7, dm7, fex4, fey0, r8 // 4-byte Folded Reload
 ; ASM-NEXT:    lda p6, [sp, #-64]; st dc4, [p7], #24; vmov fewl2, fewh2; vmac.f dm6, dm6, fex4, fey0, r8 // 4-byte Folded Reload
@@ -231,8 +231,8 @@ define dso_local void @gemm.if.else(ptr %add.ptr, ptr %tdm1) #5 {
 ; ASM-NEXT:    vmov fewl0, fewh8; vmac.f dm3, dm3, fex10, fey3, r8
 ; ASM-NEXT:    vmac.f dm2, dm2, fex0, fey3, r8
 ; ASM-NEXT:    vst.conv.bf16.fp32 cml7, [p4], #64; vmac.f dm0, dm0, fex0, fey3, r8
-; ASM-NEXT:    vst.conv.bf16.fp32 cmh7, [p4], #64; vmac.f dm1, dm1, fex8, fey3, r8
-; ASM-NEXT:    vst.conv.bf16.fp32 cml6, [p4], #64; mov r8, r5
+; ASM-NEXT:    vst.conv.bf16.fp32 cmh7, [p4], #64; mov r8, r5; vmac.f dm1, dm1, fex8, fey3, r8
+; ASM-NEXT:    vst.conv.bf16.fp32 cml6, [p4], #64
 ; ASM-NEXT:    vst.conv.bf16.fp32 cmh6, [p4], #64
 ; ASM-NEXT:    vst.conv.bf16.fp32 cml3, [p2], #64
 ; ASM-NEXT:    vst.conv.bf16.fp32 cmh3, [p2], #64

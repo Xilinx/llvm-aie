@@ -59,8 +59,8 @@ define void @versioned(ptr noalias %a, ptr noalias %b, i32 %n) {
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:  .LBB0_3: // %loop.ph.lver.high
-; CHECK-NEXT:    mova r0, #2; add.nc lc, r2, #-1
-; CHECK-NEXT:    lshl r2, r1, r0
+; CHECK-NEXT:    nopb ; mova r0, #2; nops ; nopxm ; nopv
+; CHECK-NEXT:    nopa ; lshl r2, r1, r0; add.nc lc, r2, #-1
 ; CHECK-NEXT:    add r1, r1, #1; mov dj0, r2
 ; CHECK-NEXT:    lda r2, [p0, dj0]
 ; CHECK-NEXT:    nop
@@ -94,8 +94,7 @@ define void @versioned(ptr noalias %a, ptr noalias %b, i32 %n) {
 ; CHECK-NEXT:  .L_LEnd0:
 ; CHECK-NEXT:    nopb ; nopa ; nops ; xor r2, r3, r2; nopm ; nopv
 ; CHECK-NEXT:  // %bb.5: // %exit
-; CHECK-NEXT:    nopa ; nopb ; nopxm ; st r2, [p1, dj0]
-; CHECK-NEXT:    nop
+; CHECK-NEXT:    nopb ; nopa ; st r2, [p1, dj0]; nopxm ; nopv
 ; CHECK-NEXT:  .LBB0_6: // %exit
 ; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5

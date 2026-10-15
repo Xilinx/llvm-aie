@@ -225,6 +225,11 @@ void ScheduleDAGInstrs::adjustAndAddPred(SUnit *DstSU, SDep &Dep, int SrcIdx,
   DstSU->addPred(Dep);
 }
 
+bool ScheduleDAGInstrs::shouldRetainAllPhysRegDeps(const SUnit &SU,
+                                                   MCRegister Reg) const {
+  return TRI->shouldRetainAllPhysRegDeps(Reg);
+}
+
 void ScheduleDAGInstrs::addSchedBarrierDeps() {
   MachineInstr *ExitMI = ExitSU.getInstr();
   // Add dependencies on the defs and uses of the instruction.
@@ -375,11 +380,15 @@ void ScheduleDAGInstrs::addPhysRegDeps(SUnit *SU, unsigned OperIdx) {
   } else {
     addPhysRegDataDeps(SU, OperIdx);
 
-    // Clear previous uses and defs of this register and its subregisters.
-    for (MCRegUnit Unit : TRI->regunits(Reg)) {
-      Uses.eraseAll(Unit);
-      if (!MO.isDead())
-        Defs.eraseAll(Unit);
+    // Clear previous uses and defs of this register and its subregisters,
+    // unless the target requests retaining all defs for this register
+    // (e.g. to allow a mutation pass to selectively remove edges later).
+    if (!shouldRetainAllPhysRegDeps(*SU, Reg)) {
+      for (MCRegUnit Unit : TRI->regunits(Reg)) {
+        Uses.eraseAll(Unit);
+        if (!MO.isDead())
+          Defs.eraseAll(Unit);
+      }
     }
 
     if (MO.isDead() && SU->isCall) {

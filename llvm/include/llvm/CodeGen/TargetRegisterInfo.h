@@ -618,6 +618,16 @@ public:
   /// function.  Used by MachineRegisterInfo::isConstantPhysReg().
   virtual bool isConstantPhysReg(MCRegister PhysReg) const { return false; }
 
+  /// Return true if the DAG builder should retain all prior defs and uses
+  /// of \p Reg in the tracking maps instead of clearing them when a new def
+  /// is seen. This disables the implicit transitive reduction for this
+  /// register, producing O(n^2) pairwise edges. Targets that selectively
+  /// relax dependencies via a ScheduleDAGMutation should override this for
+  /// the relevant registers.
+  virtual bool shouldRetainAllPhysRegDeps(MCRegister Reg) const {
+    return false;
+  }
+
   /// Returns true if the register class is considered divergent.
   virtual bool isDivergentRegClass(const TargetRegisterClass *RC) const {
     return false;
