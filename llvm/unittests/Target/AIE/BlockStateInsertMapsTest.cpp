@@ -58,37 +58,36 @@ TEST_F(BlockStateInsertMapsTest, BottomInsertCycleMapDepths) {
   EXPECT_EQ(BS.BottomInsert.CycleMap.size(), 3u);
 }
 
-TEST_F(BlockStateInsertMapsTest, TopInsertSemanticOrderIndependentOfBundles) {
+TEST_F(BlockStateInsertMapsTest, TopInsertInstrOrderIndependentOfBundles) {
   auto *A = appendPlainInstr();
   auto *B = appendPlainInstr();
   BlockState BS(MBB);
-  // Bundle/scheduled order is B then A; semantic (program) order is A then B.
+  // Bundle order is B then A; instruction order is A then B.
   BS.TopInsert.Bundles = {makeBundle({B}), makeBundle({A})};
-  BS.TopInsert.SemanticOrder = {A, B};
+  BS.TopInsert.InstrOrder = {A, B};
 
   BS.TopInsert.rebuildCycleMapFromStart();
 
-  EXPECT_EQ(BS.TopInsert.SemanticOrder.size(), 2u);
-  EXPECT_EQ(BS.TopInsert.SemanticOrder[0], A);
-  EXPECT_EQ(BS.TopInsert.SemanticOrder[1], B);
+  EXPECT_EQ(BS.TopInsert.InstrOrder.size(), 2u);
+  EXPECT_EQ(BS.TopInsert.InstrOrder[0], A);
+  EXPECT_EQ(BS.TopInsert.InstrOrder[1], B);
   EXPECT_EQ(BS.TopInsert.CycleMap.lookup(B), 0);
   EXPECT_EQ(BS.TopInsert.CycleMap.lookup(A), 1);
 }
 
-TEST_F(BlockStateInsertMapsTest,
-       BottomInsertSemanticOrderIndependentOfBundles) {
+TEST_F(BlockStateInsertMapsTest, BottomInsertInstrOrderIndependentOfBundles) {
   auto *A = appendPlainInstr();
   auto *B = appendPlainInstr();
   BlockState BS(MBB);
-  // Bundle/scheduled order is B then A; semantic (program) order is A then B.
+  // Bundle order is B then A; instruction order is A then B.
   BS.BottomInsert.Bundles = {makeBundle({B}), makeBundle({A})};
-  BS.BottomInsert.SemanticOrder = {A, B};
+  BS.BottomInsert.InstrOrder = {A, B};
 
   BS.BottomInsert.rebuildCycleMapFromEnd();
 
-  EXPECT_EQ(BS.BottomInsert.SemanticOrder.size(), 2u);
-  EXPECT_EQ(BS.BottomInsert.SemanticOrder[0], A);
-  EXPECT_EQ(BS.BottomInsert.SemanticOrder[1], B);
+  EXPECT_EQ(BS.BottomInsert.InstrOrder.size(), 2u);
+  EXPECT_EQ(BS.BottomInsert.InstrOrder[0], A);
+  EXPECT_EQ(BS.BottomInsert.InstrOrder[1], B);
   // Depths before the end: last bundle is -1, first is -2.
   EXPECT_EQ(BS.BottomInsert.CycleMap.lookup(B), -2);
   EXPECT_EQ(BS.BottomInsert.CycleMap.lookup(A), -1);

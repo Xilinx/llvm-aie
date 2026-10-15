@@ -164,15 +164,16 @@ public:
   bool DelaySlotFinalPass = false;
 };
 
-// For interblock scheduling we need the original code (SemanticOrder) to
-// compute inter-block dependences and the scheduled code (Bundles) to check
-// interblock contraints
+// For interblock scheduling we need the instructions in block order
+// (InstrOrder) to compute inter-block dependences and the scheduled code
+// (Bundles) to check interblock constraints.
 // Region decomposition is inaccessible from the SchedStrategy, we only
 // get enter and leave calls. We construct our Regions from the iterators
 // passed to the enterRegion call.
 class Region {
-  // The instrutions in their original order
-  std::vector<MachineInstr *> SemanticOrder;
+  // Free instructions in program order. After the post-pipeliner that order
+  // can differ from the original semantic order.
+  std::vector<MachineInstr *> InstrOrder;
   // The instruction that starts the next region, if any
   MachineInstr *ExitInstr = nullptr;
 
@@ -193,9 +194,9 @@ public:
   using free_iterator = std::vector<MachineInstr *>::const_iterator;
   using fixed_iterator = MachineBasicBlock::iterator;
 
-  /// Iterate over the "free" instructions in semantic order.
+  /// Iterate over the free instructions in block order.
   inline ArrayRef<MachineInstr *> getFreeInstructions() const {
-    return SemanticOrder;
+    return InstrOrder;
   }
 
   /// Iterate over the instructions that are fixed at the top. Typically those
@@ -216,13 +217,13 @@ public:
 
   /// Set the fixed bundles at the top of the region (e.g. a SWP epilogue).
   /// The instructions must already be physically present at the start of the
-  /// block. Trims SemanticOrder to exclude the newly fixed instructions.
+  /// block. Trims InstrOrder to exclude the newly fixed instructions.
   /// \pre The region starts at BB->begin().
   void setTopFixedBundles(ArrayRef<MachineBundle> Bundles);
 
   /// Set the fixed bundles at the bottom of the region (e.g. a SWP prologue).
   /// The instructions must already be physically present at the end of the
-  /// block. Trims SemanticOrder to exclude the newly fixed instructions.
+  /// block. Trims InstrOrder to exclude the newly fixed instructions.
   /// \pre The region ends at BB->end().
   void setBotFixedBundles(ArrayRef<MachineBundle> Bundles);
 
@@ -237,9 +238,10 @@ public:
 struct InsertDescriptor {
   std::vector<MachineBundle> Bundles;
 
-  /// Instructions drawn from Bundles, in original program order. Instructions
-  /// with no clone at this end are omitted.
-  std::vector<MachineInstr *> SemanticOrder;
+  /// Clones in the loop body's instruction order, which is the post-pipeliner
+  /// order rather than bundle order. Instructions with no clone at this end
+  /// are omitted.
+  std::vector<MachineInstr *> InstrOrder;
 
   /// Cycle of each instruction in Bundles. Epilogue: bundle index from the
   /// start. Prologue: depth before the end (last bundle is -1).
@@ -250,7 +252,7 @@ struct InsertDescriptor {
 
   void clear() {
     Bundles.clear();
-    SemanticOrder.clear();
+    InstrOrder.clear();
     CycleMap.clear();
   }
 

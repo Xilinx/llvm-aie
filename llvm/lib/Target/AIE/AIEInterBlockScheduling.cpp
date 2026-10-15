@@ -580,14 +580,14 @@ class PipelineExtractor : public PipelineScheduleVisitor {
     TimedRegion.clear();
 
     // We finished the prologue and collected the first copy of each
-    // instruction emitted there. Now populate the semantic order of BotFixed
-    // by following the original semantic order of the loop body. Only
-    // instructions that were actually cloned into the prologue are recorded;
-    // loop body instructions without a prologue copy are omitted.
+    // instruction emitted there. Now populate BotFixed's instruction order
+    // by following the loop body's instruction order. Only instructions that
+    // were actually cloned into the prologue are recorded; loop body
+    // instructions without a prologue copy are omitted.
     for (MachineInstr *OrigMI : Loop.getTop().getFreeInstructions()) {
       const auto It = PrologueFirstIterClones.find(OrigMI);
       if (It != PrologueFirstIterClones.end())
-        Prologue->BottomInsert.SemanticOrder.push_back(It->second);
+        Prologue->BottomInsert.InstrOrder.push_back(It->second);
     }
     Prologue->BottomInsert.rebuildCycleMapFromEnd();
 
@@ -615,12 +615,12 @@ class PipelineExtractor : public PipelineScheduleVisitor {
     }
     TimedRegion.clear();
 
-    // Last-iteration epilogue clones in original loop-body order. Only
+    // Last-iteration epilogue clones in the loop body's instruction order. Only
     // instructions that were actually cloned into the epilogue are recorded.
     for (MachineInstr *OrigMI : Loop.getTop().getFreeInstructions()) {
       const auto It = EpilogueLastIterClones.find(OrigMI);
       if (It != EpilogueLastIterClones.end())
-        Epilogue->TopInsert.SemanticOrder.push_back(It->second);
+        Epilogue->TopInsert.InstrOrder.push_back(It->second);
     }
     Epilogue->TopInsert.rebuildCycleMapFromStart();
   }
@@ -1254,8 +1254,8 @@ namespace {
 void addFixedInstrs(const InsertDescriptor &Fixed, InterBlockEdges &DAG,
                     MachineBasicBlock *BB,
                     InterBlockEdges::NodeValues *Depths) {
-  for (MachineInstr *MI : Fixed.SemanticOrder) {
-    assert(MI && "Fixed semantic order contains a null instruction");
+  for (MachineInstr *MI : Fixed.InstrOrder) {
+    assert(MI && "Fixed instruction order contains a null instruction");
     if (!MI->getParent())
       BB->push_back(MI);
     DAG.addNode(MI);
@@ -1488,7 +1488,7 @@ void InterBlockScheduling::enterRegion(MachineBasicBlock *BB,
                       << "\n");
 
   if (IsGatheringPhase) {
-    // Gather region boundaries and capture the invariant SemanticOrder for all
+    // Gather region boundaries and capture the invariant InstrOrder for all
     // block types. Fixed bundles are NOT set here: they result from loop
     // pipelining, which happens during Scheduling, and are applied via the
     // setTopFixedBundles / setBotFixedBundles calls in the Scheduling pass.
@@ -1668,7 +1668,7 @@ void InterBlockScheduling::emitInterBlockTop(BlockState &BS) {
   // buildGraph may have inserted drain clones here so dependency
   // queries can reach the subtarget. Remove them before emitBundles, or
   // before this region is transferred to a new dedicated exit.
-  for (MachineInstr *MI : BS.TopInsert.SemanticOrder) {
+  for (MachineInstr *MI : BS.TopInsert.InstrOrder) {
     if (MI && MI->getParent() == EpilogueBB)
       EpilogueBB->remove_instr(MI);
   }
@@ -1707,7 +1707,7 @@ void InterBlockScheduling::emitInterBlockBottom(const BlockState &BS) const {
   // BottomInsert instructions may have been temporarily placed in the block
   // by buildPerSuccEdges to enable dependency analysis. Remove them before
   // emitBundles re-inserts all BottomInsert instructions properly.
-  for (MachineInstr *MI : BS.BottomInsert.SemanticOrder) {
+  for (MachineInstr *MI : BS.BottomInsert.InstrOrder) {
     if (MI->getParent() == PreHeader)
       PreHeader->remove_instr(MI);
   }
@@ -1736,7 +1736,7 @@ int InterBlockScheduling::getCyclesToRespectTiming(
       }
       ++DistFromLoopEntry;
     }
-    // Here we need to iterate using semantic order.
+    // Here we need to iterate in instruction order.
     assert(R.top_fixed_instrs().empty() && "SWP epilogue already emitted?");
     for (MachineInstr *MI : R.getFreeInstructions()) {
       Edges.addNode(MI);
@@ -1841,12 +1841,11 @@ int InterBlockScheduling::getCyclesToAvoidResourceConflicts(
 Region::Region(MachineBasicBlock *BB, MachineBasicBlock::iterator Begin,
                MachineBasicBlock::iterator End)
     : BB(BB) {
-  // When the region is created, its instructions haven't been re-ordered yet,
-  // so this is effectively saving the semantic order. Fixed bundles (if any)
-  // are set separately via setTopFixedBundles / setBotFixedBundles, which
-  // will trim the corresponding entries from SemanticOrder.
+  // Capture the instructions in their current block order. For a loop that
+  // order is the post-pipeliner order. Fixed bundles (if any) are set
+  // separately via setTopFixedBundles / setBotFixedBundles.
   for (auto It = Begin; It != End; ++It) {
-    SemanticOrder.push_back(&*It);
+    InstrOrder.push_back(&*It);
   }
   if (End != BB->end()) {
     ExitInstr = &*End;
@@ -1864,7 +1863,7 @@ void Region::setTopFixedBundles(ArrayRef<MachineBundle> Bundles) {
     return getBundleStart(MI->getIterator()) == std::prev(FreeBegin);
   }));
   TopFixedBundles = Bundles;
-  // SemanticOrder was captured during the gathering phase before the fixed
+  // InstrOrder was captured during the gathering phase before the fixed
   // bundles were inserted into the block, so it already contains only the
   // free instructions. No adjustment is needed.
 }
@@ -1877,7 +1876,7 @@ void Region::setBotFixedBundles(ArrayRef<MachineBundle> Bundles) {
     return getBundleStart(MI->getIterator()) == FreeEnd;
   }));
   BotFixedBundles = Bundles;
-  // SemanticOrder was captured during the gathering phase before the fixed
+  // InstrOrder was captured during the gathering phase before the fixed
   // bundles were inserted into the block, so it already contains only the
   // free instructions. No adjustment is needed.
 }
@@ -2054,8 +2053,8 @@ void BlockState::initInterBlock(const MachineSchedContext &Context,
     // mode. In test mode the loop is not a pipeline candidate but the tracker
     // analysis is forced for testing purposes.
     if (IsPipelineCandidate || TestRegDefUseTracker) {
-      // Analyze once using the invariant semantic order. The semantic order
-      // and physical register state are invariant across all pipelining
+      // Analyze once using the invariant instruction order. That order and
+      // the physical register state are invariant across all pipelining
       // attempts.
       RegTracker->trackImplicitRanges(
           AIEBaseRegisterInfo::PhysRegProperty::LocalScope);
