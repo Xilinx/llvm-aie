@@ -1255,8 +1255,7 @@ void addFixedInstrs(const InsertDescriptor &Fixed, InterBlockEdges &DAG,
                     MachineBasicBlock *BB,
                     InterBlockEdges::NodeValues *Depths) {
   for (MachineInstr *MI : Fixed.SemanticOrder) {
-    if (!MI)
-      continue;
+    assert(MI && "Fixed semantic order contains a null instruction");
     if (!MI->getParent())
       BB->push_back(MI);
     DAG.addNode(MI);
@@ -1265,12 +1264,14 @@ void addFixedInstrs(const InsertDescriptor &Fixed, InterBlockEdges &DAG,
   }
 }
 
-// Last ConflictHorizon loop bundles, at depth I-L. The last bundle is one
-// cycle before epilogue cycle 0. These instructions already belong to the loop.
+// The loop bundles that can still reach the epilogue: the last Horizon
+// bundles. Depth counts back from the end of the loop, so the last bundle is
+// -1, one cycle before epilogue cycle 0. These instructions already belong
+// to the loop.
 void addLoopBundles(InterBlockEdges &DAG, ArrayRef<MachineBundle> Bundles,
                     int Horizon) {
   const int L = (int)Bundles.size();
-  const int Start = Horizon > 0 ? std::max(0, L - Horizon) : 0;
+  const int Start = std::max(0, L - Horizon);
   for (int I = Start; I < L; ++I) {
     const int Depth = I - L;
     for (MachineInstr *MI : Bundles[I].getInstrs()) {
@@ -1289,36 +1290,42 @@ void InterBlockScheduling::buildGraph(InterBlockEdges &DAG) {
   const BlockState &Pred = getBlockState(PredBB);
   const BlockState &Succ = getBlockState(SuccBB);
 
-  // Before the boundary. A pipelined loop whose successor holds its epilogue
-  // contributes the loop bundles. Any other predecessor contributes epilogue
-  // clones that stayed in the block, if any epilogue instructions exist, then
-  // its free instructions. Neither of those has a pre-depth.
-  if (Pred.isPipelined() && !Succ.TopInsert.empty() &&
-      !Pred.getTop().Bundles.empty())
-    addLoopBundles(DAG, Pred.getTop().Bundles, HR->getConflictHorizon());
+  // Before the boundary. This edge meets the predecessor's bottom region.
+  // A single-region pipelined loop whose successor holds the epilogue
+  // contributes that region's scheduled bundles. Any other one-region
+  // predecessor contributes its epilogue clones, which sit in that same
+  // region, then the bottom region's free instructions. A multi-region
+  // predecessor contributes only those free instructions. Neither of those
+  // has a pre-depth.
+  const bool PredOneRegion = &Pred.getTop() == &Pred.getBottom();
+  if (Pred.isPipelined() && PredOneRegion && !Succ.TopInsert.empty())
+    addLoopBundles(DAG, Pred.getBottom().Bundles, HR->getConflictHorizon());
   else {
-    addFixedInstrs(Pred.TopInsert, DAG, PredBB, /*Depths=*/nullptr);
+    if (PredOneRegion)
+      addFixedInstrs(Pred.TopInsert, DAG, PredBB, /*Depths=*/nullptr);
     for (MachineInstr *MI : Pred.getBottom().getFreeInstructions())
       DAG.addNode(MI);
   }
 
-  // Prologue clones, fixed before the end of the predecessor.
-  if (!Pred.BottomInsert.empty())
-    addFixedInstrs(Pred.BottomInsert, DAG, PredBB, &DAG.getPreDepths());
+  // Prologue clones. They are fixed at the end of the block, so they always
+  // belong to the bottom region and sit on this edge.
+  addFixedInstrs(Pred.BottomInsert, DAG, PredBB, &DAG.getPreDepths());
 
   DAG.markBoundary();
 
-  // After the boundary. Epilogue clones, then the successor's free
-  // instructions. An empty region is an empty block, so it contributes no
-  // free nodes.
+  // After the boundary. Epilogue clones, then the successor's top-region
+  // free instructions. An empty region is an empty block, so it contributes
+  // no free nodes.
   addFixedInstrs(Succ.TopInsert, DAG, SuccBB, &DAG.getPostDepths());
   if (!Succ.getRegions().empty()) {
     for (MachineInstr *MI : Succ.getTop().getFreeInstructions())
       DAG.addNode(MI);
   }
-  // Prologue of a successor preheader. No post-depth: an ExitSU latency still
-  // reaches it. Empty when the successor is not a preheader.
-  addFixedInstrs(Succ.BottomInsert, DAG, SuccBB, /*Depths=*/nullptr);
+  // Prologue clones at the bottom of the successor. They share its top
+  // region, and so this edge, only when the successor is a single region.
+  // No post-depth: an ExitSU latency still reaches them.
+  if (&Succ.getTop() == &Succ.getBottom())
+    addFixedInstrs(Succ.BottomInsert, DAG, SuccBB, /*Depths=*/nullptr);
 
   DAG.buildEdges();
 }
