@@ -90,7 +90,7 @@ body:             |
 
   ; bb.2 is Loop A: a single-block ZOL with a VLDA and a VST.
   ; After scheduling, the PostPipeliner pipelines it, creating prologue
-  ; clones stored in bb.1.BottomInsertSemanticOrder.
+  ; clones stored in bb.1.BottomInsert.SemanticOrder.
   bb.2.loop_a:
     successors: %bb.2(0x7c000000), %bb.3(0x04000000)
     liveins: $p0, $p1
@@ -104,7 +104,7 @@ body:             |
   ;       as BlockType::Epilogue because bb.2 is a Loop predecessor.
   ;   (b) The dedicated fallthrough preheader of Loop B (bb.4):
   ;       succ_size==1, no terminator, layout-adjacent to bb.4.
-  ; After Loop B (bb.4) is pipelined, bb.3.BottomInsertSemanticOrder
+  ; After Loop B (bb.4) is pipelined, bb.3.BottomInsert.SemanticOrder
   ; holds Loop B prologue clones created by CloneMachineInstr but not
   ; yet inserted into any MachineBasicBlock.
   bb.3.between_loops:
@@ -121,7 +121,7 @@ body:             |
 
   ; bb.4 is Loop B: VBCST_32 (mv slot) + VST (st slot), no loads.
   ; With itercount=16 and II=1, the PostPipeliner creates a prologue whose
-  ; first-iteration VBCST_32 clone lands in bb.3.BottomInsertSemanticOrder.
+  ; first-iteration VBCST_32 clone lands in bb.3.BottomInsert.SemanticOrder.
   bb.4.loop_b:
     successors: %bb.4(0x7c000000), %bb.5(0x04000000)
     liveins: $r1, $p1
@@ -129,7 +129,7 @@ body:             |
     ; VBCST_32 (mv slot) broadcasts scalar $r1 into vector $x0. This is not a
     ; memory load so isDereferenceableInvariantLoad() returns false immediately.
     ; After pipelining (II=1), the first-iteration clone of VBCST_32 goes into
-    ; bb.3.BottomInsertSemanticOrder without a parent MachineBasicBlock.
+    ; bb.3.BottomInsert.SemanticOrder without a parent MachineBasicBlock.
     $x0 = VBCST_32 $r1
     $p1 = VST_dmx_sts_x_st_pstm_nrm_imm $x0, $p1, 64 :: (store (<8 x s32>) into %ir.pd, addrspace 6)
     PseudoLoopEnd <mcsymbol .L_LEnd1>, %bb.4
