@@ -167,10 +167,11 @@ bool hasUnrollPragma(const Loop *L);
 std::pair<MachineBasicBlock *, MachineBasicBlock *>
 findPrologueEpilogue(const MachineBasicBlock &LoopBB);
 
-/// For a ZOL loop block, check whether it was software-pipelined.
-/// Scans non-loop predecessors for the lowered LoopStart whose trip-count
-/// adjustment encodes the stage count: Adj == -(NS - 1) for an NS-stage
-/// pipelined loop. Adj == 0 means the loop was not software-pipelined.
+/// Check whether a loop block was software-pipelined by the MachinePipeliner.
+/// Uses the stage count the pipeliner recorded for its kernel. Failing that,
+/// for a ZOL, scans non-loop predecessors for the lowered LoopStart whose
+/// trip-count adjustment encodes the stage count: Adj == -(NS - 1) for an
+/// NS-stage pipelined loop. Adj == 0 means the loop was not software-pipelined.
 /// \return The number of stages (NS) if pipelined, std::nullopt otherwise.
 std::optional<unsigned> getSWPStageCount(const MachineBasicBlock &LoopBB,
                                          const AIEBaseInstrInfo &TII);

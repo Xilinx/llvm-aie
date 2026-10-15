@@ -9,7 +9,6 @@
 ; the prologue guarded by the trip count since the loop may run only once.
 ; The pipeliner "schedule" remark of the post-RA scheduler reports which
 ; pipeliner handled the loop and its stage count.
-; FIXME: The loop is reported as loop-aware with NS 1.
 ;
 ; RUN: llc -mtriple=aie2p -O2 -pass-remarks-output=- \
 ; RUN:   -pass-remarks-filter=pipeliner %s -o /dev/null | FileCheck %s
@@ -40,9 +39,9 @@ define void @guarded(ptr noalias %in, ptr noalias %out, i32 %n) {
 ; CHECK-NEXT: Function:        guarded
 ; CHECK-NEXT: Args:
 ; CHECK-NEXT:   - String:          Schedule found
-; CHECK-NEXT:   - Pipeliner:       loop-aware
+; CHECK-NEXT:   - Pipeliner:       prepipeliner
 ; CHECK-NEXT:   - II:              '7'
-; CHECK-NEXT:   - NS:              '1'
+; CHECK-NEXT:   - NS:              '2'
 ; CHECK-NEXT:   - Loop:            bb.2.loop
 ; CHECK-NEXT:   - Prologue:        bb.1
 ; CHECK-NEXT:   - PrologueBundles: '1'
