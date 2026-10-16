@@ -36,10 +36,12 @@ MachineFunctionInfo *AIEMachineFunctionInfo::clone(
     const {
   auto *Info = DestMF.cloneInfo<AIEMachineFunctionInfo>(*this);
   Info->LoopSchedules.clear();
+  Info->SWPStageCounts.clear();
   for (const auto &[SrcMBB, DstMBB] : Src2DstMBB) {
-    auto It = LoopSchedules.find(SrcMBB);
-    if (It != LoopSchedules.end())
+    if (auto It = LoopSchedules.find(SrcMBB); It != LoopSchedules.end())
       Info->LoopSchedules[DstMBB] = It->second;
+    if (auto It = SWPStageCounts.find(SrcMBB); It != SWPStageCounts.end())
+      Info->SWPStageCounts[DstMBB] = It->second;
   }
   return Info;
 }
