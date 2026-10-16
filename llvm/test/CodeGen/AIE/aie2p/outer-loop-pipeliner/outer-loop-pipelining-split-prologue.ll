@@ -123,7 +123,7 @@ define void @split_prologue_basic(ptr noalias %a_ptr_init,
 ; CHECK-NEXT: ...
 ; ASM-LABEL: split_prologue_basic:
 ; ASM:       // %bb.0: // %entry
-; ASM-NEXT:    mova r3, #1; nopxm
+; ASM-NEXT:    mova r3, #1; nopb ; nopxm ; nops
 ; ASM-NEXT:    ge r3, r3, r0
 ; ASM-NEXT:    jnz r3, #.LBB0_8
 ; ASM-NEXT:    nop // Delay Slot 5
@@ -131,14 +131,14 @@ define void @split_prologue_basic(ptr noalias %a_ptr_init,
 ; ASM-NEXT:    nop // Delay Slot 3
 ; ASM-NEXT:    nop // Delay Slot 2
 ; ASM-NEXT:    nop // Delay Slot 1
-; ASM-NEXT:  // %bb.1: // %outer.header.preheader
+; ASM-NEXT:  // %bb.1: // %stage0.top
 ; ASM-NEXT:    vlda x0, [p0], #64; vldb x2, [p1], #64
 ; ASM-NEXT:    nop
 ; ASM-NEXT:    nop
 ; ASM-NEXT:    nop
 ; ASM-NEXT:    nop
 ; ASM-NEXT:    mova m0, #4; add r0, r0, #-1; mov p4, p2
-; ASM-NEXT:    padda [p4], m0; movx r4, #0; mov r3, #0
+; ASM-NEXT:    padda [p4], m0; movx r3, #0
 ; ASM-NEXT:  .LBB0_2: // %steady.stage1.top
 ; ASM-NEXT:    // =>This Loop Header: Depth=1
 ; ASM-NEXT:    // Child Loop BB0_3 Depth 2
@@ -150,22 +150,22 @@ define void @split_prologue_basic(ptr noalias %a_ptr_init,
 ; ASM-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
 ; ASM-NEXT:    nopa ; nopb ; nops ; nopx ; vmov x0, bmll0; nopv
 ; ASM-NEXT:    nopa ; nopb ; nops ; nopx ; vextract.64 r7:r6, x0, #0, vaddsign1; nopv
-; ASM-NEXT:    mova r5, #0; nopb ; nops ; nopx ; mov p3, p4; nopv
+; ASM-NEXT:    mova r4, #0; nopb ; nops ; nopx ; mov p3, p4; nopv
 ; ASM-NEXT:  .LBB0_3: // %steady.stage1.inner.inner.header
 ; ASM-NEXT:    // Parent Loop BB0_2 Depth=1
 ; ASM-NEXT:    // => This Inner Loop Header: Depth=2
 ; ASM-NEXT:  .L_LEnd1:
-; ASM-NEXT:    nopa ; nopb ; nops ; add r5, r5, r6; nopm ; nopv
+; ASM-NEXT:    nopa ; nopb ; nops ; add r4, r4, r6; nopm ; nopv
 ; ASM-NEXT:  // %bb.4: // %steady.stage1.bottom.and.stage0.top
 ; ASM-NEXT:    // in Loop: Header=BB0_2 Depth=1
-; ASM-NEXT:    nopa ; nopb ; nops ; add r4, r4, #1; nopm ; nopv
-; ASM-NEXT:    vlda x0, [p0], #64; vldb x2, [p1], #64; lt r6, r4, r0
-; ASM-NEXT:    jnz r6, #.LBB0_2
+; ASM-NEXT:    nopa ; nopb ; nops ; add r3, r3, #1; nopm ; nopv
+; ASM-NEXT:    vlda x0, [p0], #64; vldb x2, [p1], #64; lt r5, r3, r0
+; ASM-NEXT:    jnz r5, #.LBB0_2
 ; ASM-NEXT:    nop // Delay Slot 5
 ; ASM-NEXT:    nop // Delay Slot 4
 ; ASM-NEXT:    nop // Delay Slot 3
 ; ASM-NEXT:    mov p4, p3 // Delay Slot 2
-; ASM-NEXT:    padda [p4], m0; st r5, [p2, #0]; mov p2, p3 // Delay Slot 1
+; ASM-NEXT:    padda [p4], m0; st r4, [p2, #0]; mov p2, p3 // Delay Slot 1
 ; ASM-NEXT:  // %bb.5: // %lastiter.stage1.top
 ; ASM-NEXT:    add.nc lc, r1, #0; vmul dm0, x0, x2,r2
 ; ASM-NEXT:    movxm ls, #.LBB0_6
@@ -174,14 +174,14 @@ define void @split_prologue_basic(ptr noalias %a_ptr_init,
 ; ASM-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
 ; ASM-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
 ; ASM-NEXT:    nopa ; nopb ; nops ; nopx ; vmov x0, bmll0; nopv
-; ASM-NEXT:    nopa ; nopb ; nops ; nopx ; vextract.64 r5:r4, x0, #0, vaddsign1; nopv
-; ASM-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
+; ASM-NEXT:    nopa ; nopb ; nops ; nopx ; vextract.64 r7:r6, x0, #0, vaddsign1; nopv
+; ASM-NEXT:    mova r4, #0; nopb ; nops ; nopxm ; nopv
 ; ASM-NEXT:  .LBB0_6: // %lastiter.stage1.inner.inner.header
 ; ASM-NEXT:    // =>This Inner Loop Header: Depth=1
 ; ASM-NEXT:  .L_LEnd0:
-; ASM-NEXT:    nopa ; nopb ; nops ; add r3, r3, r4; nopm ; nopv
+; ASM-NEXT:    nopa ; nopb ; nops ; add r4, r4, r6; nopm ; nopv
 ; ASM-NEXT:  // %bb.7: // %lastiter.stage1.bottom
-; ASM-NEXT:    nopa ; nopb ; st r3, [p3, #0]; nopxm ; nopv
+; ASM-NEXT:    nopa ; nopb ; st r4, [p3, #0]; nopxm ; nopv
 ; ASM-NEXT:  .LBB0_8: // %exit
 ; ASM-NEXT:    nopa ; ret lr
 ; ASM-NEXT:    nop // Delay Slot 5
