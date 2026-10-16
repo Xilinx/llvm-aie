@@ -98,6 +98,13 @@ void AIEBaseInstrInfo::insertNoop(MachineBasicBlock &MBB,
 bool AIEBaseInstrInfo::reverseBranchCondition(
     SmallVectorImpl<MachineOperand> &Cond) const {
   assert((Cond.size() == 2) && "Invalid branch condition!");
+  // A hardware loop branch decrements its counter as part of branching, so it
+  // has no opposite form to swap in. Report failure and let the caller keep
+  // the layout it has. Only the form carrying its target as an operand gets
+  // this far; the one branching through a pointer register is not recognized
+  // as a conditional branch in the first place.
+  if (isHardwareLoopJNZ(Cond[0].getImm()))
+    return true;
   // TODO We are returning Success in analyzeBranch for PseudoLoopEnd
   // which means we should be able to reverse the branch. Currently we are
   // supporting single BB loop for Zero-overhead loop, and there's no block

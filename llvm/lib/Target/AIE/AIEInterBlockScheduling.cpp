@@ -16,6 +16,7 @@
 #include "AIEBundle.h"
 #include "AIEHazardRecognizer.h"
 #include "AIELiveRegs.h"
+#include "AIEMachineFunctionInfo.h"
 #include "AIEMachineScheduler.h"
 #include "AIEMaxLatencyFinder.h"
 #include "AIEMultiSlotInstrMaterializer.h"
@@ -476,6 +477,7 @@ void InterBlockScheduling::emitLoopRemarks() {
     if (!Pipeliner)
       Pipeliner = "loop-aware";
 
+    MF.getInfo<AIEMachineFunctionInfo>()->setLoopSchedule(*LoopBB, II, NS);
     emitPipelinerRemark(More, Pipeliner, LoopBB, II, NS, &PrologueBS,
                         PrologueBS.getScheduleLength(), &EpilogueBS,
                         EpilogueBS.getScheduleLength(), VregMode,

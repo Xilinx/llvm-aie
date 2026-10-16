@@ -88,6 +88,17 @@ private:
   DenseMap<Register, Register> SpillGroupOriginal;
 
 public:
+  /// II and stage count the post-RA scheduler committed for a loop block.
+  struct LoopSchedule {
+    int II;
+    unsigned NS;
+  };
+
+private:
+  /// Keyed by the loop block, since block numbers change after scheduling.
+  DenseMap<const MachineBasicBlock *, LoopSchedule> LoopSchedules;
+
+public:
   //  AIEMachineFunctionInfo() = default;
 
   AIEMachineFunctionInfo(const Function &F, const TargetSubtargetInfo *STI,
@@ -116,6 +127,18 @@ public:
   std::optional<Register> getSpillGroupOriginal(Register V) const {
     auto It = SpillGroupOriginal.find(V);
     if (It == SpillGroupOriginal.end())
+      return std::nullopt;
+    return It->second;
+  }
+
+  void setLoopSchedule(const MachineBasicBlock &LoopMBB, int II, unsigned NS) {
+    LoopSchedules[&LoopMBB] = {II, NS};
+  }
+
+  std::optional<LoopSchedule>
+  getLoopSchedule(const MachineBasicBlock &LoopMBB) const {
+    auto It = LoopSchedules.find(&LoopMBB);
+    if (It == LoopSchedules.end())
       return std::nullopt;
     return It->second;
   }

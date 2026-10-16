@@ -47,6 +47,8 @@ define weak_odr dso_local void @convert_bf16_to_bfp16(ptr noalias %in, ptr noali
 ; REMARKS-NEXT:   - BundleCount:     '4'
 ; REMARKS-NEXT:   - ByteCount:       '64'
 ; REMARKS-NEXT:   - Offset:          '144'
+; REMARKS-NEXT:   - II:              '4'
+; REMARKS-NEXT:   - NS:              '4'
 ; REMARKS-NEXT: ...
 ; REMARKS: --- !Analysis
 ; REMARKS-NEXT: Pass:            aie-asm-printer
