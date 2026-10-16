@@ -86,9 +86,6 @@ define void @main(i1 %arg) #0 {
 ; CHECK-NEXT:  ; %bb.1: ; %bb48
 ; CHECK-NEXT:    image_sample_lz v3, v[1:2], s[16:23], s[68:71] dmask:0x1
 ; CHECK-NEXT:    v_mov_b32_e32 v1, v2
-; CHECK-NEXT:    s_and_b64 vcc, exec, -1
-; CHECK-NEXT:  .LBB0_2: ; %bb50
-; CHECK-NEXT:    ; =>This Inner Loop Header: Depth=1
 ; CHECK-NEXT:    s_mov_b32 s69, s68
 ; CHECK-NEXT:    s_mov_b32 s70, s68
 ; CHECK-NEXT:    s_mov_b32 s71, s68

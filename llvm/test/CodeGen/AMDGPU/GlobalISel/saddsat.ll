@@ -3056,7 +3056,7 @@ define <2 x float> @v_saddsat_v4i16(<4 x i16> %lhs, <4 x i16> %rhs) {
 ; GFX6-NEXT:    v_add_i32_e32 v2, vcc, v2, v4
 ; GFX6-NEXT:    v_lshlrev_b32_e32 v4, 16, v7
 ; GFX6-NEXT:    v_max_i32_e32 v5, 0, v3
-; GFX6-NEXT:    v_sub_i32_e32 v6, vcc, 0x80000000, v6
+; GFX6-NEXT:    v_sub_i32_e32 v6, vcc, v11, v6
 ; GFX6-NEXT:    v_sub_i32_e32 v5, vcc, v9, v5
 ; GFX6-NEXT:    v_max_i32_e32 v4, v6, v4
 ; GFX6-NEXT:    v_min_i32_e32 v4, v4, v5

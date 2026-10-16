@@ -2955,16 +2955,17 @@ define amdgpu_ps float @ssubsat_v2i16_vs(<2 x i16> %lhs, <2 x i16> inreg %rhs) {
 ; GFX6-NEXT:    v_max_i32_e32 v2, -1, v0
 ; GFX6-NEXT:    s_lshl_b32 s0, s0, 16
 ; GFX6-NEXT:    v_add_i32_e32 v2, vcc, 0x80000001, v2
-; GFX6-NEXT:    v_min_i32_e32 v3, -1, v0
-; GFX6-NEXT:    v_bfrev_b32_e32 v4, 1
-; GFX6-NEXT:    v_add_i32_e32 v3, vcc, v3, v4
+; GFX6-NEXT:    v_min_i32_e32 v4, -1, v0
+; GFX6-NEXT:    v_bfrev_b32_e32 v5, 1
+; GFX6-NEXT:    v_add_i32_e32 v4, vcc, v4, v5
 ; GFX6-NEXT:    v_max_i32_e32 v2, s0, v2
-; GFX6-NEXT:    v_min_i32_e32 v2, v2, v3
+; GFX6-NEXT:    v_min_i32_e32 v2, v2, v4
 ; GFX6-NEXT:    v_lshlrev_b32_e32 v1, 16, v1
+; GFX6-NEXT:    v_mov_b32_e32 v3, 0x80000001
 ; GFX6-NEXT:    v_sub_i32_e32 v0, vcc, v0, v2
 ; GFX6-NEXT:    v_max_i32_e32 v2, -1, v1
 ; GFX6-NEXT:    s_lshl_b32 s0, s1, 16
-; GFX6-NEXT:    v_add_i32_e32 v2, vcc, 0x80000001, v2
+; GFX6-NEXT:    v_add_i32_e32 v2, vcc, v2, v3
 ; GFX6-NEXT:    v_min_i32_e32 v3, -1, v1
 ; GFX6-NEXT:    v_add_i32_e32 v3, vcc, 0x80000000, v3
 ; GFX6-NEXT:    v_max_i32_e32 v2, s0, v2
@@ -3061,7 +3062,7 @@ define <2 x float> @v_ssubsat_v4i16(<4 x i16> %lhs, <4 x i16> %rhs) {
 ; GFX6-NEXT:    v_lshlrev_b32_e32 v4, 16, v7
 ; GFX6-NEXT:    v_add_i32_e32 v5, vcc, v5, v9
 ; GFX6-NEXT:    v_min_i32_e32 v6, -1, v3
-; GFX6-NEXT:    v_add_i32_e32 v6, vcc, 0x80000000, v6
+; GFX6-NEXT:    v_add_i32_e32 v6, vcc, v6, v11
 ; GFX6-NEXT:    v_max_i32_e32 v4, v5, v4
 ; GFX6-NEXT:    v_min_i32_e32 v4, v4, v6
 ; GFX6-NEXT:    v_ashrrev_i32_e32 v0, 16, v0
