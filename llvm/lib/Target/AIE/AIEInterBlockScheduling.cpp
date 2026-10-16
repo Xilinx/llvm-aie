@@ -21,8 +21,10 @@
 #include "AIEMaxLatencyFinder.h"
 #include "AIEMultiSlotInstrMaterializer.h"
 #include "AIERegDefUseTracker.h"
+#include "AIESiblingLoopOptimizer.h"
 #include "Utils/AIELoopOptionOverrides.h"
 #include "Utils/AIELoopUtils.h"
+#include "Utils/AIEMachineBundleUtils.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/ADT/STLExtras.h"
@@ -129,6 +131,10 @@ static cl::opt<bool> PostPipelinerVRegReservedMode(
     "aie-postpipeliner-vreg-reserved-mode", cl::Hidden, cl::init(false),
     cl::desc("[AIE] Enable reserved virtual register mode for the "
              "postpipeliner (virtualizes ranges overlapping RESERVED bases)"));
+static cl::opt<bool> OptimizeSiblingLoops(
+    "aie-optimize-sibling-loops", cl::init(true),
+    cl::desc("[AIE] Optimize sibling loops by merging matching prologue "
+             "bundles into epilogue"));
 
 namespace llvm::AIE {
 
@@ -487,6 +493,8 @@ void InterBlockScheduling::emitLoopRemarks() {
 
 void InterBlockScheduling::leaveFunction() {
   DEBUG_BLOCKS(dbgs() << "<< leaveFunction\n");
+  if (OptimizeSiblingLoops)
+    SiblingLoopOptimizer(*this, *HR, *TII, SelectedAltDescs, *Context).run();
   emitLoopRemarks();
   Blocks.clear();
   MatTracker.clear();
@@ -1874,10 +1882,11 @@ void BlockState::clearSchedule() {
 }
 
 void BlockState::setBlockProperties() {
-  // We use the classification engine as a place to determine if this block
-  // is the epilogue of an outerloop pipelined loop.
-  IsEpilogueOfOuterPipelinedLoop =
-      AIELoopUtils::isOuterLoopPipelined(*TheBlock);
+  // Try to build OuterLoopContext if this block is an outer-loop pipelined
+  // loop latch. This also determines if it's an epilogue of an outer-pipelined
+  // loop.
+  OuterLoopContext = AIELoopUtils::OuterLoopStructure::tryBuildFrom(*TheBlock);
+  IsEpilogueOfOuterPipelinedLoop = OuterLoopContext.has_value();
 
   // We never skip AA check. Except for epilogues of outer-pipelined loops.
   // This is a pre-condition of the optimization (sometimes restrict information
