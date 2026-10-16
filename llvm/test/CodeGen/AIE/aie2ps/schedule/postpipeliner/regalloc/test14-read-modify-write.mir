@@ -33,13 +33,13 @@
 # live ranges when a subreg is redefined within a super-register range.
 #
 # CHECK: FINAL LIVE RANGES
-# CHECK: Live Range #10 for x10:
+# CHECK: Live Range #{{[0-9]+}} for x10:
 # CHECK-NEXT:   Definitions (1):
 # CHECK-NEXT:     [0] Register: x10 $x10, $p0 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign1
 # CHECK-NEXT:   Uses (1):
 # CHECK-NEXT:     [0] Register: x10 $x0, dead $r16 = VMIN_GE_16_vaddSign1 $x10, $x4
 # CHECK-EMPTY:
-# CHECK-NEXT: Live Range #2 for y5:
+# CHECK-NEXT: Live Range #{{[0-9]+}} for y5:
 # CHECK-NEXT:   Definitions (1):
 # CHECK-NEXT:     [0] Register: x10 (SubRegIdx: 8) $x10, dead $r16 = VMAX_LT_16_vaddSign1 $x0, $x4
 # CHECK-NEXT:   Uses (1):

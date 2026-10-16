@@ -494,6 +494,12 @@ AIE2PSRegisterInfo::getLargestLegalSuperClass(const TargetRegisterClass *RC,
   if (AIE2PS::eRRegClass.hasSubClassEq(RC))
     return &AIE2PS::eRRegClass;
 
+  // Widen narrow EX register sub-classes (odd-only mEXoa/mEXow, even-only
+  // mEXea/mEXew, etc.) to the full mEXa class so that the post-RA register
+  // allocator can choose from all 12 EX registers rather than just 6.
+  if (AIE2PS::mEXaRegClass.hasSubClassEq(RC))
+    return &AIE2PS::mEXaRegClass;
+
   if (AIE2PS::ePRegClass.hasSubClassEq(RC))
     return &AIE2PS::spill_eP_to_eRRegClass;
   if (AIE2PS::eMRegClass.hasSubClassEq(RC))

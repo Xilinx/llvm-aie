@@ -128,7 +128,7 @@ public:
   /// \param OS Output stream to write to
   void dumpLiveLanes(
       const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex, int II,
-      raw_ostream &OS) const;
+      raw_ostream &OS, const RegLiveRangeTracker &Tracker) const;
 };
 
 } // end namespace llvm

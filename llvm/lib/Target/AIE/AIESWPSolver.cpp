@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 // This file contains an interface to create constraints to model a software
@@ -196,7 +196,7 @@ void Z3Solver::cycles(const SolverData &Data) {
   }
 }
 
-std::vector<int> Z3Solver::getSUCycles() {
+NodeSchedule Z3Solver::getSUCycles() {
   std::vector<int> Cycles;
   z3::model M = Solver.get_model();
   for (const auto &C : CycleExprs) {
@@ -205,7 +205,7 @@ std::vector<int> Z3Solver::getSUCycles() {
     Z3_get_numeral_int(Context, Val, &IntVal);
     Cycles.push_back(IntVal);
   }
-  return Cycles;
+  return NodeSchedule(std::move(Cycles));
 }
 
 void Z3Solver::genModel(const SolverData &Data, bool SEFStage) {

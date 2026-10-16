@@ -19,12 +19,14 @@
 #define LLVM_LIB_TARGET_AIE_AIEPOSTREGALLOC_H
 
 #include "AIELivenessVector.h"
+#include "AIEMaxNumRegUnits.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/Register.h"
-#include "llvm/MC/LaneBitmask.h"
 #include "llvm/MC/MCRegister.h"
 #include <functional>
+#include <string>
 #include <vector>
 
 namespace llvm {
@@ -35,6 +37,34 @@ class RegLiveRangeTracker;
 class RegLiveRange;
 
 namespace AIE {
+
+/// Result of a post-scheduling register allocation attempt.
+/// On failure the object evaluates to false and holds no useful data.
+/// On success it holds the winning scoring strategy name and the
+/// virtual-to-physical register assignment.
+class PostRegAllocResult {
+  bool Succeeded = false;
+  std::string WinningStrategyName;
+  DenseMap<Register, MCRegister> Assignments;
+
+public:
+  PostRegAllocResult() = default;
+  PostRegAllocResult(std::string WinningStrategyName,
+                     DenseMap<Register, MCRegister> Assignments)
+      : Succeeded(true), WinningStrategyName(std::move(WinningStrategyName)),
+        Assignments(std::move(Assignments)) {}
+
+  bool succeeded() const { return Succeeded; }
+  explicit operator bool() const { return Succeeded; }
+
+  const std::string &getWinningStrategyName() const {
+    return WinningStrategyName;
+  }
+  const DenseMap<Register, MCRegister> &getAssignments() const {
+    return Assignments;
+  }
+  DenseMap<Register, MCRegister> &getAssignments() { return Assignments; }
+};
 
 /// Post-scheduling register allocator for AIE targets.
 ///
@@ -147,10 +177,19 @@ private:
 
   /// Internal allocation state with RegUnit-based interference tracking.
   struct AllocState {
-    /// RegUnit occupancy - tracks lane masks for each register unit.
-    /// RegUnits are the fundamental units of register interference in LLVM.
-    /// Two registers interfere if they share any RegUnits.
-    DenseMap<unsigned /*RegUnit*/, AIE::LivenessVector> RegUnitOccupancy;
+    // Per-cycle RegUnit occupancy: CycleOccupancy[c] has a bit set for each
+    // RegUnit that is occupied at modulo cycle c.
+    SmallVector<PartSet, 8> CycleOccupancy;
+
+    // Cached RegUnit set per physical register.  Computed once in init()
+    // by iterating MCRegUnitIterator for each admissible register; reused in
+    // canPlace() and place() to avoid repeated MCRegUnitIterator walks.
+    DenseMap<MCRegister, PartSet> PhysRegUnitSets;
+
+    // Pre-computed admissible RegUnit set per live range index.
+    // The admissible set is the union of PhysRegUnitSets for every admissible
+    // physical register of the live range.
+    DenseMap<unsigned, PartSet> AdmissibleRegUnits;
 
     /// Pre-computed interference graphs (reused across scoring attempts).
     WeightedAsymmetricGraph RCInterferenceGraph;
@@ -172,17 +211,23 @@ private:
               const RegLiveRangeTracker *RegTracker);
 
     /// Check if PhysReg can accommodate VRegMasks without conflicts.
-    /// This checks RegUnit conflicts to handle aliasing properly.
+    /// A conflict occurs when the candidate register's RegUnits (looked up from
+    /// PhysRegUnitSets) are already occupied at any live cycle.
     bool canPlace(Register PhysReg, const AIE::LivenessVector &VRegMasks) const;
 
-    /// Place VReg in PhysReg (updates RegUnit occupancy).
+    /// Place VReg in PhysReg (marks PhysReg's cached RegUnits occupied per
+    /// cycle).
     void place(Register VReg, Register PhysReg,
                const AIE::LivenessVector &VRegMasks,
                const TargetRegisterClass *RC);
   };
 
-  /// Scoring function type - takes pre-computed metrics and returns a score.
-  using ScoringFunction = std::function<unsigned(const VRegMetrics &)>;
+  /// Comparator type for ordering live ranges during allocation.
+  /// Returns true if A should be allocated before B (A has higher priority).
+  /// This is the strict-weak-ordering predicate used directly in std::sort.
+  /// Score-based orderings are a special case: scoreA > scoreB iff order(A,B).
+  using ComparatorFunction =
+      std::function<bool(const VRegMetrics &, const VRegMetrics &)>;
 
 public:
   /// Allocate physical registers for live ranges.
@@ -192,19 +237,15 @@ public:
   /// \param II Initiation interval for pipelined loops (>= 1).
   /// \param RegTracker RegLiveRangeTracker providing register information.
   /// \param TRI Target register info.
-  /// \param OutAssign Output map from virtual to physical registers.
-  /// \param OutWinningStrategyName Updated before each scoring attempt; holds
-  ///        the name of the scoring strategy that succeeded on return.
-  /// \return True if allocation succeeded, false if no solution found.
-  static bool
+  /// \return PostRegAllocResult holding the assignment and winning strategy
+  ///         name on success, or an empty (false) result on failure.
+  static PostRegAllocResult
   allocate(const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex,
            int II, const RegLiveRangeTracker &RegTracker,
-           const TargetRegisterInfo &TRI,
-           DenseMap<Register /*VReg*/, MCRegister /*Phys*/> &OutAssign,
-           std::string &OutWinningStrategyName);
+           const TargetRegisterInfo &TRI);
 
 private:
-  /// Try to allocate using a specific scoring function for ordering.
+  /// Try to allocate using a specific comparator for ordering.
   /// Returns AllocResult which implicitly converts to bool (true = success).
   /// On success, OutAssign contains the virtual to physical register mapping.
   /// The RegTracker provides the problem description (LiveRanges,
@@ -213,7 +254,7 @@ private:
   tryAllocate(const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex,
               const RegLiveRangeTracker *RegTracker,
               const TargetRegisterInfo &TRI, AllocState &State,
-              ScoringFunction ScoreFn,
+              ComparatorFunction OrderFn,
               DenseMap<Register, MCRegister> &OutAssign);
 
   /// Compute metrics for a live range.
@@ -240,37 +281,64 @@ private:
                            const TargetRegisterInfo &TRI);
 
   /// Build live range interference graph (symmetric).
+  /// Two live ranges interfere if their admissible RegUnit sets overlap and
+  /// they are temporally concurrent.
   static WeightedSymmetricGraph buildVRegInterferenceGraph(
       const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex,
-      const RegLiveRangeTracker &RegTracker,
-      const WeightedAsymmetricGraph &RCInterferenceGraph);
+      const DenseMap<unsigned, PartSet> &AdmissibleRegUnits);
 
-  /// Predefined scoring functions.
-  static unsigned scoreByArea(const VRegMetrics &M) { return M.TotalLanes; }
-  static unsigned scoreByWidth(const VRegMetrics &M) { return M.MaxWidth; }
-  static unsigned scoreByDuration(const VRegMetrics &M) { return M.Duration; }
-  static unsigned scoreByAreaPlusWidth(const VRegMetrics &M) {
-    return M.TotalLanes * 10 + M.MaxWidth;
+  /// Predefined ordering comparators.
+  /// Each returns true if A should be allocated before B.
+  static bool orderByArea(const VRegMetrics &A, const VRegMetrics &B) {
+    return A.TotalLanes > B.TotalLanes;
   }
-  // Score by interference degree - considers both pure and aliasing.
-  static unsigned scoreByInterference(const VRegMetrics &M) {
-    // Pure interference is critical, aliasing interference is secondary.
-    return M.PureInterferenceDegree * 1000 + M.AliasingInterferenceDegree * 10 +
-           M.TotalLanes;
+  static bool orderByWidth(const VRegMetrics &A, const VRegMetrics &B) {
+    return A.MaxWidth > B.MaxWidth;
   }
-  // Score prioritizing scarce register classes (fewer available registers).
-  // Register classes with fewer available registers get HIGHER scores,
-  // so they are allocated FIRST, giving them first pick of registers.
-  static unsigned scoreByScarceRegClass(const VRegMetrics &M) {
-    // Fewer available registers = higher scarceness bonus.
-    // This ensures scarce register classes are allocated first.
-    // Use a large multiplier to make this the dominant factor.
-    unsigned ScarcenessBonus = (100 - M.NumAvailableRegs) * 10000;
-    // Add interference as secondary factor.
-    unsigned InterferenceScore = M.PureInterferenceDegree * 1000 +
-                                 M.AliasingInterferenceDegree * 10 +
-                                 M.TotalLanes;
-    return ScarcenessBonus + InterferenceScore;
+  static bool orderByDuration(const VRegMetrics &A, const VRegMetrics &B) {
+    return A.Duration > B.Duration;
+  }
+  static bool orderByAreaPlusWidth(const VRegMetrics &A, const VRegMetrics &B) {
+    return (A.TotalLanes * 10 + A.MaxWidth) > (B.TotalLanes * 10 + B.MaxWidth);
+  }
+  // Order by interference degree: most-interfering range goes first.
+  static bool orderByInterference(const VRegMetrics &A, const VRegMetrics &B) {
+    const int IntA = A.PureInterferenceDegree * 1000 +
+                     A.AliasingInterferenceDegree * 10 + A.TotalLanes;
+    const int IntB = B.PureInterferenceDegree * 1000 +
+                     B.AliasingInterferenceDegree * 10 + B.TotalLanes;
+    return IntA > IntB;
+  }
+  // Order by register class scarceness: fewer available registers → higher
+  // priority (allocated first). Within the same scarceness, most-interfering
+  // range goes first. Uses signed arithmetic throughout — no overflow.
+  static bool orderByScarceRegClass(const VRegMetrics &A,
+                                    const VRegMetrics &B) {
+    // Primary: fewer available registers → first.
+    if (A.NumAvailableRegs != B.NumAvailableRegs)
+      return A.NumAvailableRegs < B.NumAvailableRegs;
+    // Secondary: interference degree (signed, avoids overflow).
+    const int IntA = A.PureInterferenceDegree * 1000 +
+                     A.AliasingInterferenceDegree * 10 + A.TotalLanes;
+    const int IntB = B.PureInterferenceDegree * 1000 +
+                     B.AliasingInterferenceDegree * 10 + B.TotalLanes;
+    return IntA > IntB;
+  }
+  // Lexicographic ordering: MaxWidth first (absolute precedence), then
+  // interference degree. A range in a wide-register class (e.g. eEYs,
+  // MaxWidth=12) is always allocated before one in a narrower class
+  // (MaxWidth=6). Within the same width tier the most interfering range goes
+  // first, mirroring the graph-coloring heuristic of colouring high-degree
+  // nodes first.
+  static bool orderByWidthThenInterference(const VRegMetrics &A,
+                                           const VRegMetrics &B) {
+    if (A.MaxWidth != B.MaxWidth)
+      return A.MaxWidth > B.MaxWidth;
+    const int IntA =
+        A.PureInterferenceDegree * 1000 + A.AliasingInterferenceDegree;
+    const int IntB =
+        B.PureInterferenceDegree * 1000 + B.AliasingInterferenceDegree;
+    return IntA > IntB;
   }
 
   /// Get allocatable physical registers for a live range.

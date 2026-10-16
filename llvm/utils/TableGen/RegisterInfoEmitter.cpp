@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Modifications (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its
+// Modifications (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its
 // affiliates
 //
 //===----------------------------------------------------------------------===//
@@ -81,6 +81,9 @@ public:
 
   // runMCDesc - Print out MC register descriptions.
   void runMCDesc(raw_ostream &OS);
+
+  // emitNumRegUnits - Emit a constant for the number of register units.
+  void emitNumRegUnits(raw_ostream &OS);
 
   // runTargetHeader - Emit a header fragment for the register info emitter.
   void runTargetHeader(raw_ostream &OS);
@@ -1878,10 +1881,32 @@ void RegisterInfoEmitter::runTargetDesc(raw_ostream &OS) {
   OS << "#endif // GET_REGINFO_TARGET_DESC\n\n";
 }
 
+// EmitNumRegUnits - Emit a const expr for the number of register units.
+// Uses GET_NUM_REGUNITS guard, analogous to GET_NUM_RESOURCES in
+// SubtargetEmitter.
+void RegisterInfoEmitter::emitNumRegUnits(raw_ostream &OS) {
+  const std::string TargetName(Target.getName());
+  OS << "#ifdef GET_NUM_REGUNITS\n"
+        "#undef GET_NUM_REGUNITS\n"
+        "namespace "
+     << TargetName
+     << "RegInfo {\n"
+        "const int NumRegUnits = "
+     << RegBank.getNumNativeRegUnits()
+     << ";\n"
+        "} // namespace "
+     << TargetName
+     << "RegInfo\n"
+        "#endif // GET_NUM_REGUNITS\n\n";
+}
+
 void RegisterInfoEmitter::run(raw_ostream &OS) {
   TGTimer &Timer = Records.getTimer();
   Timer.startTimer("Print enums");
   runEnums(OS);
+
+  Timer.startTimer("Print number of register units");
+  emitNumRegUnits(OS);
 
   Timer.startTimer("Print MC registers");
   runMCDesc(OS);
