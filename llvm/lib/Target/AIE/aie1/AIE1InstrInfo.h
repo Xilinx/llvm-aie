@@ -28,7 +28,7 @@ namespace llvm {
 
 class AIEInstrInfo : public AIEGenInstrInfo {
 public:
-  AIEInstrInfo();
+  explicit AIEInstrInfo(const TargetSubtargetInfo &STI);
 
   /// Allocate and return a hazard recognizer to use for this target when
   /// scheduling the machine instructions after register allocation.

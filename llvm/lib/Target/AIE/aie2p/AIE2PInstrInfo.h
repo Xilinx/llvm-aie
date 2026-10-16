@@ -27,7 +27,7 @@ namespace llvm {
 
 class AIE2PInstrInfo : public AIE2PGenInstrInfo {
 public:
-  AIE2PInstrInfo();
+  explicit AIE2PInstrInfo(const TargetSubtargetInfo &STI);
 
   unsigned getReturnOpcode() const override;
   unsigned getCallOpcode(const MachineFunction &CallerF, bool IsIndirect,

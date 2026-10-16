@@ -223,6 +223,7 @@ TargetTransformInfo::UnrollingPreferences llvm::gatherUnrollingPreferences(
   UP.MaxIterationsCountToAnalyze = UnrollMaxIterationsCountToAnalyze;
   UP.SCEVExpansionBudget = SCEVCheapExpansionBudget;
   UP.RuntimeUnrollMultiExit = false;
+  UP.AddAdditionalAccumulators = false;
 
   // Override with any target specific settings
   TTI.getUnrollingPreferences(L, SE, UP, &ORE);
@@ -1362,6 +1363,7 @@ tryToUnrollLoop(Loop *L, DominatorTree &DT, LoopInfo *LI, ScalarEvolution &SE,
   ULO.Heart = getLoopConvergenceHeart(L);
   ULO.SCEVExpansionBudget = UP.SCEVExpansionBudget;
   ULO.RuntimeUnrollMultiExit = UP.RuntimeUnrollMultiExit;
+  ULO.AddAdditionalAccumulators = UP.AddAdditionalAccumulators;
   LoopUnrollReport UnrollReport = UnrollLoop(
       L, ULO, LI, &SE, &DT, &AC, &TTI, &ORE, PreserveLCSSA, &RemainderLoop, AA);
   LoopUnrollResult UnrollResult = UnrollReport.Result;

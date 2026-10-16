@@ -236,7 +236,7 @@ static void rewriteOperandsToSubRegs(
     // classes with both 20 and 32 bits registers.
     const TargetRegisterClass *OpRC = TII.getRegClass(
         RegOp.getParent()->getDesc(), RegOp.getParent()->getOperandNo(&RegOp),
-        &TRI, VRM.getMachineFunction());
+        &TRI);
     MRI.constrainRegClass(SubRegToVReg[SubReg], OpRC);
 
     LLVM_DEBUG(dbgs() << "        to " << *RegOp.getParent());

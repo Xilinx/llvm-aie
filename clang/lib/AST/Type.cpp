@@ -1936,10 +1936,6 @@ NestedNameSpecifier Type::getPrefix() const {
     return cast<TemplateSpecializationType>(this)
         ->getTemplateName()
         .getQualifier();
-  case Type::DependentTemplateSpecialization:
-    return cast<DependentTemplateSpecializationType>(this)
-        ->getDependentTemplateName()
-        .getQualifier();
   case Type::Enum:
   case Type::Record:
   case Type::InjectedClassName:
@@ -3218,7 +3214,6 @@ bool Type::isSpecifierType() const {
   case SubstTemplateTypeParm:
   case TemplateSpecialization:
   case DependentName:
-  case DependentTemplateSpecialization:
   case ObjCInterface:
   case ObjCObject:
     return true;
@@ -3336,42 +3331,12 @@ StringRef KeywordHelpers::getKeywordName(ElaboratedTypeKeyword Keyword) {
   llvm_unreachable("Unknown elaborated type keyword.");
 }
 
-DependentTemplateSpecializationType::DependentTemplateSpecializationType(
-    ElaboratedTypeKeyword Keyword, const DependentTemplateStorage &Name,
-    ArrayRef<TemplateArgument> Args, QualType Canon)
-    : TypeWithKeyword(Keyword, DependentTemplateSpecialization, Canon,
-
-                      toTypeDependence(Name.getDependence())),
-      Name(Name) {
-  DependentTemplateSpecializationTypeBits.NumArgs = Args.size();
-  auto *ArgBuffer = const_cast<TemplateArgument *>(template_arguments().data());
-  for (const TemplateArgument &Arg : Args) {
-    addDependence(toTypeDependence(Arg.getDependence() &
-                                   TemplateArgumentDependence::UnexpandedPack));
-
-    new (ArgBuffer++) TemplateArgument(Arg);
-  }
-}
-
-void DependentTemplateSpecializationType::Profile(
-    llvm::FoldingSetNodeID &ID, const ASTContext &Context,
-    ElaboratedTypeKeyword Keyword, const DependentTemplateStorage &Name,
-    ArrayRef<TemplateArgument> Args) {
-  ID.AddInteger(llvm::to_underlying(Keyword));
-  Name.Profile(ID);
-  for (const TemplateArgument &Arg : Args)
-    Arg.Profile(ID, Context);
-}
-
 bool Type::isElaboratedTypeSpecifier() const {
   ElaboratedTypeKeyword Keyword;
   if (const auto *TST = dyn_cast<TemplateSpecializationType>(this))
     Keyword = TST->getKeyword();
   else if (const auto *DepName = dyn_cast<DependentNameType>(this))
     Keyword = DepName->getKeyword();
-  else if (const auto *DepTST =
-               dyn_cast<DependentTemplateSpecializationType>(this))
-    Keyword = DepTST->getKeyword();
   else if (const auto *T = dyn_cast<TagType>(this))
     Keyword = T->getKeyword();
   else if (const auto *T = dyn_cast<TypedefType>(this))
@@ -4648,17 +4613,6 @@ TemplateSpecializationType::TemplateSpecializationType(
   TemplateSpecializationTypeBits.NumArgs = Args.size();
   TemplateSpecializationTypeBits.TypeAlias = IsAlias;
 
-  assert(!T.getAsDependentTemplateName() &&
-         "Use DependentTemplateSpecializationType for dependent template-name");
-  assert((T.getKind() == TemplateName::Template ||
-          T.getKind() == TemplateName::SubstTemplateTemplateParm ||
-          T.getKind() == TemplateName::SubstTemplateTemplateParmPack ||
-          T.getKind() == TemplateName::UsingTemplate ||
-          T.getKind() == TemplateName::QualifiedTemplate ||
-          T.getKind() == TemplateName::DeducedTemplate ||
-          T.getKind() == TemplateName::AssumedTemplate) &&
-         "Unexpected template name for TemplateSpecializationType");
-
   auto *TemplateArgs =
       const_cast<TemplateArgument *>(template_arguments().data());
   for (const TemplateArgument &Arg : Args) {
@@ -4697,15 +4651,17 @@ bool clang::TemplateSpecializationType::isSugared() const {
 
 void TemplateSpecializationType::Profile(llvm::FoldingSetNodeID &ID,
                                          const ASTContext &Ctx) {
-  Profile(ID, Template, template_arguments(),
+  Profile(ID, getKeyword(), Template, template_arguments(),
           isSugared() ? desugar() : QualType(), Ctx);
 }
 
 void TemplateSpecializationType::Profile(llvm::FoldingSetNodeID &ID,
+                                         ElaboratedTypeKeyword Keyword,
                                          TemplateName T,
                                          ArrayRef<TemplateArgument> Args,
                                          QualType Underlying,
                                          const ASTContext &Context) {
+  ID.AddInteger(llvm::to_underlying(Keyword));
   T.Profile(ID);
   Underlying.Profile(ID);
 
@@ -5112,7 +5068,6 @@ bool Type::canHaveNullability(bool ResultIfUnknown) const {
   case Type::SubstTemplateTypeParmPack:
   case Type::SubstBuiltinTemplatePack:
   case Type::DependentName:
-  case Type::DependentTemplateSpecialization:
   case Type::Auto:
     return ResultIfUnknown;
 
@@ -5429,7 +5384,7 @@ bool Type::isHLSLResourceRecordArray() const {
   const Type *Ty = getUnqualifiedDesugaredType();
   if (!Ty->isArrayType())
     return false;
-  while (isa<ConstantArrayType>(Ty))
+  while (isa<ArrayType>(Ty))
     Ty = Ty->getArrayElementTypeNoTypeQual();
   return Ty->isHLSLResourceRecord();
 }
@@ -5442,7 +5397,7 @@ bool Type::isHLSLIntangibleType() const {
     return Ty->isHLSLBuiltinIntangibleType();
 
   // unwrap arrays
-  while (isa<ConstantArrayType>(Ty))
+  while (isa<ArrayType>(Ty))
     Ty = Ty->getArrayElementTypeNoTypeQual();
 
   const RecordType *RT =

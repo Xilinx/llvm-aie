@@ -27,7 +27,7 @@ namespace llvm {
 
 class AIE2PSInstrInfo : public AIE2PSGenInstrInfo {
 public:
-  AIE2PSInstrInfo();
+  explicit AIE2PSInstrInfo(const TargetSubtargetInfo &STI);
 
   unsigned getReturnOpcode() const override;
   unsigned getAddrIntrinsic2D() const override;

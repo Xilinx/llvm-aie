@@ -24,9 +24,9 @@
 ; AIE-O0123-NEXT:Machine Module Information
 ; AIE-O0123-NEXT:Target Transform Information
 
+; AIE-O123-NEXT:Assumption Cache Tracker
 ; AIE-O123-NEXT:AIE complex addressing modes based Alias Analysis
 ; AIE-O123-NEXT:External Alias Analysis
-; AIE-O123-NEXT:Assumption Cache Tracker
 ; AIE-O123-NEXT:Type-Based Alias Analysis
 ; AIE-O123-NEXT:Scoped NoAlias Alias Analysis
 ; AIE-O123-NEXT:Profile summary info

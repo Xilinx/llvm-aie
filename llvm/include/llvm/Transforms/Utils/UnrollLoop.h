@@ -94,6 +94,7 @@ struct UnrollLoopOptions {
   const Instruction *Heart = nullptr;
   unsigned SCEVExpansionBudget;
   bool RuntimeUnrollMultiExit = false;
+  bool AddAdditionalAccumulators = false;
 };
 
 LLVM_ABI LoopUnrollReport UnrollLoop(Loop *L, UnrollLoopOptions ULO,
@@ -178,6 +179,9 @@ LLVM_ABI bool computeUnrollCount(
     TargetTransformInfo::UnrollingPreferences &UP,
     TargetTransformInfo::PeelingPreferences &PP, bool &UseUpperBound);
 
+LLVM_ABI std::optional<RecurrenceDescriptor>
+canParallelizeReductionWhenUnrolling(PHINode &Phi, Loop *L,
+                                     ScalarEvolution *SE);
 } // end namespace llvm
 
 #endif // LLVM_TRANSFORMS_UTILS_UNROLLLOOP_H

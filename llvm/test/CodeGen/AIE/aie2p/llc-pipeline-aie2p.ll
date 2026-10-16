@@ -98,9 +98,9 @@
 ; AIE-O1-NEXT:Target Pass Configuration
 ; AIE-O1-NEXT:Machine Module Information
 ; AIE-O1-NEXT:Target Transform Information
+; AIE-O1-NEXT:Assumption Cache Tracker
 ; AIE-O1-NEXT:AIE complex addressing modes based Alias Analysis
 ; AIE-O1-NEXT:External Alias Analysis
-; AIE-O1-NEXT:Assumption Cache Tracker
 ; AIE-O1-NEXT:Type-Based Alias Analysis
 ; AIE-O1-NEXT:Scoped NoAlias Alias Analysis
 ; AIE-O1-NEXT:Profile summary info
@@ -333,9 +333,9 @@
 ; AIE-O23-NEXT:Target Pass Configuration
 ; AIE-O23-NEXT:Machine Module Information
 ; AIE-O23-NEXT:Target Transform Information
+; AIE-O23-NEXT:Assumption Cache Tracker
 ; AIE-O23-NEXT:AIE complex addressing modes based Alias Analysis
 ; AIE-O23-NEXT:External Alias Analysis
-; AIE-O23-NEXT:Assumption Cache Tracker
 ; AIE-O23-NEXT:Type-Based Alias Analysis
 ; AIE-O23-NEXT:Scoped NoAlias Alias Analysis
 ; AIE-O23-NEXT:Profile summary info

@@ -7,7 +7,7 @@
 // (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
-// RUN: llvm-tblgen -gen-disassembler -I %p/../../include -I %p/Common %s | FileCheck %s
+// RUN: llvm-tblgen -gen-disassembler -ignore-non-decodable-operands -I %p/../../include -I %p/Common %s | FileCheck %s
 
 include "arch-with-regs.td"
 
@@ -50,9 +50,9 @@ def InstB : TestInstruction {
 
 // CHECK:      static const uint8_t DecoderTable8[{{[0-9]+}}] = {
 // CHECK-NEXT: /* 0 */       MCD::OPC_ExtractField, 0, 4,  // Inst{3-0} ...
-// CHECK-NEXT: /* 3 */       MCD::OPC_FilterValue, 8, 4, 0, // Skip to: 11
+// CHECK-NEXT: /* 3 */       MCD::OPC_FilterValueOrSkip, 8, 4, 0, // Skip to: 11
 // CHECK-NEXT: /* 7 */       MCD::OPC_Decode, {{[0-9]+}}, {{[0-9]+}}, 0, // Opcode: InstA, DecodeIdx: 0
-// CHECK-NEXT: /* 11 */      MCD::OPC_FilterValueOrFail, 12,
+// CHECK-NEXT: /* 11 */      MCD::OPC_FilterValue, 12,
 // CHECK-NEXT: /* 13 */      MCD::OPC_Decode, {{[0-9]+}}, {{[0-9]+}}, 1, // Opcode: InstB, DecodeIdx: 1
 
 // CHECK-LABEL: static DecodeStatus decodeToMCInst

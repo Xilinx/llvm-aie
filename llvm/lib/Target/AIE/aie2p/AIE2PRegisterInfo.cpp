@@ -277,8 +277,7 @@ Register AIE2PRegisterInfo::getFrameRegister(const MachineFunction &MF) const {
 }
 
 const TargetRegisterClass *
-AIE2PRegisterInfo::getPointerRegClass(const MachineFunction &MF,
-                                      unsigned Kind) const {
+AIE2PRegisterInfo::getPointerRegClass(unsigned Kind) const {
   llvm_unreachable("Un-implemented");
 }
 

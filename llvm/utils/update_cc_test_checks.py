@@ -367,6 +367,7 @@ def update_test(ti: common.TestInfo):
         ginfo=ginfo,
     )
 
+    global_tbaa_records_for_prefixes = {}
     for prefixes, args, extra_commands, triple_in_cmd in run_list:
         # Execute non-filechecked runline.
         if not prefixes:
@@ -392,6 +393,10 @@ def update_test(ti: common.TestInfo):
             prefixes,
             raw_tool_output,
         )
+
+        # Extract TBAA metadata for later usage in check lines.
+        tbaa_map = common.get_tbaa_records(ti.args.version, raw_tool_output)
+        global_tbaa_records_for_prefixes[tuple(prefixes)] = tbaa_map
 
         # Invoke clang -Xclang -ast-dump=json to get mapping from start lines to
         # mangled names. Forward all clang args for now.
@@ -438,6 +443,7 @@ def update_test(ti: common.TestInfo):
                 ti.args.function_signature,
                 ginfo,
                 global_vars_seen_dict,
+                global_tbaa_records_for_prefixes,
                 is_filtered=builder.is_filtered(),
             )
 
@@ -450,6 +456,7 @@ def update_test(ti: common.TestInfo):
                     output_lines,
                     ginfo,
                     global_vars_seen_dict,
+                    global_tbaa_records_for_prefixes,
                     False,
                     True,
                     ti.args.check_globals,
@@ -511,6 +518,7 @@ def update_test(ti: common.TestInfo):
                                     output_lines,
                                     ginfo,
                                     global_vars_seen_dict,
+                                    global_tbaa_records_for_prefixes,
                                     False,
                                     True,
                                     ti.args.check_globals,
@@ -531,6 +539,7 @@ def update_test(ti: common.TestInfo):
                                 args.function_signature,
                                 ginfo,
                                 global_vars_seen_dict,
+                                global_tbaa_records_for_prefixes,
                                 is_filtered=builder.is_filtered(),
                             )
                         )
@@ -549,6 +558,7 @@ def update_test(ti: common.TestInfo):
                 output_lines,
                 ginfo,
                 global_vars_seen_dict,
+                global_tbaa_records_for_prefixes,
                 False,
                 False,
                 ti.args.check_globals,
