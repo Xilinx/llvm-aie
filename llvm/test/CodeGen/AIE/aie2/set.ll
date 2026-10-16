@@ -69,7 +69,7 @@ define dso_local noundef <128 x i8> @_Z27test_set_v256uint4_1024_256iDv32_DU8_(i
 ; CHECK-LABEL: _Z27test_set_v256uint4_1024_256iDv32_DU8_:
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    paddb [sp], #64; nopa ; nops ; nopxm ; nopv
-; CHECK-NEXT:    mova r2, #4; nopx
+; CHECK-NEXT:    nopa ; movx r2, #4
 ; CHECK-NEXT:    jl #__modsi3
 ; CHECK-NEXT:    mov r1, r0 // Delay Slot 5
 ; CHECK-NEXT:    st r16, [sp, #-28] // 4-byte Folded Spill Delay Slot 4
@@ -360,7 +360,7 @@ define dso_local noundef <16 x i64> @_Z17test_set_v32acc32iDv8_u7__acc32(i32 nou
 ; CHECK-LABEL: _Z17test_set_v32acc32iDv8_u7__acc32:
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    paddb [sp], #64; nopa ; nops ; nopxm ; nopv
-; CHECK-NEXT:    mova r2, #4; nopx
+; CHECK-NEXT:    nopa ; movx r2, #4
 ; CHECK-NEXT:    jl #__modsi3
 ; CHECK-NEXT:    mov r1, r0 // Delay Slot 5
 ; CHECK-NEXT:    st r16, [sp, #-28] // 4-byte Folded Spill Delay Slot 4
@@ -533,7 +533,7 @@ define dso_local noundef <16 x i64> @_Z17test_set_v16acc64iDv4_u7__acc64(i32 nou
 ; CHECK-LABEL: _Z17test_set_v16acc64iDv4_u7__acc64:
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    paddb [sp], #64; nopa ; nops ; nopxm ; nopv
-; CHECK-NEXT:    mova r2, #4; nopx
+; CHECK-NEXT:    nopa ; movx r2, #4
 ; CHECK-NEXT:    jl #__modsi3
 ; CHECK-NEXT:    mov r1, r0 // Delay Slot 5
 ; CHECK-NEXT:    st r16, [sp, #-28] // 4-byte Folded Spill Delay Slot 4

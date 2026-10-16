@@ -59,7 +59,7 @@ define dso_local noundef <32 x i16> @test_vsel_s16(<32 x i16> noundef %a, <32 x 
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    or r1, r16, r16; mov r16, r0 // Delay Slot 3
 ; CHECK-NEXT:    vsel.16 x0, x2, x4, r16 // Delay Slot 2
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
+; CHECK-NEXT:    or r16, r1, r1 // Delay Slot 1
 entry:
   %0 = tail call <32 x i16> @llvm.aie2.vsel16(<32 x i16> %a, <32 x i16> %b, i32 %s)
   ret <32 x i16> %0
@@ -73,7 +73,7 @@ define dso_local noundef <16 x i32> @test_vsel_s32(<16 x i32> noundef %a, <16 x 
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    or r1, r16, r16; mov r16, r0 // Delay Slot 3
 ; CHECK-NEXT:    vsel.32 x0, x2, x4, r16 // Delay Slot 2
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
+; CHECK-NEXT:    or r16, r1, r1 // Delay Slot 1
 entry:
   %0 = tail call <16 x i32> @llvm.aie2.vsel32(<16 x i32> %a, <16 x i32> %b, i32 %s)
   ret <16 x i32> %0

@@ -45,7 +45,7 @@ define void @invariant_guard_nested_loop(ptr noalias %out, ptr noalias %in, i32 
 ; CHECK-AIE2-NEXT:    add.nc lc, r1, #0
 ; CHECK-AIE2-NEXT:    movxm ls, #.LBB0_3
 ; CHECK-AIE2-NEXT:    nopb ; nopa ; nops ; movxm le, #.L_LEnd0; nopv
-; CHECK-AIE2-NEXT:    nopb ; nopa ; nops ; or r5, r2, r2; mov r6, r2; nopv
+; CHECK-AIE2-NEXT:    nopb ; nopa ; nops ; or r6, r2, r2; mov r5, r2; nopv
 ; CHECK-AIE2-NEXT:  .LBB0_3: // %inner
 ; CHECK-AIE2-NEXT:    // Parent Loop BB0_1 Depth=1
 ; CHECK-AIE2-NEXT:    // => This Inner Loop Header: Depth=2
@@ -97,7 +97,7 @@ define void @invariant_guard_nested_loop(ptr noalias %out, ptr noalias %in, i32 
 ; CHECK-AIE2P-NEXT:    add.nc lc, r1, #0
 ; CHECK-AIE2P-NEXT:    movxm ls, #.LBB0_3
 ; CHECK-AIE2P-NEXT:    nopa ; nopb ; nops ; movxm le, #.L_LEnd0; nopv
-; CHECK-AIE2P-NEXT:    nopa ; nopb ; nops ; or r5, r2, r2; mov r6, r2; nopv
+; CHECK-AIE2P-NEXT:    nopa ; nopb ; nops ; or r6, r2, r2; mov r5, r2; nopv
 ; CHECK-AIE2P-NEXT:  .LBB0_3: // %inner
 ; CHECK-AIE2P-NEXT:    // Parent Loop BB0_1 Depth=1
 ; CHECK-AIE2P-NEXT:    // => This Inner Loop Header: Depth=2
@@ -147,7 +147,7 @@ define void @invariant_guard_nested_loop(ptr noalias %out, ptr noalias %in, i32 
 ; CHECK-AIE2PS-NEXT:  // %bb.2: // %inner.ph
 ; CHECK-AIE2PS-NEXT:    // in Loop: Header=BB0_1 Depth=1
 ; CHECK-AIE2PS-NEXT:    add.nc lc, r1, #0
-; CHECK-AIE2PS-NEXT:    nopa ; nopb ; nops ; add.nc le, pc, #.L_LEnd0; addm.nc ls, pc, #.LBB0_3; nopv
+; CHECK-AIE2PS-NEXT:    nopa ; nopb ; nops ; add.nc ls, pc, #.LBB0_3; addm.nc le, pc, #.L_LEnd0; nopv
 ; CHECK-AIE2PS-NEXT:    nopa ; nopb ; nops ; or r16, r2, r2; mov r18, r2; nopv
 ; CHECK-AIE2PS-NEXT:  .LBB0_3: // %inner
 ; CHECK-AIE2PS-NEXT:    // Parent Loop BB0_1 Depth=1
@@ -378,8 +378,8 @@ define void @invariant_cmp_select_in_loop(ptr %out, i32 %n, i32 %a, i32 %b, i32 
 ; CHECK-AIE2P-NEXT:    movxm ls, #.LBB2_1
 ; CHECK-AIE2P-NEXT:    nopa ; nopb ; nops ; movxm le, #.L_LEnd1; nopv
 ; CHECK-AIE2P-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
-; CHECK-AIE2P-NEXT:    nopa ; nopb ; nops ; lt r27, r1, r2; nopm ; nopv
-; CHECK-AIE2P-NEXT:    mova r0, #2; nopb ; nops ; movx r4, #0; nopm ; nopv
+; CHECK-AIE2P-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
+; CHECK-AIE2P-NEXT:    mova r0, #2; nopb ; nops ; lt r27, r1, r2; mov r4, #0; nopv
 ; CHECK-AIE2P-NEXT:  .LBB2_1: // %loop
 ; CHECK-AIE2P-NEXT:    // =>This Inner Loop Header: Depth=1
 ; CHECK-AIE2P-NEXT:    nopa ; nopb ; nops ; lshl r2, r4, r0; nopm ; nopv
@@ -398,11 +398,11 @@ define void @invariant_cmp_select_in_loop(ptr %out, i32 %n, i32 %a, i32 %b, i32 
 ; CHECK-AIE2PS-LABEL: invariant_cmp_select_in_loop:
 ; CHECK-AIE2PS:       // %bb.0: // %entry
 ; CHECK-AIE2PS-NEXT:    nopa ; nopb ; nops ; add.nc lc, r0, #0; nopm ; nopv
-; CHECK-AIE2PS-NEXT:    nopa ; nopb ; nops ; add.nc le, pc, #.L_LEnd1; addm.nc ls, pc, #.LBB2_1; nopv
+; CHECK-AIE2PS-NEXT:    nopa ; nopb ; nops ; add.nc ls, pc, #.LBB2_1; addm.nc le, pc, #.L_LEnd1; nopv
 ; CHECK-AIE2PS-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
 ; CHECK-AIE2PS-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
-; CHECK-AIE2PS-NEXT:    nopa ; nopb ; nops ; lt r27, r1, r2; nopm ; nopv
-; CHECK-AIE2PS-NEXT:    mova r0, #2; nopb ; nops ; movx r4, #0; nopm ; nopv
+; CHECK-AIE2PS-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
+; CHECK-AIE2PS-NEXT:    mova r0, #2; nopb ; nops ; lt r27, r1, r2; mov r4, #0; nopv
 ; CHECK-AIE2PS-NEXT:  .LBB2_1: // %loop
 ; CHECK-AIE2PS-NEXT:    // =>This Inner Loop Header: Depth=1
 ; CHECK-AIE2PS-NEXT:    nopa ; nopb ; nops ; lshl r6, r4, r0; nopm ; nopv
@@ -492,7 +492,7 @@ define i32 @cmp_in_loop_used_after_loop(ptr %in, i32 %n, i32 %t, i32 %x, i32 %y)
 ; CHECK-AIE2PS-LABEL: cmp_in_loop_used_after_loop:
 ; CHECK-AIE2PS:       // %bb.0: // %entry
 ; CHECK-AIE2PS-NEXT:    mova r0, #0; nopb ; nops ; add.nc lc, r1, #0; addm.nc ls, pc, #.LBB3_1; nopv
-; CHECK-AIE2PS-NEXT:    mova r16, #0; nopb ; nops ; movx r6, #2; addm.nc le, pc, #.L_LEnd2; nopv
+; CHECK-AIE2PS-NEXT:    mova r16, #0; nopb ; nops ; add.nc le, pc, #.L_LEnd2; mov r6, #2; nopv
 ; CHECK-AIE2PS-NEXT:  .LBB3_1: // %loop
 ; CHECK-AIE2PS-NEXT:    // =>This Inner Loop Header: Depth=1
 ; CHECK-AIE2PS-NEXT:    nopa ; nopb ; nops ; lshl r18, r0, r6; nopm ; nopv

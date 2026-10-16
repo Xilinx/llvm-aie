@@ -41,7 +41,7 @@ define i32 @load_ptr(i8 *%a) {
 ; AIE2P-O0-LABEL: load_ptr:
 ; AIE2P-O0:       // %bb.0:
 ; AIE2P-O0-NEXT:    mova m0, #1; nopx
-; AIE2P-O0-NEXT:    padda [p0], m0
+; AIE2P-O0-NEXT:    paddb [p0], m0
 ; AIE2P-O0-NEXT:    lda.s8 r0, [p0, #0]
 ; AIE2P-O0-NEXT:    nop
 ; AIE2P-O0-NEXT:    ret lr
@@ -93,7 +93,7 @@ define i32 @load_ptr_optnone(i8 *%a) noinline optnone {
 ; AIE2P-O0-LABEL: load_ptr_optnone:
 ; AIE2P-O0:       // %bb.0:
 ; AIE2P-O0-NEXT:    mova m0, #1; nopx
-; AIE2P-O0-NEXT:    padda [p0], m0
+; AIE2P-O0-NEXT:    paddb [p0], m0
 ; AIE2P-O0-NEXT:    lda.s8 r0, [p0, #0]
 ; AIE2P-O0-NEXT:    nop
 ; AIE2P-O0-NEXT:    ret lr

@@ -1,10 +1,10 @@
-//===--- AIESloStatistics.h ----------------------------------------------r===//
+//===--- AIESlotStatistics.h ---------------------------------------------===//
 //
 // This file is licensed under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -49,8 +49,12 @@ public:
   // The slot counts of each MSP
   std::unordered_map<MachineInstr *, SlotCounts> MSPSlotCounts;
 
-  // Add an instruction to the statistics
-  void addInstruction(MachineInstr &MI, const AIEBaseInstrInfo *TII);
+  // Add an instruction to the statistics. A multi-slot pseudo spreads its
+  // demand uniformly over its alternatives. With SkipDominatedAlternatives,
+  // alternatives whose conflict set strictly contains another alternative's
+  // conflict set get no share.
+  void addInstruction(MachineInstr &MI, const AIEBaseInstrInfo *TII,
+                      bool SkipDominatedAlternatives = false);
 
   // The number of represented slots
   int size() const { return std::max(Fixed.size(), Free.size()); }
@@ -72,6 +76,11 @@ public:
 
 SlotStatistics computeSlotStatistics(MachineBasicBlock &MBB,
                                      const AIEBaseInstrInfo *TII);
+
+// Compute slot statistics for an explicit list of instructions.
+SlotStatistics computeSlotStatistics(ArrayRef<MachineInstr *> Instrs,
+                                     const AIEBaseInstrInfo *TII,
+                                     bool SkipDominatedAlternatives = false);
 
 } // namespace llvm::AIE
 

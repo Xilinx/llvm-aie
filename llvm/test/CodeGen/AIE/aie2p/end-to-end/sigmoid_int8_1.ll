@@ -13,7 +13,8 @@ define void @sigmoid_int8_1() {
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; mov crunpacksize, #1; nopv
 ; CHECK-NEXT:    movxm ls, #.LBB0_1
-; CHECK-NEXT:    mova p0, #0; nopb ; movxm le, #.L_LEnd0
+; CHECK-NEXT:    movxm le, #.L_LEnd0
+; CHECK-NEXT:    nopx ; mov p0, #0
 ; CHECK-NEXT:    mova r0, #0; vldb.unpack x3, unpacksign0, [p0, #0]; mov crsrsmode, #0
 ; CHECK-NEXT:    vbcst.32 x4, r0
 ; CHECK-NEXT:    mova r1, #1; nopb ; nops ; nopx ; add.nc lc, r0, #-3; nopv

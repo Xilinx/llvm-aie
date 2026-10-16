@@ -10,9 +10,34 @@
 
 #include "AIEBaseInstrInfo.h"
 #include "AIESlotUtils.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/MachineInstr.h"
 
 namespace llvm::AIE {
+
+static SlotBits getConflictBits(unsigned Opcode, const AIEBaseInstrInfo *TII) {
+  const auto *SlotInfo = TII->getSlotInfo(TII->getSlotKind(Opcode));
+  return SlotInfo ? SlotInfo->getConflictSet() : 0;
+}
+
+/// \return the alternatives whose conflict set is not a strict superset of
+/// another alternative's conflict set. A dominated alternative blocks
+/// everything a dominating one blocks and more, so it is never preferred.
+static SmallVector<unsigned, 4>
+getNonDominatedAlternatives(ArrayRef<unsigned> Alternatives,
+                            const AIEBaseInstrInfo *TII) {
+  SmallVector<unsigned, 4> Result;
+  for (unsigned AltOpcode : Alternatives) {
+    const SlotBits Bits = getConflictBits(AltOpcode, TII);
+    const bool IsDominated = any_of(Alternatives, [&](unsigned Other) {
+      const SlotBits OtherBits = getConflictBits(Other, TII);
+      return OtherBits != Bits && (OtherBits & ~Bits) == 0;
+    });
+    if (!IsDominated)
+      Result.push_back(AltOpcode);
+  }
+  return Result;
+}
 
 SlotStatistics::SlotStatistics(ArrayRef<int> FixedValue,
                                ArrayRef<int> FreeValue) {
@@ -25,15 +50,19 @@ SlotStatistics::SlotStatistics(ArrayRef<int> FixedValue,
 }
 
 void SlotStatistics::addInstruction(MachineInstr &MI,
-                                    const AIEBaseInstrInfo *TII) {
+                                    const AIEBaseInstrInfo *TII,
+                                    bool SkipDominatedAlternatives) {
   const unsigned Opcode = MI.getOpcode();
   const AIEBaseMCFormats *const Formats = TII->getFormatInterface();
   const auto *const Alternatives = Formats->getAlternateInstsOpcode(Opcode);
   if (Alternatives) {
     MSPs.push_back(&MI);
+    SmallVector<unsigned, 4> Spread(Alternatives->begin(), Alternatives->end());
+    if (SkipDominatedAlternatives)
+      Spread = getNonDominatedAlternatives(Spread, TII);
     SlotCounts Term;
-    const int Scale = SlotStatistics::Unit / Alternatives->size();
-    for (unsigned AltOpcode : *Alternatives) {
+    const int Scale = SlotStatistics::Unit / Spread.size();
+    for (unsigned AltOpcode : Spread) {
       Term += Scale * getConflictCounts(AltOpcode, TII);
     }
     MSPSlotCounts.emplace(&MI, Term);
@@ -69,6 +98,15 @@ SlotStatistics computeSlotStatistics(MachineBasicBlock &MBB,
   for (auto &MI : MBB) {
     Result.addInstruction(MI, TII);
   }
+  return Result;
+}
+
+SlotStatistics computeSlotStatistics(ArrayRef<MachineInstr *> Instrs,
+                                     const AIEBaseInstrInfo *TII,
+                                     bool SkipDominatedAlternatives) {
+  SlotStatistics Result;
+  for (auto *MI : Instrs)
+    Result.addInstruction(*MI, TII, SkipDominatedAlternatives);
   return Result;
 }
 

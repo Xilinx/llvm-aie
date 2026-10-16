@@ -18,7 +18,9 @@
 #include "AIEInterBlockScheduling.h"
 #include "AIEMaxLatencyFinder.h"
 #include "AIEPostPipeliner.h"
+#include "AIESlotUtils.h"
 #include "Utils/AIELoopUtils.h"
+#include "Utils/AIEMachineBundleUtils.h"
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
@@ -45,6 +47,19 @@ using namespace llvm::AIE;
 static cl::opt<bool> InsertCycleSeparators(
     "aie-prera-cycle-separators", cl::init(false),
     cl::desc("[AIE] Insert CYCLE_SEPARATOR meta instructions"));
+static cl::opt<bool> MultiSlotSlotPreference(
+    "aie-multislot-slot-preference", cl::Hidden, cl::init(true),
+    cl::desc("Let multi-slot instructions outside of loops try the slot that "
+             "the rest of their region needs least first"));
+static cl::opt<bool> SiblingMergeSlotDemand(
+    "aie-slot-demand-sibling-merge", cl::Hidden, cl::init(true),
+    cl::desc("Count the prologue bundles that may be merged into an outer "
+             "loop latch in the latch's slot demand"));
+static cl::opt<bool> SlotDemandSkipDominated(
+    "aie-slot-demand-skip-dominated", cl::Hidden, cl::init(true),
+    cl::desc("Do not spread the slot demand of multi-slot instructions over "
+             "alternatives whose conflict set contains that of another "
+             "alternative"));
 static cl::opt<bool>
     EnableFinerRPTracking("aie-premisched-finer-rp-tracking", cl::init(true),
                           cl::desc("Track reg pressure more accurately and "
@@ -510,6 +525,47 @@ int AIEPostRASchedStrategy::getInterBlockDepth(const SUnit &SU) const {
   return It == IncomingInterBlockLatency.end() ? Depth : Depth + It->second;
 }
 
+/// Return true if the leading bundles of \p MBB may be merged into an outer
+/// loop latch that is scheduled after it.
+static bool isSiblingMergeSource(InterBlockScheduling &InterBlock,
+                                 const MachineBasicBlock *MBB) {
+  for (auto &[_, BS] : InterBlock.getBlocks()) {
+    const auto &OLS = BS.getOuterLoopContext();
+    if (OLS && !OLS->Speculative &&
+        (OLS->SteadyTop == MBB || OLS->PeeledIterTop == MBB))
+      return true;
+  }
+  return false;
+}
+
+/// Return the instructions that the sibling loop optimization may merge into
+/// the end of \p MBB if it is an outer-loop-pipelined latch: the leading
+/// prologue bundles that SteadyTop and PeeledIterTop have in common.
+static SmallVector<MachineInstr *>
+getSiblingMergeInstrs(InterBlockScheduling &InterBlock, MachineBasicBlock *MBB,
+                      const AIEBaseInstrInfo &TII) {
+  SmallVector<MachineInstr *> Instrs;
+  const auto &OLS = InterBlock.getBlockState(MBB).getOuterLoopContext();
+  if (!OLS || OLS->Speculative)
+    return Instrs;
+  // Both prologue blocks are scheduled before the latch.
+  const BlockState &SteadyTop = InterBlock.getBlockState(OLS->SteadyTop);
+  const BlockState &PeeledTop = InterBlock.getBlockState(OLS->PeeledIterTop);
+  if (SteadyTop.getRegions().empty() || PeeledTop.getRegions().empty())
+    return Instrs;
+  // Same candidates as SiblingLoopOptimizer::getNumberOfMergeableBundles.
+  auto LoopSetupFilter = [&TII](const MachineInstr &MI) {
+    return TII.isZeroOverheadLoopSetupInstr(MI) && !TII.isZOLTripCountDef(MI);
+  };
+  ArrayRef<MachineBundle> SteadyPrologue = SteadyTop.getTop().Bundles;
+  const unsigned NumMergeable =
+      AIEMachineBundleUtils::countMatchingLeadingBundles(
+          SteadyPrologue, PeeledTop.getTop().Bundles, LoopSetupFilter);
+  for (const MachineBundle &Bundle : SteadyPrologue.take_front(NumMergeable))
+    append_range(Instrs, Bundle.getInstrs());
+  return Instrs;
+}
+
 void AIEPostRASchedStrategy::initialize(ScheduleDAGMI *Dag) {
   PostGenericScheduler::initialize(Dag);
   assert(PostRADirection == MISched::Direction::Unspecified);
@@ -524,8 +580,39 @@ void AIEPostRASchedStrategy::initialize(ScheduleDAGMI *Dag) {
   initializeTopScoreBoard();
 
   // Compute RegionTopDownCycles first so the delay slot logic can inspect it.
-  const Region &Reg = InterBlock.getBlockState(CurMBB).getCurrentRegion();
+  const BlockState &BS = InterBlock.getBlockState(CurMBB);
+  const Region &Reg = BS.getCurrentRegion();
   RegionTopDownCycles = Reg.getTopFixedBundles().size();
+
+  // Loops get their slots from the multi-slot materializer and the pipeliner.
+  // Sibling merge sources are judged by the latch they merge into, which is
+  // scheduled after them; they keep the default order.
+  TrackSlotDemand = MultiSlotSlotPreference && BS.Kind != BlockType::Loop &&
+                    !isSiblingMergeSource(InterBlock, CurMBB);
+  const AIE::SlotCounts *Demand = nullptr;
+  RegionSlotStats = AIE::SlotStatistics();
+  if (TrackSlotDemand) {
+    RegionSlotStats = computeSlotStatistics(
+        Reg.getFreeInstructions(), getTII(CurMBB), SlotDemandSkipDominated);
+    RemainingSlotDemand = RegionSlotStats.Fixed + RegionSlotStats.Free;
+    // The outer loop compacts stage 0 and stage 1 by merging SteadyTop's
+    // leading bundles into the tail of the latch, so they compete for the
+    // latch's slots. They are never scheduled here and stay in the count.
+    if (SiblingMergeSlotDemand && IsBottomRegion) {
+      const SmallVector<MachineInstr *> MergeInstrs =
+          getSiblingMergeInstrs(InterBlock, CurMBB, *getTII(CurMBB));
+      const AIE::SlotStatistics MergeStats = computeSlotStatistics(
+          MergeInstrs, getTII(CurMBB), SlotDemandSkipDominated);
+      RemainingSlotDemand += MergeStats.Fixed + MergeStats.Free;
+    }
+    DEBUG_WITH_TYPE("aie-slot-demand",
+                    dbgs() << "Slot demand for " << CurMBB->getName()
+                           << (IsBottomRegion ? " (bottom)" : "") << ": "
+                           << RemainingSlotDemand << "\n");
+    Demand = &RemainingSlotDemand;
+  }
+  getAIEHazardRecognizer(Top)->setRemainingSlotDemand(Demand);
+  getAIEHazardRecognizer(Bot)->setRemainingSlotDemand(Demand);
 
   // Delay slots are normally scheduled bottom-up so the control-flow
   // instruction is issued exactly TII->getNumDelaySlots() before the end of
@@ -854,6 +941,18 @@ bool AIEPostRASchedStrategy::isAvailableNode(SUnit &SU, SchedBoundary &Zone,
 /// Called after ScheduleDAGMI has scheduled an instruction and updated
 /// scheduled/remaining flags in the DAG nodes.
 void AIEPostRASchedStrategy::schedNode(SUnit *SU, bool IsTopNode) {
+  // Multi-slot instructions leave the demand they spread over their
+  // alternatives, others the demand of their own slot.
+  if (TrackSlotDemand) {
+    MachineInstr *MI = SU->getInstr();
+    if (auto It = RegionSlotStats.MSPSlotCounts.find(MI);
+        It != RegionSlotStats.MSPSlotCounts.end())
+      RemainingSlotDemand -= It->second;
+    else
+      RemainingSlotDemand -= AIE::SlotStatistics::Unit *
+                             getConflictCounts(MI->getOpcode(), getTII(CurMBB));
+  }
+
   if (IsTopNode) {
     const int DeltaCycles = int(SU->TopReadyCycle) - int(Top.getCurrCycle());
     assert(DeltaCycles <= 0);

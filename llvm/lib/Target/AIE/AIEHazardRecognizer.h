@@ -17,6 +17,7 @@
 #include "AIEBaseSubtarget.h"
 #include "AIEBundle.h"
 #include "AIEMaxNumResources.h"
+#include "AIESlotCounts.h"
 #include "MCTargetDesc/AIEMCFormats.h"
 #include "StaticBitSet.h"
 #include "llvm/CodeGen/LiveInterval.h"
@@ -206,6 +207,13 @@ public:
   /// issued again.
   void setReservedCycles(unsigned Cycles);
 
+  /// Slot demand of the instructions in the region that are not scheduled
+  /// yet. Multi-slot instructions try their least demanded alternative first.
+  /// nullptr keeps the TableGen order.
+  void setRemainingSlotDemand(const AIE::SlotCounts *Demand) {
+    RemainingSlotDemand = Demand;
+  }
+
   /// Update Scoreboard for Schedclass at DeltaCycles.
   /// \param FUDepthLimit Restricts the depth to which itinerary
   ///        resources are recorded in the scoreboard. This is mainly for
@@ -321,6 +329,7 @@ private:
   static int NumInstrsScheduled;
   unsigned IssueLimit = 1;
   unsigned ReservedCycles = 0;
+  const AIE::SlotCounts *RemainingSlotDemand = nullptr;
 
   bool IsPreRA = false;
 

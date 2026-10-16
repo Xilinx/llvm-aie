@@ -123,7 +123,7 @@ define void @split_prologue_basic(ptr noalias %a_ptr_init,
 ; CHECK-NEXT: ...
 ; ASM-LABEL: split_prologue_basic:
 ; ASM:       // %bb.0: // %entry
-; ASM-NEXT:    mova r3, #1; nopxm
+; ASM-NEXT:    mova r3, #1; nopb ; nopxm
 ; ASM-NEXT:    ge r3, r3, r0
 ; ASM-NEXT:    jnz r3, #.LBB0_8
 ; ASM-NEXT:    nop // Delay Slot 5
@@ -137,8 +137,8 @@ define void @split_prologue_basic(ptr noalias %a_ptr_init,
 ; ASM-NEXT:    nop
 ; ASM-NEXT:    nop
 ; ASM-NEXT:    nop
-; ASM-NEXT:    mova m0, #4; add r0, r0, #-1; mov p4, p2
-; ASM-NEXT:    padda [p4], m0; movx r4, #0; mov r3, #0
+; ASM-NEXT:    mova m0, #4; movs p4, p2
+; ASM-NEXT:    mova r4, #0; padds [p4], m0; add r0, r0, #-1; mov r3, #0
 ; ASM-NEXT:  .LBB0_2: // %steady.stage1.top
 ; ASM-NEXT:    // =>This Loop Header: Depth=1
 ; ASM-NEXT:    // Child Loop BB0_3 Depth 2

@@ -250,6 +250,10 @@ class BlockState {
   // optimized by the outer-loop pipeliner.
   bool IsEpilogueOfOuterPipelinedLoop = false;
 
+  // This holds the outer loop structure if this block is an outer-loop
+  // pipelined loop latch.
+  std::optional<AIELoopUtils::OuterLoopStructure> OuterLoopContext;
+
   // This holds the information whether it is safe to drop memory dependencies,
   // for example, a load -> process -> store using the same pointer, where
   // we know that the store will never overwrite a memory position that
@@ -369,6 +373,13 @@ public:
   }
 
   bool isSafeToIgnoreMemDeps() const { return IsSafeToIgnoreMemDeps; }
+
+  /// Return the outer loop context if this block is an outer-loop pipelined
+  /// loop latch.
+  const std::optional<AIELoopUtils::OuterLoopStructure> &
+  getOuterLoopContext() const {
+    return OuterLoopContext;
+  }
 
 protected:
   void setBlockProperties();
@@ -568,6 +579,9 @@ public:
   // pipelined loop.
   std::optional<ArrayRef<MachineBundle>>
   getSWPLoopBundlesForEpilogue(MachineBasicBlock *Epilogue);
+
+  /// Provide access to the Blocks map for external optimizers.
+  auto &getBlocks() { return Blocks; }
 
   /// If \p LoopMBB is not the only Predecessor of \p CurrentMBB, create a
   /// dedicated Exit MBB by splitting the edge between LoopMBB and CurrentBB

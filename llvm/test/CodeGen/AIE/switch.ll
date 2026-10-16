@@ -142,7 +142,7 @@ define  i32 @test(i8 signext %i) noinline nounwind optnone {
 ; AIE2P-NEXT:    paddxm [sp], #64
 ; AIE2P-NEXT:    st p6, [sp, #-60] // 4-byte Folded Spill
 ; AIE2P-NEXT:    mov p6, sp
-; AIE2P-NEXT:    padda [p6], m0
+; AIE2P-NEXT:    paddb [p6], m0
 ; AIE2P-NEXT:    st.s8 r1, [p6, #0]
 ; AIE2P-NEXT:    nop
 ; AIE2P-NEXT:    nop
@@ -172,7 +172,7 @@ define  i32 @test(i8 signext %i) noinline nounwind optnone {
 ; AIE2P-NEXT:    and r0, r0, r1
 ; AIE2P-NEXT:    mova r1, #2
 ; AIE2P-NEXT:    lshl r0, r0, r1
-; AIE2P-NEXT:    mov dj0, r0
+; AIE2P-NEXT:    movs dj0, r0
 ; AIE2P-NEXT:    lda p0, [p0, dj0]
 ; AIE2P-NEXT:    nop
 ; AIE2P-NEXT:    nop

@@ -59,8 +59,8 @@ define void @versioned(ptr noalias %a, ptr noalias %b, i32 %n) {
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:  .LBB0_3: // %loop.ph.lver.high
-; CHECK-NEXT:    mova r0, #2; add.nc lc, r2, #-1
-; CHECK-NEXT:    lshl r2, r1, r0
+; CHECK-NEXT:    nopb ; nopa ; nops ; movx r0, #2; add.nc lc, r2, #-1; nopv
+; CHECK-NEXT:    nopa ; lshl r2, r1, r0; nopm
 ; CHECK-NEXT:    add r1, r1, #1; mov dj0, r2
 ; CHECK-NEXT:    lda r2, [p0, dj0]
 ; CHECK-NEXT:    nop
@@ -125,7 +125,7 @@ exit:
 define void @already_pipelineable(ptr noalias %a, ptr noalias %b, i32 %n) {
 ; CHECK-LABEL: already_pipelineable:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    mova r1, #1
+; CHECK-NEXT:    movx r1, #1
 ; CHECK-NEXT:    lt r27, r1, r0
 ; CHECK-NEXT:    sel.nez r1, r0, r1, r27
 ; CHECK-NEXT:    mova r1, #2; movx r0, #0; add.nc lc, r1, #-1
