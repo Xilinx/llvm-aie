@@ -37,6 +37,11 @@ struct AIEConcatUnmergeCombineMatchData {
   // Concat Source Registers.
   SmallVector<Register, 4> ConcatSubVecs;
 
+  // The MBB of the PHIs feeding the G_CONCAT, where the new PHI is created.
+  // It may differ from the G_CONCAT's MBB (e.g. a loop header whose PHIs are
+  // concatenated in the latch, after an inner loop).
+  MachineBasicBlock *PhiMBB = nullptr;
+
   // PHI component of the backedge
   // Register for the PHI Source operand 2 sitting in the backedge path.
   std::optional<Register> UnmergeSourceReg;
