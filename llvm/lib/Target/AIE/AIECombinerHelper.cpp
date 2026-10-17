@@ -936,6 +936,13 @@ static bool findUnmergeOrigin(MachineInstr &ConcatI, const unsigned UseOpIdx,
   if (!PhiInst->isPHI() || !MRI.hasOneNonDBGUse(Reg))
     return false;
 
+  // All PHIs must share one MBB: the new PHI replaces them there.
+  if (MatchData.PhiMBB && MatchData.PhiMBB != PhiInst->getParent()) {
+    LLVM_DEBUG(dbgs() << "PHIs of the Concat are in different MBBs.\n");
+    return false;
+  }
+  MatchData.PhiMBB = PhiInst->getParent();
+
   auto [UnmergeInst, UnmergeDefReg] = FindPhiUnmergeComponents(PhiInst);
 
   if (!UnmergeInst || !MatchData.NewConcatMBB) {
@@ -1021,11 +1028,10 @@ void llvm::applyConcatUnmergePhis(MachineInstr &ConcatI,
                                   MachineRegisterInfo &MRI, MachineIRBuilder &B,
                                   AIEConcatUnmergeCombineMatchData &MatchInfo,
                                   GISelChangeObserver &Observer) {
-  /// Set Insertion Point.
-  if (MatchInfo.NewConcatMBB->empty())
-    B.setMBB(*MatchInfo.NewConcatMBB);
-  else
-    B.setInstr(MatchInfo.NewConcatMBB->instr_back());
+  // Set Insertion Point before the terminators: a block may end with
+  // G_BRCOND + G_BR, or fall through after the definition of a concat input.
+  B.setInsertPt(*MatchInfo.NewConcatMBB,
+                MatchInfo.NewConcatMBB->getFirstTerminator());
 
   // Create new Concat Instruction.
   const auto TargetVecType = MRI.getType(*MatchInfo.UnmergeSourceReg);
@@ -1034,8 +1040,9 @@ void llvm::applyConcatUnmergePhis(MachineInstr &ConcatI,
   LLVM_DEBUG(dbgs() << "In bb." << MatchInfo.NewConcatMBB->getNumber()
                     << " created " << *NewConcat.getInstr());
 
-  // Set Insertion Point to top of phi-MBB.
-  B.setInsertPt(*ConcatI.getParent(), ConcatI.getParent()->begin());
+  // Set Insertion Point to top of phi-MBB. It need not be the G_CONCAT's MBB,
+  // and the PHIs dominate the G_CONCAT, so the new PHI dominates its uses.
+  B.setInsertPt(*MatchInfo.PhiMBB, MatchInfo.PhiMBB->begin());
 
   // Create new PHI node.
   auto NewPHI = B.buildInstr(TargetOpcode::G_PHI);
