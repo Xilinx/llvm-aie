@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// Modifications (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its
 // affiliates
 //
 //===----------------------------------------------------------------------===//
@@ -21,6 +21,7 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineMemOperand.h"
+#include "llvm/CodeGen/MachinePipeliner.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/MachineScheduler.h"
 #include "llvm/CodeGen/MachineTraceMetrics.h"
@@ -2107,6 +2108,19 @@ std::string TargetInstrInfo::createMIROperandComment(
 }
 
 TargetInstrInfo::PipelinerLoopInfo::~PipelinerLoopInfo() = default;
+
+void TargetInstrInfo::PipelinerLoopInfo::buildGraph(SwingSchedulerDAG &SSD,
+                                                    AAResults *AA) {
+  SSD.buildSchedGraph(AA);
+}
+
+void TargetInstrInfo::PipelinerLoopInfo::addPhiDataDependence(
+    SwingSchedulerDAG &SSD, SUnit *Def, SUnit *Use, unsigned UseOpIdx,
+    SDep Dep) {
+  SSD.MF.getSubtarget().adjustSchedDependency(Def, 0, Use, UseOpIdx, Dep,
+                                              SSD.getSchedModel());
+  Use->addPred(Dep);
+}
 
 void TargetInstrInfo::mergeOutliningCandidateAttributes(
     Function &F, std::vector<outliner::Candidate> &Candidates) const {

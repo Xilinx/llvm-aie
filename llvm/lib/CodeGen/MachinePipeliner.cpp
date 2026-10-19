@@ -708,7 +708,7 @@ void SwingSchedulerDAG::setMAX_II() {
 /// We override the schedule function in ScheduleDAGInstrs to implement the
 /// scheduling part of the Swing Modulo Scheduling algorithm.
 void SwingSchedulerDAG::schedule() {
-  buildSchedGraph(AA);
+  LoopPipelinerInfo->buildGraph(*this, AA);
   const LoopCarriedEdges LCE = addLoopCarriedDependences();
   updatePhiDependences();
   Topo.InitDAGTopologicalSorting();
@@ -1233,7 +1233,6 @@ LoopCarriedEdges SwingSchedulerDAG::addLoopCarriedDependences() {
 /// PHIs.
 void SwingSchedulerDAG::updatePhiDependences() {
   SmallVector<SDep, 4> RemoveDeps;
-  const TargetSubtargetInfo &ST = MF.getSubtarget<TargetSubtargetInfo>();
 
   // Iterate over each DAG node.
   for (SUnit &I : SUnits) {
@@ -1279,9 +1278,8 @@ void SwingSchedulerDAG::updatePhiDependences() {
           if (!MI->isPHI()) {
             SDep Dep(SU, SDep::Data, Reg);
             Dep.setLatency(0);
-            ST.adjustSchedDependency(SU, 0, &I, MO.getOperandNo(), Dep,
-                                     &SchedModel);
-            I.addPred(Dep);
+            LoopPipelinerInfo->addPhiDataDependence(*this, SU, &I,
+                                                    MO.getOperandNo(), Dep);
           } else {
             HasPhiUse = Reg;
             // Add a chain edge to a dependent Phi that isn't an existing

@@ -1146,9 +1146,16 @@ bool PostPipeliner::tryScarceRangePacking() {
   assert(checkAcyclic(ScarceRanges) &&
          "Scarce-only DAG must be acyclic by construction");
 
+  // The post-pipeliner works on complete schedule data, so the helper computes
+  // exact latencies. The context must outlive the helper.
+  MachineSchedContext Context;
+  Context.MF = &DAG->MF;
+  DataDependenceHelper LatencyHelper(Context, /*AddMutators=*/false,
+                                     /*ExactLatencies=*/true);
+
   // Create the strategy once (precomputes predecessors and members).
-  BurstMostUrgentStrategy Strategy(*DAG, Info, ScarceRanges, MinLength + II,
-                                   II);
+  BurstMostUrgentStrategy Strategy(*DAG, Info, ScarceRanges, MinLength + II, II,
+                                   LatencyHelper);
 
   // Enumerate orders and try scheduling with different orderings.
   return enumerateRangeOrders(
