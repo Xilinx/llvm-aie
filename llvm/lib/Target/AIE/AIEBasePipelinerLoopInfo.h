@@ -15,6 +15,7 @@
 #ifndef LLVM_LIB_TARGET_AIE_AIEBASEPIPELINERLOOPINFO_H
 #define LLVM_LIB_TARGET_AIE_AIEBASEPIPELINERLOOPINFO_H
 #include "AIEBaseInstrInfo.h"
+#include "AIEDataDependenceHelper.h"
 #include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
 #include <memory>
@@ -48,6 +49,11 @@ protected:
   MachineInstr *VersionThreshold = nullptr;
 
   bool isVersionGuarded() const { return VersionThreshold != nullptr; }
+
+  /// Scheduling context and helper used by addPhiDataDependence. Created on
+  /// first use.
+  MachineSchedContext PhiDepContext;
+  std::unique_ptr<AIE::DataDependenceHelper> PhiDepHelper;
 
   /// Whether the loop is known to run more than \p TC times, either from its
   /// static minimum or because a runtime guard can be made to promise it.
@@ -119,6 +125,15 @@ public:
   bool shouldIgnoreForPipelining(const MachineInstr *MI) const override {
     return false;
   }
+
+  /// Build the dependence graph with the AIE DataDependenceHelper instead of
+  /// ScheduleDAGInstrs::buildSchedGraph.
+  void buildGraph(SwingSchedulerDAG &SSD, AAResults *AA) override;
+
+  /// Add the PHI to user edge through DataDependenceHelper::addDep instead of
+  /// the virtual TargetSubtargetInfo::adjustSchedDependency.
+  void addPhiDataDependence(SwingSchedulerDAG &SSD, SUnit *Def, SUnit *Use,
+                            unsigned UseOpIdx, SDep Dep) override;
 
   bool shouldUseSchedule(SwingSchedulerDAG &SSD, SMSchedule &SMS) override;
 

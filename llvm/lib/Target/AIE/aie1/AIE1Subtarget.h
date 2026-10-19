@@ -67,7 +67,6 @@ public:
   unsigned getCriticalPathLimit() const override {
     return getSchedModel().MispredictPenalty / 2;
   }
-  bool enableWindowScheduler() const override { return true; }
 
   void ParseSubtargetFeatures(StringRef CPU, StringRef TuneCPU, StringRef FS);
 

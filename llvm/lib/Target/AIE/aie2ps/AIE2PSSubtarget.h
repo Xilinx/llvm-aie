@@ -56,14 +56,12 @@ public:
   bool enablePostRAMachineScheduler() const override { return true; }
   bool useAA() const override { return true; }
   bool enableEarlyIfConversion() const override { return true; }
-  bool enableWindowScheduler() const override { return true; }
 
   void
   adjustSchedDependency(SUnit *Def, int DefOpIdx, SUnit *Use, int UseOpIdx,
                         SDep &Dep,
                         const TargetSchedModel *SchedModel) const override {
-    AIEBaseSubtarget::adjustSchedDependency(InstrItins, Def, DefOpIdx, Use,
-                                            UseOpIdx, Dep);
+    assert(false && "Edges must be built by DataDependenceHelper::addDep");
   }
   bool enableSubRegLiveness() const override { return true; }
 
