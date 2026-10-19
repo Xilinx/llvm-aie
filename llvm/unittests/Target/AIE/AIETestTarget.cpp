@@ -32,6 +32,12 @@ public:
 // Include helper functions to define a testing target.
 #include "MFCommon.inc"
 
+// A minimal itinerary table, so that the itinerary data is not empty. The
+// single entry has no stages and no operand cycles. The table is terminated by
+// an end marker, as consumers scan it until they find one.
+InstrItinerary AIETestItineraries[] = {{1, 0, 0, 0, 0},
+                                       {0, UINT16_MAX, UINT16_MAX, 0, 0}};
+
 MCSchedModel AIETestSchedModel = {
     1000, // IssueWidth
     1000, // MicroOpBufferSize
@@ -47,8 +53,9 @@ MCSchedModel AIETestSchedModel = {
     nullptr, // No sched classes
     0,       // No resources
     0,       // No sched classes
-    nullptr, // No Itinerary
-    nullptr  // No extra processor descriptor
+    nullptr, // No sched class names
+    AIETestItineraries,
+    nullptr // No extra processor descriptor
 };
 
 SubtargetSubTypeKV ProcModels[] = {SubtargetSubTypeKV{
@@ -57,10 +64,16 @@ SubtargetSubTypeKV ProcModels[] = {SubtargetSubTypeKV{
 } // namespace
 
 class AIETestSubTarget : public TestSubTarget<AIETestInstrInfo> {
+  InstrItineraryData Itins{AIETestSchedModel, nullptr, nullptr, nullptr};
+
 public:
   AIETestSubTarget(TargetMachine &TM)
       : TestSubTarget<AIETestInstrInfo>(TM, "aie-test", "aie-test",
                                         ProcModels) {}
+
+  const InstrItineraryData *getInstrItineraryData() const override {
+    return &Itins;
+  }
 };
 
 TargetMachine *llvm::AIE::createAIETestTargetMachine() {

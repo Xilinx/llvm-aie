@@ -26,6 +26,8 @@ class SUnit;
 
 namespace llvm::AIE {
 
+class DataDependenceHelper;
+
 // Represents a scarce range to be scheduled atomically.
 struct ScarceRange {
   // SUnit indices that are part of this scarce range.
@@ -69,10 +71,15 @@ class BurstMostUrgentStrategy : public PostPipelinerStrategy {
   // Used in simulateAntiDependences to apply the correct iteration offset.
   int II;
 
+  // Provides the signed operand latencies for anti-dependence simulation.
+  // Owned by the caller, which must keep it alive for the strategy's lifetime.
+  DataDependenceHelper &LatencyHelper;
+
 public:
   BurstMostUrgentStrategy(ScheduleDAGInstrs &DAG, ScheduleInfo &Info,
                           const std::vector<ScarceRange> &ScarceRanges,
-                          int LatestBias, int II);
+                          int LatestBias, int II,
+                          DataDependenceHelper &LatencyHelper);
 
   // Initialize OrderedMembers based on the given range order.
   void init(const SmallVector<int, 4> &RangeOrder);

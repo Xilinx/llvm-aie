@@ -14,6 +14,7 @@
 
 #include "AIEBasePipelinerLoopInfo.h"
 #include "AIEBaseInstrInfo.h"
+#include "AIEDataDependenceHelper.h"
 #include "AIELoopClass.h"
 #include "AIEMachineFunctionInfo.h"
 #include "AIESlotStatistics.h"
@@ -264,6 +265,36 @@ MachineBasicBlock *AIEBasePipelinerLoopInfo::getLoopStartBlock() {
     LoopStartBlock = Pred;
   }
   return LoopStartBlock;
+}
+
+void AIEBasePipelinerLoopInfo::buildGraph(SwingSchedulerDAG &SSD,
+                                          AAResults *AA) {
+  // Same preamble as ScheduleDAGInstrs::buildSchedGraph.
+  SSD.initSUnitsPublic();
+  SSD.setExitSU();
+  SSD.makeMaps();
+  SSD.recordDbgInstrs();
+
+  MachineFunction &MF = *LoopBlock->getParent();
+  MachineSchedContext Context;
+  Context.MF = &MF;
+  Context.AA = MF.getSubtarget().useAA() ? AA : nullptr;
+  AIE::DataDependenceHelper DDH(Context, /*AddMutators=*/false,
+                                /*ExactLatencies=*/false);
+  DDH.setAbandonSingleDefDeps(true);
+  DDH.buildEdges(SSD, /*TrackLaneMasks=*/false);
+}
+
+void AIEBasePipelinerLoopInfo::addPhiDataDependence(SwingSchedulerDAG &SSD,
+                                                    SUnit *Def, SUnit *Use,
+                                                    unsigned UseOpIdx,
+                                                    SDep Dep) {
+  if (!PhiDepHelper) {
+    PhiDepContext.MF = LoopBlock->getParent();
+    PhiDepHelper = std::make_unique<AIE::DataDependenceHelper>(
+        PhiDepContext, /*AddMutators=*/false, /*ExactLatencies=*/false);
+  }
+  PhiDepHelper->addDep(Def, /*SrcOpIdx=*/0, Use, UseOpIdx, Dep);
 }
 
 bool AIEBasePipelinerLoopInfo::shouldUseSchedule(SwingSchedulerDAG &SSD,
@@ -914,19 +945,19 @@ createAIEBasePipelinerLoopInfo(MachineInstr *EndLoop,
                                const AIEBaseInstrInfo &TII) {
   LLVM_DEBUG(dbgs() << "PLI: ----START LOOP----\n");
   LLVM_DEBUG(dbgs() << "  Trying DownCountLoop\n");
-  DownCountLoop DCL(EndLoop, TII);
-  auto Outcome = DCL.accept(EndLoop);
+  auto DCL = std::make_unique<DownCountLoop>(EndLoop, TII);
+  auto Outcome = DCL->accept(EndLoop);
   if (Outcome == AIEBasePipelinerLoopInfo::Assessment::Accept) {
     LLVM_DEBUG(dbgs() << "PLI: Loop accepted by DownCountLoop\n");
-    return std::make_unique<DownCountLoop>(DCL);
+    return DCL;
   }
 
   LLVM_DEBUG(dbgs() << "  Trying ZeroOverheadLoop\n");
-  ZeroOverheadLoop ZOL(EndLoop, TII);
-  Outcome = ZOL.accept(EndLoop);
+  auto ZOL = std::make_unique<ZeroOverheadLoop>(EndLoop, TII);
+  Outcome = ZOL->accept(EndLoop);
   if (Outcome == AIEBasePipelinerLoopInfo::Assessment::Accept) {
     LLVM_DEBUG(dbgs() << "PLI: Loop accepted by ZeroOverheadLoop\n");
-    return std::make_unique<ZeroOverheadLoop>(ZOL);
+    return ZOL;
   }
 
   LLVM_DEBUG(dbgs() << "PLI: Loop rejected: " << (int)Outcome << "\n");
