@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This pass moves instructions into successor blocks when possible, so that
@@ -1278,22 +1281,29 @@ bool MachineSinking::isProfitableToSinkTo(Register Reg, MachineInstr &MI,
     return true;
 
   // Check if only use in post dominated block is PHI instruction.
+  bool PHIUse = false;
   bool NonPHIUse = false;
   for (MachineInstr &UseInst : MRI->use_nodbg_instructions(Reg)) {
-    MachineBasicBlock *UseBlock = UseInst.getParent();
-    if (UseBlock == SuccToSinkTo && !UseInst.isPHI())
+    if (UseInst.getParent() != SuccToSinkTo)
+      continue;
+    if (UseInst.isPHI())
+      PHIUse = true;
+    else
       NonPHIUse = true;
   }
-  if (!NonPHIUse)
+  if (PHIUse && !NonPHIUse)
     return true;
 
   // If SuccToSinkTo post dominates then also it may be profitable if MI
   // can further profitably sinked into another block in next round.
   bool BreakPHIEdge = false;
   // FIXME - If finding successor is compile time expensive then cache results.
+  // A later round never sinks into a deeper cycle, so a path through one does
+  // not make this step profitable.
   if (MachineBasicBlock *MBB2 =
           FindSuccToSinkTo(MI, SuccToSinkTo, BreakPHIEdge, AllSuccessors))
-    return isProfitableToSinkTo(Reg, MI, SuccToSinkTo, MBB2, AllSuccessors);
+    if (CI->getCycleDepth(MBB2) <= CI->getCycleDepth(SuccToSinkTo))
+      return isProfitableToSinkTo(Reg, MI, SuccToSinkTo, MBB2, AllSuccessors);
 
   MachineCycle *MCycle = CI->getCycle(MBB);
 
