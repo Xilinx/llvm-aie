@@ -242,6 +242,11 @@ class AIEPreRASchedStrategy : public GenericScheduler {
 public:
   AIEPreRASchedStrategy(const MachineSchedContext *C) : GenericScheduler(C) {}
 
+  void buildGraph(ScheduleDAGMI &DAG, AAResults *AA,
+                  RegPressureTracker *RPTracker = nullptr,
+                  PressureDiffs *PDiffs = nullptr, LiveIntervals *LIS = nullptr,
+                  bool TrackLaneMasks = false) override;
+
   void initialize(ScheduleDAGMI *DAG) override;
 
   // We override to be able to skip the prescheduler for specific blocks

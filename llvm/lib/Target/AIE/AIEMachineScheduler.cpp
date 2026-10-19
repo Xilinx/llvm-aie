@@ -14,6 +14,7 @@
 #include "AIEBaseRegisterInfo.h"
 #include "AIEBaseSubtarget.h"
 #include "AIEBundle.h"
+#include "AIEDataDependenceHelper.h"
 #include "AIEHazardRecognizer.h"
 #include "AIEInterBlockScheduling.h"
 #include "AIEMaxLatencyFinder.h"
@@ -21,11 +22,14 @@
 #include "Utils/AIELoopUtils.h"
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/ADT/iterator_range.h"
+#include "llvm/CodeGen/LiveIntervals.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineOptimizationRemarkEmitter.h"
 #include "llvm/CodeGen/MachineScheduler.h"
+#include "llvm/CodeGen/RegisterPressure.h"
 #include "llvm/CodeGen/ResourceScoreboard.h"
+#include "llvm/CodeGen/SlotIndexes.h"
 #include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/Support/Debug.h"
 #include <memory>
@@ -1891,6 +1895,47 @@ void simplifyReservedRegDeps(ScheduleDAGMI &DAG) {
 
 } // namespace
 
+void llvm::AIEPreRASchedStrategy::buildGraph(ScheduleDAGMI &DAG, AAResults *AA,
+                                             RegPressureTracker *RPTracker,
+                                             PressureDiffs *PDiffs,
+                                             LiveIntervals *LIS,
+                                             bool TrackLaneMasks) {
+  // Set up SUnits (same as buildSchedGraph preamble).
+  DAG.initSUnitsPublic();
+  DAG.setExitSU();
+  DAG.makeMaps();
+  DAG.recordDbgInstrs();
+  // Build dependency edges through the AIE-specific path.
+  // RPTracker and PDiffs do not affect which edges are created or their
+  // latencies; they track register pressure as a side effect of the backward
+  // pass and are handled separately below.
+  DataDependenceHelper DDH(*Context, false, false);
+  DDH.buildEdges(DAG, AA, TrackLaneMasks);
+
+  // Register pressure tracking: a pure side-effect pass over the same
+  // backward order, independent of the dependency graph.
+  if (RPTracker) {
+    if (PDiffs)
+      PDiffs->init(DAG.SUnits.size());
+    for (auto &SUR : llvm::reverse(DAG.SUnits)) {
+      MachineInstr &MI = *SUR.getInstr();
+      RegisterOperands RegOpers;
+      RegOpers.collect(MI, *DAG.TRI, DAG.MRI, TrackLaneMasks, false);
+      if (TrackLaneMasks) {
+        SlotIndex SlotIdx = LIS->getInstructionIndex(MI);
+        RegOpers.adjustLaneLiveness(*LIS, DAG.MRI, SlotIdx);
+      }
+      if (PDiffs != nullptr)
+        PDiffs->addInstruction(SUR.NodeNum, RegOpers, DAG.MRI);
+      if (RPTracker->getPos() == DAG.getRegionEnd() ||
+          &*RPTracker->getPos() != &MI)
+        RPTracker->recedeSkipDebugValues();
+      assert(&*RPTracker->getPos() == &MI && "RPTracker in sync");
+      RPTracker->recede(RegOpers);
+    }
+  }
+}
+
 void llvm::AIEPostRASchedStrategy::buildGraph(ScheduleDAGMI &DAG, AAResults *AA,
                                               RegPressureTracker *RPTracker,
                                               PressureDiffs *PDiffs,
@@ -1933,13 +1978,13 @@ void llvm::AIEPostRASchedStrategy::buildGraph(ScheduleDAGMI &DAG, AAResults *AA,
   DAG.ExitSU.setInstr(Region.getExitInstr());
   DAG.makeMaps();
   // We are in the postscheduler. RPTracker, PDiffs and LIS are null.
-  // For VirtMode, we do want to track LaneMasks though.
-  // Furthermore, we want to register WAR and WAW on virtual
-  // registers
-  const bool OverrideTrackLaneMasks = true;
-  const bool AbandonSingleDefs = false;
-  DAG.buildEdges(Context->AA, RPTracker, PDiffs, LIS, OverrideTrackLaneMasks,
-                 AbandonSingleDefs);
+  // For VirtMode, we do want to track LaneMasks so that WAR and WAW
+  // dependencies on virtual registers use per-lane granularity.
+  // Use the AIE-specific edge builder (DataDependenceHelper) instead of the
+  // generic ScheduleDAGInstrs::buildEdges to route through the AIE latency
+  // computation logic.
+  DataDependenceHelper DDH(*Context, false, false);
+  DDH.buildEdges(DAG, Context->AA, /*TrackLaneMasks=*/true);
   static_cast<AIEScheduleDAGMI &>(DAG).recordDbgInstrs(Region);
 
   // Apply reserved register dependency simplification when enabled and in
