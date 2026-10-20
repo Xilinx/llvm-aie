@@ -49,6 +49,7 @@ class MCInstrInfo;
 class MCObjectWriter;
 class MCRegisterInfo;
 class MCRelocationInfo;
+class MCSimulator;
 class MCStreamer;
 class MCSubtargetInfo;
 class MCSymbolizer;
@@ -237,6 +238,12 @@ public:
       mca::InstrumentManager *(*)(const MCSubtargetInfo &STI,
                                   const MCInstrInfo &MCII);
 
+  using MCSimulatorCtorTy = MCSimulator *(*)(const MCSubtargetInfo &STI,
+                                             const MCInstrInfo &MII,
+                                             const MCRegisterInfo &MRI,
+                                             const MCDisassembler &DisAsm,
+                                             raw_ostream &Out);
+
 private:
   /// Next - The next registered target in the linked list, maintained by the
   /// TargetRegistry.
@@ -350,6 +357,10 @@ private:
   /// InstrumentManagerCtorFn - Construction function for this target's
   /// InstrumentManager, if registered (default = nullptr).
   InstrumentManagerCtorTy InstrumentManagerCtorFn = nullptr;
+
+  /// MCSimulatorCtorFn - Construction function for this target's
+  /// MCSimulator, if registered (default = nullptr).
+  MCSimulatorCtorTy MCSimulatorCtorFn = nullptr;
 
 public:
   Target() = default;
@@ -638,6 +649,18 @@ public:
                           const MCInstrInfo &MCII) const {
     if (InstrumentManagerCtorFn)
       return InstrumentManagerCtorFn(STI, MCII);
+    return nullptr;
+  }
+
+  /// createMCSimulator - Create a target specific MCSimulator. \p Out
+  /// receives what the simulated program itself prints.
+  MCSimulator *createMCSimulator(const MCSubtargetInfo &STI,
+                                 const MCInstrInfo &MII,
+                                 const MCRegisterInfo &MRI,
+                                 const MCDisassembler &DisAsm,
+                                 raw_ostream &Out) const {
+    if (MCSimulatorCtorFn)
+      return MCSimulatorCtorFn(STI, MII, MRI, DisAsm, Out);
     return nullptr;
   }
 
@@ -1029,6 +1052,19 @@ struct TargetRegistry {
   static void RegisterInstrumentManager(Target &T,
                                         Target::InstrumentManagerCtorTy Fn) {
     T.InstrumentManagerCtorFn = Fn;
+  }
+
+  /// RegisterMCSimulator - Register an MCSimulator implementation for the
+  /// given target.
+  ///
+  /// Clients are responsible for ensuring that registration doesn't occur
+  /// while another thread is attempting to access the registry. Typically
+  /// this is done by initializing all targets at program startup.
+  ///
+  /// @param T - The target being registered.
+  /// @param Fn - A function to construct an MCSimulator for the target.
+  static void RegisterMCSimulator(Target &T, Target::MCSimulatorCtorTy Fn) {
+    T.MCSimulatorCtorFn = Fn;
   }
 
   /// @}

@@ -52,6 +52,11 @@ extern "C" {
 #define LLVM_TARGETMCA(TargetName)                                             \
   LLVM_ABI void LLVMInitialize##TargetName##TargetMCA();
 #include "llvm/Config/TargetMCAs.def"
+
+// Declare all of the available TargetSim initialization functions.
+#define LLVM_TARGETSIM(TargetName)                                             \
+  LLVM_ABI void LLVMInitialize##TargetName##TargetSim();
+#include "llvm/Config/TargetSims.def"
 }
 
 namespace llvm {
@@ -177,6 +182,13 @@ namespace llvm {
   inline void InitializeAllTargetMCAs() {
 #define LLVM_TARGETMCA(TargetName) LLVMInitialize##TargetName##TargetMCA();
 #include "llvm/Config/TargetMCAs.def"
+  }
+
+  /// InitializeAllTargetSims - The main program should call this function to
+  /// register the target MCSimulator classes.
+  inline void InitializeAllTargetSims() {
+#define LLVM_TARGETSIM(TargetName) LLVMInitialize##TargetName##TargetSim();
+#include "llvm/Config/TargetSims.def"
   }
 }
 

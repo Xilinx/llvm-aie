@@ -1,0 +1,28 @@
+/*===------ llvm/Config/TargetSims.def - LLVM Target Simulators -*- C++ -*-===*\
+|*                                                                            *|
+|* This file is licensed under the Apache License v2.0 with LLVM Exceptions.  *|
+|* See https://llvm.org/LICENSE.txt for license information.                  *|
+|* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception                    *|
+|*                                                                            *|
+|* (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates          *|
+|*                                                                            *|
+|*===----------------------------------------------------------------------===*|
+|*                                                                            *|
+|* This file enumerates the targets with an instruction simulator in this     *|
+|* build of LLVM. Clients of this file should define the LLVM_TARGETSIM macro *|
+|* to be a function-like macro with a single parameter (the name of the       *|
+|* target); including this file will then enumerate all of those targets.     *|
+|*                                                                            *|
+|* The set of targets supported by LLVM is generated at configuration         *|
+|* time, at which point this header is generated. Do not modify this          *|
+|* header directly.                                                           *|
+|*                                                                            *|
+\*===----------------------------------------------------------------------===*/
+
+#ifndef LLVM_TARGETSIM
+#  error Please define the macro LLVM_TARGETSIM(TargetName)
+#endif
+
+@LLVM_ENUM_TARGETSIMS@
+
+#undef LLVM_TARGETSIM
