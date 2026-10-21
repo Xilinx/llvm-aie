@@ -76,7 +76,7 @@ body:             |
   ; CHECK-NEXT:   - Prologue:        bb.1.for.body.preheader
   ; CHECK-NEXT:   - PrologueBundles: '32'
   ; CHECK-NEXT:   - Epilogue:        bb.4.for.cond.cleanup
-  ; CHECK-NEXT:   - EpilogueBundles: '25'
+  ; CHECK-NEXT:   - EpilogueBundles: '19'
   ; CHECK-NEXT:   - VregMode:        Virtual
   ; CHECK-NEXT:   - SchedHeuristic:  DeferNth_3
   ; CHECK-NEXT:   - AllocHeuristic:  scarce register class scoring
