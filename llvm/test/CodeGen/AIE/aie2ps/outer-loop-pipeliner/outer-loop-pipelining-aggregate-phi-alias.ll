@@ -123,7 +123,7 @@ define void @drain_after_olp(ptr noalias %a, ptr noalias %c, ptr %out, i32 %n, i
 ;
 ; NOOLP-LABEL: drain_after_olp:
 ; NOOLP:       // %bb.0: // %entry
-; NOOLP-NEXT:    mova r4, #1; nopb ; nopx
+; NOOLP-NEXT:    mova r4, #1; nopb ; nopxm ; nops
 ; NOOLP-NEXT:    geu r4, r4, r0
 ; NOOLP-NEXT:    jnz r4, #.LBB0_8
 ; NOOLP-NEXT:    nop // Delay Slot 5
@@ -132,7 +132,8 @@ define void @drain_after_olp(ptr noalias %a, ptr noalias %c, ptr %out, i32 %n, i
 ; NOOLP-NEXT:    nop // Delay Slot 2
 ; NOOLP-NEXT:    nop // Delay Slot 1
 ; NOOLP-NEXT:  // %bb.1: // %outer.header.preheader
-; NOOLP-NEXT:    mova r24, #0
+; NOOLP-NEXT:    addm.nc r3, r0, #-1
+; NOOLP-NEXT:    mova r24, #0; movxm p4, #.LBB0_2
 ; NOOLP-NEXT:    vbcst.32 x0, r24
 ; NOOLP-NEXT:    vmov x1, x0
 ; NOOLP-NEXT:    vmov lfl0, x0
@@ -150,22 +151,21 @@ define void @drain_after_olp(ptr noalias %a, ptr noalias %c, ptr %out, i32 %n, i
 ; NOOLP-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
 ; NOOLP-NEXT:    nopa ; nopb ; nops ; nopx ; vadd.8 x2, x2, x2; nopv
 ; NOOLP-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
-; NOOLP-NEXT:    nopa ; nopb ; nops ; nopx ; vextract.8 r6, x2, #0, vaddsign0; nopv
-; NOOLP-NEXT:    padda [p0], #64; nopb ; nops ; movx r4, #0; nopm ; nopv
+; NOOLP-NEXT:    nopa ; nopb ; nops ; nopx ; vextract.8 r4, x2, #0, vaddsign0; nopv
+; NOOLP-NEXT:    padda [p0], #64; nopb ; nops ; movx r0, #0; nopm ; nopv
 ; NOOLP-NEXT:  .LBB0_3: // %inner.header
 ; NOOLP-NEXT:    // Parent Loop BB0_2 Depth=1
 ; NOOLP-NEXT:    // => This Inner Loop Header: Depth=2
 ; NOOLP-NEXT:  .L_LEnd1:
-; NOOLP-NEXT:    nopa ; nopb ; nops ; add r4, r4, r6; nopm ; nopv
+; NOOLP-NEXT:    nopa ; nopb ; nops ; add r0, r0, r4; nopm ; nopv
 ; NOOLP-NEXT:  // %bb.4: // %outer.latch
 ; NOOLP-NEXT:    // in Loop: Header=BB0_2 Depth=1
-; NOOLP-NEXT:    add r0, r0, #-1; vmov x2, lfl0
-; NOOLP-NEXT:    jnz r0, #.LBB0_2
-; NOOLP-NEXT:    nopx ; vmov x3, lfh0 // Delay Slot 5
+; NOOLP-NEXT:    nopa ; nopb ; jnzd r3, r3, p4; vmov x2, lfl0; nops
+; NOOLP-NEXT:    vmov x3, lfh0 // Delay Slot 5
 ; NOOLP-NEXT:    vadd.32 x2, x2, x0 // Delay Slot 4
 ; NOOLP-NEXT:    vadd.32 x3, x3, x0 // Delay Slot 3
 ; NOOLP-NEXT:    vmov lfl0, x2 // Delay Slot 2
-; NOOLP-NEXT:    st r4, [p1], #4; vmov lfh0, x3 // Delay Slot 1
+; NOOLP-NEXT:    st r0, [p1], #4; vmov lfh0, x3 // Delay Slot 1
 ; NOOLP-NEXT:  // %bb.5: // %drain.preheader
 ; NOOLP-NEXT:    vldb x0, [p3], #64
 ; NOOLP-NEXT:    vldb x0, [p3], #64; add.nc lc, r2, #-9
