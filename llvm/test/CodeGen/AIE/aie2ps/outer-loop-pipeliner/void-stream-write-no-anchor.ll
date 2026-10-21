@@ -64,7 +64,7 @@ define void @void_stream_write_no_anchor(ptr %a, ptr %c, i32 %n, i32 %m) {
 ; REMARKS-NEXT:   - Prologue:        bb.2.outer.header
 ; REMARKS-NEXT:   - PrologueBundles: '8'
 ; REMARKS-NEXT:   - Epilogue:        bb.4.outer.latch
-; REMARKS-NEXT:   - EpilogueBundles: '7'
+; REMARKS-NEXT:   - EpilogueBundles: '6'
 ; REMARKS-NEXT: ...
 ; CHECK-LABEL: define void @void_stream_write_no_anchor(
 ; CHECK:       outer.header:
