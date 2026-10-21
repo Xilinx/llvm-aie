@@ -13,11 +13,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIEBaseInstructionSelector.h"
+#include "llvm/ADT/bit.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/CodeGen/GlobalISel/GenericMachineInstrs.h"
 #include "llvm/CodeGen/TargetOpcodes.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/MC/MCContext.h"
+#include "llvm/Support/MathExtras.h"
 
 using namespace llvm;
 
@@ -357,11 +359,29 @@ void AIEBaseInstructionSelector::setUnsetCtrlRegister(
   setUnsetCtrlRegister(MIB, I, I, MRI, CRReg, ValueReg, DefaultCRVal);
 }
 
+/// \return the value that the move \p Opcode writes to give \p Val to a
+/// register that keeps its \p Width low bits, if the move encodes one: \p Val
+/// itself or its sign extension from \p Width bits.
+static std::optional<int64_t> getMoveImmediate(const AIEBaseInstrInfo &TII,
+                                               unsigned Opcode, uint64_t Val,
+                                               unsigned Width) {
+  for (const int64_t Imm : {int64_t(Val), SignExtend64(Val, Width)})
+    if (TII.getMoveImmOperand(Opcode, Imm))
+      return Imm;
+  return std::nullopt;
+}
+
 MachineInstrBuilder
 AIEBaseInstructionSelector::setCtrlRegister(MachineIRBuilder &MIB,
-                                            Register CRReg, unsigned Val) {
-  auto Opcode = TII.getMvSclMultiSlotPseudoOpcode();
-  return MIB.buildInstr(Opcode, {CRReg}, {}).addImm(Val);
+                                            Register CRReg, int64_t Val) {
+  return setCtrlRegister(MIB, CRReg, Val, TII.getMvSclMultiSlotPseudoOpcode());
+}
+
+MachineInstrBuilder AIEBaseInstructionSelector::setCtrlRegister(
+    MachineIRBuilder &MIB, Register CRReg, int64_t Val, unsigned Opcode) {
+  const std::optional<int64_t> Imm = TII.getMoveImmOperand(Opcode, Val);
+  assert(Imm && "Unencodable immediate");
+  return MIB.buildInstr(Opcode, {CRReg}, {}).addImm(*Imm);
 }
 
 MachineInstrBuilder AIEBaseInstructionSelector::setStatusRegister(
@@ -1277,14 +1297,21 @@ bool AIEBaseInstructionSelector::selectSetControlRegister(
   if (!CtrlReg)
     return false;
 
-  // Handle const input val for control regs.
+  // Handle const input val for control regs. A value that no move encodes is
+  // copied from the register that holds it.
   if (const auto Src = getIConstantVRegValWithLookThrough(SrcReg, MRI)) {
     const unsigned SrcConstVal =
         TRI.matchControlRegisterBitwidth(*CtrlReg, Src->Value.getZExtValue());
-
-    MachineInstrBuilder MI = setCtrlRegister(MIB, *CtrlReg, SrcConstVal);
-    I.eraseFromParent();
-    return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
+    const unsigned Width =
+        llvm::popcount(TRI.matchControlRegisterBitwidth(*CtrlReg, ~0u));
+    for (const unsigned Opcode : TII.getMovesImmToCtrlReg(*CtrlReg)) {
+      if (const std::optional<int64_t> Imm =
+              getMoveImmediate(TII, Opcode, SrcConstVal, Width)) {
+        MachineInstrBuilder MI = setCtrlRegister(MIB, *CtrlReg, *Imm, Opcode);
+        I.eraseFromParent();
+        return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
+      }
+    }
   }
 
   auto CopyInstr = MIB.buildInstr(TargetOpcode::COPY, {Register(*CtrlReg)}, {})
