@@ -410,9 +410,10 @@ Register AIE2PRegisterInfo::getStackPointerRegister() const {
   return AIE2P::sp;
 }
 
-Register AIE2PRegisterInfo::getControlRegister(unsigned Idx) const {
+std::optional<MCRegister>
+AIE2PRegisterInfo::getControlRegister(unsigned Idx) const {
   // Control Register Map. Keys based on encoding.
-  static std::unordered_map<unsigned, Register> ControlRegisterMap = {
+  static const std::unordered_map<unsigned, MCRegister> ControlRegisterMap = {
       {0, AIE2P::crSat},
       {1, AIE2P::crRnd},
       {2, AIE2P::crFPMask},
@@ -441,9 +442,10 @@ Register AIE2PRegisterInfo::getControlRegister(unsigned Idx) const {
 
   };
 
-  if (ControlRegisterMap.find(Idx) != ControlRegisterMap.end())
-    return ControlRegisterMap[Idx];
-  llvm_unreachable("Unexpected key for control register.");
+  auto It = ControlRegisterMap.find(Idx);
+  if (It == ControlRegisterMap.end())
+    return std::nullopt;
+  return It->second;
 }
 
 Register AIE2PRegisterInfo::getStatusRegister(unsigned Idx) const {

@@ -844,10 +844,11 @@ bool AIE2PSRegisterInfo::isVecOrAccRegClass(
   return false;
 }
 
-Register AIE2PSRegisterInfo::getControlRegister(unsigned Idx) const {
+std::optional<MCRegister>
+AIE2PSRegisterInfo::getControlRegister(unsigned Idx) const {
   // Control Register Map. Keys based on encoding.
   // The map is based on the encoding in clang/lib/Headers/aie2ps/aie2ps_enums.h
-  static std::unordered_map<unsigned, Register> ControlRegisterMap = {
+  static const std::unordered_map<unsigned, MCRegister> ControlRegisterMap = {
       {0, AIE2PS::crSat},
       {1, AIE2PS::crRnd},
       {2, AIE2PS::crFPMask},
@@ -892,9 +893,10 @@ Register AIE2PSRegisterInfo::getControlRegister(unsigned Idx) const {
       {41, AIE2PS::srFPCnvFx2Fl},
       {42, AIE2PS::srFPCnvFl2Fx}};
 
-  if (ControlRegisterMap.find(Idx) != ControlRegisterMap.end())
-    return ControlRegisterMap[Idx];
-  llvm_unreachable("Unexpected key for control register.");
+  auto It = ControlRegisterMap.find(Idx);
+  if (It == ControlRegisterMap.end())
+    return std::nullopt;
+  return It->second;
 }
 
 Register AIE2PSRegisterInfo::getUnpackSignCtrlReg() const {
