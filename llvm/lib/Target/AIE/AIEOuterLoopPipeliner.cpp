@@ -94,9 +94,7 @@ using namespace llvm;
 
 #define DEBUG_TYPE "aie-outer-loop-pipeliner"
 
-// Not static: the hardware-loop cost model reads it too, so that a loop this
-// pass is going to rotate is not turned into a hardware loop first.
-cl::opt<bool> EnableOuterLoopPipelining(
+static cl::opt<bool> EnableOuterLoopPipelining(
     "aie-enable-outer-loop-pipelining",
     cl::desc("Enable outer loop pipelining for long-latency loops"),
     cl::init(false), cl::Hidden);
