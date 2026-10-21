@@ -329,3 +329,36 @@ body:             |
     $r0 = COPY %0:gprregbank(s32)
     PseudoRET implicit $lr, implicit $r0
 ...
+
+# crFPNlfMask keeps 8 bits, but its constants are moved with the 5-bit
+# immediate of MOVX, which the move sign-extends to the width of the register.
+---
+name:            set_fpnlfmask_16
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    ; CHECK-LABEL: name: set_fpnlfmask_16
+    ; CHECK: $crfpnlfmask = MOVX_mvx_cr_imm 16
+    ; CHECK-NEXT: PseudoRET implicit $lr
+    %0:gprregbank(s32) = G_CONSTANT i32 24
+    %1:gprregbank(s32) = G_CONSTANT i32 16
+    G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2ps.set.ctrl.reg), %0:gprregbank(s32), %1:gprregbank(s32)
+    PseudoRET implicit $lr
+...
+---
+name:            set_fpnlfmask_wide
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    ; CHECK-LABEL: name: set_fpnlfmask_wide
+    ; CHECK: $crfpnlfmask = MOVX_mvx_cr_imm 255
+    ; CHECK-NEXT: PseudoRET implicit $lr
+    %0:gprregbank(s32) = G_CONSTANT i32 24
+    %1:gprregbank(s32) = G_CONSTANT i32 255
+    G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2ps.set.ctrl.reg), %0:gprregbank(s32), %1:gprregbank(s32)
+    PseudoRET implicit $lr
+...
