@@ -386,17 +386,19 @@ const TargetRegisterClass *AIE2RegisterInfo::getConstrainedRegClassForOperand(
 
 Register AIE2RegisterInfo::getStackPointerRegister() const { return AIE2::SP; }
 
-Register AIE2RegisterInfo::getControlRegister(unsigned Idx) const {
+std::optional<MCRegister>
+AIE2RegisterInfo::getControlRegister(unsigned Idx) const {
   // Control Register Map. Keys based on encoding.
-  static std::unordered_map<unsigned, Register> ControlRegisterMap = {
+  static const std::unordered_map<unsigned, MCRegister> ControlRegisterMap = {
       {0, AIE2::crVaddSign}, {1, AIE2::crF2FMask},  {2, AIE2::crF2IMask},
       {3, AIE2::crFPMask},   {4, AIE2::crMCDEn},    {5, AIE2::crPackSign},
       {6, AIE2::crRnd},      {7, AIE2::crSCDEn},    {8, AIE2::crSRSSign},
       {9, AIE2::crSat},      {10, AIE2::crUPSSign}, {11, AIE2::crUnpackSign}};
 
-  if (ControlRegisterMap.find(Idx) != ControlRegisterMap.end())
-    return ControlRegisterMap[Idx];
-  llvm_unreachable("Unexpected key for control register.");
+  auto It = ControlRegisterMap.find(Idx);
+  if (It == ControlRegisterMap.end())
+    return std::nullopt;
+  return It->second;
 }
 
 const TargetRegisterClass *

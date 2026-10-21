@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -71,7 +71,7 @@ struct AIE2PRegisterInfo : public AIE2PGenRegisterInfo {
       const MachineOperand &MO, const MachineRegisterInfo &MRI) const override;
 
   Register getStackPointerRegister() const override;
-  Register getControlRegister(unsigned Idx) const override;
+  std::optional<MCRegister> getControlRegister(unsigned Idx) const override;
   Register getStatusRegister(unsigned Idx) const override;
 
   const TargetRegisterClass *

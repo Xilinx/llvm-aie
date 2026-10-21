@@ -70,7 +70,7 @@ struct AIE2RegisterInfo : public AIE2GenRegisterInfo {
       const MachineOperand &MO, const MachineRegisterInfo &MRI) const override;
 
   Register getStackPointerRegister() const override;
-  Register getControlRegister(unsigned Idx) const override;
+  std::optional<MCRegister> getControlRegister(unsigned Idx) const override;
 
   const TargetRegisterClass *
   getLargestLegalSuperClass(const TargetRegisterClass *RC,

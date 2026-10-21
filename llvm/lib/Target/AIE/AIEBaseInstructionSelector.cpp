@@ -1272,20 +1272,23 @@ bool AIEBaseInstructionSelector::selectSetControlRegister(
   const auto Idx = getIConstantVRegValWithLookThroughOrFail(
       IdxReg, MRI, "Expected const value for control register map index.");
 
-  const Register CtrlReg = TRI.getControlRegister(Idx.Value.getZExtValue());
+  const std::optional<MCRegister> CtrlReg =
+      TRI.getControlRegister(Idx.Value.getZExtValue());
+  if (!CtrlReg)
+    return false;
 
   // Handle const input val for control regs.
   if (const auto Src = getIConstantVRegValWithLookThrough(SrcReg, MRI)) {
     const unsigned SrcConstVal =
-        TRI.matchControlRegisterBitwidth(CtrlReg, Src->Value.getZExtValue());
+        TRI.matchControlRegisterBitwidth(*CtrlReg, Src->Value.getZExtValue());
 
-    MachineInstrBuilder MI = setCtrlRegister(MIB, CtrlReg, SrcConstVal);
+    MachineInstrBuilder MI = setCtrlRegister(MIB, *CtrlReg, SrcConstVal);
     I.eraseFromParent();
     return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
   }
 
-  auto CopyInstr =
-      MIB.buildInstr(TargetOpcode::COPY, {CtrlReg}, {}).addReg(SrcReg);
+  auto CopyInstr = MIB.buildInstr(TargetOpcode::COPY, {Register(*CtrlReg)}, {})
+                       .addReg(SrcReg);
   if (!selectCopy(*CopyInstr, MRI))
     return false;
 
@@ -1361,14 +1364,17 @@ bool AIEBaseInstructionSelector::selectGetControlRegister(
   const auto Idx = getIConstantVRegValWithLookThroughOrFail(
       IdxReg, MRI, "Expected const value for control register map index.");
 
-  const Register CtrlReg = TRI.getControlRegister(Idx.Value.getZExtValue());
+  const std::optional<MCRegister> CtrlReg =
+      TRI.getControlRegister(Idx.Value.getZExtValue());
+  if (!CtrlReg)
+    return false;
   const MachineFunction &MF = *I.getParent()->getParent();
 
   if (!RBI.constrainGenericRegister(DstReg, *TRI.getGPRRegClass(MF), MRI))
     return false;
 
   auto CopyInstr =
-      MIB.buildInstr(TargetOpcode::COPY, {DstReg}, {}).addReg(CtrlReg);
+      MIB.buildInstr(TargetOpcode::COPY, {DstReg}, {}).addReg(*CtrlReg);
   if (!selectCopy(*CopyInstr, MRI))
     return false;
 
