@@ -36,6 +36,10 @@ public:
   unsigned getPtrAdd2DOpcode() const override;
   unsigned getPtrAdd3DOpcode() const override;
   unsigned getMvSclMultiSlotPseudoOpcode() const override;
+  SmallVector<unsigned, 2>
+  getMovesImmToCtrlReg(MCRegister CtrlReg) const override;
+  std::optional<int64_t> getMoveImmOperand(unsigned Opcode,
+                                           int64_t Imm) const override;
   unsigned getOppositeBranchOpcode(unsigned Opc) const override;
   unsigned getJumpOpcode() const override;
 

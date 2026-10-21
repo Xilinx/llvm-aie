@@ -103,7 +103,10 @@ public:
                             Register CRReg, Register ValueReg,
                             unsigned DefaultCRVal = 0);
   MachineInstrBuilder setCtrlRegister(MachineIRBuilder &MIB, Register CRReg,
-                                      unsigned Val);
+                                      int64_t Val);
+  /// Write \p Val to \p CRReg with \p Opcode, a move of an immediate.
+  MachineInstrBuilder setCtrlRegister(MachineIRBuilder &MIB, Register CRReg,
+                                      int64_t Val, unsigned Opcode);
   MachineInstrBuilder setStatusRegister(MachineIRBuilder &MIB,
                                         Register StatusReg, unsigned Val);
   AddressingModeInfo createAddressModeInfo(MachineInstr &MemI,

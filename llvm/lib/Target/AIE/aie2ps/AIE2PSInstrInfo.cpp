@@ -70,6 +70,33 @@ unsigned AIE2PSInstrInfo::getMvSclMultiSlotPseudoOpcode() const {
   return AIE2PS::MOVX_mvx_cr_imm;
 }
 
+SmallVector<unsigned, 2>
+AIE2PSInstrInfo::getMovesImmToCtrlReg(MCRegister CtrlReg) const {
+  // MOVX leaves the M slot free, but has a 5-bit immediate. The 8-bit immediate
+  // of MOV is as wide as the widest control register; MOV does not write the
+  // sign registers.
+  if (AIE2PS::mSCmRegClass.contains(CtrlReg))
+    return {AIE2PS::MOVX_mvx_cr_imm, AIE2PS::MOV_alu_mv_mv_mv_sc_cg};
+  return {AIE2PS::MOVX_mvx_cr_imm};
+}
+
+std::optional<int64_t> AIE2PSInstrInfo::getMoveImmOperand(unsigned Opcode,
+                                                          int64_t Imm) const {
+  switch (Opcode) {
+  case AIE2PS::MOVX_mvx_cr_imm:
+    // The operand holds the bits of the immediate, unsigned.
+    if (isInt<5>(Imm))
+      return Imm & 0x1f;
+    return std::nullopt;
+  case AIE2PS::MOV_alu_mv_mv_mv_sc_cg:
+    if (isInt<8>(Imm))
+      return Imm;
+    return std::nullopt;
+  default:
+    llvm_unreachable("Unexpected move of an immediate");
+  }
+}
+
 unsigned AIE2PSInstrInfo::getAddrIntrinsic2D() const {
   return Intrinsic::aie2ps_add_2d;
 }
