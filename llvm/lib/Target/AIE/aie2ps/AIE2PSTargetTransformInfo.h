@@ -29,6 +29,11 @@ class AIE2PSTTICommon : public AIETTICommon {
 public:
   bool isVectorExtractIntrinsicID(Intrinsic::ID ID) const override;
   bool isGetSSIntrinsicID(Intrinsic::ID ID) const override;
+  bool allowMultiBlockHardwareLoops() const override { return true; }
+  // Same as the outer loop pipeliner's aie-outer-loop-pointer-threshold.
+  std::optional<unsigned> getMultiBlockJNZDPointerPHILimit() const override {
+    return 6;
+  }
 };
 
 class AIE2PSTTIImpl : public AIEBaseTTIImpl<AIE2PSTTIImpl> {

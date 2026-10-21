@@ -363,6 +363,19 @@ bool AIETTICommon::isHardwareLoopProfitable(
                            "unavailable\n");
       return false;
     }
+    if (const std::optional<unsigned> Limit =
+            getMultiBlockJNZDPointerPHILimit()) {
+      const unsigned NumPointerPHIs =
+          count_if(L->getHeader()->phis(), [](const PHINode &PHI) {
+            return PHI.getType()->isPointerTy();
+          });
+      if (NumPointerPHIs >= *Limit) {
+        LLVM_DEBUG(dbgs() << "AIE Loops: Multi-block loop, " << NumPointerPHIs
+                          << " pointer PHIs leave no pointer register for "
+                             "JNZD\n");
+        return false;
+      }
+    }
   }
 
   if (!ForceHLGeneration) {
