@@ -15,6 +15,7 @@
 #ifndef LLVM_LIB_TARGET_AIE_AIEDATADEPENDENCEHELPER_H
 #define LLVM_LIB_TARGET_AIE_AIEDATADEPENDENCEHELPER_H
 
+#include "AIEBaseAliasAnalysis.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/MachineScheduler.h"
 #include "llvm/CodeGen/ScheduleDAGInstrs.h"
@@ -152,6 +153,7 @@ public:
   // of the loop body). Zero (default) disables the virtual-unroll alias check.
   void setPipeliningNInstr(unsigned N) { PipeliningNInstr = N; }
   void setSafeToIgnoreMemDeps(bool V) { SafeToIgnoreMemDeps = V; }
+
   void setAbandonSingleDefDeps(bool V) { AbandonSingleDefDeps = V; }
   void setRetainFixedPhysRegDeps(bool V) { RetainFixedPhysRegDeps = V; }
 
@@ -159,14 +161,14 @@ public:
   // going through TargetSchedModel.
   int computeLatency(const MachineInstr *MI) const;
 
-  // Build all dependency edges for Target.
+  // Build all dependency edges for Target. Uses *this for AIE context (AA from
+  // Context, scheduling model, and alias analysis flags).
   // The no-arg version calls buildEdges(*this).
-  void buildEdges(ScheduleDAGInstrs &Target, AAResults *AA = nullptr,
-                  bool TrackLaneMasks = false);
+  void buildEdges(ScheduleDAGInstrs &Target, bool TrackLaneMasks = false);
+  void buildEdges();
 
   DataDependenceHelper(const MachineSchedContext &Context, bool AddMutators,
                        bool ExactLatencies);
-  void buildEdges();
 
   // Compute the maximum depth of all nodes. The depth is the earliest cycle
   // in which an instruction can run when considering all latencies leading

@@ -328,7 +328,7 @@ InstrEvents DataDependenceHelper::collectEvents(SUnit *SU) {
 }
 
 void DataDependenceHelper::buildEdges() {
-  DataDependenceHelper::buildEdges(*this, Context.AA);
+  DataDependenceHelper::buildEdges(*this);
   for (auto &M : Mutations) {
     M->apply(this);
   }
@@ -338,7 +338,7 @@ void DataDependenceHelper::buildEdges() {
 static constexpr unsigned AIEHugeRegion = 500;
 static unsigned aieGetReductionSize() { return AIEHugeRegion / 2; }
 
-void DataDependenceHelper::buildEdges(ScheduleDAGInstrs &Target, AAResults *AA,
+void DataDependenceHelper::buildEdges(ScheduleDAGInstrs &Target,
                                       bool TrackLaneMasks) {
   // AIE-specific edge-building. Operates on Target using *this for context.
   // TrackLaneMasks is propagated to the member so the reg-dep helpers can use
@@ -351,13 +351,10 @@ void DataDependenceHelper::buildEdges(ScheduleDAGInstrs &Target, AAResults *AA,
   BB = Target.getBB();
   ExitSU.setInstr(Target.ExitSU.getInstr());
 
-  // Initialize AA for both DDH and Target. DDH's AAForDep is used by
-  // DDH's own mayAlias(). Target's AAForDep is used by addChainDependencies()
-  // which dispatches through Target's mayAlias() override.
-  AAResults *EffectiveAA = AA ? AA : Context.AA;
-  if (EffectiveAA)
-    AAForDep.emplace(*EffectiveAA);
-  Target.initAAForDep(EffectiveAA);
+  // Initialize DDH's alias analysis. DDH's own addChainDependencies() uses
+  // DDH's mayAlias() which in turn uses this AAForDep.
+  if (auto *A = Context.AA)
+    AAForDep.emplace(*A);
   BarrierChain = nullptr;
 
   ScheduleDAGInstrs::Value2SUsMap Stores, Loads(1 /*TrueMemOrderLatency*/);
@@ -434,42 +431,39 @@ void DataDependenceHelper::buildEdges(ScheduleDAGInstrs &Target, AAResults *AA,
 
     if (MI.mayStore()) {
       if (!ObjsFound) {
-        Target.addChainDependenciesPublic(SU, Stores);
-        Target.addChainDependenciesPublic(SU, NonAliasStores);
-        Target.addChainDependenciesPublic(SU, Loads);
-        Target.addChainDependenciesPublic(SU, NonAliasLoads);
+        addChainDependencies(SU, Stores);
+        addChainDependencies(SU, NonAliasStores);
+        addChainDependencies(SU, Loads);
+        addChainDependencies(SU, NonAliasLoads);
         Stores.insert(SU, UnknownValue);
       } else {
         for (const UnderlyingObject &UnderlObj : Objs) {
           const ValueType V = UnderlObj.getValue();
           const bool ThisMayAlias = UnderlObj.mayAlias();
-          Target.addChainDependenciesPublic(
-              SU, ThisMayAlias ? Stores : NonAliasStores, V);
-          Target.addChainDependenciesPublic(
-              SU, ThisMayAlias ? Loads : NonAliasLoads, V);
+          addChainDependencies(SU, ThisMayAlias ? Stores : NonAliasStores, V);
+          addChainDependencies(SU, ThisMayAlias ? Loads : NonAliasLoads, V);
         }
         for (const UnderlyingObject &UnderlObj : Objs) {
           const ValueType V = UnderlObj.getValue();
           const bool ThisMayAlias = UnderlObj.mayAlias();
           (ThisMayAlias ? Stores : NonAliasStores).insert(SU, V);
         }
-        Target.addChainDependenciesPublic(SU, Loads, UnknownValue);
-        Target.addChainDependenciesPublic(SU, Stores, UnknownValue);
+        addChainDependencies(SU, Loads, UnknownValue);
+        addChainDependencies(SU, Stores, UnknownValue);
       }
     } else {
       if (!ObjsFound) {
-        Target.addChainDependenciesPublic(SU, Stores);
-        Target.addChainDependenciesPublic(SU, NonAliasStores);
+        addChainDependencies(SU, Stores);
+        addChainDependencies(SU, NonAliasStores);
         Loads.insert(SU, UnknownValue);
       } else {
         for (const UnderlyingObject &UnderlObj : Objs) {
           const ValueType V = UnderlObj.getValue();
           const bool ThisMayAlias = UnderlObj.mayAlias();
-          Target.addChainDependenciesPublic(
-              SU, ThisMayAlias ? Stores : NonAliasStores, V);
+          addChainDependencies(SU, ThisMayAlias ? Stores : NonAliasStores, V);
           (ThisMayAlias ? Loads : NonAliasLoads).insert(SU, V);
         }
-        Target.addChainDependenciesPublic(SU, Stores, UnknownValue);
+        addChainDependencies(SU, Stores, UnknownValue);
       }
     }
 
@@ -503,8 +497,22 @@ void DataDependenceHelper::buildEdges(ScheduleDAGInstrs &Target, AAResults *AA,
 }
 
 bool DataDependenceHelper::mayAlias(SUnit *SUa, SUnit *SUb, bool TBAA) {
-  if (!MemDeps) {
+  if (!MemDeps)
     return false;
+  // All memory accesses in the region are proved non-aliasing; skip chain deps.
+  if (SafeToIgnoreMemDeps)
+    return false;
+  // When building a pipelined schedule, the DAG contains two copies of the
+  // loop body. Instructions with NodeNum >= PipeliningNInstr belong to the
+  // second copy (the "next iteration"). aliasAcrossVirtualUnrolls() uses the
+  // per-copy iteration index to determine whether two accesses across copies
+  // can provably not alias.
+  if (PipeliningNInstr > 0) {
+    const unsigned IterA = SUa->NodeNum / PipeliningNInstr;
+    const unsigned IterB = SUb->NodeNum / PipeliningNInstr;
+    if (aliasAcrossVirtualUnrolls(SUa->getInstr(), SUb->getInstr(), IterA,
+                                  IterB) == AliasResult::NoAlias)
+      return false;
   }
   return ScheduleDAGInstrs::mayAlias(SUa, SUb, TBAA);
 }

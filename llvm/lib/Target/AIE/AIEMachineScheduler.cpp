@@ -1910,7 +1910,7 @@ void llvm::AIEPreRASchedStrategy::buildGraph(ScheduleDAGMI &DAG, AAResults *AA,
   // latencies; they track register pressure as a side effect of the backward
   // pass and are handled separately below.
   DataDependenceHelper DDH(*Context, false, false);
-  DDH.buildEdges(DAG, AA, TrackLaneMasks);
+  DDH.buildEdges(DAG, TrackLaneMasks);
 
   // Register pressure tracking: a pure side-effect pass over the same
   // backward order, independent of the dependency graph.
@@ -1984,7 +1984,14 @@ void llvm::AIEPostRASchedStrategy::buildGraph(ScheduleDAGMI &DAG, AAResults *AA,
   // generic ScheduleDAGInstrs::buildEdges to route through the AIE latency
   // computation logic.
   DataDependenceHelper DDH(*Context, false, false);
-  DDH.buildEdges(DAG, Context->AA, /*TrackLaneMasks=*/true);
+  // Propagate region-level alias analysis flags to DDH so that mayAlias()
+  // makes the same decisions as AIEScheduleDAGMI::mayAlias() would.
+  DDH.setSafeToIgnoreMemDeps(BS.isSafeToIgnoreMemDeps());
+  // When pipelining, the DAG contains two copies of the loop body. Inform DDH
+  // so that its mayAlias() can apply the virtual-unroll alias check.
+  if (BS.FixPoint.Stage == SchedulingStage::Pipelining)
+    DDH.setPipeliningNInstr(Region.getFreeInstructions().size());
+  DDH.buildEdges(DAG, /*TrackLaneMasks=*/true);
   static_cast<AIEScheduleDAGMI &>(DAG).recordDbgInstrs(Region);
 
   // Apply reserved register dependency simplification when enabled and in

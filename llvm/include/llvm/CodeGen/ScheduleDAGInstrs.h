@@ -527,21 +527,6 @@ namespace llvm {
     bool getRemoveKillFlags() const { return RemoveKillFlags; }
     void initSUnitsPublic() { initSUnits(); }
     void markTopoDirty() { Topo.MarkDirty(); }
-    // Initialize alias analysis for chain-dependency checking. Must be called
-    // on the Target DAG so that Target's mayAlias() uses the right AA results.
-    void initAAForDep(AAResults *AA) {
-      if (AA)
-        AAForDep.emplace(*AA);
-    }
-    // Chain-dependency wrappers: these must be called on the Target DAG so
-    // that Target's mayAlias() override (e.g. virtual-unroll alias checks)
-    // is used when determining which chain edges to emit.
-    void addChainDependenciesPublic(SUnit *SU, Value2SUsMap &M) {
-      addChainDependencies(SU, M);
-    }
-    void addChainDependenciesPublic(SUnit *SU, Value2SUsMap &M, ValueType V) {
-      addChainDependencies(SU, M, V);
-    }
   };
 
   /// Returns an existing SUnit for this MI, or nullptr.
