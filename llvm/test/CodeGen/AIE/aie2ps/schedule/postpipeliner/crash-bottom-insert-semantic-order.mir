@@ -7,7 +7,7 @@
 # RUN: llc -mtriple=aie2ps -O2 --start-before=postmisched %s -o /dev/null
 
 # This test reproduces a crash triggered by
-# InterBlockScheduling::buildGraph accessing BottomInsertSemanticOrder
+# InterBlockScheduling::buildGraph accessing BottomInsert.SemanticOrder
 # instructions that are not yet embedded in a MachineBasicBlock.
 #
 # The crash occurs via the call chain:
@@ -15,7 +15,7 @@
 #     -> makeDedicatedLoopExit(bb.2, bb.3)   [bb.3.pred_size == 2]
 #       -> buildPerSuccEdges(DedicatedExit)
 #         -> buildGraph(DedicatedExit -> bb.3)
-#           -> DAG.addNode(MI) for each MI in bb.3.BottomInsertSemanticOrder
+#           -> DAG.addNode(MI) for each MI in bb.3.BottomInsert.SemanticOrder
 #             -> DAG.buildEdges()
 #               -> isDereferenceableInvariantLoad()
 #                 -> getParent()->getParent()  NULL DEREFERENCE
@@ -24,7 +24,7 @@
 #   - The epilogue of Loop A (bb.2), causing makeDedicatedLoopExit to
 #     rebuild edges touching bb.3 before emitInterBlockBottom(bb.3) runs.
 #   - The dedicated fallthrough preheader of Loop B (bb.4), so after
-#     Loop B is pipelined, bb.3.BottomInsertSemanticOrder holds Loop B
+#     Loop B is pipelined, bb.3.BottomInsert.SemanticOrder holds Loop B
 #     prologue clones that were created by CloneMachineInstr but have
 #     not yet been inserted into any MachineBasicBlock.
 #
@@ -47,7 +47,7 @@
 #
 # bb.3 has pred_size == 2 (bb.0 and bb.2), causing makeDedicatedLoopExit
 # to split the bb.2->bb.3 edge. When buildPerSuccEdges rebuilds edges for
-# the new DedicatedExit->bb.3, it finds bb.3.BottomInsertSemanticOrder
+# the new DedicatedExit->bb.3, it finds bb.3.BottomInsert.SemanticOrder
 # populated with Loop B prologue clones that lack a parent MBB.
 
 --- |
@@ -128,7 +128,7 @@ body:             |
 
   ; bb.2 is Loop A: a single-block ZOL with a VLDA and a VST.
   ; After scheduling, the PostPipeliner pipelines it, creating prologue
-  ; clones stored in bb.1.BottomInsertSemanticOrder.
+  ; clones stored in bb.1.BottomInsert.SemanticOrder.
   bb.2.loop_a:
     successors: %bb.2(0x7c000000), %bb.3(0x04000000)
     liveins: $p0, $p1
@@ -142,7 +142,7 @@ body:             |
   ;       as BlockType::Epilogue because bb.2 is a Loop predecessor.
   ;   (b) The dedicated fallthrough preheader of Loop B (bb.4):
   ;       succ_size==1, no terminator, layout-adjacent to bb.4.
-  ; After Loop B (bb.4) is pipelined, bb.3.BottomInsertSemanticOrder
+  ; After Loop B (bb.4) is pipelined, bb.3.BottomInsert.SemanticOrder
   ; holds Loop B prologue clones created by CloneMachineInstr but not
   ; yet inserted into any MachineBasicBlock.
   bb.3.between_loops:
