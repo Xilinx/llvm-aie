@@ -4,7 +4,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 
 # RUN: llc -mtriple aie2 -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s
 
@@ -192,4 +192,43 @@ body: |
     %102:gprregbank(s32) = COPY $r2
     %103:vregbank(<32 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.unpack.I16.I8), %25:vregbank(<32 x s8>), %102:gprregbank(s32)
     PseudoRET implicit $lr, implicit %103
+...
+
+# A store between the load and the unpack: the unpack moves up to the load,
+# after the definition of the addressing registers that the fused instruction
+# uses.
+---
+name:            VLDB_UNPACK_I512_I16_I8_store_between
+legalized:       true
+regBankSelected: true
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $p0, $p1, $wl0
+    ; CHECK-LABEL: name: VLDB_UNPACK_I512_I16_I8_store_between
+    ; CHECK: liveins: $p0, $p1, $wl0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: %q:ep = COPY $p1
+    ; CHECK-NEXT: %x:vec256 = COPY $wl0
+    ; CHECK-NEXT: [[MOV_PD_imm10_pseudo:%[0-9]+]]:em = MOV_PD_imm10_pseudo 1
+    ; CHECK-NEXT: [[MOV_PD_imm10_pseudo1:%[0-9]+]]:edj = MOV_PD_imm10_pseudo 2
+    ; CHECK-NEXT: [[MOV_PD_imm10_pseudo2:%[0-9]+]]:edn = MOV_PD_imm10_pseudo 3
+    ; CHECK-NEXT: [[MOV_PD_imm10_pseudo3:%[0-9]+]]:edc = MOV_PD_imm10_pseudo 4
+    ; CHECK-NEXT: [[VLDB_2D_UNPACK_S16_S8_:%[0-9]+]]:vec512, [[VLDB_2D_UNPACK_S16_S8_1:%[0-9]+]]:ep, [[VLDB_2D_UNPACK_S16_S8_2:%[0-9]+]]:edc = VLDB_2D_UNPACK_S16_S8 [[COPY]], %12 :: (load (<32 x s8>))
+    ; CHECK-NEXT: VST_dmw_sts_w_ag_idx_imm %x, %q, 0 :: (store (<16 x s16>))
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:ed = REG_SEQUENCE [[MOV_PD_imm10_pseudo]], %subreg.sub_mod, [[MOV_PD_imm10_pseudo2]], %subreg.sub_dim_size, [[MOV_PD_imm10_pseudo1]], %subreg.sub_dim_stride, [[MOV_PD_imm10_pseudo3]], %subreg.sub_dim_count
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDB_2D_UNPACK_S16_S8_]], implicit [[VLDB_2D_UNPACK_S16_S8_1]], implicit [[VLDB_2D_UNPACK_S16_S8_2]]
+    %0:ptrregbank(p0) = COPY $p0
+    %q:ptrregbank(p0) = COPY $p1
+    %x:vregbank(<16 x s16>) = COPY $wl0
+    %1:em(s20) = G_CONSTANT i20 1
+    %2:edj(s20) = G_CONSTANT i20 2
+    %3:edn(s20) = G_CONSTANT i20 3
+    %4:edc(s20) = G_CONSTANT i20 4
+    %102:gprregbank(s32) = G_CONSTANT i32 1
+    %25:vregbank(<32 x s8>), %5:ptrregbank(p0), %6:modregbank(s20) = G_AIE_POSTINC_2D_LOAD %0, %1, %2, %3, %4 :: (load (<32 x s8>))
+    G_STORE %x, %q :: (store (<16 x s16>))
+    %103:vregbank(<32 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.unpack.I16.I8), %25:vregbank(<32 x s8>), %102:gprregbank(s32)
+    PseudoRET implicit $lr, implicit %103, implicit %5, implicit %6
 ...
