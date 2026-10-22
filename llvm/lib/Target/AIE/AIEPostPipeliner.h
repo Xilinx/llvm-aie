@@ -204,6 +204,15 @@ public:
   virtual int mobility(const SUnit &N) { return latest(N) - earliest(N); }
   // Select from top or from bottom.
   virtual bool fromTop() { return true; }
+  // Scan direction for this particular node. Defaults to the strategy-wide
+  // fromTop(). Early-consumer strategies override this to place producers
+  // ALAP toward already-placed data consumers, or ASAP after placed preds.
+  virtual bool fromTop(const SUnit &SU) { return fromTop(); }
+  // When true, keep normal predecessor readiness and also treat a node as
+  // ready when it has an in-iteration data predecessor and all in-iteration
+  // data successors are placed. That lets data consumers start before their
+  // producers. The default is false (predecessor- or successor-only readiness).
+  virtual bool earlyConsumers() { return false; }
   // Report a fully committed node. Called after scheduleNode() and
   // commitCycle(), so Info[N.NodeNum].Scheduled is true and
   // Info[N.NodeNum].Cycle holds the assigned cycle.
@@ -212,7 +221,7 @@ public:
 
   // Decide a cycle in [Earliest, Latest] to insert MI, based on resource
   // hazards. Returns the chosen cycle on success, or an empty optional if none
-  // fits. The default implementation uses fromTop() to determine scan
+  // fits. The default implementation uses fromTop(SU) to determine scan
   // direction.
   virtual std::optional<int>
   fitInInterval(const SUnit &SU, int Earliest, int Latest, int II,

@@ -74,25 +74,31 @@ static cl::opt<int>
 
 PipelineScheduleVisitor::~PipelineScheduleVisitor() {}
 
-std::optional<int> PostPipelinerStrategy::fitInInterval(
-    const SUnit &SU, int First, int Last, int II, const AIEHazardRecognizer &HR,
-    ResourceScoreboard<FuncUnitWrapper> &Scoreboard) {
+// Scan [First, Last] for a resource-free cycle. FromTop chooses ASAP (+1)
+// vs ALAP (-1).
+static std::optional<int>
+scanInterval(const SUnit &SU, int First, int Last, int II,
+             const AIEHazardRecognizer &HR,
+             ResourceScoreboard<FuncUnitWrapper> &Scoreboard, bool FromTop) {
   MachineInstr &MI = *SU.getInstr();
   assert(First <= Last);
-  const int Step = fromTop() ? 1 : -1;
-  if (Step < 0) {
+  const int Step = FromTop ? 1 : -1;
+  if (Step < 0)
     std::swap(First, Last);
-  }
 
   const int Limit = Last + Step;
   for (int C = First; C != Limit; C += Step) {
     const int Mod = C % II;
-    if (!HR.checkConflict(Scoreboard, MI, Mod)) {
+    if (!HR.checkConflict(Scoreboard, MI, Mod))
       return C;
-    }
   }
-
   return std::nullopt;
+}
+
+std::optional<int> PostPipelinerStrategy::fitInInterval(
+    const SUnit &SU, int First, int Last, int II, const AIEHazardRecognizer &HR,
+    ResourceScoreboard<FuncUnitWrapper> &Scoreboard) {
+  return scanInterval(SU, First, Last, II, HR, Scoreboard, fromTop(SU));
 }
 
 class PostPipelineDumper : public PipelineScheduleVisitor {
@@ -898,13 +904,37 @@ int PostPipeliner::mostUrgent(PostPipelinerStrategy &Strategy) {
     return N < NInstr && !Info[N].Scheduled;
   };
 
+  // Data-only "not scheduled"
+  auto DataNotScheduled = [&](const SDep &Dep) {
+    return Dep.getKind() == SDep::Data && NotScheduled(Dep);
+  };
+
+  auto HasInIterDataPred = [this](const SUnit &SU) {
+    return any_of(SU.Preds, [this](const SDep &Dep) {
+      if (Dep.getKind() != SDep::Data)
+        return false;
+      const SUnit *P = Dep.getSUnit();
+      return !P->isBoundaryNode() && (int)P->NodeNum < NInstr;
+    });
+  };
+
   int Best = -1;
   LLVM_DEBUG(dbgs() << "Available:");
   for (int K = FirstUnscheduled; K <= LastUnscheduled; K++) {
     const auto &SU = DAG->SUnits[K];
-    auto &Edges = Strategy.fromTop() ? SU.Preds : SU.Succs;
-    // Check whether it is available
-    if (Info[K].Scheduled || any_of(Edges, NotScheduled)) {
+    if (Info[K].Scheduled)
+      continue;
+    bool Available = false;
+    if (Strategy.earlyConsumers()) {
+      const bool PredReady = none_of(SU.Preds, NotScheduled);
+      const bool SuccReady =
+          HasInIterDataPred(SU) && none_of(SU.Succs, DataNotScheduled);
+      Available = PredReady || SuccReady;
+    } else {
+      auto &Edges = Strategy.fromTop() ? SU.Preds : SU.Succs;
+      Available = none_of(Edges, NotScheduled);
+    }
+    if (!Available) {
       continue;
     }
     LLVM_DEBUG(dbgs() << " SU" << K);
@@ -1209,6 +1239,18 @@ int getMinOutputLat(ArrayRef<SDep> Edges) {
   }
   return Min;
 }
+
+unsigned numInIterDataSuccs(const SUnit &SU, int NInstr) {
+  unsigned N = 0;
+  for (const SDep &Dep : SU.Succs) {
+    if (Dep.getKind() != SDep::Data)
+      continue;
+    const SUnit *S = Dep.getSUnit();
+    if (!S->isBoundaryNode() && (int)S->NodeNum < NInstr)
+      ++N;
+  }
+  return N;
+}
 } // namespace
 
 class DefaultStrategy : public PostPipelinerStrategy {
@@ -1308,6 +1350,7 @@ public:
 class ConfigStrategy : public PostPipelinerStrategy {
   bool TopDown = true;
   bool Alternate = false;
+  bool EarlyConsumers = false;
 
 public:
   enum PriorityComponent {
@@ -1319,6 +1362,8 @@ public:
     DepLength, // Schedule "as deep as possible" first
     Liveness,  // Minimise liveness by looking at output deps
     EffHeight, // Prefer nodes with more critical path below them
+    Height,    // Prefer sinks (fewer in-iter Data succs)
+    Anchored,  // Prefer Data preds of already-placed nodes
     Size
   };
 
@@ -1357,6 +1402,10 @@ public:
       return "Liveness";
     case PriorityComponent::EffHeight:
       return "EffHeight";
+    case PriorityComponent::Height:
+      return "Height";
+    case PriorityComponent::Anchored:
+      return "Anchored";
     default:
       break;
     }
@@ -1366,6 +1415,7 @@ public:
     int ExtraStages = 0;
     bool TopDown = true;
     bool Alternate = false;
+    bool EarlyConsumers = false;
     int Runs = 0;
     SmallVector<PriorityComponent, 4> Components;
     SmallVector<PlacementModifier, 2> Modifiers;
@@ -1376,6 +1426,8 @@ private:
   SmallVector<PlacementModifier, 2> Modifiers;
   std::set<int> SuccSiblingScheduled;
   std::set<int> PredSiblingScheduled;
+  // Data preds of already-placed nodes (early-consumer producer pull).
+  std::set<int> AnchoredPreds;
   std::function<bool(const SUnit &A, const SUnit &B)>
       Discriminators[PriorityComponent::Size] = {
           [&](const SUnit &A, const SUnit &B) {
@@ -1417,16 +1469,64 @@ private:
             const auto &IB = Info[B.NodeNum];
             return IA.EffectiveHeight > IB.EffectiveHeight;
           },
+          [&](const SUnit &A, const SUnit &B) {
+            // Prefer in-iteration data sinks so placement anchors at
+            // consumers.
+            return numInIterDataSuccs(A, Info.NInstr) <
+                   numInIterDataSuccs(B, Info.NInstr);
+          },
+          [&](const SUnit &A, const SUnit &B) {
+            // Prefer Data predecessors of already-placed nodes so operand
+            // producers are scheduled before unrelated anti-dep chains.
+            return AnchoredPreds.count(A.NodeNum) >
+                   AnchoredPreds.count(B.NodeNum);
+          },
       };
   std::vector<PriorityComponent> Priority;
 
+  // True if Edges contains a placed in-iteration data neighbour.
+  bool hasPlacedInIterDataNeighbour(ArrayRef<SDep> Edges) const {
+    for (const SDep &Dep : Edges) {
+      if (Dep.getKind() != SDep::Data)
+        continue;
+      const SUnit *Neigh = Dep.getSUnit();
+      if (Neigh->isBoundaryNode())
+        continue;
+      const int N = Neigh->NodeNum;
+      if (N < Info.NInstr && Info[N].Scheduled)
+        return true;
+    }
+    return false;
+  }
+
   bool fromTop() override { return TopDown; }
+
+  bool earlyConsumers() override { return EarlyConsumers; }
+
+  bool fromTop(const SUnit &SU) override {
+    if (!EarlyConsumers)
+      return fromTop();
+    // Prefer ALAP toward an already-placed data consumer even when a
+    // predecessor is also placed, so producers sink next to consumers
+    // instead of ASAP after an earlier producer.
+    if (hasPlacedInIterDataNeighbour(SU.Succs))
+      return false;
+    if (hasPlacedInIterDataNeighbour(SU.Preds))
+      return true;
+    // Anchors (no placed neighbours) use an explicit midpoint scan in
+    // fitInInterval; this is only a fallback for the neighbour-anchored path.
+    return TopDown;
+  }
 
   bool better(const SUnit &A, const SUnit &B) override {
     for (auto P : Priority) {
-      if (Discriminators[P](A, B)) {
+      if (Discriminators[P](A, B))
         return true;
-      }
+      // Early-consumer needs true lexicographic order so earlier components
+      // (e.g. Anchored) dominate later ones. The other strategies keep the
+      // historical first-true-wins behaviour.
+      if (EarlyConsumers && Discriminators[P](B, A))
+        return false;
     }
     return false;
   }
@@ -1462,6 +1562,8 @@ private:
         }
         PredSiblingScheduled.insert(PDep.getSUnit()->NodeNum);
       }
+      // Pull in Data predecessors of the placed node.
+      AnchoredPreds.insert(PDep.getSUnit()->NodeNum);
     }
     if (Alternate) {
       TopDown = !TopDown;
@@ -1470,12 +1572,21 @@ private:
 
 public:
   std::string name() override { return Name; }
+
+  // Also drop producer-pull state so the next attempt does not rank its
+  // first node with anchors from the previous schedule.
+  bool checkAndResetChanged() {
+    AnchoredPreds.clear();
+    return PostPipelinerStrategy::checkAndResetChanged();
+  }
+
   ConfigStrategy(ScheduleDAGInstrs &DAG, ScheduleInfo &Info, int Length,
-                 bool TopDown, bool Alternate,
+                 bool TopDown, bool Alternate, bool EarlyConsumers,
                  ArrayRef<PriorityComponent> Components,
                  ArrayRef<PlacementModifier> Modifiers = {})
       : PostPipelinerStrategy(DAG, Info, Length), TopDown(TopDown),
-        Alternate(Alternate), Modifiers(Modifiers.begin(), Modifiers.end()) {
+        Alternate(Alternate), EarlyConsumers(EarlyConsumers),
+        Modifiers(Modifiers.begin(), Modifiers.end()) {
     Name = "Config_" + std::to_string(Length) + "_" + std::to_string(TopDown) +
            "_" + std::to_string(Alternate);
     for (auto Comp : Components) {
@@ -1484,17 +1595,20 @@ public:
     }
     for (auto Mod : this->Modifiers)
       Name += "_" + getPlacementName(Mod);
+    if (EarlyConsumers)
+      Name += "_EarlyConsumers";
   }
 
   // Apply placement modifiers to adjust the cycle chosen for SU.
   // DeferNonCritical nudges non-critical (EffH=0) nodes one cycle later.
+  // It assumes a top-down (ASAP) scan, so it is skipped for ALAP nodes.
   std::optional<int>
   fitInInterval(const SUnit &SU, int Earliest, int Latest, int II,
                 const AIEHazardRecognizer &HR,
                 ResourceScoreboard<FuncUnitWrapper> &Scoreboard) override {
     const bool ShouldDeferOne =
         llvm::is_contained(Modifiers, DeferNonCritical) &&
-        Info[SU.NodeNum].EffectiveHeight == 0;
+        Info[SU.NodeNum].EffectiveHeight == 0 && fromTop(SU);
     if (ShouldDeferOne && Earliest + 1 <= Latest) {
       // Try the deferred range [Earliest+1, Latest] first. If no
       // resource-free cycle exists there, fall back to the original
@@ -1505,6 +1619,25 @@ public:
         return Result;
       return PostPipelinerStrategy::fitInInterval(SU, Earliest, Earliest, II,
                                                   HR, Scoreboard);
+    }
+    if (EarlyConsumers) {
+      const bool HasPlacedSucc = hasPlacedInIterDataNeighbour(SU.Succs);
+      const bool HasPlacedPred = hasPlacedInIterDataNeighbour(SU.Preds);
+      // Anchors (no placed neighbours): start at the window midpoint so
+      // ASAP does not crush producers and ALAP does not crush anti-deps
+      // into later groups. The two halves are complementary.
+      if (!HasPlacedSucc && !HasPlacedPred && Earliest < Latest) {
+        const int Mid = Earliest + (Latest - Earliest) / 2;
+        // ASAP in the upper half, then ALAP in the lower half.
+        auto Result =
+            scanInterval(SU, Mid, Latest, II, HR, Scoreboard, /*FromTop=*/true);
+        if (!Result && Mid > Earliest)
+          Result = scanInterval(SU, Earliest, Mid - 1, II, HR, Scoreboard,
+                                /*FromTop=*/false);
+        return Result;
+      }
+      // Neighbour-anchored: fromTop(SU) picks one preferred-direction scan
+      // of the full window (fall through below).
     }
     return PostPipelinerStrategy::fitInInterval(SU, Earliest, Latest, II, HR,
                                                 Scoreboard);
@@ -1517,23 +1650,31 @@ static const ConfigStrategy::Configuration Heuristics[] = {
     // Loosely speaking, a lower value of the first parameter targets
     // a lower stage count, which benefits code size.
     // Runs>1 is only useful for heuristics that use it, e.g. Critical
-    // {ExtraStages, TopDown, Alternate, Runs, PriorityComponents, Modifiers}
-    {1, true, false, 1, {Prio::NodeNum}, {}},
+    // {ExtraStages, TopDown, Alternate, EarlyConsumers, Runs,
+    //  PriorityComponents, Modifiers}
+    {1, true, false, false, 1, {Prio::NodeNum}, {}},
     // Tight schedule window: ExtraStages=0 keeps NS low, which is needed
     // when MinTripCount barely exceeds RecMII.
-    {0, true, false, HeuristicRuns, {Prio::NodeNum}, {}},
-    {1, true, false, HeuristicRuns, {Prio::Latest}, {}},
-    {1, true, false, HeuristicRuns, {Prio::Critical}, {}},
-    {1, true, false, HeuristicRuns, {Prio::Latest, Prio::Sibling}, {}},
-    {1, true, false, HeuristicRuns, {Prio::DepLength, Prio::Latest}, {}},
-    {1, true, false, HeuristicRuns, {Prio::Critical, Prio::LCDLatest}, {}},
-    {1, true, false, HeuristicRuns, {Prio::Liveness, Prio::Latest}, {}},
-    {1, true, false, HeuristicRuns, {Prio::Latest, Prio::Liveness}, {}},
+    {0, true, false, false, HeuristicRuns, {Prio::NodeNum}, {}},
+    {1, true, false, false, HeuristicRuns, {Prio::Latest}, {}},
+    {1, true, false, false, HeuristicRuns, {Prio::Critical}, {}},
+    {1, true, false, false, HeuristicRuns, {Prio::Latest, Prio::Sibling}, {}},
+    {1, true, false, false, HeuristicRuns, {Prio::DepLength, Prio::Latest}, {}},
+    {1,
+     true,
+     false,
+     false,
+     HeuristicRuns,
+     {Prio::Critical, Prio::LCDLatest},
+     {}},
+    {1, true, false, false, HeuristicRuns, {Prio::Liveness, Prio::Latest}, {}},
+    {1, true, false, false, HeuristicRuns, {Prio::Latest, Prio::Liveness}, {}},
     // EffectiveHeight: prefer nodes with more critical path below them.
     // DeferNonCritical defers non-critical nodes (EH=0) to leave early
     // modulo cycles free for the critical path.
     {1,
      true,
+     false,
      false,
      HeuristicRuns,
      {Prio::EffHeight, Prio::Latest},
@@ -1541,15 +1682,37 @@ static const ConfigStrategy::Configuration Heuristics[] = {
     {1,
      true,
      false,
+     false,
      HeuristicRuns,
      {Prio::EffHeight, Prio::Critical},
      {Plc::DeferNonCritical}},
-    {1, true, false, HeuristicRuns, {Prio::EffHeight, Prio::Latest}, {}},
-    {1, true, false, HeuristicRuns, {Prio::EffHeight, Prio::Critical}, {}},
+    {1, true, false, false, HeuristicRuns, {Prio::EffHeight, Prio::Latest}, {}},
+    {1,
+     true,
+     false,
+     false,
+     HeuristicRuns,
+     {Prio::EffHeight, Prio::Critical},
+     {}},
     // Bottom-up strategies
-    {0, false, false, 2, {Prio::Critical, Prio::LCDLatest}, {}},
-    {1, false, false, 2, {Prio::Critical, Prio::LCDLatest}, {}},
-    {1, false, false, 1, {Prio::NodeNum}, {}}, // pure bottom up
+    {0, false, false, false, 2, {Prio::Critical, Prio::LCDLatest}, {}},
+    {1, false, false, false, 2, {Prio::Critical, Prio::LCDLatest}, {}},
+    {1, false, false, false, 1, {Prio::NodeNum}, {}}, // pure bottom up
+    // Early consumers: place sinks first, then pull producers ALAP toward them.
+    {0,
+     true,
+     false,
+     true,
+     HeuristicRuns,
+     {Prio::Anchored, Prio::Height, Prio::Latest, Prio::NodeNum},
+     {}},
+    {1,
+     true,
+     false,
+     true,
+     HeuristicRuns,
+     {Prio::Anchored, Prio::Height, Prio::Latest, Prio::NodeNum},
+     {}},
 };
 
 /// Spreads independent instructions apart by deferring one instruction per
@@ -1653,7 +1816,8 @@ bool PostPipeliner::tryApproaches() {
     }
     const int StrategyLength = MinLength + Config.ExtraStages * II;
     ConfigStrategy S(*DAG, Info, StrategyLength, Config.TopDown,
-                     Config.Alternate, Config.Components, Config.Modifiers);
+                     Config.Alternate, Config.EarlyConsumers, Config.Components,
+                     Config.Modifiers);
     if (!S.isEnabled()) {
       continue;
     }
@@ -1780,10 +1944,8 @@ bool PostPipeliner::applySolver(const SolverData &Data, SWPSolver &Solver,
   // order to save solver time. We extract the cycles, and make a final check
   // for all constraints using a dedicated strategy.
   auto Schedule = Solver.getSUCycles();
-  DEBUG_SUMMARY(dbgs() << "Solver found "; for (auto C
-                                                : Schedule) dbgs()
-                                           << C << ", ";
-                dbgs() << "\n";);
+  DEBUG_SUMMARY(dbgs() << "Solver found ";
+                for (auto C : Schedule) dbgs() << C << ", "; dbgs() << "\n";);
   CheckFixedSchedule S{*DAG, Info, II * NS, Schedule, "Solver"};
   resetSchedule(/*FullReset=*/true);
   DEBUG_SUMMARY(dbgs() << "--- Strategy " << S.name() << "\n");
