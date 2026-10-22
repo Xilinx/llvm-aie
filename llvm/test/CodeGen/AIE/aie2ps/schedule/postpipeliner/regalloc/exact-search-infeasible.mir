@@ -1,0 +1,79 @@
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+
+# Both compare results are used, so each keeps the bypass write on r16, the
+# only register in that class. A bypass write occupies r16 one cycle before
+# the register-file write. With one scheduling heuristic and two II attempts
+# those ranges overlap. Forced-choice propagation detects that one range has
+# no legal register before the search tries a node.
+# REQUIRES: asserts
+
+# RUN: llc -verify-machineinstrs --mtriple=aie2ps -O2 \
+# RUN:   --start-before=postmisched %s \
+# RUN:   --aie-postpipeliner-vreg-mode=1 \
+# RUN:   --aie-postpipeliner-phys-mode=0 \
+# RUN:   --aie-postpipeliner-heuristic=0 \
+# RUN:   --aie-postpipeliner-maxtry-ii=2 \
+# RUN:   --aie-postregalloc-exact-budget=1000 \
+# RUN:   --debug-only=aie-postregalloc \
+# RUN:   -o /dev/null 2>&1 \
+# RUN:   | FileCheck %s
+
+# CHECK: Exact: infeasible, forced-choice propagation failed
+# CHECK-NOT: Exact: feasible
+
+--- |
+  target triple = "aie2ps"
+
+  define void @exact_search_infeasible(ptr addrspace(6) noalias %data, i32 %n) {
+  preheader:
+    call void @llvm.set.loop.iterations.i32(i32 %n)
+    br label %loop_body
+
+  loop_body:
+    %dec = call i1 @llvm.loop.decrement.i32(i32 1)
+    br i1 %dec, label %loop_body, label %exit, !llvm.loop !0
+
+  exit:
+    ret void
+  }
+
+  declare void @llvm.set.loop.iterations.i32(i32)
+  declare i1 @llvm.loop.decrement.i32(i32)
+
+  !0 = distinct !{!0, !1}
+  !1 = !{!"llvm.loop.itercount.range", i64 5}
+...
+---
+name:            exact_search_infeasible
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  bb.0.preheader:
+    successors: %bb.1
+    liveins: $p0, $r1, $x3, $x4
+
+    $lc = ADD_NC_add_lc_ri $r1, 0
+    MOVXM_lng_cg_ls_abs %bb.1, implicit-def $ls
+    MOVXM_lng_cg_le_abs <mcsymbol .L_LEnd0>, implicit-def $le
+
+  bb.1.loop_body (align 16):
+    successors: %bb.1, %bb.2
+    liveins: $p0, $x3, $x4
+
+    $x1, $p0 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign1 $p0, 32, implicit $crunpacksize, implicit $unpacksign1
+    dead $x5, $r16 = VMIN_GE_16_vaddSign1 $x1, $x3, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $r2 = ADD_add_r_ri $r16, 1, implicit-def dead $srcarry
+    dead $x6, $r16 = VMAX_LT_16_vaddSign1 $x1, $x4, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $r3 = ADD_add_r_ri $r16, 1, implicit-def dead $srcarry
+
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+
+  bb.2.exit (align 16):
+    RET implicit $lr
+    DelayedSchedBarrier
+
+...

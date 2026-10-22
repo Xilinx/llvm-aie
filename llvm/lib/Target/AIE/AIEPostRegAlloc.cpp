@@ -16,6 +16,7 @@
 #include "AIELivenessVector.h"
 #include "AIERegDefUseTracker.h"
 #include "llvm/CodeGen/TargetRegisterInfo.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
@@ -27,6 +28,11 @@
 
 using namespace llvm;
 using namespace llvm::AIE;
+
+static cl::opt<unsigned> PostRegAllocExactBudget(
+    "aie-postregalloc-exact-budget", cl::Hidden, cl::init(0),
+    cl::desc("Node budget for the exact post-regalloc search. "
+             "0 uses the heuristic strategies"));
 
 // Initialize allocation state and compute interference graphs.
 void AIEPostRegAlloc::AllocState::init(
@@ -453,6 +459,61 @@ AIEPostRegAlloc::AllocResult AIEPostRegAlloc::tryAllocate(
   return AllocResult();
 }
 
+AIEPostRegAlloc::ExactResult AIEPostRegAlloc::tryAllocateExact(
+    const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex,
+    const RegLiveRangeTracker &RegTracker, const TargetRegisterInfo &TRI,
+    AllocState &State, DenseMap<Register, MCRegister> &OutAssign) {
+
+  if (PostRegAllocExactBudget == 0)
+    return ExactResult::Unknown;
+
+  Placement Work(LiveLanesByLRIndex, RegTracker, State, OutAssign);
+
+  if (!Work.drainForcedChoices(TRI)) {
+    LLVM_DEBUG(
+        dbgs() << "Exact: infeasible, forced-choice propagation failed\n");
+    return ExactResult::Infeasible;
+  }
+
+  unsigned Nodes = 0;
+  // Feasible: assignment found. Infeasible: this branch failed.
+  // Unknown: node budget exhausted; stop searching.
+  std::function<ExactResult()> Search = [&]() -> ExactResult {
+    if (Nodes == PostRegAllocExactBudget)
+      return ExactResult::Unknown;
+    ++Nodes;
+
+    // Fewest remaining candidates. orderByScarceRegClass breaks ties.
+    const std::optional<Placement::Choice> Best =
+        Work.selectMinRemaining(orderByScarceRegClass);
+    if (!Best)
+      return ExactResult::Feasible;
+    if (Best->Cands.empty())
+      return ExactResult::Infeasible;
+
+    const auto Saved = State.CycleOccupancy;
+    for (Register PhysReg : Best->Cands) {
+      Work.place(*Best->LR, PhysReg);
+      ExactResult Sub = Search();
+      if (Sub == ExactResult::Feasible)
+        return Sub;
+      Work.unplace(*Best->LR, Saved);
+      if (Sub == ExactResult::Unknown)
+        return Sub;
+    }
+    return ExactResult::Infeasible;
+  };
+
+  ExactResult Outcome = Search();
+  const char *Name = Outcome == ExactResult::Feasible     ? "feasible"
+                     : Outcome == ExactResult::Infeasible ? "infeasible"
+                                                          : "unknown";
+  LLVM_DEBUG(dbgs() << "Exact: " << Name << " nodes=" << Nodes << "\n");
+  if (Outcome != ExactResult::Feasible)
+    OutAssign.clear();
+  return Outcome;
+}
+
 // Dump virtual register metrics for debugging.
 void AIEPostRegAlloc::dumpVRegMetrics(
     const DenseMap<unsigned, VRegMetrics> &AllMetrics,
@@ -572,6 +633,19 @@ PostRegAllocResult AIEPostRegAlloc::allocate(
 
   // Dump virtual register metrics when debug output is enabled.
   LLVM_DEBUG(dumpVRegMetrics(State.AllMetrics, RegTracker, TRI));
+
+  // A non-zero budget selects the exact search and skips the heuristics.
+  if (PostRegAllocExactBudget > 0) {
+    LLVM_DEBUG(dbgs() << "Trying exact search\n");
+    ExactResult ER = tryAllocateExact(LiveLanesByLRIndex, RegTracker, TRI,
+                                      State, Assignments);
+    if (ER == ExactResult::Feasible) {
+      LLVM_DEBUG(dbgs() << "Allocation succeeded with exact search\n");
+      return PostRegAllocResult("exact search", std::move(Assignments));
+    }
+    LLVM_DEBUG(dbgs() << "Exact search failed\n");
+    return PostRegAllocResult();
+  }
 
   // Define the allocation strategies to try.
   struct AllocationStrategy {

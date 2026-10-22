@@ -300,6 +300,21 @@ private:
               ComparatorFunction OrderFn,
               DenseMap<Register, MCRegister> &OutAssign);
 
+  /// Result of the exact backtracking search.
+  /// Feasible: a register assignment was found.
+  /// Infeasible: every branch was tried and none succeeded.
+  /// Unknown: the node budget was exhausted, or the search was not run
+  /// because -aie-postregalloc-exact-budget is zero. The assignment is
+  /// kept only when the result is Feasible.
+  enum class ExactResult { Feasible, Infeasible, Unknown };
+
+  /// Exact MRV backtracking allocator. Used instead of the heuristics when
+  /// -aie-postregalloc-exact-budget is non-zero.
+  static ExactResult tryAllocateExact(
+      const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex,
+      const RegLiveRangeTracker &RegTracker, const TargetRegisterInfo &TRI,
+      AllocState &State, DenseMap<Register, MCRegister> &OutAssign);
+
   /// Compute metrics for a live range.
   /// \param LR The live range to compute metrics for.
   /// \param Masks The lane masks for this live range.
