@@ -245,7 +245,9 @@ private:
   /// Returns AllocResult which implicitly converts to bool (true = success).
   /// On success, OutAssign contains the virtual to physical register mapping.
   /// The RegTracker provides the problem description (LiveRanges,
-  /// AvailableRegs, AdmissibleRegs per LR).
+  /// AvailableRegs, AdmissibleRegs per LR). The next live range is selected by
+  /// Minimum Remaining Values (fewest effective physical-register candidates),
+  /// with OrderFn as tie-break.
   static AllocResult
   tryAllocate(const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex,
               const RegLiveRangeTracker *RegTracker,

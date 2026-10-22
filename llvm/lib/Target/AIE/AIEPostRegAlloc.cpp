@@ -20,6 +20,7 @@
 #include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
+#include <optional>
 #include <vector>
 
 #define DEBUG_TYPE "aie-postregalloc"
@@ -301,9 +302,11 @@ std::vector<Register> AIEPostRegAlloc::getCandidatePhysRegs(
   return Candidates;
 }
 
-// Try to allocate using a specific scoring function for ordering.
+// Try to allocate using a specific comparator for ordering.
 // Each iteration of the main loop first drains all forced (choice-1)
 // decisions, then places exactly one scored entry before restarting.
+// The free (non-forced) pick is the unplaced VReg with the fewest effective
+// candidates (Minimum Remaining Values); OrderFn is only used as a tie-break.
 AIEPostRegAlloc::AllocResult AIEPostRegAlloc::tryAllocate(
     const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex,
     const RegLiveRangeTracker *RegTracker, const TargetRegisterInfo &TRI,
@@ -394,10 +397,9 @@ AIEPostRegAlloc::AllocResult AIEPostRegAlloc::tryAllocate(
     return true;
   };
 
-  // Build a sorted list of pointers to VReg entries in AllEntries.
-  // Non-VReg ranges (non-virtualizable or excluded by overlap policy) are
-  // always choice-1 and placed by DrainForcedChoices; they do not participate
-  // in the ordering.
+  // Virtual-register live ranges still needing a choice. Ranges without a
+  // virtual register stay in AllEntries and are placed by DrainForcedChoices
+  // when they have a single candidate.
   std::vector<LREntry *> ScoredEntries;
   for (LREntry &Entry : AllEntries) {
     if (!Entry.LR->getVReg().isValid())
@@ -405,43 +407,49 @@ AIEPostRegAlloc::AllocResult AIEPostRegAlloc::tryAllocate(
     ScoredEntries.push_back(&Entry);
   }
 
-  // Sort using the ordering comparator (hardest first).
-  // Use VReg index as a deterministic tiebreaker when the comparator
-  // considers two entries equivalent (OrderFn(A,B) == OrderFn(B,A) == false).
-  llvm::sort(ScoredEntries, [&](const LREntry *A, const LREntry *B) {
-    const VRegMetrics &MA = State.AllMetrics[A->LRIndex];
-    const VRegMetrics &MB = State.AllMetrics[B->LRIndex];
-    if (OrderFn(MA, MB))
-      return true;
-    if (OrderFn(MB, MA))
-      return false;
-    return A->LR->getVReg().virtRegIndex() < B->LR->getVReg().virtRegIndex();
-  });
+  // One Minimum Remaining Values choice: the unplaced VReg with the fewest
+  // effective candidates. OrderFn breaks ties.
+  struct Choice {
+    const LREntry *Entry;
+    std::vector<Register> Cands;
+  };
+  const auto SelectMinRemaining = [&]() -> std::optional<Choice> {
+    std::optional<Choice> Best;
+    for (const LREntry *E : ScoredEntries) {
+      if (PlacedLRIndices.count(E->LRIndex))
+        continue;
+      std::vector<Register> Cands = GetEffectiveCandidates(*E);
+      // DrainForcedChoices already rejected choice-0, so Cands is non-empty.
+      const unsigned Count = Cands.size();
+      const VRegMetrics &Metrics = State.AllMetrics[E->LRIndex];
+      if (!Best || Count < Best->Cands.size() ||
+          (Count == Best->Cands.size() &&
+           OrderFn(Metrics, State.AllMetrics[Best->Entry->LRIndex])))
+        Best = Choice{E, std::move(Cands)};
+    }
+    return Best;
+  };
 
   // Main allocation loop. Each iteration drains all forced choices first, then
   // places exactly one scored entry before restarting. A choice-0 before any
   // scored placement means the schedule is truly infeasible; after a scored
-  // placement it may be a scoring artifact that another strategy avoids.
-  // NextScoredIdx == 0 iff no scored placement has been made yet, which is
-  // the condition for reporting a truly-infeasible schedule.
-  size_t NextScoredIdx = 0;
+  // placement it may be a scoring artifact that another tie-break avoids.
+  // NumScoredPlacements == 0 iff no scored placement has been made yet, which
+  // is the condition for reporting a truly-infeasible schedule.
+  unsigned NumScoredPlacements = 0;
 
   while (true) {
     if (!DrainForcedChoices())
-      return AllocResult(/*InfeasibleSchedule=*/NextScoredIdx == 0);
+      return AllocResult(/*InfeasibleSchedule=*/NumScoredPlacements == 0);
 
-    // Advance past entries already placed by DrainForcedChoices.
-    while (NextScoredIdx < ScoredEntries.size() &&
-           PlacedLRIndices.count(ScoredEntries[NextScoredIdx]->LRIndex))
-      ++NextScoredIdx;
+    const std::optional<Choice> Best = SelectMinRemaining();
+    if (!Best)
+      break; // All placed.
 
-    if (NextScoredIdx >= ScoredEntries.size())
-      break;
-
-    const LREntry &Entry = *ScoredEntries[NextScoredIdx++];
+    const LREntry &Entry = *Best->Entry;
+    const std::vector<Register> &EffectiveCands = Best->Cands;
     const unsigned LRIndex = Entry.LRIndex;
     const RegLiveRange &LR = *Entry.LR;
-    const auto &VRegMasks = *Entry.Masks;
     const TargetRegisterClass *RC = LR.getRegisterClass();
     const auto &Metrics = State.AllMetrics[LRIndex];
 
@@ -452,31 +460,15 @@ AIEPostRegAlloc::AllocResult AIEPostRegAlloc::tryAllocate(
                       << ", alias_int=" << Metrics.AliasingInterferenceDegree
                       << ")\n");
 
-    const std::vector<Register> Candidates =
-        getCandidatePhysRegs(LR.getAdmissibleRegs(), AvailableRegs);
-
-    if (Candidates.empty()) {
-      LLVM_DEBUG(dbgs() << "  No candidates available!\n");
-      return AllocResult(/*InfeasibleSchedule=*/false);
-    }
-
-    Register ChosenPhys = Register();
-    for (Register PhysReg : Candidates) {
-      LLVM_DEBUG(dbgs() << "  Trying " << printReg(PhysReg, &TRI) << " ");
-      if (State.canPlace(PhysReg, VRegMasks)) {
-        LLVM_DEBUG(dbgs() << "\n");
-        ChosenPhys = PhysReg;
-        break;
-      }
-    }
-
-    LLVM_DEBUG(dbgs() << "\n");
-    if (!ChosenPhys.isValid()) {
+    if (EffectiveCands.empty()) {
       LLVM_DEBUG(dbgs() << "  Failed to find suitable physreg!\n");
       return AllocResult(/*InfeasibleSchedule=*/false);
     }
 
+    Register ChosenPhys = EffectiveCands.front();
+    LLVM_DEBUG(dbgs() << "  Trying " << printReg(ChosenPhys, &TRI) << "\n");
     DoPlace(Entry, ChosenPhys);
+    ++NumScoredPlacements;
   }
 
   LLVM_DEBUG(dbgs() << "Allocation succeeded with " << OutAssign.size()
@@ -610,9 +602,10 @@ PostRegAllocResult AIEPostRegAlloc::allocate(
     ComparatorFunction OrderFn;
   };
 
+  // Every strategy selects by Minimum Remaining Values. OrderFn is the
+  // tie-break, tried in order until one allocation succeeds.
   std::vector<AllocationStrategy> Strategies = {
-      // Scarce register class first: fewer available registers → first.
-      // Within the same scarceness, highest interference degree wins.
+      // Fewer available registers first, then highest interference degree.
       {"scarce register class scoring", orderByScarceRegClass},
       // Lexicographic: widest register class first (absolute precedence),
       // then highest interference degree within the same width tier.
