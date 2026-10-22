@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file contains TOSA numerical support functions and quantization
@@ -15,6 +18,14 @@
 
 using namespace mlir;
 using namespace mlir::tosa;
+
+bool mlir::tosa::isQuantizedType(Type type) {
+  return isa<quant::UniformQuantizedType>(mlir::getElementTypeOrSelf(type));
+}
+
+bool mlir::tosa::hasQuantizedType(Value value) {
+  return isQuantizedType(value.getType());
+}
 
 /// From a scale value, generates multiplier and shift values where
 /// mantissa is in [-1.0,-0.5] or [0.5, 1.0] such that
