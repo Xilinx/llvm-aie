@@ -116,14 +116,14 @@ body:             |
 ...
 
 ---
-name:            set_fp2int_mask
+name:            set_scden
 alignment:       16
 legalized:       true
 regBankSelected: true
 body:             |
   bb.1.entry:
     liveins: $r0
-    ; CHECK-LABEL: name: set_fp2int_mask
+    ; CHECK-LABEL: name: set_scden
     ; CHECK: liveins: $r0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:er = COPY $r0
@@ -136,14 +136,14 @@ body:             |
 ...
 
 ---
-name:            set_fp2bfmask
+name:            set_mcden
 alignment:       16
 legalized:       true
 regBankSelected: true
 body:             |
   bb.1.entry:
     liveins: $r0
-    ; CHECK-LABEL: name: set_fp2bfmask
+    ; CHECK-LABEL: name: set_mcden
     ; CHECK: liveins: $r0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:er = COPY $r0
@@ -229,13 +229,13 @@ body:             |
 
 
 ---
-name:            get_fp2int_mask
+name:            get_scden
 alignment:       16
 legalized:       true
 regBankSelected: true
 body:             |
   bb.1.entry:
-    ; CHECK-LABEL: name: get_fp2int_mask
+    ; CHECK-LABEL: name: get_scden
     ; CHECK: [[COPY:%[0-9]+]]:er = COPY $crscden
     ; CHECK-NEXT: $r0 = COPY [[COPY]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0
@@ -246,13 +246,13 @@ body:             |
 ...
 
 ---
-name:            get_fp2bfmask
+name:            get_mcden
 alignment:       16
 legalized:       true
 regBankSelected: true
 body:             |
   bb.1.entry:
-    ; CHECK-LABEL: name: get_fp2bfmask
+    ; CHECK-LABEL: name: get_mcden
     ; CHECK: [[COPY:%[0-9]+]]:er = COPY $crmcden
     ; CHECK-NEXT: $r0 = COPY [[COPY]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0
@@ -263,13 +263,13 @@ body:             |
 ...
 
 ---
-name:            get_fp2bmask
+name:            get_unpacksize
 alignment:       16
 legalized:       true
 regBankSelected: true
 body:             |
   bb.1.entry:
-    ; CHECK-LABEL: name: get_fp2bmask
+    ; CHECK-LABEL: name: get_unpacksize
     ; CHECK: [[COPY:%[0-9]+]]:er = COPY $crunpacksize
     ; CHECK-NEXT: $r0 = COPY [[COPY]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0
@@ -280,13 +280,13 @@ body:             |
 ...
 
 ---
-name:            get_crfpnlfMask
+name:            get_fp8conf
 alignment:       16
 legalized:       true
 regBankSelected: true
 body:             |
   bb.1.entry:
-    ; CHECK-LABEL: name: get_crfpnlfMask
+    ; CHECK-LABEL: name: get_fp8conf
     ; CHECK: [[COPY:%[0-9]+]]:er = COPY $crfp8conf
     ; CHECK-NEXT: $r0 = COPY [[COPY]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0
@@ -297,13 +297,13 @@ body:             |
 ...
 
 ---
-name:            get_crFPCnvFx2FlMask
+name:            get_fpconvsat
 alignment:       16
 legalized:       true
 regBankSelected: true
 body:             |
   bb.1.entry:
-    ; CHECK-LABEL: name: get_crFPCnvFx2FlMask
+    ; CHECK-LABEL: name: get_fpconvsat
     ; CHECK: [[COPY:%[0-9]+]]:er = COPY $crfpconvsat
     ; CHECK-NEXT: $r0 = COPY [[COPY]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0
@@ -314,13 +314,13 @@ body:             |
 ...
 
 ---
-name:            get_crfpcnvfl2fxmask
+name:            get_fpnlfmask
 alignment:       16
 legalized:       true
 regBankSelected: true
 body:             |
   bb.1.entry:
-    ; CHECK-LABEL: name: get_crfpcnvfl2fxmask
+    ; CHECK-LABEL: name: get_fpnlfmask
     ; CHECK: [[COPY:%[0-9]+]]:er = COPY $crfpnlfmask
     ; CHECK-NEXT: $r0 = COPY [[COPY]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0
