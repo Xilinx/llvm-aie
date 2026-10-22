@@ -349,6 +349,10 @@ public:
   QualType FnRetTy;
   llvm::Function *CurFn = nullptr;
 
+  /// If a cast expression is being visited, this holds the current cast's
+  /// expression.
+  const CastExpr *CurCast = nullptr;
+
   /// Save Parameter Decl for coroutine.
   llvm::SmallVector<const ParmVarDecl *, 4> FnArgs;
 
@@ -3351,6 +3355,12 @@ public:
   SanitizerAnnotateDebugInfo(ArrayRef<SanitizerKind::SanitizerOrdinal> Ordinals,
                              SanitizerHandler Handler);
 
+  /// Emit additional metadata used by the AllocToken instrumentation.
+  void EmitAllocToken(llvm::CallBase *CB, QualType AllocType);
+  /// Emit additional metadata used by the AllocToken instrumentation,
+  /// inferring the type from an allocation call expression.
+  void EmitAllocToken(llvm::CallBase *CB, const CallExpr *E);
+
   llvm::Value *GetCountedByFieldExprGEP(const Expr *Base, const FieldDecl *FD,
                                         const FieldDecl *CountDecl);
 
@@ -3864,6 +3874,7 @@ public:
   void EmitOMPUnrollDirective(const OMPUnrollDirective &S);
   void EmitOMPReverseDirective(const OMPReverseDirective &S);
   void EmitOMPInterchangeDirective(const OMPInterchangeDirective &S);
+  void EmitOMPFuseDirective(const OMPFuseDirective &S);
   void EmitOMPForDirective(const OMPForDirective &S);
   void EmitOMPForSimdDirective(const OMPForSimdDirective &S);
   void EmitOMPScopeDirective(const OMPScopeDirective &S);
@@ -4466,10 +4477,8 @@ public:
                                 AggValueSlot slot = AggValueSlot::ignored());
   LValue EmitPseudoObjectLValue(const PseudoObjectExpr *e);
 
-  void FlattenAccessAndType(
-      Address Addr, QualType AddrTy,
-      SmallVectorImpl<std::pair<Address, llvm::Value *>> &AccessList,
-      SmallVectorImpl<QualType> &FlatTypes);
+  void FlattenAccessAndTypeLValue(LValue LVal,
+                                  SmallVectorImpl<LValue> &AccessList);
 
   llvm::Value *EmitIvarOffset(const ObjCInterfaceDecl *Interface,
                               const ObjCIvarDecl *Ivar);

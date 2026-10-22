@@ -153,10 +153,10 @@ using BogusTargetMachine = TestTargetMachine<BogusSubTarget>;
 }
 
 [[maybe_unused]] std::unique_ptr<MachineFunction>
-createMachineFunction(LLVMContext &Ctx, Module &M,
+createMachineFunction(LLVMContext &Ctx, Module &M, const Twine &Name = "Test",
                       TargetMachine *TM = nullptr) {
   auto Type = FunctionType::get(Type::getVoidTy(Ctx), false);
-  auto F = Function::Create(Type, GlobalValue::ExternalLinkage, "Test", &M);
+  auto F = Function::Create(Type, GlobalValue::ExternalLinkage, Name, &M);
 
   if (!TM)
     TM = createTargetMachine();
