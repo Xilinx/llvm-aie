@@ -374,7 +374,7 @@ define void @__addsf3_lowered_to_call(ptr %a) {
 ; AIE2-NEXT:    st r17, [sp, #-56]; or r29, r16, r16 // 4-byte Folded Spill
 ; AIE2-NEXT:    st r18, [sp, #-52]; vinsert.32 x0, x0, r29, r16 // 4-byte Folded Spill
 ; AIE2-NEXT:    st lr, [sp, #-64]; vmov bmh0, x0 // 4-byte Folded Spill
-; AIE2-NEXT:    mova r21, #1; st r22, [sp, #-36] // 4-byte Folded Spill
+; AIE2-NEXT:    st r22, [sp, #-36]; movx r21, #1 // 4-byte Folded Spill
 ; AIE2-NEXT:    mova r19, #16; vst amhl0, [sp, #-128]; movxm r18, #16256 // 32-byte Folded Spill
 ; AIE2-NEXT:    mova r17, #0; vst amhh0, [sp, #-96]; or r22, r16, r16; mov r20, #28 // 32-byte Folded Spill
 ; AIE2-NEXT:  .LBB3_1: // %for.cond1.preheader

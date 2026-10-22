@@ -34,7 +34,7 @@ define void @conv2d_outer_loop(ptr noalias %ifm, ptr noalias %wts, ptr noalias %
 ; CHECK-NEXT:    paddxm [sp], #64; ltu r27, r16, r6
 ; CHECK-NEXT:    st p6, [sp, #-64]; or r24, r28, r24 // 4-byte Folded Spill
 ; CHECK-NEXT:    mova m0, #96; st p7, [sp, #-60]; add r2, r24, r2 // 4-byte Folded Spill
-; CHECK-NEXT:    mova m0, #-20; paddb [p3], m0; sel.nez r18, r2, r0, r27; st r18, [p3, dj0]
+; CHECK-NEXT:    st r18, [p3, dj0]; paddb [p3], m0; sel.nez r18, r2, r0, r27; mov m0, #-20
 ; CHECK-NEXT:    st.s8 r18, [p3], m0; eq r2, r24, r16
 ; CHECK-NEXT:    and r26, r2, r26
 ; CHECK-NEXT:    jnz r26, #.LBB0_2
@@ -42,7 +42,7 @@ define void @conv2d_outer_loop(ptr noalias %ifm, ptr noalias %wts, ptr noalias %
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    mov r7, r8 // Delay Slot 3
 ; CHECK-NEXT:    ltu r28, r16, r18; mov r17, r10 // Delay Slot 2
-; CHECK-NEXT:    mova r2, #5; st r28, [p3, #0]; or r19, r12, r12; mov r24, #1 // Delay Slot 1
+; CHECK-NEXT:    mova r24, #1; st r28, [p3, #0]; or r19, r12, r12; mov r2, #5 // Delay Slot 1
 ; CHECK-NEXT:  // %bb.1: // %if.else.i
 ; CHECK-NEXT:    mova dj0, #-48
 ; CHECK-NEXT:    lda.s8 r22, [p3, dj0]
@@ -55,10 +55,10 @@ define void @conv2d_outer_loop(ptr noalias %ifm, ptr noalias %wts, ptr noalias %
 ; CHECK-NEXT:    add r24, r22, #-4
 ; CHECK-NEXT:    extend.u8 r28, r22
 ; CHECK-NEXT:    mova r26, #254; extend.u8 r24, r24
-; CHECK-NEXT:    mova r26, #8; ltu r24, r24, r26
+; CHECK-NEXT:    ltu r24, r24, r26; mov r26, #8
 ; CHECK-NEXT:    ne r26, r28, r26
 ; CHECK-NEXT:    ne r28, r28, r2
-; CHECK-NEXT:    mova r26, #4; and r24, r26, r24
+; CHECK-NEXT:    and r24, r26, r24; mov r26, #4
 ; CHECK-NEXT:    lshl r22, r22, r26
 ; CHECK-NEXT:    and r27, r28, r24
 ; CHECK-NEXT:    and r24, r18, r2
@@ -67,7 +67,7 @@ define void @conv2d_outer_loop(ptr noalias %ifm, ptr noalias %wts, ptr noalias %
 ; CHECK-NEXT:    or r22, r22, r18
 ; CHECK-NEXT:  .LBB0_2: // %if.end.i
 ; CHECK-NEXT:    mova m0, #4; nopx
-; CHECK-NEXT:    padda [p3], m0; ne r6, r20, r6
+; CHECK-NEXT:    paddb [p3], m0; ne r6, r20, r6
 ; CHECK-NEXT:    st r24, [p3], #24; jnz r6, #.LBB0_4
 ; CHECK-NEXT:    st.s8 r22, [p3, #0] // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4

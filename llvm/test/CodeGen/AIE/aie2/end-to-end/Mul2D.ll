@@ -71,7 +71,7 @@ define void @mul2d(ptr noalias %in_ptr0, ptr noalias %in_ptr1, ptr noalias %out_
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    mova r4, #-1
+; CHECK-NEXT:    mov r4, #-1
 ; CHECK-NEXT:    mova dc0, #0; vldb wl8, [p1], #32; lshl r1, r1, r4
 ; CHECK-NEXT:    vldb wl2, [p1], #32; add r1, r1, #-1; mov dc4, dc0
 ; CHECK-NEXT:    vldb.3d wl6, [p0], d0; jz r1, #.LBB0_4

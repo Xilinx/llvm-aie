@@ -85,7 +85,7 @@ define dso_local void @gemm_int8_psum_1_v2(ptr noalias %p_a, ptr noalias %p_b, p
 ; CHECK-LABEL: gemm_int8_psum_1_v2:
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova m0, #48; nopb ; nops ; nopx ; mov dj0, #37; nopv
-; CHECK-NEXT:    lda.u8 r0, [p5, dj0]; paddb [p5], m0; mov m2, #-44
+; CHECK-NEXT:    lda.u8 r0, [p5, dj0]; paddb [p5], m0; nopx ; mov m2, #-44
 ; CHECK-NEXT:    lda.u8 r28, [p5], m2
 ; CHECK-NEXT:    lda r1, [p5], m0
 ; CHECK-NEXT:    mova m0, #24
@@ -94,8 +94,7 @@ define dso_local void @gemm_int8_psum_1_v2(ptr noalias %p_a, ptr noalias %p_b, p
 ; CHECK-NEXT:    lda dn0, [p5], #-8
 ; CHECK-NEXT:    lda dj0, [p5], #12
 ; CHECK-NEXT:    lda dn4, [p5], #-8; mov m1, #-48
-; CHECK-NEXT:    lda dj4, [p5], m1
-; CHECK-NEXT:    mova m1, #80
+; CHECK-NEXT:    lda dj4, [p5], m1; mov m1, #80
 ; CHECK-NEXT:    lda m3, [p5], m1
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mova r18, #0
@@ -119,11 +118,11 @@ define dso_local void @gemm_int8_psum_1_v2(ptr noalias %p_a, ptr noalias %p_b, p
 ; CHECK-NEXT:    lda dj2, [p5, #-4]; paddb [p2], m4
 ; CHECK-NEXT:    lda r4, [p2, #0]
 ; CHECK-NEXT:    lda r6, [p2, #4]; movs p2, p4; mov r7, r8
-; CHECK-NEXT:    vlda bmll5, [p2], #64; movx r5, #768; mov dc2, #0
-; CHECK-NEXT:    vlda bmlh5, [p2], #64; movx crsrsmode, #0; mov dc0, #0
-; CHECK-NEXT:    vlda bmhl5, [p2], #64; add r1, r1, #-1; mov s0, r16
-; CHECK-NEXT:    vlda bmhh5, [p2], #64; vldb x6, [p1], m3; movxm p5, #.LBB0_1
-; CHECK-NEXT:    vlda bmll2, [p2], #64; movs dc1, dc0; sel.eqz r8, r18, r5, r27; mov r5, #1
+; CHECK-NEXT:    vlda bmll5, [p2], #64; movx crsrsmode, #0; mov dc2, #0
+; CHECK-NEXT:    vlda bmlh5, [p2], #64; add r1, r1, #-1; mov r5, #768
+; CHECK-NEXT:    vlda bmhl5, [p2], #64; movxm p5, #.LBB0_1
+; CHECK-NEXT:    vlda bmhh5, [p2], #64; vldb x6, [p1], m3; sel.eqz r8, r18, r5, r27; mov dc0, #0
+; CHECK-NEXT:    vlda bmll2, [p2], #64; movs dc1, dc0; movx r5, #1; mov s0, r16
 ; CHECK-NEXT:    vlda bmlh2, [p2], #64; vsrs.2x wl4, bmll3, s0, srssign1; ne r30, r30, r5; vbcst.32 x2, r18
 ; CHECK-NEXT:    vlda bmhl2, [p2], #64; movs dc5, dc0; eqz r5, r28; addm.nc r1, r1, #-1
 ; CHECK-NEXT:    vlda bmhh2, [p2], #64; vldb.3d x8, [p1], d1; or r19, r10, r10; vbcst.16 x0, r5

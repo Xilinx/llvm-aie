@@ -78,7 +78,7 @@ define void @nested(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef 
 ; AIE2P-NEXT:    // =>This Loop Header: Depth=1
 ; AIE2P-NEXT:    // Child Loop BB0_2 Depth 2
 ; AIE2P-NEXT:    nopa ; nopb ; lshl r5, r3, r4; nopm
-; AIE2P-NEXT:    movs dj0, r5
+; AIE2P-NEXT:    mov dj0, r5
 ; AIE2P-NEXT:    lda p3, [p1, dj0]
 ; AIE2P-NEXT:    nop
 ; AIE2P-NEXT:    nop

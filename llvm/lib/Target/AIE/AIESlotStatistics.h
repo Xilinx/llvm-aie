@@ -55,8 +55,12 @@ public:
   // 1/Unit of an instruction. A non-multi-slot instruction adds Unit to every
   // slot of its conflict set (Fixed). A multi-slot pseudo adds Unit in total,
   // spread uniformly over its alternatives, each adding its share to every
-  // slot of its conflict set (Free).
-  void addInstruction(MachineInstr &MI, const AIEBaseInstrInfo *TII);
+  // slot of its conflict set (Free). With SkipWiderAlternatives, alternatives
+  // whose conflict set strictly contains another alternative's conflict set
+  // get no share, since they block everything the narrower one blocks and
+  // more.
+  void addInstruction(MachineInstr &MI, const AIEBaseInstrInfo *TII,
+                      bool SkipWiderAlternatives = false);
 
   // The number of represented slots
   int size() const { return std::max(Fixed.size(), Free.size()); }
@@ -81,7 +85,8 @@ SlotStatistics computeSlotStatistics(MachineBasicBlock &MBB,
 
 // Compute slot statistics for an explicit list of instructions.
 SlotStatistics computeSlotStatistics(ArrayRef<MachineInstr *> Instrs,
-                                     const AIEBaseInstrInfo *TII);
+                                     const AIEBaseInstrInfo *TII,
+                                     bool SkipWiderAlternatives = false);
 
 /// Tracks the slot demand of the not yet scheduled free instructions of a
 /// region, and uses it to order the alternatives of multi-slot pseudos. The
@@ -104,7 +109,8 @@ public:
   }
 
   /// Start tracking the demand of \p FreeInstrs.
-  void init(ArrayRef<MachineInstr *> FreeInstrs, const AIEBaseInstrInfo *TII);
+  void init(ArrayRef<MachineInstr *> FreeInstrs, const AIEBaseInstrInfo *TII,
+            bool SkipWiderAlternatives);
 
   bool isActive() const { return Active; }
   const SlotCounts &getRemainingDemand() const { return Remaining; }

@@ -253,11 +253,11 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: multi_slot_sched_s20_MOVA_second
-    ; CHECK: BUNDLE implicit-def $p1, implicit-def $m3 {
-    ; CHECK-NEXT:   $p1 = MOVA_lda_cg 0
-    ; CHECK-NEXT:   $m3 = MOV_mv_cg 2
+    ; CHECK: BUNDLE implicit-def $r2, implicit-def $p1 {
+    ; CHECK-NEXT:   $r2 = MOVA_lda_cg 1
+    ; CHECK-NEXT:   $p1 = MOV_mv_cg 0
     ; CHECK-NEXT: }
-    ; CHECK-NEXT: $r2 = MOVA_lda_cg 1
+    ; CHECK-NEXT: $m3 = MOVA_lda_cg 2
     $p1 = MOV_PD_imm10_pseudo 0
     $r2 = MOVA_lda_cg 1
     $m3 = MOV_PD_imm10_pseudo 2

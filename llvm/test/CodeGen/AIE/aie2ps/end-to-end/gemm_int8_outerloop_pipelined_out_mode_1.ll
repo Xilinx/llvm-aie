@@ -85,7 +85,7 @@ define dso_local void @gemm_int8_1(ptr noalias %p_a, ptr noalias %p_b, ptr noali
 ; REMARKS-NEXT: ...
 ; ASM-LABEL: gemm_int8_1:
 ; ASM:       // %bb.0: // %entry
-; ASM-NEXT:    mova m0, #48; nopb ; nopx ; mov dj0, #37; nops
+; ASM-NEXT:    mova m0, #48; nopb ; nops ; nopx ; mov dj0, #37; nopv
 ; ASM-NEXT:    lda.u8 r2, [p5, dj0]; paddb [p5], m0
 ; ASM-NEXT:    lda.u8 r7, [p5], #4; mov m0, #-48
 ; ASM-NEXT:    lda.u8 r24, [p5], m0
@@ -95,8 +95,7 @@ define dso_local void @gemm_int8_1(ptr noalias %p_a, ptr noalias %p_b, ptr noali
 ; ASM-NEXT:    lda dn0, [p5], #-8
 ; ASM-NEXT:    lda dj0, [p5], #12
 ; ASM-NEXT:    lda dn4, [p5], #-8; mov m1, #-44
-; ASM-NEXT:    lda dj4, [p5], m1
-; ASM-NEXT:    mova m1, #76
+; ASM-NEXT:    lda dj4, [p5], m1; mov m1, #76
 ; ASM-NEXT:    lda m3, [p5], m1
 ; ASM-NEXT:    nop
 ; ASM-NEXT:    mova r0, #0

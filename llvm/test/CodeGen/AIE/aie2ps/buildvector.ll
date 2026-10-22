@@ -10,8 +10,8 @@
 define void @test_single_diff_lane_buildvector() {
 ; CHECK-LABEL: test_single_diff_lane_buildvector:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    mova r0, #111; nopx
-; CHECK-NEXT:    mova r2, #777
+; CHECK-NEXT:    nopa ; movx r0, #111
+; CHECK-NEXT:    movx r2, #777
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vbcst.32 x0, r2 // Delay Slot 5
 ; CHECK-NEXT:    vinsert.32 x0, x0, #0, r0 // Delay Slot 4
@@ -27,7 +27,7 @@ define void @test_splat_buildvector() {
 ; CHECK-LABEL: test_splat_buildvector:
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr; nopm ; nops
-; CHECK-NEXT:    mova r0, #888 // Delay Slot 5
+; CHECK-NEXT:    movx r0, #888 // Delay Slot 5
 ; CHECK-NEXT:    vbcst.32 x0, r0 // Delay Slot 4
 ; CHECK-NEXT:    mova p0, #0 // Delay Slot 3
 ; CHECK-NEXT:    vst wl0, [p0, #0] // Delay Slot 2
@@ -58,9 +58,9 @@ entry:
 define void @test_multi_diff_lane_buildvector() {
 ; CHECK-LABEL: test_multi_diff_lane_buildvector:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    mova r0, #111; nopxm
-; CHECK-NEXT:    mova r2, #222
-; CHECK-NEXT:    mova r4, #777
+; CHECK-NEXT:    nopa ; movx r0, #111; nopm
+; CHECK-NEXT:    movx r2, #222
+; CHECK-NEXT:    movx r4, #777
 ; CHECK-NEXT:    vpush.hi.32 x0, x0, r0
 ; CHECK-NEXT:    vpush.hi.32 x0, x0, r2
 ; CHECK-NEXT:    vpush.hi.32 x0, x0, r4
@@ -84,7 +84,7 @@ define void @test_buildvector_64bits() {
 ; CHECK-NEXT:    nopa ; nopb ; ret lr; nopm
 ; CHECK-NEXT:    movxm r0, #50922249 // Delay Slot 5
 ; CHECK-NEXT:    mova p0, #0 // Delay Slot 4
-; CHECK-NEXT:    mov r1, r0 // Delay Slot 3
+; CHECK-NEXT:    or r1, r0, r0 // Delay Slot 3
 ; CHECK-NEXT:    st r1:r0, [p0, #0] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
@@ -98,7 +98,7 @@ define void @test_const_splat_buildvector_64bits() {
 ; CHECK-NEXT:    nopa ; nopb ; ret lr; nopm
 ; CHECK-NEXT:    movxm r0, #2139062143 // Delay Slot 5
 ; CHECK-NEXT:    mova p0, #0 // Delay Slot 4
-; CHECK-NEXT:    mov r1, r0 // Delay Slot 3
+; CHECK-NEXT:    or r1, r0, r0 // Delay Slot 3
 ; CHECK-NEXT:    st r1:r0, [p0, #0] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:

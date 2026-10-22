@@ -49,6 +49,11 @@ static cl::opt<bool> MultiSlotSlotPreference(
     "aie-multislot-slot-preference", cl::Hidden, cl::init(true),
     cl::desc("Let multi-slot instructions outside of loops try the slot that "
              "the rest of their region needs least first"));
+static cl::opt<bool> SlotDemandSkipWider(
+    "aie-slot-demand-skip-wider", cl::Hidden, cl::init(true),
+    cl::desc("Do not spread the slot demand of multi-slot instructions over "
+             "alternatives whose conflict set contains that of another "
+             "alternative"));
 static cl::opt<bool>
     EnableFinerRPTracking("aie-premisched-finer-rp-tracking", cl::init(true),
                           cl::desc("Track reg pressure more accurately and "
@@ -529,6 +534,24 @@ int AIEPostRASchedStrategy::getInterBlockDepth(const SUnit &SU) const {
   return It == IncomingInterBlockLatency.end() ? Depth : Depth + It->second;
 }
 
+void AIEPostRASchedStrategy::initSlotDemand(const BlockState &BS,
+                                            const Region &Reg) {
+  // Loops get their slots from the multi-slot materializer and the pipeliner,
+  // if they are pipeline candidates. Other loops keep the TableGen order.
+  SlotDemand.reset();
+  if (MultiSlotSlotPreference && BS.Kind != BlockType::Loop) {
+    SlotDemand.init(Reg.getFreeInstructions(), getTII(CurMBB),
+                    SlotDemandSkipWider);
+    DEBUG_WITH_TYPE("aie-slot-demand",
+                    dbgs() << "Slot demand for " << CurMBB->getName()
+                           << (IsBottomRegion ? " (bottom)" : "") << ": "
+                           << SlotDemand.getRemainingDemand() << "\n");
+  }
+  // An inactive tracker leaves the alternatives in TableGen order.
+  getAIEHazardRecognizer(Top)->setSlotDemandTracker(&SlotDemand);
+  getAIEHazardRecognizer(Bot)->setSlotDemandTracker(&SlotDemand);
+}
+
 void AIEPostRASchedStrategy::initialize(ScheduleDAGMI *Dag) {
   PostGenericScheduler::initialize(Dag);
   assert(PostRADirection == MISched::Direction::Unspecified);
@@ -547,20 +570,7 @@ void AIEPostRASchedStrategy::initialize(ScheduleDAGMI *Dag) {
   const Region &Reg = BS.getCurrentRegion();
   RegionTopDownCycles = Reg.getTopFixedBundles().size();
 
-  // Loops get their slots from the multi-slot materializer and the pipeliner,
-  // if they are pipeline candidates. Other loops keep the TableGen order.
-  SlotDemand.reset();
-  if (MultiSlotSlotPreference && BS.Kind != BlockType::Loop) {
-    SlotDemand.init(Reg.getFreeInstructions(), getTII(CurMBB));
-    DEBUG_WITH_TYPE("aie-slot-demand",
-                    dbgs() << "Slot demand for " << CurMBB->getName()
-                           << (IsBottomRegion ? " (bottom)" : "") << ": "
-                           << SlotDemand.getRemainingDemand() << "\n");
-  }
-  const AIE::SlotDemandTracker *Tracker =
-      SlotDemand.isActive() ? &SlotDemand : nullptr;
-  getAIEHazardRecognizer(Top)->setSlotDemandTracker(Tracker);
-  getAIEHazardRecognizer(Bot)->setSlotDemandTracker(Tracker);
+  initSlotDemand(BS, Reg);
 
   // Delay slots are normally scheduled bottom-up so the control-flow
   // instruction is issued exactly TII->getNumDelaySlots() before the end of

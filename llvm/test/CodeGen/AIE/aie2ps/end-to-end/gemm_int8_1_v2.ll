@@ -85,7 +85,7 @@ define dso_local void @gemm_int8_1_v2(ptr noalias %p_a, ptr noalias %p_b, ptr no
 ; REMARKS-NEXT: ...
 ; CHECK-LABEL: gemm_int8_1_v2:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    mova m0, #48; nopb ; nopx ; mov dj0, #37
+; CHECK-NEXT:    mova m0, #48; nopb ; nopx ; mov dj0, #37; nops
 ; CHECK-NEXT:    lda.u8 r2, [p5, dj0]; paddb [p5], m0; mov m2, #-44
 ; CHECK-NEXT:    lda.u8 r28, [p5], m2
 ; CHECK-NEXT:    lda r1, [p5], m0
@@ -95,8 +95,7 @@ define dso_local void @gemm_int8_1_v2(ptr noalias %p_a, ptr noalias %p_b, ptr no
 ; CHECK-NEXT:    lda dn0, [p5], #-8
 ; CHECK-NEXT:    lda dj0, [p5], #12
 ; CHECK-NEXT:    lda dn4, [p5], #-8; mov m1, #-48
-; CHECK-NEXT:    lda dj4, [p5], m1
-; CHECK-NEXT:    mova m1, #80
+; CHECK-NEXT:    lda dj4, [p5], m1; mov m1, #80
 ; CHECK-NEXT:    lda m3, [p5], m1
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    vlda.ups.2x bmll0, s0, upssign1, [p3, #0]; movx crupsmode, #0; mov r0, #0
@@ -111,13 +110,13 @@ define dso_local void @gemm_int8_1_v2(ptr noalias %p_a, ptr noalias %p_b, ptr no
 ; CHECK-NEXT:    lda m2, [p5], #-4; paddb [p2], m4
 ; CHECK-NEXT:    lda r20, [p2, #0]
 ; CHECK-NEXT:    lda r22, [p2, #4]; movxm p2, ##_ZN3aie6detail19transpose_bits_implILj8EaLj64EE13shuffle_modesE
-; CHECK-NEXT:    lda dn2, [p5, #0]; paddb [p2], m4; movx r5, #768; mov r7, r8
-; CHECK-NEXT:    lda r24, [p2, #0]; movx crsrsmode, #0; mov dc0, #0
+; CHECK-NEXT:    lda dn2, [p5, #0]; paddb [p2], m4; movx crsrsmode, #0; mov r7, r8
+; CHECK-NEXT:    lda r24, [p2, #0]; add r1, r1, #-1; mov r5, #768
 ; CHECK-NEXT:    lda r26, [p2, #4]; movxm p2, ##_ZN3aie6detail19transpose_bits_implILj8EaLj64EE13shuffle_modesE
-; CHECK-NEXT:    lda dj2, [p5, #-4]; paddb [p2], m4; add r1, r1, #-1; mov s1, r18
-; CHECK-NEXT:    lda r2, [p2, #0]; movxm p5, #.LBB0_1
+; CHECK-NEXT:    lda dj2, [p5, #-4]; paddb [p2], m4; movxm p5, #.LBB0_1
+; CHECK-NEXT:    lda r2, [p2, #0]; sel.eqz r8, r0, r5, r27; mov dc0, #0
 ; CHECK-NEXT:    lda r4, [p2, #4]; vldb x6, [p1], m3; movxm p2, ##_ZN3aie6detail19transpose_bits_implILj8EaLj64EE13shuffle_modesE
-; CHECK-NEXT:    movs dc1, dc0; sel.eqz r8, r0, r5, r27; mov r5, #1
+; CHECK-NEXT:    movs dc1, dc0; movx r5, #1; mov s1, r18
 ; CHECK-NEXT:    mova dc2, #0; paddb [p2], m4; ne r30, r30, r5; vbcst.32 x2, r0; vsrs.2x wl4, bmll0, s1, srssign1
 ; CHECK-NEXT:    lda r6, [p2, #0]; movs dc5, dc0; eqz r5, r28; addm.nc r1, r1, #-1
 ; CHECK-NEXT:    lda r16, [p2, #4]; vldb.3d x8, [p1], d1; or r19, r10, r10; vbcst.16 x0, r5; movs p2, p4
