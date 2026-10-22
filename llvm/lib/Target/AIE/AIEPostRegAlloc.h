@@ -19,10 +19,11 @@
 #define LLVM_LIB_TARGET_AIE_AIEPOSTREGALLOC_H
 
 #include "AIELivenessVector.h"
+#include "AIEMaxNumRegUnits.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/Register.h"
-#include "llvm/MC/LaneBitmask.h"
 #include "llvm/MC/MCRegister.h"
 #include <functional>
 #include <vector>
@@ -38,12 +39,13 @@ namespace AIE {
 
 /// Post-scheduling register allocator for AIE targets.
 ///
-/// This allocator performs modulo-aware register allocation using lane masks
-/// to track sub-register liveness. It properly handles physical register
-/// aliasing, ensuring that allocating a register blocks all its aliases
-/// (sub-registers and super-registers). It is transactional (does not modify
-/// MRI until a complete solution is found) and does not spill (returns false
-/// if allocation fails).
+/// This allocator performs modulo-aware register allocation. Occupancy is
+/// tracked per modulo cycle as the set of register units in use. Placing a
+/// physical register marks all of its units occupied at every cycle where the
+/// live range is non-empty. Registers that
+/// share a unit therefore alias. It is transactional (does not modify MRI
+/// until a complete solution is found) and does not spill (returns false if
+/// allocation fails).
 class AIEPostRegAlloc {
 private:
   /// Interference graph with configurable weight type and symmetry.
@@ -147,10 +149,17 @@ private:
 
   /// Internal allocation state with RegUnit-based interference tracking.
   struct AllocState {
-    /// RegUnit occupancy - tracks lane masks for each register unit.
-    /// RegUnits are the fundamental units of register interference in LLVM.
-    /// Two registers interfere if they share any RegUnits.
-    DenseMap<unsigned /*RegUnit*/, AIE::LivenessVector> RegUnitOccupancy;
+    // Per-cycle RegUnit occupancy: CycleOccupancy[c] has a bit set for each
+    // RegUnit that is occupied at modulo cycle c.
+    SmallVector<PartSet, 8> CycleOccupancy;
+
+    // Cached RegUnit set per physical register.
+    DenseMap<MCRegister, PartSet> PhysRegUnitSets;
+
+    // Pre-computed admissible RegUnit set per live range index.
+    // The admissible set is the union of PhysRegUnitSets for every admissible
+    // physical register of the live range.
+    DenseMap<unsigned, PartSet> AdmissibleRegUnits;
 
     /// Pre-computed interference graphs (reused across scoring attempts).
     WeightedAsymmetricGraph RCInterferenceGraph;
@@ -172,10 +181,11 @@ private:
               const RegLiveRangeTracker *RegTracker);
 
     /// Check if PhysReg can accommodate VRegMasks without conflicts.
-    /// This checks RegUnit conflicts to handle aliasing properly.
+    /// A conflict occurs when the candidate register's RegUnits are already
+    /// occupied at any live cycle.
     bool canPlace(Register PhysReg, const AIE::LivenessVector &VRegMasks) const;
 
-    /// Place VReg in PhysReg (updates RegUnit occupancy).
+    /// Place VReg in PhysReg (marks PhysReg's RegUnits occupied per cycle).
     void place(Register VReg, Register PhysReg,
                const AIE::LivenessVector &VRegMasks,
                const TargetRegisterClass *RC);
@@ -242,8 +252,7 @@ private:
   /// Build live range interference graph (symmetric).
   static WeightedSymmetricGraph buildVRegInterferenceGraph(
       const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex,
-      const RegLiveRangeTracker &RegTracker,
-      const WeightedAsymmetricGraph &RCInterferenceGraph);
+      const DenseMap<unsigned, PartSet> &AdmissibleRegUnits);
 
   /// Predefined scoring functions.
   static unsigned scoreByArea(const VRegMetrics &M) { return M.TotalLanes; }
