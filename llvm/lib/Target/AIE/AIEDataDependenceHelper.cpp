@@ -36,7 +36,12 @@ static cl::opt<bool>
 DataDependenceHelper::DataDependenceHelper(const MachineSchedContext &Context,
                                            bool AddMutators,
                                            bool ExactLatencies)
-    : ScheduleDAGInstrs(*Context.MF, Context.MLI), Context(Context) {
+    : ScheduleDAGInstrs(*Context.MF, Context.MLI), Context(Context),
+      AIETII(static_cast<const AIEBaseSubtarget &>(Context.MF->getSubtarget())
+                 .getInstrInfo()),
+      Itins(Context.MF->getSubtarget().getInstrItineraryData()) {
+  assert(Itins && !Itins->isEmpty() &&
+         "AIE always has complete itinerary data");
   if (!AddMutators)
     return;
 
@@ -264,12 +269,7 @@ InstrEvents DataDependenceHelper::collectEvents(SUnit *SU) {
   // Resolve the AIE register-dependent itinerary class once for this
   // instruction. Subsequent per-operand cycle and forwarding class queries
   // are cheap table lookups.
-  const auto &ST = static_cast<const AIEBaseSubtarget &>(MF.getSubtarget());
-  const auto *TII = static_cast<const AIEBaseInstrInfo *>(ST.getInstrInfo());
-  const InstrItineraryData *Itins = ST.getInstrItineraryData();
-  assert(Itins && !Itins->isEmpty() &&
-         "AIE always has complete itinerary data");
-  const unsigned ItinClass = TII->getSchedClass(
+  const unsigned ItinClass = AIETII->getSchedClass(
       MI.getDesc(), make_range(MI.operands_begin(), MI.operands_end()), MRI);
 
   for (unsigned OpIdx = 0, N = MI.getNumOperands(); OpIdx != N; ++OpIdx) {
@@ -309,17 +309,13 @@ int DataDependenceHelper::computeDataLatency(const MachineInstr &DefMI,
                                              unsigned DefOpIdx,
                                              const MachineInstr *UseMI,
                                              unsigned UseOpIdx) const {
-  const auto &ST = static_cast<const AIEBaseSubtarget &>(MF.getSubtarget());
-  const auto *TII = static_cast<const AIEBaseInstrInfo *>(ST.getInstrInfo());
-  const InstrItineraryData *Itins = ST.getInstrItineraryData();
-
   // Mirror TargetSchedModel::computeOperandLatency for itineraries. Negative
-  // latencies are capped at 0 by getOperandLatency; adjustSchedDependency
-  // restores the signed value for operands covered by the itinerary.
+  // latencies are capped at 0 by getOperandLatency; setLatency restores the
+  // signed value for operands covered by the itinerary.
   std::optional<unsigned> OperLatency;
   if (UseMI) {
     OperLatency =
-        TII->getOperandLatency(Itins, DefMI, DefOpIdx, *UseMI, UseOpIdx);
+        AIETII->getOperandLatency(Itins, DefMI, DefOpIdx, *UseMI, UseOpIdx);
   } else {
     const unsigned DefClass = DefMI.getDesc().getSchedClass();
     OperLatency = Itins->getOperandCycle(DefClass, DefOpIdx);
@@ -327,8 +323,8 @@ int DataDependenceHelper::computeDataLatency(const MachineInstr &DefMI,
   if (OperLatency)
     return static_cast<int>(*OperLatency);
 
-  const int DefaultDefLatency =
-      static_cast<int>(TII->defaultDefLatency(ST.getSchedModel(), DefMI));
+  const int DefaultDefLatency = static_cast<int>(
+      AIETII->defaultDefLatency(MF.getSubtarget().getSchedModel(), DefMI));
   return std::max(computeLatency(&DefMI), DefaultDefLatency);
 }
 
@@ -343,37 +339,57 @@ static bool isImplicitPseudoOperand(const MachineInstr &MI, unsigned OpIdx) {
   return OpIdx >= Desc.getNumOperands() && !Described;
 }
 
-void DataDependenceHelper::setBaseLatency(SUnit *Src, int SrcOpIdx, SUnit *Dst,
-                                          int DstOpIdx, SDep &Dep) const {
-  switch (Dep.getKind()) {
-  case SDep::Output:
-    // Latency of WAW dependences is entirely given by adjustSchedDependency.
+void DataDependenceHelper::setLatency(SUnit *Src, int SrcOpIdx, SUnit *Dst,
+                                      int DstOpIdx, SDep &Dep) const {
+  // Base latency. Only data edges and artificial edges to a physical register
+  // use carry one. The latency of WAW dependences is given by the signed
+  // operand latency below.
+  const MachineInstr &SrcMI = *Src->getInstr();
+  const SDep::Kind Kind = Dep.getKind();
+  const bool HasBaseLatency =
+      Kind == SDep::Data || (Kind == SDep::Order && Dep.isArtificial());
+  if (Kind == SDep::Output) {
     Dep.setSignedLatency(0);
+  } else if (HasBaseLatency) {
+    const bool Pseudo = SrcMI.getOperand(SrcOpIdx).getReg().isPhysical() &&
+                        (isImplicitPseudoOperand(SrcMI, SrcOpIdx) ||
+                         (DstOpIdx >= 0 &&
+                          isImplicitPseudoOperand(*Dst->getInstr(), DstOpIdx)));
+    if (Pseudo) {
+      Dep.setLatency(0);
+    } else {
+      // Artificial edges to a physical register use have no use operand.
+      const MachineInstr *UseMI =
+          Dep.isArtificial() ? nullptr : Dst->getInstr();
+      Dep.setSignedLatency(
+          computeDataLatency(SrcMI, SrcOpIdx, UseMI, DstOpIdx));
+    }
+  }
+
+  // Replace it by the signed operand latency of the itineraries, where those
+  // describe both operands. Artificial dependences are not needed for
+  // correctness.
+  if (Dep.isArtificial())
     return;
-  case SDep::Data:
-    break;
-  case SDep::Order:
-    // Only artificial edges to a physical register use carry a latency.
-    if (!Dep.isArtificial())
-      return;
-    break;
-  default:
+  assert(SrcOpIdx >= 0 && DstOpIdx >= 0);
+  const MachineInstr &DstMI = *Dst->getInstr();
+
+  // Itineraries do not describe implicit operands that were added dynamically,
+  // i.e. those that are not part of the static MCInstrDesc.
+  auto NumStaticOps = [](const MCInstrDesc &D) -> unsigned {
+    return D.NumOperands + D.NumImplicitDefs + D.NumImplicitUses;
+  };
+  if (unsigned(SrcOpIdx) >= NumStaticOps(SrcMI.getDesc()) ||
+      unsigned(DstOpIdx) >= NumStaticOps(DstMI.getDesc())) {
+    LLVM_DEBUG(llvm::dbgs()
+               << "Warning!: No latency for dynamic op #" << SrcOpIdx << " in "
+               << SrcMI << "Or op #" << DstOpIdx << " in " << DstMI << "\n");
     return;
   }
 
-  const MachineInstr &DefMI = *Src->getInstr();
-  if (DefMI.getOperand(SrcOpIdx).getReg().isPhysical()) {
-    const bool PseudoDef = isImplicitPseudoOperand(DefMI, SrcOpIdx);
-    const bool PseudoUse =
-        DstOpIdx >= 0 && isImplicitPseudoOperand(*Dst->getInstr(), DstOpIdx);
-    if (PseudoDef || PseudoUse) {
-      Dep.setLatency(0);
-      return;
-    }
-  }
-  // Artificial edges to a physical register use have no use operand.
-  const MachineInstr *UseMI = Dep.isArtificial() ? nullptr : Dst->getInstr();
-  Dep.setSignedLatency(computeDataLatency(DefMI, SrcOpIdx, UseMI, DstOpIdx));
+  if (const std::optional<int> Lat = AIETII->getSignedOperandLatency(
+          Itins, SrcMI, SrcOpIdx, DstMI, DstOpIdx, Kind))
+    Dep.setSignedLatency(*Lat);
 }
 
 bool DataDependenceHelper::addDep(SUnit *Src, int SrcOpIdx, SUnit *Dst,
@@ -385,23 +401,13 @@ bool DataDependenceHelper::addDep(SUnit *Src, int SrcOpIdx, SUnit *Dst,
     return true;
   }
 
-  setBaseLatency(Src, SrcOpIdx, Dst, DstOpIdx, Dep);
-
-  // Call the non-virtual AIE-specific latency adjustment directly, bypassing
-  // the virtual TargetSubtargetInfo::adjustSchedDependency dispatch.
-  const auto &ST = static_cast<const AIEBaseSubtarget &>(MF.getSubtarget());
-  ST.adjustSchedDependency(*ST.getInstrItineraryData(), Src, SrcOpIdx, Dst,
-                           DstOpIdx, Dep);
+  setLatency(Src, SrcOpIdx, Dst, DstOpIdx, Dep);
   Dst->addPred(Dep);
   return true;
 }
 
 int DataDependenceHelper::computeLatency(const MachineInstr *MI) const {
-  const auto &ST = static_cast<const AIEBaseSubtarget &>(MF.getSubtarget());
-  const InstrItineraryData *Itins = ST.getInstrItineraryData();
-  assert(Itins && !Itins->isEmpty() &&
-         "AIE always has complete itinerary data");
-  return static_cast<int>(ST.getInstrInfo()->getInstrLatency(Itins, *MI));
+  return static_cast<int>(AIETII->getInstrLatency(Itins, *MI));
 }
 
 void DataDependenceHelper::buildEdges() {
@@ -460,10 +466,16 @@ void DataDependenceHelper::buildEdges(ScheduleDAGInstrs &Target,
 
     const bool HasVRegDef = handleRegEvents(SU);
 
-    if (SU->NumSuccs == 0 && SU->Latency > 1 && (HasVRegDef || MI.mayLoad())) {
-      SDep Dep(SU, SDep::Artificial);
-      Dep.setLatency(SU->Latency - 1);
-      ExitSU.addPred(Dep);
+    // Model the live-out latency of vreg defs and loads without in-region
+    // successors. Mutations such as RegionEndEdges may later replace these
+    // edges with more precise ones.
+    if (SU->NumSuccs == 0 && (HasVRegDef || MI.mayLoad())) {
+      const int ExitLatency = computeLatency(&MI) - 1;
+      if (ExitLatency > 0) {
+        SDep Dep(SU, SDep::Artificial);
+        Dep.setSignedLatency(ExitLatency);
+        ExitSU.addPred(Dep);
+      }
     }
 
     const TargetInstrInfo *TII = MF.getSubtarget().getInstrInfo();
@@ -592,6 +604,35 @@ bool DataDependenceHelper::mayAlias(SUnit *SUa, SUnit *SUb, bool TBAA) {
       return false;
   }
   return ScheduleDAGInstrs::mayAlias(SUa, SUb, TBAA);
+}
+
+void DataDependenceHelper::addChainDependency(SUnit *SUa, SUnit *SUb,
+                                              unsigned Latency) {
+  if (!mayAlias(SUa, SUb, shouldUseTBAA()))
+    return;
+  SDep Dep(SUa, SDep::MayAliasMem);
+  Dep.setLatency(Latency);
+  SUb->addPred(Dep);
+}
+
+void DataDependenceHelper::addChainDependencies(SUnit *SU, SUList &SUs,
+                                                unsigned Latency) {
+  for (SUnit *Entry : SUs)
+    addChainDependency(SU, Entry, Latency);
+}
+
+void DataDependenceHelper::addChainDependencies(SUnit *SU,
+                                                Value2SUsMap &Val2SUsMap) {
+  for (auto &I : Val2SUsMap)
+    addChainDependencies(SU, I.second, Val2SUsMap.getTrueMemOrderLatency());
+}
+
+void DataDependenceHelper::addChainDependencies(SUnit *SU,
+                                                Value2SUsMap &Val2SUsMap,
+                                                ValueType V) {
+  const Value2SUsMap::iterator Itr = Val2SUsMap.find(V);
+  if (Itr != Val2SUsMap.end())
+    addChainDependencies(SU, Itr->second, Val2SUsMap.getTrueMemOrderLatency());
 }
 
 int DataDependenceHelper::maxDepth() const {

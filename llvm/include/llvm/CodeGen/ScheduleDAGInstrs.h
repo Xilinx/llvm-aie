@@ -320,8 +320,12 @@ namespace llvm {
     MachineFunction *CurrFunc;
     MachineFunction::iterator NextMBB;
 
-    // Supply specific memory disambiguation
-    virtual bool mayAlias(SUnit *SUa, SUnit *SUb, bool TBAA);
+    /// Memory disambiguation of the instructions of \p SUa and \p SUb using
+    /// the alias analysis of the current region.
+    bool mayAlias(SUnit *SUa, SUnit *SUb, bool TBAA);
+
+    /// Whether TBAA information should be used during DAG construction.
+    static bool shouldUseTBAA();
 
   public:
     explicit ScheduleDAGInstrs(MachineFunction &mf,

@@ -1984,8 +1984,7 @@ void llvm::AIEPostRASchedStrategy::buildGraph(ScheduleDAGMI &DAG, AAResults *AA,
   // generic ScheduleDAGInstrs::buildEdges to route through the AIE latency
   // computation logic.
   DataDependenceHelper DDH(*Context, false, false);
-  // Propagate region-level alias analysis flags to DDH so that mayAlias()
-  // makes the same decisions as AIEScheduleDAGMI::mayAlias() would.
+  // Propagate region-level alias analysis flags to DDH.
   DDH.setSafeToIgnoreMemDeps(BS.isSafeToIgnoreMemDeps());
   // When pipelining, the DAG contains two copies of the loop body. Inform DDH
   // so that its mayAlias() can apply the virtual-unroll alias check.
@@ -2027,25 +2026,6 @@ SUnit &AIEPostRASchedStrategy::addFixedSUnit(MachineInstr &MI, bool IsTop) {
   }
 
   return SU;
-}
-
-bool AIEScheduleDAGMI::mayAlias(SUnit *SUa, SUnit *SUb, bool UseTBAA) {
-  BlockState &BS = getSchedImpl()->getInterBlock().getBlockState(getBB());
-
-  if (BS.isSafeToIgnoreMemDeps())
-    return false;
-
-  if (BS.FixPoint.Stage == SchedulingStage::Pipelining) {
-    int NInstr = BS.getCurrentRegion().getFreeInstructions().size();
-    int IterA = SUa->NodeNum / NInstr;
-    int IterB = SUb->NodeNum / NInstr;
-    if (aliasAcrossVirtualUnrolls(SUa->getInstr(), SUb->getInstr(), IterA,
-                                  IterB) == AliasResult::NoAlias) {
-      return false;
-    }
-  }
-
-  return ScheduleDAGMI::mayAlias(SUa, SUb, UseTBAA);
 }
 
 void AIEScheduleDAGMI::schedule() {

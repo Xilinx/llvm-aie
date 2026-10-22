@@ -59,6 +59,7 @@ class MCInst;
 struct MCSchedModel;
 class Module;
 class ScheduleDAG;
+class SDep;
 class ScheduleDAGMI;
 class ScheduleDAGTopologicalSort;
 class ScheduleHazardRecognizer;
@@ -785,6 +786,13 @@ public:
     /// target to override the creation of SUnits and dependence edges. The
     /// default uses ScheduleDAGInstrs::buildSchedGraph.
     virtual void buildGraph(SwingSchedulerDAG &SSD, AAResults *AA);
+
+    /// Add the true dependence \p Dep from the PHI \p Def to its user \p Use
+    /// in \p SSD, with the latency adjusted by the target. \p Dep has latency
+    /// zero on entry and \p UseOpIdx is the operand index of the use in \p Use.
+    /// The default uses TargetSubtargetInfo::adjustSchedDependency.
+    virtual void addPhiDataDependence(SwingSchedulerDAG &SSD, SUnit *Def,
+                                      SUnit *Use, unsigned UseOpIdx, SDep Dep);
 
     /// Return true if the given instruction should not be pipelined and should
     /// be ignored. An example could be a loop comparison, or induction variable

@@ -27,6 +27,8 @@
 
 namespace llvm {
 
+struct AIEBaseInstrInfo;
+class InstrItineraryData;
 class raw_ostream;
 
 namespace AIE {
@@ -107,6 +109,9 @@ class DataDependenceHelper : public ScheduleDAGInstrs {
   /// Ordered list of DAG postprocessing steps.
   std::vector<std::unique_ptr<ScheduleDAGMutation>> Mutations;
   const MachineSchedContext &Context;
+  // The AIE instruction info and itineraries of the function.
+  const AIEBaseInstrInfo *AIETII;
+  const InstrItineraryData *Itins;
   // Set at the start of buildEdges() and consulted by the reg-dep helpers.
   bool TrackLaneMasks = false;
 
@@ -136,9 +141,10 @@ class DataDependenceHelper : public ScheduleDAGInstrs {
   void addVRegUseDeps(SUnit *SU, unsigned OperIdx);
   bool handleRegEvents(SUnit *SU);
 
-  // Set the latency of Dep before AIE-specific adjustment.
-  void setBaseLatency(SUnit *Src, int SrcOpIdx, SUnit *Dst, int DstOpIdx,
-                      SDep &Dep) const;
+  // Set the latency of Dep: the base latency, replaced by the signed operand
+  // latency of the itineraries where those describe both operands.
+  void setLatency(SUnit *Src, int SrcOpIdx, SUnit *Dst, int DstOpIdx,
+                  SDep &Dep) const;
   // Compute the latency of a data dependence from AIE itinerary data.
   // UseMI may be null for an unknown user.
   int computeDataLatency(const MachineInstr &DefMI, unsigned DefOpIdx,
@@ -151,8 +157,19 @@ class DataDependenceHelper : public ScheduleDAGInstrs {
   /// through the edge builders to centralise latency computation.
   InstrEvents collectEvents(SUnit *SU);
 
+  // Add a chain edge between SUa and SUb if mayAlias() does not deny it.
+  void addChainDependency(SUnit *SUa, SUnit *SUb, unsigned Latency = 0);
+  // Add chain dependencies from all SUs in SUs to SU.
+  void addChainDependencies(SUnit *SU, SUList &SUs, unsigned Latency);
+  // Add chain dependencies from all SUs in Val2SUsMap to SU.
+  void addChainDependencies(SUnit *SU, Value2SUsMap &Val2SUsMap);
+  // Add chain dependencies from all SUs mapped to V in Val2SUsMap to SU.
+  void addChainDependencies(SUnit *SU, Value2SUsMap &Val2SUsMap, ValueType V);
+
 protected:
-  bool mayAlias(SUnit *SUa, SUnit *SUb, bool TBAA) override;
+  // Memory disambiguation that applies the configuration of this helper on
+  // top of the alias analysis wrapper of ScheduleDAGInstrs.
+  virtual bool mayAlias(SUnit *SUa, SUnit *SUb, bool TBAA);
 
   /// True when the cycle of \p SU is set externally, e.g. by the pipeliner.
   virtual bool isFixedNode(const SUnit &SU) const { return false; }

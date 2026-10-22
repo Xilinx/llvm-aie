@@ -593,6 +593,8 @@ bool ScheduleDAGInstrs::mayAlias(SUnit *SUa, SUnit *SUb, bool UseTBAA) {
   return SUa->getInstr()->mayAlias(getAAForDep(), *SUb->getInstr(), UseTBAA);
 }
 
+bool ScheduleDAGInstrs::shouldUseTBAA() { return UseTBAA; }
+
 void ScheduleDAGInstrs::addChainDependency (SUnit *SUa, SUnit *SUb,
                                             unsigned Latency) {
   if (mayAlias(SUa, SUb, UseTBAA)) {

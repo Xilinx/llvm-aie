@@ -2116,6 +2116,14 @@ void TargetInstrInfo::PipelinerLoopInfo::buildGraph(SwingSchedulerDAG &SSD,
   SSD.buildSchedGraph(AA);
 }
 
+void TargetInstrInfo::PipelinerLoopInfo::addPhiDataDependence(
+    SwingSchedulerDAG &SSD, SUnit *Def, SUnit *Use, unsigned UseOpIdx,
+    SDep Dep) {
+  SSD.MF.getSubtarget().adjustSchedDependency(Def, 0, Use, UseOpIdx, Dep,
+                                              SSD.getSchedModel());
+  Use->addPred(Dep);
+}
+
 void TargetInstrInfo::mergeOutliningCandidateAttributes(
     Function &F, std::vector<outliner::Candidate> &Candidates) const {
   // Include target features from an arbitrary candidate for the outlined
