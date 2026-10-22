@@ -22,6 +22,7 @@
 #include "AIEMaxNumRegUnits.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/SmallBitVector.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/Register.h"
 #include "llvm/MC/MCRegister.h"
@@ -225,6 +226,50 @@ private:
   using ComparatorFunction =
       std::function<bool(const VRegMetrics &, const VRegMetrics &)>;
 
+  /// Live ranges under allocation and the occupancy they share. Used by both
+  /// the heuristic and the exact search.
+  struct Placement {
+    const DenseMap<unsigned, AIE::LivenessVector> &LiveLanes;
+    const DenseSet<MCRegister> &AvailableRegs;
+    AllocState &State;
+    DenseMap<Register, MCRegister> &OutAssign;
+    SmallBitVector Placed;
+    SmallVector<const RegLiveRange *, 32> Ranges;
+
+    /// Unplaced virtual range chosen by Minimum Remaining Values.
+    /// Cands is empty when the chosen range has no legal register.
+    struct Choice {
+      const RegLiveRange *LR = nullptr;
+      std::vector<Register> Cands;
+    };
+
+    /// Collect the live ranges that take part in allocation.
+    Placement(const DenseMap<unsigned, AIE::LivenessVector> &Lanes,
+              const RegLiveRangeTracker &Tracker, AllocState &InState,
+              DenseMap<Register, MCRegister> &InAssign);
+
+    /// Per-cycle lane masks of LR.
+    const AIE::LivenessVector &masks(const RegLiveRange &LR) const;
+
+    /// Admissible, available registers that LR can still occupy.
+    std::vector<Register> candidates(const RegLiveRange &LR) const;
+
+    /// Assign PhysReg to LR and mark its units occupied.
+    void place(const RegLiveRange &LR, Register PhysReg);
+
+    /// Undo the assignment of LR and restore the saved occupancy.
+    void unplace(const RegLiveRange &LR, const SmallVector<PartSet, 8> &Saved);
+
+    /// Place every range that has exactly one legal register, repeating until
+    /// no new forced choice appears. Returns false when a range has none.
+    bool drainForcedChoices(const TargetRegisterInfo &TRI);
+
+    /// Unplaced virtual range with the fewest legal registers. OrderFn breaks
+    /// ties. nullopt when every virtual range is already placed.
+    std::optional<Choice>
+    selectMinRemaining(const ComparatorFunction &OrderFn) const;
+  };
+
 public:
   /// Allocate physical registers for live ranges.
   ///
@@ -336,13 +381,6 @@ private:
         B.PureInterferenceDegree * 1000 + B.AliasingInterferenceDegree;
     return IntA > IntB;
   }
-
-  /// Get allocatable physical registers for a live range.
-  /// Returns the intersection of AdmissibleRegs (semantic constraint from
-  /// instruction encoding) and AvailableRegs (global availability).
-  static std::vector<Register>
-  getCandidatePhysRegs(const DenseSet<MCRegister> &AdmissibleRegs,
-                       const DenseSet<MCRegister> &AvailableRegs);
 
   /// Dump live range metrics for debugging.
   static void dumpVRegMetrics(const DenseMap<unsigned, VRegMetrics> &AllMetrics,
