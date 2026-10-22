@@ -54,6 +54,7 @@ struct AIE2PSRegisterInfo : public AIE2PSGenRegisterInfo {
   const TargetRegisterClass *
   getGPRRegClass(const MachineFunction &MF) const override;
   std::optional<MCRegister> getControlRegister(unsigned Idx) const override;
+  std::optional<MCRegister> getStatusRegister(unsigned Idx) const override;
 
   /// Given a register bank and operand type, return the smallest register class
   /// that can hold a value on that bank.
@@ -72,6 +73,8 @@ struct AIE2PSRegisterInfo : public AIE2PSGenRegisterInfo {
 
   unsigned matchControlRegisterBitwidth(Register CtrlReg,
                                         unsigned SrcConstVal) const override;
+  unsigned matchStatusRegisterBitwidth(Register StatusReg,
+                                       unsigned SrcConstVal) const override;
 
   Register getUnpackSignCtrlReg() const override;
 
