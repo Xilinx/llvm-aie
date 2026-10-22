@@ -52,9 +52,6 @@ void DataDependenceHelper::addPhysRegDataDeps(SUnit *SU, unsigned OperIdx) {
   const MachineOperand &MO = SU->getInstr()->getOperand(OperIdx);
   assert(MO.isDef() && "expect physreg def");
   const Register Reg = MO.getReg();
-  const MCInstrDesc &DefMIDesc = SU->getInstr()->getDesc();
-  const bool ImplicitPseudoDef = (OperIdx >= DefMIDesc.getNumOperands() &&
-                                  !DefMIDesc.hasImplicitDefOfPhysReg(Reg));
   for (const MCRegUnit Unit : TRI->regunits(Reg)) {
     for (RegUnit2SUnitsMap::iterator I = Uses.find(Unit); I != Uses.end();
          ++I) {
@@ -62,27 +59,16 @@ void DataDependenceHelper::addPhysRegDataDeps(SUnit *SU, unsigned OperIdx) {
       if (UseSU == SU)
         continue;
       const int UseOpIdx = I->OpIdx;
-      MachineInstr *UseInstr = nullptr;
-      bool ImplicitPseudoUse = false;
       SDep Dep;
       if (UseOpIdx < 0) {
         Dep = SDep(SU, SDep::Artificial);
       } else {
         SU->hasPhysRegDefs = true;
-        UseInstr = UseSU->getInstr();
-        const Register UseReg = UseInstr->getOperand(UseOpIdx).getReg();
-        const MCInstrDesc &UseMIDesc = UseInstr->getDesc();
-        ImplicitPseudoUse = UseOpIdx >= (int)UseMIDesc.getNumOperands() &&
-                            !UseMIDesc.hasImplicitUseOfPhysReg(UseReg);
+        const Register UseReg =
+            UseSU->getInstr()->getOperand(UseOpIdx).getReg();
         Dep = SDep(SU, SDep::Data, UseReg);
       }
-      if (!ImplicitPseudoDef && !ImplicitPseudoUse) {
-        Dep.setLatency(SchedModel.computeOperandLatency(SU->getInstr(), OperIdx,
-                                                        UseInstr, UseOpIdx));
-      } else {
-        Dep.setLatency(0);
-      }
-      adjustAndAddPred(UseSU, Dep, OperIdx, UseOpIdx, &SchedModel);
+      addDep(SU, OperIdx, UseSU, UseOpIdx, Dep);
     }
   }
 }
@@ -106,10 +92,7 @@ void DataDependenceHelper::addPhysRegDeps(SUnit *SU, unsigned OperIdx) {
       if (DefSU != SU &&
           (Kind != SDep::Output || !MO.isDead() || !DefMO.isDead())) {
         SDep Dep(SU, Kind, DefMO.getReg());
-        if (Kind != SDep::Anti)
-          Dep.setLatency(
-              SchedModel.computeOutputLatency(MI, OperIdx, DefInstr));
-        adjustAndAddPred(DefSU, Dep, OperIdx, I->OpIdx, &SchedModel);
+        addDep(SU, OperIdx, DefSU, I->OpIdx, Dep);
       }
     }
   }
@@ -186,11 +169,8 @@ void DataDependenceHelper::addVRegDefDeps(SUnit *SU, unsigned OperIdx) {
       }
       if ((LaneMask & DefLaneMask).any()) {
         SUnit *UseSU = I->SU;
-        MachineInstr *Use = UseSU->getInstr();
         SDep Dep(SU, SDep::Data, Reg);
-        Dep.setLatency(SchedModel.computeOperandLatency(MI, OperIdx, Use,
-                                                        I->OperandIndex));
-        adjustAndAddPred(UseSU, Dep, OperIdx, I->OperandIndex, &SchedModel);
+        addDep(SU, OperIdx, UseSU, I->OperandIndex, Dep);
       }
       LaneMask &= ~KillLaneMask;
       if (LaneMask.any()) {
@@ -214,9 +194,7 @@ void DataDependenceHelper::addVRegDefDeps(SUnit *SU, unsigned OperIdx) {
     if (DefSU == SU)
       continue;
     SDep Dep(SU, SDep::Output, Reg);
-    Dep.setLatency(
-        SchedModel.computeOutputLatency(MI, OperIdx, DefSU->getInstr()));
-    DefSU->addPred(Dep);
+    addDep(SU, OperIdx, DefSU, V2SU.OperandIndex, Dep);
     const LaneBitmask OverlapMask = V2SU.LaneMask & LaneMask;
     const LaneBitmask NonOverlapMask = V2SU.LaneMask & ~LaneMask;
     V2SU.SU = SU;
@@ -244,7 +222,7 @@ void DataDependenceHelper::addVRegUseDeps(SUnit *SU, unsigned OperIdx) {
     if (V2SU.SU == SU)
       continue;
     SDep Dep(SU, SDep::Anti, Reg);
-    adjustAndAddPred(V2SU.SU, Dep, OperIdx, V2SU.OperandIndex, &SchedModel);
+    addDep(SU, OperIdx, V2SU.SU, V2SU.OperandIndex, Dep);
   }
 }
 
@@ -325,6 +303,104 @@ InstrEvents DataDependenceHelper::collectEvents(SUnit *SU) {
     }
   }
   return Events;
+}
+
+int DataDependenceHelper::computeDataLatency(const MachineInstr &DefMI,
+                                             unsigned DefOpIdx,
+                                             const MachineInstr *UseMI,
+                                             unsigned UseOpIdx) const {
+  const auto &ST = static_cast<const AIEBaseSubtarget &>(MF.getSubtarget());
+  const auto *TII = static_cast<const AIEBaseInstrInfo *>(ST.getInstrInfo());
+  const InstrItineraryData *Itins = ST.getInstrItineraryData();
+
+  // Mirror TargetSchedModel::computeOperandLatency for itineraries. Negative
+  // latencies are capped at 0 by getOperandLatency; adjustSchedDependency
+  // restores the signed value for operands covered by the itinerary.
+  std::optional<unsigned> OperLatency;
+  if (UseMI) {
+    OperLatency =
+        TII->getOperandLatency(Itins, DefMI, DefOpIdx, *UseMI, UseOpIdx);
+  } else {
+    const unsigned DefClass = DefMI.getDesc().getSchedClass();
+    OperLatency = Itins->getOperandCycle(DefClass, DefOpIdx);
+  }
+  if (OperLatency)
+    return static_cast<int>(*OperLatency);
+
+  const int DefaultDefLatency =
+      static_cast<int>(TII->defaultDefLatency(ST.getSchedModel(), DefMI));
+  return std::max(computeLatency(&DefMI), DefaultDefLatency);
+}
+
+// An operand that was added dynamically, i.e. it is not described by the
+// instruction descriptor, carries no latency information.
+static bool isImplicitPseudoOperand(const MachineInstr &MI, unsigned OpIdx) {
+  const MCInstrDesc &Desc = MI.getDesc();
+  const MachineOperand &MO = MI.getOperand(OpIdx);
+  const Register Reg = MO.getReg();
+  const bool Described = MO.isDef() ? Desc.hasImplicitDefOfPhysReg(Reg)
+                                    : Desc.hasImplicitUseOfPhysReg(Reg);
+  return OpIdx >= Desc.getNumOperands() && !Described;
+}
+
+void DataDependenceHelper::setBaseLatency(SUnit *Src, int SrcOpIdx, SUnit *Dst,
+                                          int DstOpIdx, SDep &Dep) const {
+  switch (Dep.getKind()) {
+  case SDep::Output:
+    // Latency of WAW dependences is entirely given by adjustSchedDependency.
+    Dep.setSignedLatency(0);
+    return;
+  case SDep::Data:
+    break;
+  case SDep::Order:
+    // Only artificial edges to a physical register use carry a latency.
+    if (!Dep.isArtificial())
+      return;
+    break;
+  default:
+    return;
+  }
+
+  const MachineInstr &DefMI = *Src->getInstr();
+  if (DefMI.getOperand(SrcOpIdx).getReg().isPhysical()) {
+    const bool PseudoDef = isImplicitPseudoOperand(DefMI, SrcOpIdx);
+    const bool PseudoUse =
+        DstOpIdx >= 0 && isImplicitPseudoOperand(*Dst->getInstr(), DstOpIdx);
+    if (PseudoDef || PseudoUse) {
+      Dep.setLatency(0);
+      return;
+    }
+  }
+  // Artificial edges to a physical register use have no use operand.
+  const MachineInstr *UseMI = Dep.isArtificial() ? nullptr : Dst->getInstr();
+  Dep.setSignedLatency(computeDataLatency(DefMI, SrcOpIdx, UseMI, DstOpIdx));
+}
+
+void DataDependenceHelper::addDep(SUnit *Src, int SrcOpIdx, SUnit *Dst,
+                                  int DstOpIdx, SDep Dep) {
+  // WAW dependences on virtual registers carry no latency.
+  if (Dep.getKind() == SDep::Output && !Dep.getReg().isPhysical()) {
+    Dep.setSignedLatency(0);
+    Dst->addPred(Dep);
+    return;
+  }
+
+  setBaseLatency(Src, SrcOpIdx, Dst, DstOpIdx, Dep);
+
+  // Call the non-virtual AIE-specific latency adjustment directly, bypassing
+  // the virtual TargetSubtargetInfo::adjustSchedDependency dispatch.
+  const auto &ST = static_cast<const AIEBaseSubtarget &>(MF.getSubtarget());
+  ST.adjustSchedDependency(*ST.getInstrItineraryData(), Src, SrcOpIdx, Dst,
+                           DstOpIdx, Dep);
+  Dst->addPred(Dep);
+}
+
+int DataDependenceHelper::computeLatency(const MachineInstr *MI) const {
+  const auto &ST = static_cast<const AIEBaseSubtarget &>(MF.getSubtarget());
+  const InstrItineraryData *Itins = ST.getInstrItineraryData();
+  assert(Itins && !Itins->isEmpty() &&
+         "AIE always has complete itinerary data");
+  return static_cast<int>(ST.getInstrInfo()->getInstrLatency(Itins, *MI));
 }
 
 void DataDependenceHelper::buildEdges() {

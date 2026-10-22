@@ -117,6 +117,8 @@ class DataDependenceHelper : public ScheduleDAGInstrs {
   // When true, all memory accesses in the current region are proved
   // non-aliasing and chain dependencies can be suppressed entirely.
   bool SafeToIgnoreMemDeps = false;
+  // When true, singly defined virtual registers get no output or anti
+  // dependences.
   bool AbandonSingleDefDeps = false;
   // When true, a physical register def in a fixed node does not erase the
   // earlier defs and uses it would otherwise stand in for by transitivity.
@@ -133,6 +135,18 @@ class DataDependenceHelper : public ScheduleDAGInstrs {
   void addVRegDefDeps(SUnit *SU, unsigned OperIdx);
   void addVRegUseDeps(SUnit *SU, unsigned OperIdx);
   bool handleRegEvents(SUnit *SU);
+  // Compute the latency of Dep according to the configuration of this helper
+  // and add it to Dst. This merges the computation of the base latency and
+  // the AIE-specific adjustment, without going through TargetSchedModel or
+  // the virtual TargetSubtargetInfo::adjustSchedDependency dispatch.
+  void addDep(SUnit *Src, int SrcOpIdx, SUnit *Dst, int DstOpIdx, SDep Dep);
+  // Set the latency of Dep before AIE-specific adjustment.
+  void setBaseLatency(SUnit *Src, int SrcOpIdx, SUnit *Dst, int DstOpIdx,
+                      SDep &Dep) const;
+  // Compute the latency of a data dependence from AIE itinerary data.
+  // UseMI may be null for an unknown user.
+  int computeDataLatency(const MachineInstr &DefMI, unsigned DefOpIdx,
+                         const MachineInstr *UseMI, unsigned UseOpIdx) const;
 
   /// Collect per-operand events for SU into an InstrEvents record using
   /// AIE itinerary data. The itinerary class is resolved once per
@@ -153,7 +167,6 @@ public:
   // of the loop body). Zero (default) disables the virtual-unroll alias check.
   void setPipeliningNInstr(unsigned N) { PipeliningNInstr = N; }
   void setSafeToIgnoreMemDeps(bool V) { SafeToIgnoreMemDeps = V; }
-
   void setAbandonSingleDefDeps(bool V) { AbandonSingleDefDeps = V; }
   void setRetainFixedPhysRegDeps(bool V) { RetainFixedPhysRegDeps = V; }
 
