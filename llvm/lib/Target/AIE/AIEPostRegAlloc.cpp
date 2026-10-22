@@ -16,6 +16,7 @@
 #include "AIELivenessVector.h"
 #include "AIERegDefUseTracker.h"
 #include "llvm/CodeGen/TargetRegisterInfo.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
@@ -27,6 +28,11 @@
 
 using namespace llvm;
 using namespace llvm::AIE;
+
+static cl::opt<unsigned> PostRegAllocExactBudget(
+    "aie-postregalloc-exact-budget", cl::Hidden, cl::init(0),
+    cl::desc("Node budget for the exact post-regalloc search. "
+             "0 uses the heuristic strategies"));
 
 // Initialize allocation state and compute interference graphs.
 void AIEPostRegAlloc::AllocState::init(
@@ -451,6 +457,97 @@ AIEPostRegAlloc::AllocResult AIEPostRegAlloc::tryAllocate(
   return AllocResult();
 }
 
+AIEPostRegAlloc::ExactResult AIEPostRegAlloc::tryAllocateExact(
+    const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex,
+    const RegLiveRangeTracker &RegTracker, const TargetRegisterInfo &TRI,
+    AllocState &State, DenseMap<Register, MCRegister> &OutAssign) {
+
+  if (PostRegAllocExactBudget == 0)
+    return ExactResult::Unknown;
+
+  std::fill(State.CycleOccupancy.begin(), State.CycleOccupancy.end(),
+            PartSet());
+  OutAssign.clear();
+
+  Placement Work(LiveLanesByLRIndex, RegTracker, State, OutAssign);
+
+  // Pin non-virtual ranges that have exactly one legal register. They already
+  // occupy a register the pool can hand out and are not part of the
+  // permutation.
+  for (const RegLiveRange *LR : Work.Ranges) {
+    if (LR->getVReg().isValid() || Work.Placed.test(LR->getIndex()))
+      continue;
+    const std::vector<Register> Cands = Work.candidates(*LR);
+    if (Cands.empty()) {
+      LLVM_DEBUG(dbgs() << "Exact: infeasible, pinned range has no register\n");
+      return ExactResult::Infeasible;
+    }
+    if (Cands.size() == 1) {
+      LLVM_DEBUG(dbgs() << "  Pinned: LR#" << LR->getIndex() << " -> "
+                        << printReg(Cands[0], &TRI) << "\n");
+      Work.place(*LR, Cands[0]);
+    }
+  }
+
+  SmallVector<const RegLiveRange *, 32> Order;
+  for (const RegLiveRange *LR : Work.Ranges) {
+    if (!LR->getVReg().isValid() || Work.Placed.test(LR->getIndex()))
+      continue;
+    Order.push_back(LR);
+  }
+  llvm::sort(Order, [](const RegLiveRange *A, const RegLiveRange *B) {
+    return A->getIndex() < B->getIndex();
+  });
+
+  const SmallBitVector Pinned = Work.Placed;
+  const SmallVector<PartSet, 8> SavedOccupancy = State.CycleOccupancy;
+  const DenseMap<Register, MCRegister> SavedAssign = OutAssign;
+
+  unsigned Nodes = 0;
+  ExactResult Outcome = ExactResult::Infeasible;
+  const auto ByIndex = [](const RegLiveRange *A, const RegLiveRange *B) {
+    return A->getIndex() < B->getIndex();
+  };
+
+  do {
+    State.CycleOccupancy = SavedOccupancy;
+    Work.Placed = Pinned;
+    OutAssign = SavedAssign;
+
+    bool Failed = false;
+    for (const RegLiveRange *LR : Order) {
+      if (Nodes == PostRegAllocExactBudget) {
+        Outcome = ExactResult::Unknown;
+        Failed = true;
+        break;
+      }
+      ++Nodes;
+
+      const std::vector<Register> Cands = Work.candidates(*LR);
+      if (Cands.empty()) {
+        Failed = true;
+        break;
+      }
+      Work.place(*LR, Cands.front());
+    }
+
+    if (Outcome == ExactResult::Unknown)
+      break;
+    if (!Failed) {
+      Outcome = ExactResult::Feasible;
+      break;
+    }
+  } while (std::next_permutation(Order.begin(), Order.end(), ByIndex));
+
+  const char *Name = Outcome == ExactResult::Feasible     ? "feasible"
+                     : Outcome == ExactResult::Infeasible ? "infeasible"
+                                                          : "unknown";
+  LLVM_DEBUG(dbgs() << "Exact: " << Name << " nodes=" << Nodes << "\n");
+  if (Outcome != ExactResult::Feasible)
+    OutAssign.clear();
+  return Outcome;
+}
+
 // Dump virtual register metrics for debugging.
 void AIEPostRegAlloc::dumpVRegMetrics(
     const DenseMap<unsigned, VRegMetrics> &AllMetrics,
@@ -570,6 +667,19 @@ PostRegAllocResult AIEPostRegAlloc::allocate(
 
   // Dump virtual register metrics when debug output is enabled.
   LLVM_DEBUG(dumpVRegMetrics(State.AllMetrics, RegTracker, TRI));
+
+  // A non-zero budget selects the exact search and skips the heuristics.
+  if (PostRegAllocExactBudget > 0) {
+    LLVM_DEBUG(dbgs() << "Trying exact search\n");
+    ExactResult ER = tryAllocateExact(LiveLanesByLRIndex, RegTracker, TRI,
+                                      State, Assignments);
+    if (ER == ExactResult::Feasible) {
+      LLVM_DEBUG(dbgs() << "Allocation succeeded with exact search\n");
+      return PostRegAllocResult("exact search", std::move(Assignments));
+    }
+    LLVM_DEBUG(dbgs() << "Exact search failed\n");
+    return PostRegAllocResult();
+  }
 
   // Define the allocation strategies to try.
   struct AllocationStrategy {
