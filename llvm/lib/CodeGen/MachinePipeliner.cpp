@@ -686,7 +686,7 @@ void SwingSchedulerDAG::setMAX_II() {
 /// We override the schedule function in ScheduleDAGInstrs to implement the
 /// scheduling part of the Swing Modulo Scheduling algorithm.
 void SwingSchedulerDAG::schedule() {
-  buildSchedGraph(AA);
+  LoopPipelinerInfo->buildGraph(*this, AA);
   const LoopCarriedEdges LCE = addLoopCarriedDependences();
   updatePhiDependences();
   Topo.InitDAGTopologicalSorting();

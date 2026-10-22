@@ -14,6 +14,7 @@
 
 #include "AIEBasePipelinerLoopInfo.h"
 #include "AIEBaseInstrInfo.h"
+#include "AIEDataDependenceHelper.h"
 #include "AIELoopClass.h"
 #include "AIESlotStatistics.h"
 #include "Utils/AIELoopUtils.h"
@@ -251,6 +252,24 @@ MachineBasicBlock *AIEBasePipelinerLoopInfo::getLoopStartBlock() {
     LoopStartBlock = Pred;
   }
   return LoopStartBlock;
+}
+
+void AIEBasePipelinerLoopInfo::buildGraph(SwingSchedulerDAG &SSD,
+                                          AAResults *AA) {
+  // Same preamble as ScheduleDAGInstrs::buildSchedGraph.
+  SSD.initSUnitsPublic();
+  SSD.setExitSU();
+  SSD.makeMaps();
+  SSD.recordDbgInstrs();
+
+  MachineFunction &MF = *LoopBlock->getParent();
+  MachineSchedContext Context;
+  Context.MF = &MF;
+  Context.AA = MF.getSubtarget().useAA() ? AA : nullptr;
+  AIE::DataDependenceHelper DDH(Context, /*AddMutators=*/false,
+                                /*ExactLatencies=*/false);
+  DDH.setAbandonSingleDefDeps(true);
+  DDH.buildEdges(SSD, /*TrackLaneMasks=*/false);
 }
 
 bool AIEBasePipelinerLoopInfo::shouldUseSchedule(SwingSchedulerDAG &SSD,

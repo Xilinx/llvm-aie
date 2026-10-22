@@ -118,6 +118,10 @@ public:
     return false;
   }
 
+  /// Build the dependence graph with the AIE DataDependenceHelper instead of
+  /// ScheduleDAGInstrs::buildSchedGraph.
+  void buildGraph(SwingSchedulerDAG &SSD, AAResults *AA) override;
+
   bool shouldUseSchedule(SwingSchedulerDAG &SSD, SMSchedule &SMS) override;
 
   bool canAcceptII(SMSchedule &SMS) override;

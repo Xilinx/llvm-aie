@@ -45,6 +45,7 @@
 
 namespace llvm {
 
+class AAResults;
 class ResourceCycle;
 class InstrItineraryData;
 class LiveIntervals;
@@ -779,6 +780,12 @@ public:
     }
 
     virtual ~PipelinerLoopInfo();
+
+    /// Build the dependence graph of the loop body in \p SSD. This allows a
+    /// target to override the creation of SUnits and dependence edges. The
+    /// default uses ScheduleDAGInstrs::buildSchedGraph.
+    virtual void buildGraph(SwingSchedulerDAG &SSD, AAResults *AA);
+
     /// Return true if the given instruction should not be pipelined and should
     /// be ignored. An example could be a loop comparison, or induction variable
     /// update with no users being pipelined.

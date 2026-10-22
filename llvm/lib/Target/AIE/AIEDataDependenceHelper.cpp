@@ -182,7 +182,7 @@ void DataDependenceHelper::addVRegDefDeps(SUnit *SU, unsigned OperIdx) {
     }
   }
 
-  if (false && MRI.hasOneDef(Reg))
+  if (AbandonSingleDefDeps && MRI.hasOneDef(Reg))
     return;
 
   LaneBitmask LaneMask = DefLaneMask;
