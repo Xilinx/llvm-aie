@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 
 #include "mlir/Dialect/Quant/IR/QuantTypes.h"
@@ -109,7 +112,8 @@ mlir::quant::fakeQuantAttrsToType(Location loc, unsigned numBits, double rmin,
                                   double rmax, bool narrowRange,
                                   Type expressedType, bool isSigned) {
   MLIRContext *ctx = expressedType.getContext();
-  unsigned flags = isSigned ? QuantizationFlags::Signed : 0;
+  unsigned flags =
+      isSigned ? QuantizationFlags::Signed : QuantizationFlags::None;
   Type storageType;
   int64_t qmin;
   int64_t qmax;
@@ -177,7 +181,8 @@ UniformQuantizedPerAxisType mlir::quant::fakeQuantAttrsToType(
     zeroPoints.push_back(nudgedZeroPoint);
   }
 
-  unsigned flags = isSigned ? QuantizationFlags::Signed : 0;
+  unsigned flags =
+      isSigned ? QuantizationFlags::Signed : QuantizationFlags::None;
   return UniformQuantizedPerAxisType::getChecked(
       loc, flags, storageType, expressedType, scales, zeroPoints,
       quantizedDimension, qmin, qmax);
