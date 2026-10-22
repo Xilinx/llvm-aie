@@ -120,8 +120,11 @@ BitVector AIE2RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
 }
 
 bool AIE2RegisterInfo::isSimplifiableReservedReg(MCRegister PhysReg) const {
-  return SimplifyCRSRRegs && (AIE2::mCRmRegClass.contains(PhysReg) ||
-                              AIE2::mSRmRegClass.contains(PhysReg));
+  // The instructions that set a sticky flag OR into it: they do not overwrite
+  // the value of an earlier write.
+  return SimplifyCRSRRegs && !isReservedStickyReg(PhysReg) &&
+         (AIE2::mCRmRegClass.contains(PhysReg) ||
+          AIE2::mSRmRegClass.contains(PhysReg));
 }
 
 bool AIE2RegisterInfo::isReservedStickyReg(MCRegister PhysReg) const {

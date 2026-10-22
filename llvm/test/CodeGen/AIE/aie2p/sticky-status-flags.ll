@@ -13,12 +13,12 @@
 define i32 @srs_flag(<16 x i32> %acc, i32 %sh, ptr %out) {
 ; CHECK-LABEL: srs_flag:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nops ; mov s0, r1
+; CHECK-NEXT:    nopx ; mov s0, r1
 ; CHECK-NEXT:    vmov bmll0, x0
 ; CHECK-NEXT:    ret lr; mov crsrsmode, #0
 ; CHECK-NEXT:    vst.srs.2x bmll0, s0, srssign1, [p0, #0] // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    mov srsrs_of, #0 // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    mov r0, srsrs_of // Delay Slot 1
 entry:
@@ -33,13 +33,13 @@ define i32 @ups_flag(ptr %in, i32 %sh, ptr %out) {
 ; CHECK-LABEL: ups_flag:
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    vlda.ups.2x bmll0, s0, upssign1, [p0, #0]; nopb ; nops ; nopxm ; nopv
-; CHECK-NEXT:    nopx
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mov s0, r1
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    mov crupsmode, #0 // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    mov srups_of, #0 // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    vst bmll0, [p1, #0] // Delay Slot 2
 ; CHECK-NEXT:    mov r0, srups_of // Delay Slot 1
@@ -55,9 +55,9 @@ entry:
 define i32 @nlf_flag(float %a, ptr %out) {
 ; CHECK-LABEL: nlf_flag:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopb ; invsqrt r1, r1; nopm ; nops
+; CHECK-NEXT:    nopa ; nopb ; invsqrt r1, r1; nopm
 ; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    mov srfpnlf, #0 // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    st r1, [p0, #0] // Delay Slot 2

@@ -771,6 +771,9 @@ bool AIE2PSRegisterInfo::isReservedStickyReg(MCRegister PhysReg) const {
   case AIE2PS::srUPS_of:
   case AIE2PS::srFifo_of:
   case AIE2PS::srFifo_uf:
+  case AIE2PS::srFPNlf:
+  case AIE2PS::srFPCnvFx2Fl:
+  case AIE2PS::srFPCnvFl2Fx:
     return true;
   default:
     return false;
@@ -778,8 +781,11 @@ bool AIE2PSRegisterInfo::isReservedStickyReg(MCRegister PhysReg) const {
 }
 
 bool AIE2PSRegisterInfo::isSimplifiableReservedReg(MCRegister PhysReg) const {
-  return SimplifyCRSRRegs && (AIE2PS::mSCmRegClass.contains(PhysReg) ||
-                              AIE2PS::mCRm_fileRegClass.contains(PhysReg));
+  // The instructions that set a sticky flag OR into it: they do not overwrite
+  // the value of an earlier write.
+  return SimplifyCRSRRegs && !isReservedStickyReg(PhysReg) &&
+         (AIE2PS::mSCmRegClass.contains(PhysReg) ||
+          AIE2PS::mCRm_fileRegClass.contains(PhysReg));
 }
 
 bool AIE2PSRegisterInfo::hasPhysRegProperty(MCRegister PhysReg,

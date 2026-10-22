@@ -26,6 +26,7 @@ body:             |
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:acc512 = COPY $bmll0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r1
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: $srsrs_of = MOV_alu_mv_mv_mv_sc_cg 0
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:es = COPY [[COPY1]]
     ; CHECK-NEXT: VST_SRS_2x_dmw_sts_srs_bm_idx_imm_srsSign1 [[COPY]], [[COPY3]], [[COPY2]], 0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1 :: (store (<16 x s16>))
     ; CHECK-NEXT: [[COPY4:%[0-9]+]]:er = COPY $srsrs_of
@@ -58,6 +59,7 @@ body:             |
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r1
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:es = COPY [[COPY1]]
+    ; CHECK-NEXT: [[VSRS_2x_mv_w_srs_bm_srsSign1_:%[0-9]+]]:vec256 = VSRS_2x_mv_w_srs_bm_srsSign1 [[COPY]], [[COPY3]], implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
     ; CHECK-NEXT: VST_SRS_2x_dmw_sts_srs_bm_idx_imm_srsSign1 [[COPY]], [[COPY3]], [[COPY2]], 0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1 :: (store (<16 x s16>))
     ; CHECK-NEXT: [[COPY4:%[0-9]+]]:er = COPY $srsrs_of
     ; CHECK-NEXT: $r0 = COPY [[COPY4]]

@@ -3,7 +3,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 #
 # RUN: llc -mtriple aie2 -run-pass=dead-mi-elimination %s -verify-machineinstrs -o - | FileCheck %s
 
@@ -491,14 +491,9 @@ body:             |
     %8:acc1024 = VLDA_UPS_S32_D8_ag_idx_imm %2:mss, %3:ep, 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign
 ...
 
-# Test 6 - Remove dead code with virtual registers.
-# Transform -
-# %1 = opcode                    |   |    |   %1 = opcode
-# %2 = opcode                    |   |    |   %2 = opcode
-# %3 = opcode %1 %2              |-> to ->|   -----------------
-# %4 = opcode %1 %2              |   |    |   -----------------
-# %5 = opcode %1 %2              |   |    |   -----------------
-# %6 = opcode %1 %2              |   |    |   %6 = opcode %1 %2
+# Test 6 - Keep the instructions that set a sticky status flag. Each VNEGSUB_F
+# ORs into srFPFlags, so it is not dead although its result is unused, and
+# neither are the writes of $crfpmask that it reads.
 ---
 name:            crfpmask_multiple
 alignment:       16
@@ -518,6 +513,17 @@ body:             |
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:ercr = COPY $crfpmask
     ; CHECK-NEXT: $crfpmask = COPY [[COPY2]]
     ; CHECK-NEXT: [[VNEGSUB_F:%[0-9]+]]:acc512 = VNEGSUB_F [[COPY]], [[COPY1]], [[MOV_RLC_imm10_pseudo]], implicit-def $srfpflags, implicit $crfpmask
+    ; CHECK-NEXT: $crfpmask = COPY [[COPY2]]
+    ; CHECK-NEXT: [[VNEGSUB_F1:%[0-9]+]]:acc512 = VNEGSUB_F [[COPY]], [[COPY1]], [[MOV_RLC_imm10_pseudo]], implicit-def $srfpflags, implicit $crfpmask
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:ercr = COPY $crfpmask
+    ; CHECK-NEXT: $crfpmask = COPY [[COPY3]]
+    ; CHECK-NEXT: [[VNEGSUB_F2:%[0-9]+]]:acc512 = VNEGSUB_F [[COPY]], [[COPY1]], [[MOV_RLC_imm10_pseudo]], implicit-def $srfpflags, implicit $crfpmask
+    ; CHECK-NEXT: $crfpmask = COPY [[COPY2]]
+    ; CHECK-NEXT: [[VNEGSUB_F3:%[0-9]+]]:acc512 = VNEGSUB_F [[COPY]], [[COPY1]], [[MOV_RLC_imm10_pseudo]], implicit-def $srfpflags, implicit $crfpmask
+    ; CHECK-NEXT: $crfpmask = COPY [[COPY2]]
+    ; CHECK-NEXT: [[VNEGSUB_F4:%[0-9]+]]:acc512 = VNEGSUB_F [[COPY]], [[COPY1]], [[MOV_RLC_imm10_pseudo]], implicit-def $srfpflags, implicit $crfpmask
+    ; CHECK-NEXT: $crfpmask = COPY [[COPY2]]
+    ; CHECK-NEXT: [[VNEGSUB_F5:%[0-9]+]]:acc512 = VNEGSUB_F [[COPY]], [[COPY1]], [[MOV_RLC_imm10_pseudo]], implicit-def $srfpflags, implicit $crfpmask
     %0:acc512 = COPY $bml1
     %1:acc512 = COPY $bml2
     %2:er = MOV_RLC_imm10_pseudo 28
