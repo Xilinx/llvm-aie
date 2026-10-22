@@ -161,6 +161,9 @@ getTrackablePhysRegDefsAndCopies(const MachineInstr &MI,
 
   if (!MI.isCopy())
     return {};
+  // TODO: A copy of a subregister holds another value than a copy of the
+  // register, but is tracked as one. Selection does not copy subregisters to
+  // these physical registers.
 
   // We can track the operands of a copy if one is virtual and the other is a
   // safe-to-simplify physical register. This is dictated by PhysRegCopyTracker.
@@ -196,6 +199,9 @@ bool trySimplifyCopy(MachineInstr &MI, const PhysRegCopyTracker &CT) {
     if (std::optional<Register> EquivVirtSrc;
         SrcReg.isPhysical() && (EquivVirtSrc = CT.getVirtualCopy(SrcReg))) {
       // Avoid defining a new VReg if another available one has the same value.
+      // TODO: SrcReg may keep only some bits of the VReg that it was assigned
+      // from, e.g. crSat keeps 2. The replacement is exact only if DstReg is
+      // just written back, whole, to SrcReg.
       MI.getMF()->getRegInfo().replaceRegWith(DstReg, *EquivVirtSrc);
       MI.eraseFromParent();
       return true;
