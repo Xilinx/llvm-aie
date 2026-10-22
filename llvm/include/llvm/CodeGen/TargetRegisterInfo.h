@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Modifications (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its
+// Modifications (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its
 // affiliates
 //
 //===----------------------------------------------------------------------===//
@@ -618,6 +618,16 @@ public:
   /// Returns true if PhysReg is unallocatable and constant throughout the
   /// function.  Used by MachineRegisterInfo::isConstantPhysReg().
   virtual bool isConstantPhysReg(MCRegister PhysReg) const { return false; }
+
+  /// Return true if the DAG builder should retain all prior defs and uses
+  /// of \p Reg in the tracking maps instead of clearing them when a new def
+  /// is seen. This disables the implicit transitive reduction for this
+  /// register, producing O(n^2) pairwise edges. Targets that selectively
+  /// relax dependencies via a ScheduleDAGMutation should override this for
+  /// the relevant registers.
+  virtual bool shouldRetainAllPhysRegDeps(MCRegister Reg) const {
+    return false;
+  }
 
   /// Returns true if the register class is considered divergent.
   virtual bool isDivergentRegClass(const TargetRegisterClass *RC) const {

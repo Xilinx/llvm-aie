@@ -314,6 +314,30 @@ void AIEPostRASchedStrategy::initializeBotScoreBoard() {
     BotHazardRec->blockCycleInScoreboard(Cycle - Depth);
   };
 
+  // Replay \p NumIterations back-to-back executions of \p Bundles from cycle 0
+  // and stop at \p Limit, as there's only so much future we need. Return the
+  // number of cycles replayed.
+  auto ReplayBundles = [=](ArrayRef<MachineBundle> Bundles, int NumIterations,
+                           int Limit) {
+    int Cycle = 0;
+    if (Limit <= 0)
+      return Cycle;
+    for (int Iteration = 0; Iteration < NumIterations; Iteration++) {
+      for (const MachineBundle &Bundle : Bundles) {
+        DEBUG_BLOCKS(dbgs() << "Cycle " << Cycle << " has "
+                            << Bundle.getInstrs().size() << " instrs\n");
+        for (MachineInstr *MI : Bundle.getInstrs()) {
+          assert(!TheTII->isMultiSlotPseudo(*MI) &&
+                 "Scheduled bundles must not contain MultiSlotPseudos");
+          InsertInCycle(*MI, Cycle);
+        }
+        if (++Cycle >= Limit)
+          return Cycle;
+      }
+    }
+    return Cycle;
+  };
+
   /// Do the final alignment of the scoreboard to the position where we
   /// want it. We started it at -Depth representing Cycle 0. The scoreboard
   /// should have CurrentCycle representing the last cycle of the current
@@ -373,7 +397,7 @@ void AIEPostRASchedStrategy::initializeBotScoreBoard() {
           MachineInstr *MI = SU.getInstr();
           if (!MI)
             continue;
-          const int StaticDepth = SE.getPostDepthOr(&SU, 0);
+          const int StaticDepth = SE.getPostDepths().getDistanceOr(&SU, 0);
           // Insert at every cycle from StaticDepth to FirstBlockedCycle-1.
           for (int C = StaticDepth; C < FirstBlockedCycle; C++)
             InsertInCycle(*MI, C);
@@ -381,22 +405,12 @@ void AIEPostRASchedStrategy::initializeBotScoreBoard() {
         continue;
       }
       DEBUG_BLOCKS(dbgs() << " Replay bundles\n");
-      int Cycle = 0;
-      const std::vector<MachineBundle> &TopBundles = SBS.getTop().Bundles;
-      for (auto &Bundle : TopBundles) {
-        // There's only so much future we need.
-        if (Cycle >= FirstBlockedCycle) {
-          break;
-        }
-        DEBUG_BLOCKS(dbgs() << "Cycle " << Cycle << " has "
-                            << Bundle.getInstrs().size() << " instrs\n");
-        for (MachineInstr *MI : Bundle.getInstrs()) {
-          assert(!TheTII->isMultiSlotPseudo(*MI) &&
-                 "Scheduled bundles must not contain MultiSlotPseudos");
-          InsertInCycle(*MI, Cycle);
-        }
-        Cycle++;
-      }
+      // A postpipelined loop's bundles are its steady-state loop body. Replay
+      // only the iterations guaranteed to run; later cycles stay blocked.
+      const int NumIterations = SBS.getGuaranteedIterations();
+      DEBUG_BLOCKS(dbgs() << " Replay iterations: " << NumIterations << "\n");
+      const int Cycle =
+          ReplayBundles(SBS.getTop().Bundles, NumIterations, FirstBlockedCycle);
       FirstBlockedCycle = std::min(FirstBlockedCycle, Cycle);
     }
   }
@@ -427,7 +441,8 @@ void AIEPostRASchedStrategy::initializeTopScoreBoard() {
   if (!IsFirstRegion)
     return;
 
-  auto LoopBundlesOpt = InterBlock.getSWPLoopBundlesForEpilogue(CurMBB);
+  BlockState &BS = InterBlock.getBlockState(CurMBB);
+  auto LoopBundlesOpt = InterBlock.getSWPLoopBundlesForEpilogue(BS);
 
   if (!LoopBundlesOpt)
     return;
