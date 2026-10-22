@@ -80,6 +80,10 @@ AIE2PSInstrInfo::getMovesImmToCtrlReg(MCRegister CtrlReg) const {
   return {AIE2PS::MOVX_mvx_cr_imm};
 }
 
+unsigned AIE2PSInstrInfo::getSetStatusRegisterOpcode() const {
+  return AIE2PS::MOV_alu_mv_mv_mv_sc_cg;
+}
+
 std::optional<int64_t> AIE2PSInstrInfo::getMoveImmOperand(unsigned Opcode,
                                                           int64_t Imm) const {
   switch (Opcode) {

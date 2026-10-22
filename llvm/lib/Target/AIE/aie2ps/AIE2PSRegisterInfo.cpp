@@ -876,25 +876,30 @@ AIE2PSRegisterInfo::getControlRegister(unsigned Idx) const {
       {24, AIE2PS::crFPNlfMask},
       {25, AIE2PS::crFPCnvFx2FlMask},
       {26, AIE2PS::crFPCnvFl2FxMask},
-      {27, AIE2PS::crF2BMask},
-      {28, AIE2PS::srCarry},
-      {29, AIE2PS::srSS0},
-      {30, AIE2PS::srMS0},
-      {31, AIE2PS::srSRS_of},
-      {32, AIE2PS::srUPS_of},
-      {33, AIE2PS::srSparse_of},
-      {34, AIE2PS::srFifo_of},
-      {35, AIE2PS::srFifo_uf},
-      {36, AIE2PS::srFPFlags},
-      {37, AIE2PS::srF2IFlags},
-      {38, AIE2PS::srF2FFlags},
-      {39, AIE2PS::srF2BFlags},
-      {40, AIE2PS::srFPNlf},
-      {41, AIE2PS::srFPCnvFx2Fl},
-      {42, AIE2PS::srFPCnvFl2Fx}};
+      {27, AIE2PS::crF2BMask}};
 
   auto It = ControlRegisterMap.find(Idx);
   if (It == ControlRegisterMap.end())
+    return std::nullopt;
+  return It->second;
+}
+
+std::optional<MCRegister>
+AIE2PSRegisterInfo::getStatusRegister(unsigned Idx) const {
+  // Status Register Map. Keys based on encoding.
+  // The map is based on the encoding in clang/lib/Headers/aie2ps/aie2ps_enums.h
+  static const std::unordered_map<unsigned, MCRegister> StatusRegisterMap = {
+      {28, AIE2PS::srCarry},     {29, AIE2PS::srSS0},
+      {30, AIE2PS::srMS0},       {31, AIE2PS::srSRS_of},
+      {32, AIE2PS::srUPS_of},    {33, AIE2PS::srSparse_of},
+      {34, AIE2PS::srFifo_of},   {35, AIE2PS::srFifo_uf},
+      {36, AIE2PS::srFPFlags},   {37, AIE2PS::srF2IFlags},
+      {38, AIE2PS::srF2FFlags},  {39, AIE2PS::srF2BFlags},
+      {40, AIE2PS::srFPNlf},     {41, AIE2PS::srFPCnvFx2Fl},
+      {42, AIE2PS::srFPCnvFl2Fx}};
+
+  auto It = StatusRegisterMap.find(Idx);
+  if (It == StatusRegisterMap.end())
     return std::nullopt;
   return It->second;
 }
@@ -944,5 +949,35 @@ AIE2PSRegisterInfo::matchControlRegisterBitwidth(Register CtrlReg,
     return SrcConstVal % (1 << 8);
   default:
     llvm_unreachable("Unknown control register.");
+  }
+}
+
+unsigned
+AIE2PSRegisterInfo::matchStatusRegisterBitwidth(Register StatusReg,
+                                                unsigned SrcConstVal) const {
+  // Modulo by width of status regs. To constrain the max possible value in
+  // the register according to register width.
+  switch (StatusReg) {
+  case AIE2PS::srCarry:
+  case AIE2PS::srSRS_of:
+  case AIE2PS::srUPS_of:
+  case AIE2PS::srSparse_of:
+  case AIE2PS::srFifo_of:
+  case AIE2PS::srFifo_uf:
+    return SrcConstVal % (1 << 1);
+  case AIE2PS::srFPFlags:
+  case AIE2PS::srF2IFlags:
+  case AIE2PS::srF2FFlags:
+  case AIE2PS::srF2BFlags:
+    return SrcConstVal % (1 << 5);
+  case AIE2PS::srFPNlf:
+  case AIE2PS::srFPCnvFx2Fl:
+  case AIE2PS::srFPCnvFl2Fx:
+    return SrcConstVal % (1 << 8);
+  case AIE2PS::srSS0:
+  case AIE2PS::srMS0:
+    return SrcConstVal;
+  default:
+    llvm_unreachable("Unknown status register.");
   }
 }

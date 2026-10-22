@@ -1900,6 +1900,10 @@ bool AIE2PSInstructionSelector::select(MachineInstr &I) {
       return selectSetControlRegister(I, MRI);
     case Intrinsic::aie2ps_get_ctrl_reg:
       return selectGetControlRegister(I, MRI);
+    case Intrinsic::aie2ps_set_status_reg:
+      return selectSetStatusRegister(I, MRI);
+    case Intrinsic::aie2ps_get_status_reg:
+      return selectGetStatusRegister(I, MRI);
     case Intrinsic::aie2ps_I256_v16_acc32_srs:
     case Intrinsic::aie2ps_I256_v32_acc32_srs:
     case Intrinsic::aie2ps_I512_v32_acc32_srs:
