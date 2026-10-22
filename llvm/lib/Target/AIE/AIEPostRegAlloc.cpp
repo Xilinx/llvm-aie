@@ -579,19 +579,19 @@ void AIEPostRegAlloc::dumpVRegMetrics(
 }
 
 // Main allocation entry point.
-bool AIEPostRegAlloc::allocate(
+PostRegAllocResult AIEPostRegAlloc::allocate(
     const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex, int II,
-    const RegLiveRangeTracker &RegTracker, const TargetRegisterInfo &TRI,
-    DenseMap<Register, MCRegister> &OutAssign,
-    std::string &OutWinningStrategyName) {
+    const RegLiveRangeTracker &RegTracker, const TargetRegisterInfo &TRI) {
 
   LLVM_DEBUG(dbgs() << "AIEPostRegAlloc::allocate for "
                     << LiveLanesByLRIndex.size() << " live ranges, II=" << II
                     << "\n");
 
+  DenseMap<Register, MCRegister> Assignments;
+
   if (LiveLanesByLRIndex.empty()) {
     LLVM_DEBUG(dbgs() << "No live ranges to allocate\n");
-    return true;
+    return PostRegAllocResult("Trivial", std::move(Assignments));
   }
 
   LLVM_DEBUG(dbgs() << "Available " << RegTracker.getAvailablePhysRegs().size()
@@ -640,13 +640,12 @@ bool AIEPostRegAlloc::allocate(
     LLVM_DEBUG(dbgs() << "Trying allocation with " << Strategy.Name << "\n");
 
     AllocResult Result = tryAllocate(LiveLanesByLRIndex, &RegTracker, TRI,
-                                     State, Strategy.OrderFn, OutAssign);
+                                     State, Strategy.OrderFn, Assignments);
 
     if (Result) {
-      OutWinningStrategyName = Strategy.Name;
       LLVM_DEBUG(dbgs() << "Allocation succeeded with " << Strategy.Name
                         << "\n");
-      return true;
+      return PostRegAllocResult(Strategy.Name, std::move(Assignments));
     }
 
     LLVM_DEBUG(dbgs() << Strategy.Name << " failed\n");
@@ -660,5 +659,5 @@ bool AIEPostRegAlloc::allocate(
   }
 
   LLVM_DEBUG(dbgs() << "All allocation attempts failed\n");
-  return false;
+  return PostRegAllocResult();
 }
