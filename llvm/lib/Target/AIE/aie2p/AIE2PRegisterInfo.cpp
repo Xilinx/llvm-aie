@@ -448,9 +448,10 @@ AIE2PRegisterInfo::getControlRegister(unsigned Idx) const {
   return It->second;
 }
 
-Register AIE2PRegisterInfo::getStatusRegister(unsigned Idx) const {
+std::optional<MCRegister>
+AIE2PRegisterInfo::getStatusRegister(unsigned Idx) const {
   // Status Register Map. Keys based on encoding.
-  static std::unordered_map<unsigned, Register> StatusRegisterMap = {
+  static const std::unordered_map<unsigned, MCRegister> StatusRegisterMap = {
       {25, AIE2P::srCarry},     {26, AIE2P::srSS0},
       {27, AIE2P::srMS0},       {28, AIE2P::srSRS_of},
       {29, AIE2P::srUPS_of},    {30, AIE2P::srSparse_of},
@@ -462,9 +463,10 @@ Register AIE2PRegisterInfo::getStatusRegister(unsigned Idx) const {
 
   };
 
-  if (StatusRegisterMap.find(Idx) != StatusRegisterMap.end())
-    return StatusRegisterMap[Idx];
-  llvm_unreachable("Unexpected key for status register.");
+  auto It = StatusRegisterMap.find(Idx);
+  if (It == StatusRegisterMap.end())
+    return std::nullopt;
+  return It->second;
 }
 
 const TargetRegisterClass *
