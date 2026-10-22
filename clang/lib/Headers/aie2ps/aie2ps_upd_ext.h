@@ -259,7 +259,7 @@ INTRINSIC(v2uint32) set_v2uint32(int idx, unsigned int val) {
 }
 
 INTRINSIC(v2float) set_v2float(int idx, float val) {
-  return set_v2w32(idx, val);
+  return set_v2w32(idx, __builtin_bit_cast(unsigned int, val));
 }
 
 INTRINSIC(v2int4) insert(v2int4 v, int idx, int val) {
@@ -296,7 +296,7 @@ INTRINSIC(v2int32) insert(v2int32 v, int idx, int val) {
   return upd_v2w32(v, idx, val);
 }
 INTRINSIC(v2float) insert(v2float v, int idx, float val) {
-  return upd_v2w32(v, idx, val);
+  return upd_v2w32(v, idx, __builtin_bit_cast(unsigned int, val));
 }
 
 INTRINSIC(v2uint4) insert(v2uint4 v, int idx, unsigned int val) {
@@ -353,7 +353,9 @@ INTRINSIC(int) extract_elem(v4int16 v, int idx) { return ext_v4w16(v, idx); }
 
 INTRINSIC(int) extract_elem(v2int32 v, int idx) { return ext_v2w32(v, idx); }
 
-INTRINSIC(float) extract_elem(v2float v, int idx) { return ext_v2w32(v, idx); }
+INTRINSIC(float) extract_elem(v2float v, int idx) {
+  return __builtin_bit_cast(float, ext_v2w32(v, idx));
+}
 
 INTRINSIC(unsigned int) extract_elem(v2uint4 v, int idx) {
   return ext_v2u4(v, idx);

@@ -1793,14 +1793,14 @@ unsigned int test_extract_elem(v2uint32 v, int idx)
 // CHECK-LABEL: define dso_local noundef <2 x float> @_Z16test_set_v2floatif(
 // CHECK-SAME: i32 noundef [[IDX:%.*]], float noundef [[VAL:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[CONV_I:%.*]] = fptoui float [[VAL]] to i32
-// CHECK-NEXT:    [[CONV_I_I_I:%.*]] = zext i32 [[CONV_I]] to i64
+// CHECK-NEXT:    [[TMP0:%.*]] = bitcast float [[VAL]] to i32
+// CHECK-NEXT:    [[CONV_I_I_I:%.*]] = zext i32 [[TMP0]] to i64
 // CHECK-NEXT:    [[AND_I_I_I:%.*]] = shl i32 [[IDX]], 5
 // CHECK-NEXT:    [[MUL_I_I_I:%.*]] = and i32 [[AND_I_I_I]], 32
 // CHECK-NEXT:    [[SH_PROM_I_I_I:%.*]] = zext nneg i32 [[MUL_I_I_I]] to i64
 // CHECK-NEXT:    [[SHL_I_I_I:%.*]] = shl nuw i64 [[CONV_I_I_I]], [[SH_PROM_I_I_I]]
-// CHECK-NEXT:    [[TMP0:%.*]] = bitcast i64 [[SHL_I_I_I]] to <2 x float>
-// CHECK-NEXT:    ret <2 x float> [[TMP0]]
+// CHECK-NEXT:    [[TMP1:%.*]] = bitcast i64 [[SHL_I_I_I]] to <2 x float>
+// CHECK-NEXT:    ret <2 x float> [[TMP1]]
 //
 v2float test_set_v2float(int idx, float val)
 {
@@ -1809,19 +1809,19 @@ v2float test_set_v2float(int idx, float val)
 // CHECK-LABEL: define dso_local noundef <2 x float> @_Z11test_insertDv2_fif(
 // CHECK-SAME: <2 x float> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], float noundef [[VAL:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[CONV_I:%.*]] = fptoui float [[VAL]] to i32
-// CHECK-NEXT:    [[TMP0:%.*]] = bitcast <2 x float> [[V]] to i64
+// CHECK-NEXT:    [[TMP0:%.*]] = bitcast float [[VAL]] to i32
+// CHECK-NEXT:    [[TMP1:%.*]] = bitcast <2 x float> [[V]] to i64
 // CHECK-NEXT:    [[AND_I_I_I:%.*]] = shl i32 [[IDX]], 5
 // CHECK-NEXT:    [[MUL_I_I_I:%.*]] = and i32 [[AND_I_I_I]], 32
 // CHECK-NEXT:    [[SH_PROM_I_I_I:%.*]] = zext nneg i32 [[MUL_I_I_I]] to i64
 // CHECK-NEXT:    [[SHL_I_I_I:%.*]] = shl nuw i64 4294967295, [[SH_PROM_I_I_I]]
 // CHECK-NEXT:    [[NOT_I_I_I:%.*]] = xor i64 [[SHL_I_I_I]], -1
-// CHECK-NEXT:    [[AND1_I_I_I:%.*]] = and i64 [[NOT_I_I_I]], [[TMP0]]
-// CHECK-NEXT:    [[CONV3_I_I_I:%.*]] = zext i32 [[CONV_I]] to i64
+// CHECK-NEXT:    [[AND1_I_I_I:%.*]] = and i64 [[NOT_I_I_I]], [[TMP1]]
+// CHECK-NEXT:    [[CONV3_I_I_I:%.*]] = zext i32 [[TMP0]] to i64
 // CHECK-NEXT:    [[SHL6_I_I_I:%.*]] = shl nuw i64 [[CONV3_I_I_I]], [[SH_PROM_I_I_I]]
 // CHECK-NEXT:    [[OR_I_I_I:%.*]] = or i64 [[AND1_I_I_I]], [[SHL6_I_I_I]]
-// CHECK-NEXT:    [[TMP1:%.*]] = bitcast i64 [[OR_I_I_I]] to <2 x float>
-// CHECK-NEXT:    ret <2 x float> [[TMP1]]
+// CHECK-NEXT:    [[TMP2:%.*]] = bitcast i64 [[OR_I_I_I]] to <2 x float>
+// CHECK-NEXT:    ret <2 x float> [[TMP2]]
 //
 v2float test_insert(v2float v, int idx, float val)
 {
@@ -1836,8 +1836,8 @@ v2float test_insert(v2float v, int idx, float val)
 // CHECK-NEXT:    [[SH_PROM_I_I_I:%.*]] = zext nneg i32 [[MUL_I_I_I]] to i64
 // CHECK-NEXT:    [[SHR_I_I_I:%.*]] = lshr i64 [[TMP0]], [[SH_PROM_I_I_I]]
 // CHECK-NEXT:    [[TMP1:%.*]] = trunc i64 [[SHR_I_I_I]] to i32
-// CHECK-NEXT:    [[CONV_I:%.*]] = sitofp i32 [[TMP1]] to float
-// CHECK-NEXT:    ret float [[CONV_I]]
+// CHECK-NEXT:    [[TMP2:%.*]] = bitcast i32 [[TMP1]] to float
+// CHECK-NEXT:    ret float [[TMP2]]
 //
 float test_extract_elem(v2float v, int idx)
 {
