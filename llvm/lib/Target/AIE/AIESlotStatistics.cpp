@@ -16,6 +16,29 @@
 
 namespace llvm::AIE {
 
+/// \return the alternatives whose conflict set is not a strict superset of
+/// another alternative's conflict set. A wider alternative blocks everything a
+/// narrower one blocks and more, so it only wins if the narrower one hits a
+/// hazard that is not slot related. Note that "wider" refers to the conflict
+/// sets, not to the instruction encoding.
+static SmallVector<unsigned, 4>
+getMinimalConflictAlternatives(ArrayRef<unsigned> Alternatives,
+                               const AIEBaseInstrInfo *TII) {
+  SmallVector<unsigned, 4> Result;
+  for (unsigned AltOpcode : Alternatives) {
+    const SlotBits Bits = getConflictSet(AltOpcode, TII);
+    // Multi-slot pseudos only list instructions that have slot info.
+    assert(Bits && "alternative of a multi-slot pseudo without slot info");
+    const bool IsWider = any_of(Alternatives, [&](unsigned Other) {
+      const SlotBits OtherBits = getConflictSet(Other, TII);
+      return OtherBits != Bits && (OtherBits & ~Bits) == 0;
+    });
+    if (!IsWider)
+      Result.push_back(AltOpcode);
+  }
+  return Result;
+}
+
 SlotStatistics::SlotStatistics(ArrayRef<int> FixedValue,
                                ArrayRef<int> FreeValue) {
   for (unsigned I = 0; I < FixedValue.size(); I++) {
@@ -27,15 +50,19 @@ SlotStatistics::SlotStatistics(ArrayRef<int> FixedValue,
 }
 
 void SlotStatistics::addInstruction(MachineInstr &MI,
-                                    const AIEBaseInstrInfo *TII) {
+                                    const AIEBaseInstrInfo *TII,
+                                    bool SkipWiderAlternatives) {
   const unsigned Opcode = MI.getOpcode();
   const AIEBaseMCFormats *const Formats = TII->getFormatInterface();
   const auto *const Alternatives = Formats->getAlternateInstsOpcode(Opcode);
   if (Alternatives) {
     MSPs.push_back(&MI);
+    SmallVector<unsigned, 4> Spread(Alternatives->begin(), Alternatives->end());
+    if (SkipWiderAlternatives)
+      Spread = getMinimalConflictAlternatives(Spread, TII);
     SlotCounts Term;
-    const int Scale = SlotStatistics::Unit / Alternatives->size();
-    for (unsigned AltOpcode : *Alternatives) {
+    const int Scale = SlotStatistics::Unit / Spread.size();
+    for (unsigned AltOpcode : Spread) {
       Term += Scale * getConflictCounts(AltOpcode, TII);
     }
     MSPSlotCounts.emplace(&MI, Term);
@@ -75,10 +102,11 @@ SlotStatistics computeSlotStatistics(MachineBasicBlock &MBB,
 }
 
 SlotStatistics computeSlotStatistics(ArrayRef<MachineInstr *> Instrs,
-                                     const AIEBaseInstrInfo *TII) {
+                                     const AIEBaseInstrInfo *TII,
+                                     bool SkipWiderAlternatives) {
   SlotStatistics Result;
   for (auto *MI : Instrs)
-    Result.addInstruction(*MI, TII);
+    Result.addInstruction(*MI, TII, SkipWiderAlternatives);
   return Result;
 }
 
@@ -88,8 +116,9 @@ static cl::opt<int> SlotDemandMargin(
              "alternative must beat the default to be tried first"));
 
 void SlotDemandTracker::init(ArrayRef<MachineInstr *> FreeInstrs,
-                             const AIEBaseInstrInfo *TII) {
-  Stats = computeSlotStatistics(FreeInstrs, TII);
+                             const AIEBaseInstrInfo *TII,
+                             bool SkipWiderAlternatives) {
+  Stats = computeSlotStatistics(FreeInstrs, TII, SkipWiderAlternatives);
   Remaining = Stats.Fixed + Stats.Free;
   Active = true;
 }

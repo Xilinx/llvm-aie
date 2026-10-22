@@ -101,7 +101,7 @@ define weak_odr dso_local void @gemm_int8_psum_1(ptr noalias %p_a, ptr noalias %
 ; CHECK-NEXT:    lda dj4, [p5], m1; mov m1, #76
 ; CHECK-NEXT:    lda m3, [p5], m1
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    mova r28, #0
+; CHECK-NEXT:    movx r28, #0
 ; CHECK-NEXT:    lda m1, [p5], #-8; sub r2, r28, r0; mov m2, #-40
 ; CHECK-NEXT:    lda dn1, [p5], #-8; and r27, r0, r2; mov r1, #32
 ; CHECK-NEXT:    lda dj1, [p5], #12; clz r0, r27; mov m4, #120
@@ -122,10 +122,10 @@ define weak_odr dso_local void @gemm_int8_psum_1(ptr noalias %p_a, ptr noalias %
 ; CHECK-NEXT:    lda dj2, [p5, #-4]; paddb [p2], m4
 ; CHECK-NEXT:    lda r4, [p2, #0]
 ; CHECK-NEXT:    lda r6, [p2, #4]; movs p2, p4
-; CHECK-NEXT:    vlda bmll3, [p2], #64; mov r17, r8
-; CHECK-NEXT:    vlda bmlh3, [p2], #64; movx r3, #1; mov dc2, #0
-; CHECK-NEXT:    vlda bmhl3, [p2], #64; lshl r24, r3, r24; mov dc0, #0
-; CHECK-NEXT:    vlda bmhh3, [p2], #64; vldb.128 wl4, [p3, #0]; add r26, r26, #-1; mov r27, r5
+; CHECK-NEXT:    vlda bmll3, [p2], #64; movx r3, #1
+; CHECK-NEXT:    vlda bmlh3, [p2], #64; lshl r24, r3, r24; mov r17, r8
+; CHECK-NEXT:    vlda bmhl3, [p2], #64; add r26, r26, #-1; mov dc2, #0
+; CHECK-NEXT:    vlda bmhh3, [p2], #64; vldb.128 wl4, [p3, #0]; or r27, r5, r5; mov dc0, #0
 ; CHECK-NEXT:    vlda bmll2, [p2], #64; vldb.128 wl6, [p3, #16]; sel.eqz r5, r24, r28, r27; vbcst.32 x2, r28
 ; CHECK-NEXT:    vlda bmlh2, [p2], #64; vldb x8, [p1], m3; movxm p5, #.LBB0_1; movs dc1, dc0
 ; CHECK-NEXT:    vlda bmhl2, [p2], #64; movs dc5, dc0; movx r24, #768; mov r27, r7

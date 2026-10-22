@@ -60,9 +60,9 @@ body:             |
   ; CHECK-NEXT:     $p1 = MOVA_lda_cg 0
   ; CHECK-NEXT:     ST_dms_spill killed $r18, -20, implicit $sp :: (store (s32) into %stack.3)
   ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   BUNDLE implicit-def $r18, implicit-def $r17, implicit-def $r16, implicit killed $r1 {
-  ; CHECK-NEXT:     renamable $r18 = MOVA_lda_cg 1
-  ; CHECK-NEXT:     renamable $r17 = MOVX_alu_cg 0
+  ; CHECK-NEXT:   BUNDLE implicit-def $r17, implicit-def $r18, implicit-def $r16, implicit killed $r1 {
+  ; CHECK-NEXT:     renamable $r17 = MOVA_lda_cg 0
+  ; CHECK-NEXT:     renamable $r18 = MOVX_alu_cg 1
   ; CHECK-NEXT:     $r16 = MOV_mv_scl killed $r1
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   DelayedSchedBarrier csr_aie2, implicit killed $p0, implicit killed $p1, implicit-def dead $r0

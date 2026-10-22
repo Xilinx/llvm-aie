@@ -103,6 +103,9 @@ public:
 
   void initializeTopScoreBoard();
 
+  /// Seed the slot demand of \p Reg and hand it to the hazard recognizers.
+  void initSlotDemand(const BlockState &BS, const Region &Reg);
+
   MachineBasicBlock *nextBlock() override;
 
   // Return the current block

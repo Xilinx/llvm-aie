@@ -346,7 +346,7 @@ define <128 x i8> @insert_v128i8_dyn(<128 x i8> %v, i8 %e, i32 %idx) nounwind {
 ; AIE2-LABEL: insert_v128i8_dyn:
 ; AIE2:       // %bb.0:
 ; AIE2-NEXT:    nopa ; paddb [sp], #128; nopxm
-; AIE2-NEXT:    mova r2, #127
+; AIE2-NEXT:    movx r2, #127
 ; AIE2-NEXT:    mov p0, sp
 ; AIE2-NEXT:    and r1, r1, r2
 ; AIE2-NEXT:    padds [p0], #-128
@@ -428,7 +428,7 @@ define <64 x i16> @insert_v64i16_dyn(<64 x i16> %v, i16 %e, i32 %idx) nounwind {
 ; AIE2-LABEL: insert_v64i16_dyn:
 ; AIE2:       // %bb.0:
 ; AIE2-NEXT:    paddb [sp], #128
-; AIE2-NEXT:    mova r2, #63
+; AIE2-NEXT:    movx r2, #63
 ; AIE2-NEXT:    mov p0, sp
 ; AIE2-NEXT:    and r1, r1, r2
 ; AIE2-NEXT:    mova r2, #1
@@ -514,7 +514,7 @@ define <32 x i32> @insert_v32i32_dyn(<32 x i32> %v, i32 %e, i32 %idx) nounwind {
 ; AIE2-LABEL: insert_v32i32_dyn:
 ; AIE2:       // %bb.0:
 ; AIE2-NEXT:    paddb [sp], #128; nopa ; nops ; nopxm ; nopv
-; AIE2-NEXT:    mova r2, #31
+; AIE2-NEXT:    movx r2, #31
 ; AIE2-NEXT:    mov p0, sp
 ; AIE2-NEXT:    and r1, r1, r2
 ; AIE2-NEXT:    mova r2, #2

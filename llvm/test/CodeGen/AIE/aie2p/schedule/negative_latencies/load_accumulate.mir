@@ -24,8 +24,10 @@ body:             |
     ; CHECK: liveins: $p0, $p1
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: $dj0 = MOVA 14
-    ; CHECK-NEXT: $r3 = LDA_s16_idx $p0, killed $dj0
-    ; CHECK-NEXT: $dj0 = MOVA 16
+    ; CHECK-NEXT: BUNDLE implicit-def $r3, implicit-def $dj0, implicit $p0, implicit killed $dj0 {
+    ; CHECK-NEXT:   $r3 = LDA_s16_idx $p0, killed $dj0
+    ; CHECK-NEXT:   $dj0 = MOV_alu_mv_mv_mv_cg 16
+    ; CHECK-NEXT: }
     ; CHECK-NEXT: $r4 = LDA_s16_idx $p0, killed $dj0
     ; CHECK-NEXT: $dj0 = MOV_alu_mv_mv_mv_cg 18
     ; CHECK-NEXT: BUNDLE implicit-def $r4, implicit-def $dj0, implicit $p0, implicit killed $dj0 {

@@ -42,14 +42,14 @@ define dso_local void @lowerMemcpyUsingWordByte() local_unnamed_addr #0 {
 ; CHECK-LABEL: lowerMemcpyUsingWordByte:
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova m0, #-8; nopb ; nops ; movxm p0, ##(buffer2+8); nopv
-; CHECK-NEXT:    padda [p0], m0; nopb ; nopxm
+; CHECK-NEXT:    nopa ; paddb [p0], m0; nopxm
 ; CHECK-NEXT:    lda r0, [p0], #4
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    movxm p1, ##(buffer1+8)
-; CHECK-NEXT:    padda [p1], m0
+; CHECK-NEXT:    paddb [p1], m0
 ; CHECK-NEXT:    lda.s8 r0, [p0, #4]; st r0, [p1], #4
 ; CHECK-NEXT:    st.s8 r0, [p1, #4]
 ; CHECK-NEXT:    nop
@@ -104,14 +104,14 @@ define dso_local void @lowerMemcpyUsingWordHalfByte() local_unnamed_addr #0 {
 ; CHECK-LABEL: lowerMemcpyUsingWordHalfByte:
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova m0, #-8; nopb ; nops ; movxm p0, ##(buffer2+8); nopv
-; CHECK-NEXT:    padda [p0], m0; nopx
+; CHECK-NEXT:    paddb [p0], m0; nopx
 ; CHECK-NEXT:    lda r0, [p0], #4
 ; CHECK-NEXT:    lda r1, [p0], #4
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    movxm p1, ##(buffer1+8)
-; CHECK-NEXT:    padda [p1], m0
+; CHECK-NEXT:    paddb [p1], m0
 ; CHECK-NEXT:    st r0, [p1], #4
 ; CHECK-NEXT:    lda.s16 r0, [p0, #0]; st r1, [p1], #4
 ; CHECK-NEXT:    st.s16 r0, [p1, #0]

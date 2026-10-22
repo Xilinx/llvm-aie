@@ -192,7 +192,7 @@ define void @pipelined_release_ptr_fifo_same(ptr noalias %io, i32 %lock_id) {
 ; CHECK-NEXT:    nopa ; nopb ; nops ; movx r6, #-1; nopm ; nopv
 ; CHECK-NEXT:    nopa ; nopb ; nops ; acq r0, r6; mov r26, #0; nopv
 ; CHECK-NEXT:    nopa ; nopb ; nops ; sel.eqz r4, r2, r4, r27; vbcst.32 x0, r26; nopv
-; CHECK-NEXT:    mova r2, #1; nopb ; movs p2, r4; nopxm ; nopv
+; CHECK-NEXT:    nopa ; nopb ; movs p2, r4; nopx ; mov r2, #1; nopv
 ; CHECK-NEXT:  .LBB2_1: // %for.body
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
 ; CHECK-NEXT:  .L_LEnd2:

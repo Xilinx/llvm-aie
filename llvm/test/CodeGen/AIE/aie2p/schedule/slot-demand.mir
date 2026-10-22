@@ -1,0 +1,48 @@
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+# REQUIRES: asserts
+# RUN: llc -march=aie2p -run-pass=postmisched %topdown-multi %s -o - \
+# RUN:   -debug-only=aie-slot-demand 2>&1 | FileCheck %s --check-prefixes=WIDER,SCHED
+# RUN: llc -march=aie2p -run-pass=postmisched %topdown-multi %s -o - \
+# RUN:   -debug-only=aie-slot-demand -aie-slot-demand-skip-wider=0 2>&1 \
+# RUN:   | FileCheck %s --check-prefixes=ALL,SCHED
+
+# The initial slot demand of the region is counted in units of 1/60
+# instruction. MOV_PD_imm11_pseudo can be MOVA, MOV_alu_mv_mv_mv_cg or MOVXM.
+# MOVXM blocks everything that MOV_alu_mv_mv_mv_cg blocks and more, so by
+# default it does not get a share of the demand. With
+# -aie-slot-demand-skip-wider=0 the demand is spread over all three.
+
+# WIDER: Slot demand for entry (bottom): { 180, 90, 0, 270, 90 }
+# ALL: Slot demand for entry (bottom): { 240, 60, 0, 300, 120 }
+
+# In both cases the demand does not change which alternative is picked for the
+# first free slot here, so the scheduled output is the same.
+# SCHED:      BUNDLE {{.*}} {
+# SCHED-NEXT:   $p0 = MOVA 1
+# SCHED-NEXT:   $r0 = ADD_add_r_ri killed $r1, 1, implicit-def $srcarry
+# SCHED-NEXT: }
+# SCHED-NEXT: BUNDLE {{.*}} {
+# SCHED-NEXT:   $p1 = MOVA 2
+# SCHED-NEXT:   $r3 = ADD_add_r_ri killed $r4, 1, implicit-def $srcarry
+# SCHED-NEXT: }
+# SCHED-NEXT: BUNDLE {{.*}} {
+# SCHED-NEXT:   $p2 = MOVA 3
+# SCHED-NEXT:   $r6 = ADD_add_r_ri killed $r7, 1, implicit-def $srcarry
+# SCHED-NEXT: }
+
+---
+name:            mov_pd
+alignment:       16
+body:             |
+  bb.0.entry:
+    $p0 = MOV_PD_imm11_pseudo 1
+    $p1 = MOV_PD_imm11_pseudo 2
+    $p2 = MOV_PD_imm11_pseudo 3
+    $r0 = ADD_add_r_ri $r1, 1, implicit-def $srcarry
+    $r3 = ADD_add_r_ri $r4, 1, implicit-def $srcarry
+    $r6 = ADD_add_r_ri $r7, 1, implicit-def $srcarry
+...

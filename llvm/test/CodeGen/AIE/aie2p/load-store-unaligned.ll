@@ -21,10 +21,10 @@ define dso_local void @test_load_store_unaligned(<8 x i16> noundef %a, <4 x i32>
 ; CHECK-NEXT:    mov p3, sp
 ; CHECK-NEXT:    mov p2, sp
 ; CHECK-NEXT:    st r11, [sp, #-20] // 4-byte Folded Spill
-; CHECK-NEXT:    padda [p0], #-128
+; CHECK-NEXT:    paddb [p0], #-128
 ; CHECK-NEXT:    mov r17, p0
 ; CHECK-NEXT:    mov p0, sp
-; CHECK-NEXT:    padda [p0], m0
+; CHECK-NEXT:    paddb [p0], m0
 ; CHECK-NEXT:    mova m0, #-96
 ; CHECK-NEXT:    mov r16, p0
 ; CHECK-NEXT:    mov p0, sp

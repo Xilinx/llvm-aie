@@ -324,7 +324,7 @@ define void @pipelined_acquire_ptr_same_buffer(ptr noalias %data_io, i32 %lock_i
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    mova r4, #-1; sel.eqz r2, r2, r4, r27
+; CHECK-NEXT:    sel.eqz r2, r2, r4, r27; mov r4, #-1
 ; CHECK-NEXT:    acq r0, r4
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -399,7 +399,7 @@ define void @pipelined_acquire_ptr_disjoint_buffer(ptr noalias %lock_io, ptr noa
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    mova r4, #-1; sel.eqz r2, r2, r4, r27
+; CHECK-NEXT:    sel.eqz r2, r2, r4, r27; mov r4, #-1
 ; CHECK-NEXT:    acq r0, r4
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
