@@ -223,8 +223,7 @@ Register AIERegisterInfo::getFrameRegister(const MachineFunction &MF) const {
 }
 
 const TargetRegisterClass *
-AIERegisterInfo::getPointerRegClass(const MachineFunction &MF,
-                                    unsigned Kind) const {
+AIERegisterInfo::getPointerRegClass(unsigned Kind) const {
   // Generally speaking, all pointer operations have to go through PTR
   // registers.
   return &AIE::PTRRegClass;

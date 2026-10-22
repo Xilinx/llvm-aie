@@ -13,7 +13,8 @@
 // RUN: yaml2obj %t/f.yaml -o f.o
 // RUN: ld.lld -e main main.o f.o -o %t/prog
 // RUN: llvm-nm --radix=d %t/prog | sed 's/^0*//' > %t/symtab.dec
-// RUN: (cat %t/symtab.dec; llvm-objdump --triple=aie2p -d --no-print-imm-hex %t/prog) | FileCheck %s
+// RUN: llvm-objdump --triple=aie2p -d --no-print-imm-hex %t/prog > %t/dis
+// RUN: cat %t/symtab.dec %t/dis | FileCheck %s
 
 // CHECK: [[f:[0-9]+]] T f
 // CHECK: [[f1:[0-9]+]] T f1

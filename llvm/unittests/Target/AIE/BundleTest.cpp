@@ -11,6 +11,7 @@
 #include "MCTargetDesc/AIEFormat.h"
 #include "MCTargetDesc/AIEMCFormats.h"
 #include "aie1/AIE1InstrInfo.h"
+#include "llvm/CodeGen/TargetSubtargetInfo.h"
 #include "llvm/CodeGen/TargetOpcodes.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -106,9 +107,20 @@ class MockMCFormats : public AIEBaseMCFormats {
   }
 };
 
+namespace {
+// AIE InstrInfo needs a subtarget to construct; none of its hooks are used.
+struct DummySubtarget : public TargetSubtargetInfo {
+  DummySubtarget()
+      : TargetSubtargetInfo(Triple(""), "", "", "", {}, {}, {}, nullptr, nullptr,
+                            nullptr, nullptr, nullptr, nullptr) {}
+  const TargetRegisterInfo *getRegisterInfo() const override { return nullptr; }
+};
+DummySubtarget DummySTI;
+} // namespace
+
 class MockTII : public AIEInstrInfo {
 public:
-  MockTII() {
+  MockTII() : AIEInstrInfo(DummySTI) {
     for (int i = 0; i < 10; i++) {
       MyInstrs[i].Opcode = FirstOpcode + i;
     }

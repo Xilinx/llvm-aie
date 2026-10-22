@@ -13,7 +13,8 @@
 // RUN: yaml2obj %t/t1.yaml -o t1.o
 // RUN: ld.lld t0.o t1.o -o %t/prog
 // RUN: llvm-nm %t/prog | sed 's/^0*//' > %t/symtab
-// RUN: (cat %t/symtab; llvm-objdump --triple=aie2 -d %t/prog) | FileCheck %s
+// RUN: llvm-objdump --triple=aie2 -d %t/prog > %t/dis
+// RUN: cat %t/symtab %t/dis | FileCheck %s
 
 // t1.yaml contains relocations in various bundle formats.
 // We 'load the symbol table' as dumped by nm and check the patched addresses

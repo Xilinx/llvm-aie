@@ -9,7 +9,7 @@
 # RUN: yaml2obj %S/aie-linkabs.in0.test -o %t_1.o
 # RUN: yaml2obj %S/aie-linkabs.in0.test -o %t_2.o
 # RUN: yaml2obj %S/aie-linkabs.in1.test -o %t_3.o
-# RUN: not ld.lld -Ttext=0 %t_1.o %t_2.o %t_3.o -o %t |& FileCheck %s
+# RUN: not ld.lld -Ttext=0 %t_1.o %t_2.o %t_3.o -o %t 2>&1 | FileCheck %s
 #
 
 # CHECK: ld.lld: error: duplicate symbol: me_primitive::ss1

@@ -64,6 +64,9 @@ StringRef getReferenceAttributeName();
 struct Placeholder {};
 using ReplacementItem = std::variant<StringRef, Placeholder>;
 
+/// Determines whether \p type is a valid fundamental C++ type in EmitC.
+bool isFundamentalType(mlir::Type type);
+
 } // namespace emitc
 } // namespace mlir
 

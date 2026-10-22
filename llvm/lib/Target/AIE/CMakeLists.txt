@@ -13,7 +13,9 @@ tablegen(LLVM AIEGenAsmWriter.inc -gen-asm-writer)
 tablegen(LLVM AIEGenCallingConv.inc -gen-callingconv)
 #tablegen(LLVM AIEGenCompressInstEmitter.inc -gen-compress-inst-emitter)
 tablegen(LLVM AIEGenDAGISel.inc -gen-dag-isel)
-tablegen(LLVM AIEGenDisassemblerTables.inc -gen-disassembler)
+tablegen(LLVM AIEGenDisassemblerTables.inc -gen-disassembler
+              -ignore-non-decodable-operands
+              -ignore-fully-defined-operands)
 tablegen(LLVM AIEGenGlobalISel.inc -gen-global-isel -gisel-subtarget-class AIEBaseSubtarget)
 tablegen(LLVM AIEGenFormats.inc -gen-instr-format)
 tablegen(LLVM AIEGenInstrInfo.inc -gen-instr-info -base-instrinfo-class AIEBaseInstrInfo)
@@ -38,7 +40,9 @@ tablegen(LLVM AIEGenPreISelGICombiner.inc -gen-global-isel-combiner -gisel-subta
               -combiners="AIEPreISelCombiner")
 tablegen(LLVM AIE2GenCallingConv.inc -gen-callingconv)
 tablegen(LLVM AIE2GenCopyMaterialization.inc -gen-aie-copy-materialization)
-tablegen(LLVM AIE2GenDisassemblerTables.inc -gen-disassembler)
+tablegen(LLVM AIE2GenDisassemblerTables.inc -gen-disassembler
+              -ignore-non-decodable-operands
+              -ignore-fully-defined-operands)
 tablegen(LLVM AIE2GenFormats.inc -gen-instr-format)
 tablegen(LLVM AIE2GenInstrInfo.inc -gen-instr-info -base-instrinfo-class AIEBaseInstrInfo)
 tablegen(LLVM AIE2GenMCCodeEmitter.inc -gen-emitter)
@@ -69,7 +73,9 @@ tablegen(LLVM AIE2PGenGlobalISel.inc -gen-global-isel -gisel-subtarget-class AIE
 tablegen(LLVM AIE2PGenAsmWriter.inc -gen-asm-writer)
 tablegen(LLVM AIE2PGenFormats.inc -gen-instr-format)
 tablegen(LLVM AIE2PGenMCCodeEmitter.inc -gen-emitter)
-tablegen(LLVM AIE2PGenDisassemblerTables.inc -gen-disassembler)
+tablegen(LLVM AIE2PGenDisassemblerTables.inc -gen-disassembler
+              -ignore-non-decodable-operands
+              -ignore-fully-defined-operands)
 tablegen(LLVM AIE2PGenPreLegalizerGICombiner.inc -gen-global-isel-combiner -gisel-subtarget-class AIEBaseSubtarget
               -combiners="AIE2PPreLegalizerCombiner")
 tablegen(LLVM AIE2PGenPostLegalizerGIGenericCombiner.inc -gen-global-isel-combiner -gisel-subtarget-class AIEBaseSubtarget
@@ -98,7 +104,9 @@ tablegen(LLVM AIE2PSGenFormats.inc -gen-instr-format)
 tablegen(LLVM AIE2PSGenMCCodeEmitter.inc -gen-emitter)
 tablegen(LLVM AIE2PSGenAsmWriter.inc -gen-asm-writer)
 tablegen(LLVM AIE2PSGenVarInstructionItin.inc -gen-aie-alternate-itinerary-emitter)
-tablegen(LLVM AIE2PSGenDisassemblerTables.inc -gen-disassembler)
+tablegen(LLVM AIE2PSGenDisassemblerTables.inc -gen-disassembler
+              -ignore-non-decodable-operands
+              -ignore-fully-defined-operands)
 tablegen(LLVM AIE2PSGenPreLegalizerGICombiner.inc -gen-global-isel-combiner -gisel-subtarget-class AIEBaseSubtarget
               -combiners="AIE2PSPreLegalizerCombiner")
 tablegen(LLVM AIE2PSGenPostLegalizerGIGenericCombiner.inc -gen-global-isel-combiner -gisel-subtarget-class AIEBaseSubtarget
