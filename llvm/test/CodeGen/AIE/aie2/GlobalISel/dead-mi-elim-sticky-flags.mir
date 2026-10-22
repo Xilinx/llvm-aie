@@ -27,6 +27,7 @@ body:             |
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r0
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:mss = COPY [[COPY1]]
+    ; CHECK-NEXT: [[VSRS_S16_S32_mv_w_srs:%[0-9]+]]:vec256 = VSRS_S16_S32_mv_w_srs [[COPY]], [[COPY3]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd
     ; CHECK-NEXT: VST_SRS_S16_S32_ag_idx_imm [[COPY2]], 0, [[COPY]], [[COPY3]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd :: (store (<16 x s16>))
     ; CHECK-NEXT: PseudoRET implicit $lr
     %0:acc512 = COPY $bml0

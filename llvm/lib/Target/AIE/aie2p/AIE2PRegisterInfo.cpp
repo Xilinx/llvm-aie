@@ -107,9 +107,12 @@ BitVector AIE2PRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
 }
 
 bool AIE2PRegisterInfo::isSimplifiableReservedReg(MCRegister PhysReg) const {
-  return SimplifyCRSRRegs && (AIE2P::mCRmRegClass.contains(PhysReg) ||
-                              AIE2P::mSRmRegClass.contains(PhysReg) ||
-                              AIE2P::mCRFPRegClass.contains(PhysReg));
+  // The instructions that set a sticky flag OR into it: they do not overwrite
+  // the value of an earlier write.
+  return SimplifyCRSRRegs && !isReservedStickyReg(PhysReg) &&
+         (AIE2P::mCRmRegClass.contains(PhysReg) ||
+          AIE2P::mSRmRegClass.contains(PhysReg) ||
+          AIE2P::mCRFPRegClass.contains(PhysReg));
 }
 
 const uint32_t *AIE2PRegisterInfo::getNoPreservedMask() const {
@@ -588,6 +591,9 @@ bool AIE2PRegisterInfo::isReservedStickyReg(MCRegister PhysReg) const {
   case AIE2P::srUPS_of:
   case AIE2P::srFifo_of:
   case AIE2P::srFifo_uf:
+  case AIE2P::srFPNlf:
+  case AIE2P::srFPCnvFx2Fl:
+  case AIE2P::srFPCnvFl2Fx:
     return true;
   default:
     return false;
