@@ -4245,8 +4245,13 @@ bool AIE2PSInstructionSelector::selectG_AIE_LOAD_UPS(
     setUnsetCtrlRegister(MIB, *NewInstr, MRI, AIE2PS::upsSign0, SignReg);
 
   UPSI.eraseFromParent();
-  makeDeadMI(*LoadOp, MRI);
-  return constrainSelectedInstRegOperands(*NewInstr.getInstr(), TII, TRI, RBI);
+
+  if (!constrainSelectedInstRegOperands(*NewInstr.getInstr(), TII, TRI, RBI))
+    return false;
+
+  LoadOp->eraseFromParent();
+
+  return true;
 }
 
 bool AIE2PSInstructionSelector::selectWideG_AIE_LOAD_STORE(

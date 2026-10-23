@@ -866,9 +866,13 @@ bool AIEBaseInstructionSelector::selectG_AIE_LOAD_CONV(
   NewInstr.cloneMemRefs(AMI->MemI);
 
   CONVI.eraseFromParent();
-  makeDeadMI(*LoadOp, MRI);
 
-  return constrainSelectedInstRegOperands(*NewInstr.getInstr(), TII, TRI, RBI);
+  if (!constrainSelectedInstRegOperands(*NewInstr.getInstr(), TII, TRI, RBI))
+    return false;
+
+  LoadOp->eraseFromParent();
+
+  return true;
 }
 
 bool AIEBaseInstructionSelector::selectVCONV(MachineInstr &I,
@@ -957,9 +961,13 @@ bool AIEBaseInstructionSelector::selectG_AIE_LOAD_UNPACK(
                          SignReg);
 
   UNPACKI.eraseFromParent();
-  makeDeadMI(*LoadOp, MRI);
 
-  return constrainSelectedInstRegOperands(*NewInstr.getInstr(), TII, TRI, RBI);
+  if (!constrainSelectedInstRegOperands(*NewInstr.getInstr(), TII, TRI, RBI))
+    return false;
+
+  LoadOp->eraseFromParent();
+
+  return true;
 }
 
 bool AIEBaseInstructionSelector::selectG_AIE_STORE_PACK(
@@ -1044,15 +1052,9 @@ AIEBaseInstructionSelector::getCombinedOpcodeCONVLoad(
   return {};
 }
 
-// Make an instruction trivially dead by creating and distributing new virtual
-// registers to its defs.
-// Erasing the load instruction breaks later on in the selection code. That is
-// because we keep an iterator on erased instructions. This breaks while
-// trying to eliminate a trivially dead instruction which requires access to
-// its memory operands which have been erased, thus leading to a seg fault. To
-// remedy this, we keep the load to be removed by the trivial dead code
-// elimination and we make sure to assign a new virtual register definition to
-// its live operands to respect SSA.
+// Make an instruction that a fused instruction replaces, trivially dead, for
+// instruction selection to erase it: drop its side effects and give its defs,
+// which the fused instruction now defines, new virtual registers.
 void AIEBaseInstructionSelector::makeDeadMI(MachineInstr &MI,
                                             MachineRegisterInfo &MRI) {
   if (MI.getOpcode() == TargetOpcode::G_INTRINSIC_W_SIDE_EFFECTS) {
@@ -1063,6 +1065,9 @@ void AIEBaseInstructionSelector::makeDeadMI(MachineInstr &MI,
     Register NewReg = MRI.cloneVirtualRegister(Def->getReg());
     Def->setReg(NewReg);
   }
+  // This helper cannot make this instruction trivially dead, e.g. a volatile
+  // load, and need to be erased explicitly.
+  assert(isTriviallyDead(MI, MRI) && "Expected a trivially dead instruction");
 }
 
 void AIEBaseInstructionSelector::insertPtrAddForOffset(MachineRegisterInfo &MRI,

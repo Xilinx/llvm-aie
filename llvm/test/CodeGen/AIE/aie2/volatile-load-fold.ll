@@ -29,9 +29,8 @@ define <8 x i64> @ups_load(ptr %p, i32 %sh) {
 define <8 x i64> @conv_load(ptr %p) {
 ; CHECK-LABEL: conv_load:
 ; CHECK:       // %bb.0:
-; CHECK-NEXT:    vlda.conv.fp32.bf16 bml0, [p0, #0]; nopb ; nopxm ; nops
-; CHECK-NEXT:    vldb wh0, [p0, #0]
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopb ; vlda.conv.fp32.bf16 bml0, [p0, #0]; nops ; nopxm ; nopv
+; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3

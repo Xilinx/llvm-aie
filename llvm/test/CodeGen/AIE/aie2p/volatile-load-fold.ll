@@ -12,7 +12,6 @@
 define <16 x i32> @ups_load(ptr %p, i32 %sh) {
 ; CHECK-LABEL: ups_load:
 ; CHECK:       // %bb.0:
-; CHECK-NEXT:    nopa ; vldb wh0, [p0, #0]; nops ; nopxm ; nopv
 ; CHECK-NEXT:    vlda.ups.2x bmll0, s0, upssign1, [p0, #0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -33,10 +32,10 @@ define <16 x i32> @ups_load(ptr %p, i32 %sh) {
 define <16 x i32> @ups_load_store_between(ptr %p, ptr %q, <16 x i16> %x, i32 %sh) {
 ; CHECK-LABEL: ups_load_store_between:
 ; CHECK:       // %bb.0:
-; CHECK-NEXT:    vlda.ups.2x bmll0, s0, upssign1, [p0, #0]; nopb ; nopxm ; nops
+; CHECK-NEXT:    vlda.ups.2x bmll0, s0, upssign1, [p0, #0]; nopb ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    vldb wh0, [p0, #0]
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mov s0, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    mov crupsmode, #0 // Delay Slot 5
@@ -53,8 +52,7 @@ define <16 x i32> @ups_load_store_between(ptr %p, ptr %q, <16 x i16> %x, i32 %sh
 define <32 x i16> @unpack_load(ptr %p) {
 ; CHECK-LABEL: unpack_load:
 ; CHECK:       // %bb.0:
-; CHECK-NEXT:    nopa ; vldb wh0, [p0, #0]; nopxm
-; CHECK-NEXT:    vldb.unpack x0, unpacksign1, [p0, #0]
+; CHECK-NEXT:    nopa ; vldb.unpack x0, unpacksign1, [p0, #0]; nops ; nopxm ; nopv
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -69,8 +67,8 @@ define <32 x i16> @unpack_load(ptr %p) {
 define <16 x float> @conv_load(ptr %p) {
 ; CHECK-LABEL: conv_load:
 ; CHECK:       // %bb.0:
-; CHECK-NEXT:    vlda.conv.fp32.bf16 bmll0, [p0, #0]; nopxm
-; CHECK-NEXT:    vldb wh0, [p0, #0]
+; CHECK-NEXT:    vlda.conv.fp32.bf16 bmll0, [p0, #0]; nopb ; nopxm
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
