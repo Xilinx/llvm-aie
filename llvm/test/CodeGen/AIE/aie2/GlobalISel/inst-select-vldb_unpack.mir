@@ -211,7 +211,6 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:edj = COPY $m0
-    ; CHECK-NEXT: [[VLD_idx_pseudo:%[0-9]+]]:vec256 = VLD_idx_pseudo [[COPY]], [[COPY1]] :: (volatile load (<32 x s8>))
     ; CHECK-NEXT: [[VLDB_UNPACK_S8_S4_ag_idx:%[0-9]+]]:vec512 = VLDB_UNPACK_S8_S4_ag_idx [[COPY]], [[COPY1]] :: (volatile load (<32 x s8>))
     ; CHECK-NEXT: $x0 = COPY [[VLDB_UNPACK_S8_S4_ag_idx]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $x0

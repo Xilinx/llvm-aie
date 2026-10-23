@@ -1713,11 +1713,15 @@ bool AIE2InstructionSelector::select512BitG_AIE_LOAD_UPS(
         .addImm(AIE2::sub_512_hi);
 
     UPSI.eraseFromParent();
+
+    if (!constrainSelectedInstRegOperands(*LoadLower, TII, TRI, RBI) ||
+        !constrainSelectedInstRegOperands(*LoadHigher, TII, TRI, RBI) ||
+        !RBI.constrainGenericRegister(DstReg, AIE2::ACC1024RegClass, MRI))
+      return false;
+
     AMI.MemI.eraseFromParent();
 
-    return constrainSelectedInstRegOperands(*LoadLower, TII, TRI, RBI) &&
-           constrainSelectedInstRegOperands(*LoadHigher, TII, TRI, RBI) &&
-           RBI.constrainGenericRegister(DstReg, AIE2::ACC1024RegClass, MRI);
+    return true;
   }
   case AIE2::G_AIE_OFFSET_LOAD: {
     MachineInstrBuilder LoadHigher;
@@ -1764,11 +1768,15 @@ bool AIE2InstructionSelector::select512BitG_AIE_LOAD_UPS(
         .addImm(AIE2::sub_512_hi);
 
     UPSI.eraseFromParent();
+
+    if (!constrainSelectedInstRegOperands(*LoadLower, TII, TRI, RBI) ||
+        !constrainSelectedInstRegOperands(*LoadHigher, TII, TRI, RBI) ||
+        !RBI.constrainGenericRegister(DstReg, AIE2::ACC1024RegClass, MRI))
+      return false;
+
     AMI.MemI.eraseFromParent();
 
-    return constrainSelectedInstRegOperands(*LoadLower, TII, TRI, RBI) &&
-           constrainSelectedInstRegOperands(*LoadHigher, TII, TRI, RBI) &&
-           RBI.constrainGenericRegister(DstReg, AIE2::ACC1024RegClass, MRI);
+    return true;
   }
   default:
     return false;
@@ -1842,8 +1850,13 @@ bool AIE2InstructionSelector::selectG_AIE_LOAD_UPS(
     setUnsetCtrlRegister(MIB, *NewInstr, MRI, AIE2::crUPSSign, SignReg);
 
   UPSI.eraseFromParent();
+
+  if (!constrainSelectedInstRegOperands(*NewInstr.getInstr(), TII, TRI, RBI))
+    return false;
+
   AMI->MemI.eraseFromParent();
-  return constrainSelectedInstRegOperands(*NewInstr.getInstr(), TII, TRI, RBI);
+
+  return true;
 }
 
 bool AIE2InstructionSelector::selectVSRS(MachineInstr &I,
