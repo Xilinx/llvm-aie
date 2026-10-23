@@ -1,4 +1,4 @@
-//===-- AIESiblingLoopPreRAAligner.cpp - Pre-RA sibling loop alignment ----===//
+//===-- AIESiblingLoopVRegMerger.cpp - Sibling loop vreg merger ----===//
 //
 // This file is licensed under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -43,21 +43,21 @@
 
 using namespace llvm;
 
-#define DEBUG_TYPE "aie-sibling-loop-pre-ra-align"
+#define DEBUG_TYPE "aie-sibling-loop-vreg-merge"
 
-cl::opt<bool> EnableSiblingLoopPreRAAlign(
-    "aie-enable-sibling-loop-pre-ra-align", cl::Hidden, cl::init(true),
+cl::opt<bool> EnableSiblingLoopVRegMerge(
+    "aie-enable-sibling-loop-vreg-merge", cl::Hidden, cl::init(true),
     cl::desc("Merge sibling OLP loop registers before register allocation"));
 
 namespace {
 
-class AIESiblingLoopPreRAAligner : public MachineFunctionPass {
+class AIESiblingLoopVRegMerger : public MachineFunctionPass {
 public:
   static char ID;
-  AIESiblingLoopPreRAAligner() : MachineFunctionPass(ID) {}
+  AIESiblingLoopVRegMerger() : MachineFunctionPass(ID) {}
 
   StringRef getPassName() const override {
-    return "AIE sibling loop pre-RA register alignment";
+    return "AIE sibling loop vreg merger";
   }
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
@@ -117,11 +117,12 @@ private:
                            MachineRegisterInfo &MRI) const;
 };
 
-char AIESiblingLoopPreRAAligner::ID = 0;
+char AIESiblingLoopVRegMerger::ID = 0;
 
-bool AIESiblingLoopPreRAAligner::isLocalTo(
-    Register VReg, const MachineBasicBlock *DefMBB,
-    const MachineBasicBlock *ExtraMBB, const MachineRegisterInfo &MRI) const {
+bool AIESiblingLoopVRegMerger::isLocalTo(Register VReg,
+                                         const MachineBasicBlock *DefMBB,
+                                         const MachineBasicBlock *ExtraMBB,
+                                         const MachineRegisterInfo &MRI) const {
   if (!VReg.isVirtual())
     return false;
 
@@ -140,7 +141,7 @@ bool AIESiblingLoopPreRAAligner::isLocalTo(
   return true;
 }
 
-bool AIESiblingLoopPreRAAligner::mergeIfCompatible(
+bool AIESiblingLoopVRegMerger::mergeIfCompatible(
     Register SteadyReg, Register PeeledReg, MachineRegisterInfo &MRI) const {
 
   const TargetRegisterClass *const RC =
@@ -158,7 +159,7 @@ bool AIESiblingLoopPreRAAligner::mergeIfCompatible(
   return true;
 }
 
-unsigned AIESiblingLoopPreRAAligner::mergeMatchedInstrDefs(
+unsigned AIESiblingLoopVRegMerger::mergeMatchedInstrDefs(
     const MachineInstr &SteadyMI, const MachineInstr &PeeledMI,
     const MachineBasicBlock *SteadyMBB, const MachineBasicBlock *PeeledMBB,
     const MachineBasicBlock *SteadyExtraMBB,
@@ -189,7 +190,7 @@ unsigned AIESiblingLoopPreRAAligner::mergeMatchedInstrDefs(
   return Count;
 }
 
-unsigned AIESiblingLoopPreRAAligner::alignMBBPair(
+unsigned AIESiblingLoopVRegMerger::alignMBBPair(
     const MachineBasicBlock *SteadyMBB, const MachineBasicBlock *PeeledMBB,
     const MachineBasicBlock *SteadyExtraMBB,
     const MachineBasicBlock *PeeledExtraMBB, MachineRegisterInfo &MRI) const {
@@ -289,7 +290,7 @@ computeLCSMatchedPairs(const MachineBasicBlock &SteadyMBB,
   return Matches;
 }
 
-unsigned AIESiblingLoopPreRAAligner::alignMBBPairLCS(
+unsigned AIESiblingLoopVRegMerger::alignMBBPairLCS(
     const MachineBasicBlock *SteadyMBB, const MachineBasicBlock *PeeledMBB,
     const MachineBasicBlock *SteadyExtraMBB,
     const MachineBasicBlock *PeeledExtraMBB, MachineRegisterInfo &MRI) const {
@@ -441,7 +442,7 @@ static void substituteEquivalentDefs(MachineBasicBlock *MBB,
   }
 }
 
-unsigned AIESiblingLoopPreRAAligner::alignInnerRegs(
+unsigned AIESiblingLoopVRegMerger::alignInnerRegs(
     const AIELoopUtils::OuterLoopStructure &OLS,
     MachineRegisterInfo &MRI) const {
   // Normalise both inner loops by substituting invariant COPYs with already-
@@ -467,7 +468,7 @@ unsigned AIESiblingLoopPreRAAligner::alignInnerRegs(
                       /*PeeledExtraMBB=*/nullptr, MRI);
 }
 
-unsigned AIESiblingLoopPreRAAligner::alignTopRegs(
+unsigned AIESiblingLoopVRegMerger::alignTopRegs(
     const AIELoopUtils::OuterLoopStructure &OLS,
     MachineRegisterInfo &MRI) const {
   LLVM_DEBUG(dbgs() << "  [Top] Aligning " << OLS.SteadyTop->getName()
@@ -494,8 +495,8 @@ unsigned AIESiblingLoopPreRAAligner::alignTopRegs(
                          /*PeeledExtraMBB=*/OLS.PeeledIterInner, MRI);
 }
 
-bool AIESiblingLoopPreRAAligner::runOnMachineFunction(MachineFunction &MF) {
-  if (!EnableSiblingLoopPreRAAlign)
+bool AIESiblingLoopVRegMerger::runOnMachineFunction(MachineFunction &MF) {
+  if (!EnableSiblingLoopVRegMerge)
     return false;
 
   LLVM_DEBUG(dbgs() << "*** Sibling Loop Pre-RA Register Alignment: "
@@ -538,11 +539,11 @@ bool AIESiblingLoopPreRAAligner::runOnMachineFunction(MachineFunction &MF) {
 
 } // end anonymous namespace
 
-char &llvm::AIESiblingLoopPreRAAlignerID = AIESiblingLoopPreRAAligner::ID;
+char &llvm::AIESiblingLoopVRegMergerID = AIESiblingLoopVRegMerger::ID;
 
-INITIALIZE_PASS(AIESiblingLoopPreRAAligner, DEBUG_TYPE,
-                "AIE sibling loop pre-RA register alignment", false, false)
+INITIALIZE_PASS(AIESiblingLoopVRegMerger, DEBUG_TYPE,
+                "AIE sibling loop vreg merger", false, false)
 
-FunctionPass *llvm::createAIESiblingLoopPreRAAligner() {
-  return new AIESiblingLoopPreRAAligner();
+FunctionPass *llvm::createAIESiblingLoopVRegMerger() {
+  return new AIESiblingLoopVRegMerger();
 }
