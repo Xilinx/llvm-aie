@@ -526,6 +526,12 @@ void SiblingLoopOptimizer::run() {
     if (OLS.Speculative)
       continue;
 
+    if (!OLS.hasLinearLayout()) {
+      DEBUG_BLOCKS(dbgs() << "  Skipping: OLP blocks are not in linear "
+                             "layout order\n");
+      continue;
+    }
+
     DEBUG_BLOCKS(dbgs() << "optimizeSiblingLoops: Processing outer loop latch "
                         << BB->getNumber() << "\n");
 
