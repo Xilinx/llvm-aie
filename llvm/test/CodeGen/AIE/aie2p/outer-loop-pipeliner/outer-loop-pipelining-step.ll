@@ -19,29 +19,22 @@
 ; For a decrement outer loop with step -k, removing one iteration requires
 ; adjusting the exit limit by k (NewLimit = OldLimit - Step = OldLimit + k).
 ; The unified formula NewLimit = Limit - Step handles all step magnitudes.
-;
-; JNZD hardware loop conversion is restricted to step -1 because
-; @llvm.loop.decrement.reg always decrements the counter by exactly 1.
 
 ; ============================================================================
 ; Test 1: Decrement outer loop with step -2.
 ;
 ; The outer loop exits when %iv.next (= %iv + (-2)) == 0.
 ; The pipeliner must adjust the limit from 0 to 2 (= 0 - (-2)).
-; The loop is pipelined but NOT converted to a JNZD hardware loop (step != -1).
 ; ============================================================================
 
 ; CHECK-LABEL: define void @decrement_step2
 
-; Stage-0 top block: data load only, no outer hardware-loop setup.
-; Absence of @llvm.start.loop.iterations here confirms no JNZD conversion.
+; Stage-0 top block: data load only.
 ; CHECK: stage0.top:
 ; CHECK:   %v0.steady.top = load i32
-; CHECK-NOT: @llvm.start.loop.iterations
 ; CHECK:   br label %steady.stage1.top
 
 ; Steady-state header: pipelined load PHI, standard inner-loop set.loop.iterations.
-; No @llvm.start.loop.iterations for outer (outer loop is NOT a JNZD hw loop).
 ; CHECK: steady.stage1.top:
 ; CHECK:   %v0.steady.phi = phi i32 [ %v0.steady.top, %stage0.top ], [ %v0.steady.bottom, %steady.stage1.bottom.and.stage0.top ]
 ; CHECK:   call void @llvm.set.loop.iterations.i32(i32 %M)
@@ -49,7 +42,6 @@
 
 ; Steady-state bottom: step-2 counter + adjusted limit, then next-iteration load.
 ; The limit is adjusted to 2 (constant folded: 0 - (-2) = 2), not 1.
-; No @llvm.loop.decrement.reg — outer loop kept as software icmp (step != -1).
 ; CHECK: steady.stage1.bottom.and.stage0.top:
 ; CHECK:   store i32
 ; CHECK:   %iv.next.steady = add i32 %iv.steady, -2
@@ -104,33 +96,28 @@ declare i1 @llvm.loop.decrement.i32(i32)
 ; ============================================================================
 ; Test 2: Decrement outer loop with step -1 (regression guard).
 ;
-; With step -1, the outer loop is both pipelined AND converted to a JNZD
-; hardware loop. @llvm.start.loop.iterations appears in the stage-0 top block
-; and @llvm.loop.decrement.reg replaces the software icmp in the latch.
+; With step -1, the pipeliner must adjust the limit from 0 to 1 (= 0 - (-1)).
 ; ============================================================================
 
 ; CHECK-LABEL: define void @decrement_step1
 
-; Stage-0 top block: data load + outer JNZD hardware-loop setup (step -1 only).
+; Stage-0 top block: data load only.
 ; CHECK: stage0.top:
 ; CHECK:   %v0.steady.top = load i32
-; CHECK:   %outer.jnzd.tc = sub i32 %N, 1
-; CHECK:   %outer.ctr.init = call i32 @llvm.start.loop.iterations.i32(i32 %outer.jnzd.tc)
 ; CHECK:   br label %steady.stage1.top
 
-; Steady-state header: hardware-loop counter PHI for the outer JNZD loop.
+; Steady-state header: pipelined load PHI, standard inner-loop set.loop.iterations.
 ; CHECK: steady.stage1.top:
 ; CHECK:   %v0.steady.phi = phi i32 [ %v0.steady.top, %stage0.top ], [ %v0.steady.bottom, %steady.stage1.bottom.and.stage0.top ]
-; CHECK:   %outer.ctr = phi i32 [ %outer.ctr.init, %stage0.top ]
 ; CHECK:   call void @llvm.set.loop.iterations.i32(i32 %M)
 
-; Steady-state bottom: @llvm.loop.decrement.reg replaces the software %iv.next/%outer.cond.
+; Steady-state bottom: step-1 counter + adjusted limit, then next-iteration load.
 ; CHECK: steady.stage1.bottom.and.stage0.top:
 ; CHECK:   store i32
+; CHECK:   %iv.next.steady = add i32 %iv.steady, -1
+; CHECK:   %outer.cond.steady = icmp eq i32 %iv.next.steady, 1
 ; CHECK:   %v0.steady.bottom = load i32
-; CHECK:   %outer.ctr.next = call i32 @llvm.loop.decrement.reg.i32
-; CHECK:   %outer.loop.cond = icmp ne i32 %outer.ctr.next, 0
-; CHECK:   br i1 %outer.loop.cond, label %steady.stage1.top, label %lastiter.stage1.top
+; CHECK-NEXT:   br i1 %outer.cond.steady, label %lastiter.stage1.top, label %steady.stage1.top
 
 define void @decrement_step1(ptr noalias %a, ptr noalias %c, i32 %N, i32 %M) {
 entry:
@@ -155,7 +142,7 @@ outer.latch:
   store i32 %acc.next, ptr %c.ptr, align 4
   %a.ptr.next = getelementptr inbounds i32, ptr %a.ptr, i32 1
   %c.ptr.next = getelementptr inbounds i32, ptr %c.ptr, i32 1
-  ; Step = -1: eligible for JNZD hardware-loop conversion.
+  ; Step = -1. The exit condition is (iv - 1) == 0, i.e., iv == 1.
   %iv.next = add i32 %iv, -1
   %outer.cond = icmp eq i32 %iv.next, 0
   br i1 %outer.cond, label %exit, label %outer.header, !llvm.loop !4
