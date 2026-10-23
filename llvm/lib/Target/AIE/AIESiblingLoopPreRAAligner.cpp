@@ -207,57 +207,103 @@ unsigned AIESiblingLoopPreRAAligner::alignMBBPair(
   return Count;
 }
 
+/// Compute the Longest Common Subsequence of instructions from two MBBs,
+/// matching by opcode and def register classes. Returns pairs of
+/// corresponding instructions.
+static SmallVector<std::pair<const MachineInstr *, const MachineInstr *>>
+computeLCSMatchedPairs(const MachineBasicBlock &SteadyMBB,
+                       const MachineBasicBlock &PeeledMBB,
+                       const MachineRegisterInfo &MRI) {
+  // Two instructions match if they have the same opcode, the same number of
+  // defs, and compatible register classes on all def operands. This avoids
+  // mismatching generic opcodes like COPY that may define different register
+  // kinds (e.g. GPR vs vector), which would waste an LCS slot and prevent
+  // the correct pair from being found.
+  auto InstructionsMatch = [&MRI](const MachineInstr *SteadyMI,
+                                  const MachineInstr *PeeledMI) {
+    if (SteadyMI->getOpcode() != PeeledMI->getOpcode())
+      return false;
+    if (SteadyMI->getNumDefs() != PeeledMI->getNumDefs())
+      return false;
+    for (unsigned Idx = 0, End = SteadyMI->getNumDefs(); Idx < End; ++Idx) {
+      const MachineOperand &SOp = SteadyMI->getOperand(Idx);
+      const MachineOperand &POp = PeeledMI->getOperand(Idx);
+      if (!SOp.isReg() || !POp.isReg())
+        continue;
+      const Register SReg = SOp.getReg();
+      const Register PReg = POp.getReg();
+      if (SReg.isVirtual() && PReg.isVirtual() &&
+          MRI.getRegClass(SReg) != MRI.getRegClass(PReg))
+        return false;
+    }
+    return true;
+  };
+
+  // Collect instructions into random-access arrays.
+  SmallVector<const MachineInstr *> SteadyInstrs, PeeledInstrs;
+  for (const MachineInstr &MI : SteadyMBB)
+    SteadyInstrs.push_back(&MI);
+  for (const MachineInstr &MI : PeeledMBB)
+    PeeledInstrs.push_back(&MI);
+
+  const int SteadySize = SteadyInstrs.size();
+  const int PeeledSize = PeeledInstrs.size();
+
+  if (SteadySize == 0 || PeeledSize == 0)
+    return {};
+
+  // LCSLengths[SteadyIdx][PeeledIdx] = LCS length of
+  // SteadyInstrs[0..SteadyIdx-1] and PeeledInstrs[0..PeeledIdx-1].
+  std::vector<std::vector<int>> LCSLengths(SteadySize + 1,
+                                           std::vector<int>(PeeledSize + 1, 0));
+  for (int SteadyIdx = 1; SteadyIdx <= SteadySize; ++SteadyIdx)
+    for (int PeeledIdx = 1; PeeledIdx <= PeeledSize; ++PeeledIdx)
+      if (InstructionsMatch(SteadyInstrs[SteadyIdx - 1],
+                            PeeledInstrs[PeeledIdx - 1]))
+        LCSLengths[SteadyIdx][PeeledIdx] =
+            LCSLengths[SteadyIdx - 1][PeeledIdx - 1] + 1;
+      else
+        LCSLengths[SteadyIdx][PeeledIdx] =
+            std::max(LCSLengths[SteadyIdx - 1][PeeledIdx],
+                     LCSLengths[SteadyIdx][PeeledIdx - 1]);
+
+  // Backtrack to recover matched pairs (in reverse order, which does not
+  // affect the merge since each pair involves independent registers).
+  SmallVector<std::pair<const MachineInstr *, const MachineInstr *>> Matches;
+  int SteadyIdx = SteadySize, PeeledIdx = PeeledSize;
+  while (SteadyIdx > 0 && PeeledIdx > 0) {
+    if (InstructionsMatch(SteadyInstrs[SteadyIdx - 1],
+                          PeeledInstrs[PeeledIdx - 1]) &&
+        LCSLengths[SteadyIdx][PeeledIdx] ==
+            LCSLengths[SteadyIdx - 1][PeeledIdx - 1] + 1) {
+      Matches.push_back(
+          {SteadyInstrs[SteadyIdx - 1], PeeledInstrs[PeeledIdx - 1]});
+      --SteadyIdx;
+      --PeeledIdx;
+    } else if (LCSLengths[SteadyIdx - 1][PeeledIdx] >=
+               LCSLengths[SteadyIdx][PeeledIdx - 1]) {
+      --SteadyIdx;
+    } else {
+      --PeeledIdx;
+    }
+  }
+
+  return Matches;
+}
+
 unsigned AIESiblingLoopPreRAAligner::alignMBBPairLCS(
     const MachineBasicBlock *SteadyMBB, const MachineBasicBlock *PeeledMBB,
     const MachineBasicBlock *SteadyExtraMBB,
     const MachineBasicBlock *PeeledExtraMBB, MachineRegisterInfo &MRI) const {
 
-  // Collect instructions into random-access arrays.
-  SmallVector<const MachineInstr *> SteadyInstrs, PeeledInstrs;
-  for (const MachineInstr &MI : *SteadyMBB)
-    SteadyInstrs.push_back(&MI);
-  for (const MachineInstr &MI : *PeeledMBB)
-    PeeledInstrs.push_back(&MI);
-
-  const int N = SteadyInstrs.size();
-  const int M = PeeledInstrs.size();
-
-  if (N == 0 || M == 0)
-    return 0;
-
-  // dp[i][j] = LCS length of SteadyInstrs[0..i-1] and PeeledInstrs[0..j-1],
-  // using same opcode as the match criterion.
-  std::vector<std::vector<int>> DP(N + 1, std::vector<int>(M + 1, 0));
-  for (int I = 1; I <= N; ++I)
-    for (int J = 1; J <= M; ++J)
-      if (SteadyInstrs[I - 1]->getOpcode() == PeeledInstrs[J - 1]->getOpcode())
-        DP[I][J] = DP[I - 1][J - 1] + 1;
-      else
-        DP[I][J] = std::max(DP[I - 1][J], DP[I][J - 1]);
-
-  // Backtrack to recover matched pairs (in reverse order, which does not
-  // affect the merge since each pair involves independent registers).
-  SmallVector<std::pair<const MachineInstr *, const MachineInstr *>> Matches;
-  int I = N, J = M;
-  while (I > 0 && J > 0) {
-    if (SteadyInstrs[I - 1]->getOpcode() == PeeledInstrs[J - 1]->getOpcode() &&
-        DP[I][J] == DP[I - 1][J - 1] + 1) {
-      Matches.push_back({SteadyInstrs[I - 1], PeeledInstrs[J - 1]});
-      --I;
-      --J;
-    } else if (DP[I - 1][J] >= DP[I][J - 1]) {
-      --I;
-    } else {
-      --J;
-    }
-  }
+  auto Matches = computeLCSMatchedPairs(*SteadyMBB, *PeeledMBB, MRI);
 
   LLVM_DEBUG({
     dbgs() << "  [LCS] Matched " << Matches.size() << " instruction pairs"
-           << " (Steady=" << N << ", Peeled=" << M << ")\n";
+           << " (Steady=" << SteadyMBB->size()
+           << ", Peeled=" << PeeledMBB->size() << ")\n";
   });
 
-  // For each matched pair, merge compatible def registers.
   unsigned Count = 0;
   for (auto &[SI, PI] : Matches)
     Count += mergeMatchedInstrDefs(*SI, *PI, SteadyMBB, PeeledMBB,
