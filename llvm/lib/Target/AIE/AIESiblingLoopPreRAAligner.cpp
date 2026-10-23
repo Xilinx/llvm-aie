@@ -142,10 +142,6 @@ bool AIESiblingLoopPreRAAligner::isLocalTo(
 
 bool AIESiblingLoopPreRAAligner::mergeIfCompatible(
     Register SteadyReg, Register PeeledReg, MachineRegisterInfo &MRI) const {
-  if (!SteadyReg.isVirtual() || !PeeledReg.isVirtual())
-    return false;
-  if (SteadyReg == PeeledReg)
-    return false;
 
   const TargetRegisterClass *const RC =
       MRI.constrainRegClass(SteadyReg, MRI.getRegClass(PeeledReg));
@@ -172,11 +168,15 @@ unsigned AIESiblingLoopPreRAAligner::mergeMatchedInstrDefs(
   for (unsigned I = 0; I < NumDefs; ++I) {
     const MachineOperand &SOp = SteadyMI.getOperand(I);
     const MachineOperand &POp = PeeledMI.getOperand(I);
-    if (!SOp.isReg() || !POp.isReg())
-      continue;
+    assert(SOp.isReg() && POp.isReg());
 
     const Register SteadyReg = SOp.getReg();
     const Register PeeledReg = POp.getReg();
+
+    if (!SteadyReg.isVirtual() || !PeeledReg.isVirtual())
+      continue;
+    if (SteadyReg == PeeledReg)
+      continue;
 
     if (!isLocalTo(SteadyReg, SteadyMBB, SteadyExtraMBB, MRI))
       continue;
@@ -195,12 +195,10 @@ unsigned AIESiblingLoopPreRAAligner::alignMBBPair(
     const MachineBasicBlock *PeeledExtraMBB, MachineRegisterInfo &MRI) const {
   unsigned Count = 0;
 
-  auto SI = SteadyMBB->begin();
-  auto PI = PeeledMBB->begin();
-  for (; SI != SteadyMBB->end() && PI != PeeledMBB->end(); ++SI, ++PI) {
-    if (SI->getOpcode() != PI->getOpcode())
+  for (auto [SteadyMI, PeeledMI] : llvm::zip(*SteadyMBB, *PeeledMBB)) {
+    if (SteadyMI.getOpcode() != PeeledMI.getOpcode())
       continue;
-    Count += mergeMatchedInstrDefs(*SI, *PI, SteadyMBB, PeeledMBB,
+    Count += mergeMatchedInstrDefs(SteadyMI, PeeledMI, SteadyMBB, PeeledMBB,
                                    SteadyExtraMBB, PeeledExtraMBB, MRI);
   }
 
@@ -392,8 +390,7 @@ findEquivalentConstantIn(const MachineBasicBlock &TopBlock,
 static void substituteEquivalentDefs(MachineBasicBlock *MBB,
                                      const MachineBasicBlock *TopBlock,
                                      MachineRegisterInfo &MRI) {
-  for (auto I = MBB->begin(), E = MBB->end(); I != E;) {
-    MachineInstr &MI = *I++;
+  for (MachineInstr &MI : make_early_inc_range(*MBB)) {
     std::optional<Register> Replacement;
     Register Dst;
 
