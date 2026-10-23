@@ -87,6 +87,16 @@ private:
   unsigned alignTopRegs(const AIELoopUtils::OuterLoopStructure &OLS,
                         MachineRegisterInfo &MRI) const;
 
+  /// Given two opcode-matching instructions, merge their def registers that
+  /// pass the locality check. Returns the number of registers merged.
+  unsigned mergeMatchedInstrDefs(const MachineInstr &SteadyMI,
+                                 const MachineInstr &PeeledMI,
+                                 const MachineBasicBlock *SteadyMBB,
+                                 const MachineBasicBlock *PeeledMBB,
+                                 const MachineBasicBlock *SteadyExtraMBB,
+                                 const MachineBasicBlock *PeeledExtraMBB,
+                                 MachineRegisterInfo &MRI) const;
+
   /// Core helper: iterate matching instruction pairs in two MBBs (lockstep)
   /// and merge corresponding def registers that pass the locality check.
   /// Assumes both blocks have structurally identical instruction sequences.
@@ -152,6 +162,33 @@ bool AIESiblingLoopPreRAAligner::mergeIfCompatible(
   return true;
 }
 
+unsigned AIESiblingLoopPreRAAligner::mergeMatchedInstrDefs(
+    const MachineInstr &SteadyMI, const MachineInstr &PeeledMI,
+    const MachineBasicBlock *SteadyMBB, const MachineBasicBlock *PeeledMBB,
+    const MachineBasicBlock *SteadyExtraMBB,
+    const MachineBasicBlock *PeeledExtraMBB, MachineRegisterInfo &MRI) const {
+  unsigned Count = 0;
+  const unsigned NumDefs = SteadyMI.getNumDefs();
+  for (unsigned I = 0; I < NumDefs; ++I) {
+    const MachineOperand &SOp = SteadyMI.getOperand(I);
+    const MachineOperand &POp = PeeledMI.getOperand(I);
+    if (!SOp.isReg() || !POp.isReg())
+      continue;
+
+    const Register SteadyReg = SOp.getReg();
+    const Register PeeledReg = POp.getReg();
+
+    if (!isLocalTo(SteadyReg, SteadyMBB, SteadyExtraMBB, MRI))
+      continue;
+    if (!isLocalTo(PeeledReg, PeeledMBB, PeeledExtraMBB, MRI))
+      continue;
+
+    if (mergeIfCompatible(SteadyReg, PeeledReg, MRI))
+      ++Count;
+  }
+  return Count;
+}
+
 unsigned AIESiblingLoopPreRAAligner::alignMBBPair(
     const MachineBasicBlock *SteadyMBB, const MachineBasicBlock *PeeledMBB,
     const MachineBasicBlock *SteadyExtraMBB,
@@ -163,25 +200,8 @@ unsigned AIESiblingLoopPreRAAligner::alignMBBPair(
   for (; SI != SteadyMBB->end() && PI != PeeledMBB->end(); ++SI, ++PI) {
     if (SI->getOpcode() != PI->getOpcode())
       continue;
-
-    const unsigned NumDefs = SI->getNumDefs();
-    for (unsigned I = 0; I < NumDefs; ++I) {
-      const MachineOperand &SOp = SI->getOperand(I);
-      const MachineOperand &POp = PI->getOperand(I);
-      if (!SOp.isReg() || !POp.isReg())
-        continue;
-
-      const Register SteadyReg = SOp.getReg();
-      const Register PeeledReg = POp.getReg();
-
-      if (!isLocalTo(SteadyReg, SteadyMBB, SteadyExtraMBB, MRI))
-        continue;
-      if (!isLocalTo(PeeledReg, PeeledMBB, PeeledExtraMBB, MRI))
-        continue;
-
-      if (mergeIfCompatible(SteadyReg, PeeledReg, MRI))
-        ++Count;
-    }
+    Count += mergeMatchedInstrDefs(*SI, *PI, SteadyMBB, PeeledMBB,
+                                   SteadyExtraMBB, PeeledExtraMBB, MRI);
   }
 
   return Count;
@@ -239,26 +259,9 @@ unsigned AIESiblingLoopPreRAAligner::alignMBBPairLCS(
 
   // For each matched pair, merge compatible def registers.
   unsigned Count = 0;
-  for (auto &[SI, PI] : Matches) {
-    const unsigned NumDefs = SI->getNumDefs();
-    for (unsigned K = 0; K < NumDefs; ++K) {
-      const MachineOperand &SOp = SI->getOperand(K);
-      const MachineOperand &POp = PI->getOperand(K);
-      if (!SOp.isReg() || !POp.isReg())
-        continue;
-
-      const Register SteadyReg = SOp.getReg();
-      const Register PeeledReg = POp.getReg();
-
-      if (!isLocalTo(SteadyReg, SteadyMBB, SteadyExtraMBB, MRI))
-        continue;
-      if (!isLocalTo(PeeledReg, PeeledMBB, PeeledExtraMBB, MRI))
-        continue;
-
-      if (mergeIfCompatible(SteadyReg, PeeledReg, MRI))
-        ++Count;
-    }
-  }
+  for (auto &[SI, PI] : Matches)
+    Count += mergeMatchedInstrDefs(*SI, *PI, SteadyMBB, PeeledMBB,
+                                   SteadyExtraMBB, PeeledExtraMBB, MRI);
 
   return Count;
 }
