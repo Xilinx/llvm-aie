@@ -917,10 +917,13 @@ bool AIEBaseInstructionSelector::selectG_AIE_LOAD_UNPACK(
   if (!canCombineUNPACKLoad(*LoadOp, UNPACKI, MRI))
     return false;
 
+  MIB.setInstr(ShouldAdvanceOp ? *LoadOp : UNPACKI);
   std::optional<AddressingModeInfo> AddrModeInfo =
       getOrDefineAddressingRegister(*LoadOp, MRI);
-  if (!AddrModeInfo)
+  if (!AddrModeInfo) {
+    MIB.setInstr(UNPACKI);
     return false;
+  }
 
   Register DstReg = UNPACKI.getOperand(0).getReg();
   // In this case of G_INTRINSIC operand 1 is target intrinsic
@@ -934,11 +937,6 @@ bool AIEBaseInstructionSelector::selectG_AIE_LOAD_UNPACK(
       ConstantSign ? SignVal.value().Value == 0x1 : false);
 
   assert(LSO && "Unexpected VLDB.UNPACK combine failure");
-
-  if (ShouldAdvanceOp)
-    MIB.setInstr(*LoadOp);
-  else
-    MIB.setInstr(UNPACKI);
 
   setUnpackSizeRegister(MIB, cast<GIntrinsic>(UNPACKI).getIntrinsicID());
 

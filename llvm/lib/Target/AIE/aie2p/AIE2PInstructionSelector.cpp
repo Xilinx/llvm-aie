@@ -536,15 +536,18 @@ bool AIE2PInstructionSelector::selectG_AIE_LOAD_UPS(
       return false;
   }
 
-  if (!canCombineUPS(*LoadOp, UPSI, MRI))
+  if (!crUPSModeVal.has_value() || !canCombineUPS(*LoadOp, UPSI, MRI))
     return false;
 
   assert(getLoadStoreSize(*LoadOp) == 256 || getLoadStoreSize(*LoadOp) == 512);
 
+  MIB.setInstr(*InsertionPoint);
   std::optional<AddressingModeInfo> AMI =
       getOrDefineAddressingRegister(*LoadOp, MRI);
-  if (!AMI)
+  if (!AMI) {
+    MIB.setInstr(UPSI);
     return false;
+  }
 
   Register DstReg = UPSI.getOperand(0).getReg();
   // In this case of G_INTRINSIC_W_SIDE_EFFECTS operand 1 is target intrinsic
@@ -569,12 +572,9 @@ bool AIE2PInstructionSelector::selectG_AIE_LOAD_UPS(
            (DstRegSize != 1024 || DstRegSize != 2048))) &&
          "Unexpected VLDA.UPS size");
 
-  if (!crUPSModeVal.has_value())
-    return false;
   // Selects the mode of the accumulator for UPS instructions
   // 0 – 32-bit accumulator lane
   // 1 – 64-bit accumulator lane
-  MIB.setInstr(*InsertionPoint);
   setCtrlRegister(MIB, AIE2P::crUPSMode, *crUPSModeVal);
 
   auto NewInstr = MIB.buildInstr(LSO->ISelOpcode);
