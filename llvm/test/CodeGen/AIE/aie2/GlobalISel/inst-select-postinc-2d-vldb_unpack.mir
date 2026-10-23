@@ -215,9 +215,9 @@ body: |
     ; CHECK-NEXT: [[MOV_PD_imm10_pseudo1:%[0-9]+]]:edj = MOV_PD_imm10_pseudo 2
     ; CHECK-NEXT: [[MOV_PD_imm10_pseudo2:%[0-9]+]]:edn = MOV_PD_imm10_pseudo 3
     ; CHECK-NEXT: [[MOV_PD_imm10_pseudo3:%[0-9]+]]:edc = MOV_PD_imm10_pseudo 4
-    ; CHECK-NEXT: [[VLDB_2D_UNPACK_S16_S8_:%[0-9]+]]:vec512, [[VLDB_2D_UNPACK_S16_S8_1:%[0-9]+]]:ep, [[VLDB_2D_UNPACK_S16_S8_2:%[0-9]+]]:edc = VLDB_2D_UNPACK_S16_S8 [[COPY]], %12 :: (load (<32 x s8>))
-    ; CHECK-NEXT: VST_dmw_sts_w_ag_idx_imm %x, %q, 0 :: (store (<16 x s16>))
     ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:ed = REG_SEQUENCE [[MOV_PD_imm10_pseudo]], %subreg.sub_mod, [[MOV_PD_imm10_pseudo2]], %subreg.sub_dim_size, [[MOV_PD_imm10_pseudo1]], %subreg.sub_dim_stride, [[MOV_PD_imm10_pseudo3]], %subreg.sub_dim_count
+    ; CHECK-NEXT: [[VLDB_2D_UNPACK_S16_S8_:%[0-9]+]]:vec512, [[VLDB_2D_UNPACK_S16_S8_1:%[0-9]+]]:ep, [[VLDB_2D_UNPACK_S16_S8_2:%[0-9]+]]:edc = VLDB_2D_UNPACK_S16_S8 [[COPY]], [[REG_SEQUENCE]] :: (load (<32 x s8>))
+    ; CHECK-NEXT: VST_dmw_sts_w_ag_idx_imm %x, %q, 0 :: (store (<16 x s16>))
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDB_2D_UNPACK_S16_S8_]], implicit [[VLDB_2D_UNPACK_S16_S8_1]], implicit [[VLDB_2D_UNPACK_S16_S8_2]]
     %0:ptrregbank(p0) = COPY $p0
     %q:ptrregbank(p0) = COPY $p1
