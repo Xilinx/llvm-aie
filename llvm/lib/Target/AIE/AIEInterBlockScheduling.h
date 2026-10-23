@@ -131,17 +131,11 @@ public:
 class FixedpointState {
 public:
   SchedulingStage Stage = SchedulingStage::Scheduling;
-  // PostPipeliner mode - physical or virtual register mode
-  PostPipelinerMode PipelinerMode = PostPipelinerMode::None;
   // Parameters of the loop-aware convergence
   int LatencyMargin = 0;
   SmallMapVector<MachineInstr *, int, 8> PerMILatencyMargin;
   SmallMapVector<MachineInstr *, int, 8> PerMIExtraDepth;
   int ResourceMargin = 0;
-  // The II of the modulo schedule we are trying.
-  int II = 0;
-  // The number of II steps we've made from the minimum
-  int IITries = 0;
   // Results from the convergence test
   int MaxLatencyExtent = 0;
   int MaxResourceExtent = 0;
@@ -316,8 +310,28 @@ public:
   SmallVector<MachineInstr *, 8> TopFixedInstrs;
   SmallVector<MachineInstr *, 8> BotFixedInstrs;
 
+  /// For pipelined loop preheaders: a parallel array to the loop body's
+  /// SemanticOrder. Each entry is the first-iteration clone from BottomInsert
+  /// for the corresponding original loop instruction, or nullptr when that
+  /// instruction has no copy in the prologue. Populated by PipelineExtractor
+  /// during PipeliningDone.
+  std::vector<MachineInstr *> BottomInsertSemanticOrder;
+
+  // Pre-built pipeliner DAGs (one per enabled mode), owned here so they
+  // outlive the AIEScheduleDAGMI::schedule() call and remain valid for
+  // PostPipeliner::materializePipeline() which runs from leaveBlock().
+  std::unique_ptr<DataDependenceHelper> PipelinePhysDAG;
+  std::unique_ptr<DataDependenceHelper> PipelineVirtDAG;
+
   void initInterBlock(const MachineSchedContext &Context,
                       const AIEHazardRecognizer &HR);
+
+  /// Initialize for pipelining - virtualizes registers if in virtual mode.
+  /// \p Mode specifies which virtualization policy to apply.
+  void initPipelining(PostPipelinerMode Mode);
+
+  /// Restore after pipelining - restores physical registers if virtualized.
+  void restorePipelining();
 
   // Concatenate Bundles to the current region
   void addBundles(const std::vector<MachineBundle> &Bundles) {
@@ -368,13 +382,6 @@ public:
   void clearSchedule();
 
   void setPipelined();
-
-  /// Initialize for pipelining - virtualizes registers if in virtual mode
-  void initPipelining();
-
-  /// Restore after failed pipelining - restores physical registers if
-  /// virtualized
-  void restorePipelining();
 
   bool isScheduled() const {
     return FixPoint.Stage == SchedulingStage::SchedulingDone || isPipelined() ||
