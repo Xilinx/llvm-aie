@@ -376,13 +376,13 @@ void DataDependenceHelper::setBaseLatency(SUnit *Src, int SrcOpIdx, SUnit *Dst,
   Dep.setSignedLatency(computeDataLatency(DefMI, SrcOpIdx, UseMI, DstOpIdx));
 }
 
-void DataDependenceHelper::addDep(SUnit *Src, int SrcOpIdx, SUnit *Dst,
+bool DataDependenceHelper::addDep(SUnit *Src, int SrcOpIdx, SUnit *Dst,
                                   int DstOpIdx, SDep Dep) {
   // WAW dependences on virtual registers carry no latency.
   if (Dep.getKind() == SDep::Output && !Dep.getReg().isPhysical()) {
     Dep.setSignedLatency(0);
     Dst->addPred(Dep);
-    return;
+    return true;
   }
 
   setBaseLatency(Src, SrcOpIdx, Dst, DstOpIdx, Dep);
@@ -393,6 +393,7 @@ void DataDependenceHelper::addDep(SUnit *Src, int SrcOpIdx, SUnit *Dst,
   ST.adjustSchedDependency(*ST.getInstrItineraryData(), Src, SrcOpIdx, Dst,
                            DstOpIdx, Dep);
   Dst->addPred(Dep);
+  return true;
 }
 
 int DataDependenceHelper::computeLatency(const MachineInstr *MI) const {

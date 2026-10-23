@@ -135,11 +135,7 @@ class DataDependenceHelper : public ScheduleDAGInstrs {
   void addVRegDefDeps(SUnit *SU, unsigned OperIdx);
   void addVRegUseDeps(SUnit *SU, unsigned OperIdx);
   bool handleRegEvents(SUnit *SU);
-  // Compute the latency of Dep according to the configuration of this helper
-  // and add it to Dst. This merges the computation of the base latency and
-  // the AIE-specific adjustment, without going through TargetSchedModel or
-  // the virtual TargetSubtargetInfo::adjustSchedDependency dispatch.
-  void addDep(SUnit *Src, int SrcOpIdx, SUnit *Dst, int DstOpIdx, SDep Dep);
+
   // Set the latency of Dep before AIE-specific adjustment.
   void setBaseLatency(SUnit *Src, int SrcOpIdx, SUnit *Dst, int DstOpIdx,
                       SDep &Dep) const;
@@ -162,6 +158,14 @@ protected:
   virtual bool isFixedNode(const SUnit &SU) const { return false; }
 
 public:
+  // Compute the latency of Dep according to the configuration of this helper
+  // and add it to Dst. This merges the computation of the base latency and
+  // the AIE-specific adjustment, without going through TargetSchedModel or
+  // the virtual TargetSubtargetInfo::adjustSchedDependency dispatch.
+  // Returns true if the dependence was added. Callers that track event state
+  // can use a false return to learn that the edge was found unnecessary.
+  bool addDep(SUnit *Src, int SrcOpIdx, SUnit *Dst, int DstOpIdx, SDep Dep);
+
   // Set the number of instructions per virtual-unroll copy. Must be called
   // before buildEdges() when the DAG is built in pipelining mode (two copies
   // of the loop body). Zero (default) disables the virtual-unroll alias check.
