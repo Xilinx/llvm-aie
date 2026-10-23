@@ -85,7 +85,7 @@ void DummyScheduleDAGMI::scheduleInstr(MachineInstr *MI, SchedBoundary &Zone,
 
 ScheduleDAGMITest::ScheduleDAGMITest(TargetMachine *TM)
     : Mod("Module", Ctx) {
-  MF = createMachineFunction(Ctx, Mod, TM);
+  MF = createMachineFunction(Ctx, Mod, "Test", TM);
   MBB = MF->CreateMachineBasicBlock();
 }
 

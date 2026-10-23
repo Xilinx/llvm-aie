@@ -747,7 +747,7 @@ CodeGenRegisterClass::CodeGenRegisterClass(CodeGenRegBank &RegBank,
     RSI.insertRegSizeForMode(DefaultMode, RI);
   }
 
-  CopyCost = R->getValueAsInt("CopyCost");
+  int CopyCostParsed = R->getValueAsInt("CopyCost");
   Allocatable = R->getValueAsBit("isAllocatable");
   AltOrderSelect = R->getValueAsString("AltOrderSelect");
   int AllocationPriority = R->getValueAsInt("AllocationPriority");
@@ -763,6 +763,14 @@ CodeGenRegisterClass::CodeGenRegisterClass(CodeGenRegBank &RegBank,
 
   UseRegPressureInPreRAScheduling =
       R->getValueAsBit("ConsiderInPreRAScheduling");
+
+  // Saturate negative costs to the maximum
+  if (CopyCostParsed < 0)
+    CopyCost = std::numeric_limits<uint8_t>::max();
+  else if (!isUInt<8>(CopyCostParsed))
+    PrintFatalError(R->getLoc(), "'CopyCost' must be an 8-bit value");
+
+  CopyCost = CopyCostParsed;
 }
 
 // Create an inferred register class that was missing from the .td files.
@@ -863,17 +871,6 @@ unsigned CodeGenRegisterClass::getWeight(const CodeGenRegBank &RegBank) const {
 
   return (*Members.begin())->getWeight(RegBank);
 }
-
-namespace llvm {
-
-raw_ostream &operator<<(raw_ostream &OS, const CodeGenRegisterClass::Key &K) {
-  OS << "{ " << K.RSI;
-  for (const auto R : *K.Members)
-    OS << ", " << R->getName();
-  return OS << " }";
-}
-
-} // end namespace llvm
 
 // This is a simple lexicographical order that can be used to search for sets.
 // It is not the same as the topological order provided by TopoOrderRC.

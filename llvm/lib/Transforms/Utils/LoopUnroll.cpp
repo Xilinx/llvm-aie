@@ -1109,7 +1109,6 @@ llvm::UnrollLoop(Loop *L, UnrollLoopOptions ULO, LoopInfo *LI,
       }
 
       Phi.replaceAllUsesWith(RdxResult);
-      continue;
     }
   }
 

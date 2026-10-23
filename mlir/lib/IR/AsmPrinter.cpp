@@ -2232,10 +2232,9 @@ void AsmPrinter::Impl::printLocationInternal(LocationAttr loc, bool pretty,
           os << '>';
         }
         os << '[';
-        llvm::interleave(
-            loc.getLocations(),
-            [&](Location loc) { printLocationInternal(loc, pretty); },
-            [&]() { os << ", "; });
+        interleaveComma(loc.getLocations(), [&](Location loc) {
+          printLocationInternal(loc, pretty);
+        });
         os << ']';
       })
       .Default([&](LocationAttr loc) {

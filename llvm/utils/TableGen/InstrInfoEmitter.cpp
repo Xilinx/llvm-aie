@@ -17,6 +17,7 @@
 #include "Basic/SequenceToOffsetTable.h"
 #include "Common/CodeGenDAGPatterns.h"
 #include "Common/CodeGenInstruction.h"
+#include "Common/CodeGenRegisters.h"
 #include "Common/CodeGenSchedule.h"
 #include "Common/CodeGenTarget.h"
 #include "Common/PredicateExpander.h"
@@ -123,6 +124,7 @@ private:
 InstrInfoEmitter::OperandInfoTy
 InstrInfoEmitter::GetOperandInfo(const CodeGenInstruction &Inst) {
   OperandInfoTy Result;
+  StringRef Namespace = CDP.getTargetInfo().getInstNamespace();
 
   for (auto &Op : Inst.Operands) {
     // Handle aggregate operands and normal operands the same way by expanding
@@ -153,7 +155,13 @@ InstrInfoEmitter::GetOperandInfo(const CodeGenInstruction &Inst) {
 
       if (OpR->isSubClassOf("RegisterOperand"))
         OpR = OpR->getValueAsDef("RegClass");
-      if (OpR->isSubClassOf("RegisterClass"))
+
+      if (OpR->isSubClassOf("RegClassByHwMode")) {
+        Res += Namespace;
+        Res += "::";
+        Res += OpR->getName();
+        Res += ", ";
+      } else if (OpR->isSubClassOf("RegisterClass"))
         Res += getQualifiedName(OpR) + "RegClassID, ";
       else if (OpR->isSubClassOf("PointerLikeRegClass"))
         Res += utostr(OpR->getValueAsInt("RegClassKind")) + ", ";
@@ -164,9 +172,12 @@ InstrInfoEmitter::GetOperandInfo(const CodeGenInstruction &Inst) {
       // Fill in applicable flags.
       Res += "0";
 
-      // Ptr value whose register class is resolved via callback.
-      if (OpR->isSubClassOf("PointerLikeRegClass"))
+      if (OpR->isSubClassOf("RegClassByHwMode")) {
+        Res += "|(1<<MCOI::LookupRegClassByHwMode)";
+      } else if (OpR->isSubClassOf("PointerLikeRegClass")) {
+        // Ptr value whose register class is resolved via callback.
         Res += "|(1<<MCOI::LookupPtrRegClass)";
+      }
 
       // Predicate operands.  Check to see if the original unexpanded operand
       // was of type PredicateOp.
@@ -934,6 +945,7 @@ void InstrInfoEmitter::run(raw_ostream &OS) {
 
   OS << "#if defined(GET_INSTRINFO_MC_DESC) || "
         "defined(GET_INSTRINFO_CTOR_DTOR)\n";
+
   OS << "namespace llvm {\n\n";
 
   OS << "struct " << TargetName << "InstrTable {\n";
@@ -995,6 +1007,11 @@ void InstrInfoEmitter::run(raw_ostream &OS) {
   InstrNames.layout();
   InstrNames.emitStringLiteralDef(OS, Twine("extern const char ") + TargetName +
                                           "InstrNameData[]");
+  const CodeGenRegBank &RegBank = Target.getRegBank();
+  const CodeGenHwModes &CGH = Target.getHwModes();
+  unsigned NumModes = CGH.getNumModeIds();
+  ArrayRef<const Record *> RegClassByHwMode = Target.getAllRegClassByHwMode();
+  unsigned NumClassesByHwMode = RegClassByHwMode.size();
 
   OS << "extern const unsigned " << TargetName << "InstrNameIndices[] = {";
   Num = 0;
@@ -1053,6 +1070,39 @@ void InstrInfoEmitter::run(raw_ostream &OS) {
 
   // MCInstrInfo initialization routine.
   Timer.startTimer("Emit initialization routine");
+
+  if (NumClassesByHwMode != 0) {
+    OS << "extern const int16_t " << TargetName << "RegClassByHwModeTables["
+       << NumModes << "][" << NumClassesByHwMode << "] = {\n";
+
+    for (unsigned M = 0; M < NumModes; ++M) {
+      OS << "  { // " << CGH.getModeName(M, /*IncludeDefault=*/true) << '\n';
+      for (unsigned I = 0; I != NumClassesByHwMode; ++I) {
+        const Record *Class = RegClassByHwMode[I];
+        const HwModeSelect &ModeSelect = CGH.getHwModeSelect(Class);
+
+        auto FoundMode =
+            find_if(ModeSelect.Items, [=](const HwModeSelect::PairType P) {
+              return P.first == M;
+            });
+
+        if (FoundMode == ModeSelect.Items.end()) {
+          // If a RegClassByHwMode doesn't have an entry corresponding to a
+          // mode, pad with default register class.
+          OS << indent(4) << "-1, // Missing mode entry\n";
+        } else {
+          const CodeGenRegisterClass *RegClass =
+              RegBank.getRegClass(FoundMode->second);
+          OS << indent(4) << RegClass->getQualifiedIdName() << ",\n";
+        }
+      }
+
+      OS << "  },\n";
+    }
+
+    OS << "};\n\n";
+  }
+
   OS << "static inline void Init" << TargetName
      << "MCInstrInfo(MCInstrInfo *II) {\n";
   OS << "  II->InitMCInstrInfo(" << TargetName << "Descs.Insts, " << TargetName
@@ -1065,7 +1115,15 @@ void InstrInfoEmitter::run(raw_ostream &OS) {
     OS << TargetName << "InstrComplexDeprecationInfos, ";
   else
     OS << "nullptr, ";
-  OS << NumberedInstructions.size() << ");\n}\n\n";
+  OS << NumberedInstructions.size() << ", ";
+
+  if (NumClassesByHwMode != 0) {
+    OS << '&' << TargetName << "RegClassByHwModeTables[0][0], "
+       << NumClassesByHwMode;
+  } else
+    OS << "nullptr, 0";
+
+  OS << ");\n}\n\n";
 
   OS << "} // end namespace llvm\n";
 
@@ -1107,6 +1165,12 @@ void InstrInfoEmitter::run(raw_ostream &OS) {
      << "Descs;\n";
   OS << "extern const unsigned " << TargetName << "InstrNameIndices[];\n";
   OS << "extern const char " << TargetName << "InstrNameData[];\n";
+
+  if (NumClassesByHwMode != 0) {
+    OS << "extern const int16_t " << TargetName << "RegClassByHwModeTables["
+       << NumModes << "][" << NumClassesByHwMode << "];\n";
+  }
+
   if (HasDeprecationFeatures)
     OS << "extern const uint8_t " << TargetName
        << "InstrDeprecationFeatures[];\n";
@@ -1118,7 +1182,13 @@ void InstrInfoEmitter::run(raw_ostream &OS) {
         "CFDestroyOpcode, unsigned CatchRetOpcode, unsigned ReturnOpcode)\n"
      << "  : " << IIBaseClass
      << "(CFSetupOpcode, CFDestroyOpcode, CatchRetOpcode, "
-        "ReturnOpcode) {\n"
+        "ReturnOpcode";
+  if (NumClassesByHwMode != 0)
+    OS << ", " << TargetName
+       << "RegClassByHwModeTables[STI.getHwMode(MCSubtargetInfo::HwMode_"
+          "RegInfo)]";
+
+  OS << ") {\n"
      << "  InitMCInstrInfo(" << TargetName << "Descs.Insts, " << TargetName
      << "InstrNameIndices, " << TargetName << "InstrNameData, ";
   if (HasDeprecationFeatures)
@@ -1129,8 +1199,16 @@ void InstrInfoEmitter::run(raw_ostream &OS) {
     OS << TargetName << "InstrComplexDeprecationInfos, ";
   else
     OS << "nullptr, ";
-  OS << NumberedInstructions.size() << ");\n}\n";
-  OS << "} // end namespace llvm\n";
+  OS << NumberedInstructions.size();
+
+  if (NumClassesByHwMode != 0) {
+    OS << ", &" << TargetName << "RegClassByHwModeTables[0][0], "
+       << NumClassesByHwMode;
+  }
+
+  OS << ");\n"
+        "}\n"
+        "} // end namespace llvm\n";
 
   OS << "#endif // GET_INSTRINFO_CTOR_DTOR\n\n";
 
@@ -1326,6 +1404,15 @@ void InstrInfoEmitter::emitEnums(
   }
   OS << "    INSTRUCTION_LIST_END = " << NumberedInstructions.size() << '\n';
   OS << "  };\n";
+
+  ArrayRef<const Record *> RegClassesByHwMode = Target.getAllRegClassByHwMode();
+  if (!RegClassesByHwMode.empty()) {
+    OS << "  enum RegClassByHwModeUses : uint16_t {\n";
+    for (const Record *ClassByHwMode : RegClassesByHwMode)
+      OS << indent(4) << ClassByHwMode->getName() << ",\n";
+    OS << "  };\n";
+  }
+
   OS << "} // end namespace llvm::" << Namespace << '\n';
   OS << "#endif // GET_INSTRINFO_ENUM\n\n";
 
