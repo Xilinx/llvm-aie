@@ -34,7 +34,7 @@ body:             |
   ; CONSERVATIVE-NEXT:   - Prologue:        bb.1
   ; CONSERVATIVE-NEXT:   - PrologueBundles: '22'
   ; CONSERVATIVE-NEXT:   - Epilogue:        bb.4
-  ; CONSERVATIVE-NEXT:   - EpilogueBundles: '15'
+  ; CONSERVATIVE-NEXT:   - EpilogueBundles: '11'
   ; CONSERVATIVE-NEXT:   - VregMode:        Physical
   ; CONSERVATIVE-NEXT:   - SchedHeuristic:  Config_20_1_0_NodeNum
   ; CONSERVATIVE-NEXT: ...
@@ -51,7 +51,7 @@ body:             |
   ; OPTIMISTIC-NEXT:   - Prologue:        bb.1
   ; OPTIMISTIC-NEXT:   - PrologueBundles: '22'
   ; OPTIMISTIC-NEXT:   - Epilogue:        bb.4
-  ; OPTIMISTIC-NEXT:   - EpilogueBundles: '15'
+  ; OPTIMISTIC-NEXT:   - EpilogueBundles: '11'
   ; OPTIMISTIC-NEXT:   - VregMode:        Physical
   ; OPTIMISTIC-NEXT:   - SchedHeuristic:  Config_20_1_0_NodeNum
   ; OPTIMISTIC-NEXT: ...

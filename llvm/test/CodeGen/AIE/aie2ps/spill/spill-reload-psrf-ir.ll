@@ -21,8 +21,8 @@ declare { ptr, <32 x i32>, i32 } @llvm.aie2ps.fifo.ld.fill.p0.p0(ptr, <32 x i32>
 define { ptr, <32 x i32>, i32 } @test_plfr_spill_across_call(ptr %base, <32 x i32> %fifo_buf, i32 %avail) {
 ; CHECK-LABEL: test_plfr_spill_across_call:
 ; CHECK:       // %bb.0:
-; CHECK-NEXT:    or r24, r1, r1; mov p0, p1
-; CHECK-NEXT:    vldb.fill [p0, lf0, r24]; nopx
+; CHECK-NEXT:    movs p0, p1; nopb ; or r24, r1, r1
+; CHECK-NEXT:    vldb.fill [p0, lf0, r24]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    vmov lfl0, x6

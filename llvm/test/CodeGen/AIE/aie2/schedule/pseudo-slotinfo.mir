@@ -17,10 +17,10 @@ alignment:       16
 body:             |
   bb.0 (align 16):
     ; CHECK-LABEL: name: load_padd
-    ; CHECK: BUNDLE implicit-def $r6, implicit-def $p1, implicit-def $p2, implicit killed $p1, implicit killed $m1, implicit killed $p2, implicit killed $m2 {
+    ; CHECK: BUNDLE implicit-def $r6, implicit-def $p2, implicit-def $p1, implicit killed $p1, implicit killed $p2, implicit killed $m2, implicit killed $m1 {
     ; CHECK-NEXT:   $r6 = LDA_dms_lda_idx_imm $p1, 4
-    ; CHECK-NEXT:   $p1 = PADDB_ldb_ptr_inc_nospill_nrm killed $p1, killed $m1
-    ; CHECK-NEXT:   $p2 = PADDS_st_ptr_inc_idx killed $p2, killed $m2
+    ; CHECK-NEXT:   $p2 = PADDB_ldb_ptr_inc_nospill_nrm killed $p2, killed $m2
+    ; CHECK-NEXT:   $p1 = PADDS_st_ptr_inc_idx killed $p1, killed $m1
     ; CHECK-NEXT: }
     ; CHECK-NEXT: $wl1 = VLDB_dmw_ldb_ag_idx_imm killed $p1, 0
     ; CHECK-NEXT: NOP
@@ -99,8 +99,10 @@ alignment:       16
 body:             |
   bb.0 (align 16):
     ; CHECK-LABEL: name: padd_forced_b
-    ; CHECK: $p1 = PADDB_ldb_ptr_inc_nospill_nrm killed $p1, killed $m1
-    ; CHECK-NEXT: PADDB_sp_imm 32, implicit-def $sp, implicit $sp
+    ; CHECK: BUNDLE implicit-def $sp, implicit-def $p1, implicit $sp, implicit killed $p1, implicit killed $m1 {
+    ; CHECK-NEXT:   PADDB_sp_imm 32, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT:   $p1 = PADDS_st_ptr_inc_idx killed $p1, killed $m1
+    ; CHECK-NEXT: }
     $p1 = PADD_mod_pseudo $p1, $m1
     PADDB_sp_imm 32, implicit-def $sp, implicit $sp
 ...

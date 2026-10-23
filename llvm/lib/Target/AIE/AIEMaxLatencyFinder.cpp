@@ -27,6 +27,31 @@ static cl::opt<bool>
     InterBlockLatency("aie-interblock-latency", cl::Hidden, cl::init(true),
                       cl::desc("Use interblock latencies on ExitSU edges"));
 
+static cl::opt<bool> LoopExitDepth(
+    "aie-interblock-loop-exit-depth", cl::Hidden, cl::init(true),
+    cl::desc("Place the ExitSU of an edge into a postpipelined loop after "
+             "its guaranteed steady-state iterations"));
+
+/// Depth of the ExitSU of \p SE: the cycle after which consumers that are not
+/// modelled as successor nodes may execute. The DDG models one pass over the
+/// successor's top region. A postpipelined loop successor repeats its body at
+/// least getGuaranteedIterations() times before control can leave it, and
+/// consumers inside the loop body are explicit successor nodes, so anything
+/// behind the ExitSU executes after all of those iterations.
+static int getExitDepth(const InterBlockEdges &SE,
+                        const InterBlockScheduling &IB) {
+  const int OnePass = SE.getPostDepths().getRegionMax() + 1;
+  MachineBasicBlock *SuccMBB = SE.getSucc();
+  // Only an edge entering the loop counts; the back edge is not an entry.
+  if (!LoopExitDepth || !SuccMBB || SuccMBB == SE.getPred())
+    return OnePass;
+  const BlockState &SBS = IB.getBlockState(SuccMBB);
+  if (!SBS.isPipelined())
+    return OnePass;
+  const int BodyLength = SBS.getTop().Bundles.size();
+  return std::max(OnePass, SBS.getGuaranteedIterations() * BodyLength);
+}
+
 // Compute the latency of this instruction. We take the maximum of the
 // operand and the memory latency. Include the stage latency if requested.
 int maxLatency(const MachineInstr *MI, const AIEBaseInstrInfo &InstrInfo,
@@ -95,7 +120,6 @@ MaxLatencyFinder::MaxLatencyFinder(ScheduleDAGInstrs *DAG)
   // Update post-depths now that the scheduler may have produced bundles.
   if (CurBB && Scheduler && IsBottomRegion)
     Scheduler->getInterBlock().recordPostDepths(CurBB);
-  ReduceLatency = IsBottomRegion && !HasUnknownSuccessors && InterBlockLatency;
 }
 
 int MaxLatencyFinder::computeEffectiveLatency(MachineInstr &MI) {
@@ -110,7 +134,7 @@ int MaxLatencyFinder::computeEffectiveLatency(MachineInstr &MI) {
                << (SE.getPred() ? SE.getPred()->getNumber() : -1) << " Succ="
                << (SE.getSucc() ? SE.getSucc()->getNumber() : -1) << "\n");
     LLVM_DEBUG(dbgs() << format("Successor %d PostRegionMaxDepth=%d\n", SuccNo,
-                                SE.getPostRegionMaxDepth()));
+                                SE.getPostDepths().getRegionMax()));
     const SUnit *Pred = SE.getPreBoundaryNode(&MI);
     if (!Pred) {
       LLVM_DEBUG(
@@ -119,21 +143,31 @@ int MaxLatencyFinder::computeEffectiveLatency(MachineInstr &MI) {
     }
     LLVM_DEBUG(dbgs() << "   Pre-boundary " << Pred->NodeNum << " has "
                       << Pred->Succs.size() << " successor edge(s)\n");
+    const int ExitDepth = getExitDepth(SE, Scheduler->getInterBlock());
+    LLVM_DEBUG(dbgs() << "   ExitSU depth " << ExitDepth << "\n");
 
     for (const SDep &Dep : Pred->Succs) {
       SUnit *Succ = Dep.getSUnit();
-      if (!SE.isPostBoundaryNode(Succ)) {
-        LLVM_DEBUG(dbgs() << "   SU" << Succ->NodeNum
-                          << " is not a post-boundary node, skip\n");
-        continue;
+      int Depth;
+      if (SE.isPredecessorNode(Succ)) {
+        // Remaining latency is EdgeLat minus a recorded cycle. Only
+        // the loop tail and the prologue clones have a pre-depth.
+        if (!SE.isFixedPreBoundaryNode(Succ)) {
+          LLVM_DEBUG(dbgs() << "   SU" << Succ->NodeNum
+                            << " has no pre-depth, skip\n");
+          continue;
+        }
+        const std::optional<int> PreDepth = SE.getPreDepths().getDistance(Succ);
+        assert(PreDepth && "Fixed pre-boundary node has no recorded depth");
+        Depth = *PreDepth;
+      } else {
+        // For ExitSU the depth is the number of cycles that have elapsed in
+        // the successor before reaching it (see getExitDepth). For a regular
+        // instruction node the depth is its scheduled cycle within the block.
+        Depth = Succ->isBoundaryNode()
+                    ? ExitDepth
+                    : SE.getPostDepths().getDistanceOr(Succ, 0);
       }
-
-      // For ExitSU the depth is the full length of the successor block's
-      // top region (all its cycles have elapsed before reaching ExitSU).
-      // For a regular instruction node the depth is its scheduled cycle
-      // within the block.
-      const int Depth = Succ->isBoundaryNode() ? SE.getPostRegionMaxDepth() + 1
-                                               : SE.getPostDepthOr(Succ, 0);
       const int EdgeLat = Dep.getSignedLatency();
       const int Remaining = EdgeLat - Depth;
       LLVM_DEBUG(
@@ -179,15 +213,32 @@ unsigned MaxLatencyFinder::operator()(MachineInstr &MI) {
     }
   }
 
-  LLVM_DEBUG(dbgs() << format("ReduceLatency=%d\n", ReduceLatency));
-
-  if (ReduceLatency) {
+  if (IsBottomRegion) {
+    // A free MI may feed an SWP prologue instruction at the bottom of this
+    // block. There is no DAG edge between them, so this ExitSU latency is
+    // what keeps MI early enough. It can exceed MI's worst-case latency, so
+    // keep it even when interblock latency is disabled.
     int EffectiveLatency = computeEffectiveLatency(MI);
-    Latency = std::max(0, EffectiveLatency);
+    Latency = InterBlockLatency ? std::max(0, EffectiveLatency)
+                                : std::max(Latency, EffectiveLatency);
     LLVM_DEBUG(dbgs() << "   EffectiveLatency=" << EffectiveLatency << "\n");
   }
 
   return Latency;
+}
+
+int computeMinEntryLatency(const SUnit &EdgeSU, const InterBlockEdges &Edges) {
+  int MaxDepth = 0;
+  for (const SDep &PredEdge : EdgeSU.Preds) {
+    const SUnit *PredSU = PredEdge.getSUnit();
+    const InterBlockEdges::BoundaryDistances &Depths =
+        Edges.isPredecessorNode(PredSU) ? Edges.getPreDepths()
+                                        : Edges.getPostDepths();
+    const std::optional<int> PredDepth = Depths.getDistance(PredSU);
+    MaxDepth = std::max(
+        MaxDepth, PredDepth ? *PredDepth + PredEdge.getSignedLatency() : 0);
+  }
+  return MaxDepth;
 }
 
 } // namespace llvm::AIE

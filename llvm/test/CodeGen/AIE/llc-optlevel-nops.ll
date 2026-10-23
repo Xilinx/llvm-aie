@@ -4,7 +4,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc -mtriple=aie2 -O0 < %s | FileCheck %s --check-prefix=AIE2-O0
 ; RUN: llc -mtriple=aie2 -O2 < %s | FileCheck %s --check-prefix=AIE2-O2
 ; RUN: llc -mtriple=aie2p -O0 < %s | FileCheck %s --check-prefix=AIE2P-O0
@@ -41,7 +41,7 @@ define i32 @load_ptr(i8 *%a) {
 ; AIE2P-O0-LABEL: load_ptr:
 ; AIE2P-O0:       // %bb.0:
 ; AIE2P-O0-NEXT:    mova m0, #1; nopx
-; AIE2P-O0-NEXT:    padda [p0], m0
+; AIE2P-O0-NEXT:    paddb [p0], m0
 ; AIE2P-O0-NEXT:    lda.s8 r0, [p0, #0]
 ; AIE2P-O0-NEXT:    nop
 ; AIE2P-O0-NEXT:    ret lr
@@ -93,7 +93,7 @@ define i32 @load_ptr_optnone(i8 *%a) noinline optnone {
 ; AIE2P-O0-LABEL: load_ptr_optnone:
 ; AIE2P-O0:       // %bb.0:
 ; AIE2P-O0-NEXT:    mova m0, #1; nopx
-; AIE2P-O0-NEXT:    padda [p0], m0
+; AIE2P-O0-NEXT:    paddb [p0], m0
 ; AIE2P-O0-NEXT:    lda.s8 r0, [p0, #0]
 ; AIE2P-O0-NEXT:    nop
 ; AIE2P-O0-NEXT:    ret lr

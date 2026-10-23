@@ -35,6 +35,11 @@ SlotCounts getSlotCounts(unsigned Opcode, const AIEBaseInstrInfo *TII);
 /// pressure heuristics where cross-slot interference must be considered.
 SlotCounts getConflictCounts(unsigned Opcode, const AIEBaseInstrInfo *TII);
 
+/// \return the conflict set of \p Opcode as a bit set: the slots that it
+/// blocks when issued. Empty for opcodes without slot info (e.g. BUNDLE or
+/// meta instructions).
+SlotBits getConflictSet(unsigned Opcode, const AIEBaseInstrInfo *TII);
+
 } // namespace llvm::AIE
 
 #endif // LLVM_LIB_TARGET_AIE_AIESLOTUTILS_H

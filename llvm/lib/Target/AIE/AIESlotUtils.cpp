@@ -21,8 +21,12 @@ SlotCounts getSlotCounts(unsigned Opcode, const AIEBaseInstrInfo *TII) {
 }
 
 SlotCounts getConflictCounts(unsigned Opcode, const AIEBaseInstrInfo *TII) {
+  return SlotCounts{getConflictSet(Opcode, TII)};
+}
+
+SlotBits getConflictSet(unsigned Opcode, const AIEBaseInstrInfo *TII) {
   const auto *SlotInfo = TII->getSlotInfo(TII->getSlotKind(Opcode));
-  return SlotInfo ? SlotCounts{SlotInfo->getConflictSet()} : SlotCounts{};
+  return SlotInfo ? SlotInfo->getConflictSet() : 0;
 }
 
 } // namespace llvm::AIE

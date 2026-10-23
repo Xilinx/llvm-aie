@@ -164,15 +164,16 @@ public:
   bool DelaySlotFinalPass = false;
 };
 
-// For interblock scheduling we need the original code (SemanticOrder) to
-// compute inter-block dependences and the scheduled code (Bundles) to check
-// interblock contraints
+// For interblock scheduling we need the instructions in block order
+// (InstrOrder) to compute inter-block dependences and the scheduled code
+// (Bundles) to check interblock constraints.
 // Region decomposition is inaccessible from the SchedStrategy, we only
 // get enter and leave calls. We construct our Regions from the iterators
 // passed to the enterRegion call.
 class Region {
-  // The instrutions in their original order
-  std::vector<MachineInstr *> SemanticOrder;
+  // Free instructions in program order. After the post-pipeliner that order
+  // can differ from the original semantic order.
+  std::vector<MachineInstr *> InstrOrder;
   // The instruction that starts the next region, if any
   MachineInstr *ExitInstr = nullptr;
 
@@ -193,9 +194,9 @@ public:
   using free_iterator = std::vector<MachineInstr *>::const_iterator;
   using fixed_iterator = MachineBasicBlock::iterator;
 
-  /// Iterate over the "free" instructions in semantic order.
+  /// Iterate over the free instructions in block order.
   inline ArrayRef<MachineInstr *> getFreeInstructions() const {
-    return SemanticOrder;
+    return InstrOrder;
   }
 
   /// Iterate over the instructions that are fixed at the top. Typically those
@@ -216,19 +217,49 @@ public:
 
   /// Set the fixed bundles at the top of the region (e.g. a SWP epilogue).
   /// The instructions must already be physically present at the start of the
-  /// block. Trims SemanticOrder to exclude the newly fixed instructions.
+  /// block. Trims InstrOrder to exclude the newly fixed instructions.
   /// \pre The region starts at BB->begin().
   void setTopFixedBundles(ArrayRef<MachineBundle> Bundles);
 
   /// Set the fixed bundles at the bottom of the region (e.g. a SWP prologue).
   /// The instructions must already be physically present at the end of the
-  /// block. Trims SemanticOrder to exclude the newly fixed instructions.
+  /// block. Trims InstrOrder to exclude the newly fixed instructions.
   /// \pre The region ends at BB->end().
   void setBotFixedBundles(ArrayRef<MachineBundle> Bundles);
 
   MachineInstr *getExitInstr() const { return ExitInstr; }
 
   std::vector<MachineBundle> Bundles;
+};
+
+/// Bundles inserted at one end of a block, plus the set of clones they hold
+/// and a cycle map derived from the bundles. Top and bottom inserts share
+/// this layout; the cycle map's meaning differs and is set by the rebuild
+/// method.
+struct InsertDescriptor {
+  std::vector<MachineBundle> Bundles;
+
+  /// SWP clones present at this end. Membership is what matters; list order
+  /// is not a schedule order (depths come from CycleMap).
+  std::vector<MachineInstr *> Clones;
+
+  /// Cycle of each instruction in Bundles. Epilogue: bundle index from the
+  /// start. Prologue: depth before the end (last bundle is -1).
+  DenseMap<MachineInstr *, int> CycleMap;
+
+  bool empty() const { return Bundles.empty(); }
+  size_t size() const { return Bundles.size(); }
+
+  void clear() {
+    Bundles.clear();
+    Clones.clear();
+    CycleMap.clear();
+  }
+
+  /// Record the bundle index as the cycle.
+  void rebuildCycleMapFromStart();
+  /// Record the bundle index minus the bundle count as the cycle.
+  void rebuildCycleMapFromEnd();
 };
 
 class BlockState {
@@ -238,9 +269,14 @@ class BlockState {
   /// Maintain the index of the region that is currently being updated.
   unsigned CurrentRegion = 0;
 
-  /// Per-CFG-successor inter-block DDG edges, built during the DAG mutation
-  /// phase by MaxLatencyFinder::buildInterBlockEdges(). Persists into the
-  /// initialize() phase so that initializeBotScoreBoard() can also use them.
+  /// Per-CFG-successor inter-block DDG edges. One entry per successor.
+  /// An edge spans the predecessor's bottom region and the successor's top
+  /// region. TopInsert and BottomInsert are both in that region only when
+  /// the block has a single region, ordered TopInsert, free, BottomInsert.
+  /// A one-region epilogue predecessor therefore places all three before the
+  /// boundary. A single-region pipelined loop predecessor contributes the
+  /// tail of its scheduled bundles in place of TopInsert and the free
+  /// instructions.
   std::vector<std::unique_ptr<InterBlockEdges>> PerSuccEdges;
 
   // This holds an instance of the PostPipeliner for candidate loops.
@@ -266,12 +302,12 @@ public:
   BlockType Kind = BlockType::Regular;
   LivePhysRegs LiveOuts;
 
-  /// These are owned bundles of instructions that need to be inserted
-  /// in the top and the bottom of the block respectively.
-  /// PostPipelined loops use these to push out the epilogue and prologue
-  /// in the preheader and exit block.
-  std::vector<MachineBundle> TopInsert;
-  std::vector<MachineBundle> BottomInsert;
+  /// SWP epilogue inserted at the top of the exit block. CycleMap is the
+  /// depth from the start of the epilogue.
+  InsertDescriptor TopInsert;
+  /// SWP prologue inserted at the bottom of the preheader. CycleMap is the
+  /// depth before the end of the prologue.
+  InsertDescriptor BottomInsert;
 
   /// The top-level instructions (BUNDLEs or standalone) that TopInsert and
   /// BottomInsert were emitted as, in block order. top_fixed_instrs() and
@@ -279,13 +315,6 @@ public:
   /// the bottom of the block before a reschedule.
   SmallVector<MachineInstr *, 8> TopFixedInstrs;
   SmallVector<MachineInstr *, 8> BotFixedInstrs;
-
-  /// For pipelined loop preheaders: a parallel array to the loop body's
-  /// SemanticOrder. Each entry is the first-iteration clone from BottomInsert
-  /// for the corresponding original loop instruction, or nullptr when that
-  /// instruction has no copy in the prologue. Populated by PipelineExtractor
-  /// during PipeliningDone.
-  std::vector<MachineInstr *> BottomInsertSemanticOrder;
 
   void initInterBlock(const MachineSchedContext &Context,
                       const AIEHazardRecognizer &HR);
@@ -353,6 +382,12 @@ public:
   }
   bool isPipelined() const {
     return FixPoint.Stage == SchedulingStage::PipeliningDone;
+  }
+  /// Number of back-to-back executions of this block's top region that are
+  /// known to happen once control enters it: the guaranteed steady-state
+  /// iterations of a postpipelined loop, one for any other block.
+  int getGuaranteedIterations() const {
+    return isPipelined() ? getPostSWP().getMinSteadyStateTripCount() : 1;
   }
   bool pipeliningFailed() const {
     return FixPoint.Stage == SchedulingStage::PipeliningFailed;
@@ -567,7 +602,7 @@ public:
   // \p Epilogue. Returns nullopt if \p Epilogue is not the epilogue of a
   // pipelined loop.
   std::optional<ArrayRef<MachineBundle>>
-  getSWPLoopBundlesForEpilogue(MachineBasicBlock *Epilogue);
+  getSWPLoopBundlesForEpilogue(BlockState &Epilogue);
 
   /// If \p LoopMBB is not the only Predecessor of \p CurrentMBB, create a
   /// dedicated Exit MBB by splitting the edge between LoopMBB and CurrentBB

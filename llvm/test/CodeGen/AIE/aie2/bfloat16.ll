@@ -53,7 +53,7 @@ define dso_local noundef <32 x bfloat> @bxor_v32bf16(<32 x bfloat> noundef %a, <
 ; CHECK-NEXT:    vbneg_ltz.s16 x2, r16, x2 // Delay Slot 4
 ; CHECK-NEXT:    vband x2, x2, x4 // Delay Slot 3
 ; CHECK-NEXT:    vbor x0, x2, x0 // Delay Slot 2
-; CHECK-NEXT:    mov r16, r0 // Delay Slot 1
+; CHECK-NEXT:    or r16, r0, r0 // Delay Slot 1
 entry:
   %0 = bitcast <32 x bfloat> %a to <32 x i16>
   %1 = bitcast <32 x bfloat> %b to <32 x i16>
@@ -77,7 +77,7 @@ define dso_local noundef <32 x bfloat> @bneg_v32bf16(<32 x bfloat> noundef %a)  
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    vbneg_ltz.s16 x0, r16, x2 // Delay Slot 3
 ; CHECK-NEXT:    or r0, r16, r16 // Delay Slot 2
-; CHECK-NEXT:    mov r16, r0 // Delay Slot 1
+; CHECK-NEXT:    or r16, r0, r0 // Delay Slot 1
 entry:
   %0 = bitcast <32 x bfloat> %a to <32 x i16>
   %1 = tail call { <32 x i16>, i32 } @llvm.aie2.vbneg.ltz16(<32 x i16> %0)
@@ -112,7 +112,7 @@ define dso_local noundef <32 x bfloat> @max_lt_v32bf16(<32 x bfloat> noundef %a,
 ; CHECK-NEXT:    vmax_lt.bf16 x0, r16, x2, x4 // Delay Slot 4
 ; CHECK-NEXT:    or r0, r16, r16 // Delay Slot 3
 ; CHECK-NEXT:    st r16, [p0, #0] // Delay Slot 2
-; CHECK-NEXT:    mov r16, r0 // Delay Slot 1
+; CHECK-NEXT:    or r16, r0, r0 // Delay Slot 1
 entry:
   %0 = tail call { <32 x bfloat>, i32 } @llvm.aie2.vmax.ltbf16(<32 x bfloat> %a, <32 x bfloat> %b)
   %1 = extractvalue { <32 x bfloat>, i32 } %0, 1
@@ -130,7 +130,7 @@ define dso_local noundef <32 x bfloat> @max_v32bf16D(<32 x bfloat> noundef %a, <
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    vmax_lt.bf16 x0, r16, x2, x4 // Delay Slot 3
 ; CHECK-NEXT:    or r0, r16, r16 // Delay Slot 2
-; CHECK-NEXT:    mov r16, r0 // Delay Slot 1
+; CHECK-NEXT:    or r16, r0, r0 // Delay Slot 1
 entry:
   %0 = tail call { <32 x bfloat>, i32 } @llvm.aie2.vmax.ltbf16(<32 x bfloat> %a, <32 x bfloat> %b)
   %1 = extractvalue { <32 x bfloat>, i32 } %0, 0
@@ -145,7 +145,7 @@ define dso_local noundef <32 x bfloat> @min_ge_v32bf16(<32 x bfloat> noundef %a,
 ; CHECK-NEXT:    vmin_ge.bf16 x0, r16, x2, x4 // Delay Slot 4
 ; CHECK-NEXT:    or r0, r16, r16 // Delay Slot 3
 ; CHECK-NEXT:    st r16, [p0, #0] // Delay Slot 2
-; CHECK-NEXT:    mov r16, r0 // Delay Slot 1
+; CHECK-NEXT:    or r16, r0, r0 // Delay Slot 1
 entry:
   %0 = tail call { <32 x bfloat>, i32 } @llvm.aie2.vmin.gebf16(<32 x bfloat> %a, <32 x bfloat> %b)
   %1 = extractvalue { <32 x bfloat>, i32 } %0, 1
@@ -163,7 +163,7 @@ define dso_local noundef <32 x bfloat> @min_v32bf16(<32 x bfloat> noundef %a, <3
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    vmin_ge.bf16 x0, r16, x2, x4 // Delay Slot 3
 ; CHECK-NEXT:    or r0, r16, r16 // Delay Slot 2
-; CHECK-NEXT:    mov r16, r0 // Delay Slot 1
+; CHECK-NEXT:    or r16, r0, r0 // Delay Slot 1
 entry:
   %0 = tail call { <32 x bfloat>, i32 } @llvm.aie2.vmin.gebf16(<32 x bfloat> %a, <32 x bfloat> %b)
   %1 = extractvalue { <32 x bfloat>, i32 } %0, 0

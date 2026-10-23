@@ -4,7 +4,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 
 ; RUN: llc -O2 -mtriple=aie2 -enable-aie-zol-without-minitercount=false %s -o - | FileCheck %s
 ; RUN: opt -mtriple=aie2 -passes=aa-eval -print-all-alias-modref-info -disable-output < %s 2>&1 | FileCheck %s --check-prefix=AA
@@ -51,7 +51,7 @@ declare <16 x i64> @llvm.aie2.v32acc32()
 define void @mul2d(ptr noalias %in_ptr0, ptr noalias %in_ptr1, ptr noalias %out_ptr, %struct.mul2d_params %params.coerce) {
 ; CHECK-LABEL: mul2d:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    mova r0, #2; nopb ; extend.u16 r1, r4; nopm ; nops
+; CHECK-NEXT:    mova r0, #2; nopb ; extend.u16 r1, r4; nopm
 ; CHECK-NEXT:    ltu r0, r1, r0
 ; CHECK-NEXT:    jnz r0, #.LBB0_5
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -61,7 +61,7 @@ define void @mul2d(ptr noalias %in_ptr0, ptr noalias %in_ptr1, ptr noalias %out_
 ; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:  // %bb.1: // %for.body.lr.ph
 ; CHECK-NEXT:    mov p3, sp
-; CHECK-NEXT:    paddb [p3], #-4
+; CHECK-NEXT:    padds [p3], #-4
 ; CHECK-NEXT:    lda.u8 r0, [p3], #-4
 ; CHECK-NEXT:    lda dj0, [p3], #-4
 ; CHECK-NEXT:    lda dj4, [p3], #-4
@@ -71,7 +71,7 @@ define void @mul2d(ptr noalias %in_ptr0, ptr noalias %in_ptr1, ptr noalias %out_
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    mova r4, #-1
+; CHECK-NEXT:    mov r4, #-1
 ; CHECK-NEXT:    mova dc0, #0; vldb wl8, [p1], #32; lshl r1, r1, r4
 ; CHECK-NEXT:    vldb wl2, [p1], #32; add r1, r1, #-1; mov dc4, dc0
 ; CHECK-NEXT:    vldb.3d wl6, [p0], d0; jz r1, #.LBB0_4
@@ -79,7 +79,7 @@ define void @mul2d(ptr noalias %in_ptr0, ptr noalias %in_ptr1, ptr noalias %out_
 ; CHECK-NEXT:    extend.u8 r5, r5 // Delay Slot 4
 ; CHECK-NEXT:    mova r3, #0; movx r2, #1; mov s0, r5 // Delay Slot 3
 ; CHECK-NEXT:    ne r2, r0, r2; vbcst.8 x0, r3 // Delay Slot 2
-; CHECK-NEXT:    mova r0, #808; mov crSRSSign, r2 // Delay Slot 1
+; CHECK-NEXT:    movx r0, #808; mov crSRSSign, r2 // Delay Slot 1
 ; CHECK-NEXT:  // %bb.2:
 ; CHECK-NEXT:    vmov wh6, wl0
 ; CHECK-NEXT:    vmov wh4, wl0

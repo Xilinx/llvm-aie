@@ -22,7 +22,7 @@
   ; CHECK-NEXT:  .LBB0_1: // %preheader
   ; CHECK-NEXT:    nopa ; vldb.popx x1, [p0, lf0, r24]; nops ; nopxm ; nopv
   ; CHECK-NEXT:    paddb [p0], m6
-  ; CHECK-NEXT:    vldb.pop x10, [p0, lf0, r24, m6]; mov p5, p1
+  ; CHECK-NEXT:    vldb.pop x10, [p0, lf0, r24, m6]; movs p5, p1
   ; CHECK-NEXT:    vlda x8, [p5], #64; paddb.3d [p0], d1
   ; CHECK-NEXT:    vlda x9, [p5], #64; vldb.popx x1, [p0, lf0, r24]
   ; CHECK-NEXT:    vlda x6, [p5], #64; paddb [p0], m6

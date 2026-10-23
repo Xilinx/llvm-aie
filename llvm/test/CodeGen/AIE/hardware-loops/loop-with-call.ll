@@ -64,7 +64,7 @@ define dso_local void @_Z16addToSymbolTablePKci(ptr nocapture readonly %name, i3
 ; AIE2P-NEXT:    mul r1, r9, r1 // Delay Slot 5
 ; AIE2P-NEXT:    st p6, [sp, #-52]; movxm p6, ##symbolTable // 4-byte Folded Spill Delay Slot 4
 ; AIE2P-NEXT:    st lr, [sp, #-64]; mov m0, r1 // 4-byte Folded Spill Delay Slot 3
-; AIE2P-NEXT:    padda [p6], m0; st r8, [sp, #-60] // 4-byte Folded Spill Delay Slot 2
+; AIE2P-NEXT:    paddb [p6], m0; st r8, [sp, #-60] // 4-byte Folded Spill Delay Slot 2
 ; AIE2P-NEXT:    movs p2, p0; or r8, r0, r0; mov p1, p6 // Delay Slot 1
 ; AIE2P-NEXT:    lda lr, [sp, #-64]; nopb ; nops ; nopxm ; nopv // 4-byte Folded Reload
 ; AIE2P-NEXT:    nop
@@ -365,18 +365,18 @@ define void @__addsf3_lowered_to_call(ptr %a) {
 ; AIE2-LABEL: __addsf3_lowered_to_call:
 ; AIE2:       // %bb.0: // %entry
 ; AIE2-NEXT:    paddb [sp], #128; nopa ; nops ; nopxm ; nopv
-; AIE2-NEXT:    st r21, [sp, #-40] // 4-byte Folded Spill
+; AIE2-NEXT:    st r21, [sp, #-40]; nopx // 4-byte Folded Spill
 ; AIE2-NEXT:    st r19, [sp, #-48] // 4-byte Folded Spill
+; AIE2-NEXT:    st p6, [sp, #-32] // 4-byte Folded Spill
+; AIE2-NEXT:    mov p6, p0
 ; AIE2-NEXT:    st r20, [sp, #-44] // 4-byte Folded Spill
-; AIE2-NEXT:    st r17, [sp, #-56] // 4-byte Folded Spill
-; AIE2-NEXT:    st r18, [sp, #-52] // 4-byte Folded Spill
 ; AIE2-NEXT:    mova r16, #0; st r16, [sp, #-60] // 4-byte Folded Spill
-; AIE2-NEXT:    mov r29, r16
-; AIE2-NEXT:    st p6, [sp, #-32]; vinsert.32 x0, x0, r29, r16 // 4-byte Folded Spill
+; AIE2-NEXT:    st r17, [sp, #-56]; or r29, r16, r16 // 4-byte Folded Spill
+; AIE2-NEXT:    st r18, [sp, #-52]; vinsert.32 x0, x0, r29, r16 // 4-byte Folded Spill
 ; AIE2-NEXT:    st lr, [sp, #-64]; vmov bmh0, x0 // 4-byte Folded Spill
-; AIE2-NEXT:    st r22, [sp, #-36]; movxm r18, #16256 // 4-byte Folded Spill
-; AIE2-NEXT:    mova r19, #16; vst amhl0, [sp, #-128]; movx r21, #1; mov p6, p0 // 32-byte Folded Spill
-; AIE2-NEXT:    mova r17, #0; vst amhh0, [sp, #-96]; movx r20, #28; mov r22, r16 // 32-byte Folded Spill
+; AIE2-NEXT:    st r22, [sp, #-36]; movx r21, #1 // 4-byte Folded Spill
+; AIE2-NEXT:    mova r19, #16; vst amhl0, [sp, #-128]; movxm r18, #16256 // 32-byte Folded Spill
+; AIE2-NEXT:    mova r17, #0; vst amhh0, [sp, #-96]; or r22, r16, r16; mov r20, #28 // 32-byte Folded Spill
 ; AIE2-NEXT:  .LBB3_1: // %for.cond1.preheader
 ; AIE2-NEXT:    // =>This Inner Loop Header: Depth=1
 ; AIE2-NEXT:    nopb ; nopa ; nops ; jl #__mulsf3; nopv

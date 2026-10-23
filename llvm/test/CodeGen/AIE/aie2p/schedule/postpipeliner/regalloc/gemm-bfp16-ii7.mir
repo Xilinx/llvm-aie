@@ -20,7 +20,7 @@
 # RUN:   --aie-postpipeliner-phys-mode=0 \
 # RUN:   --aie-wawreg-rewrite=0 \
 # RUN:   --aie-preassign-multi-slot-instr=1 \
-# RUN:   --aie-materialize-pipeline=0 \
+# RUN:   --aie-minimize-slot-totals=0 \
 # RUN:   --aie-postpipeliner-maxii=10 \
 # RUN:   -o - %s | FileCheck %s
 

@@ -39,7 +39,7 @@ target triple = "aie2ps-none-unknown-elf"
 define void @setup(ptr noalias nonnull align 64 dereferenceable(72) %params, ptr noalias %rtps_void) local_unnamed_addr align 2 {
 ; CHECK-LABEL: setup:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    lda r1, [p1, #12]; nopxm
+; CHECK-NEXT:    lda r1, [p1, #12]; nopb ; nopxm
 ; CHECK-NEXT:    lda r2, [p1], #4
 ; CHECK-NEXT:    lda r0, [p1], #4
 ; CHECK-NEXT:    lda r4, [p1], #8
@@ -62,9 +62,9 @@ define void @setup(ptr noalias nonnull align 64 dereferenceable(72) %params, ptr
 ; CHECK-NEXT:    mova r20, #-5
 ; CHECK-NEXT:    mova r22, #16; lshl r20, r4, r20
 ; CHECK-NEXT:    lshl r20, r20, r22
-; CHECK-NEXT:    mova r24, #32; movxm r22, #-65536
-; CHECK-NEXT:    mova m0, #8; add r20, r20, r22; mov p2, p0
-; CHECK-NEXT:    padda [p2], m0; or r20, r20, r24
+; CHECK-NEXT:    movxm r22, #-65536
+; CHECK-NEXT:    mova m0, #8; movs p2, p0; add r20, r20, r22; mov r24, #32
+; CHECK-NEXT:    paddb [p2], m0; or r20, r20, r24
 ; CHECK-NEXT:    st r20, [p2], #-12
 ; CHECK-NEXT:    st r18, [p2], #20; mul r2, r0, r2
 ; CHECK-NEXT:    st r16, [p2], #4
@@ -74,7 +74,7 @@ define void @setup(ptr noalias nonnull align 64 dereferenceable(72) %params, ptr
 ; CHECK-NEXT:    st r6, [p2, #16]
 ; CHECK-NEXT:  .LBB0_2: // %sw.epilog
 ; CHECK-NEXT:    mova m0, #4; nopx
-; CHECK-NEXT:    padda [p1], m0
+; CHECK-NEXT:    paddb [p1], m0
 ; CHECK-NEXT:    lda r0, [p1], #4; mov dj0, #30
 ; CHECK-NEXT:    st.s8 r0, [p0, dj0]
 ; CHECK-NEXT:    nop

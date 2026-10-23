@@ -12,7 +12,7 @@
 define weak_odr dso_local void @setup(ptr noalias nonnull align 64 dereferenceable(57) %params, ptr noalias %rtps_void) {
 ; AIE2-LABEL: setup:
 ; AIE2:       // %bb.0: // %entry
-; AIE2-NEXT:    lda r6, [p1, #12]; nopb ; nopx
+; AIE2-NEXT:    lda r6, [p1, #12]; nopxm
 ; AIE2-NEXT:    lda r0, [p1], #4
 ; AIE2-NEXT:    lda r3, [p1], #4
 ; AIE2-NEXT:    lda r2, [p1], #8
@@ -39,16 +39,15 @@ define weak_odr dso_local void @setup(ptr noalias nonnull align 64 dereferenceab
 ; AIE2-NEXT:    nop
 ; AIE2-NEXT:    nop
 ; AIE2-NEXT:    nop
-; AIE2-NEXT:    mova r1, #0
-; AIE2-NEXT:    nop
-; AIE2-NEXT:    mova r1, #4
+; AIE2-NEXT:    mov r1, #0
+; AIE2-NEXT:    mov r1, #4
 ; AIE2-NEXT:    eq r8, r6, r1
 ; AIE2-NEXT:    jnz r8, #.LBB0_5
 ; AIE2-NEXT:    nop // Delay Slot 5
 ; AIE2-NEXT:    nop // Delay Slot 4
 ; AIE2-NEXT:    nop // Delay Slot 3
 ; AIE2-NEXT:    nop // Delay Slot 2
-; AIE2-NEXT:    mova r1, #32 // Delay Slot 1
+; AIE2-NEXT:    mov r1, #32 // Delay Slot 1
 ; AIE2-NEXT:  // %bb.1: // %entry
 ; AIE2-NEXT:    mova r5, #2
 ; AIE2-NEXT:    eq r8, r6, r5
@@ -113,7 +112,7 @@ define weak_odr dso_local void @setup(ptr noalias nonnull align 64 dereferenceab
 ; AIE2-NEXT:    nop // Delay Slot 2
 ; AIE2-NEXT:    nop // Delay Slot 1
 ; AIE2-NEXT:  .LBB0_4: // %sw.bb51
-; AIE2-NEXT:    mova m0, #-6
+; AIE2-NEXT:    mova m0, #-6; nopb ; nopxm ; nops
 ; AIE2-NEXT:    paddb [p0], m0
 ; AIE2-NEXT:    st.s16 r4, [p0], #4
 ; AIE2-NEXT:    mul r4, r2, r3
@@ -125,21 +124,21 @@ define weak_odr dso_local void @setup(ptr noalias nonnull align 64 dereferenceab
 ; AIE2-NEXT:    st.s16 r7, [p0], m0
 ; AIE2-NEXT:    nop
 ; AIE2-NEXT:    nop
+; AIE2-NEXT:    nop
 ; AIE2-NEXT:    add r6, r0, r5
-; AIE2-NEXT:    mul r6, r3, r6
 ; AIE2-NEXT:    mul r4, r3, r0
-; AIE2-NEXT:    mova m0, #-10
-; AIE2-NEXT:    st r4, [p0], m0; add r6, r3, r6
-; AIE2-NEXT:    st.s16 r2, [p0], #2; add r5, r6, r5
+; AIE2-NEXT:    mul r6, r3, r6; mov m0, #-10
+; AIE2-NEXT:    st r4, [p0], m0
+; AIE2-NEXT:    st.s16 r2, [p0], #2; add r6, r3, r6
+; AIE2-NEXT:    add r5, r6, r5
 ; AIE2-NEXT:    add r3, r3, #-1
-; AIE2-NEXT:    add r0, r0, #-1
 ; AIE2-NEXT:    mul r5, r5, r2
 ; AIE2-NEXT:    nop
-; AIE2-NEXT:    mova r6, #16; extend.u16 r3, r3
+; AIE2-NEXT:    extend.u16 r3, r3; mov r6, #16
 ; AIE2-NEXT:    lshl r2, r2, r6
 ; AIE2-NEXT:    or r2, r3, r2
-; AIE2-NEXT:    mova dj0, #10; st r2, [p0], #4; extend.u16 r0, r0
-; AIE2-NEXT:    st.s16 r2, [p0, dj0]; movx r7, #5
+; AIE2-NEXT:    mova dj0, #10; st r2, [p0], #4; add r0, r0, #-1
+; AIE2-NEXT:    st.s16 r2, [p0, dj0]; extend.u16 r0, r0; mov r7, #5
 ; AIE2-NEXT:    lshl r2, r4, r7
 ; AIE2-NEXT:    sub r2, r1, r2
 ; AIE2-NEXT:    ret lr
@@ -213,15 +212,15 @@ define weak_odr dso_local void @setup(ptr noalias nonnull align 64 dereferenceab
 ; AIE2P-NEXT:    nop
 ; AIE2P-NEXT:    nop
 ; AIE2P-NEXT:    nop
-; AIE2P-NEXT:    mova r3, #0
-; AIE2P-NEXT:    mova r3, #4
+; AIE2P-NEXT:    mov r3, #0
+; AIE2P-NEXT:    mov r3, #4
 ; AIE2P-NEXT:    eq r16, r6, r3
 ; AIE2P-NEXT:    jnz r16, #.LBB0_5
 ; AIE2P-NEXT:    nop // Delay Slot 5
 ; AIE2P-NEXT:    nop // Delay Slot 4
 ; AIE2P-NEXT:    nop // Delay Slot 3
 ; AIE2P-NEXT:    nop // Delay Slot 2
-; AIE2P-NEXT:    mova r3, #32 // Delay Slot 1
+; AIE2P-NEXT:    mov r3, #32 // Delay Slot 1
 ; AIE2P-NEXT:  // %bb.1: // %entry
 ; AIE2P-NEXT:    mova r4, #2
 ; AIE2P-NEXT:    eq r16, r6, r4
@@ -249,7 +248,7 @@ define weak_odr dso_local void @setup(ptr noalias nonnull align 64 dereferenceab
 ; AIE2P-NEXT:    mul r16, r0, r16
 ; AIE2P-NEXT:    add r7, r7, #-1
 ; AIE2P-NEXT:    mova m0, #4; extend.u16 r7, r7; mov r17, #16
-; AIE2P-NEXT:    padda [p0], m0; lshl r16, r16, r17
+; AIE2P-NEXT:    paddb [p0], m0; lshl r16, r16, r17
 ; AIE2P-NEXT:    st.s16 r3, [p0], #2; add r16, r16, r18
 ; AIE2P-NEXT:    mova r18, #32; msc r18, r18, r2, r4
 ; AIE2P-NEXT:    or r7, r7, r16
@@ -284,7 +283,7 @@ define weak_odr dso_local void @setup(ptr noalias nonnull align 64 dereferenceab
 ; AIE2P-NEXT:    nop // Delay Slot 1
 ; AIE2P-NEXT:  .LBB0_4: // %sw.bb51
 ; AIE2P-NEXT:    mova m0, #-6
-; AIE2P-NEXT:    padda [p0], m0
+; AIE2P-NEXT:    paddb [p0], m0
 ; AIE2P-NEXT:    st.s16 r5, [p0], #4
 ; AIE2P-NEXT:    mul r5, r0, r2
 ; AIE2P-NEXT:    nop
@@ -298,13 +297,13 @@ define weak_odr dso_local void @setup(ptr noalias nonnull align 64 dereferenceab
 ; AIE2P-NEXT:    nop
 ; AIE2P-NEXT:    nop
 ; AIE2P-NEXT:    mul r5, r2, r1
-; AIE2P-NEXT:    mova m0, #-10
+; AIE2P-NEXT:    mov m0, #-10
 ; AIE2P-NEXT:    st r5, [p0], m0
 ; AIE2P-NEXT:    st.s16 r0, [p0], #2
 ; AIE2P-NEXT:    nop
 ; AIE2P-NEXT:    nop
 ; AIE2P-NEXT:    add r6, r2, #-1
-; AIE2P-NEXT:    mova r7, #16; extend.u16 r6, r6
+; AIE2P-NEXT:    extend.u16 r6, r6; mov r7, #16
 ; AIE2P-NEXT:    lshl r16, r0, r7
 ; AIE2P-NEXT:    or r6, r6, r16
 ; AIE2P-NEXT:    mova r17, #5; st r6, [p0], #4
@@ -314,7 +313,7 @@ define weak_odr dso_local void @setup(ptr noalias nonnull align 64 dereferenceab
 ; AIE2P-NEXT:    mac r2, r2, r2, r16
 ; AIE2P-NEXT:    add r1, r1, #-1
 ; AIE2P-NEXT:    add r2, r2, r4
-; AIE2P-NEXT:    mova r3, #32; msc r3, r3, r2, r0
+; AIE2P-NEXT:    msc r3, r3, r2, r0; mov r3, #32
 ; AIE2P-NEXT:    ret lr
 ; AIE2P-NEXT:    extend.u16 r0, r1 // Delay Slot 5
 ; AIE2P-NEXT:    lshl r1, r3, r7 // Delay Slot 4
@@ -322,8 +321,8 @@ define weak_odr dso_local void @setup(ptr noalias nonnull align 64 dereferenceab
 ; AIE2P-NEXT:    st r0, [p0, #0] // Delay Slot 2
 ; AIE2P-NEXT:    nop // Delay Slot 1
 ; AIE2P-NEXT:  .LBB0_5: // %sw.bb109
-; AIE2P-NEXT:    mova m0, #4; nopb ; add r7, r2, #-1; nopm
-; AIE2P-NEXT:    padda [p0], m0; movx r5, #-5
+; AIE2P-NEXT:    mova m0, #4; nopxm
+; AIE2P-NEXT:    mova r5, #-5; paddb [p0], m0; add r7, r2, #-1
 ; AIE2P-NEXT:    st.s16 r3, [p0], #2; movxm r16, #2097152
 ; AIE2P-NEXT:    lshl r6, r0, r5
 ; AIE2P-NEXT:    extend.u16 r7, r7
@@ -387,15 +386,15 @@ define weak_odr dso_local void @setup(ptr noalias nonnull align 64 dereferenceab
 ; AIE2PS-NEXT:    nop
 ; AIE2PS-NEXT:    nop
 ; AIE2PS-NEXT:    nop
-; AIE2PS-NEXT:    mova r6, #0
-; AIE2PS-NEXT:    mova r6, #4
+; AIE2PS-NEXT:    mov r6, #0
+; AIE2PS-NEXT:    mov r6, #4
 ; AIE2PS-NEXT:    eq r24, r20, r6
 ; AIE2PS-NEXT:    jnz r24, #.LBB0_5
 ; AIE2PS-NEXT:    nop // Delay Slot 5
 ; AIE2PS-NEXT:    nop // Delay Slot 4
 ; AIE2PS-NEXT:    nop // Delay Slot 3
 ; AIE2PS-NEXT:    nop // Delay Slot 2
-; AIE2PS-NEXT:    mova r6, #32 // Delay Slot 1
+; AIE2PS-NEXT:    mov r6, #32 // Delay Slot 1
 ; AIE2PS-NEXT:  // %bb.1: // %entry
 ; AIE2PS-NEXT:    mova r16, #2
 ; AIE2PS-NEXT:    eq r24, r20, r16
@@ -423,7 +422,7 @@ define weak_odr dso_local void @setup(ptr noalias nonnull align 64 dereferenceab
 ; AIE2PS-NEXT:    mul r24, r0, r24
 ; AIE2PS-NEXT:    add r22, r22, #-1
 ; AIE2PS-NEXT:    mova m0, #4; extend.u16 r22, r22; mov r26, #16
-; AIE2PS-NEXT:    padda [p0], m0; lshl r24, r24, r26
+; AIE2PS-NEXT:    paddb [p0], m0; lshl r24, r24, r26
 ; AIE2PS-NEXT:    st.s16 r6, [p0], #2; add r24, r24, r28
 ; AIE2PS-NEXT:    mova r28, #32; msc r28, r28, r4, r16
 ; AIE2PS-NEXT:    or r22, r22, r24
@@ -458,7 +457,7 @@ define weak_odr dso_local void @setup(ptr noalias nonnull align 64 dereferenceab
 ; AIE2PS-NEXT:    nop // Delay Slot 1
 ; AIE2PS-NEXT:  .LBB0_4: // %sw.bb51
 ; AIE2PS-NEXT:    mova m0, #-6
-; AIE2PS-NEXT:    padda [p0], m0
+; AIE2PS-NEXT:    paddb [p0], m0
 ; AIE2PS-NEXT:    st.s16 r18, [p0], #4
 ; AIE2PS-NEXT:    mul r18, r0, r4
 ; AIE2PS-NEXT:    nop
@@ -472,13 +471,13 @@ define weak_odr dso_local void @setup(ptr noalias nonnull align 64 dereferenceab
 ; AIE2PS-NEXT:    nop
 ; AIE2PS-NEXT:    nop
 ; AIE2PS-NEXT:    mul r18, r4, r2
-; AIE2PS-NEXT:    mova m0, #-10
+; AIE2PS-NEXT:    mov m0, #-10
 ; AIE2PS-NEXT:    st r18, [p0], m0
 ; AIE2PS-NEXT:    st.s16 r0, [p0], #2
 ; AIE2PS-NEXT:    nop
 ; AIE2PS-NEXT:    nop
 ; AIE2PS-NEXT:    add r20, r4, #-1
-; AIE2PS-NEXT:    mova r22, #16; extend.u16 r20, r20
+; AIE2PS-NEXT:    extend.u16 r20, r20; mov r22, #16
 ; AIE2PS-NEXT:    lshl r24, r0, r22
 ; AIE2PS-NEXT:    or r20, r20, r24
 ; AIE2PS-NEXT:    mova r26, #5; st r20, [p0], #4
@@ -488,7 +487,7 @@ define weak_odr dso_local void @setup(ptr noalias nonnull align 64 dereferenceab
 ; AIE2PS-NEXT:    mac r4, r4, r4, r24
 ; AIE2PS-NEXT:    add r2, r2, #-1
 ; AIE2PS-NEXT:    add r4, r4, r16
-; AIE2PS-NEXT:    mova r6, #32; msc r6, r6, r4, r0
+; AIE2PS-NEXT:    msc r6, r6, r4, r0; mov r6, #32
 ; AIE2PS-NEXT:    ret lr
 ; AIE2PS-NEXT:    extend.u16 r0, r2 // Delay Slot 5
 ; AIE2PS-NEXT:    lshl r2, r6, r22 // Delay Slot 4
@@ -496,8 +495,8 @@ define weak_odr dso_local void @setup(ptr noalias nonnull align 64 dereferenceab
 ; AIE2PS-NEXT:    st r0, [p0, #0] // Delay Slot 2
 ; AIE2PS-NEXT:    nop // Delay Slot 1
 ; AIE2PS-NEXT:  .LBB0_5: // %sw.bb109
-; AIE2PS-NEXT:    mova m0, #4; nopb ; add r22, r4, #-1; nopm
-; AIE2PS-NEXT:    padda [p0], m0; movx r18, #-5
+; AIE2PS-NEXT:    mova m0, #4; nopxm
+; AIE2PS-NEXT:    mova r18, #-5; paddb [p0], m0; add r22, r4, #-1
 ; AIE2PS-NEXT:    st.s16 r6, [p0], #2; movxm r24, #2097152
 ; AIE2PS-NEXT:    lshl r20, r0, r18
 ; AIE2PS-NEXT:    extend.u16 r22, r22

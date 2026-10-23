@@ -33,7 +33,7 @@ define float @test_extract_elem_floatv16(<16 x float> %v, i32 %idx, i32 %sign) {
 ; CHECK-NEXT:    vextract.d32 r0, x0, r16 // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 2
-; CHECK-NEXT:    mov r16, r3 // Delay Slot 1
+; CHECK-NEXT:    or r16, r3, r3 // Delay Slot 1
 entry:
   %0 = bitcast <16 x float> %v to <16 x i32>
   %1 = tail call i32 @llvm.aie2.vextract.elem32.I512(<16 x i32> %0, i32 %idx, i32 %sign)

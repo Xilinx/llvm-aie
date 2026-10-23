@@ -45,6 +45,15 @@ using namespace llvm::AIE;
 static cl::opt<bool> InsertCycleSeparators(
     "aie-prera-cycle-separators", cl::init(false),
     cl::desc("[AIE] Insert CYCLE_SEPARATOR meta instructions"));
+static cl::opt<bool> MultiSlotSlotPreference(
+    "aie-multislot-slot-preference", cl::Hidden, cl::init(true),
+    cl::desc("Let multi-slot instructions outside of loops try the slot that "
+             "the rest of their region needs least first"));
+static cl::opt<bool> SlotDemandSkipWider(
+    "aie-slot-demand-skip-wider", cl::Hidden, cl::init(true),
+    cl::desc("Do not spread the slot demand of multi-slot instructions over "
+             "alternatives whose conflict set contains that of another "
+             "alternative"));
 static cl::opt<bool>
     EnableFinerRPTracking("aie-premisched-finer-rp-tracking", cl::init(true),
                           cl::desc("Track reg pressure more accurately and "
@@ -314,6 +323,30 @@ void AIEPostRASchedStrategy::initializeBotScoreBoard() {
     BotHazardRec->blockCycleInScoreboard(Cycle - Depth);
   };
 
+  // Replay \p NumIterations back-to-back executions of \p Bundles from cycle 0
+  // and stop at \p Limit, as there's only so much future we need. Return the
+  // number of cycles replayed.
+  auto ReplayBundles = [=](ArrayRef<MachineBundle> Bundles, int NumIterations,
+                           int Limit) {
+    int Cycle = 0;
+    if (Limit <= 0)
+      return Cycle;
+    for (int Iteration = 0; Iteration < NumIterations; Iteration++) {
+      for (const MachineBundle &Bundle : Bundles) {
+        DEBUG_BLOCKS(dbgs() << "Cycle " << Cycle << " has "
+                            << Bundle.getInstrs().size() << " instrs\n");
+        for (MachineInstr *MI : Bundle.getInstrs()) {
+          assert(!TheTII->isMultiSlotPseudo(*MI) &&
+                 "Scheduled bundles must not contain MultiSlotPseudos");
+          InsertInCycle(*MI, Cycle);
+        }
+        if (++Cycle >= Limit)
+          return Cycle;
+      }
+    }
+    return Cycle;
+  };
+
   /// Do the final alignment of the scoreboard to the position where we
   /// want it. We started it at -Depth representing Cycle 0. The scoreboard
   /// should have CurrentCycle representing the last cycle of the current
@@ -373,7 +406,7 @@ void AIEPostRASchedStrategy::initializeBotScoreBoard() {
           MachineInstr *MI = SU.getInstr();
           if (!MI)
             continue;
-          const int StaticDepth = SE.getPostDepthOr(&SU, 0);
+          const int StaticDepth = SE.getPostDepths().getDistanceOr(&SU, 0);
           // Insert at every cycle from StaticDepth to FirstBlockedCycle-1.
           for (int C = StaticDepth; C < FirstBlockedCycle; C++)
             InsertInCycle(*MI, C);
@@ -381,22 +414,12 @@ void AIEPostRASchedStrategy::initializeBotScoreBoard() {
         continue;
       }
       DEBUG_BLOCKS(dbgs() << " Replay bundles\n");
-      int Cycle = 0;
-      const std::vector<MachineBundle> &TopBundles = SBS.getTop().Bundles;
-      for (auto &Bundle : TopBundles) {
-        // There's only so much future we need.
-        if (Cycle >= FirstBlockedCycle) {
-          break;
-        }
-        DEBUG_BLOCKS(dbgs() << "Cycle " << Cycle << " has "
-                            << Bundle.getInstrs().size() << " instrs\n");
-        for (MachineInstr *MI : Bundle.getInstrs()) {
-          assert(!TheTII->isMultiSlotPseudo(*MI) &&
-                 "Scheduled bundles must not contain MultiSlotPseudos");
-          InsertInCycle(*MI, Cycle);
-        }
-        Cycle++;
-      }
+      // A postpipelined loop's bundles are its steady-state loop body. Replay
+      // only the iterations guaranteed to run; later cycles stay blocked.
+      const int NumIterations = SBS.getGuaranteedIterations();
+      DEBUG_BLOCKS(dbgs() << " Replay iterations: " << NumIterations << "\n");
+      const int Cycle =
+          ReplayBundles(SBS.getTop().Bundles, NumIterations, FirstBlockedCycle);
       FirstBlockedCycle = std::min(FirstBlockedCycle, Cycle);
     }
   }
@@ -427,7 +450,8 @@ void AIEPostRASchedStrategy::initializeTopScoreBoard() {
   if (!IsFirstRegion)
     return;
 
-  auto LoopBundlesOpt = InterBlock.getSWPLoopBundlesForEpilogue(CurMBB);
+  BlockState &BS = InterBlock.getBlockState(CurMBB);
+  auto LoopBundlesOpt = InterBlock.getSWPLoopBundlesForEpilogue(BS);
 
   if (!LoopBundlesOpt)
     return;
@@ -510,6 +534,24 @@ int AIEPostRASchedStrategy::getInterBlockDepth(const SUnit &SU) const {
   return It == IncomingInterBlockLatency.end() ? Depth : Depth + It->second;
 }
 
+void AIEPostRASchedStrategy::initSlotDemand(const BlockState &BS,
+                                            const Region &Reg) {
+  // Loops get their slots from the multi-slot materializer and the pipeliner,
+  // if they are pipeline candidates. Other loops keep the TableGen order.
+  SlotDemand.reset();
+  if (MultiSlotSlotPreference && BS.Kind != BlockType::Loop) {
+    SlotDemand.init(Reg.getFreeInstructions(), getTII(CurMBB),
+                    SlotDemandSkipWider);
+    DEBUG_WITH_TYPE("aie-slot-demand",
+                    dbgs() << "Slot demand for " << CurMBB->getName()
+                           << (IsBottomRegion ? " (bottom)" : "") << ": "
+                           << SlotDemand.getRemainingDemand() << "\n");
+  }
+  // An inactive tracker leaves the alternatives in TableGen order.
+  getAIEHazardRecognizer(Top)->setSlotDemandTracker(&SlotDemand);
+  getAIEHazardRecognizer(Bot)->setSlotDemandTracker(&SlotDemand);
+}
+
 void AIEPostRASchedStrategy::initialize(ScheduleDAGMI *Dag) {
   PostGenericScheduler::initialize(Dag);
   assert(PostRADirection == MISched::Direction::Unspecified);
@@ -524,8 +566,11 @@ void AIEPostRASchedStrategy::initialize(ScheduleDAGMI *Dag) {
   initializeTopScoreBoard();
 
   // Compute RegionTopDownCycles first so the delay slot logic can inspect it.
-  const Region &Reg = InterBlock.getBlockState(CurMBB).getCurrentRegion();
+  const BlockState &BS = InterBlock.getBlockState(CurMBB);
+  const Region &Reg = BS.getCurrentRegion();
   RegionTopDownCycles = Reg.getTopFixedBundles().size();
+
+  initSlotDemand(BS, Reg);
 
   // Delay slots are normally scheduled bottom-up so the control-flow
   // instruction is issued exactly TII->getNumDelaySlots() before the end of
@@ -854,6 +899,11 @@ bool AIEPostRASchedStrategy::isAvailableNode(SUnit &SU, SchedBoundary &Zone,
 /// Called after ScheduleDAGMI has scheduled an instruction and updated
 /// scheduled/remaining flags in the DAG nodes.
 void AIEPostRASchedStrategy::schedNode(SUnit *SU, bool IsTopNode) {
+  // The demand only covers the free instructions of the region. Fixed
+  // instructions are scheduled here too, but were never counted.
+  if (isFreeSU(*SU))
+    SlotDemand.removeDemand(*SU->getInstr(), getTII(CurMBB));
+
   if (IsTopNode) {
     const int DeltaCycles = int(SU->TopReadyCycle) - int(Top.getCurrCycle());
     assert(DeltaCycles <= 0);

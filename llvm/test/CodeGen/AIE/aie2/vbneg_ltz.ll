@@ -31,7 +31,7 @@ define dso_local noundef <32 x i16> @_Z23test_bneg_ltz_v32uint16Dv32_tRj(<32 x i
 ; CHECK-NEXT:    mova r0, #-1 // Delay Slot 4
 ; CHECK-NEXT:    vbneg_ltz.s16 x0, r16, x2 // Delay Slot 3
 ; CHECK-NEXT:    st r0, [p0, #0] // Delay Slot 2
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
+; CHECK-NEXT:    or r16, r1, r1 // Delay Slot 1
 entry:
   %0 = tail call { <32 x i16>, i32 } @llvm.aie2.vbneg.ltz16(<32 x i16> %a)
   %1 = extractvalue { <32 x i16>, i32 } %0, 0
@@ -47,7 +47,7 @@ define dso_local noundef <16 x i32> @_Z23test_bneg_ltz_v16uint32Dv16_jRj(<16 x i
 ; CHECK-NEXT:    mova r0, #-1 // Delay Slot 4
 ; CHECK-NEXT:    vbneg_ltz.s32 x0, r16, x2 // Delay Slot 3
 ; CHECK-NEXT:    st r0, [p0, #0] // Delay Slot 2
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
+; CHECK-NEXT:    or r16, r1, r1 // Delay Slot 1
 entry:
   %0 = tail call { <16 x i32>, i32 } @llvm.aie2.vbneg.ltz32(<16 x i32> %a)
   %1 = extractvalue { <16 x i32>, i32 } %0, 0

@@ -48,7 +48,7 @@ define dso_local noundef <8 x i32> @test3() {
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; paddb [sp], #32; nopxm ; nops
 ; CHECK-NEXT:    mov p0, sp
-; CHECK-NEXT:    paddb [p0], #-32
+; CHECK-NEXT:    padds [p0], #-32
 ; CHECK-NEXT:    lda q0, [p0, #480]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -69,10 +69,10 @@ entry:
 define dso_local noundef <8 x i32> @test4() {
 ; CHECK-LABEL: test4:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    paddb [sp], #32; nopa ; nops ; nopxm ; nopv
-; CHECK-NEXT:    mova dj0, #512
+; CHECK-NEXT:    nopa ; paddb [sp], #32; nopxm ; nops
+; CHECK-NEXT:    movxm dj0, #512
 ; CHECK-NEXT:    mov p0, sp
-; CHECK-NEXT:    paddb [p0], #-32
+; CHECK-NEXT:    padds [p0], #-32
 ; CHECK-NEXT:    vldb.128 wl0, [p0, dj0]
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
