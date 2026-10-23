@@ -399,6 +399,10 @@ static void substituteEquivalentDefs(MachineBasicBlock *MBB,
       const Register Src = MI.getOperand(1).getReg();
       if (!Dst.isVirtual() || !Src.isVirtual())
         continue;
+      // Skip if Dst has multiple defs (e.g. phi-elim), as replacing all
+      // uses would be incorrect when some uses correspond to other defs.
+      if (!MRI.getUniqueVRegDef(Dst))
+        continue;
       // Only handle invariant COPYs: source defined outside MBB.
       const MachineInstr *const SrcDef = MRI.getUniqueVRegDef(Src);
       if (!SrcDef || SrcDef->getParent() == MBB)
