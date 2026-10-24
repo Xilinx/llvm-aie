@@ -15,15 +15,20 @@
 #ifndef LLVM_LIB_TARGET_AIE_AIEDATADEPENDENCEHELPER_H
 #define LLVM_LIB_TARGET_AIE_AIEDATADEPENDENCEHELPER_H
 
+#include "AIEBaseAliasAnalysis.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/MachineScheduler.h"
 #include "llvm/CodeGen/ScheduleDAGInstrs.h"
+#include "llvm/MC/LaneBitmask.h"
+#include "llvm/MC/MCRegisterInfo.h"
 #include <algorithm>
 #include <map>
 #include <optional>
 
 namespace llvm {
 
+struct AIEBaseInstrInfo;
+class InstrItineraryData;
 class raw_ostream;
 
 namespace AIE {
@@ -35,19 +40,169 @@ namespace AIE {
 /// change of perspective on DAGMutations: They are target-dependent ways to
 /// modify the dependence graph, not target-dependent ways to tweak the
 /// scheduler.
+/// Per-instruction snapshot of register operand events for use in pairwise
+/// edge building. Produced by DataDependenceHelper::collectEvents() using
+/// AIE itinerary data. The OperandCycle and ForwardingClass fields enable
+/// direct latency computation without repeated schedule-class lookups.
+class InstrEvents {
+public:
+  /// One physical register def or use event. The reg unit is the matching
+  /// key; Reg and OpIdx are needed to construct the SDep. OperandCycle is
+  /// the itinerary-derived cycle at which the operand is written or read,
+  /// relative to instruction issue.
+  /// ForwardingClass is the pipeline bypass class; 0 means no bypass.
+  class PhysRegEvent {
+    MCRegUnit Unit;
+    Register Reg;
+    unsigned OpIdx;
+    int OperandCycle;
+    unsigned ForwardingClass;
+
+  public:
+    PhysRegEvent(MCRegUnit Unit, Register Reg, unsigned OpIdx,
+                 int OperandCycle = 0, unsigned ForwardingClass = 0)
+        : Unit(Unit), Reg(Reg), OpIdx(OpIdx), OperandCycle(OperandCycle),
+          ForwardingClass(ForwardingClass) {}
+
+    MCRegUnit getUnit() const { return Unit; }
+    Register getReg() const { return Reg; }
+    unsigned getOpIdx() const { return OpIdx; }
+    int getOperandCycle() const { return OperandCycle; }
+    unsigned getForwardingClass() const { return ForwardingClass; }
+  };
+
+  /// One virtual register def or use event with its lane mask and operand
+  /// index. OperandCycle and ForwardingClass have the same meaning as in
+  /// PhysRegEvent.
+  class VRegEntry {
+    Register Reg;
+    LaneBitmask LaneMask;
+    unsigned OpIdx;
+    int OperandCycle;
+    unsigned ForwardingClass;
+
+  public:
+    VRegEntry(Register Reg, LaneBitmask LaneMask, unsigned OpIdx,
+              int OperandCycle = 0, unsigned ForwardingClass = 0)
+        : Reg(Reg), LaneMask(LaneMask), OpIdx(OpIdx),
+          OperandCycle(OperandCycle), ForwardingClass(ForwardingClass) {}
+
+    Register getReg() const { return Reg; }
+    LaneBitmask getLaneMask() const { return LaneMask; }
+    unsigned getOpIdx() const { return OpIdx; }
+    int getOperandCycle() const { return OperandCycle; }
+    unsigned getForwardingClass() const { return ForwardingClass; }
+  };
+
+  SUnit *SU = nullptr;
+  // Physical register defs, one entry per reg unit covered by the operand.
+  SmallVector<PhysRegEvent, 4> PhysDefs;
+  // Physical register uses, one entry per reg unit covered by the operand.
+  SmallVector<PhysRegEvent, 4> PhysUses;
+  // Virtual register defs.
+  SmallVector<VRegEntry, 4> VRegDefs;
+  // Virtual register uses.
+  SmallVector<VRegEntry, 4> VRegUses;
+};
+
 class DataDependenceHelper : public ScheduleDAGInstrs {
   /// Ordered list of DAG postprocessing steps.
   std::vector<std::unique_ptr<ScheduleDAGMutation>> Mutations;
   const MachineSchedContext &Context;
+  // The AIE instruction info and itineraries of the function.
+  const AIEBaseInstrInfo *AIETII;
+  const InstrItineraryData *Itins;
+  // Set at the start of buildEdges() and consulted by the reg-dep helpers.
+  bool TrackLaneMasks = false;
+
+  // When non-zero, the DAG contains two virtual copies of the loop body with
+  // PipeliningNInstr instructions each. mayAlias() uses this to detect
+  // loop-carried dependences via aliasAcrossVirtualUnrolls().
+  unsigned PipeliningNInstr = 0;
+  // When true, all memory accesses in the current region are proved
+  // non-aliasing and chain dependencies can be suppressed entirely.
+  bool SafeToIgnoreMemDeps = false;
+  // When true, singly defined virtual registers get no output or anti
+  // dependences.
+  bool AbandonSingleDefDeps = false;
+  // When true, a physical register def in a fixed node does not erase the
+  // earlier defs and uses it would otherwise stand in for by transitivity.
+  // This produces redundant edges, so it is off by default.
+  bool RetainFixedPhysRegDeps = false;
+
   void schedule() override {};
 
+  // Copies of ScheduleDAGInstrs register-dependency builders, now instance
+  // methods so their call sites are visible in this class for future
+  // latency centralization.
+  void addPhysRegDataDeps(SUnit *SU, unsigned OperIdx);
+  void addPhysRegDeps(SUnit *SU, unsigned OperIdx);
+  void addVRegDefDeps(SUnit *SU, unsigned OperIdx);
+  void addVRegUseDeps(SUnit *SU, unsigned OperIdx);
+  bool handleRegEvents(SUnit *SU);
+
+  // Set the latency of Dep: the base latency, replaced by the signed operand
+  // latency of the itineraries where those describe both operands.
+  void setLatency(SUnit *Src, int SrcOpIdx, SUnit *Dst, int DstOpIdx,
+                  SDep &Dep) const;
+  // Compute the latency of a data dependence from AIE itinerary data.
+  // UseMI may be null for an unknown user.
+  int computeDataLatency(const MachineInstr &DefMI, unsigned DefOpIdx,
+                         const MachineInstr *UseMI, unsigned UseOpIdx) const;
+
+  /// Collect per-operand events for SU into an InstrEvents record using
+  /// AIE itinerary data. The itinerary class is resolved once per
+  /// instruction using the AIE register-dependent schedule class.
+  /// This is left unused for now; future work will thread InstrEvents
+  /// through the edge builders to centralise latency computation.
+  InstrEvents collectEvents(SUnit *SU);
+
+  // Add a chain edge between SUa and SUb if mayAlias() does not deny it.
+  void addChainDependency(SUnit *SUa, SUnit *SUb, unsigned Latency = 0);
+  // Add chain dependencies from all SUs in SUs to SU.
+  void addChainDependencies(SUnit *SU, SUList &SUs, unsigned Latency);
+  // Add chain dependencies from all SUs in Val2SUsMap to SU.
+  void addChainDependencies(SUnit *SU, Value2SUsMap &Val2SUsMap);
+  // Add chain dependencies from all SUs mapped to V in Val2SUsMap to SU.
+  void addChainDependencies(SUnit *SU, Value2SUsMap &Val2SUsMap, ValueType V);
+
 protected:
-  bool mayAlias(SUnit *SUa, SUnit *SUb, bool TBAA) override;
+  // Memory disambiguation that applies the configuration of this helper on
+  // top of the alias analysis wrapper of ScheduleDAGInstrs.
+  virtual bool mayAlias(SUnit *SUa, SUnit *SUb, bool TBAA);
+
+  /// True when the cycle of \p SU is set externally, e.g. by the pipeliner.
+  virtual bool isFixedNode(const SUnit &SU) const { return false; }
 
 public:
+  // Compute the latency of Dep according to the configuration of this helper
+  // and add it to Dst. This merges the computation of the base latency and
+  // the AIE-specific adjustment, without going through TargetSchedModel or
+  // the virtual TargetSubtargetInfo::adjustSchedDependency dispatch.
+  // Returns true if the dependence was added. Callers that track event state
+  // can use a false return to learn that the edge was found unnecessary.
+  bool addDep(SUnit *Src, int SrcOpIdx, SUnit *Dst, int DstOpIdx, SDep Dep);
+
+  // Set the number of instructions per virtual-unroll copy. Must be called
+  // before buildEdges() when the DAG is built in pipelining mode (two copies
+  // of the loop body). Zero (default) disables the virtual-unroll alias check.
+  void setPipeliningNInstr(unsigned N) { PipeliningNInstr = N; }
+  void setSafeToIgnoreMemDeps(bool V) { SafeToIgnoreMemDeps = V; }
+  void setAbandonSingleDefDeps(bool V) { AbandonSingleDefDeps = V; }
+  void setRetainFixedPhysRegDeps(bool V) { RetainFixedPhysRegDeps = V; }
+
+  // Compute the instruction latency of MI from the AIE itineraries, without
+  // going through TargetSchedModel.
+  int computeLatency(const MachineInstr *MI) const;
+
+  // Build all dependency edges for Target. Uses *this for AIE context (AA from
+  // Context, scheduling model, and alias analysis flags).
+  // The no-arg version calls buildEdges(*this).
+  void buildEdges(ScheduleDAGInstrs &Target, bool TrackLaneMasks = false);
+  void buildEdges();
+
   DataDependenceHelper(const MachineSchedContext &Context, bool AddMutators,
                        bool ExactLatencies);
-  void buildEdges();
 
   // Compute the maximum depth of all nodes. The depth is the earliest cycle
   // in which an instruction can run when considering all latencies leading
@@ -214,19 +369,19 @@ private:
 
   bool mayAlias(SUnit *SUa, SUnit *SUb, bool TBAA) override;
 
+public:
   /// Pruning by transitivity assumes that a def issues and lands no earlier
   /// than the earlier-listed defs it stands in for. Fixed nodes have their
-  /// cycles set by the pipeliner, which need not follow that order.
-  bool shouldRetainAllPhysRegDeps(const SUnit &SU,
-                                  MCRegister Reg) const override;
-
-public:
+  /// cycles set by the pipeliner, which need not follow that order, so the
+  /// physical register edges of fixed nodes are retained.
   InterBlockEdges(const MachineSchedContext &Context,
                   bool SafeToIgnoreMemDeps = false,
                   MachineBasicBlock *Pred = nullptr,
                   MachineBasicBlock *Succ = nullptr)
       : DataDependenceHelper(Context, true, true), Pred(Pred), Succ(Succ),
-        SafeToIgnoreMemDeps(SafeToIgnoreMemDeps) {}
+        SafeToIgnoreMemDeps(SafeToIgnoreMemDeps) {
+    setRetainFixedPhysRegDeps(true);
+  }
 
   MachineBasicBlock *getPred() const { return Pred; }
   MachineBasicBlock *getSucc() const { return Succ; }
@@ -275,7 +430,7 @@ public:
   bool isFixedPreBoundaryNode(const SUnit *SU) const;
 
   /// True when SU lies outside the free range of its side.
-  bool isFixedNode(const SUnit &SU) const;
+  bool isFixedNode(const SUnit &SU) const override;
 
   /// Check whether SU represents an instruction after the boundary.
   bool isPostBoundaryNode(const SUnit *SU) const;

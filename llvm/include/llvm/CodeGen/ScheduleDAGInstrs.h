@@ -18,6 +18,7 @@
 #define LLVM_CODEGEN_SCHEDULEDAGINSTRS_H
 
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/SparseMultiSet.h"
@@ -51,6 +52,7 @@ namespace llvm {
   class PseudoSourceValue;
   class RegPressureTracker;
   class UndefValue;
+  class DataLayout;
   class Value;
 
   /// An individual mapping from virtual register number to SUnit.
@@ -213,9 +215,42 @@ namespace llvm {
   protected:
     DumpDirection DumpDir = NotSet;
 
-    /// A map from ValueType to SUList, used during DAG construction, as
-    /// a means of remembering which SUs depend on which memory locations.
-    class Value2SUsMap;
+    /// A map from ValueType to SUList, used during DAG construction, as a means
+    /// of remembering which SUs depend on which memory locations.
+    class Value2SUsMap : public SmallMapVector<ValueType, SUList, 4> {
+      unsigned NumNodes = 0;
+      unsigned TrueMemOrderLatency;
+
+    public:
+      Value2SUsMap(unsigned lat = 0) : TrueMemOrderLatency(lat) {}
+      ValueType &operator[](const SUList &Key) {
+        llvm_unreachable("Don't use. Use insert() instead.");
+      }
+      void insert(SUnit *SU, ValueType V) {
+        MapVector::operator[](V).push_back(SU);
+        NumNodes++;
+      }
+      void clearList(ValueType V) {
+        iterator Itr = find(V);
+        if (Itr != end()) {
+          assert(NumNodes >= Itr->second.size());
+          NumNodes -= Itr->second.size();
+          Itr->second.clear();
+        }
+      }
+      void clear() {
+        SmallMapVector<ValueType, SUList, 4>::clear();
+        NumNodes = 0;
+      }
+      unsigned size() const { return NumNodes; }
+      void reComputeSize() {
+        NumNodes = 0;
+        for (auto &I : *this)
+          NumNodes += I.second.size();
+      }
+      unsigned getTrueMemOrderLatency() const { return TrueMemOrderLatency; }
+      void dump();
+    };
 
     /// Returns a (possibly null) pointer to the current BatchAAResults.
     BatchAAResults *getAAForDep() const {
@@ -285,8 +320,12 @@ namespace llvm {
     MachineFunction *CurrFunc;
     MachineFunction::iterator NextMBB;
 
-    // Supply specific memory disambiguation
-    virtual bool mayAlias(SUnit *SUa, SUnit *SUb, bool TBAA);
+    /// Memory disambiguation of the instructions of \p SUa and \p SUb using
+    /// the alias analysis of the current region.
+    bool mayAlias(SUnit *SUa, SUnit *SUb, bool TBAA);
+
+    /// Whether TBAA information should be used during DAG construction.
+    static bool shouldUseTBAA();
 
   public:
     explicit ScheduleDAGInstrs(MachineFunction &mf,
@@ -441,7 +480,16 @@ namespace llvm {
     /// This method is meant to be used from a backward traversal of the
     /// instructions.
     bool handleRegEvents(SUnit *SU);
-    
+
+    /// Analyzes the memory operands of MI and returns the underlying objects.
+    /// Returns true and fills Objects when all operands are analyzable;
+    /// returns false (and clears Objects) for volatile, atomic, or otherwise
+    /// unanalyzable operands.
+    static bool getUnderlyingObjectsForInstr(const MachineInstr *MI,
+                                             const MachineFrameInfo &MFI,
+                                             UnderlyingObjectsVector &Objects,
+                                             const DataLayout &DL);
+
     /// Returns the array of the clusters.
     SmallVector<ClusterInfo> &getClusters() { return Clusters; }
 
@@ -476,6 +524,13 @@ namespace llvm {
 
     /// Returns true if the def register in \p MO has no uses.
     bool deadDefHasNoUse(const MachineOperand &MO);
+
+  public:
+    // Public interface for AIE-specific edge building.
+    MachineBasicBlock::iterator getRegionEnd() const { return RegionEnd; }
+    bool getRemoveKillFlags() const { return RemoveKillFlags; }
+    void initSUnitsPublic() { initSUnits(); }
+    void markTopoDirty() { Topo.MarkDirty(); }
   };
 
   /// Returns an existing SUnit for this MI, or nullptr.
