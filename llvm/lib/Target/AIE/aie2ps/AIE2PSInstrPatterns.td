@@ -1203,6 +1203,9 @@ def : Pat<(v64i8 (concat_vectors (v32i8 VEC256:$src0), (v32i8 VEC256:$src1))),
 def : Pat<(v128i8 (concat_vectors (v64i8 VEC512:$src0), (v64i8 VEC512:$src1))),
   (v128i8 (REG_SEQUENCE VEC1024, VEC512:$src0, sub_512_lo, VEC512:$src1, sub_512_hi))>;
 
+def : Pat<(v16i64 (concat_vectors (v8i64 VEC512:$src0), (v8i64 VEC512:$src1))),
+  (v16i64 (REG_SEQUENCE VEC1024, VEC512:$src0, sub_512_lo, VEC512:$src1, sub_512_hi))>;
+
 // concat_vector - accumulator bank
 def : Pat<(v16i64 (concat_vectors (v8i64 ACC512:$src0), (v8i64 ACC512:$src1))),
   (v16i64 (REG_SEQUENCE ACC1024, ACC512:$src0, sub_512_acc_lo, ACC512:$src1, sub_512_acc_hi))>;
