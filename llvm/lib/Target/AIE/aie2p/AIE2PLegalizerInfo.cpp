@@ -290,6 +290,13 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
       .clampScalar(0, S32, S32)
       .scalarizeIf(typeIs(0, V2S32), 0)
       .fewerElementsIf(typeInSet(0, {V4S16, V8S8}), HalveElements)
+      // Bitwise operations do not depend on the element size: compute vectors
+      // of 64-bit elements on 32-bit elements.
+      .bitcastIf(typeInSet(0, {AccV4S64, AccV8S64, AccV16S64, AccV32S64}),
+                 bitcastAccToVectorType(0))
+      .clampMaxNumElements(0, S8, 128)
+      .clampMaxNumElements(0, S16, 64)
+      .clampMaxNumElements(0, S32, 32)
       .customIf(vectorSmallerThan(0, 512));
 
   getActionDefinitionsBuilder(G_SEXT_INREG).custom();
@@ -415,6 +422,8 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
       .clampScalar(0, S32, S32)
       .scalarizeIf(typeIs(0, V2S32), 0)
       .fewerElementsIf(typeInSet(0, {V4S16, V8S8}), HalveElements)
+      .bitcastIf(typeInSet(0, {AccV4S64, AccV8S64, AccV16S64, AccV32S64}),
+                 bitcastAccToVectorType(0))
       // AIE ISA supports only 512-bit vector xor
       .clampMaxNumElements(0, S8, 64)
       .clampMaxNumElements(0, S16, 32)

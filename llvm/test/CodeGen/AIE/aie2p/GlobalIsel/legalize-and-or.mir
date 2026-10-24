@@ -313,3 +313,213 @@ body:             |
     $wl0 = COPY %5(<32 x s8>)
     PseudoRET implicit $lr, implicit $wl0
 ...
+---
+name:            and_vec_V4S64
+body:             |
+  bb.1:
+    liveins: $wl2, $wl4
+    ; CHECK-LABEL: name: and_vec_V4S64
+    ; CHECK: liveins: $wl2, $wl4
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<4 x s64>) = COPY $wl2
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<4 x s64>) = COPY $wl4
+    ; CHECK-NEXT: [[BITCAST:%[0-9]+]]:_(<8 x s32>) = G_BITCAST [[COPY]](<4 x s64>)
+    ; CHECK-NEXT: [[BITCAST1:%[0-9]+]]:_(<8 x s32>) = G_BITCAST [[COPY1]](<4 x s64>)
+    ; CHECK-NEXT: [[AND:%[0-9]+]]:_(<8 x s32>) = G_AND [[BITCAST]], [[BITCAST1]]
+    ; CHECK-NEXT: [[BITCAST2:%[0-9]+]]:_(<4 x s64>) = G_BITCAST [[AND]](<8 x s32>)
+    ; CHECK-NEXT: $wl0 = COPY [[BITCAST2]](<4 x s64>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $wl0
+    %1:_(<4 x s64>) = COPY $wl2
+    %2:_(<4 x s64>) = COPY $wl4
+    %0:_(<4 x s64>) = G_AND %1, %2
+    $wl0 = COPY %0(<4 x s64>)
+    PseudoRET implicit $lr, implicit $wl0
+...
+---
+name:            and_vec_V8S64
+body:             |
+  bb.1:
+    liveins: $x2, $x4
+    ; CHECK-LABEL: name: and_vec_V8S64
+    ; CHECK: liveins: $x2, $x4
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<8 x s64>) = COPY $x2
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<8 x s64>) = COPY $x4
+    ; CHECK-NEXT: [[BITCAST:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[COPY]](<8 x s64>)
+    ; CHECK-NEXT: [[BITCAST1:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[COPY1]](<8 x s64>)
+    ; CHECK-NEXT: [[AND:%[0-9]+]]:_(<16 x s32>) = G_AND [[BITCAST]], [[BITCAST1]]
+    ; CHECK-NEXT: [[BITCAST2:%[0-9]+]]:_(<8 x s64>) = G_BITCAST [[AND]](<16 x s32>)
+    ; CHECK-NEXT: $x0 = COPY [[BITCAST2]](<8 x s64>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $x0
+    %1:_(<8 x s64>) = COPY $x2
+    %2:_(<8 x s64>) = COPY $x4
+    %0:_(<8 x s64>) = G_AND %1, %2
+    $x0 = COPY %0(<8 x s64>)
+    PseudoRET implicit $lr, implicit $x0
+...
+---
+name:            and_vec_V16S64
+body:             |
+  bb.1:
+    liveins: $y2, $y3
+    ; CHECK-LABEL: name: and_vec_V16S64
+    ; CHECK: liveins: $y2, $y3
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<16 x s64>) = COPY $y2
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<16 x s64>) = COPY $y3
+    ; CHECK-NEXT: [[BITCAST:%[0-9]+]]:_(<32 x s32>) = G_BITCAST [[COPY]](<16 x s64>)
+    ; CHECK-NEXT: [[BITCAST1:%[0-9]+]]:_(<32 x s32>) = G_BITCAST [[COPY1]](<16 x s64>)
+    ; CHECK-NEXT: [[AND:%[0-9]+]]:_(<32 x s32>) = G_AND [[BITCAST]], [[BITCAST1]]
+    ; CHECK-NEXT: [[BITCAST2:%[0-9]+]]:_(<16 x s64>) = G_BITCAST [[AND]](<32 x s32>)
+    ; CHECK-NEXT: $y0 = COPY [[BITCAST2]](<16 x s64>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $y0
+    %1:_(<16 x s64>) = COPY $y2
+    %2:_(<16 x s64>) = COPY $y3
+    %0:_(<16 x s64>) = G_AND %1, %2
+    $y0 = COPY %0(<16 x s64>)
+    PseudoRET implicit $lr, implicit $y0
+...
+---
+name:            and_vec_V32S64
+body:             |
+  bb.1:
+    ; CHECK-LABEL: name: and_vec_V32S64
+    ; CHECK: [[DEF:%[0-9]+]]:_(<32 x s64>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<32 x s64>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[BITCAST:%[0-9]+]]:_(<64 x s32>) = G_BITCAST [[DEF]](<32 x s64>)
+    ; CHECK-NEXT: [[BITCAST1:%[0-9]+]]:_(<64 x s32>) = G_BITCAST [[DEF1]](<32 x s64>)
+    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<32 x s32>), [[UV1:%[0-9]+]]:_(<32 x s32>) = G_UNMERGE_VALUES [[BITCAST]](<64 x s32>)
+    ; CHECK-NEXT: [[UV2:%[0-9]+]]:_(<32 x s32>), [[UV3:%[0-9]+]]:_(<32 x s32>) = G_UNMERGE_VALUES [[BITCAST1]](<64 x s32>)
+    ; CHECK-NEXT: [[AND:%[0-9]+]]:_(<32 x s32>) = G_AND [[UV]], [[UV2]]
+    ; CHECK-NEXT: [[AND1:%[0-9]+]]:_(<32 x s32>) = G_AND [[UV1]], [[UV3]]
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<64 x s32>) = G_CONCAT_VECTORS [[AND]](<32 x s32>), [[AND1]](<32 x s32>)
+    ; CHECK-NEXT: [[BITCAST2:%[0-9]+]]:_(<32 x s64>) = G_BITCAST [[CONCAT_VECTORS]](<64 x s32>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[BITCAST2]](<32 x s64>)
+    %1:_(<32 x s64>) = G_IMPLICIT_DEF
+    %2:_(<32 x s64>) = G_IMPLICIT_DEF
+    %0:_(<32 x s64>) = G_AND %1, %2
+    PseudoRET implicit $lr, implicit %0
+...
+---
+name:            and_vec_V64S32
+body:             |
+  bb.1:
+    ; CHECK-LABEL: name: and_vec_V64S32
+    ; CHECK: [[DEF:%[0-9]+]]:_(<64 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<64 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<32 x s32>), [[UV1:%[0-9]+]]:_(<32 x s32>) = G_UNMERGE_VALUES [[DEF]](<64 x s32>)
+    ; CHECK-NEXT: [[UV2:%[0-9]+]]:_(<32 x s32>), [[UV3:%[0-9]+]]:_(<32 x s32>) = G_UNMERGE_VALUES [[DEF1]](<64 x s32>)
+    ; CHECK-NEXT: [[AND:%[0-9]+]]:_(<32 x s32>) = G_AND [[UV]], [[UV2]]
+    ; CHECK-NEXT: [[AND1:%[0-9]+]]:_(<32 x s32>) = G_AND [[UV1]], [[UV3]]
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<64 x s32>) = G_CONCAT_VECTORS [[AND]](<32 x s32>), [[AND1]](<32 x s32>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS]](<64 x s32>)
+    %1:_(<64 x s32>) = G_IMPLICIT_DEF
+    %2:_(<64 x s32>) = G_IMPLICIT_DEF
+    %0:_(<64 x s32>) = G_AND %1, %2
+    PseudoRET implicit $lr, implicit %0
+...
+---
+name:            or_vec_V4S64
+body:             |
+  bb.1:
+    liveins: $wl2, $wl4
+    ; CHECK-LABEL: name: or_vec_V4S64
+    ; CHECK: liveins: $wl2, $wl4
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<4 x s64>) = COPY $wl2
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<4 x s64>) = COPY $wl4
+    ; CHECK-NEXT: [[BITCAST:%[0-9]+]]:_(<8 x s32>) = G_BITCAST [[COPY]](<4 x s64>)
+    ; CHECK-NEXT: [[BITCAST1:%[0-9]+]]:_(<8 x s32>) = G_BITCAST [[COPY1]](<4 x s64>)
+    ; CHECK-NEXT: [[OR:%[0-9]+]]:_(<8 x s32>) = G_OR [[BITCAST]], [[BITCAST1]]
+    ; CHECK-NEXT: [[BITCAST2:%[0-9]+]]:_(<4 x s64>) = G_BITCAST [[OR]](<8 x s32>)
+    ; CHECK-NEXT: $wl0 = COPY [[BITCAST2]](<4 x s64>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $wl0
+    %1:_(<4 x s64>) = COPY $wl2
+    %2:_(<4 x s64>) = COPY $wl4
+    %0:_(<4 x s64>) = G_OR %1, %2
+    $wl0 = COPY %0(<4 x s64>)
+    PseudoRET implicit $lr, implicit $wl0
+...
+---
+name:            or_vec_V8S64
+body:             |
+  bb.1:
+    liveins: $x2, $x4
+    ; CHECK-LABEL: name: or_vec_V8S64
+    ; CHECK: liveins: $x2, $x4
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<8 x s64>) = COPY $x2
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<8 x s64>) = COPY $x4
+    ; CHECK-NEXT: [[BITCAST:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[COPY]](<8 x s64>)
+    ; CHECK-NEXT: [[BITCAST1:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[COPY1]](<8 x s64>)
+    ; CHECK-NEXT: [[OR:%[0-9]+]]:_(<16 x s32>) = G_OR [[BITCAST]], [[BITCAST1]]
+    ; CHECK-NEXT: [[BITCAST2:%[0-9]+]]:_(<8 x s64>) = G_BITCAST [[OR]](<16 x s32>)
+    ; CHECK-NEXT: $x0 = COPY [[BITCAST2]](<8 x s64>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $x0
+    %1:_(<8 x s64>) = COPY $x2
+    %2:_(<8 x s64>) = COPY $x4
+    %0:_(<8 x s64>) = G_OR %1, %2
+    $x0 = COPY %0(<8 x s64>)
+    PseudoRET implicit $lr, implicit $x0
+...
+---
+name:            or_vec_V16S64
+body:             |
+  bb.1:
+    liveins: $y2, $y3
+    ; CHECK-LABEL: name: or_vec_V16S64
+    ; CHECK: liveins: $y2, $y3
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<16 x s64>) = COPY $y2
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<16 x s64>) = COPY $y3
+    ; CHECK-NEXT: [[BITCAST:%[0-9]+]]:_(<32 x s32>) = G_BITCAST [[COPY]](<16 x s64>)
+    ; CHECK-NEXT: [[BITCAST1:%[0-9]+]]:_(<32 x s32>) = G_BITCAST [[COPY1]](<16 x s64>)
+    ; CHECK-NEXT: [[OR:%[0-9]+]]:_(<32 x s32>) = G_OR [[BITCAST]], [[BITCAST1]]
+    ; CHECK-NEXT: [[BITCAST2:%[0-9]+]]:_(<16 x s64>) = G_BITCAST [[OR]](<32 x s32>)
+    ; CHECK-NEXT: $y0 = COPY [[BITCAST2]](<16 x s64>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $y0
+    %1:_(<16 x s64>) = COPY $y2
+    %2:_(<16 x s64>) = COPY $y3
+    %0:_(<16 x s64>) = G_OR %1, %2
+    $y0 = COPY %0(<16 x s64>)
+    PseudoRET implicit $lr, implicit $y0
+...
+---
+name:            or_vec_V32S64
+body:             |
+  bb.1:
+    ; CHECK-LABEL: name: or_vec_V32S64
+    ; CHECK: [[DEF:%[0-9]+]]:_(<32 x s64>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<32 x s64>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[BITCAST:%[0-9]+]]:_(<64 x s32>) = G_BITCAST [[DEF]](<32 x s64>)
+    ; CHECK-NEXT: [[BITCAST1:%[0-9]+]]:_(<64 x s32>) = G_BITCAST [[DEF1]](<32 x s64>)
+    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<32 x s32>), [[UV1:%[0-9]+]]:_(<32 x s32>) = G_UNMERGE_VALUES [[BITCAST]](<64 x s32>)
+    ; CHECK-NEXT: [[UV2:%[0-9]+]]:_(<32 x s32>), [[UV3:%[0-9]+]]:_(<32 x s32>) = G_UNMERGE_VALUES [[BITCAST1]](<64 x s32>)
+    ; CHECK-NEXT: [[OR:%[0-9]+]]:_(<32 x s32>) = G_OR [[UV]], [[UV2]]
+    ; CHECK-NEXT: [[OR1:%[0-9]+]]:_(<32 x s32>) = G_OR [[UV1]], [[UV3]]
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<64 x s32>) = G_CONCAT_VECTORS [[OR]](<32 x s32>), [[OR1]](<32 x s32>)
+    ; CHECK-NEXT: [[BITCAST2:%[0-9]+]]:_(<32 x s64>) = G_BITCAST [[CONCAT_VECTORS]](<64 x s32>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[BITCAST2]](<32 x s64>)
+    %1:_(<32 x s64>) = G_IMPLICIT_DEF
+    %2:_(<32 x s64>) = G_IMPLICIT_DEF
+    %0:_(<32 x s64>) = G_OR %1, %2
+    PseudoRET implicit $lr, implicit %0
+...
+---
+name:            or_vec_V64S32
+body:             |
+  bb.1:
+    ; CHECK-LABEL: name: or_vec_V64S32
+    ; CHECK: [[DEF:%[0-9]+]]:_(<64 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<64 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<32 x s32>), [[UV1:%[0-9]+]]:_(<32 x s32>) = G_UNMERGE_VALUES [[DEF]](<64 x s32>)
+    ; CHECK-NEXT: [[UV2:%[0-9]+]]:_(<32 x s32>), [[UV3:%[0-9]+]]:_(<32 x s32>) = G_UNMERGE_VALUES [[DEF1]](<64 x s32>)
+    ; CHECK-NEXT: [[OR:%[0-9]+]]:_(<32 x s32>) = G_OR [[UV]], [[UV2]]
+    ; CHECK-NEXT: [[OR1:%[0-9]+]]:_(<32 x s32>) = G_OR [[UV1]], [[UV3]]
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<64 x s32>) = G_CONCAT_VECTORS [[OR]](<32 x s32>), [[OR1]](<32 x s32>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS]](<64 x s32>)
+    %1:_(<64 x s32>) = G_IMPLICIT_DEF
+    %2:_(<64 x s32>) = G_IMPLICIT_DEF
+    %0:_(<64 x s32>) = G_OR %1, %2
+    PseudoRET implicit $lr, implicit %0
+...
