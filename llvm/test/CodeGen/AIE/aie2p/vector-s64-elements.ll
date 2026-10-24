@@ -11,6 +11,46 @@
 ; Operations on vectors of 64-bit elements. Bitwise operations are computed on
 ; 32-bit elements.
 
+define void @or_v16i64_splat(ptr %p) {
+; AIE2P-LABEL: or_v16i64_splat:
+; AIE2P:       // %bb.0:
+; AIE2P-NEXT:    vlda bmll0, [p0, #0]; nopb ; nops ; movxm r0, #-2147483648; nopv
+; AIE2P-NEXT:    vlda bmlh0, [p0, #64]; mov r1, r0
+; AIE2P-NEXT:    nopx ; vbcst.64 x0, r1:r0
+; AIE2P-NEXT:    vmov bmll1, x0
+; AIE2P-NEXT:    vmov bmlh1, x0
+; AIE2P-NEXT:    vmov x2, bmll1
+; AIE2P-NEXT:    vmov x3, bmlh1
+; AIE2P-NEXT:    vmov x0, bmll0
+; AIE2P-NEXT:    vmov x1, bmlh0
+; AIE2P-NEXT:    vbor x1, x1, x3
+; AIE2P-NEXT:    ret lr; vbor x0, x0, x2
+; AIE2P-NEXT:    vmov bmlh0, x1 // Delay Slot 5
+; AIE2P-NEXT:    vmov bmll0, x0 // Delay Slot 4
+; AIE2P-NEXT:    vst bmlh0, [p0, #64] // Delay Slot 3
+; AIE2P-NEXT:    vst bmll0, [p0, #0] // Delay Slot 2
+; AIE2P-NEXT:    nop // Delay Slot 1
+;
+; AIE2PS-LABEL: or_v16i64_splat:
+; AIE2PS:       // %bb.0:
+; AIE2PS-NEXT:    vldb x1, [p0, #64]; nopx
+; AIE2PS-NEXT:    vldb x0, [p0, #0]
+; AIE2PS-NEXT:    nop
+; AIE2PS-NEXT:    nop
+; AIE2PS-NEXT:    movxm r0, #-2147483648
+; AIE2PS-NEXT:    mov r1, r0
+; AIE2PS-NEXT:    ret lr; vbcst.64 x3, r1:r0
+; AIE2PS-NEXT:    vbor x1, x1, x3 // Delay Slot 5
+; AIE2PS-NEXT:    vbor x0, x0, x3 // Delay Slot 4
+; AIE2PS-NEXT:    vst x1, [p0, #64] // Delay Slot 3
+; AIE2PS-NEXT:    vst x0, [p0, #0] // Delay Slot 2
+; AIE2PS-NEXT:    nop // Delay Slot 1
+  %v = load <16 x i64>, ptr %p, align 64
+  %o = or <16 x i64> %v, splat (i64 -9223372034707292160)
+  store <16 x i64> %o, ptr %p, align 64
+  ret void
+}
+
 define void @or_v16i64(ptr %p, ptr %q) {
 ; AIE2P-LABEL: or_v16i64:
 ; AIE2P:       // %bb.0:
