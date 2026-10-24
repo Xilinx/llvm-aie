@@ -29,8 +29,8 @@ body:             |
   ; COMMON-NEXT:   [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
   ; COMMON-NEXT:   [[DEF:%[0-9]+]]:_(<16 x s32>) = G_IMPLICIT_DEF
   ; COMMON-NEXT:   [[DEF1:%[0-9]+]]:_(<16 x s32>) = G_IMPLICIT_DEF
-  ; COMMON-NEXT:   [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[DEF]](<16 x s32>), [[DEF1]](<16 x s32>)
   ; COMMON-NEXT:   G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.set.loop.iterations), [[COPY]](s32)
+  ; COMMON-NEXT:   [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[DEF]](<16 x s32>), [[DEF1]](<16 x s32>)
   ; COMMON-NEXT: {{  $}}
   ; COMMON-NEXT: bb.1:
   ; COMMON-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
@@ -90,8 +90,8 @@ body:             |
   ; COMMON-NEXT:   [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
   ; COMMON-NEXT:   [[DEF:%[0-9]+]]:_(<16 x s32>) = G_IMPLICIT_DEF
   ; COMMON-NEXT:   [[DEF1:%[0-9]+]]:_(<16 x s32>) = G_IMPLICIT_DEF
-  ; COMMON-NEXT:   [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[DEF]](<16 x s32>), [[DEF1]](<16 x s32>)
   ; COMMON-NEXT:   G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.set.loop.iterations), [[COPY]](s32)
+  ; COMMON-NEXT:   [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[DEF]](<16 x s32>), [[DEF1]](<16 x s32>)
   ; COMMON-NEXT: {{  $}}
   ; COMMON-NEXT: bb.1:
   ; COMMON-NEXT:   successors: %bb.2(0x80000000)
@@ -155,8 +155,8 @@ body:             |
   ; COMMON-NEXT:   [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
   ; COMMON-NEXT:   [[DEF:%[0-9]+]]:_(<16 x s32>) = G_IMPLICIT_DEF
   ; COMMON-NEXT:   [[DEF1:%[0-9]+]]:_(<16 x s32>) = G_IMPLICIT_DEF
-  ; COMMON-NEXT:   [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[DEF]](<16 x s32>), [[DEF1]](<16 x s32>)
   ; COMMON-NEXT:   G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.set.loop.iterations), [[COPY]](s32)
+  ; COMMON-NEXT:   [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[DEF]](<16 x s32>), [[DEF1]](<16 x s32>)
   ; COMMON-NEXT: {{  $}}
   ; COMMON-NEXT: bb.1:
   ; COMMON-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
@@ -284,8 +284,8 @@ body:             |
   ; COMMON-NEXT:   [[DEF1:%[0-9]+]]:_(<8 x s32>) = G_IMPLICIT_DEF
   ; COMMON-NEXT:   [[DEF2:%[0-9]+]]:_(<8 x s32>) = G_IMPLICIT_DEF
   ; COMMON-NEXT:   [[DEF3:%[0-9]+]]:_(<8 x s32>) = G_IMPLICIT_DEF
-  ; COMMON-NEXT:   [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[DEF]](<8 x s32>), [[DEF1]](<8 x s32>), [[DEF2]](<8 x s32>), [[DEF3]](<8 x s32>)
   ; COMMON-NEXT:   G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.set.loop.iterations), [[COPY]](s32)
+  ; COMMON-NEXT:   [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[DEF]](<8 x s32>), [[DEF1]](<8 x s32>), [[DEF2]](<8 x s32>), [[DEF3]](<8 x s32>)
   ; COMMON-NEXT: {{  $}}
   ; COMMON-NEXT: bb.1:
   ; COMMON-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
