@@ -408,6 +408,9 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
       .widenScalarToNextPow2(0)
       .clampScalar(0, S32, S32)
       .scalarizeIf(typeIs(0, V2S32), 0)
+      // The vector unit adds 64-bit lanes only in accumulators: add them one
+      // by one.
+      .scalarizeIf(elementTypeIs(0, S64), 0)
       // AIE ISA supports only 512-bit vector add/sub
       .clampMaxNumElements(0, S8, 64)
       .clampMaxNumElements(0, S16, 32)
