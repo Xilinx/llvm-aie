@@ -1628,7 +1628,7 @@ def : VSUB_LT_GE_INSTR<int_aie2ps_vsub_lt16, VSUB_LT_16_vaddSign1, 0x1>;
 def : VSUB_LT_GE_INSTR<int_aie2ps_vsub_lt32, VSUB_LT_32_vaddSign1, 0x1>;
 
 def : VSUB_LT_GE_INSTR<int_aie2ps_vsub_ge8, VSUB_GE_8_vaddSign1, 0x1>;
-def : VSUB_LT_GE_INSTR<int_aie2ps_vsub_ge16, VSUB_GE_32_vaddSign1, 0x1>;
+def : VSUB_LT_GE_INSTR<int_aie2ps_vsub_ge16, VSUB_GE_16_vaddSign1, 0x1>;
 def : VSUB_LT_GE_INSTR<int_aie2ps_vsub_ge32, VSUB_GE_32_vaddSign1, 0x1>;
 
 // addr intrinsics
