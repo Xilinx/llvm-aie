@@ -4340,3 +4340,48 @@ body:             |
     G_STORE %1(<32 x s64>), %0(p0) :: (store (<32 x s64>), align 16)
     PseudoRET implicit $lr
 ...
+---
+name:            test_v128int16
+body:             |
+  bb.1.entry:
+    liveins: $p0
+
+    ; CHECK-LABEL: name: test_v128int16
+    ; CHECK: liveins: $p0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
+    ; CHECK-NEXT: [[DEF:%[0-9]+]]:_(<64 x s16>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: G_STORE [[DEF]](<64 x s16>), [[COPY]](p0) :: (store (<64 x s16>), align 64)
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 128
+    ; CHECK-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C]](s20)
+    ; CHECK-NEXT: G_STORE [[DEF]](<64 x s16>), [[PTR_ADD]](p0) :: (store (<64 x s16>) into unknown-address + 128, align 64)
+    ; CHECK-NEXT: PseudoRET implicit $lr
+    %0:_(p0) = COPY $p0
+    %1:_(<128 x s16>) = G_IMPLICIT_DEF
+    G_STORE %1(<128 x s16>), %0(p0) :: (store (<128 x s16>), align 64)
+    PseudoRET implicit $lr
+
+...
+
+---
+name:            test_v256int8
+body:             |
+  bb.1.entry:
+    liveins: $p0
+
+    ; CHECK-LABEL: name: test_v256int8
+    ; CHECK: liveins: $p0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
+    ; CHECK-NEXT: [[DEF:%[0-9]+]]:_(<128 x s8>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: G_STORE [[DEF]](<128 x s8>), [[COPY]](p0) :: (store (<128 x s8>), align 64)
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 128
+    ; CHECK-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C]](s20)
+    ; CHECK-NEXT: G_STORE [[DEF]](<128 x s8>), [[PTR_ADD]](p0) :: (store (<128 x s8>) into unknown-address + 128, align 64)
+    ; CHECK-NEXT: PseudoRET implicit $lr
+    %0:_(p0) = COPY $p0
+    %1:_(<256 x s8>) = G_IMPLICIT_DEF
+    G_STORE %1(<256 x s8>), %0(p0) :: (store (<256 x s8>), align 64)
+    PseudoRET implicit $lr
+
+...

@@ -191,6 +191,8 @@ AIE2PSLegalizerInfo::AIE2PSLegalizerInfo(const AIE2PSSubtarget &ST)
       .legalFor(AIE2PSVectorTypes)
       .legalFor(AIE2PSAccumulatorTypes)
       .legalFor({AccV2S1024})
+      .clampMaxNumElements(0, S8, 128)
+      .clampMaxNumElements(0, S16, 64)
       .widenScalarToNextPow2(0)
       .clampScalar(0, S32, S32);
 
@@ -577,6 +579,10 @@ AIE2PSLegalizerInfo::AIE2PSLegalizerInfo(const AIE2PSSubtarget &ST)
       .customIf([=](const LegalityQuery &Query) {
         return AIEHelper.isUnaligned20BitStore(Query);
       })
+      // Split 2048-bit vectors of 8- and 16-bit elements into legal 1024-bit
+      // halves.
+      .clampMaxNumElements(0, S8, 128)
+      .clampMaxNumElements(0, S16, 64)
       .widenScalarToNextPow2(0)
       .lowerIfMemSizeNotPow2()
       .bitcastIf(
