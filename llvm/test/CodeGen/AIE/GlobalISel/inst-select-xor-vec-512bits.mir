@@ -22,12 +22,10 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x2
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY $x4
-    ; CHECK-NEXT: [[VBNEG_LTZ_s32_:%[0-9]+]]:mxm, dead [[VBNEG_LTZ_s32_1:%[0-9]+]]:mr16_vcompare = VBNEG_LTZ_s32 [[COPY]]
-    ; CHECK-NEXT: [[VBAND:%[0-9]+]]:vec512 = VBAND [[VBNEG_LTZ_s32_]], [[COPY1]]
-    ; CHECK-NEXT: [[VBNEG_LTZ_s32_2:%[0-9]+]]:mxm, dead [[VBNEG_LTZ_s32_3:%[0-9]+]]:mr16_vcompare = VBNEG_LTZ_s32 [[COPY1]]
-    ; CHECK-NEXT: [[VBAND1:%[0-9]+]]:mxm = VBAND [[VBNEG_LTZ_s32_2]], [[COPY]]
-    ; CHECK-NEXT: [[VBOR:%[0-9]+]]:vec512 = VBOR [[VBAND1]], [[VBAND]]
-    ; CHECK-NEXT: $x0 = COPY [[VBOR]]
+    ; CHECK-NEXT: [[VBAND:%[0-9]+]]:vec512 = VBAND [[COPY1]], [[COPY]]
+    ; CHECK-NEXT: [[VBOR:%[0-9]+]]:mxm = VBOR [[COPY1]], [[COPY]]
+    ; CHECK-NEXT: [[VSUB_32_:%[0-9]+]]:vec512 = VSUB_32 [[VBOR]], [[VBAND]]
+    ; CHECK-NEXT: $x0 = COPY [[VSUB_32_]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $x0
     ;
     ; AIE2PS-LABEL: name: test_xor_v64s8
@@ -35,12 +33,10 @@ body:             |
     ; AIE2PS-NEXT: {{  $}}
     ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x2
     ; AIE2PS-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY $x4
-    ; AIE2PS-NEXT: [[VBNEG_LTZ_s32_:%[0-9]+]]:mxm, dead [[VBNEG_LTZ_s32_1:%[0-9]+]]:mr16m = VBNEG_LTZ_s32 [[COPY]], implicit $crbf8conf, implicit $crfp8conf
-    ; AIE2PS-NEXT: [[VBAND:%[0-9]+]]:vec512 = VBAND [[VBNEG_LTZ_s32_]], [[COPY1]], implicit $crbf8conf, implicit $crfp8conf
-    ; AIE2PS-NEXT: [[VBNEG_LTZ_s32_2:%[0-9]+]]:mxm, dead [[VBNEG_LTZ_s32_3:%[0-9]+]]:mr16m = VBNEG_LTZ_s32 [[COPY1]], implicit $crbf8conf, implicit $crfp8conf
-    ; AIE2PS-NEXT: [[VBAND1:%[0-9]+]]:mxm = VBAND [[VBNEG_LTZ_s32_2]], [[COPY]], implicit $crbf8conf, implicit $crfp8conf
-    ; AIE2PS-NEXT: [[VBOR:%[0-9]+]]:vec512 = VBOR [[VBAND1]], [[VBAND]], implicit $crbf8conf, implicit $crfp8conf
-    ; AIE2PS-NEXT: $x0 = COPY [[VBOR]]
+    ; AIE2PS-NEXT: [[VBAND:%[0-9]+]]:vec512 = VBAND [[COPY1]], [[COPY]], implicit $crbf8conf, implicit $crfp8conf
+    ; AIE2PS-NEXT: [[VBOR:%[0-9]+]]:mxm = VBOR [[COPY1]], [[COPY]], implicit $crbf8conf, implicit $crfp8conf
+    ; AIE2PS-NEXT: [[VSUB_32_:%[0-9]+]]:vec512 = VSUB_32 [[VBOR]], [[VBAND]], implicit $crbf8conf, implicit $crfp8conf
+    ; AIE2PS-NEXT: $x0 = COPY [[VSUB_32_]]
     ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit $x0
     %0:vregbank(<64 x s8>) = COPY $x2
     %1:vregbank(<64 x s8>) = COPY $x4
@@ -63,12 +59,10 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x2
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY $x4
-    ; CHECK-NEXT: [[VBNEG_LTZ_s32_:%[0-9]+]]:mxm, dead [[VBNEG_LTZ_s32_1:%[0-9]+]]:mr16_vcompare = VBNEG_LTZ_s32 [[COPY]]
-    ; CHECK-NEXT: [[VBAND:%[0-9]+]]:vec512 = VBAND [[VBNEG_LTZ_s32_]], [[COPY1]]
-    ; CHECK-NEXT: [[VBNEG_LTZ_s32_2:%[0-9]+]]:mxm, dead [[VBNEG_LTZ_s32_3:%[0-9]+]]:mr16_vcompare = VBNEG_LTZ_s32 [[COPY1]]
-    ; CHECK-NEXT: [[VBAND1:%[0-9]+]]:mxm = VBAND [[VBNEG_LTZ_s32_2]], [[COPY]]
-    ; CHECK-NEXT: [[VBOR:%[0-9]+]]:vec512 = VBOR [[VBAND1]], [[VBAND]]
-    ; CHECK-NEXT: $x0 = COPY [[VBOR]]
+    ; CHECK-NEXT: [[VBAND:%[0-9]+]]:vec512 = VBAND [[COPY1]], [[COPY]]
+    ; CHECK-NEXT: [[VBOR:%[0-9]+]]:mxm = VBOR [[COPY1]], [[COPY]]
+    ; CHECK-NEXT: [[VSUB_32_:%[0-9]+]]:vec512 = VSUB_32 [[VBOR]], [[VBAND]]
+    ; CHECK-NEXT: $x0 = COPY [[VSUB_32_]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $x0
     ;
     ; AIE2PS-LABEL: name: test_xor_v32s16
@@ -76,12 +70,10 @@ body:             |
     ; AIE2PS-NEXT: {{  $}}
     ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x2
     ; AIE2PS-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY $x4
-    ; AIE2PS-NEXT: [[VBNEG_LTZ_s32_:%[0-9]+]]:mxm, dead [[VBNEG_LTZ_s32_1:%[0-9]+]]:mr16m = VBNEG_LTZ_s32 [[COPY]], implicit $crbf8conf, implicit $crfp8conf
-    ; AIE2PS-NEXT: [[VBAND:%[0-9]+]]:vec512 = VBAND [[VBNEG_LTZ_s32_]], [[COPY1]], implicit $crbf8conf, implicit $crfp8conf
-    ; AIE2PS-NEXT: [[VBNEG_LTZ_s32_2:%[0-9]+]]:mxm, dead [[VBNEG_LTZ_s32_3:%[0-9]+]]:mr16m = VBNEG_LTZ_s32 [[COPY1]], implicit $crbf8conf, implicit $crfp8conf
-    ; AIE2PS-NEXT: [[VBAND1:%[0-9]+]]:mxm = VBAND [[VBNEG_LTZ_s32_2]], [[COPY]], implicit $crbf8conf, implicit $crfp8conf
-    ; AIE2PS-NEXT: [[VBOR:%[0-9]+]]:vec512 = VBOR [[VBAND1]], [[VBAND]], implicit $crbf8conf, implicit $crfp8conf
-    ; AIE2PS-NEXT: $x0 = COPY [[VBOR]]
+    ; AIE2PS-NEXT: [[VBAND:%[0-9]+]]:vec512 = VBAND [[COPY1]], [[COPY]], implicit $crbf8conf, implicit $crfp8conf
+    ; AIE2PS-NEXT: [[VBOR:%[0-9]+]]:mxm = VBOR [[COPY1]], [[COPY]], implicit $crbf8conf, implicit $crfp8conf
+    ; AIE2PS-NEXT: [[VSUB_32_:%[0-9]+]]:vec512 = VSUB_32 [[VBOR]], [[VBAND]], implicit $crbf8conf, implicit $crfp8conf
+    ; AIE2PS-NEXT: $x0 = COPY [[VSUB_32_]]
     ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit $x0
     %0:vregbank(<32 x s16>) = COPY $x2
     %1:vregbank(<32 x s16>) = COPY $x4
@@ -104,12 +96,10 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x2
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY $x4
-    ; CHECK-NEXT: [[VBNEG_LTZ_s32_:%[0-9]+]]:mxm, dead [[VBNEG_LTZ_s32_1:%[0-9]+]]:mr16_vcompare = VBNEG_LTZ_s32 [[COPY]]
-    ; CHECK-NEXT: [[VBAND:%[0-9]+]]:vec512 = VBAND [[VBNEG_LTZ_s32_]], [[COPY1]]
-    ; CHECK-NEXT: [[VBNEG_LTZ_s32_2:%[0-9]+]]:mxm, dead [[VBNEG_LTZ_s32_3:%[0-9]+]]:mr16_vcompare = VBNEG_LTZ_s32 [[COPY1]]
-    ; CHECK-NEXT: [[VBAND1:%[0-9]+]]:mxm = VBAND [[VBNEG_LTZ_s32_2]], [[COPY]]
-    ; CHECK-NEXT: [[VBOR:%[0-9]+]]:vec512 = VBOR [[VBAND1]], [[VBAND]]
-    ; CHECK-NEXT: $x0 = COPY [[VBOR]]
+    ; CHECK-NEXT: [[VBAND:%[0-9]+]]:vec512 = VBAND [[COPY1]], [[COPY]]
+    ; CHECK-NEXT: [[VBOR:%[0-9]+]]:mxm = VBOR [[COPY1]], [[COPY]]
+    ; CHECK-NEXT: [[VSUB_32_:%[0-9]+]]:vec512 = VSUB_32 [[VBOR]], [[VBAND]]
+    ; CHECK-NEXT: $x0 = COPY [[VSUB_32_]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $x0
     ;
     ; AIE2PS-LABEL: name: test_xor_v16s32
@@ -117,12 +107,10 @@ body:             |
     ; AIE2PS-NEXT: {{  $}}
     ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x2
     ; AIE2PS-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY $x4
-    ; AIE2PS-NEXT: [[VBNEG_LTZ_s32_:%[0-9]+]]:mxm, dead [[VBNEG_LTZ_s32_1:%[0-9]+]]:mr16m = VBNEG_LTZ_s32 [[COPY]], implicit $crbf8conf, implicit $crfp8conf
-    ; AIE2PS-NEXT: [[VBAND:%[0-9]+]]:vec512 = VBAND [[VBNEG_LTZ_s32_]], [[COPY1]], implicit $crbf8conf, implicit $crfp8conf
-    ; AIE2PS-NEXT: [[VBNEG_LTZ_s32_2:%[0-9]+]]:mxm, dead [[VBNEG_LTZ_s32_3:%[0-9]+]]:mr16m = VBNEG_LTZ_s32 [[COPY1]], implicit $crbf8conf, implicit $crfp8conf
-    ; AIE2PS-NEXT: [[VBAND1:%[0-9]+]]:mxm = VBAND [[VBNEG_LTZ_s32_2]], [[COPY]], implicit $crbf8conf, implicit $crfp8conf
-    ; AIE2PS-NEXT: [[VBOR:%[0-9]+]]:vec512 = VBOR [[VBAND1]], [[VBAND]], implicit $crbf8conf, implicit $crfp8conf
-    ; AIE2PS-NEXT: $x0 = COPY [[VBOR]]
+    ; AIE2PS-NEXT: [[VBAND:%[0-9]+]]:vec512 = VBAND [[COPY1]], [[COPY]], implicit $crbf8conf, implicit $crfp8conf
+    ; AIE2PS-NEXT: [[VBOR:%[0-9]+]]:mxm = VBOR [[COPY1]], [[COPY]], implicit $crbf8conf, implicit $crfp8conf
+    ; AIE2PS-NEXT: [[VSUB_32_:%[0-9]+]]:vec512 = VSUB_32 [[VBOR]], [[VBAND]], implicit $crbf8conf, implicit $crfp8conf
+    ; AIE2PS-NEXT: $x0 = COPY [[VSUB_32_]]
     ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit $x0
     %0:vregbank(<16 x s32>) = COPY $x2
     %1:vregbank(<16 x s32>) = COPY $x4
@@ -130,4 +118,167 @@ body:             |
     $x0 = COPY %2(<16 x s32>)
     PseudoRET implicit $lr, implicit $x0
 
+...
+---
+name:            test_not_v64s8
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.0:
+    liveins: $x2
+
+    ; CHECK-LABEL: name: test_not_v64s8
+    ; CHECK: liveins: $x2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x2
+    ; CHECK-NEXT: [[VBNEG_LTZ_s32_:%[0-9]+]]:vec512, dead [[VBNEG_LTZ_s32_1:%[0-9]+]]:mr16_vcompare = VBNEG_LTZ_s32 [[COPY]]
+    ; CHECK-NEXT: $x0 = COPY [[VBNEG_LTZ_s32_]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $x0
+    ;
+    ; AIE2PS-LABEL: name: test_not_v64s8
+    ; AIE2PS: liveins: $x2
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x2
+    ; AIE2PS-NEXT: [[VBNEG_LTZ_s32_:%[0-9]+]]:vec512, dead [[VBNEG_LTZ_s32_1:%[0-9]+]]:mr16m = VBNEG_LTZ_s32 [[COPY]], implicit $crbf8conf, implicit $crfp8conf
+    ; AIE2PS-NEXT: $x0 = COPY [[VBNEG_LTZ_s32_]]
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit $x0
+    %0:vregbank(<64 x s8>) = COPY $x2
+    %1:gprregbank(s32) = G_CONSTANT i32 255
+    %2:vregbank(<64 x s8>) = G_AIE_BROADCAST_VECTOR %1(s32)
+    %3:vregbank(<64 x s8>) = G_XOR %0, %2
+    $x0 = COPY %3(<64 x s8>)
+    PseudoRET implicit $lr, implicit $x0
+...
+---
+name:            test_not_v64s8_sext
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.0:
+    liveins: $x2
+
+    ; CHECK-LABEL: name: test_not_v64s8_sext
+    ; CHECK: liveins: $x2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x2
+    ; CHECK-NEXT: [[VBNEG_LTZ_s32_:%[0-9]+]]:vec512, dead [[VBNEG_LTZ_s32_1:%[0-9]+]]:mr16_vcompare = VBNEG_LTZ_s32 [[COPY]]
+    ; CHECK-NEXT: $x0 = COPY [[VBNEG_LTZ_s32_]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $x0
+    ;
+    ; AIE2PS-LABEL: name: test_not_v64s8_sext
+    ; AIE2PS: liveins: $x2
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x2
+    ; AIE2PS-NEXT: [[VBNEG_LTZ_s32_:%[0-9]+]]:vec512, dead [[VBNEG_LTZ_s32_1:%[0-9]+]]:mr16m = VBNEG_LTZ_s32 [[COPY]], implicit $crbf8conf, implicit $crfp8conf
+    ; AIE2PS-NEXT: $x0 = COPY [[VBNEG_LTZ_s32_]]
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit $x0
+    %0:vregbank(<64 x s8>) = COPY $x2
+    %1:gprregbank(s32) = G_CONSTANT i32 -1
+    %2:vregbank(<64 x s8>) = G_AIE_BROADCAST_VECTOR %1(s32)
+    %3:vregbank(<64 x s8>) = G_XOR %0, %2
+    $x0 = COPY %3(<64 x s8>)
+    PseudoRET implicit $lr, implicit $x0
+...
+---
+name:            test_not_v32s16
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.0:
+    liveins: $x2
+
+    ; CHECK-LABEL: name: test_not_v32s16
+    ; CHECK: liveins: $x2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x2
+    ; CHECK-NEXT: [[VBNEG_LTZ_s32_:%[0-9]+]]:vec512, dead [[VBNEG_LTZ_s32_1:%[0-9]+]]:mr16_vcompare = VBNEG_LTZ_s32 [[COPY]]
+    ; CHECK-NEXT: $x0 = COPY [[VBNEG_LTZ_s32_]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $x0
+    ;
+    ; AIE2PS-LABEL: name: test_not_v32s16
+    ; AIE2PS: liveins: $x2
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x2
+    ; AIE2PS-NEXT: [[VBNEG_LTZ_s32_:%[0-9]+]]:vec512, dead [[VBNEG_LTZ_s32_1:%[0-9]+]]:mr16m = VBNEG_LTZ_s32 [[COPY]], implicit $crbf8conf, implicit $crfp8conf
+    ; AIE2PS-NEXT: $x0 = COPY [[VBNEG_LTZ_s32_]]
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit $x0
+    %0:vregbank(<32 x s16>) = COPY $x2
+    %1:gprregbank(s32) = G_CONSTANT i32 65535
+    %2:vregbank(<32 x s16>) = G_AIE_BROADCAST_VECTOR %1(s32)
+    %3:vregbank(<32 x s16>) = G_XOR %2, %0
+    $x0 = COPY %3(<32 x s16>)
+    PseudoRET implicit $lr, implicit $x0
+...
+---
+name:            test_not_v16s32
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.0:
+    liveins: $x2
+
+    ; CHECK-LABEL: name: test_not_v16s32
+    ; CHECK: liveins: $x2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x2
+    ; CHECK-NEXT: [[VBNEG_LTZ_s32_:%[0-9]+]]:vec512, dead [[VBNEG_LTZ_s32_1:%[0-9]+]]:mr16_vcompare = VBNEG_LTZ_s32 [[COPY]]
+    ; CHECK-NEXT: $x0 = COPY [[VBNEG_LTZ_s32_]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $x0
+    ;
+    ; AIE2PS-LABEL: name: test_not_v16s32
+    ; AIE2PS: liveins: $x2
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x2
+    ; AIE2PS-NEXT: [[VBNEG_LTZ_s32_:%[0-9]+]]:vec512, dead [[VBNEG_LTZ_s32_1:%[0-9]+]]:mr16m = VBNEG_LTZ_s32 [[COPY]], implicit $crbf8conf, implicit $crfp8conf
+    ; AIE2PS-NEXT: $x0 = COPY [[VBNEG_LTZ_s32_]]
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit $x0
+    %0:vregbank(<16 x s32>) = COPY $x2
+    %1:gprregbank(s32) = G_CONSTANT i32 -1
+    %2:vregbank(<16 x s32>) = G_AIE_BROADCAST_VECTOR %1(s32)
+    %3:vregbank(<16 x s32>) = G_XOR %0, %2
+    $x0 = COPY %3(<16 x s32>)
+    PseudoRET implicit $lr, implicit $x0
+...
+---
+name:            test_xor_bcst_v64s8
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.0:
+    liveins: $x2
+
+    ; CHECK-LABEL: name: test_xor_bcst_v64s8
+    ; CHECK: liveins: $x2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x2
+    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 127
+    ; CHECK-NEXT: [[VBCST_8_:%[0-9]+]]:vec512 = VBCST_8 [[MOV_RLC_imm11_pseudo]]
+    ; CHECK-NEXT: [[VBAND:%[0-9]+]]:vec512 = VBAND [[COPY]], [[VBCST_8_]]
+    ; CHECK-NEXT: [[VBOR:%[0-9]+]]:mxm = VBOR [[COPY]], [[VBCST_8_]]
+    ; CHECK-NEXT: [[VSUB_32_:%[0-9]+]]:vec512 = VSUB_32 [[VBOR]], [[VBAND]]
+    ; CHECK-NEXT: $x0 = COPY [[VSUB_32_]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $x0
+    ;
+    ; AIE2PS-LABEL: name: test_xor_bcst_v64s8
+    ; AIE2PS: liveins: $x2
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x2
+    ; AIE2PS-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mlockid_reg = MOV_RLC_imm11_pseudo 127
+    ; AIE2PS-NEXT: [[VBCST_8_:%[0-9]+]]:vec512 = VBCST_8 [[MOV_RLC_imm11_pseudo]]
+    ; AIE2PS-NEXT: [[VBAND:%[0-9]+]]:vec512 = VBAND [[COPY]], [[VBCST_8_]], implicit $crbf8conf, implicit $crfp8conf
+    ; AIE2PS-NEXT: [[VBOR:%[0-9]+]]:mxm = VBOR [[COPY]], [[VBCST_8_]], implicit $crbf8conf, implicit $crfp8conf
+    ; AIE2PS-NEXT: [[VSUB_32_:%[0-9]+]]:vec512 = VSUB_32 [[VBOR]], [[VBAND]], implicit $crbf8conf, implicit $crfp8conf
+    ; AIE2PS-NEXT: $x0 = COPY [[VSUB_32_]]
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit $x0
+    %0:vregbank(<64 x s8>) = COPY $x2
+    %1:gprregbank(s32) = G_CONSTANT i32 127
+    %2:vregbank(<64 x s8>) = G_AIE_BROADCAST_VECTOR %1(s32)
+    %3:vregbank(<64 x s8>) = G_XOR %0, %2
+    $x0 = COPY %3(<64 x s8>)
+    PseudoRET implicit $lr, implicit $x0
 ...
