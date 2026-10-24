@@ -276,19 +276,21 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
       .clampScalar(0, S32, S32);
   // FIXME: (s|z|any)ext s20 to s64 is broken.
 
+  // 64-bit vectors are held in two 32-bit scalar registers: bitwise operations
+  // on them are split into their 32-bit halves.
+  const auto HalveElements = [=](const LegalityQuery &Query) {
+    const LLT &SrcTy = Query.Types[0];
+    return std::make_pair(0, LLT::fixed_vector(SrcTy.getNumElements() / 2,
+                                               SrcTy.getElementType()));
+  };
   getActionDefinitionsBuilder({G_AND, G_OR})
       .legalFor({S32, V2S16, V4S8})
       .legalFor(AIE2PVectorTypes)
       .widenScalarToNextPow2(0)
       .clampScalar(0, S32, S32)
       .scalarizeIf(typeIs(0, V2S32), 0)
-      .fewerElementsIf(typeInSet(0, {V4S16, V8S8}),
-                       [=](const LegalityQuery &Query) {
-                         const LLT &SrcTy = Query.Types[0];
-                         return std::make_pair(
-                             0, LLT::fixed_vector(SrcTy.getNumElements() / 2,
-                                                  SrcTy.getElementType()));
-                       });
+      .fewerElementsIf(typeInSet(0, {V4S16, V8S8}), HalveElements)
+      .customIf(vectorSmallerThan(0, 512));
 
   getActionDefinitionsBuilder(G_SEXT_INREG).custom();
 
@@ -393,18 +395,30 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
       .clampMaxNumElements(0, S16, 32)
       .clampMaxNumElements(0, S32, 16);
 
-  getActionDefinitionsBuilder({G_ADD, G_SUB, G_XOR})
+  getActionDefinitionsBuilder({G_ADD, G_SUB})
       .legalFor({S32})
       .legalFor({V16S32, V32S16, V64S8})
       .widenScalarToNextPow2(0)
       .clampScalar(0, S32, S32)
-      // AIE ISA supports only 512-bit vector add/sub/xor
+      .scalarizeIf(typeIs(0, V2S32), 0)
+      // AIE ISA supports only 512-bit vector add/sub
       .clampMaxNumElements(0, S8, 64)
       .clampMaxNumElements(0, S16, 32)
       .clampMaxNumElements(0, S32, 16)
-      // moreElements action could have used here, but it generate code more
-      // like scalarization. We can use G_CONCAT_VECTORS and unmerge to do this
-      // more optimally.
+      // Narrower vectors are computed in a 512-bit vector, see legalizeBinOp.
+      .customIf(vectorSmallerThan(0, 512));
+
+  getActionDefinitionsBuilder(G_XOR)
+      .legalFor({S32, V2S16, V4S8})
+      .legalFor({V16S32, V32S16, V64S8})
+      .widenScalarToNextPow2(0)
+      .clampScalar(0, S32, S32)
+      .scalarizeIf(typeIs(0, V2S32), 0)
+      .fewerElementsIf(typeInSet(0, {V4S16, V8S8}), HalveElements)
+      // AIE ISA supports only 512-bit vector xor
+      .clampMaxNumElements(0, S8, 64)
+      .clampMaxNumElements(0, S16, 32)
+      .clampMaxNumElements(0, S32, 16)
       .customIf(vectorSmallerThan(0, 512));
 
   // FIXME: G_SADDE/G_SSUBE doesn't support lowering. To support this properly,
@@ -882,6 +896,8 @@ bool AIE2PLegalizerInfo::legalizeCustom(
     return AIEHelper.legalizeG_ZEXT_G_ANYEXT(Helper, MI);
   case TargetOpcode::G_ADD:
   case TargetOpcode::G_SUB:
+  case TargetOpcode::G_AND:
+  case TargetOpcode::G_OR:
   case TargetOpcode::G_XOR:
     return AIEHelper.legalizeBinOp(Helper, MI);
   case TargetOpcode::G_TRUNC:

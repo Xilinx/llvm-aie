@@ -1898,14 +1898,21 @@ bool AIELegalizerHelper::legalizeG_ZEXT_G_ANYEXT(LegalizerHelper &Helper,
   return true;
 }
 
+// Compute a vector operation narrower than 512 bits in a 512-bit vector. A 32-
+// or 64-bit vector lives in scalar registers: broadcast it to all lanes and
+// extract the low subvector of the result. A 128- or 256-bit vector is padded
+// with undefined lanes and unpadded.
 bool AIELegalizerHelper::legalizeBinOp(LegalizerHelper &Helper,
                                        MachineInstr &MI) const {
   assert(MI.getOpcode() == TargetOpcode::G_ADD ||
          MI.getOpcode() == TargetOpcode::G_SUB ||
+         MI.getOpcode() == TargetOpcode::G_AND ||
+         MI.getOpcode() == TargetOpcode::G_OR ||
          MI.getOpcode() == TargetOpcode::G_XOR);
 
   MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
   MachineRegisterInfo &MRI = *MIRBuilder.getMRI();
+  const AIEBaseInstrInfo *II = ST.getInstrInfo();
 
   const Register DstReg = MI.getOperand(0).getReg();
   const LLT DstTy = MRI.getType(DstReg);
@@ -1921,19 +1928,20 @@ bool AIELegalizerHelper::legalizeBinOp(LegalizerHelper &Helper,
   auto NewVecTy = LLT::fixed_vector(
       512 / DstTy.getElementType().getSizeInBits(), DstTy.getElementType());
 
-  Register NewDstReg = MRI.createGenericVirtualRegister(NewVecTy);
-  Register NewSrc1Reg = emitPadUndefVector(MRI, MIRBuilder, NewVecTy, Src1Reg);
-  Register NewSrc2Reg = emitPadUndefVector(MRI, MIRBuilder, NewVecTy, Src2Reg);
+  const bool InScalarRegs = VectorSize <= 64;
+  const unsigned WidenOpc = InScalarRegs ? II->getGenericBroadcastVectorOpcode()
+                                         : II->getGenericPadVectorOpcode();
+  auto NewSrc1 = MIRBuilder.buildInstr(WidenOpc, {NewVecTy}, {Src1Reg});
+  auto NewSrc2 = MIRBuilder.buildInstr(WidenOpc, {NewVecTy}, {Src2Reg});
+  auto NewDst = MIRBuilder.buildInstr(MI.getOpcode(), {NewVecTy},
+                                      {NewSrc1, NewSrc2}, MI.getFlags());
 
-  unsigned NumberOfPadElts = (512 / VectorSize) - 1;
-  MIRBuilder.buildInstr(MI.getOpcode(), {NewDstReg}, {NewSrc1Reg, NewSrc2Reg},
-                        MI.getFlags());
-
-  SmallVector<Register, 8> Regs;
-  Regs.push_back(DstReg);
-  for (unsigned i = 0; i < NumberOfPadElts; ++i)
-    Regs.push_back(MRI.createGenericVirtualRegister(DstTy));
-  MIRBuilder.buildUnmerge(Regs, NewDstReg);
+  if (InScalarRegs)
+    MIRBuilder.buildInstr(II->getGenericExtractSubvectorOpcode(), {DstReg},
+                          {NewDst, MIRBuilder.buildConstant(S32, 0)});
+  else
+    MIRBuilder.buildInstr(II->getGenericUnpadVectorOpcode(), {DstReg},
+                          {NewDst});
 
   MI.eraseFromParent();
   return true;

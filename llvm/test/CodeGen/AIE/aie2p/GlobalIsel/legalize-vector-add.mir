@@ -46,13 +46,11 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<32 x s8>) = COPY $wh2
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<32 x s8>) = COPY $wh4
-    ; CHECK-NEXT: [[DEF:%[0-9]+]]:_(<32 x s8>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<64 x s8>) = G_CONCAT_VECTORS [[COPY1]](<32 x s8>), [[DEF]](<32 x s8>)
-    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:_(<32 x s8>) = COPY [[DEF]](<32 x s8>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<64 x s8>) = G_CONCAT_VECTORS [[COPY]](<32 x s8>), [[COPY2]](<32 x s8>)
-    ; CHECK-NEXT: [[ADD:%[0-9]+]]:_(<64 x s8>) = G_ADD [[CONCAT_VECTORS]], [[CONCAT_VECTORS1]]
-    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<32 x s8>), [[UV1:%[0-9]+]]:_(<32 x s8>) = G_UNMERGE_VALUES [[ADD]](<64 x s8>)
-    ; CHECK-NEXT: $wh0 = COPY [[UV]](<32 x s8>)
+    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[COPY1]](<32 x s8>)
+    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF1:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[COPY]](<32 x s8>)
+    ; CHECK-NEXT: [[ADD:%[0-9]+]]:_(<64 x s8>) = G_ADD [[AIE_PAD_VECTOR_UNDEF]], [[AIE_PAD_VECTOR_UNDEF1]]
+    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<32 x s8>) = G_AIE_UNPAD_VECTOR [[ADD]](<64 x s8>)
+    ; CHECK-NEXT: $wh0 = COPY [[AIE_UNPAD_VECTOR]](<32 x s8>)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $wh0
     %1:_(<32 x s8>) = COPY $wh2
     %2:_(<32 x s8>) = COPY $wh4
@@ -96,13 +94,11 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<16 x s16>) = COPY $wh2
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<16 x s16>) = COPY $wh4
-    ; CHECK-NEXT: [[DEF:%[0-9]+]]:_(<16 x s16>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s16>) = G_CONCAT_VECTORS [[COPY1]](<16 x s16>), [[DEF]](<16 x s16>)
-    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:_(<16 x s16>) = COPY [[DEF]](<16 x s16>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<32 x s16>) = G_CONCAT_VECTORS [[COPY]](<16 x s16>), [[COPY2]](<16 x s16>)
-    ; CHECK-NEXT: [[ADD:%[0-9]+]]:_(<32 x s16>) = G_ADD [[CONCAT_VECTORS]], [[CONCAT_VECTORS1]]
-    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<16 x s16>), [[UV1:%[0-9]+]]:_(<16 x s16>) = G_UNMERGE_VALUES [[ADD]](<32 x s16>)
-    ; CHECK-NEXT: $wh0 = COPY [[UV]](<16 x s16>)
+    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[COPY1]](<16 x s16>)
+    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF1:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[COPY]](<16 x s16>)
+    ; CHECK-NEXT: [[ADD:%[0-9]+]]:_(<32 x s16>) = G_ADD [[AIE_PAD_VECTOR_UNDEF]], [[AIE_PAD_VECTOR_UNDEF1]]
+    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<16 x s16>) = G_AIE_UNPAD_VECTOR [[ADD]](<32 x s16>)
+    ; CHECK-NEXT: $wh0 = COPY [[AIE_UNPAD_VECTOR]](<16 x s16>)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $wh0
     %1:_(<16 x s16>) = COPY $wh2
     %2:_(<16 x s16>) = COPY $wh4
@@ -147,13 +143,11 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<8 x s32>) = COPY $wh2
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<8 x s32>) = COPY $wh4
-    ; CHECK-NEXT: [[DEF:%[0-9]+]]:_(<8 x s32>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[COPY1]](<8 x s32>), [[DEF]](<8 x s32>)
-    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:_(<8 x s32>) = COPY [[DEF]](<8 x s32>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[COPY]](<8 x s32>), [[COPY2]](<8 x s32>)
-    ; CHECK-NEXT: [[ADD:%[0-9]+]]:_(<16 x s32>) = G_ADD [[CONCAT_VECTORS]], [[CONCAT_VECTORS1]]
-    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<8 x s32>), [[UV1:%[0-9]+]]:_(<8 x s32>) = G_UNMERGE_VALUES [[ADD]](<16 x s32>)
-    ; CHECK-NEXT: $wh0 = COPY [[UV]](<8 x s32>)
+    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[COPY1]](<8 x s32>)
+    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF1:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[COPY]](<8 x s32>)
+    ; CHECK-NEXT: [[ADD:%[0-9]+]]:_(<16 x s32>) = G_ADD [[AIE_PAD_VECTOR_UNDEF]], [[AIE_PAD_VECTOR_UNDEF1]]
+    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[ADD]](<16 x s32>)
+    ; CHECK-NEXT: $wh0 = COPY [[AIE_UNPAD_VECTOR]](<8 x s32>)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $wh0
     %1:_(<8 x s32>) = COPY $wh2
     %2:_(<8 x s32>) = COPY $wh4
@@ -161,4 +155,211 @@ body:             |
     $wh0 = COPY %0(<8 x s32>)
     PseudoRET implicit $lr, implicit $wh0
 
+...
+---
+name:            test_add_s8_32
+alignment:       16
+body:             |
+  bb.1:
+    liveins: $r1, $r2
+    ; CHECK-LABEL: name: test_add_s8_32
+    ; CHECK: liveins: $r1, $r2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<4 x s8>) = COPY $r1
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<4 x s8>) = COPY $r2
+    ; CHECK-NEXT: [[AIE_BROADCAST_VECTOR:%[0-9]+]]:_(<64 x s8>) = G_AIE_BROADCAST_VECTOR [[COPY]](<4 x s8>)
+    ; CHECK-NEXT: [[AIE_BROADCAST_VECTOR1:%[0-9]+]]:_(<64 x s8>) = G_AIE_BROADCAST_VECTOR [[COPY1]](<4 x s8>)
+    ; CHECK-NEXT: [[ADD:%[0-9]+]]:_(<64 x s8>) = G_ADD [[AIE_BROADCAST_VECTOR]], [[AIE_BROADCAST_VECTOR1]]
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; CHECK-NEXT: [[AIE_EXTRACT_SUBVECTOR:%[0-9]+]]:_(<4 x s8>) = G_AIE_EXTRACT_SUBVECTOR [[ADD]](<64 x s8>), [[C]](s32)
+    ; CHECK-NEXT: $r0 = COPY [[AIE_EXTRACT_SUBVECTOR]](<4 x s8>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0
+    %1:_(<4 x s8>) = COPY $r1
+    %2:_(<4 x s8>) = COPY $r2
+    %0:_(<4 x s8>) = G_ADD %1, %2
+    $r0 = COPY %0(<4 x s8>)
+    PseudoRET implicit $lr, implicit $r0
+...
+---
+name:            test_add_s16_32
+alignment:       16
+body:             |
+  bb.1:
+    liveins: $r1, $r2
+    ; CHECK-LABEL: name: test_add_s16_32
+    ; CHECK: liveins: $r1, $r2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<2 x s16>) = COPY $r1
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<2 x s16>) = COPY $r2
+    ; CHECK-NEXT: [[AIE_BROADCAST_VECTOR:%[0-9]+]]:_(<32 x s16>) = G_AIE_BROADCAST_VECTOR [[COPY]](<2 x s16>)
+    ; CHECK-NEXT: [[AIE_BROADCAST_VECTOR1:%[0-9]+]]:_(<32 x s16>) = G_AIE_BROADCAST_VECTOR [[COPY1]](<2 x s16>)
+    ; CHECK-NEXT: [[ADD:%[0-9]+]]:_(<32 x s16>) = G_ADD [[AIE_BROADCAST_VECTOR]], [[AIE_BROADCAST_VECTOR1]]
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; CHECK-NEXT: [[AIE_EXTRACT_SUBVECTOR:%[0-9]+]]:_(<2 x s16>) = G_AIE_EXTRACT_SUBVECTOR [[ADD]](<32 x s16>), [[C]](s32)
+    ; CHECK-NEXT: $r0 = COPY [[AIE_EXTRACT_SUBVECTOR]](<2 x s16>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0
+    %1:_(<2 x s16>) = COPY $r1
+    %2:_(<2 x s16>) = COPY $r2
+    %0:_(<2 x s16>) = G_ADD %1, %2
+    $r0 = COPY %0(<2 x s16>)
+    PseudoRET implicit $lr, implicit $r0
+...
+---
+name:            test_add_s32_64
+alignment:       16
+body:             |
+  bb.1:
+    liveins: $l1, $l2
+    ; CHECK-LABEL: name: test_add_s32_64
+    ; CHECK: liveins: $l1, $l2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<2 x s32>) = COPY $l1
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<2 x s32>) = COPY $l2
+    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(s32), [[UV1:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[COPY]](<2 x s32>)
+    ; CHECK-NEXT: [[UV2:%[0-9]+]]:_(s32), [[UV3:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[COPY1]](<2 x s32>)
+    ; CHECK-NEXT: [[ADD:%[0-9]+]]:_(s32) = G_ADD [[UV]], [[UV2]]
+    ; CHECK-NEXT: [[ADD1:%[0-9]+]]:_(s32) = G_ADD [[UV1]], [[UV3]]
+    ; CHECK-NEXT: [[BUILD_VECTOR:%[0-9]+]]:_(<2 x s32>) = G_BUILD_VECTOR [[ADD]](s32), [[ADD1]](s32)
+    ; CHECK-NEXT: $l0 = COPY [[BUILD_VECTOR]](<2 x s32>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $l0
+    %1:_(<2 x s32>) = COPY $l1
+    %2:_(<2 x s32>) = COPY $l2
+    %0:_(<2 x s32>) = G_ADD %1, %2
+    $l0 = COPY %0(<2 x s32>)
+    PseudoRET implicit $lr, implicit $l0
+...
+---
+name:            test_add_s16_64
+alignment:       16
+body:             |
+  bb.1:
+    liveins: $l1, $l2
+    ; CHECK-LABEL: name: test_add_s16_64
+    ; CHECK: liveins: $l1, $l2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<4 x s16>) = COPY $l1
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<4 x s16>) = COPY $l2
+    ; CHECK-NEXT: [[AIE_BROADCAST_VECTOR:%[0-9]+]]:_(<32 x s16>) = G_AIE_BROADCAST_VECTOR [[COPY]](<4 x s16>)
+    ; CHECK-NEXT: [[AIE_BROADCAST_VECTOR1:%[0-9]+]]:_(<32 x s16>) = G_AIE_BROADCAST_VECTOR [[COPY1]](<4 x s16>)
+    ; CHECK-NEXT: [[ADD:%[0-9]+]]:_(<32 x s16>) = G_ADD [[AIE_BROADCAST_VECTOR]], [[AIE_BROADCAST_VECTOR1]]
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; CHECK-NEXT: [[AIE_EXTRACT_SUBVECTOR:%[0-9]+]]:_(<4 x s16>) = G_AIE_EXTRACT_SUBVECTOR [[ADD]](<32 x s16>), [[C]](s32)
+    ; CHECK-NEXT: $l0 = COPY [[AIE_EXTRACT_SUBVECTOR]](<4 x s16>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $l0
+    %1:_(<4 x s16>) = COPY $l1
+    %2:_(<4 x s16>) = COPY $l2
+    %0:_(<4 x s16>) = G_ADD %1, %2
+    $l0 = COPY %0(<4 x s16>)
+    PseudoRET implicit $lr, implicit $l0
+...
+---
+name:            test_add_s8_64
+alignment:       16
+body:             |
+  bb.1:
+    liveins: $l1, $l2
+    ; CHECK-LABEL: name: test_add_s8_64
+    ; CHECK: liveins: $l1, $l2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<8 x s8>) = COPY $l1
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<8 x s8>) = COPY $l2
+    ; CHECK-NEXT: [[AIE_BROADCAST_VECTOR:%[0-9]+]]:_(<64 x s8>) = G_AIE_BROADCAST_VECTOR [[COPY]](<8 x s8>)
+    ; CHECK-NEXT: [[AIE_BROADCAST_VECTOR1:%[0-9]+]]:_(<64 x s8>) = G_AIE_BROADCAST_VECTOR [[COPY1]](<8 x s8>)
+    ; CHECK-NEXT: [[ADD:%[0-9]+]]:_(<64 x s8>) = G_ADD [[AIE_BROADCAST_VECTOR]], [[AIE_BROADCAST_VECTOR1]]
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; CHECK-NEXT: [[AIE_EXTRACT_SUBVECTOR:%[0-9]+]]:_(<8 x s8>) = G_AIE_EXTRACT_SUBVECTOR [[ADD]](<64 x s8>), [[C]](s32)
+    ; CHECK-NEXT: $l0 = COPY [[AIE_EXTRACT_SUBVECTOR]](<8 x s8>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $l0
+    %1:_(<8 x s8>) = COPY $l1
+    %2:_(<8 x s8>) = COPY $l2
+    %0:_(<8 x s8>) = G_ADD %1, %2
+    $l0 = COPY %0(<8 x s8>)
+    PseudoRET implicit $lr, implicit $l0
+...
+---
+name:            test_add_s32_128
+alignment:       16
+body:             |
+  bb.1:
+    liveins: $wl2, $wl4
+    ; CHECK-LABEL: name: test_add_s32_128
+    ; CHECK: liveins: $wl2, $wl4
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<8 x s32>) = COPY $wl2
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<8 x s32>) = COPY $wl4
+    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<4 x s32>) = G_AIE_UNPAD_VECTOR [[COPY]](<8 x s32>)
+    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR1:%[0-9]+]]:_(<4 x s32>) = G_AIE_UNPAD_VECTOR [[COPY1]](<8 x s32>)
+    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[AIE_UNPAD_VECTOR]](<4 x s32>)
+    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF1:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[AIE_UNPAD_VECTOR1]](<4 x s32>)
+    ; CHECK-NEXT: [[ADD:%[0-9]+]]:_(<16 x s32>) = G_ADD [[AIE_PAD_VECTOR_UNDEF]], [[AIE_PAD_VECTOR_UNDEF1]]
+    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR2:%[0-9]+]]:_(<4 x s32>) = G_AIE_UNPAD_VECTOR [[ADD]](<16 x s32>)
+    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF2:%[0-9]+]]:_(<8 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[AIE_UNPAD_VECTOR2]](<4 x s32>)
+    ; CHECK-NEXT: $wl0 = COPY [[AIE_PAD_VECTOR_UNDEF2]](<8 x s32>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $wl0
+    %1:_(<8 x s32>) = COPY $wl2
+    %2:_(<8 x s32>) = COPY $wl4
+    %3:_(<4 x s32>) = G_AIE_UNPAD_VECTOR %1(<8 x s32>)
+    %4:_(<4 x s32>) = G_AIE_UNPAD_VECTOR %2(<8 x s32>)
+    %0:_(<4 x s32>) = G_ADD %3, %4
+    %5:_(<8 x s32>) = G_AIE_PAD_VECTOR_UNDEF %0(<4 x s32>)
+    $wl0 = COPY %5(<8 x s32>)
+    PseudoRET implicit $lr, implicit $wl0
+...
+---
+name:            test_add_s16_128
+alignment:       16
+body:             |
+  bb.1:
+    liveins: $wl2, $wl4
+    ; CHECK-LABEL: name: test_add_s16_128
+    ; CHECK: liveins: $wl2, $wl4
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<16 x s16>) = COPY $wl2
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<16 x s16>) = COPY $wl4
+    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<8 x s16>) = G_AIE_UNPAD_VECTOR [[COPY]](<16 x s16>)
+    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR1:%[0-9]+]]:_(<8 x s16>) = G_AIE_UNPAD_VECTOR [[COPY1]](<16 x s16>)
+    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[AIE_UNPAD_VECTOR]](<8 x s16>)
+    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF1:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[AIE_UNPAD_VECTOR1]](<8 x s16>)
+    ; CHECK-NEXT: [[ADD:%[0-9]+]]:_(<32 x s16>) = G_ADD [[AIE_PAD_VECTOR_UNDEF]], [[AIE_PAD_VECTOR_UNDEF1]]
+    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR2:%[0-9]+]]:_(<8 x s16>) = G_AIE_UNPAD_VECTOR [[ADD]](<32 x s16>)
+    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF2:%[0-9]+]]:_(<16 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[AIE_UNPAD_VECTOR2]](<8 x s16>)
+    ; CHECK-NEXT: $wl0 = COPY [[AIE_PAD_VECTOR_UNDEF2]](<16 x s16>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $wl0
+    %1:_(<16 x s16>) = COPY $wl2
+    %2:_(<16 x s16>) = COPY $wl4
+    %3:_(<8 x s16>) = G_AIE_UNPAD_VECTOR %1(<16 x s16>)
+    %4:_(<8 x s16>) = G_AIE_UNPAD_VECTOR %2(<16 x s16>)
+    %0:_(<8 x s16>) = G_ADD %3, %4
+    %5:_(<16 x s16>) = G_AIE_PAD_VECTOR_UNDEF %0(<8 x s16>)
+    $wl0 = COPY %5(<16 x s16>)
+    PseudoRET implicit $lr, implicit $wl0
+...
+---
+name:            test_add_s8_128
+alignment:       16
+body:             |
+  bb.1:
+    liveins: $wl2, $wl4
+    ; CHECK-LABEL: name: test_add_s8_128
+    ; CHECK: liveins: $wl2, $wl4
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<32 x s8>) = COPY $wl2
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<32 x s8>) = COPY $wl4
+    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<16 x s8>) = G_AIE_UNPAD_VECTOR [[COPY]](<32 x s8>)
+    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR1:%[0-9]+]]:_(<16 x s8>) = G_AIE_UNPAD_VECTOR [[COPY1]](<32 x s8>)
+    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[AIE_UNPAD_VECTOR]](<16 x s8>)
+    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF1:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[AIE_UNPAD_VECTOR1]](<16 x s8>)
+    ; CHECK-NEXT: [[ADD:%[0-9]+]]:_(<64 x s8>) = G_ADD [[AIE_PAD_VECTOR_UNDEF]], [[AIE_PAD_VECTOR_UNDEF1]]
+    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR2:%[0-9]+]]:_(<16 x s8>) = G_AIE_UNPAD_VECTOR [[ADD]](<64 x s8>)
+    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF2:%[0-9]+]]:_(<32 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[AIE_UNPAD_VECTOR2]](<16 x s8>)
+    ; CHECK-NEXT: $wl0 = COPY [[AIE_PAD_VECTOR_UNDEF2]](<32 x s8>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $wl0
+    %1:_(<32 x s8>) = COPY $wl2
+    %2:_(<32 x s8>) = COPY $wl4
+    %3:_(<16 x s8>) = G_AIE_UNPAD_VECTOR %1(<32 x s8>)
+    %4:_(<16 x s8>) = G_AIE_UNPAD_VECTOR %2(<32 x s8>)
+    %0:_(<16 x s8>) = G_ADD %3, %4
+    %5:_(<32 x s8>) = G_AIE_PAD_VECTOR_UNDEF %0(<16 x s8>)
+    $wl0 = COPY %5(<32 x s8>)
+    PseudoRET implicit $lr, implicit $wl0
 ...
