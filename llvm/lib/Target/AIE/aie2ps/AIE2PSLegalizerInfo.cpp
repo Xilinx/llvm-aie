@@ -755,11 +755,14 @@ AIE2PSLegalizerInfo::AIE2PSLegalizerInfo(const AIE2PSSubtarget &ST)
             DstTy.getElementType() == SrcTy.getElementType() &&
             SrcTy.getSizeInBits() == 32 && DstTy.getSizeInBits() == 16)
           return true;
-        // Handle 2 cases
+        // Handle 3 cases
         // 1: vector of size 256 to 2 vectors of size 128
-        // 2: Unmerge vector to scalar outputs
+        // 2: vector of size 128 to 2 vectors of size 64
+        // 3: Unmerge vector to scalar outputs
         return (DstTy.isVector() && SrcTy.getSizeInBits() == 256 &&
                 DstTy.getSizeInBits() == 128) ||
+               (DstTy.isVector() && SrcTy.getSizeInBits() == 128 &&
+                DstTy.getSizeInBits() == 64) ||
                (SrcTy.isVector() && DstTy.isScalar() &&
                 DstTy == SrcTy.getElementType());
       })
