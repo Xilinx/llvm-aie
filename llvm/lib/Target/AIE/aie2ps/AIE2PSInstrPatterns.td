@@ -1375,42 +1375,18 @@ def : Pat<(v32i1 (aie_setult (v16i32 VEC512:$rs1), (v16i32 VEC512:$rs2))),
 
 // LE
 def : Pat<(v64i1 (aie_setle (v64i8 VEC512:$rs1), (v64i8 VEC512:$rs2))),
-         (REG_SEQUENCE eL,
-            (XOR (EXTRACT_SUBREG
-                    (VLT_8_vaddSign1 VEC512:$rs2, VEC512:$rs1), sub_l_even),
-                    (MOV_RLC_imm11_pseudo (i32 -1))), sub_l_even,
-            (XOR (EXTRACT_SUBREG
-                     (VLT_8_vaddSign1 VEC512:$rs2, VEC512:$rs1), sub_l_odd),
-                     (MOV_RLC_imm11_pseudo (i32 -1))), sub_l_odd)>;
-
+	       (VGE_8_vaddSign1 VEC512:$rs2, VEC512:$rs1)>;
 def : Pat<(v32i1 (aie_setle (v32i16 VEC512:$rs1), (v32i16 VEC512:$rs2))),
-	       (OR
-            (VLT_16_vaddSign1 VEC512:$rs1, VEC512:$rs2),
-            (VEQZ_16 (VSUB_16 VEC512:$rs1, VEC512:$rs2)))>;
-
+	       (VGE_16_vaddSign1 VEC512:$rs2, VEC512:$rs1)>;
 def : Pat<(v32i1 (aie_setle (v16i32 VEC512:$rs1), (v16i32 VEC512:$rs2))),
-	       (OR
-            (VLT_32_vaddSign1 VEC512:$rs1, VEC512:$rs2),
-            (VEQZ_32 (VSUB_32 VEC512:$rs1, VEC512:$rs2)))>;
+	       (VGE_32_vaddSign1 VEC512:$rs2, VEC512:$rs1)>;
 
 def : Pat<(v64i1 (aie_setule (v64i8 VEC512:$rs1), (v64i8 VEC512:$rs2))),
-         (REG_SEQUENCE eL,
-            (XOR (EXTRACT_SUBREG
-                    (VLT_8_vaddSign0 VEC512:$rs2, VEC512:$rs1), sub_l_even),
-                    (MOV_RLC_imm11_pseudo (i32 -1))), sub_l_even,
-            (XOR (EXTRACT_SUBREG
-                     (VLT_8_vaddSign0 VEC512:$rs2, VEC512:$rs1), sub_l_odd),
-                     (MOV_RLC_imm11_pseudo (i32 -1))), sub_l_odd)>;
-
+	       (VGE_8_vaddSign0 VEC512:$rs2, VEC512:$rs1)>;
 def : Pat<(v32i1 (aie_setule (v32i16 VEC512:$rs1), (v32i16 VEC512:$rs2))),
-	       (OR
-            (VLT_16_vaddSign0 VEC512:$rs1, VEC512:$rs2),
-            (VEQZ_16 (VSUB_16 VEC512:$rs1, VEC512:$rs2)))>;
-
+	       (VGE_16_vaddSign0 VEC512:$rs2, VEC512:$rs1)>;
 def : Pat<(v32i1 (aie_setule (v16i32 VEC512:$rs1), (v16i32 VEC512:$rs2))),
-	       (OR
-            (VLT_32_vaddSign0 VEC512:$rs1, VEC512:$rs2),
-            (VEQZ_32 (VSUB_32 VEC512:$rs1, VEC512:$rs2)))>;
+	       (VGE_32_vaddSign0 VEC512:$rs2, VEC512:$rs1)>;
 
 // GE
 def  : Pat<(v64i1 (aie_setge (v64i8 VEC512:$rs1), (v64i8 VEC512:$rs2))),
@@ -1429,32 +1405,18 @@ def  : Pat<(v32i1 (aie_setuge (v16i32 VEC512:$rs1), (v16i32 VEC512:$rs2))),
 
 // GT
 def  : Pat<(v64i1 (aie_setgt (v64i8 VEC512:$rs1), (v64i8 VEC512:$rs2))),
-         (REG_SEQUENCE eL,
-            (XOR (EXTRACT_SUBREG
-                    (VGE_8_vaddSign1 VEC512:$rs2, VEC512:$rs1), sub_l_even),
-                    (MOV_RLC_imm11_pseudo (i32 -1))), sub_l_even,
-            (XOR (EXTRACT_SUBREG
-                    (VGE_8_vaddSign1 VEC512:$rs2, VEC512:$rs1), sub_l_odd),
-                    (MOV_RLC_imm11_pseudo (i32 -1))), sub_l_odd)>;
-
+	       (VLT_8_vaddSign1 VEC512:$rs2, VEC512:$rs1)>;
 def  : Pat<(v32i1 (aie_setgt (v32i16 VEC512:$rs1), (v32i16 VEC512:$rs2))),
-	       (XOR (VGE_16_vaddSign1 VEC512:$rs2, VEC512:$rs1), (MOV_RLC_imm11_pseudo (i32 -1)))>;
+	       (VLT_16_vaddSign1 VEC512:$rs2, VEC512:$rs1)>;
 def  : Pat<(v32i1 (aie_setgt (v16i32 VEC512:$rs1), (v16i32 VEC512:$rs2))),
-	       (XOR (VGE_32_vaddSign1 VEC512:$rs2, VEC512:$rs1), (MOV_RLC_imm11_pseudo (i32 -1)))>;
+	       (VLT_32_vaddSign1 VEC512:$rs2, VEC512:$rs1)>;
 
 def  : Pat<(v64i1 (aie_setugt (v64i8 VEC512:$rs1), (v64i8 VEC512:$rs2))),
-         (REG_SEQUENCE eL,
-            (XOR (EXTRACT_SUBREG
-                    (VGE_8_vaddSign0 VEC512:$rs2, VEC512:$rs1), sub_l_even),
-                    (MOV_RLC_imm11_pseudo (i32 -1))), sub_l_even,
-            (XOR (EXTRACT_SUBREG
-                    (VGE_8_vaddSign0 VEC512:$rs2, VEC512:$rs1), sub_l_odd),
-                    (MOV_RLC_imm11_pseudo (i32 -1))), sub_l_odd)>;
-
+	       (VLT_8_vaddSign0 VEC512:$rs2, VEC512:$rs1)>;
 def  : Pat<(v32i1 (aie_setugt (v32i16 VEC512:$rs1), (v32i16 VEC512:$rs2))),
-	       (XOR (VGE_16_vaddSign0 VEC512:$rs2, VEC512:$rs1), (MOV_RLC_imm11_pseudo (i32 -1)))>;
+	       (VLT_16_vaddSign0 VEC512:$rs2, VEC512:$rs1)>;
 def  : Pat<(v32i1 (aie_setugt (v16i32 VEC512:$rs1), (v16i32 VEC512:$rs2))),
-	       (XOR (VGE_32_vaddSign0 VEC512:$rs2, VEC512:$rs1), (MOV_RLC_imm11_pseudo (i32 -1)))>;
+	       (VLT_32_vaddSign0 VEC512:$rs2, VEC512:$rs1)>;
 
 // EQ
 def  : Pat<(v64i1 (aie_seteq (v64i8 VEC512:$rs1), (v64i8 VEC512:$rs2))),
@@ -1655,13 +1617,25 @@ def : Pat<(int_aie2ps_inv eR:$src), (INV_nlf_inv eR:$src)>;
 def : Pat<(int_aie2ps_invsqrt eR:$src), (INVSQRT_nlf_invsqrt eR:$src)>;
 def : Pat<(int_aie2ps_sqrtf eR:$src), (SQRT_nlf_sqrt eR:$src)>;
 // AIE does not have a native xor instruction for vector operands.
-// Res = A xor B --> Res = AB' || A'B
+// Res = A xor B --> Res = (A || B) - AB
+// AB only has bits that are set in A || B, so no lane borrows and VSUB_32
+// gives the same result for every element size.
 foreach Ty = [v64i8, v32i16, v16i32] in {
 def : Pat<(xor Ty:$src1, Ty:$src2),
-          (VBOR
-            (VBAND (VBNEG_LTZ_s32 Ty:$src1), Ty:$src2),
-            (VBAND (VBNEG_LTZ_s32 Ty:$src2), Ty:$src1))>;
+          (VSUB_32 (VBOR Ty:$src1, Ty:$src2), (VBAND Ty:$src1, Ty:$src2))>;
 }
+
+// Res = A xor all-ones --> Res = A' (VBNEG_LTZ's compare result is unused).
+// The broadcast lanes take the low 8 / 16 / 32 bits of the i32 scalar.
+def ones_lo8  : ImmLeaf<i32, [{ return uint8_t(Imm) == 0xff; }]>;
+def ones_lo16 : ImmLeaf<i32, [{ return uint16_t(Imm) == 0xffff; }]>;
+def ones_lo32 : ImmLeaf<i32, [{ return uint32_t(Imm) == 0xffffffff; }]>;
+def : Pat<(xor v64i8:$src, (v64i8 (bcst_vector_node (i32 ones_lo8)))),
+          (VBNEG_LTZ_s32 v64i8:$src)>;
+def : Pat<(xor v32i16:$src, (v32i16 (bcst_vector_node (i32 ones_lo16)))),
+          (VBNEG_LTZ_s32 v32i16:$src)>;
+def : Pat<(xor v16i32:$src, (v16i32 (bcst_vector_node (i32 ones_lo32)))),
+          (VBNEG_LTZ_s32 v16i32:$src)>;
 
 // DIVS
 def : Pat<(int_aie2ps_divs mR31_divs:$sd_in, eR:$src0, eR:$src1),
