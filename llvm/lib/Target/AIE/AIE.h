@@ -104,6 +104,10 @@ void initializeAIESpillSlotOptimizationPass(PassRegistry &);
 extern char &AIEOutlineMemoryGEPID;
 void initializeAIEOutlineMemoryGEPPass(PassRegistry &);
 
+extern char &AIECanonicalizeGEPOffsetsID;
+void initializeAIECanonicalizeGEPOffsetsPass(PassRegistry &);
+FunctionPass *createAIECanonicalizeGEPOffsetsPass();
+
 ImmutablePass *createAIEBaseAAWrapperPass();
 void initializeAIEBaseAAWrapperPassPass(PassRegistry &);
 ImmutablePass *createAIEBaseExternalAAWrapperPass();
