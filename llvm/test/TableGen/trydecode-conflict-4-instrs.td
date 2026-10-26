@@ -91,18 +91,22 @@ def Inst4 : Arch1TestInstruction {
 //   If this succeeds, we try check the 2 bits in Inst{20-21} and we try to decode Inst3
 //   then Inst4 if the latter fails. If both fails we try Inst1. If it fails we skip to OPC_FAIL.
 
-// CHECK:      /* 0 */       MCD::OPC_CheckField, 0, 10, 9,
-// CHECK-NEXT: /* 4 */       MCD::OPC_CheckField, 22, 10, 0,
-// CHECK-NEXT: /* 8 */       MCD::OPC_Scope, 8, 0, // Skip to: 19
-// CHECK-NEXT: /* 11 */      MCD::OPC_CheckField, 18, 4, 14,
-// CHECK-NEXT: /* 15 */      MCD::OPC_TryDecode, {{[0-9]+}}, {{[0-9]+}}, 0,
-// CHECK-NEXT: /* 19 */      MCD::OPC_Scope, 19, 0, // Skip to: 41
-// CHECK-NEXT: /* 22 */      MCD::OPC_CheckField, 16, 2, 3,
-// CHECK-NEXT: /* 26 */      MCD::OPC_Scope, 8, 0, // Skip to: 37
-// CHECK-NEXT: /* 29 */      MCD::OPC_CheckField, 20, 2, 3,
-// CHECK-NEXT: /* 33 */      MCD::OPC_TryDecode, {{[0-9]+}}, {{[0-9]+}}, 1,
-// CHECK-NEXT: /* 37 */      MCD::OPC_TryDecode, {{[0-9]+}}, {{[0-9]+}}, 2,
-// CHECK-NEXT: /* 41 */      MCD::OPC_TryDecode, {{[0-9]+}}, {{[0-9]+}}, 3,
+// CHECK:      OPC_CheckField, 0, 10, 9,                  //  0: check Inst[9:0] == 0x9
+// CHECK-NEXT:   OPC_CheckField, 22, 10, 0,                 //  4: check Inst[31:22] == 0x0
+// CHECK-NEXT:   OPC_Scope, 8,                              //  8: try {
+// CHECK-NEXT:   OPC_CheckField, 18, 4, 14,                 // 10:  check Inst[21:18] == 0xe
+// CHECK-NEXT:   OPC_Decode, {{[0-9, ]+}}, 0,                     // 14:  decode to Inst1 using decoder 0
+// CHECK-NEXT:   OPC_Scope, 18,                             // 18: } else try {
+// CHECK-NEXT:   OPC_CheckField, 16, 2, 3,                  // 20:  check Inst[17:16] == 0x3
+// CHECK-NEXT:   OPC_Scope, 8,                              // 24:  try {
+// CHECK-NEXT:   OPC_CheckField, 20, 2, 3,                  // 26:   check Inst[21:20] == 0x3
+// CHECK-NEXT:   OPC_Decode, {{[0-9, ]+}}, 1,                     // 30:   decode to Inst3 using decoder 1
+// CHECK-NEXT:                                              // 30:  } else try {
+// CHECK-NEXT:   OPC_Decode, {{[0-9, ]+}}, 2,                     // 34:   decode to Inst4 using decoder 2
+// CHECK-NEXT:                                              // 34:  }
+// CHECK-NEXT:                                              // 34: } else try {
+// CHECK-NEXT:   OPC_Decode, {{[0-9, ]+}}, 3,                     // 38:  decode to Inst2 using decoder 3
+// CHECK-NEXT:                                              // 38: }
 
 // CHECK: if (!Check(S, DecodeAIncompleteRegisterClass(MI, tmp, Address, Decoder))) { DecodeComplete = false; return MCDisassembler::Fail; }
 // CHECK: if (!Check(S, DecodeDIncompleteRegisterClass(MI, tmp, Address, Decoder))) { DecodeComplete = false; return MCDisassembler::Fail; }
