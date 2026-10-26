@@ -343,10 +343,8 @@ int DataDependenceHelper::computeDataLatency(const MachineInstr &DefMI,
   if (OperLatency)
     return static_cast<int>(*OperLatency);
 
-  assert(!ExactLatencies && "ExactLatencies can't fall back to defaults");
-
-  const int DefaultDefLatency = defaultDefLatency(DefMI);
-  return std::max(computeLatency(&DefMI), DefaultDefLatency);
+  assert(!ExactLatencies && "Exact latencies require complete itinerary data");
+  return std::max(computeLatency(&DefMI), defaultDefLatency(DefMI));
 }
 
 // An operand that was added dynamically, i.e. it is not described by the

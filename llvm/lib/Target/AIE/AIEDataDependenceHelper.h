@@ -93,8 +93,8 @@ class DataDependenceHelper : public ScheduleDAGInstrs {
   // latency of the itineraries where those describe both operands.
   void setLatency(SUnit *Src, int SrcOpIdx, SUnit *Dst, int DstOpIdx,
                   SDep &Dep) const;
-  // Latency of a def that the itineraries do not describe. This is a local
-  // copy of TargetInstrInfo::defaultDefLatency.
+  // Latency of a def that the itineraries do not describe. This is similar to
+  // TargetInstrInfo::defaultDefLatency, but uses the actual AIE load latency.
   int defaultDefLatency(const MachineInstr &DefMI) const;
   // Compute the latency of a data dependence from AIE itinerary data.
   // UseMI may be null for an unknown user.
