@@ -47,6 +47,7 @@ namespace llvm {
 
 class ResourceCycle;
 class InstrItineraryData;
+class LiveInterval;
 class LiveIntervals;
 class LiveVariables;
 class MachineLoop;
@@ -1921,6 +1922,18 @@ public:
   virtual bool verifyInstruction(const MachineInstr &MI,
                                  StringRef &ErrInfo) const {
     return true;
+  }
+
+  /// Return true if the target allows the given virtual register to have
+  /// multiple disconnected live interval components. By default returns false.
+  /// Targets that intentionally create disconnected components (e.g., for
+  /// registers shared across disjoint loop paths) can override this
+  /// to suppress the verifier diagnostic for specific intervals whose
+  /// components are known to be safe.
+  virtual bool allowDisconnectedLiveComponents(const MachineFunction &MF,
+                                               const LiveInterval &LI,
+                                               const LiveIntervals &LIS) const {
+    return false;
   }
 
   /// Return the current execution domain and bit mask of
