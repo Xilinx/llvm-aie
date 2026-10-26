@@ -17,9 +17,6 @@ source_filename = "LLVMDialectModule"
 
 define void @core13() {
 ; CHECK-LABEL: @core13(
-; CHECK-NEXT:    [[CONSTEXPR1:%.*]] = and i64 ptrtoint (ptr @a to i64), 28
-; CHECK-NEXT:    [[CONSTEXPR2:%.*]] = icmp eq i64 [[CONSTEXPR1]], 0
-; CHECK-NEXT:    tail call void @llvm.assume(i1 [[CONSTEXPR2]])
 ; CHECK-NEXT:    store float 1.400000e+01, ptr getelementptr inbounds nuw (i8, ptr @a, i20 12), align 4
 ; CHECK-NEXT:    store float 8.000000e+00, ptr getelementptr inbounds nuw (i8, ptr @a, i20 20), align 4
 ; CHECK-NEXT:    store float 1.400000e+01, ptr getelementptr inbounds nuw (i8, ptr @a, i20 36), align 4
