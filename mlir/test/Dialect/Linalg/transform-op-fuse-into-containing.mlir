@@ -788,7 +788,7 @@ func.func @tile_fuse_drop_dead_producer(%arg0: tensor<10x10xf32>) -> tensor<10x1
 module attributes {transform.with_named_sequence} {
   transform.named_sequence @__transform_main(%arg1: !transform.any_op {transform.readonly}) {
     %0 = transform.structured.match ops{["linalg.negf"]} in %arg1 : (!transform.any_op) -> !transform.any_op
-    %tiled_low, %loop1, %loop2 = transform.structured.fuse %0 [5, 2] : (!transform.any_op) -> (!transform.any_op, !transform.any_op, !transform.any_op)
+    %tiled_low, %loop1, %loop2 = transform.structured.fuse %0 tile_sizes [5, 2] : (!transform.any_op) -> (!transform.any_op, !transform.any_op, !transform.any_op)
     transform.yield
   }
 }
