@@ -57,12 +57,6 @@ public:
   bool useAA() const override { return true; }
   bool enableEarlyIfConversion() const override { return true; }
 
-  void
-  adjustSchedDependency(SUnit *Def, int DefOpIdx, SUnit *Use, int UseOpIdx,
-                        SDep &Dep,
-                        const TargetSchedModel *SchedModel) const override {
-    assert(false && "Edges must be built by DataDependenceHelper::addDep");
-  }
   bool enableSubRegLiveness() const override { return true; }
 
   void ParseSubtargetFeatures(StringRef CPU, StringRef TuneCPU, StringRef FS);

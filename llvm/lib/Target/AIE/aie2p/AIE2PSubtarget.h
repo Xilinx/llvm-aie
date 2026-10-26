@@ -73,13 +73,6 @@ public:
     return &TSInfo;
   }
 
-  void
-  adjustSchedDependency(SUnit *Def, int DefOpIdx, SUnit *Use, int UseOpIdx,
-                        SDep &Dep,
-                        const TargetSchedModel *SchedModel) const override {
-    assert(false && "Edges must be built by DataDependenceHelper::addDep");
-  }
-
   bool enableSubRegLiveness() const override { return true; }
 
 protected:
