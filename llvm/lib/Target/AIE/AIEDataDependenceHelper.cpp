@@ -434,11 +434,6 @@ void DataDependenceHelper::setLatency(SUnit *Src, int SrcOpIdx, SUnit *Dst,
   // correctness.
   if (Dep.isArtificial())
     return;
-
-  // WAW dependences on virtual registers are not refined by the itineraries
-  // and keep a zero latency.
-  if (Kind == SDep::Output && Dep.getReg().isVirtual())
-    return;
   assert(SrcOpIdx >= 0 && DstOpIdx >= 0);
 
   if (const std::optional<int> Lat = getSignedOperandLatency(

@@ -463,24 +463,24 @@ define  void @test_huge_stack(i32 noundef %n) #0 {
 ; AIE2PS-NEXT:    mova r4, #-64
 ; AIE2PS-NEXT:    st p7, [sp, #-20] // 4-byte Folded Spill
 ; AIE2PS-NEXT:    mov p7, sp
-; AIE2PS-NEXT:    mov p0, sp
 ; AIE2PS-NEXT:    mov p1, sp
 ; AIE2PS-NEXT:    st lr, [sp, #-32] // 4-byte Folded Spill
 ; AIE2PS-NEXT:    st r9, [sp, #-28] // 4-byte Folded Spill
 ; AIE2PS-NEXT:    st p6, [sp, #-24] // 4-byte Folded Spill
 ; AIE2PS-NEXT:    paddb [p7], m0
 ; AIE2PS-NEXT:    mova m0, #-36
+; AIE2PS-NEXT:    mov p0, p7
 ; AIE2PS-NEXT:    mov p2, p7
-; AIE2PS-NEXT:    mov p3, p7
 ; AIE2PS-NEXT:    mov p6, p7
-; AIE2PS-NEXT:    paddb [p2], m0
+; AIE2PS-NEXT:    paddb [p0], m0
 ; AIE2PS-NEXT:    movxm m0, #-40048
-; AIE2PS-NEXT:    paddb [p3], m0
-; AIE2PS-NEXT:    st r0, [p2, #0]
-; AIE2PS-NEXT:    lda r0, [p2, #0]
+; AIE2PS-NEXT:    paddb [p2], m0
 ; AIE2PS-NEXT:    mova m0, #-40
+; AIE2PS-NEXT:    st r0, [p0, #0]
+; AIE2PS-NEXT:    lda r0, [p0, #0]
 ; AIE2PS-NEXT:    paddb [p6], m0
-; AIE2PS-NEXT:    mov r9, p3
+; AIE2PS-NEXT:    mov p0, sp
+; AIE2PS-NEXT:    mov r9, p2
 ; AIE2PS-NEXT:    mov p2, p7
 ; AIE2PS-NEXT:    st p0, [p6, #0]
 ; AIE2PS-NEXT:    movs p0, p1
