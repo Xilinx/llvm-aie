@@ -148,8 +148,8 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x2
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY $x3
-    ; CHECK-NEXT: [[VSUB_GE_32_vaddSign1_:%[0-9]+]]:vec512, [[VSUB_GE_32_vaddSign1_1:%[0-9]+]]:mr16m = VSUB_GE_32_vaddSign1 [[COPY]], [[COPY1]], implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
-    ; CHECK-NEXT: $x0 = COPY [[VSUB_GE_32_vaddSign1_]]
+    ; CHECK-NEXT: [[VSUB_GE_16_vaddSign1_:%[0-9]+]]:vec512, [[VSUB_GE_16_vaddSign1_1:%[0-9]+]]:mr16m = VSUB_GE_16_vaddSign1 [[COPY]], [[COPY1]], implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    ; CHECK-NEXT: $x0 = COPY [[VSUB_GE_16_vaddSign1_]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $x0
     %1:vregbank(<32 x s16>) = COPY $x2
     %11:vregbank(<32 x s16>) = COPY $x3

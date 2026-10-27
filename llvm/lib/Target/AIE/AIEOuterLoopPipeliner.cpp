@@ -121,6 +121,11 @@ static cl::opt<bool> SpeculativeLastIteration(
              "pressure at the cost of unused loads on the final iteration."),
     cl::init(false), cl::Hidden);
 
+static cl::opt<bool> HardwareLoopInput(
+    "aie-olp-hw-loop-input",
+    cl::desc("Pipeline outer loops that are already JNZD hardware loops"),
+    cl::init(true), cl::Hidden);
+
 static cl::opt<bool> LeanStage0Mode(
     "aie-outer-loop-pipelining-lean-stage0",
     cl::desc("Limit stage 0 to loads, address computations, and target "
@@ -277,12 +282,35 @@ struct LatchConditionInfo {
   BinaryOperator *Counter = nullptr;
   PHINode *IV = nullptr;
 
+  // Set by tryCreateFromHardwareLoop, instead of Limit/Step/Counter/IV.
+  IntrinsicInst *LoopStart = nullptr;
+  IntrinsicInst *LoopDecInReg = nullptr;
+  PHINode *JNZDCounterPhiNode = nullptr;
+
   // A unit-downcounting latch (step -1), convertible to
   // @llvm.loop.decrement.reg.
   bool isDowncounting() const { return Step == -1; }
 
+  bool isHardwareLoop() const { return LoopDecInReg != nullptr; }
+
+  // The instructions that compute the latch condition.
+  bool isLatchControl(const Instruction *I) const {
+    return I == Counter || I == Cmp || I == LoopDecInReg;
+  }
+
+  // Match a counting latch: Cmp compares Counter = add IV, Step (Step a
+  // non-zero constant, IV a header PHI) against Limit, a loop-invariant value
+  // on either side (operand LimitIdx).
   static std::optional<LatchConditionInfo>
-  tryCreate(const Loop *L, ICmpInst *Cmp, const BasicBlock *Header);
+  tryCreateFromSoftwareLoop(const Loop *L, ICmpInst *Cmp,
+                            const BasicBlock *Header);
+
+  // Match a JNZD latch: Cmp is icmp ne (LoopDecInReg, 0), with LoopDecInReg =
+  // loop.decrement.reg(JNZDCounterPhiNode, 1), and JNZDCounterPhiNode a header
+  // PHI seeded from LoopStart (start.loop.iterations) outside the loop.
+  static std::optional<LatchConditionInfo>
+  tryCreateFromHardwareLoop(const Loop *L, ICmpInst *Cmp,
+                            const BasicBlock *Header);
 };
 
 class LoopStructure {
@@ -376,7 +404,8 @@ class OrigLoopStructure : public LoopStructure {
   bool discoverTopRegion();
 
   /// \return true if latch exit condition are valid and the loop bound can be
-  /// adjusted (Step != 0).
+  /// adjusted: either a counting latch (Step != 0) or a JNZD hardware-loop
+  /// latch, whose trip count lives in start.loop.iterations.
   bool canAdjustLoopBound();
 
   // True if every incoming block is inside the top region (cloned with
@@ -777,7 +806,6 @@ bool AIEOuterLoopPipeliner::tryPipelineLoop(Loop *L, const OLPOpts &Opts) {
     LLVM_DEBUG(dbgs() << "    Not pipelining: unsupported loop structure\n");
     return false;
   }
-
   if (!LS->isProfitableToRotate(*SE, Opts.MinTripCount)) {
     LLVM_DEBUG(dbgs() << "    Not pipelining: not profitable to rotate\n");
     return false;
@@ -1398,6 +1426,9 @@ void CloneLoopStructure::remapBoundThroughCloneMap() {
   B.Limit = Map(B.Limit);
   B.Counter = cast_or_null<BinaryOperator>(Map(B.Counter));
   B.IV = cast_or_null<PHINode>(Map(B.IV));
+  // LoopStart sits outside the loop and is shared with the source, unmapped.
+  B.LoopDecInReg = cast_or_null<IntrinsicInst>(Map(B.LoopDecInReg));
+  B.JNZDCounterPhiNode = cast_or_null<PHINode>(Map(B.JNZDCounterPhiNode));
 }
 
 void OrigLoopStructure::removeFromCFG() const {
@@ -1597,10 +1628,10 @@ void AIEOuterLoopPipeliner::populateLastIterBottom(
   // loop and must be cloned.
   const LatchConditionInfo &Bound = OrigLS.latchCondition();
 
-  // The outer back-edge control (counter add + exit icmp) is dead in the
-  // non-looping last iteration; correct behavior is to always elide it. (For a
-  // JNZD hardware loop the steady counter/limit are also already erased, so it
-  // MUST be elided.)
+  // The outer back-edge control (counter add or loop.decrement.reg, plus the
+  // exit icmp) is dead in the non-looping last iteration; correct behavior is
+  // to always elide it. (For a JNZD hardware loop the steady counter/limit are
+  // also already erased, so it MUST be elided.)
 
   BasicBlock *OrigBottom = OrigLS.getBottom();
   const auto IsInLoop = [&OrigLS](const Instruction *I) {
@@ -1622,7 +1653,7 @@ void AIEOuterLoopPipeliner::populateLastIterBottom(
           return UI && OutlivesPeel(UI);
         }))
       continue;
-    if (&I == Bound.Counter || &I == Bound.Cmp)
+    if (Bound.isLatchControl(&I))
       continue;
     OrigBottomInsts.push_back(&I);
   }
@@ -1785,14 +1816,75 @@ bool OrigLoopStructure::canAdjustLoopBound() {
   if (!Cmp)
     return false;
 
-  OuterLoopCondition =
-      LatchConditionInfo::tryCreate(getOuterLoop(), Cmp, getTop());
+  if (HardwareLoopInput)
+    OuterLoopCondition = LatchConditionInfo::tryCreateFromHardwareLoop(
+        getOuterLoop(), Cmp, getTop());
+  if (!OuterLoopCondition)
+    OuterLoopCondition = LatchConditionInfo::tryCreateFromSoftwareLoop(
+        getOuterLoop(), Cmp, getTop());
+  LLVM_DEBUG(if (OuterLoopCondition) dbgs()
+             << "    Latch: "
+             << (OuterLoopCondition->isHardwareLoop() ? "hardware" : "software")
+             << " loop\n");
   return OuterLoopCondition.has_value();
 }
 
 std::optional<LatchConditionInfo>
-LatchConditionInfo::tryCreate(const Loop *L, ICmpInst *Cmp,
-                              const BasicBlock *Header) {
+LatchConditionInfo::tryCreateFromHardwareLoop(const Loop *L, ICmpInst *Cmp,
+                                              const BasicBlock *Header) {
+  const BasicBlock *Preheader = L->getLoopPreheader();
+  const BasicBlock *Latch = L->getLoopLatch();
+  if (!Preheader || !Latch)
+    return std::nullopt;
+
+  auto *Zero = dyn_cast<ConstantInt>(Cmp->getOperand(1));
+  if (Cmp->getPredicate() != ICmpInst::ICMP_NE || !Zero || !Zero->isZero())
+    return std::nullopt;
+
+  auto *DecInRegInst = dyn_cast<IntrinsicInst>(Cmp->getOperand(0));
+  if (!DecInRegInst ||
+      DecInRegInst->getIntrinsicID() != Intrinsic::loop_decrement_reg)
+    return std::nullopt;
+  assert(cast<ConstantInt>(DecInRegInst->getArgOperand(1))->isOne() &&
+         "AIE JNZD decrements by one");
+
+  auto *CtrPhiInst = dyn_cast<PHINode>(DecInRegInst->getArgOperand(0));
+  if (!CtrPhiInst)
+    return std::nullopt;
+  assert(CtrPhiInst->getParent() == Header &&
+         "HardwareLoops places the counter PHI in the header");
+  assert(CtrPhiInst->getNumIncomingValues() == 2 &&
+         "Header with a preheader and one latch has two predecessors");
+
+  // The only users allowed are the counter PHI and Cmp for the decrement, and
+  // the latch branch for Cmp. Peeling shifts the count by one and drops both
+  // from the last iteration, so any other user would read a wrong count or
+  // dangle. Rare in practice: HardwareLoops emits a decrement and test with no
+  // other users.
+  // TODO: Rewrite other users to the shifted count instead of rejecting.
+  if (!DecInRegInst->hasNUses(2) || !Cmp->hasOneUse())
+    return std::nullopt;
+
+  if (CtrPhiInst->getIncomingValueForBlock(Latch) != DecInRegInst)
+    return std::nullopt;
+
+  auto *LoopStart =
+      dyn_cast<IntrinsicInst>(CtrPhiInst->getIncomingValueForBlock(Preheader));
+  if (!LoopStart ||
+      LoopStart->getIntrinsicID() != Intrinsic::start_loop_iterations)
+    return std::nullopt;
+
+  LatchConditionInfo Info;
+  Info.Cmp = Cmp;
+  Info.LoopStart = LoopStart;
+  Info.LoopDecInReg = DecInRegInst;
+  Info.JNZDCounterPhiNode = CtrPhiInst;
+  return Info;
+}
+
+std::optional<LatchConditionInfo>
+LatchConditionInfo::tryCreateFromSoftwareLoop(const Loop *L, ICmpInst *Cmp,
+                                              const BasicBlock *Header) {
   // Split Cmp's operands into its loop-invariant limit (with operand index)
   // and the remaining counter operand.
   Value *Limit = nullptr;
@@ -1841,13 +1933,31 @@ LatchConditionInfo::tryCreate(const Loop *L, ICmpInst *Cmp,
     return std::nullopt;
   }
 
-  return LatchConditionInfo{Cmp, Limit, LimitIdx, Step, CounterAdd, IV};
+  LatchConditionInfo Info;
+  Info.Cmp = Cmp;
+  Info.Limit = Limit;
+  Info.LimitIdx = LimitIdx;
+  Info.Step = Step;
+  Info.Counter = CounterAdd;
+  Info.IV = IV;
+  return Info;
 }
 
-// NewLimit = Limit - Step covers increment (Step > 0) and decrement
-// (Step < 0) loops of any constant step magnitude.
+// Peel one iteration by running the steady loop N-1 times. A counting latch
+// gets NewLimit = Limit - Step, which covers increment (Step > 0) and
+// decrement (Step < 0) loops of any constant step magnitude. A hardware loop
+// has no limit, so its start.loop.iterations trip count becomes N - 1.
 void CloneLoopStructure::adjustLoopBound() const {
   const LatchConditionInfo &B = latchCondition();
+  if (B.isHardwareLoop()) {
+    IRBuilder<> Builder(B.LoopStart);
+    Value *TripCount = B.LoopStart->getArgOperand(0);
+    Value *NewTripCount = Builder.CreateSub(
+        TripCount, ConstantInt::get(TripCount->getType(), 1), "outer.trip.adj");
+    B.LoopStart->setArgOperand(0, NewTripCount);
+    LLVM_DEBUG(dbgs() << "    Adjusted hardware-loop trip count: N -> N-1\n");
+    return;
+  }
   IRBuilder<> Builder(getPreheader()->getTerminator());
   Value *NewLimit = Builder.CreateSub(
       B.Limit, ConstantInt::getSigned(B.Limit->getType(), B.Step),
@@ -2078,12 +2188,19 @@ bool AIEOuterLoopPipeliner::performTransformation(OrigLoopStructure &OrigLS,
   createPipelinedPHIs(OrigLS, SteadyLS, PreheaderVMap, BottomVMap);
 
   // Determine whether to use hardware loop based on pointer pressure.
+  // A loop that arrives as a hardware loop stays one: it no longer has the
+  // induction variable a soft latch would be rebuilt from.
+  const bool IsInputHardwareLoop = SteadyLS.latchCondition().isHardwareLoop();
   const unsigned NumPointerPHIs = OrigLS.countBasePointerPHIs();
-  const bool OuterIsHardwareLoop = Opts.shouldUseHardwareLoop(NumPointerPHIs) &&
-                                   SteadyLS.latchCondition().isDowncounting();
-  LLVM_DEBUG(dbgs() << "    Pointer PHIs: " << NumPointerPHIs << ", threshold: "
-                    << OuterLoopPointerThreshold << ", using "
-                    << (OuterIsHardwareLoop ? "hw" : "soft") << " loop\n");
+  const bool OuterIsHardwareLoopCandidate =
+      Opts.shouldUseHardwareLoop(NumPointerPHIs) &&
+      SteadyLS.latchCondition().isDowncounting();
+  LLVM_DEBUG(
+      dbgs() << "    Pointer PHIs: " << NumPointerPHIs
+             << ", threshold: " << OuterLoopPointerThreshold << ", using "
+             << (IsInputHardwareLoop || OuterIsHardwareLoopCandidate ? "hw"
+                                                                     : "soft")
+             << " loop" << (IsInputHardwareLoop ? " (input)" : "") << "\n");
 
   // Preparation: set up the latch condition for JNZD and/or peeling.
   // - Non-speculative: adjust the loop bound from N to N-1 (peel one iteration)
@@ -2096,7 +2213,7 @@ bool AIEOuterLoopPipeliner::performTransformation(OrigLoopStructure &OrigLS,
   // Convert to a JNZD hardware loop if applicable. Must run after bound
   // adjustment (non-speculative) or exit remapping (speculative), and before
   // peeling so the counting add/icmp are erased before the peel clones them.
-  if (OuterIsHardwareLoop)
+  if (OuterIsHardwareLoopCandidate)
     convertOuterLoopToHardwareLoop(SteadyLS);
 
   // Finalization: complete the transformation and update metadata.
