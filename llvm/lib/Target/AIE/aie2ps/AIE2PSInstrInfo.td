@@ -90,7 +90,7 @@ let hasDelaySlot = true, isBranch = true, isTerminator = true,
       PreSchedInstExpansion<JNZ, DelayedSchedBarrier>;
 
   let isIndirectBranch = true, Defs = [srCarry] in
-  def PseudoJNZD : Pseudo<(outs eR:$mRx), (ins eR:$mRx0, eP:$mPm)>,
+  def PseudoJNZD : Pseudo<(outs mRx:$mRx), (ins mRx:$mRx0, eP:$mPm)>,
       PreSchedInstExpansion<JNZD, DelayedSchedBarrier>;
 
   let isBarrier = true in {
@@ -105,11 +105,11 @@ let hasDelaySlot = true, isBranch = true, isTerminator = true,
 // JNZD loops
 let hasSideEffects = 0, mayLoad = 0, mayStore = 0, Defs = [srCarry] in
 def LoopDec :
-    Pseudo<(outs eR:$dst), (ins eR:$src), "loop_dec", "${dst}, ${src}">;
+    Pseudo<(outs mRx:$dst), (ins mRx:$src), "loop_dec", "${dst}, ${src}">;
 
 let hasSideEffects = 0, mayLoad = 0, mayStore = 0, isBranch = 1, isIndirectBranch = 1, isTerminator = true in
 def LoopJNZ :
-    Pseudo<(outs), (ins eR:$tc, eP:$target), "loop_jnz", "${tc}, ${target}">;
+    Pseudo<(outs), (ins mRx:$tc, eP:$target), "loop_jnz", "${tc}, ${target}">;
 
 // Zero overhead loops
 let hasSideEffects = true, mayLoad = false, mayStore = false,

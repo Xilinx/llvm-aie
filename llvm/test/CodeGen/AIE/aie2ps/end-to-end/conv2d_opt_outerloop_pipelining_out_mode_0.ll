@@ -189,7 +189,7 @@ define void @conv2d_opt_outerloop_out_mode_0(
 ; ASM-NEXT:    movs dc2, dc7; extend.s8 r0, r0; mov dc6, dc7
 ; ASM-NEXT:    vlda.ups.2x cml1, s0, upssign1, [p4], #64; movs dc5, dc7; lshl r26, r7, r26; mov s0, r0
 ; ASM-NEXT:    vlda.ups.2x cmh1, s0, upssign1, [p4], #64; movs dj3, r22; add r0, r20, #-1; vbcst.32 x0, r26
-; ASM-NEXT:    mova r12, #264; vldb.128 wl6, [p3, dj3]; movx crsrsmode, #0; addm.nc r3, r0, #-1; movs dc1, dc7
+; ASM-NEXT:    mova r12, #264; vldb.128 wl6, [p3, dj3]; movx crsrsmode, #0; addm.nc r20, r0, #-1; movs dc1, dc7
 ; ASM-NEXT:    vlda.ups.2x cml0, s0, upssign1, [p5], #64; vldb.128 wl8, [p1, #16]; movxm p6, #.LBB0_5; movs p7, p3
 ; ASM-NEXT:    vlda.ups.2x cmh0, s0, upssign1, [p5], #64; vldb x2, [p7], #64; or r10, r8, r7; mov s1, r6; movs dj3, r17
 ; ASM-NEXT:    mova r16, #16; vldb x4, [p7], #64; add r18, r28, #-1; vshuffle x10, x10, x1, r4; movs m5, r5
@@ -222,12 +222,12 @@ define void @conv2d_opt_outerloop_out_mode_0(
 ; ASM-NEXT:    movs p7, p3; vldb.popx x10, [p0, lf0, r24]; vshuffle x10, x8, x6, r4; vmac dm1, dm1, x10, x4, r8
 ; ASM-NEXT:    vlda x2, [p7], #64; vldb.pop.3d x1, [p0, lf0, r24, d0]; mov r0, dc6; vmac dm0, dm0, x10, x2, r8
 ; ASM-NEXT:    vlda x4, [p7], #64; lshl r0, r0, r2; vshuffle x10, x8, x6, r4; vmac dm1, dm1, x10, x4, r8
-; ASM-NEXT:    or r20, r0, r16; mov dj7, r0; vmac dm0, dm0, x10, x2, r8
-; ASM-NEXT:    movs dj7, r20; vldb.128 wl6, [p1, dj7]; vshuffle x10, x8, x6, r4; vmac dm1, dm1, x10, x4, r8
+; ASM-NEXT:    or r22, r0, r16; mov dj7, r0; vmac dm0, dm0, x10, x2, r8
+; ASM-NEXT:    movs dj7, r22; vldb.128 wl6, [p1, dj7]; vshuffle x10, x8, x6, r4; vmac dm1, dm1, x10, x4, r8
 ; ASM-NEXT:    vlda.ups.2x cml0, s0, upssign1, [p5], #64; vldb.128 wl8, [p1, dj7]; vmac dm0, dm0, x10, x2, r8
 ; ASM-NEXT:    vlda.ups.2x cml1, s0, upssign1, [p4], #64; vmac dm1, dm1, x10, x4, r8
 ; ASM-NEXT:    vlda.ups.2x cmh1, s0, upssign1, [p4], #64; vmac dm0, dm0, x10, x2, r8
-; ASM-NEXT:    vlda.ups.2x cmh0, s0, upssign1, [p5], #64; jnzd r3, r3, p6
+; ASM-NEXT:    vlda.ups.2x cmh0, s0, upssign1, [p5], #64; jnzd r20, r20, p6
 ; ASM-NEXT:    vldb.popx x8, [p0, lf0, r24]; vshuffle x10, x10, x1, r4 // Delay Slot 5
 ; ASM-NEXT:    vldb.pop.3d x6, [p0, lf0, r24, d0] // Delay Slot 4
 ; ASM-NEXT:    vldb.popx x8, [p0, lf0, r24] // Delay Slot 3
