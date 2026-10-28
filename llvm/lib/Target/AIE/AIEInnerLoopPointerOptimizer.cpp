@@ -430,13 +430,18 @@ bool AIEInnerLoopPointerOptimizer::normalizePhiToLoadBase(
     Value *ShiftBase = Phi.getIncomingValueForBlock(Preheader);
     Value *Shift = StrideVal;
     // A variable shift of "base + C" becomes "base + (C + Stride)", so the
-    // new init stays a single pointer add from base.
+    // new init stays a single pointer add from base. Only do this when the
+    // offset add can be hoisted out of an outer loop: otherwise it sits on
+    // the critical path of every outer iteration, while "(base + C) + Stride"
+    // is just two independent pointer adds.
     auto *InitGEP = dyn_cast<GetElementPtrInst>(ShiftBase);
-    if (!StrideCI && InitGEP && AIEIRUtils::isSimpleI8GEP(InitGEP) &&
+    BasicBlock *const OffsetBB =
+        StrideCI ? nullptr : getShiftOffsetInsertionPoint(L, StrideVal);
+    if (OffsetBB && OffsetBB != Preheader && InitGEP &&
+        AIEIRUtils::isSimpleI8GEP(InitGEP) &&
         isa<ConstantInt>(InitGEP->getOperand(1)) &&
         InitGEP->getOperand(1)->getType() == StrideVal->getType()) {
-      IRBuilder<> OffsetBuilder(
-          getShiftOffsetInsertionPoint(L, StrideVal)->getTerminator());
+      IRBuilder<> OffsetBuilder(OffsetBB->getTerminator());
       Shift = OffsetBuilder.CreateAdd(InitGEP->getOperand(1), StrideVal,
                                       Phi.getName() + ".shift");
       ShiftBase = InitGEP->getPointerOperand();
