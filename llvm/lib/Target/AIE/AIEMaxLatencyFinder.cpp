@@ -37,6 +37,11 @@ static cl::opt<bool> AbstractStageLatency(
     cl::desc("Include the stage latency in the ExitSU edges of DAGs that "
              "aren't scheduled, such as inter-block DAGs"));
 
+static cl::opt<bool> AbstractExitUsesByWrites(
+    "aie-abstract-exit-uses-by-writes", cl::Hidden, cl::init(true),
+    cl::desc("Bound the reads on the ExitSU edges of DAGs that aren't "
+             "scheduled by the earliest write of their register"));
+
 static cl::opt<bool> InterBlockExitLiveness(
     "aie-interblock-exit-liveness", cl::Hidden, cl::init(true),
     cl::desc("Bound defs that are dead behind the ExitSU of an inter-block "
@@ -82,10 +87,15 @@ int maxLatency(const MachineInstr *MI, const AIEBaseInstrInfo &InstrInfo,
   const MachineFunction &MF = *MI->getMF();
   const TargetRegisterInfo &TRI = *MF.getSubtarget().getRegisterInfo();
   const MachineRegisterInfo &MRI = MF.getRegInfo();
+  // A use only has to be read before a later write of its register lands.
   // Nothing behind the ExitSU reads a def whose register is dead there, so
   // the def only has to land before a later write of that register.
   auto IsBoundByWrite = [&](const MachineOperand &MO) {
-    return Exit && Exit->LiveAfter && InterBlockExitLiveness && MO.isDef() &&
+    if (!Exit)
+      return false;
+    if (MO.isUse())
+      return bool(AbstractExitUsesByWrites);
+    return Exit->LiveAfter && InterBlockExitLiveness &&
            !MRI.isReserved(MO.getReg()) &&
            Exit->LiveAfter->available(MO.getReg());
   };
