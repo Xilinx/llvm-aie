@@ -826,7 +826,11 @@ MachineInstr *InterBlockScheduling::latencyConverged(BlockState &BS) {
   }
 
   // Now check all inter-block edges. We prune by checking whether
-  // max latency reaches the successor at all
+  // max latency reaches the successor at all. Height starts at 1: the very
+  // last bundle is one cycle from the successor's first cycle. Per-MI ID
+  // stage consumers are accounted for inside AIE::maxLatency(), which adds the
+  // difference between the default E1 read and the actual minimum read stage
+  // for that MI's def class.
   int MaxExtent = 0;
   int Height = 1;
   for (auto &Bundle : reverse(Bottom.Bundles)) {

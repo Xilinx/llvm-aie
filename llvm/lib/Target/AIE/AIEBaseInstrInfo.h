@@ -804,6 +804,15 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   /// of the edge
   int getConservativeMemoryLatency(unsigned SrcSchedClass) const;
 
+  /// Returns the earliest pipeline stage at which any instruction can access
+  /// \p Reg (read or write).  Most registers are first accessed at E1
+  /// (stage 1).  Targets override this for register classes that are accessed
+  /// earlier, e.g. index registers that indexed-addressing and post-modify
+  /// instructions read and write at E0 (stage 0).
+  /// Used by maxLatency() to compute per-operand RAW and WAR latency
+  /// adjustments for inter-block scheduling.
+  virtual unsigned getEarliestAccessStage(MCRegister Reg) const { return 1; }
+
   /// Returns cycle for the first memory operation of an instruction.
   /// This is usually the same as \p getLastMemoryCycle except for instructions
   /// that touch memory multiple times like AIE's read-modify-write part-word

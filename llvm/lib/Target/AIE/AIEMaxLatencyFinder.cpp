@@ -72,11 +72,27 @@ int maxLatency(const MachineInstr *MI, const AIEBaseInstrInfo &InstrInfo,
   unsigned SrcClass = MI->getDesc().getSchedClass();
   for (unsigned I = 0;; I++) {
     std::optional<unsigned> OpLat = Itineraries.getOperandCycle(SrcClass, I);
-    if (!OpLat) {
-      // Beyond last operand
+    if (!OpLat)
       break;
+    int EffLat = int(*OpLat);
+    // Adjust operand latencies for register classes whose successors can
+    // access them earlier than E1. The effective inter-block latency is
+    //   (operand_cycle - getEarliestAccessStage(Reg) + 1)
+    // This covers both RAW (def operands) and WAR (use operands).
+    //
+    // Most registers are accessed at E1, so the adjustment cancels out
+    // (cycle - 1 + 1 = cycle). A register accessed at E0 (stage 0), such as an
+    // index register, adds +1. Applying this per-operand avoids
+    // over-penalizing instructions like MMAC whose dominant latency comes from
+    // non-idx operands.
+    if (I < MI->getNumOperands()) {
+      const MachineOperand &MO = MI->getOperand(I);
+      if (MO.isReg() && MO.getReg().isPhysical()) {
+        unsigned Earliest = InstrInfo.getEarliestAccessStage(MO.getReg());
+        EffLat = EffLat - int(Earliest) + 1;
+      }
     }
-    Latency = std::max(Latency, int(*OpLat));
+    Latency = std::max(Latency, EffLat);
   }
   Latency = std::max(Latency, InstrInfo.getConservativeMemoryLatency(SrcClass));
   if (IncludeStages) {
