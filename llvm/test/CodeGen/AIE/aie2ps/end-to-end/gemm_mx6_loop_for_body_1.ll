@@ -123,10 +123,10 @@ define dso_local void @gemm.if.then5(ptr %add.ptr, ptr %tdm1, i32 %cond3) #5 {
 ; ASM-NEXT:    lda dj5, [p2], m6; movs p1, p0; or r0, r0, r4; mov m6, #-64
 ; ASM-NEXT:    lda dc2, [p2], m6; movs p0, p4; movxm p4, #.LBB0_1
 ; ASM-NEXT:    lda dc0, [p2], #4; add r4, r3, #-1; vmov bmlh4, bmll4
-; ASM-NEXT:    lda dc4, [p2], #24; or r6, r8, r8; addm.nc r1, r4, #-1
-; ASM-NEXT:    lda dc1, [p2], #4; movx r5, #0; vmov bmlh0, bmll0
-; ASM-NEXT:    lda dc5, [p2, #0]; or r25, r5, r5; vmov cmh4, cml4
-; ASM-NEXT:    or r24, r5, r5; vmov cmh0, cml0
+; ASM-NEXT:    lda dc4, [p2], #24; or r5, r8, r8; addm.nc r4, r4, #-1
+; ASM-NEXT:    lda dc1, [p2], #4; movx r1, #0; vmov bmlh0, bmll0
+; ASM-NEXT:    lda dc5, [p2, #0]; or r25, r1, r1; vmov cmh4, cml4
+; ASM-NEXT:    or r24, r1, r1; vmov cmh0, cml0
 ; ASM-NEXT:    vlda.fill [p0, lf0, r24]; vldb.fill [p1, lf1, r25]
 ; ASM-NEXT:    vlda.pop fex0, [p0, lf0, r24]; vldb.pop fex4, [p1, lf1, r25]
 ; ASM-NEXT:    vlda.pop fex1, [p0, lf0, r24, m4]; vldb.pop fex2, [p1, lf1, r25, m3]
@@ -180,7 +180,7 @@ define dso_local void @gemm.if.then5(ptr %add.ptr, ptr %tdm1, i32 %cond3) #5 {
 ; ASM-NEXT:    vst.conv.bf16.fp32 cmh5, [p5], #64
 ; ASM-NEXT:    vst.conv.bf16.fp32 cml1, [p3], #64
 ; ASM-NEXT:    vst.conv.bf16.fp32 cml4, [p5], #64
-; ASM-NEXT:    vst.conv.bf16.fp32 cmh1, [p3], #64; jnzd r1, r1, p4; vmov bmlh4, bmll4
+; ASM-NEXT:    vst.conv.bf16.fp32 cmh1, [p3], #64; jnzd r4, r4, p4; vmov bmlh4, bmll4
 ; ASM-NEXT:    vlda.fill [p0, lf0, r24]; vldb.fill [p1, lf1, r25]; vst.conv.bf16.fp32 cml0, [p3], #64 // Delay Slot 5
 ; ASM-NEXT:    vlda.pop fex0, [p0, lf0, r24]; vldb.pop fex4, [p1, lf1, r25]; vst.conv.bf16.fp32 cmh4, [p5], #64; vmov cmh4, cml4 // Delay Slot 4
 ; ASM-NEXT:    vlda.pop fex1, [p0, lf0, r24, m4]; vldb.pop fex2, [p1, lf1, r25, m3]; vst.conv.bf16.fp32 cmh0, [p3], #64; vmov bmlh0, bmll0 // Delay Slot 3
@@ -220,7 +220,7 @@ define dso_local void @gemm.if.then5(ptr %add.ptr, ptr %tdm1, i32 %cond3) #5 {
 ; ASM-NEXT:    vmac.f dm2, dm2, fex0, fey3, r8
 ; ASM-NEXT:    vst.conv.bf16.fp32 cml7, [p5], #64; vmac.f dm0, dm0, fex0, fey3, r8
 ; ASM-NEXT:    vst.conv.bf16.fp32 cmh7, [p5], #64; movx r8, #772; vmac.f dm1, dm1, fex8, fey3, r8
-; ASM-NEXT:    vst.conv.bf16.fp32 cml6, [p5], #64; mov r8, r6
+; ASM-NEXT:    vst.conv.bf16.fp32 cml6, [p5], #64; mov r8, r5
 ; ASM-NEXT:    vst.conv.bf16.fp32 cmh6, [p5], #64
 ; ASM-NEXT:    vst.conv.bf16.fp32 cml3, [p3], #64
 ; ASM-NEXT:    vst.conv.bf16.fp32 cmh3, [p3], #64
