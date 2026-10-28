@@ -135,7 +135,8 @@ public:
   /// Create difference with another vector.
   LivenessVector operator-(const LivenessVector &Other) const;
 
-  /// Check if both vectors are non-empty at the same index.
+  /// True when any same-index pair conflicts via Liveness::conflictsWith
+  /// (lane intersection, bypass R/W same class, or bypass vs RF lanes).
   bool overlaps(const LivenessVector &Other) const;
 
   /// Check if any element has liveness.

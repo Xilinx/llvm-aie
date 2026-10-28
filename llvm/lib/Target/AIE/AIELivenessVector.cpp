@@ -220,10 +220,10 @@ LivenessVector LivenessVector::operator-(const LivenessVector &Other) const {
 }
 
 bool LivenessVector::overlaps(const LivenessVector &Other) const {
-  // True when both vectors are non-empty at the same index.
+  // True when any same-index pair conflicts (lanes / bypass).
   const size_t MinSize = std::min(Elements.size(), Other.Elements.size());
   for (size_t I = 0; I < MinSize; ++I) {
-    if (Elements[I].any() && Other.Elements[I].any())
+    if (Elements[I].conflictsWith(Other.Elements[I]))
       return true;
   }
   return false;
