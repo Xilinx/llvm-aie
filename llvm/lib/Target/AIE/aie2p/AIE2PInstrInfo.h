@@ -65,6 +65,7 @@ public:
   unsigned getGenericVSelOpcode() const override;
   unsigned getGenericVShiftOpcode() const override;
   unsigned getGenericShuffleVectorOpcode() const override;
+  bool isVShuffle(unsigned Opcode) const override;
   unsigned getGenericExtractSubvectorOpcode() const override;
   unsigned getGenericIntegerComparisonOpcode() const override;
   bool isLock(unsigned Opc) const override;

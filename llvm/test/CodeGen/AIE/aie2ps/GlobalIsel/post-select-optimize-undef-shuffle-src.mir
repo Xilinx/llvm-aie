@@ -26,8 +26,7 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x2
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:mlockid_reg = COPY $r0
-    ; CHECK-NEXT: [[DEF:%[0-9]+]]:vec512 = IMPLICIT_DEF
-    ; CHECK-NEXT: [[VSHUFFLE_vec_shuffle_x:%[0-9]+]]:vec512 = VSHUFFLE_vec_shuffle_x [[COPY]], [[DEF]], [[COPY1]]
+    ; CHECK-NEXT: [[VSHUFFLE_vec_shuffle_x:%[0-9]+]]:vec512 = VSHUFFLE_vec_shuffle_x [[COPY]], undef [[COPY]], [[COPY1]]
     ; CHECK-NEXT: $x0 = COPY [[VSHUFFLE_vec_shuffle_x]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $x0
     %0:vec512 = COPY $x2
@@ -53,16 +52,7 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:mexa = COPY $ex0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:mlockid_reg = COPY $r0
-    ; CHECK-NEXT: [[DEF:%[0-9]+]]:vec256 = IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:mgs = IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF2:%[0-9]+]]:mes = IMPLICIT_DEF
-    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:mewlv_bis = REG_SEQUENCE [[DEF]], %subreg.sub_bfp_v256, [[DEF1]], %subreg.sub_bfp_g32, [[DEF2]], %subreg.sub_bfp_e32
-    ; CHECK-NEXT: [[DEF3:%[0-9]+]]:vec256 = IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF4:%[0-9]+]]:mgs = IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF5:%[0-9]+]]:mes = IMPLICIT_DEF
-    ; CHECK-NEXT: [[REG_SEQUENCE1:%[0-9]+]]:mewhv = REG_SEQUENCE [[DEF3]], %subreg.sub_bfp_v256, [[DEF4]], %subreg.sub_bfp_g32, [[DEF5]], %subreg.sub_bfp_e32
-    ; CHECK-NEXT: [[REG_SEQUENCE2:%[0-9]+]]:mexa = REG_SEQUENCE [[REG_SEQUENCE]], %subreg.sub_bfp320_lo, [[REG_SEQUENCE1]], %subreg.sub_bfp320_hi
-    ; CHECK-NEXT: [[VSHUFFLE_vec_shuffle_egx:%[0-9]+]]:mexa = VSHUFFLE_vec_shuffle_egx [[COPY]], [[REG_SEQUENCE2]], [[COPY1]]
+    ; CHECK-NEXT: [[VSHUFFLE_vec_shuffle_egx:%[0-9]+]]:mexa = VSHUFFLE_vec_shuffle_egx [[COPY]], undef [[COPY]], [[COPY1]]
     ; CHECK-NEXT: $ex0 = COPY [[VSHUFFLE_vec_shuffle_egx]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $ex0
     %0:mexa = COPY $ex0
@@ -96,18 +86,7 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:mfexa = COPY $fex0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:mlockid_reg = COPY $r0
-    ; CHECK-NEXT: [[DEF:%[0-9]+]]:vec256 = IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:mfs = IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF2:%[0-9]+]]:mgs = IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF3:%[0-9]+]]:mes = IMPLICIT_DEF
-    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:mfews = REG_SEQUENCE [[DEF]], %subreg.sub_few_bfp_w, [[DEF1]], %subreg.sub_few_bfp_f64, [[DEF2]], %subreg.sub_few_bfp_g32, [[DEF3]], %subreg.sub_few_bfp_e32
-    ; CHECK-NEXT: [[DEF4:%[0-9]+]]:vec256 = IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF5:%[0-9]+]]:mfs = IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF6:%[0-9]+]]:mgs = IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF7:%[0-9]+]]:mes = IMPLICIT_DEF
-    ; CHECK-NEXT: [[REG_SEQUENCE1:%[0-9]+]]:mfews = REG_SEQUENCE [[DEF4]], %subreg.sub_few_bfp_w, [[DEF5]], %subreg.sub_few_bfp_f64, [[DEF6]], %subreg.sub_few_bfp_g32, [[DEF7]], %subreg.sub_few_bfp_e32
-    ; CHECK-NEXT: [[REG_SEQUENCE2:%[0-9]+]]:mfexa = REG_SEQUENCE [[REG_SEQUENCE]], %subreg.sub_bfp384_lo, [[REG_SEQUENCE1]], %subreg.sub_bfp384_hi
-    ; CHECK-NEXT: [[VSHUFFLE_vec_shuffle_fex:%[0-9]+]]:efexe = VSHUFFLE_vec_shuffle_fex [[COPY]], [[REG_SEQUENCE2]], [[COPY1]]
+    ; CHECK-NEXT: [[VSHUFFLE_vec_shuffle_fex:%[0-9]+]]:efexe = VSHUFFLE_vec_shuffle_fex [[COPY]], undef [[COPY]], [[COPY1]]
     ; CHECK-NEXT: $fex0 = COPY [[VSHUFFLE_vec_shuffle_fex]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $fex0
     %0:mfexa = COPY $fex0

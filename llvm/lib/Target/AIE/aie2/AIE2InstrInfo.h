@@ -83,6 +83,7 @@ public:
   bool isJNZ(unsigned Opc) const override;
   bool isJZ(unsigned Opc) const override;
   bool isCall(unsigned Opc) const override;
+  bool isVShuffle(unsigned Opcode) const override;
   bool jumpsToUnknown(unsigned Opcode) const override;
   bool isIConst(unsigned Opc) const override;
   bool isBooleanNoOp(unsigned Opc) const override;

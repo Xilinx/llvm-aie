@@ -95,6 +95,9 @@ bool AIE2InstrInfo::isJZ(unsigned Opc) const { return Opc == AIE2::PseudoJZ; }
 bool AIE2InstrInfo::isCall(unsigned Opc) const {
   return Opc == AIE2::JL || Opc == AIE2::JL_IND;
 }
+bool AIE2InstrInfo::isVShuffle(unsigned Opcode) const {
+  return Opcode == AIE2::VSHUFFLE;
+}
 
 bool AIE2InstrInfo::jumpsToUnknown(unsigned Opc) const {
   // The use-case of this function is to check whether all our successor blocks

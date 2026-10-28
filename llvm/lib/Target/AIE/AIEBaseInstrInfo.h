@@ -374,6 +374,8 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   virtual unsigned getGenericShuffleVectorOpcode() const {
     llvm_unreachable("Target didn't implement getGenericShuffleVectorOpcode!");
   }
+  /// Return true if Opcode is a VSHUFFLE with layout (dst, s1, s2, mode).
+  virtual bool isVShuffle(unsigned Opcode) const { return false; }
   /// Return the opcode to be used for post-increment load operations.
   virtual unsigned getGenericPostIncLoadOpcode() const {
     llvm_unreachable("Target didn't implement getGenericPostIncLoadOpcode!");

@@ -1686,6 +1686,17 @@ unsigned AIE2PInstrInfo::getGenericShuffleVectorOpcode() const {
   return AIE2P::G_AIE_SHUFFLE_VECTOR;
 }
 
+bool AIE2PInstrInfo::isVShuffle(unsigned Opcode) const {
+  switch (Opcode) {
+  case AIE2P::VSHUFFLE_vec_shuffle_x:
+  case AIE2P::VSHUFFLE_vec_shuffle_bm:
+  case AIE2P::VSHUFFLE_vec_shuffle_ex:
+    return true;
+  default:
+    return false;
+  }
+}
+
 unsigned AIE2PInstrInfo::getGenericExtractSubvectorOpcode() const {
   return AIE2P::G_AIE_EXTRACT_SUBVECTOR;
 }
