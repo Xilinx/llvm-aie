@@ -224,6 +224,10 @@ private:
 
   void expandLoopStart(LowOverheadLoop &LoLoop);
   void expandLoopEnd(LowOverheadLoop &LoLoop);
+  /// Whether keeping the JNZD of \p LoLoop costs more than falling back to an
+  /// explicit decrement and JNZ.
+  bool isJNZDExpensive(const LowOverheadLoop &LoLoop) const;
+  bool tryExpandLoopEndAsJNZ(LowOverheadLoop &LoLoop);
 
   void expand(LowOverheadLoop &LoLoop);
 };
@@ -500,6 +504,196 @@ void AIEBaseHardwareLoops::expandLoopStart(LowOverheadLoop &LoLoop) {
   LoLoop.remove(LoLoop.Start);
 }
 
+static bool isLiveInAnyAlias(const MachineBasicBlock &MBB, Register Reg,
+                             const TargetRegisterInfo &TRI) {
+  for (MCRegAliasIterator AI(Reg, &TRI, /*IncludeSelf=*/true); AI.isValid();
+       ++AI)
+    if (MBB.isLiveIn(*AI))
+      return true;
+  return false;
+}
+
+/// Collect in \p Defs the instructions of \p ML that define the JNZD target
+/// pointer of \p End.
+static void findTargetDefsInLoop(const MachineLoop &ML, const MachineInstr &End,
+                                 const TargetRegisterInfo &TRI,
+                                 SmallVectorImpl<MachineInstr *> &Defs) {
+  const Register Ptr = End.getOperand(1).getReg();
+  for (MachineBasicBlock *MBB : ML.blocks())
+    for (MachineInstr &MI : *MBB)
+      if (!MI.isDebugInstr() && MI.modifiesRegister(Ptr, &TRI))
+        Defs.push_back(&MI);
+}
+
+/// Whether \p End is the only reader of the value \p Def gives the JNZD target
+/// pointer. Collect in \p Reached the blocks of \p ML that value enters.
+static bool
+isTargetDefOnlyReadByEnd(MachineInstr &Def, const MachineInstr &End,
+                         const MachineLoop &ML, const TargetRegisterInfo &TRI,
+                         SmallPtrSetImpl<MachineBasicBlock *> &Reached) {
+  const Register Ptr = End.getOperand(1).getReg();
+  using Position = std::pair<MachineBasicBlock *, MachineBasicBlock::iterator>;
+  SmallVector<Position, 8> Worklist = {
+      {Def.getParent(), std::next(MachineBasicBlock::iterator(Def))}};
+  while (!Worklist.empty()) {
+    auto [MBB, I] = Worklist.pop_back_val();
+    bool Redefined = false;
+    for (; I != MBB->end() && !Redefined; ++I) {
+      if (I->isDebugInstr())
+        continue;
+      if (&*I != &End && I->readsRegister(Ptr, &TRI))
+        return false;
+      Redefined = I->modifiesRegister(Ptr, &TRI);
+    }
+    if (Redefined)
+      continue;
+    for (MachineBasicBlock *Succ : MBB->successors()) {
+      if (!ML.contains(Succ)) {
+        if (isLiveInAnyAlias(*Succ, Ptr, TRI))
+          return false;
+      } else if (Reached.insert(Succ).second) {
+        Worklist.push_back({Succ, Succ->begin()});
+      }
+    }
+  }
+  return true;
+}
+
+/// Whether \p Def, which defines the JNZD target pointer \p Ptr, can be
+/// removed once nothing reads its value.
+static bool isTargetDefRemovable(MachineInstr &Def, Register Ptr) {
+  bool SawStore = false;
+  if (!Def.isSafeToMove(SawStore) || !Def.getOperand(0).isReg() ||
+      Def.getOperand(0).getReg() != Ptr)
+    return false;
+  for (const MachineOperand &MO : Def.operands())
+    if (MO.isReg() && MO.isDef() && !MO.isDead() && MO.getReg() != Ptr)
+      return false;
+  return true;
+}
+
+/// Return the add-immediate defining \p Counter before \p Before in \p MBB, if
+/// nothing reads \p Counter in between.
+static MachineInstr *findCounterAdjust(MachineBasicBlock &MBB,
+                                       MachineBasicBlock::iterator Before,
+                                       Register Counter, unsigned AddOpcode,
+                                       const TargetRegisterInfo &TRI) {
+  for (auto I = Before; I != MBB.begin();) {
+    MachineInstr &MI = *--I;
+    if (MI.isDebugInstr())
+      continue;
+    if (MI.modifiesRegister(Counter, &TRI))
+      return MI.getOpcode() == AddOpcode && MI.getOperand(2).isImm() &&
+                     MI.getOperand(2).getImm() < 0
+                 ? &MI
+                 : nullptr;
+    if (MI.readsRegister(Counter, &TRI))
+      return nullptr;
+  }
+  return nullptr;
+}
+
+bool AIEBaseHardwareLoops::isJNZDExpensive(
+    const LowOverheadLoop &LoLoop) const {
+  MachineInstr *End = LoLoop.End;
+  if (End->getOperand(1).isReg()) {
+    // A target pointer defined in the loop is rebuilt every iteration, whatever
+    // the definition is (rematerialization, reload, copy, ...). JNZD has to
+    // wait for it, so it cannot be scheduled early enough to fill its delay
+    // slots.
+    SmallVector<MachineInstr *, 2> TargetDefs;
+    findTargetDefsInLoop(LoLoop.ML, *End, *TRI, TargetDefs);
+    if (!TargetDefs.empty()) {
+      LLVM_DEBUG(dbgs() << "AIE Loops: JNZD target defined in the loop by "
+                        << *TargetDefs.front());
+      return true;
+    }
+  }
+  return false;
+}
+
+bool AIEBaseHardwareLoops::tryExpandLoopEndAsJNZ(LowOverheadLoop &LoLoop) {
+  auto LoweringData = TII->getJNZDSupport();
+  MachineInstr *Dec = LoLoop.Dec;
+  MachineInstr *End = LoLoop.End;
+  MachineBasicBlock *Latch = End->getParent();
+  MachineBasicBlock *Header = LoLoop.ML.getHeader();
+  MachineBasicBlock *Preheader = LoLoop.ML.getLoopPreheader();
+  const Register Counter = Dec->getOperand(0).getReg();
+  if (!Preheader || Dec->getParent() != Latch ||
+      Dec->getOperand(1).getReg() != Counter || !Header->isLiveIn(Counter) ||
+      !Latch->isSuccessor(Header))
+    return false;
+
+  for (MachineBasicBlock *MBB : LoLoop.ML.blocks())
+    for (MachineInstr &MI : *MBB)
+      if (&MI != Dec && MI.modifiesRegister(Counter, TRI))
+        return false;
+
+  const unsigned AddOpcode = LoweringData->DecTripCountOpcode;
+  auto PreheaderInsertPt = Preheader->getFirstTerminator();
+  for (MCPhysReg Reg : TII->get(AddOpcode).implicit_defs())
+    if (Preheader->computeRegisterLiveness(TRI, Reg, PreheaderInsertPt) !=
+            MachineBasicBlock::LQR_Dead ||
+        Latch->computeRegisterLiveness(TRI, Reg, Dec) !=
+            MachineBasicBlock::LQR_Dead)
+      return false;
+
+  LLVM_DEBUG(dbgs() << "AIE Loops: Falling back to JNZ.\n");
+
+  if (End->getOperand(1).isReg()) {
+    // Without End, a value only End reads is dead: drop the pointer from the
+    // live-ins of the blocks that value enters, and remove its definition when
+    // possible.
+    const Register Ptr = End->getOperand(1).getReg();
+    SmallVector<MachineInstr *, 2> TargetDefs;
+    findTargetDefsInLoop(LoLoop.ML, *End, *TRI, TargetDefs);
+    SmallPtrSet<MachineBasicBlock *, 8> DeadIn;
+    for (MachineInstr *Def : TargetDefs) {
+      SmallPtrSet<MachineBasicBlock *, 8> Reached;
+      if (!isTargetDefOnlyReadByEnd(*Def, *End, LoLoop.ML, *TRI, Reached))
+        continue;
+      DeadIn.insert(Reached.begin(), Reached.end());
+      if (isTargetDefRemovable(*Def, Ptr))
+        LoLoop.remove(Def);
+    }
+    for (MachineBasicBlock *MBB : DeadIn)
+      for (MCRegAliasIterator AI(Ptr, TRI, /*IncludeSelf=*/true); AI.isValid();
+           ++AI)
+        if (MBB->isLiveIn(*AI))
+          MBB->removeLiveIn(*AI);
+  }
+  // JNZD tests the counter before decrementing it, so the counter enters the
+  // loop holding the trip count minus one. JNZ tests after the decrement.
+  const DebugLoc &DL = End->getDebugLoc();
+  if (MachineInstr *Init = findCounterAdjust(*Preheader, PreheaderInsertPt,
+                                             Counter, AddOpcode, *TRI)) {
+    const int64_t Imm = Init->getOperand(2).getImm() + 1;
+    const MachineOperand &Src = Init->getOperand(1);
+    if (Imm != 0) {
+      Init->getOperand(2).setImm(Imm);
+    } else {
+      // A plain move can be scheduled in more slots than the add.
+      if (Src.getReg() != Counter)
+        TII->copyPhysReg(*Preheader, Init, Init->getDebugLoc(), Counter,
+                         Src.getReg(), Src.isKill());
+      LoLoop.remove(Init);
+    }
+  } else
+    BuildMI(*Preheader, PreheaderInsertPt, DL, TII->get(AddOpcode), Counter)
+        .addReg(Counter)
+        .addImm(1);
+  BuildMI(*Latch, Dec, DL, TII->get(AddOpcode), Counter)
+      .addReg(Counter)
+      .addImm(-1);
+  BuildMI(*Latch, End, DL, TII->get(LoweringData->JNZOpcode))
+      .addReg(Counter)
+      .addMBB(Header);
+  LoLoop.remove(End);
+  LoLoop.remove(Dec);
+  return true;
+}
+
 void AIEBaseHardwareLoops::expandLoopEnd(LowOverheadLoop &LoLoop) {
   LLVM_DEBUG(dbgs() << "AIE Loops: Expanding LoopEnd.\n");
 
@@ -517,6 +711,8 @@ void AIEBaseHardwareLoops::expandLoopEnd(LowOverheadLoop &LoLoop) {
   // a pointer register holding its address.
   const MachineOperand &Target = End->getOperand(1);
   const bool HasMBBTarget = Target.isMBB();
+  if (isJNZDExpensive(LoLoop) && tryExpandLoopEndAsJNZ(LoLoop))
+    return;
   unsigned JNZDOpcode = LoweringData->LoopJNZDOpcode;
   if (HasMBBTarget) {
     assert(LoweringData->LoopJNZDPCRelOpcode &&
