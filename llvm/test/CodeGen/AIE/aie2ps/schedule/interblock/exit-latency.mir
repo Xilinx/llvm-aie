@@ -18,6 +18,9 @@
 # around the loop. The integer VMAC writes dm0 in cycle 6 and has 6 stages. The
 # bf16 VMAC writes its flags and reads its mask control register in cycle 8,
 # the length of its pipeline.
+#
+# In vmacIntDead and vmacBf16Dead the VMAC accumulates onto dm1, so dm0 isn't
+# live into the header.
 
 ---
 name:            vmacIntLive
@@ -184,6 +187,188 @@ body:             |
     $r7 = ADD_add_r_ri $r7, 1, implicit-def $srcarry
     $r7 = ADD_add_r_ri $r7, 1, implicit-def $srcarry
     $dm0 = VMAC_f_vmac_bf_vmul_bf_core_Y_R $dm0, $y0, $r7, $r11, implicit-def $srfpflags, implicit $crbf8conf, implicit $crfp8conf, implicit $crfpmask
+    JNZ $r0, %bb.1
+    DelayedSchedBarrier
+
+  bb.3:
+    liveins: $dm0, $dm1, $p0, $r0, $r2, $r7, $r11, $r14, $x7, $y0
+    $r14 = ADD_add_r_ri $r14, 1, implicit-def $srcarry
+    $r14 = ADD_add_r_ri $r14, 1, implicit-def $srcarry
+    $r14 = ADD_add_r_ri $r14, 1, implicit-def $srcarry
+    $r14 = ADD_add_r_ri $r14, 1, implicit-def $srcarry
+    $r14 = ADD_add_r_ri $r14, 1, implicit-def $srcarry
+    $r14 = ADD_add_r_ri $r14, 1, implicit-def $srcarry
+    $r14 = ADD_add_r_ri $r14, 1, implicit-def $srcarry
+    $r14 = ADD_add_r_ri $r14, 1, implicit-def $srcarry
+    $dm2 = VMAC_f_vmac_bf_vmul_bf_core_Y_R $dm0, $y0, $r14, $r11, implicit-def $srfpflags, implicit $crbf8conf, implicit $crfp8conf, implicit $crfpmask
+    RET implicit $lr
+    DelayedSchedBarrier implicit $dm2
+...
+---
+name:            vmacIntDead
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: vmacIntDead
+  ; CHECK: bb.0:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT:   liveins: $dm1, $p0, $r0, $r2, $r7, $r11, $r14, $x7, $y0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   successors: %bb.2(0x80000000)
+  ; CHECK-NEXT:   liveins: $dm1, $p0, $r0, $r2, $r7, $r11, $r14, $x7, $y0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   $r2 = ADD_add_r_ri killed $r2, 1, implicit-def $srcarry
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.2:
+  ; CHECK-NEXT:   successors: %bb.1(0x40000000), %bb.3(0x40000000)
+  ; CHECK-NEXT:   liveins: $dm1, $p0, $r0, $r2, $r7, $r11, $r14, $x7, $y0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   $r7 = ADD_add_r_ri killed $r7, 1, implicit-def $srcarry
+  ; CHECK-NEXT:   $r7 = ADD_add_r_ri killed $r7, 1, implicit-def $srcarry
+  ; CHECK-NEXT:   $r7 = ADD_add_r_ri killed $r7, 1, implicit-def $srcarry
+  ; CHECK-NEXT:   $r7 = ADD_add_r_ri killed $r7, 1, implicit-def $srcarry
+  ; CHECK-NEXT:   $r7 = ADD_add_r_ri killed $r7, 1, implicit-def $srcarry
+  ; CHECK-NEXT:   $r7 = ADD_add_r_ri killed $r7, 1, implicit-def $srcarry
+  ; CHECK-NEXT:   JNZ $r0, %bb.1
+  ; CHECK-NEXT:   $dm0 = VMAC_vmac_vmul_cm_core_X_R $dm1, $x7, $r7, $r11
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   DelayedSchedBarrier
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.3:
+  ; CHECK-NEXT:   liveins: $dm0, $dm1, $p0, $r0, $r2, $r7, $r11, $r14, $x7, $y0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   $r14 = ADD_add_r_ri killed $r14, 1, implicit-def $srcarry
+  ; CHECK-NEXT:   $r14 = ADD_add_r_ri killed $r14, 1, implicit-def $srcarry
+  ; CHECK-NEXT:   $r14 = ADD_add_r_ri killed $r14, 1, implicit-def $srcarry
+  ; CHECK-NEXT:   $r14 = ADD_add_r_ri killed $r14, 1, implicit-def $srcarry
+  ; CHECK-NEXT:   $r14 = ADD_add_r_ri killed $r14, 1, implicit-def $srcarry
+  ; CHECK-NEXT:   $r14 = ADD_add_r_ri killed $r14, 1, implicit-def $srcarry
+  ; CHECK-NEXT:   $r14 = ADD_add_r_ri killed $r14, 1, implicit-def $srcarry
+  ; CHECK-NEXT:   $r14 = ADD_add_r_ri killed $r14, 1, implicit-def $srcarry
+  ; CHECK-NEXT:   BUNDLE implicit-def $dm2, implicit $lr, implicit killed $dm0, implicit killed $x7, implicit killed $r14, implicit killed $r11 {
+  ; CHECK-NEXT:     RET implicit $lr
+  ; CHECK-NEXT:     $dm2 = VMAC_vmac_vmul_cm_core_X_R killed $dm0, killed $x7, killed $r14, killed $r11
+  ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   DelayedSchedBarrier implicit killed $dm2
+  bb.0:
+    successors: %bb.1
+    liveins: $dm1, $p0, $r0, $r2, $r7, $r11, $r14, $x7, $y0
+
+  bb.1:
+    successors: %bb.2
+    liveins: $dm1, $p0, $r0, $r2, $r7, $r11, $r14, $x7, $y0
+    $r2 = ADD_add_r_ri $r2, 1, implicit-def $srcarry
+
+  bb.2:
+    successors: %bb.1, %bb.3
+    liveins: $dm1, $p0, $r0, $r2, $r7, $r11, $r14, $x7, $y0
+    $r7 = ADD_add_r_ri $r7, 1, implicit-def $srcarry
+    $r7 = ADD_add_r_ri $r7, 1, implicit-def $srcarry
+    $r7 = ADD_add_r_ri $r7, 1, implicit-def $srcarry
+    $r7 = ADD_add_r_ri $r7, 1, implicit-def $srcarry
+    $r7 = ADD_add_r_ri $r7, 1, implicit-def $srcarry
+    $r7 = ADD_add_r_ri $r7, 1, implicit-def $srcarry
+    $dm0 = VMAC_vmac_vmul_cm_core_X_R $dm1, $x7, $r7, $r11
+    JNZ $r0, %bb.1
+    DelayedSchedBarrier
+
+  bb.3:
+    liveins: $dm0, $dm1, $p0, $r0, $r2, $r7, $r11, $r14, $x7, $y0
+    $r14 = ADD_add_r_ri $r14, 1, implicit-def $srcarry
+    $r14 = ADD_add_r_ri $r14, 1, implicit-def $srcarry
+    $r14 = ADD_add_r_ri $r14, 1, implicit-def $srcarry
+    $r14 = ADD_add_r_ri $r14, 1, implicit-def $srcarry
+    $r14 = ADD_add_r_ri $r14, 1, implicit-def $srcarry
+    $r14 = ADD_add_r_ri $r14, 1, implicit-def $srcarry
+    $r14 = ADD_add_r_ri $r14, 1, implicit-def $srcarry
+    $r14 = ADD_add_r_ri $r14, 1, implicit-def $srcarry
+    $dm2 = VMAC_vmac_vmul_cm_core_X_R $dm0, $x7, $r14, $r11
+    RET implicit $lr
+    DelayedSchedBarrier implicit $dm2
+...
+---
+name:            vmacBf16Dead
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: vmacBf16Dead
+  ; CHECK: bb.0:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT:   liveins: $dm1, $p0, $r0, $r2, $r7, $r11, $r14, $x7, $y0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   successors: %bb.2(0x80000000)
+  ; CHECK-NEXT:   liveins: $dm1, $p0, $r0, $r2, $r7, $r11, $r14, $x7, $y0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   $r2 = ADD_add_r_ri killed $r2, 1, implicit-def $srcarry
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.2:
+  ; CHECK-NEXT:   successors: %bb.1(0x40000000), %bb.3(0x40000000)
+  ; CHECK-NEXT:   liveins: $dm1, $p0, $r0, $r2, $r7, $r11, $r14, $x7, $y0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   $r7 = ADD_add_r_ri killed $r7, 1, implicit-def $srcarry
+  ; CHECK-NEXT:   $r7 = ADD_add_r_ri killed $r7, 1, implicit-def $srcarry
+  ; CHECK-NEXT:   $r7 = ADD_add_r_ri killed $r7, 1, implicit-def $srcarry
+  ; CHECK-NEXT:   $r7 = ADD_add_r_ri killed $r7, 1, implicit-def $srcarry
+  ; CHECK-NEXT:   $r7 = ADD_add_r_ri killed $r7, 1, implicit-def $srcarry
+  ; CHECK-NEXT:   $r7 = ADD_add_r_ri killed $r7, 1, implicit-def $srcarry
+  ; CHECK-NEXT:   $dm0 = VMAC_f_vmac_bf_vmul_bf_core_Y_R $dm1, $y0, $r7, $r11, implicit-def $srfpflags, implicit $crbf8conf, implicit $crfp8conf, implicit $crfpmask
+  ; CHECK-NEXT:   JNZ $r0, %bb.1
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   DelayedSchedBarrier
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.3:
+  ; CHECK-NEXT:   liveins: $dm0, $dm1, $p0, $r0, $r2, $r7, $r11, $r14, $x7, $y0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   $r14 = ADD_add_r_ri killed $r14, 1, implicit-def $srcarry
+  ; CHECK-NEXT:   $r14 = ADD_add_r_ri killed $r14, 1, implicit-def $srcarry
+  ; CHECK-NEXT:   $r14 = ADD_add_r_ri killed $r14, 1, implicit-def $srcarry
+  ; CHECK-NEXT:   $r14 = ADD_add_r_ri killed $r14, 1, implicit-def $srcarry
+  ; CHECK-NEXT:   $r14 = ADD_add_r_ri killed $r14, 1, implicit-def $srcarry
+  ; CHECK-NEXT:   $r14 = ADD_add_r_ri killed $r14, 1, implicit-def $srcarry
+  ; CHECK-NEXT:   $r14 = ADD_add_r_ri killed $r14, 1, implicit-def $srcarry
+  ; CHECK-NEXT:   $r14 = ADD_add_r_ri killed $r14, 1, implicit-def $srcarry
+  ; CHECK-NEXT:   $dm2 = VMAC_f_vmac_bf_vmul_bf_core_Y_R killed $dm0, killed $y0, killed $r14, killed $r11, implicit-def $srfpflags, implicit $crbf8conf, implicit $crfp8conf, implicit $crfpmask
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   RET implicit $lr
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   DelayedSchedBarrier implicit killed $dm2
+  bb.0:
+    successors: %bb.1
+    liveins: $dm1, $p0, $r0, $r2, $r7, $r11, $r14, $x7, $y0
+
+  bb.1:
+    successors: %bb.2
+    liveins: $dm1, $p0, $r0, $r2, $r7, $r11, $r14, $x7, $y0
+    $r2 = ADD_add_r_ri $r2, 1, implicit-def $srcarry
+
+  bb.2:
+    successors: %bb.1, %bb.3
+    liveins: $dm1, $p0, $r0, $r2, $r7, $r11, $r14, $x7, $y0
+    $r7 = ADD_add_r_ri $r7, 1, implicit-def $srcarry
+    $r7 = ADD_add_r_ri $r7, 1, implicit-def $srcarry
+    $r7 = ADD_add_r_ri $r7, 1, implicit-def $srcarry
+    $r7 = ADD_add_r_ri $r7, 1, implicit-def $srcarry
+    $r7 = ADD_add_r_ri $r7, 1, implicit-def $srcarry
+    $r7 = ADD_add_r_ri $r7, 1, implicit-def $srcarry
+    $dm0 = VMAC_f_vmac_bf_vmul_bf_core_Y_R $dm1, $y0, $r7, $r11, implicit-def $srfpflags, implicit $crbf8conf, implicit $crfp8conf, implicit $crfpmask
     JNZ $r0, %bb.1
     DelayedSchedBarrier
 

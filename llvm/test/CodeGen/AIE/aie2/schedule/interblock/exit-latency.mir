@@ -16,6 +16,11 @@
 #
 # In vmacLive the VMAC accumulates onto cm0, which is live around the loop. The
 # VMAC writes cm0 in cycle 5, the length of its pipeline.
+#
+# In the other functions the VMAC accumulates onto cm1, so cm0 isn't live into
+# the header. In vmacDead nothing else touches cm0 in the loop. In
+# vmacPartLive the latch stores amll0, part of cm0, before the VMAC. In
+# vmacOverwritten the header writes cm0 itself.
 
 ---
 name:            vmacLive
@@ -81,6 +86,258 @@ body:             |
     liveins: $cm0, $p0, $p1, $p2, $p3, $r0, $r2, $x0, $x1, $cm1
     $wl0 = VLDA_dmw_lda_w_ag_idx_imm $p2, 0
     $cm0 = VMAC_vmac_cm_core_dense $cm0, $x0, $x1, $r0
+    renamable $r1 = GE renamable $r0, renamable $r2
+    JNZ killed renamable $r1, %bb.1
+    DelayedSchedBarrier
+
+  bb.3:
+    liveins: $cm0, $p0, $p1, $p2, $p3, $r0, $r2, $x0, $x1, $cm1
+    $p1 = PADD_imm9_pseudo $p1, 32
+    $p1 = PADD_imm9_pseudo $p1, 32
+    $p1 = PADD_imm9_pseudo $p1, 32
+    $p1 = PADD_imm9_pseudo $p1, 32
+    $p1 = PADD_imm9_pseudo $p1, 32
+    $p1 = PADD_imm9_pseudo $p1, 32
+    $p1 = PADD_imm9_pseudo $p1, 32
+    $p1 = PADD_imm9_pseudo $p1, 32
+    VST_dmw_sts_am_ag_idx_imm $amll0, $p1, 0
+    RET implicit $lr
+    DelayedSchedBarrier
+...
+---
+name:            vmacDead
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: vmacDead
+  ; CHECK: bb.0:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT:   liveins: $p0, $p1, $p2, $p3, $r0, $r2, $x0, $x1, $cm1
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   successors: %bb.2(0x80000000)
+  ; CHECK-NEXT:   liveins: $p0, $p1, $p2, $p3, $r0, $r2, $x0, $x1, $cm1
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   renamable $r2 = ADD_add_r_ri killed renamable $r2, 1, implicit-def dead $srcarry
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.2:
+  ; CHECK-NEXT:   successors: %bb.1(0x40000000), %bb.3(0x40000000)
+  ; CHECK-NEXT:   liveins: $p0, $p1, $p2, $p3, $r0, $r2, $x0, $x1, $cm1
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   $wl0 = VLDA_dmw_lda_w_ag_idx_imm $p2, 0
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   renamable $r1 = GE renamable $r0, renamable $r2
+  ; CHECK-NEXT:   JNZ killed renamable $r1, %bb.1
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   $cm0 = VMAC_vmac_cm_core_dense $cm1, $x0, $x1, $r0
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   DelayedSchedBarrier
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.3:
+  ; CHECK-NEXT:   liveins: $cm0, $p0, $p1, $p2, $p3, $r0, $r2, $x0, $x1, $cm1
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   $p1 = PADDB_ldb_ptr_inc_nrm_imm killed $p1, 32
+  ; CHECK-NEXT:   $p1 = PADDB_ldb_ptr_inc_nrm_imm killed $p1, 32
+  ; CHECK-NEXT:   $p1 = PADDB_ldb_ptr_inc_nrm_imm killed $p1, 32
+  ; CHECK-NEXT:   $p1 = PADDB_ldb_ptr_inc_nrm_imm killed $p1, 32
+  ; CHECK-NEXT:   BUNDLE implicit-def $p1, implicit killed $p1, implicit $lr {
+  ; CHECK-NEXT:     $p1 = PADDB_ldb_ptr_inc_nrm_imm killed $p1, 32
+  ; CHECK-NEXT:     RET implicit $lr
+  ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   $p1 = PADDB_ldb_ptr_inc_nrm_imm killed $p1, 32
+  ; CHECK-NEXT:   $p1 = PADDB_ldb_ptr_inc_nrm_imm killed $p1, 32
+  ; CHECK-NEXT:   $p1 = PADDB_ldb_ptr_inc_nrm_imm killed $p1, 32
+  ; CHECK-NEXT:   VST_dmw_sts_am_ag_idx_imm killed $amll0, killed $p1, 0
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   DelayedSchedBarrier
+  bb.0:
+    successors: %bb.1
+    liveins: $p0, $p1, $p2, $p3, $r0, $r2, $x0, $x1, $cm1
+
+  bb.1:
+    successors: %bb.2
+    liveins: $p0, $p1, $p2, $p3, $r0, $r2, $x0, $x1, $cm1
+    renamable $r2 = ADD_add_r_ri killed renamable $r2, 1, implicit-def dead $srcarry
+
+  bb.2:
+    successors: %bb.1, %bb.3
+    liveins: $p0, $p1, $p2, $p3, $r0, $r2, $x0, $x1, $cm1
+    $wl0 = VLDA_dmw_lda_w_ag_idx_imm $p2, 0
+    $cm0 = VMAC_vmac_cm_core_dense $cm1, $x0, $x1, $r0
+    renamable $r1 = GE renamable $r0, renamable $r2
+    JNZ killed renamable $r1, %bb.1
+    DelayedSchedBarrier
+
+  bb.3:
+    liveins: $cm0, $p0, $p1, $p2, $p3, $r0, $r2, $x0, $x1, $cm1
+    $p1 = PADD_imm9_pseudo $p1, 32
+    $p1 = PADD_imm9_pseudo $p1, 32
+    $p1 = PADD_imm9_pseudo $p1, 32
+    $p1 = PADD_imm9_pseudo $p1, 32
+    $p1 = PADD_imm9_pseudo $p1, 32
+    $p1 = PADD_imm9_pseudo $p1, 32
+    $p1 = PADD_imm9_pseudo $p1, 32
+    $p1 = PADD_imm9_pseudo $p1, 32
+    VST_dmw_sts_am_ag_idx_imm $amll0, $p1, 0
+    RET implicit $lr
+    DelayedSchedBarrier
+...
+---
+name:            vmacPartLive
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: vmacPartLive
+  ; CHECK: bb.0:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT:   liveins: $amll0, $p0, $p1, $p2, $p3, $r0, $r2, $x0, $x1, $cm1
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   successors: %bb.2(0x80000000)
+  ; CHECK-NEXT:   liveins: $amll0, $p0, $p1, $p2, $p3, $r0, $r2, $x0, $x1, $cm1
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   renamable $r2 = ADD_add_r_ri killed renamable $r2, 1, implicit-def dead $srcarry
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.2:
+  ; CHECK-NEXT:   successors: %bb.1(0x40000000), %bb.3(0x40000000)
+  ; CHECK-NEXT:   liveins: $amll0, $p0, $p1, $p2, $p3, $r0, $r2, $x0, $x1, $cm1
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   VST_dmw_sts_am_ag_idx_imm killed $amll0, $p3, 0
+  ; CHECK-NEXT:   $wl0 = VLDA_dmw_lda_w_ag_idx_imm $p2, 0
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   renamable $r1 = GE renamable $r0, renamable $r2
+  ; CHECK-NEXT:   JNZ killed renamable $r1, %bb.1
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   $cm0 = VMAC_vmac_cm_core_dense $cm1, $x0, $x1, $r0
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   DelayedSchedBarrier
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.3:
+  ; CHECK-NEXT:   liveins: $cm0, $p0, $p1, $p2, $p3, $r0, $r2, $x0, $x1, $cm1
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   $p1 = PADDB_ldb_ptr_inc_nrm_imm killed $p1, 32
+  ; CHECK-NEXT:   $p1 = PADDB_ldb_ptr_inc_nrm_imm killed $p1, 32
+  ; CHECK-NEXT:   $p1 = PADDB_ldb_ptr_inc_nrm_imm killed $p1, 32
+  ; CHECK-NEXT:   $p1 = PADDB_ldb_ptr_inc_nrm_imm killed $p1, 32
+  ; CHECK-NEXT:   BUNDLE implicit-def $p1, implicit killed $p1, implicit $lr {
+  ; CHECK-NEXT:     $p1 = PADDB_ldb_ptr_inc_nrm_imm killed $p1, 32
+  ; CHECK-NEXT:     RET implicit $lr
+  ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   $p1 = PADDB_ldb_ptr_inc_nrm_imm killed $p1, 32
+  ; CHECK-NEXT:   $p1 = PADDB_ldb_ptr_inc_nrm_imm killed $p1, 32
+  ; CHECK-NEXT:   $p1 = PADDB_ldb_ptr_inc_nrm_imm killed $p1, 32
+  ; CHECK-NEXT:   VST_dmw_sts_am_ag_idx_imm killed $amll0, killed $p1, 0
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   DelayedSchedBarrier
+  bb.0:
+    successors: %bb.1
+    liveins: $amll0, $p0, $p1, $p2, $p3, $r0, $r2, $x0, $x1, $cm1
+
+  bb.1:
+    successors: %bb.2
+    liveins: $amll0, $p0, $p1, $p2, $p3, $r0, $r2, $x0, $x1, $cm1
+    renamable $r2 = ADD_add_r_ri killed renamable $r2, 1, implicit-def dead $srcarry
+
+  bb.2:
+    successors: %bb.1, %bb.3
+    liveins: $amll0, $p0, $p1, $p2, $p3, $r0, $r2, $x0, $x1, $cm1
+    VST_dmw_sts_am_ag_idx_imm $amll0, $p3, 0
+    $wl0 = VLDA_dmw_lda_w_ag_idx_imm $p2, 0
+    $cm0 = VMAC_vmac_cm_core_dense $cm1, $x0, $x1, $r0
+    renamable $r1 = GE renamable $r0, renamable $r2
+    JNZ killed renamable $r1, %bb.1
+    DelayedSchedBarrier
+
+  bb.3:
+    liveins: $cm0, $p0, $p1, $p2, $p3, $r0, $r2, $x0, $x1, $cm1
+    $p1 = PADD_imm9_pseudo $p1, 32
+    $p1 = PADD_imm9_pseudo $p1, 32
+    $p1 = PADD_imm9_pseudo $p1, 32
+    $p1 = PADD_imm9_pseudo $p1, 32
+    $p1 = PADD_imm9_pseudo $p1, 32
+    $p1 = PADD_imm9_pseudo $p1, 32
+    $p1 = PADD_imm9_pseudo $p1, 32
+    $p1 = PADD_imm9_pseudo $p1, 32
+    VST_dmw_sts_am_ag_idx_imm $amll0, $p1, 0
+    RET implicit $lr
+    DelayedSchedBarrier
+...
+---
+name:            vmacOverwritten
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: vmacOverwritten
+  ; CHECK: bb.0:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT:   liveins: $p0, $p1, $p2, $p3, $r0, $r2, $x0, $x1, $cm1
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   successors: %bb.2(0x80000000)
+  ; CHECK-NEXT:   liveins: $p0, $p1, $p2, $p3, $r0, $r2, $x0, $x1, $cm1
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   BUNDLE implicit-def $r2, implicit-def dead $srcarry, implicit-def $cm0, implicit killed $r2, implicit $cm1 {
+  ; CHECK-NEXT:     renamable $r2 = ADD_add_r_ri killed renamable $r2, 1, implicit-def dead $srcarry
+  ; CHECK-NEXT:     $cm0 = VMOV_mv_cm $cm1
+  ; CHECK-NEXT:   }
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.2:
+  ; CHECK-NEXT:   successors: %bb.1(0x40000000), %bb.3(0x40000000)
+  ; CHECK-NEXT:   liveins: $p0, $p1, $p2, $p3, $r0, $r2, $x0, $x1, $cm1
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   $wl0 = VLDA_dmw_lda_w_ag_idx_imm $p2, 0
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   renamable $r1 = GE renamable $r0, renamable $r2
+  ; CHECK-NEXT:   JNZ killed renamable $r1, %bb.1
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   $cm0 = VMAC_vmac_cm_core_dense $cm1, $x0, $x1, $r0
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   DelayedSchedBarrier
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.3:
+  ; CHECK-NEXT:   liveins: $cm0, $p0, $p1, $p2, $p3, $r0, $r2, $x0, $x1, $cm1
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   $p1 = PADDB_ldb_ptr_inc_nrm_imm killed $p1, 32
+  ; CHECK-NEXT:   $p1 = PADDB_ldb_ptr_inc_nrm_imm killed $p1, 32
+  ; CHECK-NEXT:   $p1 = PADDB_ldb_ptr_inc_nrm_imm killed $p1, 32
+  ; CHECK-NEXT:   $p1 = PADDB_ldb_ptr_inc_nrm_imm killed $p1, 32
+  ; CHECK-NEXT:   BUNDLE implicit-def $p1, implicit killed $p1, implicit $lr {
+  ; CHECK-NEXT:     $p1 = PADDB_ldb_ptr_inc_nrm_imm killed $p1, 32
+  ; CHECK-NEXT:     RET implicit $lr
+  ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   $p1 = PADDB_ldb_ptr_inc_nrm_imm killed $p1, 32
+  ; CHECK-NEXT:   $p1 = PADDB_ldb_ptr_inc_nrm_imm killed $p1, 32
+  ; CHECK-NEXT:   $p1 = PADDB_ldb_ptr_inc_nrm_imm killed $p1, 32
+  ; CHECK-NEXT:   VST_dmw_sts_am_ag_idx_imm killed $amll0, killed $p1, 0
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   DelayedSchedBarrier
+  bb.0:
+    successors: %bb.1
+    liveins: $p0, $p1, $p2, $p3, $r0, $r2, $x0, $x1, $cm1
+
+  bb.1:
+    successors: %bb.2
+    liveins: $p0, $p1, $p2, $p3, $r0, $r2, $x0, $x1, $cm1
+    renamable $r2 = ADD_add_r_ri killed renamable $r2, 1, implicit-def dead $srcarry
+    $cm0 = VMOV_mv_cm $cm1
+
+  bb.2:
+    successors: %bb.1, %bb.3
+    liveins: $p0, $p1, $p2, $p3, $r0, $r2, $x0, $x1, $cm1
+    $wl0 = VLDA_dmw_lda_w_ag_idx_imm $p2, 0
+    $cm0 = VMAC_vmac_cm_core_dense $cm1, $x0, $x1, $r0
     renamable $r1 = GE renamable $r0, renamable $r2
     JNZ killed renamable $r1, %bb.1
     DelayedSchedBarrier
