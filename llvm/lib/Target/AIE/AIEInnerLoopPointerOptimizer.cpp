@@ -166,6 +166,20 @@ GetElementPtrInst *findNextChainGEP(Value *Node, BasicBlock *Body) {
   return Best;
 }
 
+/// Returns the preheader of the outermost loop around \p L (including \p L)
+/// in which \p Stride is invariant.
+BasicBlock *getShiftOffsetInsertionPoint(Loop *L, Value *Stride) {
+  BasicBlock *Best = L->getLoopPreheader();
+  for (Loop *Outer = L->getParentLoop(); Outer;
+       Outer = Outer->getParentLoop()) {
+    BasicBlock *const PH = Outer->getLoopPreheader();
+    if (!PH || !Outer->isLoopInvariant(Stride))
+      break;
+    Best = PH;
+  }
+  return Best;
+}
+
 //===----------------------------------------------------------------------===//
 // InnerLoopStructure
 //===----------------------------------------------------------------------===//
@@ -304,11 +318,9 @@ bool AIEInnerLoopPointerOptimizer::tryOptimizeLoop(InnerLoopStructure &ILS) {
 
 /// Normalize pre-increment pointer PHIs to load-base form (Pattern 1).
 ///
-/// Detects PHIs whose back-edge value is a constant-stride i8 GEP rooted
-/// directly on the PHI (pre-increment pattern), and shifts the PHI so that
-/// it lands on the first memory-access address each iteration.  All other
-/// constant-offset GEPs rooted on the PHI are adjusted by subtracting the
-/// stride so that they continue to address the same memory locations.
+/// Detects PHIs whose back-edge value is a constant- or invariant-stride i8
+/// GEP rooted directly on the PHI (pre-increment pattern), and shifts the PHI
+/// so that it lands on the first memory-access address each iteration.
 ///
 ///   Before:
 ///     preheader: ...
@@ -332,8 +344,7 @@ bool AIEInnerLoopPointerOptimizer::tryOptimizeLoop(InnerLoopStructure &ILS) {
 ///
 /// Safety guards:
 ///   - Live-out PHIs and live-out back-edge GEPs are skipped.
-///   - If any sibling GEP off the phi has a non-constant index, the phi is
-///     skipped (we cannot safely adjust it).
+///   - Variable-stride candidates with siblings are skipped.
 bool AIEInnerLoopPointerOptimizer::normalizePhiToLoadBase(
     InnerLoopStructure &ILS) {
   LLVM_DEBUG(dbgs() << "ILPO: Normalizing pre-increment PHIs to load base\n");
@@ -357,14 +368,22 @@ bool AIEInnerLoopPointerOptimizer::normalizePhiToLoadBase(
       continue;
 
     // --- Structural check ---
-    // Back-edge value must be a constant-stride i8 GEP directly off the phi.
+    // Back-edge value must be an i8 GEP directly off the phi with a positive
+    // constant or a loop-invariant stride.
     Value *const BackVal = Phi.getIncomingValueForBlock(Body);
     auto *BackGEP = dyn_cast<GetElementPtrInst>(BackVal);
-    if (!BackGEP || BackGEP->getPointerOperand() != &Phi)
+    if (!BackGEP || BackGEP->getPointerOperand() != &Phi ||
+        !AIEIRUtils::isSimpleI8GEP(BackGEP))
       continue;
-    int64_t Stride = 0;
-    if (!AIEIRUtils::isChainLinkCandidate(BackGEP, Stride))
+    Value *const StrideVal = BackGEP->getOperand(1);
+    const auto *const StrideCI = dyn_cast<ConstantInt>(StrideVal);
+    if (StrideCI) {
+      int64_t ConstantStride = 0;
+      if (!AIEIRUtils::isChainLinkCandidate(BackGEP, ConstantStride))
+        continue;
+    } else if (!L->isLoopInvariant(StrideVal)) {
       continue;
+    }
 
     // --- Pattern check ---
     // Skip PHIs that are already in load-base form (Pattern 2): the phi (or
@@ -397,19 +416,34 @@ bool AIEInnerLoopPointerOptimizer::normalizePhiToLoadBase(
                         << "\n");
       continue;
     }
+    if (!StrideCI && !SiblingGEPs.empty()) {
+      LLVM_DEBUG(dbgs() << "ILPO:   Skip phi (variable stride with siblings): "
+                        << Phi << "\n");
+      continue;
+    }
 
     LLVM_DEBUG(dbgs() << "ILPO:   Normalizing phi: " << Phi
-                      << "\n           stride = " << Stride << "\n");
+                      << "\n           stride = " << *StrideVal << "\n");
 
     // --- Transform ---
-    Type *const IdxTy = BackGEP->getOperand(1)->getType();
-    Value *const StrideVal = ConstantInt::get(IdxTy, Stride);
-
     // Insert  new_init = phi_init + Stride  in the preheader (one-time shift).
-    Value *const PhiInit = Phi.getIncomingValueForBlock(Preheader);
+    Value *ShiftBase = Phi.getIncomingValueForBlock(Preheader);
+    Value *Shift = StrideVal;
+    // A variable shift of "base + C" becomes "base + (C + Stride)", so the
+    // new init stays a single pointer add from base.
+    auto *InitGEP = dyn_cast<GetElementPtrInst>(ShiftBase);
+    if (!StrideCI && InitGEP && AIEIRUtils::isSimpleI8GEP(InitGEP) &&
+        isa<ConstantInt>(InitGEP->getOperand(1)) &&
+        InitGEP->getOperand(1)->getType() == StrideVal->getType()) {
+      IRBuilder<> OffsetBuilder(
+          getShiftOffsetInsertionPoint(L, StrideVal)->getTerminator());
+      Shift = OffsetBuilder.CreateAdd(InitGEP->getOperand(1), StrideVal,
+                                      Phi.getName() + ".shift");
+      ShiftBase = InitGEP->getPointerOperand();
+    }
     IRBuilder<> PreheaderBuilder(Preheader->getTerminator());
     Value *const NewInit = PreheaderBuilder.CreateGEP(
-        Int8Ty, PhiInit, StrideVal, Phi.getName() + ".shifted.init");
+        Int8Ty, ShiftBase, Shift, Phi.getName() + ".shifted.init");
     Phi.setIncomingValueForBlock(Preheader, NewInit);
 
     // Phi now lands at the same address BackGEP used to compute.
@@ -417,16 +451,14 @@ bool AIEInnerLoopPointerOptimizer::normalizePhiToLoadBase(
     BackGEP->replaceAllUsesWith(&Phi);
     BackGEP->eraseFromParent();
 
-    // Adjust sibling GEPs rooted directly on the PHI: after shifting phi by
-    // Stride, each "phi + K" now addresses "old_phi + K + Stride".  Rewrite
-    // to "phi + (K - Stride)" to preserve the original memory address.
-    // GEPs rooted on other GEPs (transitive children) inherit the shift
-    // through their already-adjusted base and must NOT be touched.
+    // Adjust direct sibling GEPs for the shifted PHI. Variable-stride
+    // candidates have no siblings.
     for (GetElementPtrInst *GEP : SiblingGEPs) {
       if (GEP->getPointerOperand() != &Phi)
         continue;
       const ConstantInt *const OldCI = getConstantGEPLastIndex(GEP);
-      const int64_t NewOffset = OldCI->getSExtValue() - Stride;
+      const int64_t NewOffset =
+          OldCI->getSExtValue() - StrideCI->getSExtValue();
       LLVM_DEBUG(dbgs() << "ILPO:   Adjusting sibling GEP offset: "
                         << OldCI->getSExtValue() << " -> " << NewOffset
                         << "\n");
