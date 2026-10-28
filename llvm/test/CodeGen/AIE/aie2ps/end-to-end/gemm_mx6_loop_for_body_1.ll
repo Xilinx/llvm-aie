@@ -100,7 +100,7 @@ define dso_local void @gemm.if.then5(ptr %add.ptr, ptr %tdm1, i32 %cond3) #5 {
 ; ASM:       // %bb.0: // %newFuncRoot
 ; ASM-NEXT:    mova m0, #92; nopb ; nops ; movxm p2, ##(param+24); nopv
 ; ASM-NEXT:    paddxm [sp], #64; paddb [p2], m0; nopx
-; ASM-NEXT:    lda r2, [p2], #12
+; ASM-NEXT:    lda r4, [p2], #12
 ; ASM-NEXT:    lda m5, [p2], #-24
 ; ASM-NEXT:    lda m2, [p2], #-8
 ; ASM-NEXT:    lda dn2, [p2], #4
@@ -118,14 +118,14 @@ define dso_local void @gemm.if.then5(ptr %add.ptr, ptr %tdm1, i32 %cond3) #5 {
 ; ASM-NEXT:    lda m1, [p2], #-16
 ; ASM-NEXT:    lda dn1, [p2], #4; movxm p3, #475136
 ; ASM-NEXT:    lda dj1, [p2], #4; movs p4, p0; movxm p0, #491520
-; ASM-NEXT:    lda dn5, [p2], #4; movs p5, p1; or r6, r8, r8; mov m6, #44
-; ASM-NEXT:    lda dj5, [p2], m6; movs p1, p0; movx r4, #772; mov m6, #-64
+; ASM-NEXT:    lda dn5, [p2], #4; movs p5, p1; or r5, r8, r8; mov m6, #44
+; ASM-NEXT:    lda dj5, [p2], m6; movs p1, p0; movx r2, #772; mov m6, #-64
 ; ASM-NEXT:    lda dc2, [p2], m6; movs p0, p4; movxm p4, #.LBB0_1
-; ASM-NEXT:    lda dc0, [p2], #4; add r2, r2, #-1; vmov bmlh4, bmll4
-; ASM-NEXT:    lda dc4, [p2], #24; movx r5, #0; addm.nc r3, r2, #-1
-; ASM-NEXT:    lda dc1, [p2], #4; or r0, r0, r4; vmov bmlh0, bmll0
-; ASM-NEXT:    lda dc5, [p2, #0]; or r25, r5, r5; vmov cmh4, cml4
-; ASM-NEXT:    or r24, r5, r5; vmov cmh0, cml0
+; ASM-NEXT:    lda dc0, [p2], #4; add r4, r4, #-1; vmov bmlh4, bmll4
+; ASM-NEXT:    lda dc4, [p2], #24; or r0, r0, r2; addm.nc r2, r4, #-1
+; ASM-NEXT:    lda dc1, [p2], #4; movx r3, #0; vmov bmlh0, bmll0
+; ASM-NEXT:    lda dc5, [p2, #0]; or r25, r3, r3; vmov cmh4, cml4
+; ASM-NEXT:    or r24, r3, r3; vmov cmh0, cml0
 ; ASM-NEXT:  .LBB0_1: // %steady.stage1.top
 ; ASM-NEXT:    // =>This Loop Header: Depth=1
 ; ASM-NEXT:    // Child Loop BB0_2 Depth 2
@@ -179,7 +179,7 @@ define dso_local void @gemm.if.then5(ptr %add.ptr, ptr %tdm1, i32 %cond3) #5 {
 ; ASM-NEXT:    vst.conv.bf16.fp32 cmh5, [p5], #64
 ; ASM-NEXT:    vst.conv.bf16.fp32 cml1, [p3], #64
 ; ASM-NEXT:    vst.conv.bf16.fp32 cml4, [p5], #64
-; ASM-NEXT:    vst.conv.bf16.fp32 cmh1, [p3], #64; jnzd r3, r3, p4; vmov bmlh4, bmll4
+; ASM-NEXT:    vst.conv.bf16.fp32 cmh1, [p3], #64; jnzd r2, r2, p4; vmov bmlh4, bmll4
 ; ASM-NEXT:    vst.conv.bf16.fp32 cml0, [p3], #64 // Delay Slot 5
 ; ASM-NEXT:    vst.conv.bf16.fp32 cmh4, [p5], #64; vmov cmh4, cml4 // Delay Slot 4
 ; ASM-NEXT:    vst.conv.bf16.fp32 cmh0, [p3], #64; vmov bmlh0, bmll0 // Delay Slot 3
@@ -224,7 +224,7 @@ define dso_local void @gemm.if.then5(ptr %add.ptr, ptr %tdm1, i32 %cond3) #5 {
 ; ASM-NEXT:    vmac.f dm2, dm2, fex0, fey3, r8
 ; ASM-NEXT:    vst.conv.bf16.fp32 cml7, [p5], #64; vmac.f dm0, dm0, fex0, fey3, r8
 ; ASM-NEXT:    vst.conv.bf16.fp32 cmh7, [p5], #64; movx r8, #772; vmac.f dm1, dm1, fex8, fey3, r8
-; ASM-NEXT:    vst.conv.bf16.fp32 cml6, [p5], #64; mov r8, r6
+; ASM-NEXT:    vst.conv.bf16.fp32 cml6, [p5], #64; mov r8, r5
 ; ASM-NEXT:    vst.conv.bf16.fp32 cmh6, [p5], #64
 ; ASM-NEXT:    vst.conv.bf16.fp32 cml3, [p3], #64
 ; ASM-NEXT:    vst.conv.bf16.fp32 cmh3, [p3], #64

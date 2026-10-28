@@ -147,18 +147,18 @@ define void @conv2d_opt_outerloop_out_mode_0(
 ; ASM-NEXT:    and r4, r4, r20
 ; ASM-NEXT:    st r4, [p3, #-12]
 ; ASM-NEXT:  .LBB0_4: // %_Z24setup_conv2d_iter_paramsR13conv2d_params.exit
-; ASM-NEXT:    mova m0, #-20
+; ASM-NEXT:    mova m0, #-20; nopb ; nopx
 ; ASM-NEXT:    mova m0, #36; paddb [p3], m0
-; ASM-NEXT:    lda r22, [p3], m0
+; ASM-NEXT:    lda r20, [p3], m0
 ; ASM-NEXT:    mova m0, #100; movs p6, p3
 ; ASM-NEXT:    mova m0, #116; paddb [p6], m0
 ; ASM-NEXT:    lda r19, [p6], m0
 ; ASM-NEXT:    mova m0, #-120
 ; ASM-NEXT:    lda dn3, [p6], m0; mov m0, #-104
 ; ASM-NEXT:    lda m3, [p6], m0
-; ASM-NEXT:    lda r20, [p6], m0
+; ASM-NEXT:    lda r26, [p6], m0
 ; ASM-NEXT:    lda.u8 r28, [p6], #1; mov m0, #131
-; ASM-NEXT:    lda.s8 r26, [p6], m0
+; ASM-NEXT:    lda.s8 r22, [p6], m0
 ; ASM-NEXT:    lda m0, [p6], #-8
 ; ASM-NEXT:    nop
 ; ASM-NEXT:    nop
@@ -166,32 +166,34 @@ define void @conv2d_opt_outerloop_out_mode_0(
 ; ASM-NEXT:    lda dn0, [p6], #-8
 ; ASM-NEXT:    lda dj0, [p6], #12; mov m1, #188
 ; ASM-NEXT:    lda dn4, [p6], #-8
-; ASM-NEXT:    lda dj4, [p6], m1; movx r7, #2; mov m1, #-284
-; ASM-NEXT:    lda r4, [p6], m1; ltu r0, r0, r6; mov m1, #76
-; ASM-NEXT:    lda r5, [p6], m1; lshl r17, r22, r7; mov m1, #52
-; ASM-NEXT:    lda r30, [p6], m1; lshl r3, r3, r7
-; ASM-NEXT:    lda m1, [p6], #-8; add r3, r17, r3
-; ASM-NEXT:    lda dn1, [p6], #-8; movx r17, #0
-; ASM-NEXT:    lda dj1, [p6], #12; sub r22, r17, r22
-; ASM-NEXT:    lda dn5, [p6], #-8; lshl r22, r22, r7; mov m2, #32
-; ASM-NEXT:    lda dj5, [p6], m2; lshl r28, r0, r28
-; ASM-NEXT:    lda m2, [p6], #-8; lshl r18, r5, r18
-; ASM-NEXT:    or r8, r18, r16
-; ASM-NEXT:    mova dj1, #-56; add r18, r30, #-1
-; ASM-NEXT:    lda r1, [p3, dj1]; or r10, r8, r0
-; ASM-NEXT:    lda dn2, [p6], #-8; movx r0, #7
-; ASM-NEXT:    lda dj2, [p6], #12; lshl r0, r30, r0; mov m4, #-162
-; ASM-NEXT:    lda dn6, [p6], #-8; movx r30, #63; mov dc7, #0
-; ASM-NEXT:    lda dj6, [p6], m4; vldb.popx x10, [p0, lf0, r24]; add r5, r3, r22; mov p3, p1; movs m4, r3
-; ASM-NEXT:    movs m4, r5; paddb [p3], m4; mov dc0, dc7
-; ASM-NEXT:    movs m4, r0; paddb [p1], m4; mov dc4, dc7
+; ASM-NEXT:    lda dj4, [p6], m1; mov m1, #-284
+; ASM-NEXT:    lda r4, [p6], m1; mov m1, #76
+; ASM-NEXT:    lda r5, [p6], m1; mov m1, #52
+; ASM-NEXT:    lda r30, [p6], m1
+; ASM-NEXT:    lda m1, [p6], #-8
+; ASM-NEXT:    lda dn1, [p6], #-8
+; ASM-NEXT:    lda dj1, [p6], #12; mov m2, #32
+; ASM-NEXT:    lda dn5, [p6], #-8; ltu r0, r0, r6; mov r7, #2
+; ASM-NEXT:    lda dj5, [p6], m2; lshl r17, r20, r7; mov r6, #0
+; ASM-NEXT:    lda m2, [p6], #-8; sub r20, r6, r20
+; ASM-NEXT:    lshl r3, r3, r7
+; ASM-NEXT:    mova dj1, #-56; lshl r20, r20, r7
+; ASM-NEXT:    lda r1, [p3, dj1]; add r3, r17, r3
+; ASM-NEXT:    lda dn2, [p6], #-8; lshl r18, r5, r18
+; ASM-NEXT:    lda dj2, [p6], #12; add r5, r3, r20; mov m4, #-162
+; ASM-NEXT:    lda dn6, [p6], #-8; or r8, r18, r16
+; ASM-NEXT:    lda dj6, [p6], m4; movs m4, r3; movx r18, #7; mov p3, p1
+; ASM-NEXT:    movs m4, r5; paddb [p3], m4; lshl r18, r30, r18
+; ASM-NEXT:    movs m4, r18; paddb [p1], m4; add r18, r30, #-1
+; ASM-NEXT:    mova dc7, #0; movx r30, #63
+; ASM-NEXT:    movs dc4, dc7; vldb.popx x10, [p0, lf0, r24]; mov dc0, dc7
 ; ASM-NEXT:    lda.s8 r6, [p6, #0]; vldb.pop.3d x1, [p0, lf0, r24, d0]; mov dj7, #226
 ; ASM-NEXT:    lda r7, [p6, dj7]; movs dc3, dc7
-; ASM-NEXT:    movs dc2, dc7; mov dc6, dc7
-; ASM-NEXT:    vlda.ups.2x cml1, s0, upssign1, [p4], #64; movs dc5, dc7; mov s0, r26
-; ASM-NEXT:    vlda.ups.2x cmh1, s0, upssign1, [p4], #64; movs dj3, r22; movxm p6, #.LBB0_5
-; ASM-NEXT:    mova r12, #264; vldb.128 wl6, [p3, dj3]; add r0, r20, #-1; vbcst.32 x0, r28; movs dc1, dc7
-; ASM-NEXT:    movs p7, p3; vldb.128 wl8, [p1, #16]; movx crupsmode, #0; addm.nc r3, r0, #-1
+; ASM-NEXT:    movs dc2, dc7; lshl r28, r0, r28; mov dc6, dc7
+; ASM-NEXT:    vlda.ups.2x cml1, s0, upssign1, [p4], #64; movs dc5, dc7; or r10, r8, r0; mov s0, r22
+; ASM-NEXT:    vlda.ups.2x cmh1, s0, upssign1, [p4], #64; movs dj3, r20; add r0, r26, #-1; vbcst.32 x0, r28
+; ASM-NEXT:    mova r12, #264; vldb.128 wl6, [p3, dj3]; movx crupsmode, #0; addm.nc r20, r0, #-1; movs dc1, dc7
+; ASM-NEXT:    movs p7, p3; vldb.128 wl8, [p1, #16]; movxm p6, #.LBB0_5
 ; ASM-NEXT:    vlda.ups.2x cml0, s0, upssign1, [p5], #64; vldb x2, [p7], #64; movx crsrsmode, #0; mov s1, r6; movs dj3, r19
 ; ASM-NEXT:    vlda.ups.2x cmh0, s0, upssign1, [p5], #64; vldb x4, [p7], #64; movx r16, #16; vshuffle x10, x10, x1, r4; movs m5, r7
 ; ASM-NEXT:  .LBB0_5: // %steady.stage1.top
@@ -223,12 +225,12 @@ define void @conv2d_opt_outerloop_out_mode_0(
 ; ASM-NEXT:    movs p7, p3; vldb.popx x10, [p0, lf0, r24]; vshuffle x10, x8, x6, r4; vmac dm1, dm1, x10, x4, r8
 ; ASM-NEXT:    vlda x2, [p7], #64; vldb.pop.3d x1, [p0, lf0, r24, d0]; mov r0, dc6; vmac dm0, dm0, x10, x2, r8
 ; ASM-NEXT:    vlda x4, [p7], #64; lshl r0, r0, r2; vshuffle x10, x8, x6, r4; vmac dm1, dm1, x10, x4, r8
-; ASM-NEXT:    or r20, r0, r16; mov dj7, r0; vmac dm0, dm0, x10, x2, r8
-; ASM-NEXT:    movs dj7, r20; vldb.128 wl6, [p1, dj7]; vshuffle x10, x8, x6, r4; vmac dm1, dm1, x10, x4, r8
+; ASM-NEXT:    or r22, r0, r16; mov dj7, r0; vmac dm0, dm0, x10, x2, r8
+; ASM-NEXT:    movs dj7, r22; vldb.128 wl6, [p1, dj7]; vshuffle x10, x8, x6, r4; vmac dm1, dm1, x10, x4, r8
 ; ASM-NEXT:    vlda.ups.2x cml0, s0, upssign1, [p5], #64; vldb.128 wl8, [p1, dj7]; vmac dm0, dm0, x10, x2, r8
 ; ASM-NEXT:    vlda.ups.2x cml1, s0, upssign1, [p4], #64; vmac dm1, dm1, x10, x4, r8
 ; ASM-NEXT:    vlda.ups.2x cmh1, s0, upssign1, [p4], #64; vmac dm0, dm0, x10, x2, r8
-; ASM-NEXT:    vlda.ups.2x cmh0, s0, upssign1, [p5], #64; jnzd r3, r3, p6
+; ASM-NEXT:    vlda.ups.2x cmh0, s0, upssign1, [p5], #64; jnzd r20, r20, p6
 ; ASM-NEXT:    vshuffle x10, x10, x1, r4 // Delay Slot 5
 ; ASM-NEXT:    nop // Delay Slot 4
 ; ASM-NEXT:    nop // Delay Slot 3
