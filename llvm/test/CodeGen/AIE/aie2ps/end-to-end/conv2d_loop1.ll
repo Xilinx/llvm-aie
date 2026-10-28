@@ -126,15 +126,15 @@ define dso_local void @conv2d.for.body.i(i32 %0, ptr %add.ptr.i.i, ptr %add.ptr4
 ; ASM-NEXT:    lda dn6, [p7], #-4
 ; ASM-NEXT:    lda r17, [p7], #-4
 ; ASM-NEXT:    lda m4, [p7], #-4
-; ASM-NEXT:    mov r22, r8
-; ASM-NEXT:    vlda.ups.2x cml3, s1, upssign1, [p3], #64; movx r16, #7; mov r24, r12
-; ASM-NEXT:    vlda.ups.2x cml1, s1, upssign1, [p4], #64; or r23, r10, r10; mov s1, r2
+; ASM-NEXT:    mov r23, r8
+; ASM-NEXT:    vlda.ups.2x cml3, s1, upssign1, [p3], #64; or r24, r10, r10; mov r25, r12
+; ASM-NEXT:    vlda.ups.2x cml1, s1, upssign1, [p4], #64; movx r16, #7; mov s1, r2
 ; ASM-NEXT:    vlda.ups.2x cmh3, s1, upssign1, [p3], #64; add r0, r0, #-1; mov dc0, #0
-; ASM-NEXT:    lda m3, [p7], #-4; movs m5, p5; or r10, r3, r3; addm.nc r3, r0, #-1
-; ASM-NEXT:    lda dj3, [p7], #-4; vldb x2, [p0], m5; movx r18, #64; mov r0, p0; movs dc4, dc0
+; ASM-NEXT:    lda m3, [p7], #-4; movs m5, p5; movx r20, #64; addm.nc r18, r0, #-1
+; ASM-NEXT:    lda dj3, [p7], #-4; vldb x2, [p0], m5; movx r12, #264; mov r0, p0; movs dc4, dc0
 ; ASM-NEXT:    lda dj7, [p7], #-4; vldb.3d x4, [p0], d0; movxm p5, #.LBB0_1
 ; ASM-NEXT:    lda dn3, [p7, #0]; vldb.128 wl10, [p6, #0]; movx crupsmode, #0; mov s0, r1
-; ASM-NEXT:    lda dn7, [p7, #-4]; movs p7, p1; movx r12, #264; mov dc7, #0
+; ASM-NEXT:    lda dn7, [p7, #-4]; movs p7, p1; or r10, r3, r3; mov dc7, #0
 ; ASM-NEXT:    vlda.ups.2x cmh1, s1, upssign1, [p4], #64; vldb x1, [p7], #64; movx r2, #63; mov s2, r6; movs dc3, dc7
 ; ASM-NEXT:    vlda.ups.2x cml2, s1, upssign1, [p3], #64; vldb.128 wl6, [p6, #64]; and r0, r0, r2; mov dc6, dc7; movs dj5, r21
 ; ASM-NEXT:    vlda.ups.2x cml0, s1, upssign1, [p4], #64; movs dc5, dc7; add r30, r0, #1; mov dc2, dc7
@@ -170,14 +170,14 @@ define dso_local void @conv2d.for.body.i(i32 %0, ptr %add.ptr.i.i, ptr %add.ptr4
 ; ASM-NEXT:    vlda.ups.2x cmh3, s1, upssign1, [p3], #64; vldb x1, [p7], #64; vshift.align x9, x9, s0, x6, r30
 ; ASM-NEXT:    vlda.ups.2x cml2, s1, upssign1, [p3], #64; vldb x8, [p7], #64; mov r0, dc6; vmac dm3, dm3, x7, x4, r8
 ; ASM-NEXT:    vlda.ups.2x cmh2, s1, upssign1, [p3], #64; lshl r0, r0, r16; vmac dm2, dm2, x9, x4, r8
-; ASM-NEXT:    vlda.ups.2x cml1, s1, upssign1, [p4], #64; or r20, r0, r18; mov dj1, r0; vmac dm1, dm1, x7, x2, r8
-; ASM-NEXT:    vlda.ups.2x cmh1, s1, upssign1, [p4], #64; vldb.128 wl10, [p6, dj1]; mov dj1, r20; vmac dm0, dm0, x9, x2, r8
+; ASM-NEXT:    vlda.ups.2x cml1, s1, upssign1, [p4], #64; or r22, r0, r20; mov dj1, r0; vmac dm1, dm1, x7, x2, r8
+; ASM-NEXT:    vlda.ups.2x cmh1, s1, upssign1, [p4], #64; vldb.128 wl10, [p6, dj1]; mov dj1, r22; vmac dm0, dm0, x9, x2, r8
 ; ASM-NEXT:    vlda.ups.2x cml0, s1, upssign1, [p4], #64; vldb.128 wl6, [p6, dj1]; mov dj1, r19
 ; ASM-NEXT:    vlda.ups.2x cmh0, s1, upssign1, [p4], #64; paddb.3d [p0], d1
 ; ASM-NEXT:    vst.srs.4x dm3, s2, srssign0, [p2], m7; vldb x3, [p0], m5; mov r0, p0
 ; ASM-NEXT:    vst.srs.4x dm2, s2, srssign0, [p2], m4; vldb.3d x5, [p0], d0; and r0, r0, r2
 ; ASM-NEXT:    vst.srs.4x dm1, s2, srssign0, [p2], m7; add r30, r0, #1
-; ASM-NEXT:    vst.3d.srs.4x dm0, s2, srssign0, [p2], d3; jnzd r3, r3, p5
+; ASM-NEXT:    vst.3d.srs.4x dm0, s2, srssign0, [p2], d3; jnzd r18, r18, p5
 ; ASM-NEXT:    movx srssign0, #0 // Delay Slot 5
 ; ASM-NEXT:    nop // Delay Slot 4
 ; ASM-NEXT:    nop // Delay Slot 3
@@ -205,12 +205,12 @@ define dso_local void @conv2d.for.body.i(i32 %0, ptr %add.ptr.i.i, ptr %add.ptr4
 ; ASM-NEXT:  // %bb.6: // %lastiter.stage1.bottom
 ; ASM-NEXT:    lda p7, [sp, #-60]; nopb ; movs m0, r17; nopxm ; vmac dm2, dm2, x9, x4, r8 // 4-byte Folded Reload
 ; ASM-NEXT:    lda p6, [sp, #-64]; nopb ; movs dj0, r17; movx crsrsmode, #0; mov srssign0, r7; vmac dm1, dm1, x7, x2, r8 // 4-byte Folded Reload
-; ASM-NEXT:    paddxm [sp], #-64; nopb ; nops ; or r12, r24, r24; vshift.align x7, x7, s0, x8, r30; vmac dm0, dm0, x9, x2, r8
-; ASM-NEXT:    nopa ; or r10, r23, r23; vshift.align x9, x9, s0, x6, r30
+; ASM-NEXT:    paddxm [sp], #-64; nopb ; nops ; or r12, r25, r25; vshift.align x7, x7, s0, x8, r30; vmac dm0, dm0, x9, x2, r8
+; ASM-NEXT:    nopa ; or r10, r24, r24; vshift.align x9, x9, s0, x6, r30
 ; ASM-NEXT:    mov s0, r6; vmac dm3, dm3, x7, x4, r8
 ; ASM-NEXT:    vmac dm2, dm2, x9, x4, r8
 ; ASM-NEXT:    vmac dm1, dm1, x7, x2, r8
-; ASM-NEXT:    mov r8, r22; vmac dm0, dm0, x9, x2, r8
+; ASM-NEXT:    mov r8, r23; vmac dm0, dm0, x9, x2, r8
 ; ASM-NEXT:    nop
 ; ASM-NEXT:    nop
 ; ASM-NEXT:    vst.srs.4x dm3, s0, srssign0, [p2], m0
