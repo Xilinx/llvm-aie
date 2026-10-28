@@ -32,6 +32,11 @@ static cl::opt<bool> LoopExitDepth(
     cl::desc("Place the ExitSU of an edge into a postpipelined loop after "
              "its guaranteed steady-state iterations"));
 
+static cl::opt<bool> AbstractStageLatency(
+    "aie-abstract-exit-stage-latency", cl::Hidden, cl::init(false),
+    cl::desc("Include the stage latency in the ExitSU edges of DAGs that "
+             "aren't scheduled, such as inter-block DAGs"));
+
 /// Depth of the ExitSU of \p SE: the cycle after which consumers that are not
 /// modelled as successor nodes may execute. The DDG models one pass over the
 /// successor's top region. A postpipelined loop successor repeats its body at
@@ -203,16 +208,19 @@ int MaxLatencyFinder::computeEffectiveLatency(MachineInstr &MI) {
 
 unsigned MaxLatencyFinder::operator()(MachineInstr &MI) {
   LLVM_DEBUG(dbgs() << NoDebug(MI) << "\n");
+  if (!CurBB) {
+    // This indicates we are called from an abstract block, e.g.
+    // InterBlockEdges. We don't know successors here. Nothing schedules this
+    // DAG, so there are no heights for the stage latency to steer.
+    int Latency = maxLatency(&MI, *TII, *Itineraries, AbstractStageLatency);
+    LLVM_DEBUG(dbgs() << "MaxLatency=" << Latency << "\n");
+    return Latency;
+  }
   // If we don't use interblock information, include the 'StageLatency'
   // in maxLatency. This influences the height parameters, telling the
   // scheduler to prefer deep-pipeline instructions over shorter ones.
   int Latency = maxLatency(&MI, *TII, *Itineraries, !SuccessorsAreScheduled);
   LLVM_DEBUG(dbgs() << "MaxLatency=" << Latency << "\n");
-  if (!CurBB) {
-    // This indicates we are called from an abstract block, e.g.
-    // InterBlockEdges. We don't know successors here.
-    return Latency;
-  }
 
   if (HasUnknownSuccessors) {
     LLVM_DEBUG(dbgs() << "Unkown successors MaxLatency=" << Latency << "\n");
