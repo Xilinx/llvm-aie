@@ -127,12 +127,11 @@ body:             |
   ; CHECK-NEXT:   $wl0 = VLDA_dmw_lda_w_ag_idx_imm $p2, 0
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   renamable $r1 = GE renamable $r0, renamable $r2
   ; CHECK-NEXT:   JNZ killed renamable $r1, %bb.1
   ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   $cm0 = VMAC_vmac_cm_core_dense $cm1, $x0, $x1, $r0
   ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   $cm0 = VMAC_vmac_cm_core_dense $cm1, $x0, $x1, $r0
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   DelayedSchedBarrier

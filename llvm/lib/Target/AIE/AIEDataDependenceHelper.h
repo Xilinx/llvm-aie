@@ -16,6 +16,7 @@
 #define LLVM_LIB_TARGET_AIE_AIEDATADEPENDENCEHELPER_H
 
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/CodeGen/LiveRegUnits.h"
 #include "llvm/CodeGen/MachineScheduler.h"
 #include "llvm/CodeGen/ScheduleDAGInstrs.h"
 #include <algorithm>
@@ -27,6 +28,15 @@ namespace llvm {
 class raw_ostream;
 
 namespace AIE {
+
+/// What is known about the code behind the ExitSU of a DAG, used to bound the
+/// latency of edges into it.
+struct ExitLatencyModel {
+  /// Register units live behind the ExitSU, or null if unknown. A def of an
+  /// unreserved register outside this set only has to land before a later
+  /// write of that register.
+  const LiveRegUnits *LiveAfter = nullptr;
+};
 
 /// Class to derive actual helpers from. It is a placeholder for the future
 /// stand-alone DDG class, it just implements the unrelated schedule() as
@@ -58,6 +68,14 @@ public:
   // IncludeBoundaries controls whether edges to the artificial boundary node
   // are printed.
   void dumpDot(raw_ostream &OS, bool IncludeBoundaries) const;
+
+  /// Model of the code behind the ExitSU as seen from \p SU.
+  virtual const ExitLatencyModel &getExitLatencyModel(const SUnit &SU) const {
+    return UnknownExit;
+  }
+
+private:
+  ExitLatencyModel UnknownExit;
 };
 
 /// This class generates all edges between nodes in two flow-adjacent regions.
@@ -212,6 +230,10 @@ private:
   /// Signed distances of post-boundary SUnits (first cycle is 0).
   BoundaryDistances PostDepths{SuccMap};
 
+  /// Live-ins of Succ, computed on first use by getExitLatencyModel().
+  mutable std::optional<LiveRegUnits> SuccLiveIns;
+  mutable ExitLatencyModel PreExit;
+
   bool mayAlias(SUnit *SUa, SUnit *SUb, bool TBAA) override;
 
   /// Pruning by transitivity assumes that a def issues and lands no earlier
@@ -297,6 +319,10 @@ public:
   const BoundaryDistances &getPreDepths() const { return PreDepths; }
   BoundaryDistances &getPostDepths() { return PostDepths; }
   const BoundaryDistances &getPostDepths() const { return PostDepths; }
+
+  /// Behind the ExitSU, pre-boundary nodes see Succ's live-ins: nothing
+  /// reachable from Succ reads a register that isn't live into it.
+  const ExitLatencyModel &getExitLatencyModel(const SUnit &SU) const override;
 
   // Clear DAG and recorded depths.
   void clear();

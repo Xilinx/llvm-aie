@@ -813,6 +813,12 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   /// adjustments for inter-block scheduling.
   virtual unsigned getEarliestAccessStage(MCRegister Reg) const { return 1; }
 
+  /// Returns the earliest cycle in which any instruction, under any schedule
+  /// class variant, writes \p Reg or a register overlapping it. Falls back to
+  /// getEarliestAccessStage() if no instruction writes it.
+  int getEarliestWriteCycle(MCRegister Reg, const InstrItineraryData &Itins,
+                            const TargetRegisterInfo &TRI) const;
+
   /// Returns cycle for the first memory operation of an instruction.
   /// This is usually the same as \p getLastMemoryCycle except for instructions
   /// that touch memory multiple times like AIE's read-modify-write part-word
@@ -1212,6 +1218,10 @@ protected:
   // MIR formatter overrides for PseudoSourceValues
   const MIRFormatter *getMIRFormatter() const override;
   mutable std::unique_ptr<AIEMIRFormatter> Formatter;
+
+  /// Earliest write cycle per register unit, built on first use by
+  /// getEarliestWriteCycle(). INT_MAX for units no instruction writes.
+  mutable std::vector<int> EarliestUnitWrite;
 
   bool isExtendLikelyToBeFolded(MachineInstr &ExtMI,
                                 MachineRegisterInfo &MRI) const override;

@@ -35,6 +35,10 @@ class ScheduleDAGMutation;
 class SUnit;
 class SDep;
 
+namespace AIE {
+class DataDependenceHelper;
+} // namespace AIE
+
 class AIEBaseSubtarget : public TargetSubtargetInfo {
   AIEABI::ABI TargetABI = AIEABI::ABI_VITIS;
 
@@ -72,10 +76,10 @@ public:
   static std::vector<std::unique_ptr<ScheduleDAGMutation>>
   getPostRAMutationsImpl(const Triple &TT, AAResults *AA);
 
-  /// Required DAG mutations for InterBlock dependence analysis
+  /// Required DAG mutations for InterBlock dependence analysis of \p DDG.
   static std::vector<std::unique_ptr<ScheduleDAGMutation>>
-  getDDGMutationsImpl(const Triple &TT, bool ExactLatencies,
-                      AAResults *AA = nullptr);
+  getDDGMutationsImpl(const Triple &TT, bool ExactLatencies, AAResults *AA,
+                      const AIE::DataDependenceHelper &DDG);
 
   /// Required DAG mutations during Pre-RA scheduling.
   static std::vector<std::unique_ptr<ScheduleDAGMutation>>

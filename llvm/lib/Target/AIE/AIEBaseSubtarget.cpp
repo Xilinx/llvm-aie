@@ -443,9 +443,11 @@ class RegionEndEdges : public ScheduleDAGMutation {
       SDep ExitDep(&SU, SDep::Artificial);
 
       unsigned DelaySlots = TII->getNumDelaySlots(MI);
+      const AIE::ExitLatencyModel *Exit =
+          DDG ? &DDG->getExitLatencyModel(SU) : nullptr;
       unsigned EdgeLatency = !DelaySlots && UserSetLatencyMargin
                                  ? UserLatencyMargin
-                                 : MaxLatency(MI);
+                                 : MaxLatency(MI, Exit);
       // Extend the edge latency if MI requires delay slots. This makes sure
       // there are at least getNumDelaySlots() cycles between MI and ExitSU.
       // An SWP prologue consumer of MI can require more.
@@ -498,8 +500,13 @@ class RegionEndEdges : public ScheduleDAGMutation {
     DAG->ExitSU.setDepthDirty();
   };
 
+  /// The dependence helper whose DAG this mutation is applied to, if any. It
+  /// describes the code behind the ExitSU.
+  const AIE::DataDependenceHelper *DDG;
+
 public:
-  RegionEndEdges() {}
+  explicit RegionEndEdges(const AIE::DataDependenceHelper *DDG = nullptr)
+      : DDG(DDG) {}
 };
 
 /// EntrySU latencies for free SUnits from TopFixed post-depths and pipelined
@@ -965,11 +972,12 @@ AIEBaseSubtarget::getPostRAMutationsImpl(const Triple &TT, AAResults *AA) {
 // List the Mutations that apply to the interblock DAG construction.
 std::vector<std::unique_ptr<ScheduleDAGMutation>>
 AIEBaseSubtarget::getDDGMutationsImpl(const Triple &TT, bool ExactLatencies,
-                                      AAResults *AA) {
+                                      AAResults *AA,
+                                      const AIE::DataDependenceHelper &DDG) {
   std::vector<std::unique_ptr<ScheduleDAGMutation>> Mutations;
   Mutations.emplace_back(std::make_unique<LockDelays>(AA));
   if (!TT.isAIE1()) {
-    Mutations.emplace_back(std::make_unique<RegionEndEdges>());
+    Mutations.emplace_back(std::make_unique<RegionEndEdges>(&DDG));
     Mutations.emplace_back(std::make_unique<MemoryEdges>(ExactLatencies));
     Mutations.emplace_back(std::make_unique<MachineSchedWAWEdges>());
   }

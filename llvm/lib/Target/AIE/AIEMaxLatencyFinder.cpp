@@ -37,6 +37,11 @@ static cl::opt<bool> AbstractStageLatency(
     cl::desc("Include the stage latency in the ExitSU edges of DAGs that "
              "aren't scheduled, such as inter-block DAGs"));
 
+static cl::opt<bool> InterBlockExitLiveness(
+    "aie-interblock-exit-liveness", cl::Hidden, cl::init(true),
+    cl::desc("Bound defs that are dead behind the ExitSU of an inter-block "
+             "DAG by the earliest write of their register"));
+
 /// Depth of the ExitSU of \p SE: the cycle after which consumers that are not
 /// modelled as successor nodes may execute. The DDG models one pass over the
 /// successor's top region. A postpipelined loop successor repeats its body at
@@ -60,18 +65,30 @@ static int getExitDepth(const InterBlockEdges &SE,
 // Compute the latency of this instruction. We take the maximum of the
 // operand and the memory latency. Include the stage latency if requested.
 int maxLatency(const MachineInstr *MI, const AIEBaseInstrInfo &InstrInfo,
-               const InstrItineraryData &Itineraries, bool IncludeStages) {
+               const InstrItineraryData &Itineraries, bool IncludeStages,
+               const ExitLatencyModel *Exit) {
 
   // If we have a Bundle, query maxLatency for each bundled instruction.
   if (MI->isBundle()) {
     int BundleLatency = 0;
     for (const MachineInstr &BundledMI : const_bundled_instrs(*MI)) {
       BundleLatency = std::max(
-          maxLatency(&BundledMI, InstrInfo, Itineraries, IncludeStages),
+          maxLatency(&BundledMI, InstrInfo, Itineraries, IncludeStages, Exit),
           BundleLatency);
     }
     return BundleLatency;
   }
+
+  const MachineFunction &MF = *MI->getMF();
+  const TargetRegisterInfo &TRI = *MF.getSubtarget().getRegisterInfo();
+  const MachineRegisterInfo &MRI = MF.getRegInfo();
+  // Nothing behind the ExitSU reads a def whose register is dead there, so
+  // the def only has to land before a later write of that register.
+  auto IsBoundByWrite = [&](const MachineOperand &MO) {
+    return Exit && Exit->LiveAfter && InterBlockExitLiveness && MO.isDef() &&
+           !MRI.isReserved(MO.getReg()) &&
+           Exit->LiveAfter->available(MO.getReg());
+  };
 
   int Latency = 0;
   unsigned SrcClass = MI->getDesc().getSchedClass();
@@ -93,8 +110,11 @@ int maxLatency(const MachineInstr *MI, const AIEBaseInstrInfo &InstrInfo,
     if (I < MI->getNumOperands()) {
       const MachineOperand &MO = MI->getOperand(I);
       if (MO.isReg() && MO.getReg().isPhysical()) {
-        unsigned Earliest = InstrInfo.getEarliestAccessStage(MO.getReg());
-        EffLat = EffLat - int(Earliest) + 1;
+        int Earliest = InstrInfo.getEarliestAccessStage(MO.getReg());
+        if (IsBoundByWrite(MO))
+          Earliest = std::max(Earliest, InstrInfo.getEarliestWriteCycle(
+                                            MO.getReg(), Itineraries, TRI));
+        EffLat = EffLat - Earliest + 1;
       }
     }
     Latency = std::max(Latency, EffLat);
@@ -206,13 +226,15 @@ int MaxLatencyFinder::computeEffectiveLatency(MachineInstr &MI) {
   return EffectiveLatency;
 }
 
-unsigned MaxLatencyFinder::operator()(MachineInstr &MI) {
+unsigned MaxLatencyFinder::operator()(MachineInstr &MI,
+                                      const ExitLatencyModel *Exit) {
   LLVM_DEBUG(dbgs() << NoDebug(MI) << "\n");
   if (!CurBB) {
     // This indicates we are called from an abstract block, e.g.
     // InterBlockEdges. We don't know successors here. Nothing schedules this
     // DAG, so there are no heights for the stage latency to steer.
-    int Latency = maxLatency(&MI, *TII, *Itineraries, AbstractStageLatency);
+    int Latency =
+        maxLatency(&MI, *TII, *Itineraries, AbstractStageLatency, Exit);
     LLVM_DEBUG(dbgs() << "MaxLatency=" << Latency << "\n");
     return Latency;
   }

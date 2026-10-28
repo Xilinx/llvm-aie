@@ -27,8 +27,10 @@ using namespace llvm;
 namespace llvm::AIE {
 
 // operand and the memory latency. Include the stage latency if requested.
+// \p Exit, if given, describes the code behind the ExitSU the latency is for.
 int maxLatency(const MachineInstr *MI, const AIEBaseInstrInfo &InstrInfo,
-               const InstrItineraryData &Itineraries, bool IncludeStages);
+               const InstrItineraryData &Itineraries, bool IncludeStages,
+               const ExitLatencyModel *Exit = nullptr);
 
 /// Minimum EntrySU latency for a free post-boundary node on an inter-block
 /// edge: the largest PredDepth + edge latency over the preds that have a
@@ -60,8 +62,9 @@ class MaxLatencyFinder {
 public:
   explicit MaxLatencyFinder(ScheduleDAGInstrs *DAG);
 
-  // Find the maximum latency of MI taking successors into account.
-  unsigned operator()(MachineInstr &MI);
+  // Find the maximum latency of MI taking successors into account. \p Exit
+  // describes the code behind the ExitSU of an abstract region.
+  unsigned operator()(MachineInstr &MI, const ExitLatencyModel *Exit = nullptr);
 };
 
 } // namespace llvm::AIE

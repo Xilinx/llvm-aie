@@ -1820,7 +1820,8 @@ int InterBlockScheduling::getCyclesToRespectTiming(
                          << " Original Loop " << *LoopBS.TheBlock
                          << " Original Epilogue " << EpilogueMBB << "\n");
 
-  InterBlockEdges Edges(*Context);
+  InterBlockEdges Edges(*Context, /*SafeToIgnoreMemDeps=*/false,
+                        LoopBS.TheBlock, EpilogueBS.TheBlock);
   std::map<const MachineInstr *, int> DistancesFromLoopEntry;
   int DistFromLoopEntry = 0;
   int EntryNops = 0;

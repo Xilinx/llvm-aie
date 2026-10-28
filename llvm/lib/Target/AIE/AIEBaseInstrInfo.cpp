@@ -1442,6 +1442,52 @@ AIEBaseInstrInfo::getNumSchedClassVariants(const MCInstrDesc &Desc) const {
   return InstrInfo ? InstrInfo->Variants.size() : 0;
 }
 
+int AIEBaseInstrInfo::getEarliestWriteCycle(
+    MCRegister Reg, const InstrItineraryData &Itins,
+    const TargetRegisterInfo &TRI) const {
+  if (EarliestUnitWrite.empty()) {
+    EarliestUnitWrite.assign(TRI.getNumRegUnits(),
+                             std::numeric_limits<int>::max());
+    auto NoteWrite = [&](MCRegister DefReg, std::optional<unsigned> Cycle) {
+      if (!Cycle)
+        return;
+      for (MCRegUnit Unit : TRI.regunits(DefReg))
+        EarliestUnitWrite[Unit] =
+            std::min(EarliestUnitWrite[Unit], int(*Cycle));
+    };
+    const VarItinInterface Interface = getVarItinInterface();
+    for (unsigned Opcode = 0, E = getNumOpcodes(); Opcode < E; ++Opcode) {
+      const MCInstrDesc &Desc = get(Opcode);
+      SmallVector<unsigned, 4> SchedClasses;
+      if (Desc.getSchedClass())
+        SchedClasses.push_back(Desc.getSchedClass());
+      if (const InstrVariantInfo *Info =
+              findInstrVariantInfo(Interface, Opcode))
+        for (const SchedVariantInfo &Variant : Info->Variants)
+          SchedClasses.push_back(Variant.SchedClass);
+      for (unsigned SchedClass : SchedClasses) {
+        for (unsigned I = 0; I < Desc.getNumDefs(); ++I) {
+          const int RCId = Desc.operands()[I].RegClass;
+          if (RCId < 0)
+            continue;
+          for (MCPhysReg DefReg : *TRI.getRegClass(RCId))
+            NoteWrite(DefReg, Itins.getOperandCycle(SchedClass, I));
+        }
+        unsigned ImpIdx = Desc.getNumOperands();
+        for (MCPhysReg DefReg : Desc.implicit_defs())
+          NoteWrite(DefReg, Itins.getOperandCycle(SchedClass, ImpIdx++));
+      }
+    }
+  }
+
+  int Earliest = std::numeric_limits<int>::max();
+  for (MCRegUnit Unit : TRI.regunits(Reg))
+    Earliest = std::min(Earliest, EarliestUnitWrite[Unit]);
+  return Earliest == std::numeric_limits<int>::max()
+             ? int(getEarliestAccessStage(Reg))
+             : Earliest;
+}
+
 llvm::ArrayRef<OperandRCRequirement> AIEBaseInstrInfo::getMatchingOperandRCs(
     const MCInstrDesc &Desc, iterator_range<const MachineOperand *> Operands,
     const MachineRegisterInfo &MRI) const {

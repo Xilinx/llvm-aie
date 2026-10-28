@@ -30,8 +30,8 @@ DataDependenceHelper::DataDependenceHelper(const MachineSchedContext &Context,
 
   auto &Subtarget = Context.MF->getSubtarget();
   auto TT = Subtarget.getTargetTriple();
-  for (auto &M :
-       AIEBaseSubtarget::getDDGMutationsImpl(TT, ExactLatencies, Context.AA)) {
+  for (auto &M : AIEBaseSubtarget::getDDGMutationsImpl(TT, ExactLatencies,
+                                                       Context.AA, *this)) {
     Mutations.emplace_back(std::move(M));
   }
 }
@@ -211,6 +211,20 @@ void InterBlockEdges::clear() {
   PreDepths.reset();
   PreFree.clear();
   PostFree.clear();
+  SuccLiveIns.reset();
+  PreExit.LiveAfter = nullptr;
+}
+
+const ExitLatencyModel &
+InterBlockEdges::getExitLatencyModel(const SUnit &SU) const {
+  if (!Succ || !isPredecessorNode(&SU))
+    return DataDependenceHelper::getExitLatencyModel(SU);
+  if (!SuccLiveIns) {
+    SuccLiveIns.emplace(*TRI);
+    SuccLiveIns->addLiveIns(*Succ);
+    PreExit.LiveAfter = &*SuccLiveIns;
+  }
+  return PreExit;
 }
 
 std::map<unsigned, int> InterBlockEdges::computePreHeights() const {

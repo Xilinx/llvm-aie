@@ -147,13 +147,13 @@ body:             |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors: %bb.2(0x80000000)
-  ; CHECK-NEXT:   liveins: $r1, $r2
+  ; CHECK-NEXT:   liveins: $r1, $r2, $wl0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   $r1 = OR killed $r1, $r2
   ; CHECK-NEXT:   $r1 = AND killed $r1, killed $r2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
-  ; CHECK-NEXT:   liveins: $r1
+  ; CHECK-NEXT:   liveins: $r1, $wl0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   RET implicit $lr
   ; CHECK-NEXT:   NOP
@@ -161,7 +161,7 @@ body:             |
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   DelayedSchedBarrier implicit killed $r1
+  ; CHECK-NEXT:   DelayedSchedBarrier implicit killed $r1, implicit killed $wl0
 
   bb.0:
     successors: %bb.1
@@ -169,12 +169,12 @@ body:             |
     $wl0 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0
   bb.1:
     successors: %bb.2
-    liveins: $r1, $r2
+    liveins: $r1, $r2, $wl0
     $r1 = OR $r1, $r2
     $r1 = AND $r1, $r2
   bb.2:
     successors:
-    liveins: $r1
+    liveins: $r1, $wl0
     RET implicit $lr
-    DelayedSchedBarrier implicit $r1
+    DelayedSchedBarrier implicit $r1, implicit $wl0
 ...

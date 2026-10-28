@@ -229,10 +229,9 @@ body:             |
   ; CHECK-NEXT:   $r7 = ADD_add_r_ri killed $r7, 1, implicit-def $srcarry
   ; CHECK-NEXT:   $r7 = ADD_add_r_ri killed $r7, 1, implicit-def $srcarry
   ; CHECK-NEXT:   $r7 = ADD_add_r_ri killed $r7, 1, implicit-def $srcarry
-  ; CHECK-NEXT:   $r7 = ADD_add_r_ri killed $r7, 1, implicit-def $srcarry
   ; CHECK-NEXT:   JNZ $r0, %bb.1
+  ; CHECK-NEXT:   $r7 = ADD_add_r_ri killed $r7, 1, implicit-def $srcarry
   ; CHECK-NEXT:   $dm0 = VMAC_vmac_vmul_cm_core_X_R $dm1, $x7, $r7, $r11
-  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP

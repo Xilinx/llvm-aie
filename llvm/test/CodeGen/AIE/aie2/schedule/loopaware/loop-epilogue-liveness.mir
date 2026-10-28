@@ -20,7 +20,7 @@
 # vmacRead the epilogue does.
 
 # vmacDead
-# CHECK: Timing constraints between loop and epilogue require 3 Nops
+# CHECK: Timing constraints between loop and epilogue require 2 Nops
 # CHECK: Emitting 3 safety nops
 # vmacLive
 # CHECK: Timing constraints between loop and epilogue require 3 Nops
