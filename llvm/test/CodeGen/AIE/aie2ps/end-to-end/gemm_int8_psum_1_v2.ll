@@ -84,7 +84,7 @@ define dso_local void @gemm_int8_psum_1_v2(ptr noalias %p_a, ptr noalias %p_b, p
 ; REMARKS-NEXT: ...
 ; CHECK-LABEL: gemm_int8_psum_1_v2:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    mova m0, #48; nopb ; nopx ; mov dj0, #37; nops
+; CHECK-NEXT:    mova m0, #48; nopb ; nopx ; mov dj0, #37
 ; CHECK-NEXT:    lda.u8 r0, [p5, dj0]; paddb [p5], m0; mov m2, #-44
 ; CHECK-NEXT:    lda.u8 r28, [p5], m2
 ; CHECK-NEXT:    lda r30, [p5], m0
@@ -116,23 +116,23 @@ define dso_local void @gemm_int8_psum_1_v2(ptr noalias %p_a, ptr noalias %p_b, p
 ; CHECK-NEXT:    lda r26, [p2, #4]; movxm p2, ##_ZN3aie6detail19transpose_bits_implILj8EaLj64EE13shuffle_modesE
 ; CHECK-NEXT:    lda r6, [p5, #4]; paddb [p2], m4
 ; CHECK-NEXT:    lda r0, [p2, #0]
-; CHECK-NEXT:    lda r2, [p2, #4]; movs p2, p4
-; CHECK-NEXT:    vlda bmll5, [p2], #64; or r7, r8, r8; mov dc2, #0
+; CHECK-NEXT:    lda r2, [p2, #4]; movs p2, p4; mov r7, r8
+; CHECK-NEXT:    vlda bmll5, [p2], #64; or r19, r10, r10; mov dc2, #0
 ; CHECK-NEXT:    vlda bmlh5, [p2], #64; movx crsrsmode, #0; mov r5, #768
 ; CHECK-NEXT:    vlda bmhl5, [p2], #64; eqz r28, r28; mov dc0, #0
-; CHECK-NEXT:    vlda bmhh5, [p2], #64; add r30, r30, #-1; mov s0, r16
-; CHECK-NEXT:    vlda bmll2, [p2], #64; vldb x6, [p1], m3; movxm p5, #.LBB0_1
+; CHECK-NEXT:    vlda bmhh5, [p2], #64; vldb x6, [p1], m3; add r30, r30, #-1; mov s0, r16
+; CHECK-NEXT:    vlda bmll2, [p2], #64; movs dc1, dc0; movxm p5, #.LBB0_1
 ; CHECK-NEXT:    vlda bmlh2, [p2], #64; vsrs.2x wl4, bmll4, s0, srssign1; sel.eqz r8, r18, r5, r27; vbcst.32 x2, r18
-; CHECK-NEXT:    vlda bmhl2, [p2], #64; movs dc5, dc0; movx r5, #1; mov dc1, dc0
-; CHECK-NEXT:    vlda bmhh2, [p2], #64; vldb.3d x8, [p1], d1; ne r5, r1, r5; vbcst.16 x0, r28
-; CHECK-NEXT:    vlda bmll1, [p2], #64; movx r30, #16; addm.nc r1, r30, #-1
-; CHECK-NEXT:    vlda bmlh1, [p2], #64; movx r17, #15; vshift x10, x4, x0, r30
-; CHECK-NEXT:    vlda bmhl1, [p2], #64; vsel.32 x4, x2, x4, r17
-; CHECK-NEXT:    vlda bmhh1, [p2], #64; vldb x6, [p0], #64; or r19, r10, r10; vshuffle x6, x6, x0, r20
-; CHECK-NEXT:    vlda bmll0, [p2], #64; movs dc4, dc0; or r21, r12, r12; vsel.32 x2, x2, x10, r17
-; CHECK-NEXT:    vlda bmlh0, [p2], #64; vldb.3d x8, [p0], d0; movx r12, #776; vshuffle x10, x6, x0, r22
-; CHECK-NEXT:    vlda bmhl0, [p2], #64; add r28, r3, #-1; vshuffle x8, x8, x0, r24
-; CHECK-NEXT:    vlda bmhh0, [p2], #64; or r10, r8, r5; vshuffle x1, x8, x0, r26
+; CHECK-NEXT:    vlda bmhl2, [p2], #64; movs dc5, dc0; movx r5, #1; vbcst.16 x0, r28
+; CHECK-NEXT:    vlda bmhh2, [p2], #64; vldb.3d x8, [p1], d1; ne r1, r1, r5; addm.nc r30, r30, #-1
+; CHECK-NEXT:    vlda bmll1, [p2], #64; or r10, r8, r1; mov r1, #16
+; CHECK-NEXT:    vlda bmlh1, [p2], #64; vshift x10, x4, x0, r1
+; CHECK-NEXT:    vlda bmhl1, [p2], #64; movx r17, #15; vshuffle x6, x6, x0, r20
+; CHECK-NEXT:    vlda bmhh1, [p2], #64; vldb x6, [p0], #64; vsel.32 x4, x2, x4, r17
+; CHECK-NEXT:    vlda bmll0, [p2], #64; movs dc4, dc0; vsel.32 x2, x2, x10, r17
+; CHECK-NEXT:    vlda bmlh0, [p2], #64; vldb.3d x8, [p0], d0; or r21, r12, r12; vshuffle x10, x6, x0, r22
+; CHECK-NEXT:    vlda bmhl0, [p2], #64; movx r12, #776; vshuffle x8, x8, x0, r24
+; CHECK-NEXT:    vlda bmhh0, [p2], #64; add r28, r3, #-1; vshuffle x1, x8, x0, r26
 ; CHECK-NEXT:  .LBB0_1: // %steady.stage1.top
 ; CHECK-NEXT:    // =>This Loop Header: Depth=1
 ; CHECK-NEXT:    // Child Loop BB0_2 Depth 2
@@ -174,13 +174,13 @@ define dso_local void @gemm_int8_psum_1_v2(ptr noalias %p_a, ptr noalias %p_b, p
 ; CHECK-NEXT:    vlda bmhh2, [p2], #64; vst bmlh5, [p4], #64
 ; CHECK-NEXT:    vlda bmll1, [p2], #64; vst bmhl5, [p4], #64
 ; CHECK-NEXT:    vlda bmlh1, [p2], #64; vst bmhh5, [p4], #64; vsel.32 x4, x4, x10, r17
-; CHECK-NEXT:    vlda bmhl1, [p2], #64; vst bmll2, [p4], #64; vshift x10, x10, x0, r30
+; CHECK-NEXT:    vlda bmhl1, [p2], #64; vst bmll2, [p4], #64; vshift x10, x10, x0, r1
 ; CHECK-NEXT:    vlda bmhh1, [p2], #64; vst bmlh2, [p4], #64; vsel.32 x2, x2, x10, r17
 ; CHECK-NEXT:    vlda bmll0, [p2], #64; vst bmhl2, [p4], #64; vshuffle x10, x1, x0, r20
 ; CHECK-NEXT:    vlda bmlh0, [p2], #64; vst bmhh2, [p4], #64; vshuffle x1, x3, x0, r24
 ; CHECK-NEXT:    vlda bmhl0, [p2], #64; vst bmll1, [p4], #64; vshuffle x10, x10, x0, r22
 ; CHECK-NEXT:    vlda bmhh0, [p2], #64; vst bmlh1, [p4], #64; vshuffle x1, x1, x0, r26
-; CHECK-NEXT:    vst bmhl1, [p4], #64; jnzd r1, r1, p5
+; CHECK-NEXT:    vst bmhl1, [p4], #64; jnzd r30, r30, p5
 ; CHECK-NEXT:    vst bmhh1, [p4], #64 // Delay Slot 5
 ; CHECK-NEXT:    vst bmll0, [p4], #64 // Delay Slot 4
 ; CHECK-NEXT:    vst bmlh0, [p4], #64 // Delay Slot 3

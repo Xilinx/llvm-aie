@@ -192,7 +192,7 @@ define void @conv2d_opt_outerloop_out_mode_0(
 ; ASM-NEXT:    movs dc2, dc7; lshl r28, r0, r28; mov dc6, dc7
 ; ASM-NEXT:    vlda.ups.2x cml1, s0, upssign1, [p4], #64; movs dc5, dc7; or r10, r8, r0; mov s0, r22
 ; ASM-NEXT:    vlda.ups.2x cmh1, s0, upssign1, [p4], #64; movs dj3, r20; add r0, r26, #-1; vbcst.32 x0, r28
-; ASM-NEXT:    mova r12, #264; vldb.128 wl6, [p3, dj3]; movx crupsmode, #0; addm.nc r3, r0, #-1; movs dc1, dc7
+; ASM-NEXT:    mova r12, #264; vldb.128 wl6, [p3, dj3]; movx crupsmode, #0; addm.nc r20, r0, #-1; movs dc1, dc7
 ; ASM-NEXT:    movs p7, p3; vldb.128 wl8, [p1, #16]; movxm p6, #.LBB0_5
 ; ASM-NEXT:    vlda.ups.2x cml0, s0, upssign1, [p5], #64; vldb x2, [p7], #64; movx crsrsmode, #0; mov s1, r6; movs dj3, r19
 ; ASM-NEXT:    vlda.ups.2x cmh0, s0, upssign1, [p5], #64; vldb x4, [p7], #64; movx r16, #16; vshuffle x10, x10, x1, r4; movs m5, r7
@@ -225,12 +225,12 @@ define void @conv2d_opt_outerloop_out_mode_0(
 ; ASM-NEXT:    movs p7, p3; vldb.popx x10, [p0, lf0, r24]; vshuffle x10, x8, x6, r4; vmac dm1, dm1, x10, x4, r8
 ; ASM-NEXT:    vlda x2, [p7], #64; vldb.pop.3d x1, [p0, lf0, r24, d0]; mov r0, dc6; vmac dm0, dm0, x10, x2, r8
 ; ASM-NEXT:    vlda x4, [p7], #64; lshl r0, r0, r2; vshuffle x10, x8, x6, r4; vmac dm1, dm1, x10, x4, r8
-; ASM-NEXT:    or r20, r0, r16; mov dj7, r0; vmac dm0, dm0, x10, x2, r8
-; ASM-NEXT:    movs dj7, r20; vldb.128 wl6, [p1, dj7]; vshuffle x10, x8, x6, r4; vmac dm1, dm1, x10, x4, r8
+; ASM-NEXT:    or r22, r0, r16; mov dj7, r0; vmac dm0, dm0, x10, x2, r8
+; ASM-NEXT:    movs dj7, r22; vldb.128 wl6, [p1, dj7]; vshuffle x10, x8, x6, r4; vmac dm1, dm1, x10, x4, r8
 ; ASM-NEXT:    vlda.ups.2x cml0, s0, upssign1, [p5], #64; vldb.128 wl8, [p1, dj7]; vmac dm0, dm0, x10, x2, r8
 ; ASM-NEXT:    vlda.ups.2x cml1, s0, upssign1, [p4], #64; vmac dm1, dm1, x10, x4, r8
 ; ASM-NEXT:    vlda.ups.2x cmh1, s0, upssign1, [p4], #64; vmac dm0, dm0, x10, x2, r8
-; ASM-NEXT:    vlda.ups.2x cmh0, s0, upssign1, [p5], #64; jnzd r3, r3, p6
+; ASM-NEXT:    vlda.ups.2x cmh0, s0, upssign1, [p5], #64; jnzd r20, r20, p6
 ; ASM-NEXT:    vshuffle x10, x10, x1, r4 // Delay Slot 5
 ; ASM-NEXT:    nop // Delay Slot 4
 ; ASM-NEXT:    nop // Delay Slot 3
