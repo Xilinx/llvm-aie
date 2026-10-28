@@ -165,6 +165,9 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
     unsigned DecTripCountOpcode;
     // Target Opcode for JNZD.
     unsigned LoopJNZDOpcode;
+    // Target Opcode for a jump to a block if a register is not zero. A JNZD
+    // loop whose target pointer is rebuilt inside the loop falls back to it.
+    unsigned JNZOpcode;
     // Opcodes of the PC-relative forms, which keep the loop header as a branch
     // target operand instead of materializing it into a pointer register.
     // Only set by subtargets that have such an encoding.
