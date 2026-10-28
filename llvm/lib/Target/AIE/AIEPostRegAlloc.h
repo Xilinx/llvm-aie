@@ -54,7 +54,6 @@ public:
       : Succeeded(true), WinningStrategyName(std::move(WinningStrategyName)),
         Assignments(std::move(Assignments)) {}
 
-  bool succeeded() const { return Succeeded; }
   explicit operator bool() const { return Succeeded; }
 
   const std::string &getWinningStrategyName() const {
