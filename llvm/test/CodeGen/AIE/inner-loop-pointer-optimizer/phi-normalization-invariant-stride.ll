@@ -307,29 +307,27 @@ exit:
 }
 
 ; The stride is only invariant in the inner loop, so 192 + %s cannot be
-; computed before the outer loop.
+; computed before the outer loop. Keep the shifted init as
+; (%base + 192) + %s instead of adding the offsets every outer iteration.
 define void @stride_defined_in_outer_loop(ptr %a, ptr %out, ptr %strides, i32 %n, i32 %m) {
 ; CHECK-LABEL: stride_defined_in_outer_loop:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    mova m0, #4; nopb ; nops ; movx r2, #192; mov dj0, #192; nopv
+; CHECK-NEXT:    mova m0, #4; nopb ; nops ; nopxm ; nopv
 ; CHECK-NEXT:  .LBB6_1: // %outer
 ; CHECK-NEXT:    // =>This Loop Header: Depth=1
 ; CHECK-NEXT:    // Child Loop BB6_2 Depth 2
-; CHECK-NEXT:    lda m1, [p2, #0]; nopb ; nops ; nopxm ; nopv
-; CHECK-NEXT:    nopx
+; CHECK-NEXT:    lda m1, [p2, #0]; nopb ; nopxm ; nops
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    mov r6, m1
-; CHECK-NEXT:    add r6, r6, r2
-; CHECK-NEXT:    movs m2, r6; add.nc lc, r0, #0; mov p3, p0
-; CHECK-NEXT:    lda r4, [p0, dj0]; paddb [p3], m2; nops ; add.nc ls, pc, #.LBB6_2; addm.nc le, pc, #.L_LEnd6; nopv
+; CHECK-NEXT:    movs p3, p0
+; CHECK-NEXT:    paddb [p3], #192; add.nc lc, r0, #0
+; CHECK-NEXT:    lda r2, [p3], m1; nopb ; nops ; add.nc ls, pc, #.LBB6_2; addm.nc le, pc, #.L_LEnd6; nopv
 ; CHECK-NEXT:  .LBB6_2: // %inner
 ; CHECK-NEXT:    // Parent Loop BB6_1 Depth=1
 ; CHECK-NEXT:    // => This Inner Loop Header: Depth=2
-; CHECK-NEXT:    lda r6, [p3], m1; nopb ; nops ; nopxm ; nopv
+; CHECK-NEXT:    lda r4, [p3], m1; nopb ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
@@ -337,7 +335,7 @@ define void @stride_defined_in_outer_loop(ptr %a, ptr %out, ptr %strides, i32 %n
 ; CHECK-NEXT:    nopa ; nopb ; nopxm ; nops
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:  .L_LEnd6:
-; CHECK-NEXT:    nopa ; nopb ; nops ; add r4, r4, r6; nopm ; nopv
+; CHECK-NEXT:    nopa ; nopb ; nops ; add r2, r2, r4; nopm ; nopv
 ; CHECK-NEXT:  // %bb.3: // %outer.latch
 ; CHECK-NEXT:    // in Loop: Header=BB6_1 Depth=1
 ; CHECK-NEXT:    nopa ; nopb ; add r1, r1, #-1; nopm
@@ -346,7 +344,7 @@ define void @stride_defined_in_outer_loop(ptr %a, ptr %out, ptr %strides, i32 %n
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    padda [p2], m0; paddb [p0], #64; st r4, [p1, #0] // Delay Slot 1
+; CHECK-NEXT:    padda [p2], m0; paddb [p0], #64; st r2, [p1, #0] // Delay Slot 1
 ; CHECK-NEXT:  // %bb.4: // %exit
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
