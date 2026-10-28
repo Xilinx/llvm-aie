@@ -15,33 +15,23 @@
 define void @latch_multi_pred(ptr %p0, ptr %p1, ptr %p2) {
 ; CHECK-LABEL: latch_multi_pred:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; j #.LBB0_4
+; CHECK-NEXT:    nopa ; j #.LBB0_2
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    mova r2, #15; movx r0, #0 // Delay Slot 2
-; CHECK-NEXT:    mova m0, #4; movxm p3, #.LBB0_4 // Delay Slot 1
+; CHECK-NEXT:    mova m0, #4; movxm p3, #.LBB0_2 // Delay Slot 1
 ; CHECK-NEXT:  .LBB0_1: // %else
-; CHECK-NEXT:    // in Loop: Header=BB0_4 Depth=1
-; CHECK-NEXT:    nopa ; nopb ; st r4, [p2, #0]; nopxm ; nopv
-; CHECK-NEXT:  .LBB0_2: // %latch
-; CHECK-NEXT:    // in Loop: Header=BB0_4 Depth=1
-; CHECK-NEXT:    nopa ; jnzd r2, r2, p3
-; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    // in Loop: Header=BB0_2 Depth=1
+; CHECK-NEXT:    nopa ; nopb ; nops ; j #.LBB0_4; nopv
+; CHECK-NEXT:    nopa ; nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    padda [p0], m0 // Delay Slot 1
-; CHECK-NEXT:  // %bb.3: // %exit
-; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    nop // Delay Slot 1
-; CHECK-NEXT:  .LBB0_4: // %header
+; CHECK-NEXT:    st r4, [p2, #0] // Delay Slot 1
+; CHECK-NEXT:  .LBB0_2: // %header
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
-; CHECK-NEXT:    lda r4, [p0, #0]; nopb ; nopxm ; nops
+; CHECK-NEXT:    lda r4, [p0, #0]; nopb ; nopxm
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -55,14 +45,24 @@ define void @latch_multi_pred(ptr %p0, ptr %p1, ptr %p2) {
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
-; CHECK-NEXT:  // %bb.5: // %then
-; CHECK-NEXT:    // in Loop: Header=BB0_4 Depth=1
-; CHECK-NEXT:    j #.LBB0_2
+; CHECK-NEXT:  // %bb.3: // %then
+; CHECK-NEXT:    // in Loop: Header=BB0_2 Depth=1
+; CHECK-NEXT:    st r4, [p1, #0]
+; CHECK-NEXT:  .LBB0_4: // %latch
+; CHECK-NEXT:    // in Loop: Header=BB0_2 Depth=1
+; CHECK-NEXT:    nopa ; jnzd r2, r2, p3
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    st r4, [p1, #0] // Delay Slot 1
+; CHECK-NEXT:    padda [p0], m0 // Delay Slot 1
+; CHECK-NEXT:  // %bb.5: // %exit
+; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    nop // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   br label %header
 
@@ -96,45 +96,35 @@ exit:
 define void @guarded_inner_loop(ptr %p0, ptr %p1, ptr %p2, i32 %n) {
 ; CHECK-LABEL: guarded_inner_loop:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    j #.LBB1_4
+; CHECK-NEXT:    j #.LBB1_2
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    mova m0, #4; movx r4, #15; mov r2, #0 // Delay Slot 2
-; CHECK-NEXT:    mova r6, #2; movxm p3, #.LBB1_4 // Delay Slot 1
+; CHECK-NEXT:    mova r6, #2; movxm p3, #.LBB1_2 // Delay Slot 1
 ; CHECK-NEXT:  .LBB1_1: // %skip
-; CHECK-NEXT:    // in Loop: Header=BB1_4 Depth=1
-; CHECK-NEXT:    mova r16, #0; nopb ; st r2, [p2, #0]; nopxm ; nopv
-; CHECK-NEXT:  .LBB1_2: // %latch
-; CHECK-NEXT:    // in Loop: Header=BB1_4 Depth=1
-; CHECK-NEXT:    nopa ; nopb ; nops ; jnzd r4, r4, p3; nopm ; nopv
-; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    // in Loop: Header=BB1_2 Depth=1
+; CHECK-NEXT:    nopa ; nopb ; nops ; j #.LBB1_6; nopv
+; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    padda [p0], m0; st r16, [p1, #0]; add r2, r2, #1 // Delay Slot 1
-; CHECK-NEXT:  // %bb.3: // %exit
-; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    nop // Delay Slot 1
-; CHECK-NEXT:  .LBB1_4: // %outer
+; CHECK-NEXT:    mova r16, #0; st r2, [p2, #0] // Delay Slot 1
+; CHECK-NEXT:  .LBB1_2: // %outer
 ; CHECK-NEXT:    // =>This Loop Header: Depth=1
-; CHECK-NEXT:    // Child Loop BB1_6 Depth 2
+; CHECK-NEXT:    // Child Loop BB1_4 Depth 2
 ; CHECK-NEXT:    nopa ; nopb ; nops ; jz r0, #.LBB1_1; nopv
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
-; CHECK-NEXT:  // %bb.5: // %inner.preheader
-; CHECK-NEXT:    // in Loop: Header=BB1_4 Depth=1
-; CHECK-NEXT:    add.nc lc, r0, #0; addm.nc ls, pc, #.LBB1_6
+; CHECK-NEXT:  // %bb.3: // %inner.preheader
+; CHECK-NEXT:    // in Loop: Header=BB1_2 Depth=1
+; CHECK-NEXT:    add.nc lc, r0, #0; addm.nc ls, pc, #.LBB1_4
 ; CHECK-NEXT:    mova r16, #0; nopb ; nops ; add.nc le, pc, #.L_LEnd0; mov r18, #0; nopv
-; CHECK-NEXT:  .LBB1_6: // %inner
-; CHECK-NEXT:    // Parent Loop BB1_4 Depth=1
+; CHECK-NEXT:  .LBB1_4: // %inner
+; CHECK-NEXT:    // Parent Loop BB1_2 Depth=1
 ; CHECK-NEXT:    // => This Inner Loop Header: Depth=2
 ; CHECK-NEXT:    nopa ; nopb ; nops ; lshl r20, r18, r6; nopm ; nopv
 ; CHECK-NEXT:    nopa ; nopb ; nops ; add r18, r18, #1; mov dj0, r20; nopv
@@ -147,9 +137,18 @@ define void @guarded_inner_loop(ptr %p0, ptr %p1, ptr %p2, i32 %n) {
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:  .L_LEnd0:
 ; CHECK-NEXT:    nopa ; nopb ; nops ; add r16, r16, r20; nopm ; nopv
-; CHECK-NEXT:  // %bb.7: // %latch
-; CHECK-NEXT:    // in Loop: Header=BB1_4 Depth=1
-; CHECK-NEXT:    j #.LBB1_2
+; CHECK-NEXT:  // %bb.5: // %latch
+; CHECK-NEXT:    // in Loop: Header=BB1_2 Depth=1
+; CHECK-NEXT:  .LBB1_6: // %latch
+; CHECK-NEXT:    // in Loop: Header=BB1_2 Depth=1
+; CHECK-NEXT:    nopa ; nopb ; nops ; jnzd r4, r4, p3; nopm ; nopv
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    nop // Delay Slot 2
+; CHECK-NEXT:    padda [p0], m0; st r16, [p1, #0]; add r2, r2, #1 // Delay Slot 1
+; CHECK-NEXT:  // %bb.7: // %exit
+; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
@@ -194,24 +193,35 @@ exit:
 define void @guarded_inner_loop_with_tail(ptr %p0, ptr %p1, ptr %p2, i32 %n) {
 ; CHECK-LABEL: guarded_inner_loop_with_tail:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    mova r4, #0; nopxm
-; CHECK-NEXT:    mova m0, #4; movx r6, #15; mov r2, #5
-; CHECK-NEXT:    mova r16, #2; movs p4, p0; movxm p3, #.LBB2_1
-; CHECK-NEXT:  .LBB2_1: // %outer
+; CHECK-NEXT:    nopa ; nopb ; nops ; j #.LBB2_2; nopv
+; CHECK-NEXT:    nopx // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    mova r4, #0 // Delay Slot 3
+; CHECK-NEXT:    mova m0, #4; movx r6, #15; mov r2, #5 // Delay Slot 2
+; CHECK-NEXT:    mova r16, #2; movs p4, p0; movxm p3, #.LBB2_2 // Delay Slot 1
+; CHECK-NEXT:  .LBB2_1: // %skip
+; CHECK-NEXT:    // in Loop: Header=BB2_2 Depth=1
+; CHECK-NEXT:    nopa ; nopb ; nops ; j #.LBB2_6; nopv
+; CHECK-NEXT:    nopx // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    nop // Delay Slot 2
+; CHECK-NEXT:    mova r18, #0; st r4, [p2, #0] // Delay Slot 1
+; CHECK-NEXT:  .LBB2_2: // %outer
 ; CHECK-NEXT:    // =>This Loop Header: Depth=1
-; CHECK-NEXT:    // Child Loop BB2_3 Depth 2
-; CHECK-NEXT:    nopa ; nopb ; nops ; jz r0, #.LBB2_5; nopv
+; CHECK-NEXT:    // Child Loop BB2_4 Depth 2
+; CHECK-NEXT:    nopa ; nopb ; nops ; jz r0, #.LBB2_1; nopv
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
-; CHECK-NEXT:  // %bb.2: // %inner.preheader
-; CHECK-NEXT:    // in Loop: Header=BB2_1 Depth=1
-; CHECK-NEXT:    add.nc lc, r0, #0; addm.nc ls, pc, #.LBB2_3
+; CHECK-NEXT:  // %bb.3: // %inner.preheader
+; CHECK-NEXT:    // in Loop: Header=BB2_2 Depth=1
+; CHECK-NEXT:    add.nc lc, r0, #0; addm.nc ls, pc, #.LBB2_4
 ; CHECK-NEXT:    mova r18, #0; nopb ; nops ; add.nc le, pc, #.L_LEnd1; mov r20, #0; nopv
-; CHECK-NEXT:  .LBB2_3: // %inner
-; CHECK-NEXT:    // Parent Loop BB2_1 Depth=1
+; CHECK-NEXT:  .LBB2_4: // %inner
+; CHECK-NEXT:    // Parent Loop BB2_2 Depth=1
 ; CHECK-NEXT:    // => This Inner Loop Header: Depth=2
 ; CHECK-NEXT:    nopa ; nopb ; nops ; lshl r22, r20, r16; nopm ; nopv
 ; CHECK-NEXT:    nopa ; nopb ; nops ; add r20, r20, #1; mov dj0, r22; nopv
@@ -224,19 +234,10 @@ define void @guarded_inner_loop_with_tail(ptr %p0, ptr %p1, ptr %p2, i32 %n) {
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:  .L_LEnd1:
 ; CHECK-NEXT:    nopa ; nopb ; nops ; add r18, r18, r22; nopm ; nopv
-; CHECK-NEXT:  // %bb.4: // %latch
-; CHECK-NEXT:    // in Loop: Header=BB2_1 Depth=1
-; CHECK-NEXT:    j #.LBB2_6
-; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    nop // Delay Slot 1
-; CHECK-NEXT:  .LBB2_5: // %skip
-; CHECK-NEXT:    // in Loop: Header=BB2_1 Depth=1
-; CHECK-NEXT:    mova r18, #0; nopb ; st r4, [p2, #0]; nopxm ; nopv
+; CHECK-NEXT:  // %bb.5: // %latch
+; CHECK-NEXT:    // in Loop: Header=BB2_2 Depth=1
 ; CHECK-NEXT:  .LBB2_6: // %latch
-; CHECK-NEXT:    // in Loop: Header=BB2_1 Depth=1
+; CHECK-NEXT:    // in Loop: Header=BB2_2 Depth=1
 ; CHECK-NEXT:    nopa ; nopb ; jnzd r6, r6, p3; nopm ; nops
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
