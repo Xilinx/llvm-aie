@@ -182,8 +182,10 @@ def mMStream_tlast_reg : AIE2PSScalarRegisterClass<(add r28)>;
 def mR28_tlast : AIE2PSScalarRegisterClass<(add r28)>;
 def mR29_insert : AIE2PSScalarRegisterClass<(add r29)>;
 def mR30_shiftx : AIE2PSScalarRegisterClass<(add r30)>;
+let AllocationPriority = 1 in {
 def mR30_fifo_step_e1 : AIE2PSScalarRegisterClass<(add r30)>;
 def mR30_fifo_step_e7 : AIE2PSScalarRegisterClass<(add r30)>;
+}
 def mR31_scd : AIE2PSScalarRegisterClass<(add r31)>;
 def mR31_divs : AIE2PSScalarRegisterClass<(add r31)>;
 def mSCD_r_incr : AIE2PSScalarRegisterClass<(add r31)>;
