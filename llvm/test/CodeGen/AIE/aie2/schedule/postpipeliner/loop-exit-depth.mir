@@ -15,6 +15,15 @@
 # need to complete when the loop is entered. With a minimum trip count of 5 it
 # is scheduled closer to the loop; with a minimum trip count of 2 the loop is
 # only guaranteed to run once and the schedule doesn't change.
+#
+# deadOnSkipPath has no loop. bb.0 ends with a VMAC whose accumulator is only
+# read in bb.3, deep enough not to constrain it. The fallthrough bb.1 is a
+# single bundle in which cm0 is dead. bb.0 keeps three empty bundles after the
+# VMAC. Even if the ExitSU edge of bb.0 -> bb.1 ignored the dead cm0, the
+# interblock scoreboard blocks every cycle after bb.1, and the VMAC writes cm0
+# through CM_WA_PORT four cycles after issue.
+# liveOnSkipPath is the control: bb.2 reads cm0, so the same three bundles are
+# required there.
 
 --- |
   define void @minTC2(ptr addrspace(5) noalias %d, i32 %n) {
@@ -207,6 +216,148 @@
     br i1 %1, label %for.body, label %for.cond.cleanup, !llvm.loop !1
   }
 
+  define void @deadOnSkipPath() {
+  ; CHECK-LABEL: deadOnSkipPath:
+  ; CHECK:       // %bb.0:
+  ; CHECK-NEXT:    nopb ; vlda wl0, [p2, #0]; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    nop
+  ; CHECK-NEXT:    nop
+  ; CHECK-NEXT:    nop
+  ; CHECK-NEXT:    ge r1, r0, r2
+  ; CHECK-NEXT:    jnz r1, #.LBB2_3
+  ; CHECK-NEXT:    nop // Delay Slot 5
+  ; CHECK-NEXT:    vmac cm0, cm0, x0, x1, r0 // Delay Slot 4
+  ; CHECK-NEXT:    nop // Delay Slot 3
+  ; CHECK-NEXT:    nop // Delay Slot 2
+  ; CHECK-NEXT:    nop // Delay Slot 1
+  ; CHECK-NEXT:  // %bb.1:
+  ; CHECK-NEXT:    add r2, r2, #1
+  ; CHECK-NEXT:  // %bb.2:
+  ; CHECK-NEXT:    ret lr
+  ; CHECK-NEXT:    nop // Delay Slot 5
+  ; CHECK-NEXT:    nop // Delay Slot 4
+  ; CHECK-NEXT:    nop // Delay Slot 3
+  ; CHECK-NEXT:    st r2, [p0, #0] // Delay Slot 2
+  ; CHECK-NEXT:    nop // Delay Slot 1
+  ; CHECK-NEXT:  .LBB2_3:
+  ; CHECK-NEXT:    nopa ; paddb [p1], #32; nopxm
+  ; CHECK-NEXT:    paddb [p1], #32
+  ; CHECK-NEXT:    paddb [p1], #32
+  ; CHECK-NEXT:    paddb [p1], #32
+  ; CHECK-NEXT:    paddb [p1], #32; ret lr
+  ; CHECK-NEXT:    paddb [p1], #32 // Delay Slot 5
+  ; CHECK-NEXT:    paddb [p1], #32 // Delay Slot 4
+  ; CHECK-NEXT:    paddb [p1], #32 // Delay Slot 3
+  ; CHECK-NEXT:    vst amll0, [p1, #0] // Delay Slot 2
+  ; CHECK-NEXT:    nop // Delay Slot 1
+  ;
+  ; NOEXIT-LABEL: deadOnSkipPath:
+  ; NOEXIT:       // %bb.0:
+  ; NOEXIT-NEXT:    nopb ; vlda wl0, [p2, #0]; nops ; nopxm ; nopv
+  ; NOEXIT-NEXT:    nop
+  ; NOEXIT-NEXT:    nop
+  ; NOEXIT-NEXT:    nop
+  ; NOEXIT-NEXT:    ge r1, r0, r2
+  ; NOEXIT-NEXT:    jnz r1, #.LBB2_3
+  ; NOEXIT-NEXT:    nop // Delay Slot 5
+  ; NOEXIT-NEXT:    vmac cm0, cm0, x0, x1, r0 // Delay Slot 4
+  ; NOEXIT-NEXT:    nop // Delay Slot 3
+  ; NOEXIT-NEXT:    nop // Delay Slot 2
+  ; NOEXIT-NEXT:    nop // Delay Slot 1
+  ; NOEXIT-NEXT:  // %bb.1:
+  ; NOEXIT-NEXT:    add r2, r2, #1
+  ; NOEXIT-NEXT:  // %bb.2:
+  ; NOEXIT-NEXT:    ret lr
+  ; NOEXIT-NEXT:    nop // Delay Slot 5
+  ; NOEXIT-NEXT:    nop // Delay Slot 4
+  ; NOEXIT-NEXT:    nop // Delay Slot 3
+  ; NOEXIT-NEXT:    st r2, [p0, #0] // Delay Slot 2
+  ; NOEXIT-NEXT:    nop // Delay Slot 1
+  ; NOEXIT-NEXT:  .LBB2_3:
+  ; NOEXIT-NEXT:    nopa ; paddb [p1], #32; nopxm
+  ; NOEXIT-NEXT:    paddb [p1], #32
+  ; NOEXIT-NEXT:    paddb [p1], #32
+  ; NOEXIT-NEXT:    paddb [p1], #32
+  ; NOEXIT-NEXT:    paddb [p1], #32; ret lr
+  ; NOEXIT-NEXT:    paddb [p1], #32 // Delay Slot 5
+  ; NOEXIT-NEXT:    paddb [p1], #32 // Delay Slot 4
+  ; NOEXIT-NEXT:    paddb [p1], #32 // Delay Slot 3
+  ; NOEXIT-NEXT:    vst amll0, [p1, #0] // Delay Slot 2
+  ; NOEXIT-NEXT:    nop // Delay Slot 1
+    ret void
+  }
+
+  define void @liveOnSkipPath() {
+  ; CHECK-LABEL: liveOnSkipPath:
+  ; CHECK:       // %bb.0:
+  ; CHECK-NEXT:    vlda wl0, [p2, #0]; nopb ; nopxm ; nops
+  ; CHECK-NEXT:    nop
+  ; CHECK-NEXT:    nop
+  ; CHECK-NEXT:    nop
+  ; CHECK-NEXT:    ge r1, r0, r2
+  ; CHECK-NEXT:    jnz r1, #.LBB3_3
+  ; CHECK-NEXT:    nop // Delay Slot 5
+  ; CHECK-NEXT:    vmac cm0, cm0, x0, x1, r0 // Delay Slot 4
+  ; CHECK-NEXT:    nop // Delay Slot 3
+  ; CHECK-NEXT:    nop // Delay Slot 2
+  ; CHECK-NEXT:    nop // Delay Slot 1
+  ; CHECK-NEXT:  // %bb.1:
+  ; CHECK-NEXT:    add r2, r2, #1
+  ; CHECK-NEXT:  // %bb.2:
+  ; CHECK-NEXT:    ret lr
+  ; CHECK-NEXT:    nop // Delay Slot 5
+  ; CHECK-NEXT:    nop // Delay Slot 4
+  ; CHECK-NEXT:    vst amll0, [p1, #0] // Delay Slot 3
+  ; CHECK-NEXT:    st r2, [p0, #0] // Delay Slot 2
+  ; CHECK-NEXT:    nop // Delay Slot 1
+  ; CHECK-NEXT:  .LBB3_3:
+  ; CHECK-NEXT:    nopa ; paddb [p1], #32; nopxm
+  ; CHECK-NEXT:    paddb [p1], #32
+  ; CHECK-NEXT:    paddb [p1], #32
+  ; CHECK-NEXT:    paddb [p1], #32
+  ; CHECK-NEXT:    paddb [p1], #32; ret lr
+  ; CHECK-NEXT:    paddb [p1], #32 // Delay Slot 5
+  ; CHECK-NEXT:    paddb [p1], #32 // Delay Slot 4
+  ; CHECK-NEXT:    paddb [p1], #32 // Delay Slot 3
+  ; CHECK-NEXT:    vst amll0, [p1, #0] // Delay Slot 2
+  ; CHECK-NEXT:    nop // Delay Slot 1
+  ;
+  ; NOEXIT-LABEL: liveOnSkipPath:
+  ; NOEXIT:       // %bb.0:
+  ; NOEXIT-NEXT:    vlda wl0, [p2, #0]; nopb ; nopxm ; nops
+  ; NOEXIT-NEXT:    nop
+  ; NOEXIT-NEXT:    nop
+  ; NOEXIT-NEXT:    nop
+  ; NOEXIT-NEXT:    ge r1, r0, r2
+  ; NOEXIT-NEXT:    jnz r1, #.LBB3_3
+  ; NOEXIT-NEXT:    nop // Delay Slot 5
+  ; NOEXIT-NEXT:    vmac cm0, cm0, x0, x1, r0 // Delay Slot 4
+  ; NOEXIT-NEXT:    nop // Delay Slot 3
+  ; NOEXIT-NEXT:    nop // Delay Slot 2
+  ; NOEXIT-NEXT:    nop // Delay Slot 1
+  ; NOEXIT-NEXT:  // %bb.1:
+  ; NOEXIT-NEXT:    add r2, r2, #1
+  ; NOEXIT-NEXT:  // %bb.2:
+  ; NOEXIT-NEXT:    ret lr
+  ; NOEXIT-NEXT:    nop // Delay Slot 5
+  ; NOEXIT-NEXT:    nop // Delay Slot 4
+  ; NOEXIT-NEXT:    vst amll0, [p1, #0] // Delay Slot 3
+  ; NOEXIT-NEXT:    st r2, [p0, #0] // Delay Slot 2
+  ; NOEXIT-NEXT:    nop // Delay Slot 1
+  ; NOEXIT-NEXT:  .LBB3_3:
+  ; NOEXIT-NEXT:    nopa ; paddb [p1], #32; nopxm
+  ; NOEXIT-NEXT:    paddb [p1], #32
+  ; NOEXIT-NEXT:    paddb [p1], #32
+  ; NOEXIT-NEXT:    paddb [p1], #32
+  ; NOEXIT-NEXT:    paddb [p1], #32; ret lr
+  ; NOEXIT-NEXT:    paddb [p1], #32 // Delay Slot 5
+  ; NOEXIT-NEXT:    paddb [p1], #32 // Delay Slot 4
+  ; NOEXIT-NEXT:    paddb [p1], #32 // Delay Slot 3
+  ; NOEXIT-NEXT:    vst amll0, [p1, #0] // Delay Slot 2
+  ; NOEXIT-NEXT:    nop // Delay Slot 1
+    ret void
+  }
+
   declare void @llvm.set.loop.iterations.i32(i32)
   declare i1 @llvm.loop.decrement.i32(i32)
 
@@ -293,4 +444,91 @@ body:             |
     RET implicit $lr
     DelayedSchedBarrier
 
+...
+---
+name:            deadOnSkipPath
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  bb.0:
+    successors: %bb.3(0x40000000), %bb.1(0x40000000)
+    liveins: $p0, $p1, $p2, $r0, $r2, $x0, $x1, $cm0
+
+    $wl0 = VLDA_dmw_lda_w_ag_idx_imm $p2, 0
+    $cm0 = VMAC_vmac_cm_core_dense $cm0, $x0, $x1, $r0
+    renamable $r1 = GE renamable $r0, renamable $r2
+    JNZ killed renamable $r1, %bb.3
+    DelayedSchedBarrier
+
+  bb.1:
+    successors: %bb.2(0x80000000)
+    liveins: $p0, $r2
+
+    renamable $r2 = ADD_add_r_ri killed renamable $r2, 1, implicit-def dead $srcarry
+
+  bb.2:
+    liveins: $p0, $r2
+
+    ST_dms_sts_idx_imm $r2, $p0, 0
+    RET implicit $lr
+    DelayedSchedBarrier
+
+  bb.3:
+    liveins: $cm0, $p1
+
+    $p1 = PADD_imm9_pseudo $p1, 32
+    $p1 = PADD_imm9_pseudo $p1, 32
+    $p1 = PADD_imm9_pseudo $p1, 32
+    $p1 = PADD_imm9_pseudo $p1, 32
+    $p1 = PADD_imm9_pseudo $p1, 32
+    $p1 = PADD_imm9_pseudo $p1, 32
+    $p1 = PADD_imm9_pseudo $p1, 32
+    $p1 = PADD_imm9_pseudo $p1, 32
+    VST_dmw_sts_am_ag_idx_imm $amll0, $p1, 0
+    RET implicit $lr
+    DelayedSchedBarrier
+...
+---
+name:            liveOnSkipPath
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  bb.0:
+    successors: %bb.3(0x40000000), %bb.1(0x40000000)
+    liveins: $p0, $p1, $p2, $r0, $r2, $x0, $x1, $cm0
+
+    $wl0 = VLDA_dmw_lda_w_ag_idx_imm $p2, 0
+    $cm0 = VMAC_vmac_cm_core_dense $cm0, $x0, $x1, $r0
+    renamable $r1 = GE renamable $r0, renamable $r2
+    JNZ killed renamable $r1, %bb.3
+    DelayedSchedBarrier
+
+  bb.1:
+    successors: %bb.2(0x80000000)
+    liveins: $cm0, $p0, $p1, $r2
+
+    renamable $r2 = ADD_add_r_ri killed renamable $r2, 1, implicit-def dead $srcarry
+
+  bb.2:
+    liveins: $cm0, $p0, $p1, $r2
+
+    VST_dmw_sts_am_ag_idx_imm $amll0, $p1, 0
+    ST_dms_sts_idx_imm $r2, $p0, 0
+    RET implicit $lr
+    DelayedSchedBarrier
+
+  bb.3:
+    liveins: $cm0, $p1
+
+    $p1 = PADD_imm9_pseudo $p1, 32
+    $p1 = PADD_imm9_pseudo $p1, 32
+    $p1 = PADD_imm9_pseudo $p1, 32
+    $p1 = PADD_imm9_pseudo $p1, 32
+    $p1 = PADD_imm9_pseudo $p1, 32
+    $p1 = PADD_imm9_pseudo $p1, 32
+    $p1 = PADD_imm9_pseudo $p1, 32
+    $p1 = PADD_imm9_pseudo $p1, 32
+    VST_dmw_sts_am_ag_idx_imm $amll0, $p1, 0
+    RET implicit $lr
+    DelayedSchedBarrier
 ...
