@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Modifications (c) Copyright 2025 Advanced Micro Devices, Inc. or its
+// Modifications (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its
 // affiliates
 //
 //===----------------------------------------------------------------------===//
@@ -569,6 +569,8 @@ class MachineBlockPlacement {
   void buildLoopChains(const MachineLoop &L);
   void rotateLoop(BlockChain &LoopChain, const MachineBasicBlock *ExitingBB,
                   BlockFrequency ExitFreq, const BlockFilterSet &LoopBlockSet);
+  void rotateLoopToFixedLatch(BlockChain &LoopChain, const MachineLoop &L,
+                              MachineBasicBlock *Latch);
   void rotateLoopWithProfile(BlockChain &LoopChain, const MachineLoop &L,
                              const BlockFilterSet &LoopBlockSet);
   void buildCFGChains();
@@ -2493,6 +2495,52 @@ void MachineBlockPlacement::rotateLoop(BlockChain &LoopChain,
   std::rotate(LoopChain.begin(), std::next(ExitIt), LoopChain.end());
 }
 
+/// Rotate the loop chain so that \p Latch, whose back edge stays taken whatever
+/// the layout, is at the bottom. If the block right above the latch only jumps
+/// to it while a hotter predecessor of the latch sits above that block, move
+/// the block to the top: the hotter edge then falls through into the latch.
+void MachineBlockPlacement::rotateLoopToFixedLatch(BlockChain &LoopChain,
+                                                   const MachineLoop &L,
+                                                   MachineBasicBlock *Latch) {
+  auto LatchIt = llvm::find(LoopChain, Latch);
+  if (LatchIt == LoopChain.end())
+    return;
+  // Blocks outside the loop were merged after the latch to keep an
+  // unanalyzable fall-through, so they stay behind it.
+  auto TailIt = std::next(LatchIt);
+  while (TailIt != LoopChain.end() && !L.contains(*TailIt))
+    ++TailIt;
+  std::rotate(LoopChain.begin(), TailIt, LoopChain.end());
+
+  LatchIt = llvm::find(LoopChain, Latch);
+  if (std::distance(LoopChain.begin(), LatchIt) < 2)
+    return;
+  auto JumpIt = std::prev(LatchIt);
+  MachineBasicBlock *Jump = *JumpIt;
+  MachineBasicBlock *Above = *std::prev(JumpIt);
+  if (Jump == L.getHeader() || Jump->succ_size() != 1 ||
+      !Above->isSuccessor(Latch))
+    return;
+  // Moving Jump breaks the fall-throughs out of Above and Jump, which can only
+  // be repaired if their branches are analyzable.
+  auto IsAnalyzable = [&](MachineBasicBlock &MBB) {
+    SmallVector<MachineOperand, 4> Cond;
+    MachineBasicBlock *TBB = nullptr, *FBB = nullptr;
+    return !TII->analyzeBranch(MBB, TBB, FBB, Cond);
+  };
+  if (!IsAnalyzable(*Above) || !IsAnalyzable(*Jump))
+    return;
+  auto EdgeFreq = [&](MachineBasicBlock *From) {
+    return MBFI->getBlockFreq(From) * MBPI->getEdgeProbability(From, Latch);
+  };
+  if (EdgeFreq(Above) <= EdgeFreq(Jump))
+    return;
+  LLVM_DEBUG(dbgs() << "Moving " << getBlockName(Jump)
+                    << " to the top of the loop so that " << getBlockName(Above)
+                    << " falls through into " << getBlockName(Latch) << "\n");
+  std::rotate(LoopChain.begin(), JumpIt, std::next(JumpIt));
+}
+
 /// Attempt to rotate a loop based on profile data to reduce branch cost.
 ///
 /// With profile data, we can determine the cost in terms of missed fall through
@@ -2720,11 +2768,19 @@ void MachineBlockPlacement::buildLoopChains(const MachineLoop &L) {
       ForcePreciseRotationCost ||
       (PreciseRotationCost && F->getFunction().hasProfileData());
 
+  // A latch whose back edge is always taken gains nothing from rotation, which
+  // assumes the latch branch can be reversed to fall through into the header.
+  MachineBasicBlock *FixedLatch = nullptr;
+  for (MachineBasicBlock *Pred : L.getHeader()->predecessors())
+    if (MLI->getLoopFor(Pred) == &L && TII->isLoopLatchBranchFixed(*Pred))
+      FixedLatch = Pred;
+
   // First check to see if there is an obviously preferable top block for the
   // loop. This will default to the header, but may end up as one of the
   // predecessors to the header if there is one which will result in strictly
   // fewer branches in the loop body.
-  MachineBasicBlock *LoopTop = findBestLoopTop(L, LoopBlockSet);
+  MachineBasicBlock *LoopTop =
+      FixedLatch ? L.getHeader() : findBestLoopTop(L, LoopBlockSet);
 
   // If we selected just the header for the loop top, look for a potentially
   // profitable exit block in the event that rotating the loop can eliminate
@@ -2734,7 +2790,7 @@ void MachineBlockPlacement::buildLoopChains(const MachineLoop &L) {
   // PreferredLoopExit before processing a new loop.
   PreferredLoopExit = nullptr;
   BlockFrequency ExitFreq;
-  if (!RotateLoopWithProfile && LoopTop == L.getHeader())
+  if (!FixedLatch && !RotateLoopWithProfile && LoopTop == L.getHeader())
     PreferredLoopExit = findBestLoopExit(L, LoopBlockSet, ExitFreq);
 
   BlockChain &LoopChain = *BlockToChain[LoopTop];
@@ -2752,7 +2808,9 @@ void MachineBlockPlacement::buildLoopChains(const MachineLoop &L) {
 
   buildChain(LoopTop, LoopChain, &LoopBlockSet);
 
-  if (RotateLoopWithProfile)
+  if (FixedLatch)
+    rotateLoopToFixedLatch(LoopChain, L, FixedLatch);
+  else if (RotateLoopWithProfile)
     rotateLoopWithProfile(LoopChain, L, LoopBlockSet);
   else
     rotateLoop(LoopChain, PreferredLoopExit, ExitFreq, LoopBlockSet);

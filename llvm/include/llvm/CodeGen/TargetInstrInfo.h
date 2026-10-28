@@ -2312,6 +2312,14 @@ public:
     return true;
   }
 
+  /// Return true if the loop back edge leaving \p MBB stays a taken branch
+  /// whatever the layout, e.g. a hardware loop branch that cannot be reversed.
+  /// Block placement then keeps \p MBB at the bottom of its loop instead of
+  /// rotating it above the header.
+  virtual bool isLoopLatchBranchFixed(const MachineBasicBlock &MBB) const {
+    return false;
+  }
+
   /// Produce the expression describing the \p MI loading a value into
   /// the physical register \p Reg. This hook should only be used with
   /// \p MIs belonging to VReg-less functions.
