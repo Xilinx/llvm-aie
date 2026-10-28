@@ -43,7 +43,7 @@ define void @drain_after_olp(ptr noalias %a, ptr noalias %c, ptr %out, i32 %n, i
 ; OLP-NEXT:    vmov lfl0, x0
 ; OLP-NEXT:    add r0, r0, #-1; vmov lfh0, x1
 ; OLP-NEXT:    movxm p5, #.LBB0_2
-; OLP-NEXT:    addm.nc r3, r0, #-1
+; OLP-NEXT:    addm.nc r0, r0, #-1
 ; OLP-NEXT:    vmov x4, lfl0
 ; OLP-NEXT:    vmov x5, lfh0
 ; OLP-NEXT:    mova m0, #4; movs p3, p1; vadd.8 x2, x2, x2
@@ -56,13 +56,13 @@ define void @drain_after_olp(ptr noalias %a, ptr noalias %c, ptr %out, i32 %n, i
 ; OLP-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
 ; OLP-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
 ; OLP-NEXT:    nopa ; nopb ; nops ; nopx ; vadd.32 x4, x4, x0; nopv
-; OLP-NEXT:    nopa ; nopb ; movs p4, p0; nopx ; vextract.8 r0, x2, #0, vaddsign0; nopv
+; OLP-NEXT:    nopa ; nopb ; movs p4, p0; nopx ; vextract.8 r4, x2, #0, vaddsign0; nopv
 ; OLP-NEXT:    padda [p4], #64; paddb [p3], m0; nops ; movx r25, #0; vadd.32 x5, x5, x0; nopv
 ; OLP-NEXT:  .LBB0_3: // %steady.stage1.inner.inner.header
 ; OLP-NEXT:    // Parent Loop BB0_2 Depth=1
 ; OLP-NEXT:    // => This Inner Loop Header: Depth=2
 ; OLP-NEXT:  .L_LEnd2:
-; OLP-NEXT:    nopa ; nopb ; nops ; add r25, r25, r0; nopm ; nopv
+; OLP-NEXT:    nopa ; nopb ; nops ; add r25, r25, r4; nopm ; nopv
 ; OLP-NEXT:  // %bb.4: // %steady.stage1.bottom.and.stage0.top
 ; OLP-NEXT:    // in Loop: Header=BB0_2 Depth=1
 ; OLP-NEXT:    nopa ; nopb ; movs p0, p4; nopxm ; nopv
@@ -70,7 +70,7 @@ define void @drain_after_olp(ptr noalias %a, ptr noalias %c, ptr %out, i32 %n, i
 ; OLP-NEXT:    nop
 ; OLP-NEXT:    nop
 ; OLP-NEXT:    vmov lfl0, x4
-; OLP-NEXT:    jnzd r3, r3, p5; vmov lfh0, x5
+; OLP-NEXT:    jnzd r0, r0, p5; vmov lfh0, x5
 ; OLP-NEXT:    nop // Delay Slot 5
 ; OLP-NEXT:    nop // Delay Slot 4
 ; OLP-NEXT:    vmov x4, lfl0 // Delay Slot 3
@@ -83,12 +83,12 @@ define void @drain_after_olp(ptr noalias %a, ptr noalias %c, ptr %out, i32 %n, i
 ; OLP-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
 ; OLP-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
 ; OLP-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
-; OLP-NEXT:    nopa ; nopb ; nops ; nopx ; vextract.8 r0, x2, #0, vaddsign0; nopv
+; OLP-NEXT:    nopa ; nopb ; nops ; nopx ; vextract.8 r4, x2, #0, vaddsign0; nopv
 ; OLP-NEXT:    mova r25, #0; nopb ; nops ; nopxm ; nopv
 ; OLP-NEXT:  .LBB0_6: // %lastiter.stage1.inner.inner.header
 ; OLP-NEXT:    // =>This Inner Loop Header: Depth=1
 ; OLP-NEXT:  .L_LEnd1:
-; OLP-NEXT:    nopa ; nopb ; nops ; add r25, r25, r0; nopm ; nopv
+; OLP-NEXT:    nopa ; nopb ; nops ; add r25, r25, r4; nopm ; nopv
 ; OLP-NEXT:  // %bb.7: // %lastiter.stage1.bottom
 ; OLP-NEXT:    vldb x0, [p4], #64; nopxm
 ; OLP-NEXT:    vldb x0, [p4], #64; add.nc lc, r2, #-9
@@ -132,7 +132,7 @@ define void @drain_after_olp(ptr noalias %a, ptr noalias %c, ptr %out, i32 %n, i
 ; NOOLP-NEXT:    nop // Delay Slot 2
 ; NOOLP-NEXT:    nop // Delay Slot 1
 ; NOOLP-NEXT:  // %bb.1: // %outer.header.preheader
-; NOOLP-NEXT:    addm.nc r3, r0, #-1
+; NOOLP-NEXT:    addm.nc r0, r0, #-1
 ; NOOLP-NEXT:    mova r24, #0; movxm p4, #.LBB0_2
 ; NOOLP-NEXT:    vbcst.32 x0, r24
 ; NOOLP-NEXT:    vmov x1, x0
@@ -151,21 +151,21 @@ define void @drain_after_olp(ptr noalias %a, ptr noalias %c, ptr %out, i32 %n, i
 ; NOOLP-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
 ; NOOLP-NEXT:    nopa ; nopb ; nops ; nopx ; vadd.8 x2, x2, x2; nopv
 ; NOOLP-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
-; NOOLP-NEXT:    nopa ; nopb ; nops ; nopx ; vextract.8 r4, x2, #0, vaddsign0; nopv
-; NOOLP-NEXT:    padda [p0], #64; nopb ; nops ; movx r0, #0; nopm ; nopv
+; NOOLP-NEXT:    nopa ; nopb ; nops ; nopx ; vextract.8 r6, x2, #0, vaddsign0; nopv
+; NOOLP-NEXT:    padda [p0], #64; nopb ; nops ; movx r4, #0; nopm ; nopv
 ; NOOLP-NEXT:  .LBB0_3: // %inner.header
 ; NOOLP-NEXT:    // Parent Loop BB0_2 Depth=1
 ; NOOLP-NEXT:    // => This Inner Loop Header: Depth=2
 ; NOOLP-NEXT:  .L_LEnd1:
-; NOOLP-NEXT:    nopa ; nopb ; nops ; add r0, r0, r4; nopm ; nopv
+; NOOLP-NEXT:    nopa ; nopb ; nops ; add r4, r4, r6; nopm ; nopv
 ; NOOLP-NEXT:  // %bb.4: // %outer.latch
 ; NOOLP-NEXT:    // in Loop: Header=BB0_2 Depth=1
-; NOOLP-NEXT:    nopa ; nopb ; jnzd r3, r3, p4; vmov x2, lfl0; nops
+; NOOLP-NEXT:    nopa ; nopb ; jnzd r0, r0, p4; vmov x2, lfl0; nops
 ; NOOLP-NEXT:    vmov x3, lfh0 // Delay Slot 5
 ; NOOLP-NEXT:    vadd.32 x2, x2, x0 // Delay Slot 4
 ; NOOLP-NEXT:    vadd.32 x3, x3, x0 // Delay Slot 3
 ; NOOLP-NEXT:    vmov lfl0, x2 // Delay Slot 2
-; NOOLP-NEXT:    st r0, [p1], #4; vmov lfh0, x3 // Delay Slot 1
+; NOOLP-NEXT:    st r4, [p1], #4; vmov lfh0, x3 // Delay Slot 1
 ; NOOLP-NEXT:  // %bb.5: // %drain.preheader
 ; NOOLP-NEXT:    vldb x0, [p3], #64
 ; NOOLP-NEXT:    vldb x0, [p3], #64; add.nc lc, r2, #-9

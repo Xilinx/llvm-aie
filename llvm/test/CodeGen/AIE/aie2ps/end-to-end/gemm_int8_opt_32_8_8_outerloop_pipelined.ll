@@ -173,7 +173,7 @@ define weak_odr dso_local void @gemm_int8_opt_32_8_8(ptr noalias nonnull align 4
 ; REMARKS-NEXT: ...
 ; ASM-LABEL: gemm_int8_opt_32_8_8:
 ; ASM:       // %bb.0: // %entry
-; ASM-NEXT:    nopa ; nopb ; nopx ; mov dj0, #42
+; ASM-NEXT:    nopa ; nopb ; nopx ; mov dj0, #42; nops
 ; ASM-NEXT:    lda.s16 r0, [p3, dj0]
 ; ASM-NEXT:    nop
 ; ASM-NEXT:    nop
@@ -248,13 +248,13 @@ define weak_odr dso_local void @gemm_int8_opt_32_8_8(ptr noalias nonnull align 4
 ; ASM-NEXT:    vlda.ups.2x cmh0, s0, upssign1, [p5], #64; vldb.128 wl6, [p6, #0]; add r20, r3, r16; mov s1, r1; movs dc1, dc0
 ; ASM-NEXT:    lda.u8 r0, [p7], #1; movs m5, r20; vbcst.16 x0, r18
 ; ASM-NEXT:    lda.u8 r2, [p7], m2; movs dc5, dc0; add r18, r24, #-1; mov m2, #88
-; ASM-NEXT:    lda r5, [p7], m2; vldb.3d x10, [p1], d1; movs m4, r3; addm.nc r3, r18, #-1
-; ASM-NEXT:    lda m3, [p7], #-4; mov r20, #48
-; ASM-NEXT:    lda dn3, [p7], #-4; lshl r4, r30, r26; vshift x1, x0, x2, r20
-; ASM-NEXT:    lda dj3, [p7], #20; movx r18, #15; vshift x2, x0, x2, r20
-; ASM-NEXT:    lda m2, [p7], #-4; vldb x4, [p0, #192]; extend.s8 r4, r4; vsel.32 x3, x1, x6, r18; movs p3, p0
-; ASM-NEXT:    lda dn2, [p7, #0]; vldb x8, [p3], m5; movx crsrsmode, #0; mov s0, r4; padds [p0], #64
-; ASM-NEXT:    lda dj2, [p7, #-4]; vldb x6, [p0], #64; movxm p7, #.LBB0_2; movs dc4, dc0
+; ASM-NEXT:    lda r5, [p7], m2; vldb.3d x10, [p1], d1; movx r22, #48; addm.nc r18, r18, #-1
+; ASM-NEXT:    lda m3, [p7], #-4; vshift x1, x0, x2, r22
+; ASM-NEXT:    lda dn3, [p7], #-4; vshift x2, x0, x2, r22
+; ASM-NEXT:    lda dj3, [p7], #20; vldb x4, [p0, #192]; lshl r4, r30, r26; mov r20, #15
+; ASM-NEXT:    lda m2, [p7], #-4; paddb [p0], #64; extend.s8 r4, r4; vsel.32 x3, x1, x6, r20; movs p3, p0
+; ASM-NEXT:    lda dn2, [p7, #0]; vldb x8, [p3], m5; movx crsrsmode, #0; mov s0, r4; movs dc4, dc0
+; ASM-NEXT:    lda dj2, [p7, #-4]; vldb x6, [p0], #64; movxm p7, #.LBB0_2; movs m4, r3
 ; ASM-NEXT:    vldb.3d x10, [p0], d0; extend.u8 r6, r28; vshuffle x10, x10, x10, r0
 ; ASM-NEXT:    lda p2, [p2, #0]; movs dc3, dc2; add r16, r5, #-1; vshuffle x1, x10, x10, r2
 ; ASM-NEXT:    vlda.3d x4, [p1], d1; vldb x1, [p0], #64
@@ -290,9 +290,9 @@ define weak_odr dso_local void @gemm_int8_opt_32_8_8(ptr noalias nonnull align 4
 ; ASM-NEXT:    vlda.ups.2x cmh3, s1, upssign1, [p4], #64; vmac dm0, dm0, x6, x5, r10
 ; ASM-NEXT:    vlda.ups.2x cml2, s1, upssign1, [p4], #64; vmac dm3, dm3, x1, x5, r10
 ; ASM-NEXT:    vlda.ups.2x cmh2, s1, upssign1, [p4], #64; vmac dm2, dm2, x10, x5, r10
-; ASM-NEXT:    vlda.ups.2x cml1, s1, upssign1, [p5], #64; vsel.32 x3, x2, x1, r18; vmac dm1, dm1, x8, x5, r10
+; ASM-NEXT:    vlda.ups.2x cml1, s1, upssign1, [p5], #64; vsel.32 x3, x2, x1, r20; vmac dm1, dm1, x8, x5, r10
 ; ASM-NEXT:    vlda.ups.2x cmh1, s1, upssign1, [p5], #64; vmac dm0, dm0, x6, x5, r10
-; ASM-NEXT:    vlda.ups.2x cml0, s1, upssign1, [p5], #64; jnzd r3, r3, p7; vshuffle x1, x5, x5, r0
+; ASM-NEXT:    vlda.ups.2x cml0, s1, upssign1, [p5], #64; jnzd r18, r18, p7; vshuffle x1, x5, x5, r0
 ; ASM-NEXT:    vlda.ups.2x cmh0, s1, upssign1, [p5], #64; vshuffle x1, x1, x1, r2 // Delay Slot 5
 ; ASM-NEXT:    vlda.3d x4, [p1], d1; vldb x1, [p0], #64; vst.srs.4x dm3, s0, srssign0, [p2], #64 // Delay Slot 4
 ; ASM-NEXT:    vst.srs.4x dm2, s0, srssign0, [p2], #64; vldb x10, [p0], #64; vmul dm4, x0, x3, r8 // Delay Slot 3
@@ -332,7 +332,7 @@ define weak_odr dso_local void @gemm_int8_opt_32_8_8(ptr noalias nonnull align 4
 ; ASM-NEXT:    vst.srs.4x dm1, s0, srssign0, [p2, #0] // Delay Slot 2
 ; ASM-NEXT:    vst.srs.4x dm0, s0, srssign0, [p2, #64]; movx srssign0, #0 // Delay Slot 1
 ; ASM-NEXT:  .LBB0_8: // %if.else
-; ASM-NEXT:    mova m0, #44; nopb ; nopx ; movs p2, p3
+; ASM-NEXT:    mova m0, #44; nopb ; nopxm ; movs p2, p3
 ; ASM-NEXT:    lda.u8 r30, [p3, #0]; paddb [p2], m0
 ; ASM-NEXT:    lda.u8 r26, [p2], #3; mov m0, #-19
 ; ASM-NEXT:    lda.u8 r28, [p2], m0
@@ -344,24 +344,23 @@ define weak_odr dso_local void @gemm_int8_opt_32_8_8(ptr noalias nonnull align 4
 ; ASM-NEXT:    lda dn4, [p2], #-8; mov m1, #32
 ; ASM-NEXT:    lda dj4, [p2], m1
 ; ASM-NEXT:    lda m1, [p2], #-8
-; ASM-NEXT:    nop
 ; ASM-NEXT:    lda dn1, [p2], #-8
 ; ASM-NEXT:    lda dj1, [p2], #12
-; ASM-NEXT:    lda dn5, [p2], #-8; mov m2, #-47
+; ASM-NEXT:    lda dn5, [p2], #-8; movx crupsmode, #0; mov m2, #-47
 ; ASM-NEXT:    lda dj5, [p2], m2; lshl r6, r30, r6
-; ASM-NEXT:    mova dc0, #0; lshl r26, r4, r26; mov r27, r7
-; ASM-NEXT:    lda.u8 r0, [p2], #1; xor r4, r20, r4; mov m2, #-18
-; ASM-NEXT:    lda.u8 r2, [p2], m2; lshl r20, r28, r22; mov m2, #100
-; ASM-NEXT:    lda r3, [p2], m2; movs p3, p5; sel.nez r18, r18, r26, r27; mov r5, p6
-; ASM-NEXT:    vlda.ups.2x cml1, s0, upssign1, [p3], #64; movs dc1, dc0; lshl r16, r28, r16; vbcst.16 x0, r18
-; ASM-NEXT:    vlda.ups.2x cmh1, s0, upssign1, [p3], #64; vldb.128 wl6, [p6, #0]; or r10, r16, r20; mov s0, r1; movs dc5, dc0
-; ASM-NEXT:    vlda.ups.2x cml0, s0, upssign1, [p3], #64; vldb.3d x10, [p1], d1; or r12, r10, r4; mov r4, #192
-; ASM-NEXT:    lda m2, [p2], #-4; movs m3, r6; add r16, r6, r4; mov r6, #48
-; ASM-NEXT:    lda dn2, [p2, #0]; movx crupsmode, #0; vshift x1, x0, x2, r6
-; ASM-NEXT:    lda dj2, [p2, #-4]; movs p2, p4; add r16, r24, #-1; mov m4, r16
-; ASM-NEXT:    vlda.ups.2x cml3, s0, upssign1, [p2], #64; vldb x4, [p0, #192]; add r4, r3, #-1; vshift x2, x0, x2, r6; movs p7, p0
-; ASM-NEXT:    vlda.ups.2x cmh3, s0, upssign1, [p2], #64; vldb x8, [p7], m4; movx r16, #15; addm.nc r3, r16, #-1; padds [p0], #64
-; ASM-NEXT:    vlda.ups.2x cml2, s0, upssign1, [p2], #64; vldb x6, [p0], #64; movs dc4, dc0; vsel.32 x3, x1, x6, r16
+; ASM-NEXT:    movs p3, p5; lshl r26, r4, r26
+; ASM-NEXT:    vlda.ups.2x cml1, s0, upssign1, [p3], #64; xor r4, r20, r4; mov r27, r7
+; ASM-NEXT:    vlda.ups.2x cmh1, s0, upssign1, [p3], #64; sel.nez r18, r18, r26, r27; mov dc0, #0
+; ASM-NEXT:    lda.u8 r0, [p2], #1; lshl r20, r28, r22; mov m2, #-18
+; ASM-NEXT:    lda.u8 r2, [p2], m2; vldb.128 wl6, [p6, #0]; lshl r16, r28, r16; mov m2, #100; movs dc1, dc0
+; ASM-NEXT:    lda r3, [p2], m2; movs dc5, dc0; or r10, r16, r20; vbcst.16 x0, r18
+; ASM-NEXT:    vlda.ups.2x cml0, s0, upssign1, [p3], #64; vldb.3d x10, [p1], d1; or r12, r10, r4; mov s0, r1
+; ASM-NEXT:    lda m2, [p2], #-4; movs p7, p0; movx r4, #192; mov r18, #48
+; ASM-NEXT:    lda dn2, [p2, #0]; movs m3, r6; add r16, r6, r4; vshift x1, x0, x2, r18
+; ASM-NEXT:    lda dj2, [p2, #-4]; movs p2, p4; add r6, r24, #-1; vshift x2, x0, x2, r18
+; ASM-NEXT:    vlda.ups.2x cml3, s0, upssign1, [p2], #64; vldb x4, [p0, #192]; movx r16, #15; addm.nc r6, r6, #-1; movs m4, r16
+; ASM-NEXT:    vlda.ups.2x cmh3, s0, upssign1, [p2], #64; vldb x8, [p7], m4; padds [p0], #64; vsel.32 x3, x1, x6, r16
+; ASM-NEXT:    vlda.ups.2x cml2, s0, upssign1, [p2], #64; vldb x6, [p0], #64; add r4, r3, #-1; mov r3, p6; movs dc4, dc0
 ; ASM-NEXT:    vlda.ups.2x cmh2, s0, upssign1, [p2], #64; vldb.3d x10, [p0], d0; vshuffle x10, x10, x10, r0
 ; ASM-NEXT:    vlda.ups.2x cmh0, s0, upssign1, [p3], #64; movx crsrsmode, #0; vshuffle x1, x10, x10, r2
 ; ASM-NEXT:    vlda.3d x4, [p1], d1; vldb x1, [p0], #64
@@ -389,9 +388,9 @@ define weak_odr dso_local void @gemm_int8_opt_32_8_8(ptr noalias nonnull align 4
 ; ASM-NEXT:    nopa ; vldb x6, [p7], m3; nops ; nopx ; vshuffle x3, x4, x4, r0; vmac dm2, dm2, x10, x5, r10
 ; ASM-NEXT:  // %bb.11: // %steady.stage1.bottom.and.stage0.top258
 ; ASM-NEXT:    // in Loop: Header=BB0_9 Depth=1
-; ASM-NEXT:    nopa ; vldb x4, [p0, #192]; movs p6, r5; nopx ; vshuffle x5, x3, x3, r2; vmac dm1, dm1, x8, x5, r10
+; ASM-NEXT:    nopa ; vldb x4, [p0, #192]; movs p6, r3; nopx ; vshuffle x5, x3, x3, r2; vmac dm1, dm1, x8, x5, r10
 ; ASM-NEXT:    nopa ; paddb.2d [p6], d2; padds [p0], #64; nopx ; mov p7, p0; vmac dm0, dm0, x6, x5, r10
-; ASM-NEXT:    vlda x8, [p7], m4; vldb.128 wl1, [p6, #0]; nops ; nopx ; mov r5, p6; vmac dm3, dm3, x1, x5, r10
+; ASM-NEXT:    vlda x8, [p7], m4; vldb.128 wl1, [p6, #0]; nops ; nopx ; mov r3, p6; vmac dm3, dm3, x1, x5, r10
 ; ASM-NEXT:    vlda x6, [p0], #64; vldb.3d x5, [p1], d1; vshuffle x3, x4, x4, r0; vmac dm2, dm2, x10, x5, r10
 ; ASM-NEXT:    vlda.ups.2x cml3, s0, upssign1, [p2], #64; vldb.3d x10, [p0], d0; vshuffle x5, x3, x3, r2; vmac dm1, dm1, x8, x5, r10
 ; ASM-NEXT:    vlda.ups.2x cmh3, s0, upssign1, [p2], #64; movxm p6, #.LBB0_9; vmac dm0, dm0, x6, x5, r10
@@ -403,7 +402,7 @@ define weak_odr dso_local void @gemm_int8_opt_32_8_8(ptr noalias nonnull align 4
 ; ASM-NEXT:    vlda.ups.2x cmh0, s0, upssign1, [p3], #64; vshuffle x1, x1, x1, r2
 ; ASM-NEXT:    vst.srs.2x cml3, s0, srssign1, [p4], #64
 ; ASM-NEXT:    vlda.3d x4, [p1], d1; vldb x1, [p0], #64; vst.srs.2x cmh3, s0, srssign1, [p4], #64
-; ASM-NEXT:    vst.srs.2x cml2, s0, srssign1, [p4], #64; vldb x10, [p0], #64; jnzd r3, r3, p6; vmul dm4, x0, x3, r8
+; ASM-NEXT:    vst.srs.2x cml2, s0, srssign1, [p4], #64; vldb x10, [p0], #64; jnzd r6, r6, p6; vmul dm4, x0, x3, r8
 ; ASM-NEXT:    vldb.3d x8, [p0], d0; vst.srs.2x cml1, s0, srssign1, [p5], #64 // Delay Slot 5
 ; ASM-NEXT:    vst.srs.2x cmh2, s0, srssign1, [p4], #64; vldb x6, [p7], m3; vaddmac dm3, dm3, dm4, x8, x1, r12 // Delay Slot 4
 ; ASM-NEXT:    vlda.3d x4, [p1], d1; vldb x1, [p0], #64; vst.srs.2x cmh1, s0, srssign1, [p5], #64; vaddmac dm2, dm2, dm4, x6, x1, r12 // Delay Slot 3
