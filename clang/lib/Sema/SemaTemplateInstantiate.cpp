@@ -2250,6 +2250,12 @@ TemplateInstantiator::TransformLoopHintAttr(const LoopHintAttr *LH) {
               Option == LoopHintAttr::MaxIterationCount))
     return LH;
 
+  // A template lambda inside a template is transformed once per enclosing
+  // instantiation, while its own parameters are still unknown.
+  if (TransformedExpr->isValueDependent())
+    return LoopHintAttr::CreateImplicit(getSema().Context, Option, State,
+                                        TransformedExpr, *LH);
+
   llvm::APSInt ValueAPS =
       TransformedExpr->EvaluateKnownConstInt(getSema().getASTContext());
   // The values of 0 and 1 block any unrolling of the loop.
