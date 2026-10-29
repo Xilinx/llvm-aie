@@ -40,10 +40,6 @@ static cl::opt<bool> AllowAIEZOL(
              "JNZD"),
     cl::init(true), cl::Hidden);
 
-// Defined by the outer loop pipeliner; read here so a run-wide request is
-// honoured as well as a per-loop one.
-extern cl::opt<bool> EnableOuterLoopPipelining;
-
 // Kill switch on top of allowMultiBlockHardwareLoops(), which is what decides
 // per subtarget whether multi-block JNZD loops are available at all. Also
 // honoured as a per-loop hint, AIE_LOOP_HINT(aie-multiblock-jnzd-loops, 0).
@@ -367,16 +363,18 @@ bool AIETTICommon::isHardwareLoopProfitable(
                            "unavailable\n");
       return false;
     }
-    // The outer loop pipeliner cannot take a hardware loop as input yet: it
-    // needs a latch that still compares an induction variable. Reject here so
-    // a loop headed for pipelining reaches it in that form, whether it was
-    // requested per loop or for the whole run. The metadata key is
-    // llvm.loop.hint. plus the option name, see AIELoopOptionOverrides.h.
-    const std::optional<int64_t> PipelineHint = AIELoopUtils::getLoopHintInt(
-        L->getLoopID(), "llvm.loop.hint.aie-enable-outer-loop-pipelining");
-    if (EnableOuterLoopPipelining || (PipelineHint && *PipelineHint > 0)) {
-      LLVM_DEBUG(dbgs() << "AIE Loops: Left to the outer loop pipeliner\n");
-      return false;
+    if (const std::optional<unsigned> Limit =
+            getMultiBlockJNZDPointerPHILimit()) {
+      const unsigned NumPointerPHIs =
+          count_if(L->getHeader()->phis(), [](const PHINode &PHI) {
+            return PHI.getType()->isPointerTy();
+          });
+      if (NumPointerPHIs >= *Limit) {
+        LLVM_DEBUG(dbgs() << "AIE Loops: Multi-block loop, " << NumPointerPHIs
+                          << " pointer PHIs leave no pointer register for "
+                             "JNZD\n");
+        return false;
+      }
     }
   }
 

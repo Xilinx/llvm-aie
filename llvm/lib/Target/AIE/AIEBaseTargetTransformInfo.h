@@ -45,6 +45,13 @@ public:
   /// Such a loop cannot be a ZOL, so it ends on a JNZD instead.
   virtual bool allowMultiBlockHardwareLoops() const { return false; }
 
+  /// Number of pointer PHIs in a multi-block loop's header from which it stays
+  /// a software loop, for subtargets whose JNZD holds its target in a pointer
+  /// register. std::nullopt means no limit.
+  virtual std::optional<unsigned> getMultiBlockJNZDPointerPHILimit() const {
+    return std::nullopt;
+  }
+
   virtual bool isVectorExtractIntrinsicID(Intrinsic::ID ID) const {
     return false;
   }
