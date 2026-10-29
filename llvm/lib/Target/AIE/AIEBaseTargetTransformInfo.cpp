@@ -335,7 +335,9 @@ bool AIETTICommon::isHardwareLoopProfitable(
     Loop *L, ScalarEvolution &SE, AssumptionCache &AC,
     TargetLibraryInfo *LibInfo, HardwareLoopInfo &HWLoopInfo) const {
 
-  if (!EnableAIEHardwareLoops) {
+  // Per loop: AIE_LOOP_HINT(enable-aie-hardware-loops, 0).
+  const AIE::LoopOptionOverrides Overrides(L->getLoopID());
+  if (!Overrides.get(EnableAIEHardwareLoops)) {
     LLVM_DEBUG(dbgs() << "AIE Loops: Disabled\n");
     return false;
   }
@@ -361,7 +363,6 @@ bool AIETTICommon::isHardwareLoopProfitable(
   // and carries no such restriction, which is what lets a multi-block loop
   // become a hardware loop at all.
   if (L->getNumBlocks() > 1) {
-    const AIE::LoopOptionOverrides Overrides(L->getLoopID());
     if (!Overrides.get(AllowAIEJNZD) || !allowMultiBlockHardwareLoops()) {
       LLVM_DEBUG(dbgs() << "AIE Loops: Multi-block loop, JNZD loops "
                            "unavailable\n");
