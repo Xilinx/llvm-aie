@@ -57,7 +57,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: implicit_WAW
-    ; CHECK: BUNDLE implicit-def $wl0, implicit-def $x0, implicit-def $wh0, implicit killed $p0, implicit killed $p1 {
+    ; CHECK: BUNDLE implicit-def $wl0, implicit-def $x0, implicit-def $wh0, implicit killed $p0, implicit killed $p1 :: (load (<8 x s32>), addrspace 5), (load (<8 x s32>), addrspace 6) {
     ; CHECK-NEXT:   $wl0 = VLDA_dmw_lda_w_ag_idx_imm killed $p0, 0, implicit-def $x0 :: (load (<8 x s32>), addrspace 5)
     ; CHECK-NEXT:   $wh0 = VLDB_dmw_ldb_ag_idx_imm killed $p1, 0 :: (load (<8 x s32>), addrspace 6)
     ; CHECK-NEXT: }

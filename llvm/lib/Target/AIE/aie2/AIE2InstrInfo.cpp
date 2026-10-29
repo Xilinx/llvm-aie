@@ -62,7 +62,9 @@ const AIE2MCFormats AIE2Formats;
 } // namespace
 
 AIE2InstrInfo::AIE2InstrInfo(const TargetSubtargetInfo &STI)
-    : AIE2GenInstrInfo(STI, AIE2::ADJCALLSTACKUP, AIE2::ADJCALLSTACKDOWN) {
+    : AIE2GenInstrInfo(STI, RegInfo, AIE2::ADJCALLSTACKUP,
+                       AIE2::ADJCALLSTACKDOWN),
+      RegInfo(STI.getHwMode()) {
   FormatInterface = &AIE2Formats;
   FuncUnitWrapper::setFormatInterface(FormatInterface);
 }
@@ -549,9 +551,9 @@ void AIE2InstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                         MachineBasicBlock::iterator I,
                                         Register SrcReg, bool IsKill, int FI,
                                         const TargetRegisterClass *RC,
-                                        const TargetRegisterInfo *TRI,
                                         Register VReg,
                                         MachineInstr::MIFlag Flags) const {
+  const TargetRegisterInfo *TRI = &getRegisterInfo();
   DebugLoc DL;
   if (I != MBB.end())
     DL = I->getDebugLoc();
@@ -623,10 +625,13 @@ void AIE2InstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
 }
 
 // Load a register to a stack slot.  Used in eliminating FrameIndex pseudo-ops.
-void AIE2InstrInfo::loadRegFromStackSlot(
-    MachineBasicBlock &MBB, MachineBasicBlock::iterator I, Register DstReg,
-    int FI, const TargetRegisterClass *RC, const TargetRegisterInfo *TRI,
-    Register VReg, MachineInstr::MIFlag Flags) const {
+void AIE2InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
+                                         MachineBasicBlock::iterator I,
+                                         Register DstReg, int FI,
+                                         const TargetRegisterClass *RC,
+                                         Register VReg,
+                                         MachineInstr::MIFlag Flags) const {
+  const TargetRegisterInfo *TRI = &getRegisterInfo();
   DebugLoc DL;
   if (I != MBB.end())
     DL = I->getDebugLoc();

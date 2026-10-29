@@ -39,7 +39,6 @@ class AIESubtarget final : public AIEGenSubtargetInfo {
   AIEBaseAddrSpaceInfo AddrSpaceInfo;
   AIEFrameLowering FrameLowering;
   AIEInstrInfo InstrInfo;
-  AIERegisterInfo RegInfo;
   AIE1TargetLowering TLInfo;
   InstrItineraryData InstrItins;
   SelectionDAGTargetInfo TSInfo;
@@ -78,7 +77,9 @@ public:
     return &InstrItins;
   }
   const AIEInstrInfo *getInstrInfo() const override { return &InstrInfo; }
-  const AIERegisterInfo *getRegisterInfo() const override { return &RegInfo; }
+  const AIERegisterInfo *getRegisterInfo() const override {
+    return &InstrInfo.getRegisterInfo();
+  }
   const AIE1TargetLowering *getTargetLowering() const override {
     return &TLInfo;
   }

@@ -28,7 +28,7 @@ const bfloat16 inits[] = {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = trunc nsw i32 [[I]] to i20
 // CHECK-NEXT:    [[ARRAYIDX:%.*]] = getelementptr inbounds bfloat, ptr @_ZL5inits, i20 [[TMP0]]
-// CHECK-NEXT:    [[TMP1:%.*]] = load bfloat, ptr [[ARRAYIDX]], align 2, !tbaa [[TBAA2:![0-9]+]]
+// CHECK-NEXT:    [[TMP1:%.*]] = load bfloat, ptr [[ARRAYIDX]], align 2, !tbaa [[TBAA6:![0-9]+]]
 // CHECK-NEXT:    ret bfloat [[TMP1]]
 //
 bfloat16 lu(int i) {
@@ -144,8 +144,8 @@ bfloat16 evenDown() {
   return 1.98828113079071044921875;
 }
 //.
-// CHECK: [[TBAA2]] = !{[[META3:![0-9]+]], [[META3]], i64 0}
-// CHECK: [[META3]] = !{!"__bf16", [[META4:![0-9]+]], i64 0}
-// CHECK: [[META4]] = !{!"omnipotent char", [[META5:![0-9]+]], i64 0}
+// CHECK: [[META4:![0-9]+]] = !{!"omnipotent char", [[META5:![0-9]+]], i64 0}
 // CHECK: [[META5]] = !{!"Simple C++ TBAA"}
+// CHECK: [[TBAA6]] = !{[[META7:![0-9]+]], [[META7]], i64 0}
+// CHECK: [[META7]] = !{!"__bf16", [[META4]], i64 0}
 //.

@@ -24,11 +24,11 @@
 // DEFAULT:       while.body:
 // DEFAULT-NEXT:    [[P_CHAR_06:%.*]] = phi ptr [ [[PTR]], [[WHILE_BODY_LR_PH]] ], [ [[INCDEC_PTR:%.*]], [[WHILE_BODY]] ]
 // DEFAULT-NEXT:    [[N_ADDR_05:%.*]] = phi i32 [ [[N]], [[WHILE_BODY_LR_PH]] ], [ [[DEC:%.*]], [[WHILE_BODY]] ]
-// DEFAULT-NEXT:    store i8 [[CONV]], ptr [[P_CHAR_06]], align 1, !tbaa [[TBAA2:![0-9]+]]
+// DEFAULT-NEXT:    store i8 [[CONV]], ptr [[P_CHAR_06]], align 1, !tbaa [[TBAA6:![0-9]+]]
 // DEFAULT-NEXT:    [[INCDEC_PTR]] = getelementptr inbounds nuw i8, ptr [[P_CHAR_06]], i20 1
 // DEFAULT-NEXT:    [[DEC]] = add nsw i32 [[N_ADDR_05]], -1
 // DEFAULT-NEXT:    [[CMP:%.*]] = icmp samesign ugt i32 [[N_ADDR_05]], 1
-// DEFAULT-NEXT:    br i1 [[CMP]], label [[WHILE_BODY]], label [[WHILE_END]], !llvm.loop [[LOOP5:![0-9]+]]
+// DEFAULT-NEXT:    br i1 [[CMP]], label [[WHILE_BODY]], label [[WHILE_END]], !llvm.loop [[LOOP7:![0-9]+]]
 // DEFAULT:       while.end:
 // DEFAULT-NEXT:    ret ptr [[PTR]]
 //
@@ -40,7 +40,7 @@
 // FBUILTIN:       while.body.lr.ph:
 // FBUILTIN-NEXT:    [[CONV:%.*]] = trunc i32 [[C]] to i8
 // FBUILTIN-NEXT:    [[TMP0:%.*]] = trunc i32 [[N]] to i20
-// FBUILTIN-NEXT:    tail call void @llvm.memset.p0.i20(ptr align 1 [[PTR]], i8 [[CONV]], i20 [[TMP0]], i1 false), !tbaa [[TBAA2:![0-9]+]]
+// FBUILTIN-NEXT:    tail call void @llvm.memset.p0.i20(ptr align 1 [[PTR]], i8 [[CONV]], i20 [[TMP0]], i1 false), !tbaa [[TBAA6:![0-9]+]]
 // FBUILTIN-NEXT:    br label [[WHILE_END]]
 // FBUILTIN:       while.end:
 // FBUILTIN-NEXT:    ret ptr [[PTR]]
@@ -56,11 +56,11 @@
 // FNO-BUILTIN:       while.body:
 // FNO-BUILTIN-NEXT:    [[P_CHAR_06:%.*]] = phi ptr [ [[PTR]], [[WHILE_BODY_LR_PH]] ], [ [[INCDEC_PTR:%.*]], [[WHILE_BODY]] ]
 // FNO-BUILTIN-NEXT:    [[N_ADDR_05:%.*]] = phi i32 [ [[N]], [[WHILE_BODY_LR_PH]] ], [ [[DEC:%.*]], [[WHILE_BODY]] ]
-// FNO-BUILTIN-NEXT:    store i8 [[CONV]], ptr [[P_CHAR_06]], align 1, !tbaa [[TBAA2:![0-9]+]]
+// FNO-BUILTIN-NEXT:    store i8 [[CONV]], ptr [[P_CHAR_06]], align 1, !tbaa [[TBAA6:![0-9]+]]
 // FNO-BUILTIN-NEXT:    [[INCDEC_PTR]] = getelementptr inbounds nuw i8, ptr [[P_CHAR_06]], i20 1
 // FNO-BUILTIN-NEXT:    [[DEC]] = add nsw i32 [[N_ADDR_05]], -1
 // FNO-BUILTIN-NEXT:    [[CMP:%.*]] = icmp samesign ugt i32 [[N_ADDR_05]], 1
-// FNO-BUILTIN-NEXT:    br i1 [[CMP]], label [[WHILE_BODY]], label [[WHILE_END]], !llvm.loop [[LOOP5:![0-9]+]]
+// FNO-BUILTIN-NEXT:    br i1 [[CMP]], label [[WHILE_BODY]], label [[WHILE_END]], !llvm.loop [[LOOP7:![0-9]+]]
 // FNO-BUILTIN:       while.end:
 // FNO-BUILTIN-NEXT:    ret ptr [[PTR]]
 //
@@ -74,19 +74,19 @@ void  *aie_memset(void *ptr, int c, int n){
   return ptr;
 }
 //.
-// DEFAULT: [[TBAA2]] = !{[[META3:![0-9]+]], [[META3]], i64 0}
-// DEFAULT: [[META3]] = !{!"omnipotent char", [[META4:![0-9]+]], i64 0}
-// DEFAULT: [[META4]] = !{!"Simple C++ TBAA"}
-// DEFAULT: [[LOOP5]] = distinct !{[[LOOP5]], [[META6:![0-9]+]]}
-// DEFAULT: [[META6]] = !{!"llvm.loop.mustprogress"}
+// DEFAULT: [[META4:![0-9]+]] = !{!"omnipotent char", [[META5:![0-9]+]], i64 0}
+// DEFAULT: [[META5]] = !{!"Simple C++ TBAA"}
+// DEFAULT: [[TBAA6]] = !{[[META4]], [[META4]], i64 0}
+// DEFAULT: [[LOOP7]] = distinct !{[[LOOP7]], [[META8:![0-9]+]]}
+// DEFAULT: [[META8]] = !{!"llvm.loop.mustprogress"}
 //.
-// FBUILTIN: [[TBAA2]] = !{[[META3:![0-9]+]], [[META3]], i64 0}
-// FBUILTIN: [[META3]] = !{!"omnipotent char", [[META4:![0-9]+]], i64 0}
-// FBUILTIN: [[META4]] = !{!"Simple C++ TBAA"}
+// FBUILTIN: [[META4:![0-9]+]] = !{!"omnipotent char", [[META5:![0-9]+]], i64 0}
+// FBUILTIN: [[META5]] = !{!"Simple C++ TBAA"}
+// FBUILTIN: [[TBAA6]] = !{[[META4]], [[META4]], i64 0}
 //.
-// FNO-BUILTIN: [[TBAA2]] = !{[[META3:![0-9]+]], [[META3]], i64 0}
-// FNO-BUILTIN: [[META3]] = !{!"omnipotent char", [[META4:![0-9]+]], i64 0}
-// FNO-BUILTIN: [[META4]] = !{!"Simple C++ TBAA"}
-// FNO-BUILTIN: [[LOOP5]] = distinct !{[[LOOP5]], [[META6:![0-9]+]]}
-// FNO-BUILTIN: [[META6]] = !{!"llvm.loop.mustprogress"}
+// FNO-BUILTIN: [[META4:![0-9]+]] = !{!"omnipotent char", [[META5:![0-9]+]], i64 0}
+// FNO-BUILTIN: [[META5]] = !{!"Simple C++ TBAA"}
+// FNO-BUILTIN: [[TBAA6]] = !{[[META4]], [[META4]], i64 0}
+// FNO-BUILTIN: [[LOOP7]] = distinct !{[[LOOP7]], [[META8:![0-9]+]]}
+// FNO-BUILTIN: [[META8]] = !{!"llvm.loop.mustprogress"}
 //.

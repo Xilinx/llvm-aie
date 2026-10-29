@@ -42,6 +42,7 @@ class ABIInfo;
 class CallArgList;
 class CodeGenFunction;
 class CGBlockInfo;
+class CGHLSLOffsetInfo;
 class SwiftABIInfo;
 
 /// TargetCodeGenInfo - This class organizes various target-specific
@@ -445,9 +446,8 @@ public:
   }
 
   /// Return an LLVM type that corresponds to a HLSL type
-  virtual llvm::Type *
-  getHLSLType(CodeGenModule &CGM, const Type *T,
-              const SmallVector<int32_t> *Packoffsets = nullptr) const {
+  virtual llvm::Type *getHLSLType(CodeGenModule &CGM, const Type *T,
+                                  const CGHLSLOffsetInfo &OffsetInfo) const {
     return nullptr;
   }
 
@@ -486,7 +486,6 @@ enum class AArch64ABIKind {
   DarwinPCS,
   Win64,
   AAPCSSoft,
-  PAuthTest,
 };
 
 std::unique_ptr<TargetCodeGenInfo>

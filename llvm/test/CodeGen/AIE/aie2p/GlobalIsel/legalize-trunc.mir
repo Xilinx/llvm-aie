@@ -109,10 +109,9 @@ name:            v32s32_trunc_v32s64_acc2048
 body:             |
   bb.1.entry:
     ; CHECK-LABEL: name: v32s32_trunc_v32s64_acc2048
-    ; CHECK: [[DEF:%[0-9]+]]:_(<32 x s64>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<16 x s64>), [[UV1:%[0-9]+]]:_(<16 x s64>) = G_UNMERGE_VALUES [[DEF]](<32 x s64>)
-    ; CHECK-NEXT: [[TRUNC:%[0-9]+]]:_(<16 x s32>) = G_TRUNC [[UV]](<16 x s64>)
-    ; CHECK-NEXT: [[TRUNC1:%[0-9]+]]:_(<16 x s32>) = G_TRUNC [[UV1]](<16 x s64>)
+    ; CHECK: [[DEF:%[0-9]+]]:_(<16 x s64>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[TRUNC:%[0-9]+]]:_(<16 x s32>) = G_TRUNC [[DEF]](<16 x s64>)
+    ; CHECK-NEXT: [[TRUNC1:%[0-9]+]]:_(<16 x s32>) = G_TRUNC [[DEF]](<16 x s64>)
     ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[TRUNC]](<16 x s32>), [[TRUNC1]](<16 x s32>)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS]](<32 x s32>)
     %1:_(<32 x s64>) = G_IMPLICIT_DEF

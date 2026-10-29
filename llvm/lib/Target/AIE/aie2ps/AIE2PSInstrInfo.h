@@ -26,8 +26,12 @@
 namespace llvm {
 
 class AIE2PSInstrInfo : public AIE2PSGenInstrInfo {
+  const AIE2PSRegisterInfo RegInfo;
+
 public:
   explicit AIE2PSInstrInfo(const TargetSubtargetInfo &STI);
+
+  const AIE2PSRegisterInfo &getRegisterInfo() const { return RegInfo; }
 
   unsigned getReturnOpcode() const override;
   unsigned getAddrIntrinsic2D() const override;
@@ -84,14 +88,13 @@ public:
   void storeRegToStackSlot(MachineBasicBlock &MBB,
                            MachineBasicBlock::iterator MBBI, Register SrcReg,
                            bool IsKill, int FrameIndex,
-                           const TargetRegisterClass *RC,
-                           const TargetRegisterInfo *TRI, Register VReg,
+                           const TargetRegisterClass *RC, Register VReg,
                            MachineInstr::MIFlag Flags) const override;
 
   void loadRegFromStackSlot(MachineBasicBlock &MBB,
                             MachineBasicBlock::iterator MBBI, Register DstReg,
                             int FrameIndex, const TargetRegisterClass *RC,
-                            const TargetRegisterInfo *TRI, Register VReg,
+                            Register VReg,
                             MachineInstr::MIFlag Flags) const override;
 
   bool expandPostRAPseudo(MachineInstr &MI) const override;
