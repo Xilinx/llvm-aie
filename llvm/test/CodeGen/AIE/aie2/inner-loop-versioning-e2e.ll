@@ -16,52 +16,50 @@
 define void @versioned(ptr noalias %a, ptr noalias %b, i32 %n) {
 ; CHECK-LABEL: versioned:
 ; CHECK:       // %bb.0: // %loop.lver.guard
-; CHECK-NEXT:    mova r1, #1; nopb ; nopxm
+; CHECK-NEXT:    mova r1, #1; nopx
 ; CHECK-NEXT:    lt r27, r1, r0
-; CHECK-NEXT:    mova r1, #2; sel.nez r2, r0, r1, r27
-; CHECK-NEXT:    ltu r3, r2, r1
-; CHECK-NEXT:    jz r3, #.LBB0_3
+; CHECK-NEXT:    mova r0, #2; sel.nez r1, r0, r1, r27
+; CHECK-NEXT:    ltu r2, r1, r0
+; CHECK-NEXT:    jz r2, #.LBB0_4
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mova r1, #0 // Delay Slot 1
+; CHECK-NEXT:    mova r0, #0 // Delay Slot 1
 ; CHECK-NEXT:  // %bb.1: // %loop.ph
-; CHECK-NEXT:    mova r2, #2
+; CHECK-NEXT:    add.nc lc, r1, #0
+; CHECK-NEXT:    movxm ls, #.LBB0_2
+; CHECK-NEXT:    nopb ; mova r1, #2; nops ; movxm le, #.L_LEnd0; nopv
+; CHECK-NEXT:    nopb ; nopa ; nops ; lshl r2, r0, r1; nopm ; nopv
 ; CHECK-NEXT:  .LBB0_2: // %loop
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
-; CHECK-NEXT:    nopb ; nopa ; nops ; lshl r3, r1, r2; nopm ; nopv
-; CHECK-NEXT:    mov dj0, r3
-; CHECK-NEXT:    lda r3, [p0, dj0]
+; CHECK-NEXT:    nopb ; nopa ; nops ; add r0, r0, #1; mov dj0, r2; nopv
+; CHECK-NEXT:    nopb ; lda r2, [p0, dj0]; nops ; nopxm ; nopv
+; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
+; CHECK-NEXT:    nopx
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
+; CHECK-NEXT:    mul r3, r2, r2
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    add r1, r1, #1
-; CHECK-NEXT:    mul r4, r3, r3
+; CHECK-NEXT:    mul r4, r3, r2
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    mul r5, r4, r3
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    add r4, r5, r4
-; CHECK-NEXT:    xor r3, r4, r3
-; CHECK-NEXT:    st r3, [p1, dj0]; lt r3, r1, r0
-; CHECK-NEXT:    jnz r3, #.LBB0_2
+; CHECK-NEXT:    add r3, r4, r3
+; CHECK-NEXT:    xor r2, r3, r2
+; CHECK-NEXT:  .L_LEnd0:
+; CHECK-NEXT:    nopb ; nopa ; st r2, [p1, dj0]; lshl r2, r0, r1; nopm ; nopv
+; CHECK-NEXT:  // %bb.3: // %exit
+; CHECK-NEXT:    j #.LBB0_7
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
-; CHECK-NEXT:    j #.LBB0_6
-; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    nop // Delay Slot 1
-; CHECK-NEXT:  .LBB0_3: // %loop.ph.lver.high
-; CHECK-NEXT:    nopb ; mova r0, #2; nops ; nopxm ; nopv
-; CHECK-NEXT:    nopa ; lshl r2, r1, r0; add.nc lc, r2, #-1
-; CHECK-NEXT:    add r1, r1, #1; mov dj0, r2
+; CHECK-NEXT:  .LBB0_4: // %loop.ph.lver.high
+; CHECK-NEXT:    mova r1, #2; add.nc lc, r1, #-1
+; CHECK-NEXT:    lshl r2, r0, r1
+; CHECK-NEXT:    add r0, r0, #1; mov dj0, r2
 ; CHECK-NEXT:    lda r2, [p0, dj0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -70,15 +68,15 @@ define void @versioned(ptr noalias %a, ptr noalias %b, i32 %n) {
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mul r3, r2, r2
-; CHECK-NEXT:    movxm ls, #.LBB0_4
+; CHECK-NEXT:    movxm ls, #.LBB0_5
 ; CHECK-NEXT:    mul r4, r3, r2
-; CHECK-NEXT:    nopb ; nopa ; nops ; movxm le, #.L_LEnd0; nopv
+; CHECK-NEXT:    nopb ; nopa ; nops ; movxm le, #.L_LEnd1; nopv
 ; CHECK-NEXT:    nopb ; nopa ; nops ; add r3, r4, r3; nopm ; nopv
 ; CHECK-NEXT:    nopb ; nopa ; nops ; xor r2, r3, r2; nopm ; nopv
-; CHECK-NEXT:  .LBB0_4: // %loop.lver.high
+; CHECK-NEXT:  .LBB0_5: // %loop.lver.high
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
-; CHECK-NEXT:    nopb ; nopa ; st r2, [p1, dj0]; lshl r2, r1, r0; nopm ; nopv
-; CHECK-NEXT:    nopb ; nopa ; nops ; add r1, r1, #1; mov dj0, r2; nopv
+; CHECK-NEXT:    nopb ; nopa ; st r2, [p1, dj0]; lshl r2, r0, r1; nopm ; nopv
+; CHECK-NEXT:    nopb ; nopa ; nops ; add r0, r0, #1; mov dj0, r2; nopv
 ; CHECK-NEXT:    lda r2, [p0, dj0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -91,11 +89,11 @@ define void @versioned(ptr noalias %a, ptr noalias %b, i32 %n) {
 ; CHECK-NEXT:    mul r4, r3, r2
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    add r3, r4, r3
-; CHECK-NEXT:  .L_LEnd0:
+; CHECK-NEXT:  .L_LEnd1:
 ; CHECK-NEXT:    nopb ; nopa ; nops ; xor r2, r3, r2; nopm ; nopv
-; CHECK-NEXT:  // %bb.5: // %exit
+; CHECK-NEXT:  // %bb.6: // %exit
 ; CHECK-NEXT:    nopb ; nopa ; st r2, [p1, dj0]; nopxm ; nopv
-; CHECK-NEXT:  .LBB0_6: // %exit
+; CHECK-NEXT:  .LBB0_7: // %exit
 ; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -140,7 +138,7 @@ define void @already_pipelineable(ptr noalias %a, ptr noalias %b, i32 %n) {
 ; CHECK-NEXT:    mul r3, r2, r2
 ; CHECK-NEXT:    movxm ls, #.LBB1_1
 ; CHECK-NEXT:    mul r4, r3, r2
-; CHECK-NEXT:    nopb ; nopa ; nops ; movxm le, #.L_LEnd1; nopv
+; CHECK-NEXT:    nopb ; nopa ; nops ; movxm le, #.L_LEnd2; nopv
 ; CHECK-NEXT:    nopb ; nopa ; nops ; add r3, r4, r3; nopm ; nopv
 ; CHECK-NEXT:    nopb ; nopa ; nops ; xor r2, r3, r2; nopm ; nopv
 ; CHECK-NEXT:  .LBB1_1: // %loop
@@ -159,7 +157,7 @@ define void @already_pipelineable(ptr noalias %a, ptr noalias %b, i32 %n) {
 ; CHECK-NEXT:    mul r4, r3, r2
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    add r3, r4, r3
-; CHECK-NEXT:  .L_LEnd1:
+; CHECK-NEXT:  .L_LEnd2:
 ; CHECK-NEXT:    nopb ; nopa ; nops ; xor r2, r3, r2; nopm ; nopv
 ; CHECK-NEXT:  // %bb.2: // %exit
 ; CHECK-NEXT:    st r2, [p1, dj0]; ret lr
