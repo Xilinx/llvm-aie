@@ -8,9 +8,7 @@
 // RUN: %clang_cc1 -O2 -triple aie2 -std=c++20 -emit-llvm -o - %s | FileCheck %s
 // RUN: %clang_cc1 -O2 -triple aie2p -std=c++20 -emit-llvm -o - %s | FileCheck %s
 // RUN: %clang_cc1 -O2 -triple aie2ps -std=c++20 -emit-llvm -o - %s | FileCheck %s
-// RUN: %if asserts %{ not --crash %clang_cc1 -O2 -triple aie2p -std=c++20 -emit-llvm -o /dev/null -DDEPENDENT %s 2>&1 | FileCheck %s --check-prefix=DEPENDENT %}
 
-#ifdef DEPENDENT
 // Loop hints whose values are template parameters of a template lambda inside
 // a function template. Instantiating the function template transforms the
 // lambda body while the lambda's own parameters are still unknown.
@@ -35,9 +33,6 @@ template <unsigned N> void unrolled(int *p, int n) {
 }
 template void unrolled<4>(int *, int);
 
-// DEPENDENT: Expression evaluator can't be called on a dependent expression.
-#endif
-
 // A hint value naming a constexpr local of the enclosing function template. The
 // hint is instantiated after its loop, so the reference must not be left
 // pending an odr-use check or turned into a capture of the local.
@@ -51,11 +46,11 @@ template <unsigned N> void local_min_rows(int *p, int n) {
   rows.template operator()<true>();
 }
 template void local_min_rows<64>(int *, int);
-// CHECK-LABEL: define weak_odr void @_Z14local_min_rowsILj64EEvPii(
+// CHECK-LABEL: define weak_odr void @_Z7rescaleILj16EEvPii(
 // CHECK-SAME: ptr [[P:%.*]], i32 noundef [[N:%.*]]) local_unnamed_addr #[[ATTR0:[0-9]+]] comdat {
 // CHECK-NEXT:  [[ENTRY:.*]]:
 // CHECK-NEXT:    [[CMP5_I:%.*]] = icmp sgt i32 [[N]], 0
-// CHECK-NEXT:    br i1 [[CMP5_I]], label %[[FOR_BODY_I:.*]], label %[[_ZZ14LOCAL_MIN_ROWSILJ64EEVPIIENKULTNBVE_CLILB1EEEDAV_EXIT:.*]]
+// CHECK-NEXT:    br i1 [[CMP5_I]], label %[[FOR_BODY_I:.*]], label %[[_ZZ7RESCALEILJ16EEVPIIENKULTNJVE_CLILJ16EEEDAV_EXIT:.*]]
 // CHECK:       [[FOR_BODY_I]]:
 // CHECK-NEXT:    [[M_06_I:%.*]] = phi i32 [ [[INC_I:%.*]], %[[FOR_BODY_I]] ], [ 0, %[[ENTRY]] ]
 // CHECK-NEXT:    [[TMP0:%.*]] = trunc nsw i32 [[M_06_I]] to i20
@@ -65,12 +60,98 @@ template void local_min_rows<64>(int *, int);
 // CHECK-NEXT:    store i32 [[ADD_I]], ptr [[ARRAYIDX_I]], align 4, !tbaa [[TBAA2]]
 // CHECK-NEXT:    [[INC_I]] = add nuw nsw i32 [[M_06_I]], 1
 // CHECK-NEXT:    [[EXITCOND_NOT:%.*]] = icmp eq i32 [[INC_I]], [[N]]
-// CHECK-NEXT:    br i1 [[EXITCOND_NOT]], label %[[_ZZ14LOCAL_MIN_ROWSILJ64EEVPIIENKULTNBVE_CLILB1EEEDAV_EXIT]], label %[[FOR_BODY_I]], !llvm.loop [[LOOP6:![0-9]+]]
+// CHECK-NEXT:    br i1 [[EXITCOND_NOT]], label %[[_ZZ7RESCALEILJ16EEVPIIENKULTNJVE_CLILJ16EEEDAV_EXIT]], label %[[FOR_BODY_I]], !llvm.loop [[LOOP6:![0-9]+]]
+// CHECK:       [[_ZZ7RESCALEILJ16EEVPIIENKULTNJVE_CLILJ16EEEDAV_EXIT]]:
+// CHECK-NEXT:    ret void
+//
+//
+// CHECK-LABEL: define weak_odr void @_Z8unrolledILj4EEvPii(
+// CHECK-SAME: ptr [[P:%.*]], i32 noundef [[N:%.*]]) local_unnamed_addr #[[ATTR0]] comdat {
+// CHECK-NEXT:  [[ENTRY:.*:]]
+// CHECK-NEXT:    [[CMP5_I:%.*]] = icmp sgt i32 [[N]], 0
+// CHECK-NEXT:    br i1 [[CMP5_I]], label %[[FOR_BODY_I_PREHEADER:.*]], label %[[_ZZ8UNROLLEDILJ4EEVPIIENKULTNJVE_CLILJ4EEEDAV_EXIT:.*]]
+// CHECK:       [[FOR_BODY_I_PREHEADER]]:
+// CHECK-NEXT:    [[XTRAITER:%.*]] = and i32 [[N]], 3
+// CHECK-NEXT:    [[TMP0:%.*]] = icmp ult i32 [[N]], 4
+// CHECK-NEXT:    br i1 [[TMP0]], label %[[FOR_BODY_I_EPIL_PREHEADER:.*]], label %[[FOR_BODY_I_PREHEADER_NEW:.*]]
+// CHECK:       [[FOR_BODY_I_PREHEADER_NEW]]:
+// CHECK-NEXT:    [[UNROLL_ITER:%.*]] = and i32 [[N]], 2147483644
+// CHECK-NEXT:    br label %[[FOR_BODY_I:.*]]
+// CHECK:       [[FOR_BODY_I]]:
+// CHECK-NEXT:    [[M_06_I:%.*]] = phi i32 [ 0, %[[FOR_BODY_I_PREHEADER_NEW]] ], [ [[INC_I_3:%.*]], %[[FOR_BODY_I]] ]
+// CHECK-NEXT:    [[NITER:%.*]] = phi i32 [ 0, %[[FOR_BODY_I_PREHEADER_NEW]] ], [ [[NITER_NEXT_3:%.*]], %[[FOR_BODY_I]] ]
+// CHECK-NEXT:    [[TMP1:%.*]] = trunc nsw i32 [[M_06_I]] to i20
+// CHECK-NEXT:    [[ARRAYIDX_I:%.*]] = getelementptr inbounds i32, ptr [[P]], i20 [[TMP1]]
+// CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[ARRAYIDX_I]], align 4, !tbaa [[TBAA2]]
+// CHECK-NEXT:    [[ADD_I:%.*]] = add nsw i32 [[TMP2]], [[M_06_I]]
+// CHECK-NEXT:    store i32 [[ADD_I]], ptr [[ARRAYIDX_I]], align 4, !tbaa [[TBAA2]]
+// CHECK-NEXT:    [[INC_I:%.*]] = or disjoint i32 [[M_06_I]], 1
+// CHECK-NEXT:    [[TMP3:%.*]] = trunc nsw i32 [[INC_I]] to i20
+// CHECK-NEXT:    [[ARRAYIDX_I_1:%.*]] = getelementptr inbounds i32, ptr [[P]], i20 [[TMP3]]
+// CHECK-NEXT:    [[TMP4:%.*]] = load i32, ptr [[ARRAYIDX_I_1]], align 4, !tbaa [[TBAA2]]
+// CHECK-NEXT:    [[ADD_I_1:%.*]] = add nsw i32 [[TMP4]], [[INC_I]]
+// CHECK-NEXT:    store i32 [[ADD_I_1]], ptr [[ARRAYIDX_I_1]], align 4, !tbaa [[TBAA2]]
+// CHECK-NEXT:    [[INC_I_1:%.*]] = or disjoint i32 [[M_06_I]], 2
+// CHECK-NEXT:    [[TMP5:%.*]] = trunc nsw i32 [[INC_I_1]] to i20
+// CHECK-NEXT:    [[ARRAYIDX_I_2:%.*]] = getelementptr inbounds i32, ptr [[P]], i20 [[TMP5]]
+// CHECK-NEXT:    [[TMP6:%.*]] = load i32, ptr [[ARRAYIDX_I_2]], align 4, !tbaa [[TBAA2]]
+// CHECK-NEXT:    [[ADD_I_2:%.*]] = add nsw i32 [[TMP6]], [[INC_I_1]]
+// CHECK-NEXT:    store i32 [[ADD_I_2]], ptr [[ARRAYIDX_I_2]], align 4, !tbaa [[TBAA2]]
+// CHECK-NEXT:    [[INC_I_2:%.*]] = or disjoint i32 [[M_06_I]], 3
+// CHECK-NEXT:    [[TMP7:%.*]] = trunc nsw i32 [[INC_I_2]] to i20
+// CHECK-NEXT:    [[ARRAYIDX_I_3:%.*]] = getelementptr inbounds i32, ptr [[P]], i20 [[TMP7]]
+// CHECK-NEXT:    [[TMP8:%.*]] = load i32, ptr [[ARRAYIDX_I_3]], align 4, !tbaa [[TBAA2]]
+// CHECK-NEXT:    [[ADD_I_3:%.*]] = add nsw i32 [[TMP8]], [[INC_I_2]]
+// CHECK-NEXT:    store i32 [[ADD_I_3]], ptr [[ARRAYIDX_I_3]], align 4, !tbaa [[TBAA2]]
+// CHECK-NEXT:    [[INC_I_3]] = add nuw nsw i32 [[M_06_I]], 4
+// CHECK-NEXT:    [[NITER_NEXT_3]] = add i32 [[NITER]], 4
+// CHECK-NEXT:    [[NITER_NCMP_3:%.*]] = icmp eq i32 [[NITER_NEXT_3]], [[UNROLL_ITER]]
+// CHECK-NEXT:    br i1 [[NITER_NCMP_3]], label %[[_ZZ8UNROLLEDILJ4EEVPIIENKULTNJVE_CLILJ4EEEDAV_EXIT_LOOPEXIT_UNR_LCSSA:.*]], label %[[FOR_BODY_I]], !llvm.loop [[LOOP9:![0-9]+]]
+// CHECK:       [[_ZZ8UNROLLEDILJ4EEVPIIENKULTNJVE_CLILJ4EEEDAV_EXIT_LOOPEXIT_UNR_LCSSA]]:
+// CHECK-NEXT:    [[LCMP_MOD_NOT:%.*]] = icmp eq i32 [[XTRAITER]], 0
+// CHECK-NEXT:    br i1 [[LCMP_MOD_NOT]], label %[[_ZZ8UNROLLEDILJ4EEVPIIENKULTNJVE_CLILJ4EEEDAV_EXIT]], label %[[FOR_BODY_I_EPIL_PREHEADER]]
+// CHECK:       [[FOR_BODY_I_EPIL_PREHEADER]]:
+// CHECK-NEXT:    [[M_06_I_EPIL_INIT:%.*]] = phi i32 [ 0, %[[FOR_BODY_I_PREHEADER]] ], [ [[INC_I_3]], %[[_ZZ8UNROLLEDILJ4EEVPIIENKULTNJVE_CLILJ4EEEDAV_EXIT_LOOPEXIT_UNR_LCSSA]] ]
+// CHECK-NEXT:    [[LCMP_MOD3:%.*]] = icmp ne i32 [[XTRAITER]], 0
+// CHECK-NEXT:    tail call void @llvm.assume(i1 [[LCMP_MOD3]])
+// CHECK-NEXT:    br label %[[FOR_BODY_I_EPIL:.*]]
+// CHECK:       [[FOR_BODY_I_EPIL]]:
+// CHECK-NEXT:    [[M_06_I_EPIL:%.*]] = phi i32 [ [[INC_I_EPIL:%.*]], %[[FOR_BODY_I_EPIL]] ], [ [[M_06_I_EPIL_INIT]], %[[FOR_BODY_I_EPIL_PREHEADER]] ]
+// CHECK-NEXT:    [[EPIL_ITER:%.*]] = phi i32 [ [[EPIL_ITER_NEXT:%.*]], %[[FOR_BODY_I_EPIL]] ], [ 0, %[[FOR_BODY_I_EPIL_PREHEADER]] ]
+// CHECK-NEXT:    [[TMP9:%.*]] = trunc nsw i32 [[M_06_I_EPIL]] to i20
+// CHECK-NEXT:    [[ARRAYIDX_I_EPIL:%.*]] = getelementptr inbounds i32, ptr [[P]], i20 [[TMP9]]
+// CHECK-NEXT:    [[TMP10:%.*]] = load i32, ptr [[ARRAYIDX_I_EPIL]], align 4, !tbaa [[TBAA2]]
+// CHECK-NEXT:    [[ADD_I_EPIL:%.*]] = add nsw i32 [[TMP10]], [[M_06_I_EPIL]]
+// CHECK-NEXT:    store i32 [[ADD_I_EPIL]], ptr [[ARRAYIDX_I_EPIL]], align 4, !tbaa [[TBAA2]]
+// CHECK-NEXT:    [[INC_I_EPIL]] = add nuw nsw i32 [[M_06_I_EPIL]], 1
+// CHECK-NEXT:    [[EPIL_ITER_NEXT]] = add i32 [[EPIL_ITER]], 1
+// CHECK-NEXT:    [[EPIL_ITER_CMP_NOT:%.*]] = icmp eq i32 [[EPIL_ITER_NEXT]], [[XTRAITER]]
+// CHECK-NEXT:    br i1 [[EPIL_ITER_CMP_NOT]], label %[[_ZZ8UNROLLEDILJ4EEVPIIENKULTNJVE_CLILJ4EEEDAV_EXIT]], label %[[FOR_BODY_I_EPIL]], !llvm.loop [[LOOP11:![0-9]+]]
+// CHECK:       [[_ZZ8UNROLLEDILJ4EEVPIIENKULTNJVE_CLILJ4EEEDAV_EXIT]]:
+// CHECK-NEXT:    ret void
+//
+//
+// CHECK-LABEL: define weak_odr void @_Z14local_min_rowsILj64EEvPii(
+// CHECK-SAME: ptr [[P:%.*]], i32 noundef [[N:%.*]]) local_unnamed_addr #[[ATTR0]] comdat {
+// CHECK-NEXT:  [[ENTRY:.*]]:
+// CHECK-NEXT:    [[CMP5_I:%.*]] = icmp sgt i32 [[N]], 0
+// CHECK-NEXT:    br i1 [[CMP5_I]], label %[[FOR_BODY_I:.*]], label %[[_ZZ14LOCAL_MIN_ROWSILJ64EEVPIIENKULTNBVE_CLILB1EEEDAV_EXIT:.*]]
+// CHECK:       [[FOR_BODY_I]]:
+// CHECK-NEXT:    [[M_06_I:%.*]] = phi i32 [ [[INC_I:%.*]], %[[FOR_BODY_I]] ], [ 0, %[[ENTRY]] ]
+// CHECK-NEXT:    [[TMP0:%.*]] = trunc nsw i32 [[M_06_I]] to i20
+// CHECK-NEXT:    [[ARRAYIDX_I:%.*]] = getelementptr inbounds i32, ptr [[P]], i20 [[TMP0]]
+// CHECK-NEXT:    [[TMP1:%.*]] = load i32, ptr [[ARRAYIDX_I]], align 4, !tbaa [[TBAA2]]
+// CHECK-NEXT:    [[ADD_I:%.*]] = add nsw i32 [[TMP1]], [[M_06_I]]
+// CHECK-NEXT:    store i32 [[ADD_I]], ptr [[ARRAYIDX_I]], align 4, !tbaa [[TBAA2]]
+// CHECK-NEXT:    [[INC_I]] = add nuw nsw i32 [[M_06_I]], 1
+// CHECK-NEXT:    [[EXITCOND_NOT:%.*]] = icmp eq i32 [[INC_I]], [[N]]
+// CHECK-NEXT:    br i1 [[EXITCOND_NOT]], label %[[_ZZ14LOCAL_MIN_ROWSILJ64EEVPIIENKULTNBVE_CLILB1EEEDAV_EXIT]], label %[[FOR_BODY_I]], !llvm.loop [[LOOP12:![0-9]+]]
 // CHECK:       [[_ZZ14LOCAL_MIN_ROWSILJ64EEVPIIENKULTNBVE_CLILB1EEEDAV_EXIT]]:
 // CHECK-NEXT:    ret void
 //
 //.
 // CHECK: attributes #[[ATTR0]] = { mustprogress nounwind "no-trapping-math"="true" "stack-protector-buffer-size"="8" }
+// CHECK: attributes #[[ATTR1:[0-9]+]] = { nocallback nofree nosync nounwind willreturn memory(inaccessiblemem: write) }
 //.
 // CHECK: [[META0:![0-9]+]] = !{i32 1, !"wchar_size", i32 4}
 // CHECK: [[META1:![0-9]+]] = !{!"{{.*}}clang version {{.*}}"}
@@ -80,5 +161,10 @@ template void local_min_rows<64>(int *, int);
 // CHECK: [[META5]] = !{!"Simple C++ TBAA"}
 // CHECK: [[LOOP6]] = distinct !{[[LOOP6]], [[META7:![0-9]+]], [[META8:![0-9]+]]}
 // CHECK: [[META7]] = !{!"llvm.loop.mustprogress"}
-// CHECK: [[META8]] = !{!"llvm.loop.itercount.range", i64 5}
+// CHECK: [[META8]] = !{!"llvm.loop.itercount.range", i64 16}
+// CHECK: [[LOOP9]] = distinct !{[[LOOP9]], [[META7]], [[META10:![0-9]+]]}
+// CHECK: [[META10]] = !{!"llvm.loop.unroll.disable"}
+// CHECK: [[LOOP11]] = distinct !{[[LOOP11]], [[META10]]}
+// CHECK: [[LOOP12]] = distinct !{[[LOOP12]], [[META7]], [[META13:![0-9]+]]}
+// CHECK: [[META13]] = !{!"llvm.loop.itercount.range", i64 5}
 //.
