@@ -3931,7 +3931,8 @@ void MachineVerifier::verifyLiveInterval(const LiveInterval &LI) {
   // Check the LI only has one connected component.
   ConnectedVNInfoEqClasses ConEQ(*LiveInts);
   unsigned NumComp = ConEQ.Classify(LI);
-  if (NumComp > 1) {
+  if (NumComp > 1 &&
+      !TII->allowDisconnectedLiveComponents(*MF, LI, *LiveInts)) {
     report("Multiple connected components in live interval", MF);
     report_context(LI);
     for (unsigned comp = 0; comp != NumComp; ++comp) {

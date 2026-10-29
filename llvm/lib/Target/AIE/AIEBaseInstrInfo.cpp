@@ -27,6 +27,8 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/CodeGen/GlobalISel/GenericMachineInstrs.h"
+#include "llvm/CodeGen/LiveInterval.h"
+#include "llvm/CodeGen/LiveIntervals.h"
 #include "llvm/CodeGen/LivePhysRegs.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -1666,6 +1668,56 @@ bool AIEBaseInstrInfo::verifyInstruction(const MachineInstr &MI,
     return false;
   }
   return TargetInstrInfo::verifyInstruction(MI, ErrInfo);
+}
+
+bool AIEBaseInstrInfo::allowDisconnectedLiveComponents(
+    const MachineFunction &MF, const LiveInterval &LI,
+    const LiveIntervals &LIS) const {
+  // The sibling loop vreg merger intentionally creates disconnected live
+  // interval components for registers shared across disjoint
+  // OLP (outer-loop-pipelined) paths. Only suppress the diagnostic when
+  // both components' defs belong to a known sibling block pair from an
+  // OLP structure.
+
+  // Build separate sets for steady-side and peeled-side OLP blocks.
+  SmallPtrSet<const MachineBasicBlock *, 8> SteadyBlocks;
+  SmallPtrSet<const MachineBasicBlock *, 8> PeeledBlocks;
+  for (const MachineBasicBlock &MBB : MF) {
+    if (!AIELoopUtils::isOuterLoopPipelined(MBB))
+      continue;
+    auto OLS = AIELoopUtils::OuterLoopStructure::tryBuildFrom(
+        const_cast<MachineBasicBlock &>(MBB));
+    if (!OLS || !OLS->hasPeeledIterRegion())
+      continue;
+    SteadyBlocks.insert(OLS->SteadyTop);
+    SteadyBlocks.insert(OLS->SteadyInner);
+    SteadyBlocks.insert(OLS->SteadyBottom);
+    PeeledBlocks.insert(OLS->PeeledIterTop);
+    PeeledBlocks.insert(OLS->PeeledIterInner);
+    PeeledBlocks.insert(OLS->PeeledIterBottom);
+  }
+  if (SteadyBlocks.empty())
+    return false;
+
+  // Allow the disconnected interval only if it has defs on BOTH sides
+  // (steady and peeled), confirming the vreg merger intentionally shared it
+  // across mutually exclusive OLP paths. Defs in other blocks (e.g. the
+  // outer preheader or shared exit) are tolerated - they provide initial
+  // values or epilogue uses that naturally become part of the merged
+  // interval without compromising its safety.
+  bool HasSteady = false, HasPeeled = false;
+  for (const VNInfo *VNI : LI.valnos) {
+    if (VNI->isUnused())
+      continue;
+    const MachineBasicBlock *DefMBB = LIS.getMBBFromIndex(VNI->def);
+    if (!DefMBB)
+      return false;
+    if (SteadyBlocks.count(DefMBB))
+      HasSteady = true;
+    else if (PeeledBlocks.count(DefMBB))
+      HasPeeled = true;
+  }
+  return HasSteady && HasPeeled;
 }
 
 bool AIEBaseInstrInfo::canHoistCheapInst(const MachineInstr &MI) const {

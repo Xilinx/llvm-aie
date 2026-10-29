@@ -966,6 +966,9 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   bool hasAnnotativeMemOperands(const MachineInstr &MI) const override;
   bool verifyInstruction(const MachineInstr &MI,
                          StringRef &ErrInfo) const override;
+  bool allowDisconnectedLiveComponents(const MachineFunction &MF,
+                                       const LiveInterval &LI,
+                                       const LiveIntervals &LIS) const override;
   bool verifyControlFlowConstraints(const MachineInstr &MI,
                                     StringRef &ErrInfo) const;
 
