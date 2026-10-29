@@ -40,9 +40,9 @@ exit:
 }
 
 ; CHECK-LABEL: define void @min_zero(
-; CHECK-NOT:     @llvm.set.loop.iterations
-; CHECK-NOT:     @llvm.loop.decrement
-; CHECK:         ret void
+; CHECK:       for.body.preheader:
+; CHECK-NEXT:    call void @llvm.set.loop.iterations.i32(i32 %n)
+; CHECK:         call i1 @llvm.loop.decrement.i32(i32 1)
 define void @min_zero(i32 noundef %n, ptr nocapture readonly %in, ptr nocapture writeonly %out) {
 entry:
   %guard = icmp sgt i32 %n, 0
@@ -64,9 +64,9 @@ exit:
 }
 
 ; CHECK-LABEL: define void @min_zero_max_eight(
-; CHECK-NOT:     @llvm.set.loop.iterations
-; CHECK-NOT:     @llvm.loop.decrement
-; CHECK:         ret void
+; CHECK:       for.body.preheader:
+; CHECK-NEXT:    call void @llvm.set.loop.iterations.i32(i32 %n)
+; CHECK:         call i1 @llvm.loop.decrement.i32(i32 1)
 define void @min_zero_max_eight(i32 noundef %n, ptr nocapture readonly %in, ptr nocapture writeonly %out) {
 entry:
   %guard = icmp sgt i32 %n, 0

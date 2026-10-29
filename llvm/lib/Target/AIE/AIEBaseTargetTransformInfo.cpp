@@ -396,7 +396,8 @@ bool AIETTICommon::isHardwareLoopProfitable(
 
   if (!ForceHLGeneration) {
     std::optional<int64_t> MinTripCount = getMinTripCount(L, &SE);
-    if (MinTripCount) {
+    // A minimum of 0 promises nothing: the loop keeps its zero-trip guard.
+    if (MinTripCount && *MinTripCount > 0) {
       // Reject HL for this case.
       if (*MinTripCount <= MinIterCountHLReject) {
         return false;
