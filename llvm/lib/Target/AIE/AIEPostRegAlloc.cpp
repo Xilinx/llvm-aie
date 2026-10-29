@@ -16,16 +16,23 @@
 #include "AIELivenessVector.h"
 #include "AIERegDefUseTracker.h"
 #include "llvm/CodeGen/TargetRegisterInfo.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
+#include <optional>
 #include <vector>
 
 #define DEBUG_TYPE "aie-postregalloc"
 
 using namespace llvm;
 using namespace llvm::AIE;
+
+static cl::opt<unsigned> PostRegAllocExactBudget(
+    "aie-postregalloc-exact-budget", cl::Hidden, cl::init(0),
+    cl::desc("Node budget for the exact post-regalloc search. "
+             "0 uses the heuristic strategies"));
 
 // Initialize allocation state and compute interference graphs.
 void AIEPostRegAlloc::AllocState::init(
@@ -223,6 +230,115 @@ AIEPostRegAlloc::buildVRegInterferenceGraph(
   return Graph;
 }
 
+namespace {
+
+// Intersection of a live range's admissible registers and the allocatable pool.
+std::vector<Register>
+getCandidatePhysRegs(const DenseSet<MCRegister> &AdmissibleRegs,
+                     const DenseSet<MCRegister> &AvailableRegs) {
+  std::vector<Register> Candidates;
+  for (MCRegister PhysReg : AdmissibleRegs)
+    if (AvailableRegs.count(PhysReg))
+      Candidates.push_back(PhysReg);
+  return Candidates;
+}
+
+} // namespace
+
+AIEPostRegAlloc::Placement::Placement(
+    const DenseMap<unsigned, AIE::LivenessVector> &Lanes,
+    const RegLiveRangeTracker &Tracker, AllocState &InState,
+    DenseMap<Register, MCRegister> &InAssign)
+    : LiveLanes(Lanes), AvailableRegs(Tracker.getAvailablePhysRegs()),
+      State(InState), OutAssign(InAssign),
+      Placed(Tracker.getLiveRanges().size()) {
+  // Non-virtualizable ranges are kept: they hold a register the pool can hand
+  // out, so they must occupy it. A virtualizable range without a VReg was left
+  // physical because it is RESERVED or overlaps a RESERVED base. That register
+  // is not in the pool, so the range constrains nothing.
+  for (const RegLiveRange &LR : Tracker.getLiveRanges()) {
+    if (!LiveLanes.count(LR.getIndex()))
+      continue;
+    if (LR.isVirtualizable() && !LR.getVReg().isValid())
+      continue;
+    Ranges.push_back(&LR);
+  }
+}
+
+const AIE::LivenessVector &
+AIEPostRegAlloc::Placement::masks(const RegLiveRange &LR) const {
+  return LiveLanes.find(LR.getIndex())->second;
+}
+
+std::vector<Register>
+AIEPostRegAlloc::Placement::candidates(const RegLiveRange &LR) const {
+  std::vector<Register> Cands;
+  for (Register PhysReg :
+       getCandidatePhysRegs(LR.getAdmissibleRegs(), AvailableRegs))
+    if (State.canPlace(PhysReg, masks(LR)))
+      Cands.push_back(PhysReg);
+  return Cands;
+}
+
+void AIEPostRegAlloc::Placement::place(const RegLiveRange &LR,
+                                       Register PhysReg) {
+  State.place(LR.getVReg(), PhysReg, masks(LR), LR.getRegisterClass());
+  if (LR.getVReg().isValid())
+    OutAssign[LR.getVReg()] = PhysReg.asMCReg();
+  Placed.set(LR.getIndex());
+}
+
+void AIEPostRegAlloc::Placement::unplace(const RegLiveRange &LR,
+                                         const SmallVector<PartSet, 8> &Saved) {
+  Placed.reset(LR.getIndex());
+  if (LR.getVReg().isValid())
+    OutAssign.erase(LR.getVReg());
+  State.CycleOccupancy = Saved;
+}
+
+bool AIEPostRegAlloc::Placement::drainForcedChoices(
+    const TargetRegisterInfo &TRI) {
+  bool Progress = true;
+  while (Progress) {
+    Progress = false;
+    for (const RegLiveRange *LR : Ranges) {
+      if (Placed.test(LR->getIndex()))
+        continue;
+      const std::vector<Register> Cands = candidates(*LR);
+      if (Cands.empty()) {
+        LLVM_DEBUG(dbgs() << "  Choice-0 on LR#" << LR->getIndex()
+                          << " - infeasible\n");
+        return false;
+      }
+      if (Cands.size() == 1) {
+        LLVM_DEBUG(dbgs() << "  Forced: LR#" << LR->getIndex() << " -> "
+                          << printReg(Cands[0], &TRI) << "\n");
+        place(*LR, Cands[0]);
+        Progress = true;
+      }
+    }
+  }
+  return true;
+}
+
+std::optional<AIEPostRegAlloc::Placement::Choice>
+AIEPostRegAlloc::Placement::selectMinRemaining(
+    const ComparatorFunction &OrderFn) const {
+  std::optional<Choice> Best;
+  for (const RegLiveRange *LR : Ranges) {
+    if (!LR->getVReg().isValid() || Placed.test(LR->getIndex()))
+      continue;
+    std::vector<Register> Cands = candidates(*LR);
+    const unsigned Count = Cands.size();
+    const VRegMetrics &Metrics = State.AllMetrics.find(LR->getIndex())->second;
+    if (!Best || Count < Best->Cands.size() ||
+        (Count == Best->Cands.size() &&
+         OrderFn(Metrics, State.AllMetrics.find(Best->LR->getIndex())->second)))
+      Best = Choice{LR, std::move(Cands)};
+  }
+  return Best;
+}
+
 // Compute metrics for a live range.
 AIEPostRegAlloc::VRegMetrics AIEPostRegAlloc::computeMetrics(
     const RegLiveRange &LR, const AIE::LivenessVector &Masks,
@@ -279,31 +395,11 @@ AIEPostRegAlloc::VRegMetrics AIEPostRegAlloc::computeMetrics(
   return Metrics;
 }
 
-// Get allocatable physical registers for a live range.
-// Returns the intersection of AdmissibleRegs (semantic constraint from
-// instruction encoding) and AvailableRegs (global availability).
-std::vector<Register> AIEPostRegAlloc::getCandidatePhysRegs(
-    const DenseSet<MCRegister> &AdmissibleRegs,
-    const DenseSet<MCRegister> &AvailableRegs) {
-
-  std::vector<Register> Candidates;
-
-  // Return the intersection of admissible and available registers.
-  // AdmissibleRegs represents the semantic constraint from the LiveRange.
-  // AvailableRegs represents the global set of registers available for
-  // reallocation.
-  for (MCRegister PhysReg : AdmissibleRegs) {
-    if (AvailableRegs.count(PhysReg)) {
-      Candidates.push_back(PhysReg);
-    }
-  }
-
-  return Candidates;
-}
-
-// Try to allocate using a specific scoring function for ordering.
+// Try to allocate using a specific comparator for ordering.
 // Each iteration of the main loop first drains all forced (choice-1)
 // decisions, then places exactly one scored entry before restarting.
+// The free (non-forced) pick is the unplaced VReg with the fewest effective
+// candidates (Minimum Remaining Values); OrderFn is only used as a tie-break.
 AIEPostRegAlloc::AllocResult AIEPostRegAlloc::tryAllocate(
     const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex,
     const RegLiveRangeTracker *RegTracker, const TargetRegisterInfo &TRI,
@@ -315,133 +411,28 @@ AIEPostRegAlloc::AllocResult AIEPostRegAlloc::tryAllocate(
             PartSet());
   OutAssign.clear();
 
-  const auto &AvailableRegs = RegTracker->getAvailablePhysRegs();
-
-  // A live range together with its per-cycle lane masks.
-  class LREntry {
-  public:
-    const RegLiveRange *LR;
-    unsigned LRIndex;
-    const AIE::LivenessVector *Masks;
-  };
-
-  // Collect all live ranges that have liveness data (VReg and non-VReg).
-  // Non-virtualizable ranges are kept: they hold a register the pool can hand
-  // out, so they must occupy it. A virtualizable range without a VReg was left
-  // physical by virtualizeFilteredPhysRegs() because it is RESERVED or
-  // overlaps a RESERVED base. computeAvailablePhysRegs() excludes such bases,
-  // so the register can never be handed out and the range constrains nothing.
-  // Its AdmissibleRegs still spans its whole class, so keeping it would either
-  // strand it with no candidate or occupy an unrelated register of that class.
-  std::vector<LREntry> AllEntries;
-  for (const RegLiveRange &LR : RegTracker->getLiveRanges()) {
-    const auto It = LiveLanesByLRIndex.find(LR.getIndex());
-    if (It == LiveLanesByLRIndex.end())
-      continue;
-    // Exclude reserved ranges (and ranges overlapping a reserved base).
-    if (LR.isVirtualizable() && !LR.getVReg().isValid())
-      continue;
-    AllEntries.push_back({&LR, LR.getIndex(), &It->second});
-  }
-
-  // Track placed live range indices for both VReg and non-VReg ranges.
-  DenseSet<unsigned> PlacedLRIndices;
-
-  // Compute effective candidates for a live range given current occupancy.
-  const auto GetEffectiveCandidates = [&](const LREntry &Entry) {
-    std::vector<Register> Cands;
-    for (Register PhysReg :
-         getCandidatePhysRegs(Entry.LR->getAdmissibleRegs(), AvailableRegs)) {
-      if (State.canPlace(PhysReg, *Entry.Masks))
-        Cands.push_back(PhysReg);
-    }
-    return Cands;
-  };
-
-  // Place a live range and update the allocation state and output map.
-  const auto DoPlace = [&](const LREntry &Entry, Register PhysReg) {
-    State.place(Entry.LR->getVReg(), PhysReg, *Entry.Masks,
-                Entry.LR->getRegisterClass());
-    if (Entry.LR->getVReg().isValid())
-      OutAssign[Entry.LR->getVReg()] = PhysReg.asMCReg();
-    PlacedLRIndices.insert(Entry.LRIndex);
-  };
-
-  // Commit all choice-1 nodes (exactly one effective candidate) to a fixpoint.
-  // Returns false if a choice-0 node (zero effective candidates) is detected,
-  // signalling infeasibility.
-  const auto DrainForcedChoices = [&]() -> bool {
-    bool Progress = true;
-    while (Progress) {
-      Progress = false;
-      for (const LREntry &Entry : AllEntries) {
-        if (PlacedLRIndices.count(Entry.LRIndex))
-          continue;
-        const std::vector<Register> Cands = GetEffectiveCandidates(Entry);
-        if (Cands.empty()) {
-          LLVM_DEBUG(dbgs() << "  Choice-0 on LR#" << Entry.LRIndex
-                            << " - infeasible\n");
-          return false;
-        }
-        if (Cands.size() == 1) {
-          LLVM_DEBUG(dbgs() << "  Forced: LR#" << Entry.LRIndex << " -> "
-                            << printReg(Cands[0], &TRI) << "\n");
-          DoPlace(Entry, Cands[0]);
-          Progress = true;
-        }
-      }
-    }
-    return true;
-  };
-
-  // Build a sorted list of pointers to VReg entries in AllEntries.
-  // Non-VReg ranges (non-virtualizable or excluded by overlap policy) are
-  // always choice-1 and placed by DrainForcedChoices; they do not participate
-  // in the ordering.
-  std::vector<LREntry *> ScoredEntries;
-  for (LREntry &Entry : AllEntries) {
-    if (!Entry.LR->getVReg().isValid())
-      continue;
-    ScoredEntries.push_back(&Entry);
-  }
-
-  // Sort using the ordering comparator (hardest first).
-  // Use VReg index as a deterministic tiebreaker when the comparator
-  // considers two entries equivalent (OrderFn(A,B) == OrderFn(B,A) == false).
-  llvm::sort(ScoredEntries, [&](const LREntry *A, const LREntry *B) {
-    const VRegMetrics &MA = State.AllMetrics[A->LRIndex];
-    const VRegMetrics &MB = State.AllMetrics[B->LRIndex];
-    if (OrderFn(MA, MB))
-      return true;
-    if (OrderFn(MB, MA))
-      return false;
-    return A->LR->getVReg().virtRegIndex() < B->LR->getVReg().virtRegIndex();
-  });
+  Placement Work(LiveLanesByLRIndex, *RegTracker, State, OutAssign);
 
   // Main allocation loop. Each iteration drains all forced choices first, then
   // places exactly one scored entry before restarting. A choice-0 before any
   // scored placement means the schedule is truly infeasible; after a scored
-  // placement it may be a scoring artifact that another strategy avoids.
-  // NextScoredIdx == 0 iff no scored placement has been made yet, which is
-  // the condition for reporting a truly-infeasible schedule.
-  size_t NextScoredIdx = 0;
+  // placement it may be a scoring artifact that another tie-break avoids.
+  // NumScoredPlacements == 0 iff no scored placement has been made yet, which
+  // is the condition for reporting a truly-infeasible schedule.
+  unsigned NumScoredPlacements = 0;
 
   while (true) {
-    if (!DrainForcedChoices())
-      return AllocResult(/*InfeasibleSchedule=*/NextScoredIdx == 0);
+    if (!Work.drainForcedChoices(TRI))
+      return AllocResult(/*InfeasibleSchedule=*/NumScoredPlacements == 0);
 
-    // Advance past entries already placed by DrainForcedChoices.
-    while (NextScoredIdx < ScoredEntries.size() &&
-           PlacedLRIndices.count(ScoredEntries[NextScoredIdx]->LRIndex))
-      ++NextScoredIdx;
+    const std::optional<Placement::Choice> Best =
+        Work.selectMinRemaining(OrderFn);
+    if (!Best)
+      break; // All placed.
 
-    if (NextScoredIdx >= ScoredEntries.size())
-      break;
-
-    const LREntry &Entry = *ScoredEntries[NextScoredIdx++];
-    const unsigned LRIndex = Entry.LRIndex;
-    const RegLiveRange &LR = *Entry.LR;
-    const auto &VRegMasks = *Entry.Masks;
+    const RegLiveRange &LR = *Best->LR;
+    const std::vector<Register> &EffectiveCands = Best->Cands;
+    const unsigned LRIndex = LR.getIndex();
     const TargetRegisterClass *RC = LR.getRegisterClass();
     const auto &Metrics = State.AllMetrics[LRIndex];
 
@@ -452,36 +443,75 @@ AIEPostRegAlloc::AllocResult AIEPostRegAlloc::tryAllocate(
                       << ", alias_int=" << Metrics.AliasingInterferenceDegree
                       << ")\n");
 
-    const std::vector<Register> Candidates =
-        getCandidatePhysRegs(LR.getAdmissibleRegs(), AvailableRegs);
-
-    if (Candidates.empty()) {
-      LLVM_DEBUG(dbgs() << "  No candidates available!\n");
-      return AllocResult(/*InfeasibleSchedule=*/false);
-    }
-
-    Register ChosenPhys = Register();
-    for (Register PhysReg : Candidates) {
-      LLVM_DEBUG(dbgs() << "  Trying " << printReg(PhysReg, &TRI) << " ");
-      if (State.canPlace(PhysReg, VRegMasks)) {
-        LLVM_DEBUG(dbgs() << "\n");
-        ChosenPhys = PhysReg;
-        break;
-      }
-    }
-
-    LLVM_DEBUG(dbgs() << "\n");
-    if (!ChosenPhys.isValid()) {
+    if (EffectiveCands.empty()) {
       LLVM_DEBUG(dbgs() << "  Failed to find suitable physreg!\n");
       return AllocResult(/*InfeasibleSchedule=*/false);
     }
 
-    DoPlace(Entry, ChosenPhys);
+    Register ChosenPhys = EffectiveCands.front();
+    LLVM_DEBUG(dbgs() << "  Trying " << printReg(ChosenPhys, &TRI) << "\n");
+    Work.place(LR, ChosenPhys);
+    ++NumScoredPlacements;
   }
 
   LLVM_DEBUG(dbgs() << "Allocation succeeded with " << OutAssign.size()
                     << " assignments\n");
   return AllocResult();
+}
+
+AIEPostRegAlloc::ExactResult AIEPostRegAlloc::tryAllocateExact(
+    const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex,
+    const RegLiveRangeTracker &RegTracker, const TargetRegisterInfo &TRI,
+    AllocState &State, DenseMap<Register, MCRegister> &OutAssign) {
+
+  if (PostRegAllocExactBudget == 0)
+    return ExactResult::Unknown;
+
+  Placement Work(LiveLanesByLRIndex, RegTracker, State, OutAssign);
+
+  if (!Work.drainForcedChoices(TRI)) {
+    LLVM_DEBUG(
+        dbgs() << "Exact: infeasible, forced-choice propagation failed\n");
+    return ExactResult::Infeasible;
+  }
+
+  unsigned Nodes = 0;
+  // Feasible: assignment found. Infeasible: this branch failed.
+  // Unknown: node budget exhausted; stop searching.
+  std::function<ExactResult()> Search = [&]() -> ExactResult {
+    if (Nodes == PostRegAllocExactBudget)
+      return ExactResult::Unknown;
+    ++Nodes;
+
+    // Fewest remaining candidates. orderByScarceRegClass breaks ties.
+    const std::optional<Placement::Choice> Best =
+        Work.selectMinRemaining(orderByScarceRegClass);
+    if (!Best)
+      return ExactResult::Feasible;
+    if (Best->Cands.empty())
+      return ExactResult::Infeasible;
+
+    const auto Saved = State.CycleOccupancy;
+    for (Register PhysReg : Best->Cands) {
+      Work.place(*Best->LR, PhysReg);
+      ExactResult Sub = Search();
+      if (Sub == ExactResult::Feasible)
+        return Sub;
+      Work.unplace(*Best->LR, Saved);
+      if (Sub == ExactResult::Unknown)
+        return Sub;
+    }
+    return ExactResult::Infeasible;
+  };
+
+  ExactResult Outcome = Search();
+  const char *Name = Outcome == ExactResult::Feasible     ? "feasible"
+                     : Outcome == ExactResult::Infeasible ? "infeasible"
+                                                          : "unknown";
+  LLVM_DEBUG(dbgs() << "Exact: " << Name << " nodes=" << Nodes << "\n");
+  if (Outcome != ExactResult::Feasible)
+    OutAssign.clear();
+  return Outcome;
 }
 
 // Dump virtual register metrics for debugging.
@@ -604,15 +634,29 @@ PostRegAllocResult AIEPostRegAlloc::allocate(
   // Dump virtual register metrics when debug output is enabled.
   LLVM_DEBUG(dumpVRegMetrics(State.AllMetrics, RegTracker, TRI));
 
+  // A non-zero budget selects the exact search and skips the heuristics.
+  if (PostRegAllocExactBudget > 0) {
+    LLVM_DEBUG(dbgs() << "Trying exact search\n");
+    ExactResult ER = tryAllocateExact(LiveLanesByLRIndex, RegTracker, TRI,
+                                      State, Assignments);
+    if (ER == ExactResult::Feasible) {
+      LLVM_DEBUG(dbgs() << "Allocation succeeded with exact search\n");
+      return PostRegAllocResult("exact search", std::move(Assignments));
+    }
+    LLVM_DEBUG(dbgs() << "Exact search failed\n");
+    return PostRegAllocResult();
+  }
+
   // Define the allocation strategies to try.
   struct AllocationStrategy {
     const char *Name;
     ComparatorFunction OrderFn;
   };
 
+  // Every strategy selects by Minimum Remaining Values. OrderFn is the
+  // tie-break, tried in order until one allocation succeeds.
   std::vector<AllocationStrategy> Strategies = {
-      // Scarce register class first: fewer available registers → first.
-      // Within the same scarceness, highest interference degree wins.
+      // Fewer available registers first, then highest interference degree.
       {"scarce register class scoring", orderByScarceRegClass},
       // Lexicographic: widest register class first (absolute precedence),
       // then highest interference degree within the same width tier.
