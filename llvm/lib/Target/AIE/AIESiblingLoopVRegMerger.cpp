@@ -164,7 +164,8 @@ unsigned AIESiblingLoopVRegMerger::mergeMatchedInstrDefs(
     const MachineBasicBlock *SteadyExtraMBB,
     const MachineBasicBlock *PeeledExtraMBB, MachineRegisterInfo &MRI) const {
   unsigned Count = 0;
-  const unsigned NumDefs = SteadyMI.getNumDefs();
+
+  const unsigned NumDefs = SteadyMI.getNumExplicitDefs();
   for (unsigned I = 0; I < NumDefs; ++I) {
     const MachineOperand &SOp = SteadyMI.getOperand(I);
     const MachineOperand &POp = PeeledMI.getOperand(I);
