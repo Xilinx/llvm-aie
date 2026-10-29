@@ -79,13 +79,15 @@ body:             |
     ; CHECK-NEXT: [[MOVXM:%[0-9]+]]:er = MOVXM 28
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ercr = COPY $crfpmask
     ; CHECK-NEXT: [[VNEG_f:%[0-9]+]]:edm = VNEG_f [[COPY]], [[MOVXM]], implicit-def $srfpflags, implicit $crfpmask
+    ; CHECK-NEXT: [[VNEG_f1:%[0-9]+]]:edm = VNEG_f [[COPY]], [[MOVXM]], implicit-def $srfpflags, implicit $crfpmask
+    ; CHECK-NEXT: [[VNEG_f2:%[0-9]+]]:edm = VNEG_f [[COPY]], [[MOVXM]], implicit-def $srfpflags, implicit $crfpmask
     ; CHECK-NEXT: [[MOVXM1:%[0-9]+]]:er = MOVXM 1
     ; CHECK-NEXT: $crfpmask = COPY [[MOVXM1]]
-    ; CHECK-NEXT: [[VNEG_f1:%[0-9]+]]:edm = VNEG_f [[VNEG_f]], [[MOVXM]], implicit-def $srfpflags, implicit $crfpmask
-    ; CHECK-NEXT: $crfpmask = COPY [[COPY1]]
-    ; CHECK-NEXT: [[VNEG_f2:%[0-9]+]]:edm = VNEG_f [[VNEG_f1]], [[MOVXM]], implicit-def $srfpflags, implicit $crfpmask
     ; CHECK-NEXT: [[VNEG_f3:%[0-9]+]]:edm = VNEG_f [[VNEG_f2]], [[MOVXM]], implicit-def $srfpflags, implicit $crfpmask
+    ; CHECK-NEXT: $crfpmask = COPY [[COPY1]]
     ; CHECK-NEXT: [[VNEG_f4:%[0-9]+]]:edm = VNEG_f [[VNEG_f3]], [[MOVXM]], implicit-def $srfpflags, implicit $crfpmask
+    ; CHECK-NEXT: [[VNEG_f5:%[0-9]+]]:edm = VNEG_f [[VNEG_f4]], [[MOVXM]], implicit-def $srfpflags, implicit $crfpmask
+    ; CHECK-NEXT: [[VNEG_f6:%[0-9]+]]:edm = VNEG_f [[VNEG_f5]], [[MOVXM]], implicit-def $srfpflags, implicit $crfpmask
     %1:edm = COPY $dm3
     %2:er = MOVXM 28
     %3:ercr = COPY $crfpmask
@@ -846,18 +848,9 @@ body:             |
     %10:er = INVSQRT_mOptConvDel_mRx $s3, %9:er, implicit-def $srfpcnvfl2fx, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpnlfmask
 ...
 
-# Test 13 - Remove identity copies of srups_of (mSRm Reg class aka Status Register).
-# Transform -
-# %0 = COPY $srUPS_of               |   |    |   %0 = COPY $srUPS_of
-# $srUPS_of = COPY %0               |   |    |   ---------------------------
-# %1 = opcode implicit $srUPS_of    |   |    |   %1 = opcode implicit $srUPS_of
-# $srUPS_of = COPY %0               |   |    |   ---------------------------
-# %2 = opcode implicit $srUPS_of    |   |    |   %2 = opcode implicit $srUPS_of
-# %10 = COPY $crsat              |-> to ->|   ---------------------------
-# $srUPS_of = COPY %10              |   |    |   ---------------------------
-# %3 = opcode implicit $srUPS_of    |   |    |   %3 = opcode implicit $srUPS_of
-# $srUPS_of = COPY %0               |   |    |   ---------------------------
-# %4 = opcode implicit $srUPS_of    |   |    |   %4 = opcode implicit $srUPS_of
+# Test 13 - Keep the copies of srups_of (mSRm Reg class aka Status Register).
+# srUPS_of is a sticky flag: each ups ORs into it, so the restores of the saved
+# flag before the ups instructions are not dead.
 ---
 name:            srups_of_multiple
 alignment:       16
@@ -872,11 +865,19 @@ body:             |
     ; CHECK: liveins: $s3, $r5, $r0, $p0, $d0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ercr = COPY $srups_of
+    ; CHECK-NEXT: $srups_of = COPY [[COPY1]]
     ; CHECK-NEXT: [[VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0_:%[0-9]+]]:mbmm, [[VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0_1:%[0-9]+]]:ep, [[VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0_2:%[0-9]+]]:edc = VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0 $s3, [[COPY]], $d0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    ; CHECK-NEXT: $srups_of = COPY [[COPY1]]
     ; CHECK-NEXT: [[VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0_3:%[0-9]+]]:mbmm, [[VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0_4:%[0-9]+]]:ep, [[VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0_5:%[0-9]+]]:edc = VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0 $s3, [[COPY]], $d0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:ercr = COPY $srups_of
+    ; CHECK-NEXT: $srups_of = COPY [[COPY2]]
     ; CHECK-NEXT: [[VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0_6:%[0-9]+]]:mbmm, [[VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0_7:%[0-9]+]]:ep, [[VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0_8:%[0-9]+]]:edc = VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0 $s3, [[COPY]], $d0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    ; CHECK-NEXT: $srups_of = COPY [[COPY1]]
     ; CHECK-NEXT: [[VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0_9:%[0-9]+]]:mbmm, [[VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0_10:%[0-9]+]]:ep, [[VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0_11:%[0-9]+]]:edc = VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0 $s3, [[COPY]], $d0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    ; CHECK-NEXT: $srups_of = COPY [[COPY1]]
     ; CHECK-NEXT: [[VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0_12:%[0-9]+]]:mbmm, [[VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0_13:%[0-9]+]]:ep, [[VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0_14:%[0-9]+]]:edc = VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0 $s3, [[COPY]], $d0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    ; CHECK-NEXT: $srups_of = COPY [[COPY1]]
     ; CHECK-NEXT: [[VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0_15:%[0-9]+]]:mbmm, [[VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0_16:%[0-9]+]]:ep, [[VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0_17:%[0-9]+]]:edc = VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0 $s3, [[COPY]], $d0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
     %0:ep = COPY $p0
     %1:ercr = COPY $srups_of

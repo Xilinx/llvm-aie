@@ -6,7 +6,7 @@
 ; (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
 ;
 ; RUN: llc -mtriple=aie2p -O2 -aie-enable-outer-loop-pointer-opt=false -aie-enable-outer-loop-pipelining \
-; RUN:     -stop-after=irtranslator \
+; RUN:     -stop-after=irtranslator -verify-machineinstrs \
 ; RUN:     -o - %s 2>&1 | FileCheck %s
 
 ; The outer loop's exit block is shared between the preheader-bypass edge

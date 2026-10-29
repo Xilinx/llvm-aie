@@ -17,6 +17,7 @@
 
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/CodeGen/TargetRegisterInfo.h"
+#include <optional>
 #include <set>
 
 namespace llvm {
@@ -175,11 +176,15 @@ struct AIEBaseRegisterInfo : public TargetRegisterInfo {
                                                 unsigned SrcConstVal) const {
     llvm_unreachable("Target didn't implement matchControlRegisterBitwidth!");
   }
-  virtual Register getControlRegister(unsigned Idx) const {
-    llvm_unreachable("Target didn't implement getControlRegister!");
+  /// \return the control register that index \p Idx of the set_ctrl_reg and
+  /// get_ctrl_reg intrinsics selects, if any.
+  virtual std::optional<MCRegister> getControlRegister(unsigned Idx) const {
+    return std::nullopt;
   }
-  virtual Register getStatusRegister(unsigned Idx) const {
-    llvm_unreachable("Target didn't implement getStatusRegister!");
+  /// \return the status register that index \p Idx of the set_status_reg and
+  /// get_status_reg intrinsics selects, if any.
+  virtual std::optional<MCRegister> getStatusRegister(unsigned Idx) const {
+    return std::nullopt;
   }
   virtual unsigned matchStatusRegisterBitwidth(Register StatusReg,
                                                unsigned SrcConstVal) const {

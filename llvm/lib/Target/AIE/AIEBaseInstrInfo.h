@@ -322,6 +322,19 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
     // Fallback to multi-slot pseudo move if target doesn't override.
     return getMvSclMultiSlotPseudoOpcode();
   }
+  /// \return the moves of an immediate that write the control register
+  /// \p CtrlReg, the preferred first.
+  virtual SmallVector<unsigned, 2>
+  getMovesImmToCtrlReg(MCRegister CtrlReg) const {
+    return {getMvSclMultiSlotPseudoOpcode()};
+  }
+  /// \return the immediate operand of \p Opcode, a move of an immediate to a
+  /// control register (see getMovesImmToCtrlReg), that writes \p Imm, if there
+  /// is one. The move sign-extends its immediate to the width of the register.
+  virtual std::optional<int64_t> getMoveImmOperand(unsigned Opcode,
+                                                   int64_t Imm) const {
+    llvm_unreachable("Target didn't implement getMoveImmOperand");
+  }
   /// Return the 3-address integer ADD opcode
   virtual unsigned getAddSclOpcode() const {
     llvm_unreachable("Target didn't implement getAddSclOpcode");
@@ -964,6 +977,9 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   bool hasAnnotativeMemOperands(const MachineInstr &MI) const override;
   bool verifyInstruction(const MachineInstr &MI,
                          StringRef &ErrInfo) const override;
+  bool allowDisconnectedLiveComponents(const MachineFunction &MF,
+                                       const LiveInterval &LI,
+                                       const LiveIntervals &LIS) const override;
   bool verifyControlFlowConstraints(const MachineInstr &MI,
                                     StringRef &ErrInfo) const;
 

@@ -1,0 +1,86 @@
+# RUN: llc -mtriple=aie2ps -run-pass=aie-sibling-loop-vreg-merge %s -o - | FileCheck %s
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# The peeled inner loop copies the HIGH half of %1. The outer preheader holds
+# copies of both halves. Substituting %4 must not pick the low-half copy %2.
+
+# CHECK-LABEL: name: subreg_copy
+# CHECK:       [[LO:%[0-9]+]]:mdm = COPY [[SRC:%[0-9]+]].sub_dim_count
+# CHECK:       [[HI:%[0-9]+]]:mdm = COPY [[SRC]].sub_hi_dim_then_sub_dim_count
+# CHECK-LABEL: bb.5.lastiter.inner:
+# CHECK-NOT:   COPY [[LO]]
+# CHECK:       PseudoJNZ
+
+--- |
+  define void @subreg_copy() {
+  entry:
+    br label %steady.top
+  steady.top:
+    br label %steady.inner
+  steady.inner:
+    br i1 undef, label %steady.inner, label %steady.bottom
+  steady.bottom:
+    br i1 undef, label %steady.top, label %lastiter.top, !llvm.loop !0
+  lastiter.top:
+    br label %lastiter.inner
+  lastiter.inner:
+    br i1 undef, label %lastiter.inner, label %lastiter.bottom
+  lastiter.bottom:
+    ret void
+  }
+
+  !0 = distinct !{!0, !1}
+  !1 = !{!"llvm.loop.hint.aie_outerloop_pipeliner_success"}
+...
+---
+name: subreg_copy
+tracksRegLiveness: true
+body: |
+  bb.0.entry:
+    successors: %bb.1
+    liveins: $r0
+
+    %0:er = COPY $r0
+    %1:eds = IMPLICIT_DEF
+    %2:mdm = COPY %1.sub_dim_count
+    %3:mdm = COPY %1.sub_hi_dim_then_sub_dim_count
+    PseudoJ_jump_imm %bb.1
+
+  bb.1.steady.top:
+    successors: %bb.2
+
+    PseudoJ_jump_imm %bb.2
+
+  bb.2.steady.inner:
+    successors: %bb.2, %bb.3
+
+    PseudoJNZ %0, %bb.2
+    PseudoJ_jump_imm %bb.3
+
+  bb.3.steady.bottom:
+    successors: %bb.1, %bb.4
+
+    PseudoJNZ %0, %bb.1
+    PseudoJ_jump_imm %bb.4
+
+  bb.4.lastiter.top:
+    successors: %bb.5
+
+    PseudoJ_jump_imm %bb.5
+
+  bb.5.lastiter.inner:
+    successors: %bb.5, %bb.6
+
+    %4:mdm = COPY %1.sub_hi_dim_then_sub_dim_count
+    %5:mdm = COPY %4
+    PseudoJNZ %0, %bb.5
+    PseudoJ_jump_imm %bb.6
+
+  bb.6.lastiter.bottom:
+    PseudoRET implicit $lr, implicit %2, implicit %3, implicit %5
+...

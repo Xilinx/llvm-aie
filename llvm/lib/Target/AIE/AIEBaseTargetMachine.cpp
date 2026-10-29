@@ -193,6 +193,7 @@ extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeAIETarget() {
   initializeAIEUnallocatedSuperRegRewriterPass(*PR);
   initializeAIEWawRegRewriterPass(*PR);
   initializeAIEEpilogueRegRewriterPass(*PR);
+  initializeAIESiblingLoopVRegMergerPass(*PR);
   initializeAIEOutlineMemoryGEPPass(*PR);
   initializeAIEFinalizeBundlePass(*PR);
   initializeAIEMachineAlignmentPass(*PR);
