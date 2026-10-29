@@ -474,15 +474,15 @@ body:             |
   ; CHECK-NEXT: Args:
   ; CHECK-NEXT:   - String:          Schedule found
   ; CHECK-NEXT:   - Pipeliner:       postpipeliner
-  ; CHECK-NEXT:   - II:              '19'
+  ; CHECK-NEXT:   - II:              '16'
   ; CHECK-NEXT:   - NS:              '3'
   ; CHECK-NEXT:   - Loop:            bb.2.bb96
   ; CHECK-NEXT:   - Prologue:        bb.1.bb56
-  ; CHECK-NEXT:   - PrologueBundles: '39'
+  ; CHECK-NEXT:   - PrologueBundles: '45'
   ; CHECK-NEXT:   - Epilogue:        bb.3.bb87
-  ; CHECK-NEXT:   - EpilogueBundles: '62'
+  ; CHECK-NEXT:   - EpilogueBundles: '53'
   ; CHECK-NEXT:   - VregMode:        Virtual
-  ; CHECK-NEXT:   - SchedHeuristic:  Config_57_0_0_NodeNum
+  ; CHECK-NEXT:   - SchedHeuristic:  Config_48_1_0_Anchored_Height_Latest_NodeNum_EarlyConsumers_Run0
   ; CHECK-NEXT:   - AllocHeuristic:  scarce register class scoring
   ; CHECK-NEXT: ...
   bb.0.bb:
