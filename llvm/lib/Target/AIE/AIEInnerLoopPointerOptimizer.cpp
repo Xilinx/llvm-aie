@@ -69,6 +69,12 @@ cl::opt<bool> EnablePostIncChain(
     cl::desc("Enable post-increment GEP chain building for direct phi uses"),
     cl::init(true), cl::Hidden);
 
+cl::opt<unsigned> MaxFoldedShiftsPerLoop(
+    "aie-ilpo-max-folded-shifts",
+    cl::desc("Maximum number of normalized phis per inner loop whose init "
+             "offset is folded into a hoisted variable shift"),
+    cl::init(1), cl::Hidden);
+
 //===----------------------------------------------------------------------===//
 // Local helpers
 //===----------------------------------------------------------------------===//
@@ -354,6 +360,7 @@ bool AIEInnerLoopPointerOptimizer::normalizePhiToLoadBase(
   Loop *const L = ILS.getLoop();
   Type *const Int8Ty = Type::getInt8Ty(Body->getContext());
   bool Changed = false;
+  unsigned NumFoldedShifts = 0;
 
   // Returns true when V has at least one user outside the loop.
   auto IsLiveOut = [&](Value *V) {
@@ -433,11 +440,13 @@ bool AIEInnerLoopPointerOptimizer::normalizePhiToLoadBase(
     // new init stays a single pointer add from base. Only do this when the
     // offset add can be hoisted out of an outer loop: otherwise it sits on
     // the critical path of every outer iteration, while "(base + C) + Stride"
-    // is just two independent pointer adds.
+    // is just two independent pointer adds. Each folded shift keeps a
+    // modifier register live across the outer loops, so cap them per loop.
     auto *InitGEP = dyn_cast<GetElementPtrInst>(ShiftBase);
     BasicBlock *const OffsetBB =
         StrideCI ? nullptr : getShiftOffsetInsertionPoint(L, StrideVal);
-    if (OffsetBB && OffsetBB != Preheader && InitGEP &&
+    if (NumFoldedShifts < MaxFoldedShiftsPerLoop && OffsetBB &&
+        OffsetBB != Preheader && InitGEP &&
         AIEIRUtils::isSimpleI8GEP(InitGEP) &&
         isa<ConstantInt>(InitGEP->getOperand(1)) &&
         InitGEP->getOperand(1)->getType() == StrideVal->getType()) {
@@ -445,6 +454,7 @@ bool AIEInnerLoopPointerOptimizer::normalizePhiToLoadBase(
       Shift = OffsetBuilder.CreateAdd(InitGEP->getOperand(1), StrideVal,
                                       Phi.getName() + ".shift");
       ShiftBase = InitGEP->getPointerOperand();
+      ++NumFoldedShifts;
     }
     IRBuilder<> PreheaderBuilder(Preheader->getTerminator());
     Value *const NewInit = PreheaderBuilder.CreateGEP(

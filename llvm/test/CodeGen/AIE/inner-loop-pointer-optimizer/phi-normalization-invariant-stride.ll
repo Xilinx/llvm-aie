@@ -597,27 +597,24 @@ exit:
 define void @many_pointers_folded_shift(ptr %a, ptr %out, i32 %stride, i32 %n, i32 %m) {
 ; CHECK-LABEL: many_pointers_folded_shift:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    paddxm [sp], #64; nopb ; movx r4, #64; nopm
-; CHECK-NEXT:    mova r6, #128; st p6, [sp, #-64]; add r4, r0, r4; mov m0, r0 // 4-byte Folded Spill
-; CHECK-NEXT:    mova r16, #192; movs m1, r4; add r6, r0, r6
-; CHECK-NEXT:    mova r18, #256; movs m2, r6; add r16, r0, r16
-; CHECK-NEXT:    mova r20, #320; movs m3, r16; add r18, r0, r18
-; CHECK-NEXT:    movs m4, r18; add r20, r0, r20
-; CHECK-NEXT:    movs m5, r20
+; CHECK-NEXT:    nopa ; nopb ; movx r4, #64; nopm ; nops
+; CHECK-NEXT:    paddxm [sp], #64; add r4, r0, r4; mov m0, r0
+; CHECK-NEXT:    st p6, [sp, #-64]; mov m1, r4 // 4-byte Folded Spill
 ; CHECK-NEXT:  .LBB9_1: // %outer
 ; CHECK-NEXT:    // =>This Loop Header: Depth=1
 ; CHECK-NEXT:    // Child Loop BB9_2 Depth 2
-; CHECK-NEXT:    movs p4, p0; nopb ; nopx
-; CHECK-NEXT:    movs p3, p0; add.nc lc, r1, #0; mov p2, p0
-; CHECK-NEXT:    padda [p3], m2; paddb [p2], m1; add.nc ls, pc, #.LBB9_2; mov p5, p0; movs p6, p0
-; CHECK-NEXT:    padda [p6], m5; paddb [p5], m4; padds [p4], m3; add.nc le, pc, #.L_LEnd10; mov r0, #0; nopv
+; CHECK-NEXT:    nopa ; nopb ; nopx ; mov p5, p0; movs p2, p0
+; CHECK-NEXT:    movs p4, p0; mov p3, p0
+; CHECK-NEXT:    padda [p2], #128; paddb [p4], #256; padds [p3], #192; mov p6, p0
+; CHECK-NEXT:    padda [p2], m0; paddb [p6], #320; add.nc lc, r1, #0; addm.nc ls, pc, #.LBB9_2; padds [p5], m1
+; CHECK-NEXT:    padda [p6], m0; paddb [p4], m0; padds [p3], m0; add.nc le, pc, #.L_LEnd10; mov r0, #0; nopv
 ; CHECK-NEXT:  .LBB9_2: // %inner
 ; CHECK-NEXT:    // Parent Loop BB9_1 Depth=1
 ; CHECK-NEXT:    // => This Inner Loop Header: Depth=2
-; CHECK-NEXT:    lda r16, [p4], m0; nopb ; nops ; nopxm ; nopv
-; CHECK-NEXT:    lda r4, [p2], m0; nopb ; nops ; nopxm ; nopv
-; CHECK-NEXT:    lda r6, [p3], m0; nopb ; nops ; nopxm ; nopv
-; CHECK-NEXT:    lda r18, [p5], m0; nopb ; nops ; nopxm ; nopv
+; CHECK-NEXT:    lda r16, [p3], m0; nopb ; nops ; nopxm ; nopv
+; CHECK-NEXT:    lda r4, [p5], m0; nopb ; nops ; nopxm ; nopv
+; CHECK-NEXT:    lda r6, [p2], m0; nopb ; nops ; nopxm ; nopv
+; CHECK-NEXT:    lda r18, [p4], m0; nopb ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    nopa ; nopx
 ; CHECK-NEXT:    lda r20, [p6], m0
 ; CHECK-NEXT:    nop
@@ -830,21 +827,20 @@ exit:
 define void @olp_two_pointers_from_first(ptr addrspace(5) %a, i20 %stride, i20 %d1, i20 %d2, <32 x i16> %w, i32 %m, i32 %n) {
 ; CHECK-LABEL: olp_two_pointers_from_first:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; mov dj0, p2; nopv
-; CHECK-NEXT:    movs p2, p1; mov m3, p1
-; CHECK-NEXT:    movs p4, p0; mov dn0, p3
-; CHECK-NEXT:    mova m0, #0; movs dn6, p3; movxm p3, #.LBB12_1
-; CHECK-NEXT:    movs dn2, m0; add r0, r0, #-1; mov dc2, m0
-; CHECK-NEXT:    movs dc3, m0; add r2, r1, #1; addm.nc r1, r0, #-1
-; CHECK-NEXT:    movs dc6, m0; mov dn3, m0
-; CHECK-NEXT:    mova r8, #0; movs dj2, dj0; or r3, r8, r8; mov m2, m0
-; CHECK-NEXT:    movs dj4, m0; mov s0, r8
-; CHECK-NEXT:    padda [p1], #256; movs dc0, m0; mov dc4, m0
-; CHECK-NEXT:    vlda x2, [p0, #192]; paddb [p2], #192; movs p1, p0; mov m5, p1
-; CHECK-NEXT:    padda [p4], #128; vldb x4, [p1], m5; movs m4, p2; mov dn4, m0
-; CHECK-NEXT:    movs dj3, m0; vldb.3d x8, [p4], d0; mov dn1, dn6
-; CHECK-NEXT:    movs dj1, dj0; vldb x6, [p0, #256]; mov m1, m0; vclr dm0
-; CHECK-NEXT:    movs dj5, m0; paddb [p0], m4; movx crsrsmode, #0; mov dn5, m0
+; CHECK-NEXT:    movs m3, p1; nopx
+; CHECK-NEXT:    movs p4, p0; mov dj0, p2
+; CHECK-NEXT:    movs dn0, p3; add r0, r0, #-1; mov dj2, p2
+; CHECK-NEXT:    movs dn6, p3; movxm p3, #.LBB12_1
+; CHECK-NEXT:    mova m0, #0; movs dj1, p2; add r2, r1, #1; addm.nc r1, r0, #-1
+; CHECK-NEXT:    movs dc3, m0; mov dc2, m0
+; CHECK-NEXT:    movs dn2, m0; mov dc6, m0
+; CHECK-NEXT:    padda [p1], #192; movs dn3, m0; mov m2, m0
+; CHECK-NEXT:    movs p1, p0; mov m4, p1
+; CHECK-NEXT:    movs dc4, m0; vldb x2, [p0, #192]; or r3, r8, r8; mov dj4, m0
+; CHECK-NEXT:    padda [p4], #128; vldb x4, [p1], m4; movx r8, #0; mov dc0, m0; movs dn4, m0
+; CHECK-NEXT:    movs dn1, dn6; vldb.3d x8, [p4], d0; mov s0, r8
+; CHECK-NEXT:    vlda x6, [p0, #256]; paddb [p0], #256; movs dj3, m0; nopx ; mov m1, m0; vclr dm0
+; CHECK-NEXT:    movs dj5, m0; paddb [p0], m3; movx crsrsmode, #0; mov dn5, m0
 ; CHECK-NEXT:  .LBB12_1: // %steady.stage1.top
 ; CHECK-NEXT:    // =>This Loop Header: Depth=1
 ; CHECK-NEXT:    // Child Loop BB12_2 Depth 2
@@ -857,8 +853,8 @@ define void @olp_two_pointers_from_first(ptr addrspace(5) %a, i20 %stride, i20 %
 ; CHECK-NEXT:  .LBB12_2: // %steady.stage1.inner.inner
 ; CHECK-NEXT:    // Parent Loop BB12_1 Depth=1
 ; CHECK-NEXT:    // => This Inner Loop Header: Depth=2
-; CHECK-NEXT:    nopa ; vldb x4, [p0], m3; nops ; nopxm ; nopv
-; CHECK-NEXT:    nopa ; vldb x2, [p1], m3; movs dc1, dc3; nopx ; mov dc5, dc6; nopv
+; CHECK-NEXT:    nopa ; vldb x4, [p1], m3; nops ; nopxm ; nopv
+; CHECK-NEXT:    nopa ; vldb x2, [p0], m3; movs dc1, dc3; nopx ; mov dc5, dc6; nopv
 ; CHECK-NEXT:    nopa ; vldb.3d x6, [p2], d1; nops ; nopxm ; nopv
 ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
@@ -870,12 +866,12 @@ define void @olp_two_pointers_from_first(ptr addrspace(5) %a, i20 %stride, i20 %
 ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; vmac dm3, dm3, x6, x0, r8
 ; CHECK-NEXT:  // %bb.3: // %steady.stage1.bottom.and.stage0.top
 ; CHECK-NEXT:    // in Loop: Header=BB12_1 Depth=1
-; CHECK-NEXT:    nopa ; nopb ; jnzd r1, r1, p3; nopm
-; CHECK-NEXT:    movs p4, p2; vldb x2, [p2, #192]; mov p1, p2 // Delay Slot 5
-; CHECK-NEXT:    padda [p4], #128; vldb x4, [p1], m5; movs dc0, m0; mov dc4, m0 // Delay Slot 4
-; CHECK-NEXT:    vldb.3d x8, [p4], d0 // Delay Slot 3
-; CHECK-NEXT:    vldb x6, [p2, #256]; mov p0, p2 // Delay Slot 2
-; CHECK-NEXT:    padda [p0], m4; vsrs.4x x10, dm1, s0, srssign0 // Delay Slot 1
+; CHECK-NEXT:    nopa ; vldb x2, [p2, #192]; jnzd r1, r1, p3; nopm
+; CHECK-NEXT:    movs p4, p2; vldb x6, [p2, #256]; mov p1, p2 // Delay Slot 5
+; CHECK-NEXT:    padda [p4], #128; vldb x4, [p1], m4; movs dc0, m0; mov dc4, m0 // Delay Slot 4
+; CHECK-NEXT:    padda [p2], #256; vldb.3d x8, [p4], d0 // Delay Slot 3
+; CHECK-NEXT:    mov p0, p2 // Delay Slot 2
+; CHECK-NEXT:    padda [p0], m3; vsrs.4x x10, dm1, s0, srssign0 // Delay Slot 1
 ; CHECK-NEXT:  // %bb.4: // %lastiter.stage1.top
 ; CHECK-NEXT:    vmov.d dm2, dm0
 ; CHECK-NEXT:    movs dn4, dn2; vmov.d dm3, dm0
@@ -885,8 +881,8 @@ define void @olp_two_pointers_from_first(ptr addrspace(5) %a, i20 %stride, i20 %
 ; CHECK-NEXT:    nopa ; nopb ; movs p2, p4; add.nc le, pc, #.L_LEnd12; mov dc4, dc2; vaddmac dm1, dm1, dm0, x2, x6, r8
 ; CHECK-NEXT:  .LBB12_5: // %lastiter.stage1.inner.inner
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
-; CHECK-NEXT:    nopa ; vldb x4, [p0], m3; nops ; nopxm ; nopv
-; CHECK-NEXT:    nopa ; vldb x2, [p1], m3; movs dc1, dc0; nopx ; mov dc5, dc4; nopv
+; CHECK-NEXT:    nopa ; vldb x4, [p1], m3; nops ; nopxm ; nopv
+; CHECK-NEXT:    nopa ; vldb x2, [p0], m3; movs dc1, dc0; nopx ; mov dc5, dc4; nopv
 ; CHECK-NEXT:    nopa ; vldb.3d x6, [p2], d1; nops ; nopxm ; nopv
 ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
