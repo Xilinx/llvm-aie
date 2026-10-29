@@ -135,15 +135,9 @@ public:
   /// Create difference with another vector.
   LivenessVector operator-(const LivenessVector &Other) const;
 
-  /// Check if any liveness overlaps with another vector.
+  /// True when any same-index pair conflicts via Liveness::conflictsWith
+  /// (lane intersection, bypass R/W same class, or bypass vs RF lanes).
   bool overlaps(const LivenessVector &Other) const;
-
-  /// Check if both vectors are simultaneously live at any slot,
-  /// regardless of lane-mask domain. Use this when comparing live ranges
-  /// across different register class hierarchies (e.g., pair eL vs.
-  /// scalar mLockId_reg) where lane bits are not in the same domain and
-  /// overlaps() would incorrectly return false.
-  bool anySlotOverlap(const LivenessVector &Other) const;
 
   /// Check if any element has liveness.
   bool any() const;
