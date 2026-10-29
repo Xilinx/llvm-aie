@@ -536,6 +536,8 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   virtual Register getUPSSignControlRegister() const {
     llvm_unreachable("Target didn't implement UPSSign control register");
   }
+  bool isLoopLatchBranchFixed(const MachineBasicBlock &MBB) const override;
+
   // Opcodes related to hardware loop handling
   virtual bool isHardwareLoopDec(unsigned Opcode) const;
   virtual bool isHardwareLoopJNZ(unsigned Opcode) const;
