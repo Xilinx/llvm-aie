@@ -283,7 +283,7 @@
 
 ; AIE-O123-NEXT:      MachineDominator Tree Construction
 ; AIE-O123-NEXT:      Machine Natural Loop Construction
-; AIE-O123-NEXT:      ReachingDefAnalysis
+; AIE-O123-NEXT:      Reaching Definitions Analysis
 ; AIE-O123-NEXT:      Lazy Machine Block Frequency Analysis
 ; AIE-O123-NEXT:      Machine Optimization Remark Emitter
 ; AIE-O123-NEXT:      AIE Hardware Loops pass

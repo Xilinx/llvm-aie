@@ -40,7 +40,7 @@ define i32 @test() nounwind {
   ; FPELIM-NEXT:   renamable $cs0 = MOV_S12 4
   ; FPELIM-NEXT:   ST_idx_GPR renamable $r10, renamable $p0, killed renamable $cs0 :: (store (s32) into %ir.1 + 4)
   ; FPELIM-NEXT:   ST_SPIL_GPR renamable $r10, -1056, implicit $sp :: (store (s32) into %ir.1)
-  ; FPELIM-NEXT:   renamable $p0 = PADDA_nrm_imm killed renamable $p0, 4
+  ; FPELIM-NEXT:   renamable $p0 = nuw PADDA_nrm_imm killed renamable $p0, 4
   ; FPELIM-NEXT:   JAL @test1, csr_aie1, implicit-def dead $lr, implicit $p0, implicit-def $sp
   ; FPELIM-NEXT:   $r0 = COPY killed renamable $r10
   ; FPELIM-NEXT:   $r10 = LDA_SPIL_GPR -24, implicit $sp :: (load (s32) from %stack.2)
@@ -74,7 +74,7 @@ define i32 @test() nounwind {
   ; WITHFP-NEXT:   renamable $cs0 = MOV_S12 4
   ; WITHFP-NEXT:   ST_idx_GPR renamable $r10, renamable $p0, killed renamable $cs0 :: (store (s32) into %ir.1 + 4)
   ; WITHFP-NEXT:   ST_SPIL_GPR renamable $r10, -1056, implicit $sp :: (store (s32) into %ir.1)
-  ; WITHFP-NEXT:   renamable $p0 = PADDA_nrm_imm killed renamable $p0, 4
+  ; WITHFP-NEXT:   renamable $p0 = nuw PADDA_nrm_imm killed renamable $p0, 4
   ; WITHFP-NEXT:   JAL @test1, csr_aie1, implicit-def dead $lr, implicit $p0, implicit-def $sp
   ; WITHFP-NEXT:   $r0 = COPY killed renamable $r10
   ; WITHFP-NEXT:   $r10 = LDA_SPIL_GPR -24, implicit $sp :: (load (s32) from %stack.2)

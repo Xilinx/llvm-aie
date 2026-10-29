@@ -306,7 +306,7 @@
 ; AIE-O1-NEXT:      Branch Probability Basic Block Placement
 ; AIE-O1-NEXT:      MachineDominator Tree Construction
 ; AIE-O1-NEXT:      Machine Natural Loop Construction
-; AIE-O1-NEXT:      ReachingDefAnalysis
+; AIE-O1-NEXT:      Reaching Definitions Analysis
 ; AIE-O1-NEXT:      Lazy Machine Block Frequency Analysis
 ; AIE-O1-NEXT:      Machine Optimization Remark Emitter
 ; AIE-O1-NEXT:      AIE Hardware Loops pass
@@ -553,7 +553,7 @@
 ; AIE-O23-NEXT:      Branch Probability Basic Block Placement
 ; AIE-O23-NEXT:      MachineDominator Tree Construction
 ; AIE-O23-NEXT:      Machine Natural Loop Construction
-; AIE-O23-NEXT:      ReachingDefAnalysis
+; AIE-O23-NEXT:      Reaching Definitions Analysis
 ; AIE-O23-NEXT:      Lazy Machine Block Frequency Analysis
 ; AIE-O23-NEXT:      Machine Optimization Remark Emitter
 ; AIE-O23-NEXT:      AIE Hardware Loops pass

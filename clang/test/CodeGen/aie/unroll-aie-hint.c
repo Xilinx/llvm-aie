@@ -23,11 +23,15 @@
 // CHECK-NEXT:    br label %[[FOR_BODY:.*]]
 // CHECK:       [[FOR_COND_CLEANUP_UNR_LCSSA:.*]]:
 // CHECK-NEXT:    [[LCMP_MOD_NOT:%.*]] = icmp eq i32 [[XTRAITER]], 0
-// CHECK-NEXT:    br i1 [[LCMP_MOD_NOT]], label %[[FOR_COND_CLEANUP:.*]], label %[[FOR_BODY_EPIL:.*]]
+// CHECK-NEXT:    br i1 [[LCMP_MOD_NOT]], label %[[FOR_COND_CLEANUP:.*]], label %[[FOR_BODY_EPIL_PREHEADER:.*]]
+// CHECK:       [[FOR_BODY_EPIL_PREHEADER]]:
+// CHECK-NEXT:    [[LCMP_MOD7:%.*]] = icmp ne i32 [[XTRAITER]], 0
+// CHECK-NEXT:    tail call void @llvm.assume(i1 [[LCMP_MOD7]])
+// CHECK-NEXT:    br label %[[FOR_BODY_EPIL:.*]]
 // CHECK:       [[FOR_BODY_EPIL]]:
-// CHECK-NEXT:    [[I_05_EPIL:%.*]] = phi i32 [ [[INC_EPIL:%.*]], %[[FOR_BODY_EPIL]] ], [ [[INC_3:%.*]], %[[FOR_COND_CLEANUP_UNR_LCSSA]] ]
-// CHECK-NEXT:    [[S_04_EPIL:%.*]] = phi i32 [ [[ADD_EPIL:%.*]], %[[FOR_BODY_EPIL]] ], [ [[ADD_3:%.*]], %[[FOR_COND_CLEANUP_UNR_LCSSA]] ]
-// CHECK-NEXT:    [[EPIL_ITER:%.*]] = phi i32 [ [[EPIL_ITER_NEXT:%.*]], %[[FOR_BODY_EPIL]] ], [ 0, %[[FOR_COND_CLEANUP_UNR_LCSSA]] ]
+// CHECK-NEXT:    [[I_05_EPIL:%.*]] = phi i32 [ [[INC_3:%.*]], %[[FOR_BODY_EPIL_PREHEADER]] ], [ [[INC_EPIL:%.*]], %[[FOR_BODY_EPIL]] ]
+// CHECK-NEXT:    [[S_04_EPIL:%.*]] = phi i32 [ [[ADD_3:%.*]], %[[FOR_BODY_EPIL_PREHEADER]] ], [ [[ADD_EPIL:%.*]], %[[FOR_BODY_EPIL]] ]
+// CHECK-NEXT:    [[EPIL_ITER:%.*]] = phi i32 [ 0, %[[FOR_BODY_EPIL_PREHEADER]] ], [ [[EPIL_ITER_NEXT:%.*]], %[[FOR_BODY_EPIL]] ]
 // CHECK-NEXT:    [[TMP1:%.*]] = trunc nsw i32 [[I_05_EPIL]] to i20
 // CHECK-NEXT:    [[ARRAYIDX_EPIL:%.*]] = getelementptr inbounds i32, ptr [[P]], i20 [[TMP1]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[ARRAYIDX_EPIL]], align 4, !tbaa [[TBAA2:![0-9]+]]
@@ -88,11 +92,15 @@ int bool_hint_unroll(int n, int *p) {
 // CHECK-NEXT:    br label %[[FOR_BODY:.*]]
 // CHECK:       [[FOR_COND_CLEANUP_UNR_LCSSA:.*]]:
 // CHECK-NEXT:    [[LCMP_MOD_NOT:%.*]] = icmp eq i32 [[XTRAITER]], 0
-// CHECK-NEXT:    br i1 [[LCMP_MOD_NOT]], label %[[FOR_COND_CLEANUP:.*]], label %[[FOR_BODY_EPIL:.*]]
+// CHECK-NEXT:    br i1 [[LCMP_MOD_NOT]], label %[[FOR_COND_CLEANUP:.*]], label %[[FOR_BODY_EPIL_PREHEADER:.*]]
+// CHECK:       [[FOR_BODY_EPIL_PREHEADER]]:
+// CHECK-NEXT:    [[LCMP_MOD7:%.*]] = icmp ne i32 [[XTRAITER]], 0
+// CHECK-NEXT:    tail call void @llvm.assume(i1 [[LCMP_MOD7]])
+// CHECK-NEXT:    br label %[[FOR_BODY_EPIL:.*]]
 // CHECK:       [[FOR_BODY_EPIL]]:
-// CHECK-NEXT:    [[I_05_EPIL:%.*]] = phi i32 [ [[INC_EPIL:%.*]], %[[FOR_BODY_EPIL]] ], [ [[INC_3:%.*]], %[[FOR_COND_CLEANUP_UNR_LCSSA]] ]
-// CHECK-NEXT:    [[S_04_EPIL:%.*]] = phi i32 [ [[ADD_EPIL:%.*]], %[[FOR_BODY_EPIL]] ], [ [[ADD_3:%.*]], %[[FOR_COND_CLEANUP_UNR_LCSSA]] ]
-// CHECK-NEXT:    [[EPIL_ITER:%.*]] = phi i32 [ [[EPIL_ITER_NEXT:%.*]], %[[FOR_BODY_EPIL]] ], [ 0, %[[FOR_COND_CLEANUP_UNR_LCSSA]] ]
+// CHECK-NEXT:    [[I_05_EPIL:%.*]] = phi i32 [ [[INC_3:%.*]], %[[FOR_BODY_EPIL_PREHEADER]] ], [ [[INC_EPIL:%.*]], %[[FOR_BODY_EPIL]] ]
+// CHECK-NEXT:    [[S_04_EPIL:%.*]] = phi i32 [ [[ADD_3:%.*]], %[[FOR_BODY_EPIL_PREHEADER]] ], [ [[ADD_EPIL:%.*]], %[[FOR_BODY_EPIL]] ]
+// CHECK-NEXT:    [[EPIL_ITER:%.*]] = phi i32 [ 0, %[[FOR_BODY_EPIL_PREHEADER]] ], [ [[EPIL_ITER_NEXT:%.*]], %[[FOR_BODY_EPIL]] ]
 // CHECK-NEXT:    [[TMP1:%.*]] = trunc nsw i32 [[I_05_EPIL]] to i20
 // CHECK-NEXT:    [[ARRAYIDX_EPIL:%.*]] = getelementptr inbounds i32, ptr [[P]], i20 [[TMP1]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[ARRAYIDX_EPIL]], align 4, !tbaa [[TBAA2]]
@@ -153,11 +161,15 @@ int int_hint_unroll(int n, int *p) {
 // CHECK-NEXT:    br label %[[FOR_BODY:.*]]
 // CHECK:       [[FOR_COND_CLEANUP_UNR_LCSSA:.*]]:
 // CHECK-NEXT:    [[LCMP_MOD_NOT:%.*]] = icmp eq i32 [[XTRAITER]], 0
-// CHECK-NEXT:    br i1 [[LCMP_MOD_NOT]], label %[[FOR_COND_CLEANUP:.*]], label %[[FOR_BODY_EPIL:.*]]
+// CHECK-NEXT:    br i1 [[LCMP_MOD_NOT]], label %[[FOR_COND_CLEANUP:.*]], label %[[FOR_BODY_EPIL_PREHEADER:.*]]
+// CHECK:       [[FOR_BODY_EPIL_PREHEADER]]:
+// CHECK-NEXT:    [[LCMP_MOD7:%.*]] = icmp ne i32 [[XTRAITER]], 0
+// CHECK-NEXT:    tail call void @llvm.assume(i1 [[LCMP_MOD7]])
+// CHECK-NEXT:    br label %[[FOR_BODY_EPIL:.*]]
 // CHECK:       [[FOR_BODY_EPIL]]:
-// CHECK-NEXT:    [[I_05_EPIL:%.*]] = phi i32 [ [[INC_EPIL:%.*]], %[[FOR_BODY_EPIL]] ], [ [[INC_3:%.*]], %[[FOR_COND_CLEANUP_UNR_LCSSA]] ]
-// CHECK-NEXT:    [[S_04_EPIL:%.*]] = phi i32 [ [[ADD_EPIL:%.*]], %[[FOR_BODY_EPIL]] ], [ [[ADD_3:%.*]], %[[FOR_COND_CLEANUP_UNR_LCSSA]] ]
-// CHECK-NEXT:    [[EPIL_ITER:%.*]] = phi i32 [ [[EPIL_ITER_NEXT:%.*]], %[[FOR_BODY_EPIL]] ], [ 0, %[[FOR_COND_CLEANUP_UNR_LCSSA]] ]
+// CHECK-NEXT:    [[I_05_EPIL:%.*]] = phi i32 [ [[INC_3:%.*]], %[[FOR_BODY_EPIL_PREHEADER]] ], [ [[INC_EPIL:%.*]], %[[FOR_BODY_EPIL]] ]
+// CHECK-NEXT:    [[S_04_EPIL:%.*]] = phi i32 [ [[ADD_3:%.*]], %[[FOR_BODY_EPIL_PREHEADER]] ], [ [[ADD_EPIL:%.*]], %[[FOR_BODY_EPIL]] ]
+// CHECK-NEXT:    [[EPIL_ITER:%.*]] = phi i32 [ 0, %[[FOR_BODY_EPIL_PREHEADER]] ], [ [[EPIL_ITER_NEXT:%.*]], %[[FOR_BODY_EPIL]] ]
 // CHECK-NEXT:    [[TMP1:%.*]] = trunc nsw i32 [[I_05_EPIL]] to i20
 // CHECK-NEXT:    [[ARRAYIDX_EPIL:%.*]] = getelementptr inbounds i32, ptr [[P]], i20 [[TMP1]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[ARRAYIDX_EPIL]], align 4, !tbaa [[TBAA2]]
@@ -219,11 +231,15 @@ int multi_hint_unroll(int n, int *p) {
 // CHECK-NEXT:    br label %[[FOR_BODY:.*]]
 // CHECK:       [[FOR_COND_CLEANUP_UNR_LCSSA:.*]]:
 // CHECK-NEXT:    [[LCMP_MOD_NOT:%.*]] = icmp eq i32 [[XTRAITER]], 0
-// CHECK-NEXT:    br i1 [[LCMP_MOD_NOT]], label %[[FOR_COND_CLEANUP:.*]], label %[[FOR_BODY_EPIL:.*]]
+// CHECK-NEXT:    br i1 [[LCMP_MOD_NOT]], label %[[FOR_COND_CLEANUP:.*]], label %[[FOR_BODY_EPIL_PREHEADER:.*]]
+// CHECK:       [[FOR_BODY_EPIL_PREHEADER]]:
+// CHECK-NEXT:    [[LCMP_MOD7:%.*]] = icmp ne i32 [[XTRAITER]], 0
+// CHECK-NEXT:    tail call void @llvm.assume(i1 [[LCMP_MOD7]])
+// CHECK-NEXT:    br label %[[FOR_BODY_EPIL:.*]]
 // CHECK:       [[FOR_BODY_EPIL]]:
-// CHECK-NEXT:    [[I_05_EPIL:%.*]] = phi i32 [ [[INC_EPIL:%.*]], %[[FOR_BODY_EPIL]] ], [ [[INC_3:%.*]], %[[FOR_COND_CLEANUP_UNR_LCSSA]] ]
-// CHECK-NEXT:    [[S_04_EPIL:%.*]] = phi i32 [ [[ADD_EPIL:%.*]], %[[FOR_BODY_EPIL]] ], [ [[ADD_3:%.*]], %[[FOR_COND_CLEANUP_UNR_LCSSA]] ]
-// CHECK-NEXT:    [[EPIL_ITER:%.*]] = phi i32 [ [[EPIL_ITER_NEXT:%.*]], %[[FOR_BODY_EPIL]] ], [ 0, %[[FOR_COND_CLEANUP_UNR_LCSSA]] ]
+// CHECK-NEXT:    [[I_05_EPIL:%.*]] = phi i32 [ [[INC_3:%.*]], %[[FOR_BODY_EPIL_PREHEADER]] ], [ [[INC_EPIL:%.*]], %[[FOR_BODY_EPIL]] ]
+// CHECK-NEXT:    [[S_04_EPIL:%.*]] = phi i32 [ [[ADD_3:%.*]], %[[FOR_BODY_EPIL_PREHEADER]] ], [ [[ADD_EPIL:%.*]], %[[FOR_BODY_EPIL]] ]
+// CHECK-NEXT:    [[EPIL_ITER:%.*]] = phi i32 [ 0, %[[FOR_BODY_EPIL_PREHEADER]] ], [ [[EPIL_ITER_NEXT:%.*]], %[[FOR_BODY_EPIL]] ]
 // CHECK-NEXT:    [[TMP1:%.*]] = trunc nsw i32 [[I_05_EPIL]] to i20
 // CHECK-NEXT:    [[ARRAYIDX_EPIL:%.*]] = getelementptr inbounds i32, ptr [[P]], i20 [[TMP1]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[ARRAYIDX_EPIL]], align 4, !tbaa [[TBAA2]]

@@ -1383,9 +1383,11 @@ tryToUnrollLoop(Loop *L, DominatorTree &DT, LoopInfo *LI, ScalarEvolution &SE,
       return In / UnrollReport.Count;
     };
 
-    MDNode *Scaled = updateIterCounts(L->getHeader()->getContext(), OrigLoopID,
-                                      ScaleDown, ScaleDown);
-    L->setLoopID(Scaled);
+    // UnrollLoop may have updated the loop ID (estimated trip count).
+    MDNode *Scaled = updateIterCounts(L->getHeader()->getContext(),
+                                      L->getLoopID(), ScaleDown, ScaleDown);
+    if (Scaled)
+      L->setLoopID(Scaled);
     std::optional<MDNode *> NewLoopID = makeFollowupLoopID(
         Scaled, {LLVMLoopUnrollFollowupAll, LLVMLoopUnrollFollowupUnrolled});
     if (NewLoopID) {
