@@ -700,6 +700,65 @@ bool modifyStoreFlush(MachineBasicBlock &MBB, MachineRegisterInfo &MRI) {
   return Changed;
 }
 
+/// True if every bit of virtual register Reg comes from an IMPLICIT_DEF.
+static bool isFullyUndef(Register Reg, const MachineRegisterInfo &MRI,
+                         unsigned Depth = 0) {
+  if (!Reg.isVirtual() || Depth > 8)
+    return false;
+
+  const MachineInstr *Def = MRI.getVRegDef(Reg);
+  if (!Def)
+    return false;
+
+  switch (Def->getOpcode()) {
+  case TargetOpcode::IMPLICIT_DEF:
+    return true;
+  case TargetOpcode::COPY: {
+    const MachineOperand &Src = Def->getOperand(1);
+    return Src.isReg() && isFullyUndef(Src.getReg(), MRI, Depth + 1);
+  }
+  case TargetOpcode::REG_SEQUENCE:
+    // REG_SEQUENCE operands: (dst, v0, sub0, v1, sub1, ...)
+    for (unsigned I = 1, E = Def->getNumOperands(); I < E; I += 2) {
+      if (!Def->getOperand(I).isReg() ||
+          !isFullyUndef(Def->getOperand(I).getReg(), MRI, Depth + 1))
+        return false;
+    }
+    return Def->getNumOperands() > 1;
+  default:
+    return false;
+  }
+}
+
+/// If src2 of a VSHUFFLE is fully undef, rewrite it as an undef use of src1 so
+/// register allocation does not assign an unrelated register to the don't-care
+/// operand.
+static bool foldUndefShuffleSrc(MachineBasicBlock &MBB,
+                                MachineRegisterInfo &MRI) {
+  const AIEBaseInstrInfo *TII = static_cast<const AIEBaseInstrInfo *>(
+      MBB.getParent()->getSubtarget().getInstrInfo());
+  bool Changed = false;
+
+  for (MachineInstr &MI : MBB) {
+    if (!TII->isVShuffle(MI.getOpcode()))
+      continue;
+
+    MachineOperand &S1 = MI.getOperand(1);
+    MachineOperand &S2 = MI.getOperand(2);
+    if (!isFullyUndef(S2.getReg(), MRI))
+      continue;
+
+    LLVM_DEBUG(dbgs() << "Folding undef shuffle src2 into undef src1: ";
+               MI.dump());
+    S2.setReg(S1.getReg());
+    S2.setIsUndef(true);
+    S2.setIsKill(false);
+    Changed = true;
+  }
+
+  return Changed;
+}
+
 static bool combineSubRegCopyToSuperregCopy(MachineBasicBlock &MBB,
                                             MachineRegisterInfo &MRI) {
   const TargetInstrInfo *TII = MBB.getParent()->getSubtarget().getInstrInfo();
@@ -840,6 +899,11 @@ bool AIEPostSelectOptimize::runOnMachineFunction(MachineFunction &MF) {
     for (MachineBasicBlock &MBB : MF) {
       Changed |= modifyStoreFlush(MBB, MF.getRegInfo());
     }
+  }
+
+  // 6. Fold a fully-undef VSHUFFLE src2 into an undef use of src1.
+  for (MachineBasicBlock &MBB : MF) {
+    Changed |= foldUndefShuffleSrc(MBB, MF.getRegInfo());
   }
 
   return Changed;
