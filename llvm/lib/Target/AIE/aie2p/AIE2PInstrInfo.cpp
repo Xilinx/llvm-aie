@@ -1579,6 +1579,7 @@ AIE2PInstrInfo::getJNZDSupport() const {
   Result.LoopJNZOpcode = AIE2P::LoopJNZ;
   Result.DecTripCountOpcode = AIE2P::ADD_NC_mv_add_ri;
   Result.LoopJNZDOpcode = AIE2P::PseudoJNZD;
+  Result.JNZOpcode = AIE2P::PseudoJNZ;
   return Result;
 }
 
