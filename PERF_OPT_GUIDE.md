@@ -459,7 +459,7 @@ The table below lists the `AIE_*` wrapper macros and their underlying
 | `AIE_LOOP_UNROLL_FULL`            | `unroll(full)`                     | Fully unroll the loop                                           |
 | `AIE_LOOP_UNROLL(N)`              | `unroll_count(N)`                  | Unroll by factor N                                              |
 | `AIE_LOOP_HINT(key, value)`       | `hint(key, value)`                 | Pass arbitrary per-loop metadata to specific compiler passes (see [Section 6](#6-loop-hints))   |
-| `AIE_KEEP_SWLOOP`                 | (TBD)                              | Keep the software loop structure (prevent ZOL conversion)       |
+| `AIE_KEEP_SWLOOP`                 | (TBD)                              | Keep the software loop structure (prevent ZOL conversion); use `AIE_LOOP_HINT(enable-aie-hardware-loops, 0)` meanwhile (see [Section 6](#6-loop-hints)) |
 | `AIE_NO_PIPELINING`               | (TBD)                              | Disable all software pipelining for the loop                    |
 
 The macros that matter most for kernel performance are
@@ -538,6 +538,44 @@ AIE_LOOP_HINT(aie-gpr-realloc, 1)
 AIE_LOOP_HINT(aie-realloc-loopaware, 1)
 AIE_LOOP_HINT(aie-reg-rewrite-mode, swpaware)
 ```
+
+### Turning hardware loops off or on for one loop
+The compiler turns every loop whose trip count it can compute, and that
+calls no function, into a hardware loop: a zero-overhead loop (ZOL) for
+a single-block innermost loop, or a JNZD loop otherwise, where the
+target supports it. A declared minimum trip count does not affect that
+decision, so `AIE_LOOP_RANGE` cannot keep a loop out of hardware loops.
+
+To keep one loop a software branch loop, for example a loop that runs
+only once or twice and whose branch delay slots are already filled with
+useful work, turn hardware loops off for that loop alone:
+```cpp
+AIE_LOOP_HINT(enable-aie-hardware-loops, 0)
+AIE_LOOP_RANGE(4,)
+for (int i = 0; i < count; i++) {
+    // Stays a software loop. Its minimum of 4 is still used, for
+    // example to remove the loop guard.
+}
+```
+
+| Key                          | Type | Default | Effect                                                          |
+|------------------------------|------|---------|-----------------------------------------------------------------|
+| `enable-aie-hardware-loops`  | 0/1  | 1       | 0 keeps the loop out of hardware loops; 1 is the default         |
+| `aie-multiblock-jnzd-loops`  | 0/1  | 1       | 0 keeps a loop that spans several blocks out of JNZD loops       |
+
+A loop that is not a hardware loop is not taken by the post-RA
+pipeliner, which only schedules zero-overhead loops; the pre-RA pipeliner
+can still pipeline it (see [Section 7](#7-software-pipelining)).
+
+A value of 1 only states the default: as with any key, an explicit
+`--enable-aie-hardware-loops=false` on the command line wins over the
+hint. The command-line equivalents act on every loop of the compilation:
+- `--enable-aie-hardware-loops=false` turns hardware loops off.
+- `--aie-hardware-loops-minitercount=N` rejects hardware loops for the
+  loops that declare a minimum below N (default 1).
+
+Check the result with the `aie-hardware-loops` remarks (see
+[Hardware loop remarks](#hardware-loop-remarks)).
 
 ### Disabling per-loop overrides
 For debugging, pass `--aie-ignore-loop-hints` to `llc`
@@ -1302,19 +1340,18 @@ ZOL conversion eliminates the branch instruction at the end of the
 loop body, freeing a VLIW slot and removing the branch latency. This
 is both a PM and a performance improvement.
 
-The compiler generates a hardware loop when the minimum iteration
-count is known (via `AIE_LOOP_RANGE`). When the minimum is known and
-greater than 1, the compiler can also remove the loop guard (the
-branch that skips the loop when the trip count is zero), saving
-additional PM and cycles.
-
-**Current limitation**: the loop guard is only removed when the
-minimum iteration count is strictly greater than 1. Setting
-`AIE_LOOP_RANGE(2,)` or higher enables this optimization.
+The compiler generates a hardware loop whenever it can compute the trip
+count, whether or not a minimum is declared. A loop opts out with
+`AIE_LOOP_HINT(enable-aie-hardware-loops, 0)` (see [Turning hardware
+loops off or on for one loop](#turning-hardware-loops-off-or-on-for-one-loop)).
+When a minimum of 1 or more is declared with `AIE_LOOP_RANGE`, the
+compiler also removes the loop guard (the branch that skips the loop
+when the trip count is zero), saving additional PM and cycles.
 
 If `Zero-Overhead-Loop` is `false` or the remark is absent, the loop
 uses a software branch. Common reasons ZOL conversion fails: the loop
-has multiple exits, or the trip count cannot be determined.
+has multiple exits, the trip count cannot be determined, the loop calls
+a function, or the loop opted out with the hint.
 
 ### Assembly-level remarks
 The `aie-asm-printer` pass reports the code size of each basic block:
@@ -1512,3 +1549,10 @@ Use this checklist when writing or reviewing kernel code:
     deduction is ambiguous
 14. `AIE_LOOP_HINT` used for per-loop compiler tuning when global
     defaults are suboptimal
+
+## 16. Changes
+
+- A declared minimum trip count of 0 or 1 (`AIE_LOOP_RANGE(0,)`,
+  `AIE_LOOP_RANGE(1,)`) no longer keeps a loop out of hardware loops.
+  Use `AIE_LOOP_HINT(enable-aie-hardware-loops, 0)` for that instead; see
+  [Turning hardware loops off or on for one loop](#turning-hardware-loops-off-or-on-for-one-loop).
