@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // \file
@@ -427,7 +430,8 @@ bool SCCPSolver::removeNonFeasibleEdges(BasicBlock *BB, DomTreeUpdater &DTU,
     }
 
     Instruction *BI = BranchInst::Create(OnlyFeasibleSuccessor, BB);
-    BI->setDebugLoc(TI->getDebugLoc());
+    BI->copyMetadata(*TI, {LLVMContext::MD_loop, LLVMContext::MD_dbg,
+                           LLVMContext::MD_annotation});
     TI->eraseFromParent();
     DTU.applyUpdatesPermissive(Updates);
   } else if (FeasibleSuccessors.size() > 1) {
