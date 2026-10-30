@@ -157,7 +157,7 @@ define void @inner_start_from_stage0_addr(ptr noalias %a, ptr noalias %c, i32 %N
 ; CHECK-NEXT:    [[A_ADDR_STEADY_BOTTOM:%.*]] = getelementptr inbounds i32, ptr [[A_PTR_NEXT_STEADY]], i32 [[OFFSET]]
 ; CHECK-NEXT:    [[V0_STEADY_BOTTOM:%.*]] = load i32, ptr [[A_ADDR_STEADY_BOTTOM]], align 4
 ; CHECK-NEXT:    [[A_START_STEADY_BOTTOM]] = getelementptr inbounds i32, ptr [[A_ADDR_STEADY_BOTTOM]], i32 4
-; CHECK-NEXT:    br i1 [[OUTER_COND_STEADY]], label %[[STEADY_STAGE1_TOP]], label %[[EXIT]], !llvm.loop [[LOOP6:![0-9]+]]
+; CHECK-NEXT:    br i1 [[OUTER_COND_STEADY]], label %[[STEADY_STAGE1_TOP]], label %[[EXIT]], !llvm.loop [[LOOP7:![0-9]+]]
 ; CHECK:       [[EXIT]]:
 ; CHECK-NEXT:    ret void
 ;
@@ -206,9 +206,10 @@ declare i1 @llvm.loop.decrement.i32(i32)
 ;.
 ; CHECK: [[LOOP0]] = distinct !{[[LOOP0]], [[META1:![0-9]+]]}
 ; CHECK: [[META1]] = !{!"llvm.loop.mustprogress"}
-; CHECK: [[LOOP2]] = distinct !{[[LOOP2]], [[META1]], [[META3:![0-9]+]], [[META4:![0-9]+]], [[META5:![0-9]+]]}
+; CHECK: [[LOOP2]] = distinct !{[[LOOP2]], [[META1]], [[META3:![0-9]+]], [[META4:![0-9]+]], [[META5:![0-9]+]], [[META6:![0-9]+]]}
 ; CHECK: [[META3]] = !{!"llvm.loop.itercount.range", i32 2}
 ; CHECK: [[META4]] = !{!"llvm.loop.hint.aie_outerloop_pipeliner_success", i64 1}
 ; CHECK: [[META5]] = !{!"llvm.loop.hint.aie_outerloop_pipeliner_speculative", i64 1}
-; CHECK: [[LOOP6]] = distinct !{[[LOOP6]], [[META1]], [[META3]], [[META4]], [[META5]]}
+; CHECK: [[META6]] = !{!"llvm.loop.hint.aie_outerloop_pipeliner_peel_mode", !"last"}
+; CHECK: [[LOOP7]] = distinct !{[[LOOP7]], [[META1]], [[META3]], [[META4]], [[META5]], [[META6]]}
 ;.
