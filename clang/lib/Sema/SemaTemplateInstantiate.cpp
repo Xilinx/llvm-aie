@@ -2239,14 +2239,16 @@ TemplateInstantiator::TransformLoopHintAttr(const LoopHintAttr *LH) {
   if (TransformedExpr == LH->getValue())
     return LH;
 
-  // Generate error if there is a problem with the value.
-  if (getSema().CheckLoopHintExpr(TransformedExpr, LH->getLocation(),
-                                  LH->getSemanticSpelling() ==
-                                      LoopHintAttr::Pragma_unroll))
-    return LH;
-
   LoopHintAttr::OptionType Option = LH->getOption();
   LoopHintAttr::LoopHintState State = LH->getState();
+
+  // Generate error if there is a problem with the value.
+  if (getSema().CheckLoopHintExpr(
+          TransformedExpr, LH->getLocation(),
+          LH->getSemanticSpelling() == LoopHintAttr::Pragma_unroll ||
+              Option == LoopHintAttr::MinIterationCount ||
+              Option == LoopHintAttr::MaxIterationCount))
+    return LH;
 
   llvm::APSInt ValueAPS =
       TransformedExpr->EvaluateKnownConstInt(getSema().getASTContext());

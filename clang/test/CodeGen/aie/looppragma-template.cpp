@@ -17,6 +17,7 @@ template <unsigned Min> void lwb(int *p, int n) {
   for (int i = 0; i < n; i++)
     p[i] += i;
 }
+template void lwb<0>(int *, int);
 template void lwb<1>(int *, int);
 template void lwb<4>(int *, int);
 
@@ -25,37 +26,31 @@ template <unsigned Min, unsigned Max> void range(int *p, int n) {
   for (int i = 0; i < n; i++)
     p[i] += i;
 }
+template void range<0, 0>(int *, int);
+template void range<0, 8>(int *, int);
 template void range<1, 1>(int *, int);
 template void range<4, 16>(int *, int);
 
-#ifdef ERRORS
-template <unsigned Min> void lwb_zero(int *p, int n) {
-#pragma clang loop min_iteration_count(Min) // expected-error {{invalid value '0'; must be positive}}
-  for (int i = 0; i < n; i++)
-    p[i] += i;
-}
-template void lwb_zero<0>(int *, int); // expected-note {{in instantiation of function template specialization 'lwb_zero<0U>' requested here}}
-
 void lwb_zero_literal(int *p, int n) {
-#pragma clang loop min_iteration_count(0) // expected-error {{invalid value '0'; must be positive}}
+#pragma clang loop min_iteration_count(0)
   for (int i = 0; i < n; i++)
     p[i] += i;
 }
 
-void upb_zero_literal(int *p, int n) {
-#pragma clang loop min_iteration_count(1) max_iteration_count(0) // expected-error {{invalid value '0'; must be positive}}
+void tail_zero_literal(int *p, int n) {
+#pragma clang loop min_iteration_count(0) max_iteration_count(0)
   for (int i = 0; i < n; i++)
     p[i] += i;
 }
 
-template <unsigned Max> void upb_zero(int *p, int n) {
-#pragma clang loop min_iteration_count(1) max_iteration_count(Max) // expected-error {{invalid value '0'; must be positive}}
+#ifdef ERRORS
+void upb_negative_literal(int *p, int n) {
+#pragma clang loop min_iteration_count(0) max_iteration_count(-1) // expected-error {{invalid value '-1'; must be positive}}
   for (int i = 0; i < n; i++)
     p[i] += i;
 }
-template void upb_zero<0>(int *, int); // expected-note {{in instantiation of function template specialization 'upb_zero<0U>' requested here}}
 #endif
-// CHECK-LABEL: define weak_odr void @_Z3lwbILj1EEvPii(
+// CHECK-LABEL: define weak_odr void @_Z3lwbILj0EEvPii(
 // CHECK-SAME: ptr [[P:%.*]], i32 noundef [[N:%.*]]) local_unnamed_addr #[[ATTR0:[0-9]+]] comdat {
 // CHECK-NEXT:  [[ENTRY:.*]]:
 // CHECK-NEXT:    [[CMP4:%.*]] = icmp sgt i32 [[N]], 0
@@ -74,7 +69,7 @@ template void upb_zero<0>(int *, int); // expected-note {{in instantiation of fu
 // CHECK-NEXT:    br i1 [[EXITCOND_NOT]], label %[[FOR_COND_CLEANUP]], label %[[FOR_BODY]], !llvm.loop [[LOOP6:![0-9]+]]
 //
 //
-// CHECK-LABEL: define weak_odr void @_Z3lwbILj4EEvPii(
+// CHECK-LABEL: define weak_odr void @_Z3lwbILj1EEvPii(
 // CHECK-SAME: ptr [[P:%.*]], i32 noundef [[N:%.*]]) local_unnamed_addr #[[ATTR0]] comdat {
 // CHECK-NEXT:  [[ENTRY:.*]]:
 // CHECK-NEXT:    [[CMP4:%.*]] = icmp sgt i32 [[N]], 0
@@ -93,7 +88,7 @@ template void upb_zero<0>(int *, int); // expected-note {{in instantiation of fu
 // CHECK-NEXT:    br i1 [[EXITCOND_NOT]], label %[[FOR_COND_CLEANUP]], label %[[FOR_BODY]], !llvm.loop [[LOOP9:![0-9]+]]
 //
 //
-// CHECK-LABEL: define weak_odr void @_Z5rangeILj1ELj1EEvPii(
+// CHECK-LABEL: define weak_odr void @_Z3lwbILj4EEvPii(
 // CHECK-SAME: ptr [[P:%.*]], i32 noundef [[N:%.*]]) local_unnamed_addr #[[ATTR0]] comdat {
 // CHECK-NEXT:  [[ENTRY:.*]]:
 // CHECK-NEXT:    [[CMP4:%.*]] = icmp sgt i32 [[N]], 0
@@ -112,7 +107,7 @@ template void upb_zero<0>(int *, int); // expected-note {{in instantiation of fu
 // CHECK-NEXT:    br i1 [[EXITCOND_NOT]], label %[[FOR_COND_CLEANUP]], label %[[FOR_BODY]], !llvm.loop [[LOOP11:![0-9]+]]
 //
 //
-// CHECK-LABEL: define weak_odr void @_Z5rangeILj4ELj16EEvPii(
+// CHECK-LABEL: define weak_odr void @_Z5rangeILj0ELj0EEvPii(
 // CHECK-SAME: ptr [[P:%.*]], i32 noundef [[N:%.*]]) local_unnamed_addr #[[ATTR0]] comdat {
 // CHECK-NEXT:  [[ENTRY:.*]]:
 // CHECK-NEXT:    [[CMP4:%.*]] = icmp sgt i32 [[N]], 0
@@ -130,8 +125,104 @@ template void upb_zero<0>(int *, int); // expected-note {{in instantiation of fu
 // CHECK-NEXT:    [[EXITCOND_NOT:%.*]] = icmp eq i32 [[INC]], [[N]]
 // CHECK-NEXT:    br i1 [[EXITCOND_NOT]], label %[[FOR_COND_CLEANUP]], label %[[FOR_BODY]], !llvm.loop [[LOOP13:![0-9]+]]
 //
+//
+// CHECK-LABEL: define weak_odr void @_Z5rangeILj0ELj8EEvPii(
+// CHECK-SAME: ptr [[P:%.*]], i32 noundef [[N:%.*]]) local_unnamed_addr #[[ATTR0]] comdat {
+// CHECK-NEXT:  [[ENTRY:.*]]:
+// CHECK-NEXT:    [[CMP4:%.*]] = icmp sgt i32 [[N]], 0
+// CHECK-NEXT:    br i1 [[CMP4]], label %[[FOR_BODY:.*]], label %[[FOR_COND_CLEANUP:.*]]
+// CHECK:       [[FOR_COND_CLEANUP]]:
+// CHECK-NEXT:    ret void
+// CHECK:       [[FOR_BODY]]:
+// CHECK-NEXT:    [[I_05:%.*]] = phi i32 [ [[INC:%.*]], %[[FOR_BODY]] ], [ 0, %[[ENTRY]] ]
+// CHECK-NEXT:    [[TMP0:%.*]] = trunc nsw i32 [[I_05]] to i20
+// CHECK-NEXT:    [[ARRAYIDX:%.*]] = getelementptr inbounds i32, ptr [[P]], i20 [[TMP0]]
+// CHECK-NEXT:    [[TMP1:%.*]] = load i32, ptr [[ARRAYIDX]], align 4, !tbaa [[TBAA2]]
+// CHECK-NEXT:    [[ADD:%.*]] = add nsw i32 [[TMP1]], [[I_05]]
+// CHECK-NEXT:    store i32 [[ADD]], ptr [[ARRAYIDX]], align 4, !tbaa [[TBAA2]]
+// CHECK-NEXT:    [[INC]] = add nuw nsw i32 [[I_05]], 1
+// CHECK-NEXT:    [[EXITCOND_NOT:%.*]] = icmp eq i32 [[INC]], [[N]]
+// CHECK-NEXT:    br i1 [[EXITCOND_NOT]], label %[[FOR_COND_CLEANUP]], label %[[FOR_BODY]], !llvm.loop [[LOOP15:![0-9]+]]
+//
+//
+// CHECK-LABEL: define weak_odr void @_Z5rangeILj1ELj1EEvPii(
+// CHECK-SAME: ptr [[P:%.*]], i32 noundef [[N:%.*]]) local_unnamed_addr #[[ATTR0]] comdat {
+// CHECK-NEXT:  [[ENTRY:.*]]:
+// CHECK-NEXT:    [[CMP4:%.*]] = icmp sgt i32 [[N]], 0
+// CHECK-NEXT:    br i1 [[CMP4]], label %[[FOR_BODY:.*]], label %[[FOR_COND_CLEANUP:.*]]
+// CHECK:       [[FOR_COND_CLEANUP]]:
+// CHECK-NEXT:    ret void
+// CHECK:       [[FOR_BODY]]:
+// CHECK-NEXT:    [[I_05:%.*]] = phi i32 [ [[INC:%.*]], %[[FOR_BODY]] ], [ 0, %[[ENTRY]] ]
+// CHECK-NEXT:    [[TMP0:%.*]] = trunc nsw i32 [[I_05]] to i20
+// CHECK-NEXT:    [[ARRAYIDX:%.*]] = getelementptr inbounds i32, ptr [[P]], i20 [[TMP0]]
+// CHECK-NEXT:    [[TMP1:%.*]] = load i32, ptr [[ARRAYIDX]], align 4, !tbaa [[TBAA2]]
+// CHECK-NEXT:    [[ADD:%.*]] = add nsw i32 [[TMP1]], [[I_05]]
+// CHECK-NEXT:    store i32 [[ADD]], ptr [[ARRAYIDX]], align 4, !tbaa [[TBAA2]]
+// CHECK-NEXT:    [[INC]] = add nuw nsw i32 [[I_05]], 1
+// CHECK-NEXT:    [[EXITCOND_NOT:%.*]] = icmp eq i32 [[INC]], [[N]]
+// CHECK-NEXT:    br i1 [[EXITCOND_NOT]], label %[[FOR_COND_CLEANUP]], label %[[FOR_BODY]], !llvm.loop [[LOOP17:![0-9]+]]
+//
+//
+// CHECK-LABEL: define weak_odr void @_Z5rangeILj4ELj16EEvPii(
+// CHECK-SAME: ptr [[P:%.*]], i32 noundef [[N:%.*]]) local_unnamed_addr #[[ATTR0]] comdat {
+// CHECK-NEXT:  [[ENTRY:.*]]:
+// CHECK-NEXT:    [[CMP4:%.*]] = icmp sgt i32 [[N]], 0
+// CHECK-NEXT:    br i1 [[CMP4]], label %[[FOR_BODY:.*]], label %[[FOR_COND_CLEANUP:.*]]
+// CHECK:       [[FOR_COND_CLEANUP]]:
+// CHECK-NEXT:    ret void
+// CHECK:       [[FOR_BODY]]:
+// CHECK-NEXT:    [[I_05:%.*]] = phi i32 [ [[INC:%.*]], %[[FOR_BODY]] ], [ 0, %[[ENTRY]] ]
+// CHECK-NEXT:    [[TMP0:%.*]] = trunc nsw i32 [[I_05]] to i20
+// CHECK-NEXT:    [[ARRAYIDX:%.*]] = getelementptr inbounds i32, ptr [[P]], i20 [[TMP0]]
+// CHECK-NEXT:    [[TMP1:%.*]] = load i32, ptr [[ARRAYIDX]], align 4, !tbaa [[TBAA2]]
+// CHECK-NEXT:    [[ADD:%.*]] = add nsw i32 [[TMP1]], [[I_05]]
+// CHECK-NEXT:    store i32 [[ADD]], ptr [[ARRAYIDX]], align 4, !tbaa [[TBAA2]]
+// CHECK-NEXT:    [[INC]] = add nuw nsw i32 [[I_05]], 1
+// CHECK-NEXT:    [[EXITCOND_NOT:%.*]] = icmp eq i32 [[INC]], [[N]]
+// CHECK-NEXT:    br i1 [[EXITCOND_NOT]], label %[[FOR_COND_CLEANUP]], label %[[FOR_BODY]], !llvm.loop [[LOOP19:![0-9]+]]
+//
+//
+// CHECK-LABEL: define dso_local void @_Z16lwb_zero_literalPii(
+// CHECK-SAME: ptr captures(none) [[P:%.*]], i32 noundef [[N:%.*]]) local_unnamed_addr #[[ATTR1:[0-9]+]] {
+// CHECK-NEXT:  [[ENTRY:.*]]:
+// CHECK-NEXT:    [[CMP4:%.*]] = icmp sgt i32 [[N]], 0
+// CHECK-NEXT:    br i1 [[CMP4]], label %[[FOR_BODY:.*]], label %[[FOR_COND_CLEANUP:.*]]
+// CHECK:       [[FOR_COND_CLEANUP]]:
+// CHECK-NEXT:    ret void
+// CHECK:       [[FOR_BODY]]:
+// CHECK-NEXT:    [[I_05:%.*]] = phi i32 [ [[INC:%.*]], %[[FOR_BODY]] ], [ 0, %[[ENTRY]] ]
+// CHECK-NEXT:    [[TMP0:%.*]] = trunc nsw i32 [[I_05]] to i20
+// CHECK-NEXT:    [[ARRAYIDX:%.*]] = getelementptr inbounds i32, ptr [[P]], i20 [[TMP0]]
+// CHECK-NEXT:    [[TMP1:%.*]] = load i32, ptr [[ARRAYIDX]], align 4, !tbaa [[TBAA2]]
+// CHECK-NEXT:    [[ADD:%.*]] = add nsw i32 [[TMP1]], [[I_05]]
+// CHECK-NEXT:    store i32 [[ADD]], ptr [[ARRAYIDX]], align 4, !tbaa [[TBAA2]]
+// CHECK-NEXT:    [[INC]] = add nuw nsw i32 [[I_05]], 1
+// CHECK-NEXT:    [[EXITCOND_NOT:%.*]] = icmp eq i32 [[INC]], [[N]]
+// CHECK-NEXT:    br i1 [[EXITCOND_NOT]], label %[[FOR_COND_CLEANUP]], label %[[FOR_BODY]], !llvm.loop [[LOOP21:![0-9]+]]
+//
+//
+// CHECK-LABEL: define dso_local void @_Z17tail_zero_literalPii(
+// CHECK-SAME: ptr captures(none) [[P:%.*]], i32 noundef [[N:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// CHECK-NEXT:  [[ENTRY:.*]]:
+// CHECK-NEXT:    [[CMP4:%.*]] = icmp sgt i32 [[N]], 0
+// CHECK-NEXT:    br i1 [[CMP4]], label %[[FOR_BODY:.*]], label %[[FOR_COND_CLEANUP:.*]]
+// CHECK:       [[FOR_COND_CLEANUP]]:
+// CHECK-NEXT:    ret void
+// CHECK:       [[FOR_BODY]]:
+// CHECK-NEXT:    [[I_05:%.*]] = phi i32 [ [[INC:%.*]], %[[FOR_BODY]] ], [ 0, %[[ENTRY]] ]
+// CHECK-NEXT:    [[TMP0:%.*]] = trunc nsw i32 [[I_05]] to i20
+// CHECK-NEXT:    [[ARRAYIDX:%.*]] = getelementptr inbounds i32, ptr [[P]], i20 [[TMP0]]
+// CHECK-NEXT:    [[TMP1:%.*]] = load i32, ptr [[ARRAYIDX]], align 4, !tbaa [[TBAA2]]
+// CHECK-NEXT:    [[ADD:%.*]] = add nsw i32 [[TMP1]], [[I_05]]
+// CHECK-NEXT:    store i32 [[ADD]], ptr [[ARRAYIDX]], align 4, !tbaa [[TBAA2]]
+// CHECK-NEXT:    [[INC]] = add nuw nsw i32 [[I_05]], 1
+// CHECK-NEXT:    [[EXITCOND_NOT:%.*]] = icmp eq i32 [[INC]], [[N]]
+// CHECK-NEXT:    br i1 [[EXITCOND_NOT]], label %[[FOR_COND_CLEANUP]], label %[[FOR_BODY]], !llvm.loop [[LOOP22:![0-9]+]]
+//
 //.
 // CHECK: attributes #[[ATTR0]] = { mustprogress nounwind "no-trapping-math"="true" "stack-protector-buffer-size"="8" }
+// CHECK: attributes #[[ATTR1]] = { mustprogress nofree norecurse nosync nounwind memory(argmem: readwrite) "no-trapping-math"="true" "stack-protector-buffer-size"="8" }
 //.
 // CHECK: [[META0:![0-9]+]] = !{i32 1, !"wchar_size", i32 4}
 // CHECK: [[META1:![0-9]+]] = !{!"{{.*}}clang version {{.*}}"}
@@ -141,11 +232,19 @@ template void upb_zero<0>(int *, int); // expected-note {{in instantiation of fu
 // CHECK: [[META5]] = !{!"Simple C++ TBAA"}
 // CHECK: [[LOOP6]] = distinct !{[[LOOP6]], [[META7:![0-9]+]], [[META8:![0-9]+]]}
 // CHECK: [[META7]] = !{!"llvm.loop.mustprogress"}
-// CHECK: [[META8]] = !{!"llvm.loop.itercount.range", i64 1}
+// CHECK: [[META8]] = !{!"llvm.loop.itercount.range", i64 0}
 // CHECK: [[LOOP9]] = distinct !{[[LOOP9]], [[META7]], [[META10:![0-9]+]]}
-// CHECK: [[META10]] = !{!"llvm.loop.itercount.range", i64 4}
+// CHECK: [[META10]] = !{!"llvm.loop.itercount.range", i64 1}
 // CHECK: [[LOOP11]] = distinct !{[[LOOP11]], [[META7]], [[META12:![0-9]+]]}
-// CHECK: [[META12]] = !{!"llvm.loop.itercount.range", i64 1, i64 1}
+// CHECK: [[META12]] = !{!"llvm.loop.itercount.range", i64 4}
 // CHECK: [[LOOP13]] = distinct !{[[LOOP13]], [[META7]], [[META14:![0-9]+]]}
-// CHECK: [[META14]] = !{!"llvm.loop.itercount.range", i64 4, i64 16}
+// CHECK: [[META14]] = !{!"llvm.loop.itercount.range", i64 0, i64 0}
+// CHECK: [[LOOP15]] = distinct !{[[LOOP15]], [[META7]], [[META16:![0-9]+]]}
+// CHECK: [[META16]] = !{!"llvm.loop.itercount.range", i64 0, i64 8}
+// CHECK: [[LOOP17]] = distinct !{[[LOOP17]], [[META7]], [[META18:![0-9]+]]}
+// CHECK: [[META18]] = !{!"llvm.loop.itercount.range", i64 1, i64 1}
+// CHECK: [[LOOP19]] = distinct !{[[LOOP19]], [[META7]], [[META20:![0-9]+]]}
+// CHECK: [[META20]] = !{!"llvm.loop.itercount.range", i64 4, i64 16}
+// CHECK: [[LOOP21]] = distinct !{[[LOOP21]], [[META7]], [[META8]]}
+// CHECK: [[LOOP22]] = distinct !{[[LOOP22]], [[META7]], [[META14]]}
 //.

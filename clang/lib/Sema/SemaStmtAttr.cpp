@@ -197,8 +197,12 @@ static Attr *handleLoopHintAttr(Sema &S, Stmt *St, const ParsedAttr &A,
                Option == LoopHintAttr::MinIterationCount ||
                Option == LoopHintAttr::MaxIterationCount) {
       assert(ValueExpr && "Attribute must have a valid value expression.");
+      // Generic code may compute an iteration count bound of 0, for example
+      // for a tail loop that can be empty.
       if (S.CheckLoopHintExpr(ValueExpr, St->getBeginLoc(),
-                              /*AllowZero=*/false))
+                              /*AllowZero=*/Option ==
+                                      LoopHintAttr::MinIterationCount ||
+                                  Option == LoopHintAttr::MaxIterationCount))
         return nullptr;
       State = LoopHintAttr::Numeric;
     } else if (Option == LoopHintAttr::Vectorize ||
