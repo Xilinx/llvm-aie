@@ -54,9 +54,31 @@ void AIE2FrameLowering::adjustSPReg(MachineBasicBlock &MBB,
         .addImm(StackPtrIncr)
         .setMIFlag(Flag);
   } else {
-    LLVM_DEBUG(dbgs() << "Adjust Stack by " << StackPtrIncr << " bytes\n.");
-    report_fatal_error(
-        "adjustSPReg cannot yet handle adjustments > +-2^17 bytes");
+    // AIE2 has no register-form SP pointer add (only the sp_imm forms), and SP
+    // is reserved, so it cannot be an explicit operand of the general pointer
+    // add. Copy SP into a scratch pointer register, add the materialized offset
+    // there, and copy the result back to SP. This is the same sequence the
+    // backend already uses to update SP for a dynamic stack allocation. The
+    // scratch registers are resolved by the register scavenger.
+    MachineRegisterInfo &MRI = MBB.getParent()->getRegInfo();
+    auto *RI = static_cast<const AIEBaseRegisterInfo *>(STI.getRegisterInfo());
+    Register SPReg = RI->getStackPointerRegister();
+    Register ScratchP = MRI.createVirtualRegister(&AIE2::ePRegClass);
+    Register ModReg = MRI.createVirtualRegister(&AIE2::eMRegClass);
+    BuildMI(MBB, MBBI, DL, TII->get(TII->getMvSclOpcode()), ScratchP)
+        .addReg(SPReg)
+        .setMIFlag(Flag);
+    BuildMI(MBB, MBBI, DL, TII->get(AIE2::MOVXM_lng_cg), ModReg)
+        .addImm(StackPtrIncr)
+        .setMIFlag(Flag);
+    BuildMI(MBB, MBBI, DL, TII->get(AIE2::PADDA_lda_ptr_inc_idx))
+        .addDef(ScratchP)
+        .addUse(ScratchP)
+        .addUse(ModReg)
+        .setMIFlag(Flag);
+    BuildMI(MBB, MBBI, DL, TII->get(TII->getMvSclOpcode()), SPReg)
+        .addReg(ScratchP, RegState::Kill)
+        .setMIFlag(Flag);
   }
 }
 
