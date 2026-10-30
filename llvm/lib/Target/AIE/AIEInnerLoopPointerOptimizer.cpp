@@ -376,7 +376,9 @@ bool AIEInnerLoopPointerOptimizer::normalizePhiToLoadBase(
 
     // --- Structural check ---
     // Back-edge value must be an i8 GEP directly off the phi with a positive
-    // constant or a loop-invariant stride.
+    // constant or a loop-invariant stride. isChainLinkCandidate already
+    // requires a simple i8 GEP, but only on the constant-stride path below;
+    // a variable stride never reaches it, so the shape is checked here.
     Value *const BackVal = Phi.getIncomingValueForBlock(Body);
     auto *BackGEP = dyn_cast<GetElementPtrInst>(BackVal);
     if (!BackGEP || BackGEP->getPointerOperand() != &Phi ||
