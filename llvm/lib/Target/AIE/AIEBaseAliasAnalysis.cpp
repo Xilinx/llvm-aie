@@ -59,6 +59,12 @@ static cl::opt<bool> DisambiguateNoAliasArgRoots(
              "function arguments (looks through GEP/cast/phi/select/load) "),
     cl::init(false), cl::Hidden);
 
+static cl::opt<bool> DisambiguateByteGeometry(
+    "aie-alias-analysis-byte-geometry",
+    cl::desc("Compare the address intervals of pointer cursors whose byte "
+             "geometry is known, instead of their update counts"),
+    cl::init(true), cl::Hidden);
+
 /// Function attribute (emitted by clang for the `aie_propagate_restrict`
 /// attribute) that enables noalias-arg-root disambiguation for a single
 /// function, independently of the module-wide command-line option.
@@ -227,35 +233,78 @@ struct IntrinsicArgsInfo {
   SmallVector<const Value *, 5> CounterArgs;
 };
 
+//===----------------------------------------------------------------------===//
+// Comparing two pointer cursors across loop iterations
+//
+// Both accesses of a query are reached by walking a cursor from the PHI that
+// enters the loop to the value handed back on the backedge. What that walk can
+// establish depends on how the cursor is advanced.
+//
+// AIE 2D/3D addressing intrinsics move a pointer by an AGU pattern whose
+// displacement is not a compile-time constant. Byte distances are therefore
+// unavailable, and the only comparable quantity is the *number* of updates
+// each cursor has undergone: two cursors driven by the same pattern, standing
+// at different update counts, are at least one update apart.
+//
+// That inference assumes every access fits within a single update. Nothing
+// here checks it; it is a property of the model, not something it derives.
+//
+// A cursor advanced by constant, inbounds getelementptrs has a second, sharper
+// description: its address is affine in the iteration number, so the bytes it
+// touches are known exactly. ByteGeometry below carries that description and
+// supersedes the update counting whenever both cursors have it. In particular
+// it can relate cursors advancing at *different* rates, which update counting
+// cannot: one update means a different distance on each of them.
+//===----------------------------------------------------------------------===//
+
+/// Bytes an access covers, as a function of the loop iteration number:
+///
+///     Addr(n) = Root + OffsetBytes + StrideBytes * n,    n >= 0
+///
+/// Only built for cursors advanced by constant inbounds getelementptrs, so the
+/// sequence is known not to wrap and may be extrapolated over iterations.
+struct ByteGeometry {
+  /// Distance from the cursor's entry pointer to the access, within one
+  /// iteration.
+  int64_t OffsetBytes = 0;
+  /// Distance the cursor covers in one iteration.
+  int64_t StrideBytes = 0;
+
+  /// Address of the access in loop iteration \p Iteration, relative to the
+  /// cursor's entry pointer.
+  int64_t addressAt(unsigned Iteration) const {
+    return OffsetBytes + StrideBytes * int64_t(Iteration);
+  }
+};
+
+/// Where an access sits in the update sequence of the cursor addressing it.
 struct PtrUpdateChainInfo {
-  // Calls up to a specific point.
-  unsigned PointerUpdates = 0;
-  // Total calls across the loop.
-  unsigned TotalPointerUpdates = 0;
-  // All parameters.
+  /// Updates applied to the cursor before the access, within one iteration.
+  unsigned UpdatesBeforeAccess = 0;
+  /// Updates applied to the cursor over a whole iteration.
+  unsigned UpdatesPerIteration = 0;
+  /// Constant arguments and counters of the addressing intrinsic driving the
+  /// cursor. Empty for getelementptr chains.
   IntrinsicArgsInfo IntrinsicParameters;
-  // Constant chain (always the same index).
+  /// Index operands of the getelementptr chain driving the cursor. Empty for
+  /// intrinsic chains.
   SmallVector<const Value *, 2> GEPIndexes;
+  /// Exact byte geometry of the cursor. Only present when every update is a
+  /// constant inbounds getelementptr of the same size.
+  std::optional<ByteGeometry> Bytes;
 
-  // Same GEP Indexes.
-  bool hasSameGEPIndexes(const PtrUpdateChainInfo &Other) const {
-    return GEPIndexes == Other.GEPIndexes;
+  /// Update count reached by the access in loop iteration \p Iteration.
+  unsigned updatesAt(unsigned Iteration) const {
+    return UpdatesBeforeAccess + Iteration * UpdatesPerIteration;
   }
 
-  // Same number of call until the point of interest.
-  bool hasSameNumberOfUpdates(const PtrUpdateChainInfo &Other) const {
-    return PointerUpdates == Other.PointerUpdates;
-  }
-
-  // Same number of calls across the loop.
-  bool hasSameTotalNumberOfUpdates(const PtrUpdateChainInfo &Other) const {
-    return TotalPointerUpdates == Other.TotalPointerUpdates;
-  }
-
-  // Check for the same constant parameters.
-  bool hasSameParameters(const PtrUpdateChainInfo &Other) const {
-    return IntrinsicParameters.ConstantArgs ==
-           Other.IntrinsicParameters.ConstantArgs;
+  /// Do both cursors advance by the same amount, whatever that amount is?
+  /// Only then are their update counts expressed in a common unit.
+  bool advancesLike(const PtrUpdateChainInfo &Other) const {
+    return UpdatesPerIteration == Other.UpdatesPerIteration &&
+           IntrinsicParameters.ConstantArgs ==
+               Other.IntrinsicParameters.ConstantArgs &&
+           GEPIndexes == Other.GEPIndexes;
   }
 
   // Check for the same initial values for the counters.
@@ -288,36 +337,60 @@ struct PtrUpdateChainInfo {
     }
     return true;
   }
-
-  bool mayOverlap(const PtrUpdateChainInfo &Other) const {
-    // Different number of updates in the chain.
-    // * but maybe with consistent updates (same steps)
-    if (!hasSameTotalNumberOfUpdates(Other))
-      return true;
-
-    // Different parameters.
-    if (!hasSameParameters(Other))
-      return true;
-
-    // Every counter must start equally.
-    if (!hasSameStartingCounters(Other))
-      return true;
-
-    // Check for different steps of calculation.
-    if (hasSameNumberOfUpdates(Other))
-      return true;
-
-    // Check for different GEP index.
-    if (!hasSameGEPIndexes(Other))
-      return true;
-
-    return false;
-  }
-
-  void bumpIteration(const unsigned VirtIteration) {
-    PointerUpdates += VirtIteration * TotalPointerUpdates;
-  }
 };
+
+/// Can the access described by \p A, executed in iteration \p IterA, and the
+/// one described by \p B, executed in iteration \p IterB, touch the same
+/// bytes?
+///
+/// Both cursors must run the same update pattern from the same starting
+/// counters, otherwise their update counts are not comparable at all. Given
+/// that, the accesses are separated whenever they stand at different counts.
+static bool mayOverlap(const PtrUpdateChainInfo &A, unsigned IterA,
+                       const PtrUpdateChainInfo &B, unsigned IterB) {
+  if (!A.advancesLike(B))
+    return true;
+
+  if (!A.hasSameStartingCounters(B))
+    return true;
+
+  return A.updatesAt(IterA) == B.updatesAt(IterB);
+}
+
+/// Same question, answered from exact byte geometry: can \p SizeA bytes at
+/// \p A in iteration \p IterA and \p SizeB bytes at \p B in iteration \p IterB
+/// be the same bytes?
+///
+/// Writing D(n) for the signed distance between the two accesses when loop
+/// iteration n is reached,
+///
+///     D(n) = D0 + (A.StrideBytes - B.StrideBytes) * n,    n >= 0
+///
+/// Evaluating a single n is not enough once the strides differ, because D then
+/// changes from iteration to iteration. The distance must therefore both start
+/// clear of the other access and keep moving away from it, which makes the
+/// answer hold for every n.
+///
+/// \p ExtraOffsetA and \p ExtraOffsetB locate each access relative to the
+/// address of the IR Value it was queried with. They carry the
+/// MachineMemOperand offset of a split access, and any constant displacement
+/// the caller dropped when it substituted a Value by its base.
+static bool mayOverlap(const ByteGeometry &A, unsigned IterA, int64_t SizeA,
+                       int64_t ExtraOffsetA, const ByteGeometry &B,
+                       unsigned IterB, int64_t SizeB, int64_t ExtraOffsetB) {
+  const int64_t D0 =
+      (A.addressAt(IterA) + ExtraOffsetA) - (B.addressAt(IterB) + ExtraOffsetB);
+  const int64_t Delta = A.StrideBytes - B.StrideBytes;
+
+  // A starts at or past the end of B and never comes back.
+  if (Delta >= 0 && D0 >= SizeB)
+    return false;
+  // A ends at or before the start of B and never catches up.
+  if (Delta <= 0 && D0 <= -SizeA)
+    return false;
+
+  return true;
+}
 
 static IntrinsicArgsInfo collectIntrinsicOperands(const Value *V) {
   const auto *Extract = dyn_cast<ExtractValueInst>(V);
@@ -367,6 +440,22 @@ static bool allInSameBB(SmallVector<const Value *> Values) {
   return true;
 }
 
+/// Byte displacement of \p GEP, if it is a constant.
+///
+/// inbounds is required. ByteGeometry extrapolates the address sequence over
+/// iterations, which is only meaningful while the arithmetic stays inside one
+/// object and therefore cannot wrap.
+static std::optional<int64_t> getConstantGEPStep(const GEPOperator *GEP) {
+  const auto *AsInstr = dyn_cast<Instruction>(GEP);
+  if (!AsInstr || !GEP->isInBounds())
+    return std::nullopt;
+  const DataLayout &DL = AsInstr->getModule()->getDataLayout();
+  APInt Offset(DL.getIndexTypeSizeInBits(GEP->getType()), 0);
+  if (!GEP->accumulateConstantOffset(DL, Offset))
+    return std::nullopt;
+  return Offset.getSExtValue();
+}
+
 /// This function returns some tracking information related to the upward path
 /// that starts from a Value *TargetPointer to the Phi node that firstly defines
 /// a pointer value to the same ambiguous memory. We start the search from the
@@ -378,6 +467,12 @@ trackPtrUpdateChain(const Value *LastUpdate, const Value *TargetPointer) {
   bool FoundGEPChain = false;
   IntrinsicArgsInfo IntrinsicParameters;
   SmallVector<const Value *, 2> GEPIndexes;
+  // Byte displacement shared by every update of the chain. Reset as soon as one
+  // update has no constant step, or one that differs from the others: matching
+  // GEP index *operands* do not imply matching byte steps, as the source
+  // element types may differ.
+  std::optional<int64_t> StepBytes;
+  bool UniformStepBytes = true;
 
   // We count backwards.
   std::optional<unsigned> LastCalls = std::nullopt;
@@ -392,7 +487,7 @@ trackPtrUpdateChain(const Value *LastUpdate, const Value *TargetPointer) {
     // This information is crucial to calculate the number
     // of pointer updates before TargetPointer.
     if (LastUpdate == TargetPointer)
-      LastCalls = ChainInfo.TotalPointerUpdates;
+      LastCalls = ChainInfo.UpdatesPerIteration;
 
     if (!LastUpdate->getType()->isPointerTy())
       return std::nullopt; // not a pointer.
@@ -404,6 +499,16 @@ trackPtrUpdateChain(const Value *LastUpdate, const Value *TargetPointer) {
         if (FoundIntrinsicChain) {
           // Found a mixed chain.
           return std::nullopt;
+        }
+
+        if (UniformStepBytes) {
+          const std::optional<int64_t> Step = getConstantGEPStep(GEP);
+          if (!Step)
+            UniformStepBytes = false;
+          else if (!StepBytes)
+            StepBytes = *Step;
+          else if (*StepBytes != *Step)
+            UniformStepBytes = false;
         }
 
         if (!FoundGEPChain) {
@@ -422,7 +527,7 @@ trackPtrUpdateChain(const Value *LastUpdate, const Value *TargetPointer) {
           return std::nullopt;
         }
 
-        ChainInfo.TotalPointerUpdates++;
+        ChainInfo.UpdatesPerIteration++;
         FoundGEPChain = true;
       }
 
@@ -432,9 +537,16 @@ trackPtrUpdateChain(const Value *LastUpdate, const Value *TargetPointer) {
     } else if (isa<PHINode>(LastUpdate)) {
       // Reached final destination.
       if (LastCalls) {
-        ChainInfo.PointerUpdates = ChainInfo.TotalPointerUpdates - *LastCalls;
+        ChainInfo.UpdatesBeforeAccess =
+            ChainInfo.UpdatesPerIteration - *LastCalls;
         ChainInfo.IntrinsicParameters = IntrinsicParameters;
         ChainInfo.GEPIndexes = GEPIndexes;
+        // Convert the update counts to bytes once, here, so that the byte
+        // model never has to reason in updates again.
+        if (UniformStepBytes && StepBytes)
+          ChainInfo.Bytes =
+              ByteGeometry{int64_t(ChainInfo.UpdatesBeforeAccess) * *StepBytes,
+                           int64_t(ChainInfo.UpdatesPerIteration) * *StepBytes};
         return ChainInfo;
       }
       return std::nullopt; // The object was not found.
@@ -476,7 +588,7 @@ trackPtrUpdateChain(const Value *LastUpdate, const Value *TargetPointer) {
       IntrinsicParameters.ConstantArgs = NewArgs.ConstantArgs;
 
       LastUpdate = AIEObject;
-      ChainInfo.TotalPointerUpdates++;
+      ChainInfo.UpdatesPerIteration++;
       FoundIntrinsicChain = true;
     }
   }
@@ -528,10 +640,23 @@ static bool isLockStepGEPChain(std::unordered_set<const Value *> &Visited,
                             GEPB->getPointerOperand());
 }
 
-static AliasResult aliasAIEIntrinsic(const Value *ValueA, const Value *ValueB,
-                                     const Value *BaseA, const Value *BaseB,
-                                     const unsigned VirtUnrollLevelA,
-                                     const unsigned VirtUnrollLevelB) {
+/// \p ExtraOffsetA and \p ExtraOffsetB are the byte offsets of the accesses
+/// relative to \p ValueA and \p ValueB. std::nullopt means the access does not
+/// have a known byte position relative to its Value, which rules out the byte
+/// model for the query.
+///
+/// \p AcrossUnrolls says the query comes from the virtual-unroll interface:
+/// the two accesses are then the pairs (n + UnrollLevelA, n + UnrollLevelB),
+/// which is the quantification the byte model proves its answer for. Plain
+/// alias queries have no such notion and may be asked about any two dynamic
+/// instances of the accesses. A byte-model NoAlias between cursors with
+/// different strides does not hold for those, so they keep update counting.
+static AliasResult
+aliasAIEIntrinsic(const Value *ValueA, const Value *ValueB, const Value *BaseA,
+                  const Value *BaseB, const unsigned VirtUnrollLevelA,
+                  const unsigned VirtUnrollLevelB, int64_t SizeA, int64_t SizeB,
+                  bool AcrossUnrolls, std::optional<int64_t> ExtraOffsetA = 0,
+                  std::optional<int64_t> ExtraOffsetB = 0) {
 
   const PHINode *PhiA = dyn_cast<PHINode>(BaseA);
   const PHINode *PhiB = dyn_cast<PHINode>(BaseB);
@@ -618,23 +743,37 @@ static AliasResult aliasAIEIntrinsic(const Value *ValueA, const Value *ValueB,
   if (!BTracking) // Non uniform address update accross the loop.
     return AliasResult::MayAlias;
 
-  // If we are in PostRA SWP, we need to increase the count
-  // by the number of unrolls x complete number of pointer
-  // updates for every completed iteration. In this way,
-  // we will have the notion of distance between different
-  // iterations and associated instructions.
-  ATracking->bumpIteration(VirtUnrollLevelA);
-  BTracking->bumpIteration(VirtUnrollLevelB);
+  // Under PostRA SWP the two accesses come from different iterations, so each
+  // cursor is evaluated at its own virtual unroll level. That is what gives us
+  // a notion of distance between instructions of different iterations.
+  //
+  // Byte geometry supersedes update counting whenever both cursors have it and
+  // the accessed sizes are known. This selects a model, it is not a fallback
+  // on the answer: once the byte model applies, its MayAlias is final. Asking
+  // the update counting afterwards would reinstate its assumption that an
+  // access fits within one update, which is exactly what the byte model is
+  // here to stop relying on.
+  const bool KnownSizes = SizeA > 0 && SizeB > 0;
+  const bool KnownOffsets = ExtraOffsetA && ExtraOffsetB;
+  const bool Overlaps =
+      (DisambiguateByteGeometry && KnownSizes && KnownOffsets &&
+       AcrossUnrolls && ATracking->Bytes && BTracking->Bytes)
+          ? mayOverlap(*ATracking->Bytes, VirtUnrollLevelA, SizeA,
+                       *ExtraOffsetA, *BTracking->Bytes, VirtUnrollLevelB,
+                       SizeB, *ExtraOffsetB)
+          : mayOverlap(*ATracking, VirtUnrollLevelA, *BTracking,
+                       VirtUnrollLevelB);
 
-  // If there is no overlap, NoAlias
-  if (ATracking->mayOverlap(*BTracking))
-    return AliasResult::MayAlias;
-
-  return AliasResult::NoAlias;
+  return Overlaps ? AliasResult::MayAlias : AliasResult::NoAlias;
 }
 
 // Forward declarations for helpers defined later in this file.
 static const Argument *traceToNoAliasArgRoot(const Value *Ptr);
+
+/// Size of a memory location in bytes, or 0 when it is not a known constant.
+static int64_t getKnownSize(LocationSize Size) {
+  return Size.hasValue() ? int64_t(Size.getValue()) : 0;
+}
 
 AliasResult AIEBaseAAResult::alias(const MemoryLocation &LocA,
                                    const MemoryLocation &LocB,
@@ -644,8 +783,10 @@ AliasResult AIEBaseAAResult::alias(const MemoryLocation &LocA,
   const Value *BaseB = getUnderlyingObjectAIE(LocB.Ptr);
 
   if (DisambiguateAccessSameOriginPointers &&
-      aliasAIEIntrinsic(LocA.Ptr, LocB.Ptr, BaseA, BaseB, 0, 0
-                        /*No virtually unrolled*/) == AliasResult::NoAlias)
+      aliasAIEIntrinsic(LocA.Ptr, LocB.Ptr, BaseA, BaseB, 0, 0,
+                        /*No virtually unrolled*/
+                        getKnownSize(LocA.Size), getKnownSize(LocB.Size),
+                        /*AcrossUnrolls=*/false) == AliasResult::NoAlias)
     return AliasResult::NoAlias;
 
   // Distinct noalias function-arg roots. Complements getUnderlyingObjectAIE
@@ -693,6 +834,18 @@ static bool hasIntrinsicPAddUser(const Value *V) {
     }
   }
   return false;
+}
+
+/// Constant byte displacement of \p V from \p Base, if \p V reaches \p Base
+/// through constant offsets only.
+static std::optional<int64_t> getConstantByteOffsetFrom(const Value *V,
+                                                        const Value *Base,
+                                                        const DataLayout &DL) {
+  APInt Offset(DL.getIndexTypeSizeInBits(V->getType()), 0);
+  if (V->stripAndAccumulateConstantOffsets(DL, Offset,
+                                           /*AllowNonInbounds=*/true) != Base)
+    return std::nullopt;
+  return Offset.getSExtValue();
 }
 
 // If V is a GEP with one constant index, return it.
@@ -880,8 +1033,17 @@ AliasResult AIE::aliasAcrossVirtualUnrolls(const MachineInstr *MIA,
                                            unsigned UnrollLevelMIA,
                                            unsigned UnrollLevelMIB) {
 
-  auto GetValueBasePair = [=](const MachineMemOperand *MMO)
-      -> std::optional<std::pair<const Value *, const Value *>> {
+  struct QueriedAccess {
+    const Value *Val;
+    const Value *Base;
+    /// Byte offset of the access relative to Val, if known.
+    std::optional<int64_t> ExtraOffset;
+  };
+
+  const DataLayout &DL = MIA->getMF()->getDataLayout();
+
+  auto GetQueriedAccess =
+      [&](const MachineMemOperand *MMO) -> std::optional<QueriedAccess> {
     const Value *Val = MMO->getValue();
     // We know nothing about the MMO.
     if (!Val)
@@ -890,6 +1052,8 @@ AliasResult AIE::aliasAcrossVirtualUnrolls(const MachineInstr *MIA,
     const Value *Base = getUnderlyingObjectAIE(Val);
     if (!Base)
       return std::nullopt;
+
+    std::optional<int64_t> ExtraOffset = MMO->getOffset();
 
     if (auto ConstantOffset = getGEPConstantOffset(Val)) {
       const int64_t Offset = *ConstantOffset;
@@ -910,30 +1074,37 @@ AliasResult AIE::aliasAcrossVirtualUnrolls(const MachineInstr *MIA,
         // this memory operation is related to the memory operation targeted by
         // the intrinsic.
         if (hasIntrinsicPAddUser(Base)) {
+          // The access stays where it is, so the displacement from Base that
+          // Val encoded must now be carried explicitly.
+          ExtraOffset = getConstantByteOffsetFrom(Val, Base, DL);
+          if (ExtraOffset)
+            *ExtraOffset += MMO->getOffset();
           Val = Base;
         }
       }
     }
-    return std::make_pair(Val, Base);
+    return QueriedAccess{Val, Base, ExtraOffset};
   };
 
   // Check each pair of memory operands from both instructions.
   for (auto *MMOA : MIA->memoperands()) {
 
-    auto ValueBasePairA = GetValueBasePair(MMOA);
-    if (!ValueBasePairA)
+    auto AccessA = GetQueriedAccess(MMOA);
+    if (!AccessA)
       return AliasResult::MayAlias;
 
     for (auto *MMOB : MIB->memoperands()) {
 
-      auto ValueBasePairB = GetValueBasePair(MMOB);
-      if (!ValueBasePairB)
+      auto AccessB = GetQueriedAccess(MMOB);
+      if (!AccessB)
         return AliasResult::MayAlias;
 
-      if (aliasAIEIntrinsic(ValueBasePairA->first, ValueBasePairB->first,
-                            ValueBasePairA->second, ValueBasePairB->second,
-                            UnrollLevelMIA,
-                            UnrollLevelMIB) == AliasResult::NoAlias)
+      if (aliasAIEIntrinsic(AccessA->Val, AccessB->Val, AccessA->Base,
+                            AccessB->Base, UnrollLevelMIA, UnrollLevelMIB,
+                            getKnownSize(MMOA->getSize()),
+                            getKnownSize(MMOB->getSize()),
+                            /*AcrossUnrolls=*/true, AccessA->ExtraOffset,
+                            AccessB->ExtraOffset) == AliasResult::NoAlias)
         continue;
 
       // Fall back to a noalias-arg-root analysis. This handles the common
@@ -941,8 +1112,8 @@ AliasResult AIE::aliasAcrossVirtualUnrolls(const MachineInstr *MIA,
       // noalias function arguments via a chain of pointer arithmetic, phi,
       // select and loads.
       if (useNoAliasArgRoots(&MIA->getMF()->getFunction())) {
-        const Argument *RootA = traceToNoAliasArgRoot(ValueBasePairA->first);
-        const Argument *RootB = traceToNoAliasArgRoot(ValueBasePairB->first);
+        const Argument *RootA = traceToNoAliasArgRoot(AccessA->Val);
+        const Argument *RootB = traceToNoAliasArgRoot(AccessB->Val);
         if (RootA && RootB && RootA != RootB)
           continue;
       }
