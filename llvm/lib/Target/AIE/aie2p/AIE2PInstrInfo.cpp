@@ -111,6 +111,18 @@ unsigned AIE2PInstrInfo::getMvSclMultiSlotPseudoOpcode() const {
   return AIE2P::MOV_scalar_imm11_pseudo;
 }
 
+std::optional<int64_t> AIE2PInstrInfo::getMoveImmOperand(unsigned Opcode,
+                                                         int64_t Imm) const {
+  switch (Opcode) {
+  case AIE2P::MOV_scalar_imm11_pseudo:
+    if (isInt<11>(Imm))
+      return Imm;
+    return std::nullopt;
+  default:
+    llvm_unreachable("Unexpected move of an immediate");
+  }
+}
+
 unsigned AIE2PInstrInfo::getAddSclOpcode() const { return AIE2P::ADD_alu_r_rr; }
 
 unsigned AIE2PInstrInfo::getOppositeBranchOpcode(unsigned Opc) const {

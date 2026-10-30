@@ -839,6 +839,18 @@ unsigned AIE2InstrInfo::getMvSclMultiSlotPseudoOpcode() const {
   return AIE2::MOV_scalar_imm10_pseudo;
 }
 
+std::optional<int64_t> AIE2InstrInfo::getMoveImmOperand(unsigned Opcode,
+                                                        int64_t Imm) const {
+  switch (Opcode) {
+  case AIE2::MOV_scalar_imm10_pseudo:
+    if (isInt<10>(Imm))
+      return Imm;
+    return std::nullopt;
+  default:
+    llvm_unreachable("Unexpected move of an immediate");
+  }
+}
+
 unsigned AIE2InstrInfo::getAddSclOpcode() const { return AIE2::ADD; }
 
 unsigned AIE2InstrInfo::getMoveToMSOpcode(MachineInstr &I,

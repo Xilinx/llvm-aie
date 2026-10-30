@@ -771,6 +771,9 @@ bool AIE2PSRegisterInfo::isReservedStickyReg(MCRegister PhysReg) const {
   case AIE2PS::srUPS_of:
   case AIE2PS::srFifo_of:
   case AIE2PS::srFifo_uf:
+  case AIE2PS::srFPNlf:
+  case AIE2PS::srFPCnvFx2Fl:
+  case AIE2PS::srFPCnvFl2Fx:
     return true;
   default:
     return false;
@@ -778,8 +781,11 @@ bool AIE2PSRegisterInfo::isReservedStickyReg(MCRegister PhysReg) const {
 }
 
 bool AIE2PSRegisterInfo::isSimplifiableReservedReg(MCRegister PhysReg) const {
-  return SimplifyCRSRRegs && (AIE2PS::mSCmRegClass.contains(PhysReg) ||
-                              AIE2PS::mCRm_fileRegClass.contains(PhysReg));
+  // The instructions that set a sticky flag OR into it: they do not overwrite
+  // the value of an earlier write.
+  return SimplifyCRSRRegs && !isReservedStickyReg(PhysReg) &&
+         (AIE2PS::mSCmRegClass.contains(PhysReg) ||
+          AIE2PS::mCRm_fileRegClass.contains(PhysReg));
 }
 
 bool AIE2PSRegisterInfo::hasPhysRegProperty(MCRegister PhysReg,
@@ -844,10 +850,11 @@ bool AIE2PSRegisterInfo::isVecOrAccRegClass(
   return false;
 }
 
-Register AIE2PSRegisterInfo::getControlRegister(unsigned Idx) const {
+std::optional<MCRegister>
+AIE2PSRegisterInfo::getControlRegister(unsigned Idx) const {
   // Control Register Map. Keys based on encoding.
   // The map is based on the encoding in clang/lib/Headers/aie2ps/aie2ps_enums.h
-  static std::unordered_map<unsigned, Register> ControlRegisterMap = {
+  static const std::unordered_map<unsigned, MCRegister> ControlRegisterMap = {
       {0, AIE2PS::crSat},
       {1, AIE2PS::crRnd},
       {2, AIE2PS::crFPMask},
@@ -875,26 +882,32 @@ Register AIE2PSRegisterInfo::getControlRegister(unsigned Idx) const {
       {24, AIE2PS::crFPNlfMask},
       {25, AIE2PS::crFPCnvFx2FlMask},
       {26, AIE2PS::crFPCnvFl2FxMask},
-      {27, AIE2PS::crF2BMask},
-      {28, AIE2PS::srCarry},
-      {29, AIE2PS::srSS0},
-      {30, AIE2PS::srMS0},
-      {31, AIE2PS::srSRS_of},
-      {32, AIE2PS::srUPS_of},
-      {33, AIE2PS::srSparse_of},
-      {34, AIE2PS::srFifo_of},
-      {35, AIE2PS::srFifo_uf},
-      {36, AIE2PS::srFPFlags},
-      {37, AIE2PS::srF2IFlags},
-      {38, AIE2PS::srF2FFlags},
-      {39, AIE2PS::srF2BFlags},
-      {40, AIE2PS::srFPNlf},
-      {41, AIE2PS::srFPCnvFx2Fl},
+      {27, AIE2PS::crF2BMask}};
+
+  auto It = ControlRegisterMap.find(Idx);
+  if (It == ControlRegisterMap.end())
+    return std::nullopt;
+  return It->second;
+}
+
+std::optional<MCRegister>
+AIE2PSRegisterInfo::getStatusRegister(unsigned Idx) const {
+  // Status Register Map. Keys based on encoding.
+  // The map is based on the encoding in clang/lib/Headers/aie2ps/aie2ps_enums.h
+  static const std::unordered_map<unsigned, MCRegister> StatusRegisterMap = {
+      {28, AIE2PS::srCarry},     {29, AIE2PS::srSS0},
+      {30, AIE2PS::srMS0},       {31, AIE2PS::srSRS_of},
+      {32, AIE2PS::srUPS_of},    {33, AIE2PS::srSparse_of},
+      {34, AIE2PS::srFifo_of},   {35, AIE2PS::srFifo_uf},
+      {36, AIE2PS::srFPFlags},   {37, AIE2PS::srF2IFlags},
+      {38, AIE2PS::srF2FFlags},  {39, AIE2PS::srF2BFlags},
+      {40, AIE2PS::srFPNlf},     {41, AIE2PS::srFPCnvFx2Fl},
       {42, AIE2PS::srFPCnvFl2Fx}};
 
-  if (ControlRegisterMap.find(Idx) != ControlRegisterMap.end())
-    return ControlRegisterMap[Idx];
-  llvm_unreachable("Unexpected key for control register.");
+  auto It = StatusRegisterMap.find(Idx);
+  if (It == StatusRegisterMap.end())
+    return std::nullopt;
+  return It->second;
 }
 
 Register AIE2PSRegisterInfo::getUnpackSignCtrlReg() const {
@@ -942,5 +955,35 @@ AIE2PSRegisterInfo::matchControlRegisterBitwidth(Register CtrlReg,
     return SrcConstVal % (1 << 8);
   default:
     llvm_unreachable("Unknown control register.");
+  }
+}
+
+unsigned
+AIE2PSRegisterInfo::matchStatusRegisterBitwidth(Register StatusReg,
+                                                unsigned SrcConstVal) const {
+  // Modulo by width of status regs. To constrain the max possible value in
+  // the register according to register width.
+  switch (StatusReg) {
+  case AIE2PS::srCarry:
+  case AIE2PS::srSRS_of:
+  case AIE2PS::srUPS_of:
+  case AIE2PS::srSparse_of:
+  case AIE2PS::srFifo_of:
+  case AIE2PS::srFifo_uf:
+    return SrcConstVal % (1 << 1);
+  case AIE2PS::srFPFlags:
+  case AIE2PS::srF2IFlags:
+  case AIE2PS::srF2FFlags:
+  case AIE2PS::srF2BFlags:
+    return SrcConstVal % (1 << 5);
+  case AIE2PS::srFPNlf:
+  case AIE2PS::srFPCnvFx2Fl:
+  case AIE2PS::srFPCnvFl2Fx:
+    return SrcConstVal % (1 << 8);
+  case AIE2PS::srSS0:
+  case AIE2PS::srMS0:
+    return SrcConstVal;
+  default:
+    llvm_unreachable("Unknown status register.");
   }
 }

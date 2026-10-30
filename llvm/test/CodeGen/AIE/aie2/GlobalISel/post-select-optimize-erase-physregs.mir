@@ -4,7 +4,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 
 # RUN: llc -mtriple aie2 -run-pass=dead-mi-elimination,aie-post-select-optimize,dead-mi-elimination %s -verify-machineinstrs -o - | FileCheck %s
 
@@ -80,13 +80,15 @@ body:             |
     ; CHECK-NEXT: [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 28
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:ercr = COPY $crfpmask
     ; CHECK-NEXT: [[VNEGSUB_F:%[0-9]+]]:acc512 = VNEGSUB_F [[COPY]], [[COPY1]], [[MOV_RLC_imm10_pseudo]], implicit-def $srfpflags, implicit $crfpmask
+    ; CHECK-NEXT: [[VNEGSUB_F1:%[0-9]+]]:acc512 = VNEGSUB_F [[COPY]], [[COPY1]], [[MOV_RLC_imm10_pseudo]], implicit-def $srfpflags, implicit $crfpmask
+    ; CHECK-NEXT: [[VNEGSUB_F2:%[0-9]+]]:acc512 = VNEGSUB_F [[COPY]], [[COPY1]], [[MOV_RLC_imm10_pseudo]], implicit-def $srfpflags, implicit $crfpmask
     ; CHECK-NEXT: [[MOV_RLC_imm10_pseudo1:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 1
     ; CHECK-NEXT: $crfpmask = COPY [[MOV_RLC_imm10_pseudo1]]
-    ; CHECK-NEXT: [[VNEGSUB_F1:%[0-9]+]]:acc512 = VNEGSUB_F [[COPY]], [[VNEGSUB_F]], [[MOV_RLC_imm10_pseudo]], implicit-def $srfpflags, implicit $crfpmask
-    ; CHECK-NEXT: $crfpmask = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VNEGSUB_F2:%[0-9]+]]:acc512 = VNEGSUB_F [[COPY]], [[VNEGSUB_F1]], [[MOV_RLC_imm10_pseudo]], implicit-def $srfpflags, implicit $crfpmask
     ; CHECK-NEXT: [[VNEGSUB_F3:%[0-9]+]]:acc512 = VNEGSUB_F [[COPY]], [[VNEGSUB_F2]], [[MOV_RLC_imm10_pseudo]], implicit-def $srfpflags, implicit $crfpmask
+    ; CHECK-NEXT: $crfpmask = COPY [[COPY2]]
     ; CHECK-NEXT: [[VNEGSUB_F4:%[0-9]+]]:acc512 = VNEGSUB_F [[COPY]], [[VNEGSUB_F3]], [[MOV_RLC_imm10_pseudo]], implicit-def $srfpflags, implicit $crfpmask
+    ; CHECK-NEXT: [[VNEGSUB_F5:%[0-9]+]]:acc512 = VNEGSUB_F [[COPY]], [[VNEGSUB_F4]], [[MOV_RLC_imm10_pseudo]], implicit-def $srfpflags, implicit $crfpmask
+    ; CHECK-NEXT: [[VNEGSUB_F6:%[0-9]+]]:acc512 = VNEGSUB_F [[COPY]], [[VNEGSUB_F5]], [[MOV_RLC_imm10_pseudo]], implicit-def $srfpflags, implicit $crfpmask
     %0:acc512 = COPY $bml1
     %1:acc512 = COPY $bml2
     %2:er = MOV_RLC_imm10_pseudo 28

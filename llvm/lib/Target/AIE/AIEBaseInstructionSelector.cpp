@@ -13,11 +13,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIEBaseInstructionSelector.h"
+#include "llvm/ADT/bit.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/CodeGen/GlobalISel/GenericMachineInstrs.h"
 #include "llvm/CodeGen/TargetOpcodes.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/MC/MCContext.h"
+#include "llvm/Support/MathExtras.h"
 
 using namespace llvm;
 
@@ -357,11 +359,29 @@ void AIEBaseInstructionSelector::setUnsetCtrlRegister(
   setUnsetCtrlRegister(MIB, I, I, MRI, CRReg, ValueReg, DefaultCRVal);
 }
 
+/// \return the value that the move \p Opcode writes to give \p Val to a
+/// register that keeps its \p Width low bits, if the move encodes one: \p Val
+/// itself or its sign extension from \p Width bits.
+static std::optional<int64_t> getMoveImmediate(const AIEBaseInstrInfo &TII,
+                                               unsigned Opcode, uint64_t Val,
+                                               unsigned Width) {
+  for (const int64_t Imm : {int64_t(Val), SignExtend64(Val, Width)})
+    if (TII.getMoveImmOperand(Opcode, Imm))
+      return Imm;
+  return std::nullopt;
+}
+
 MachineInstrBuilder
 AIEBaseInstructionSelector::setCtrlRegister(MachineIRBuilder &MIB,
-                                            Register CRReg, unsigned Val) {
-  auto Opcode = TII.getMvSclMultiSlotPseudoOpcode();
-  return MIB.buildInstr(Opcode, {CRReg}, {}).addImm(Val);
+                                            Register CRReg, int64_t Val) {
+  return setCtrlRegister(MIB, CRReg, Val, TII.getMvSclMultiSlotPseudoOpcode());
+}
+
+MachineInstrBuilder AIEBaseInstructionSelector::setCtrlRegister(
+    MachineIRBuilder &MIB, Register CRReg, int64_t Val, unsigned Opcode) {
+  const std::optional<int64_t> Imm = TII.getMoveImmOperand(Opcode, Val);
+  assert(Imm && "Unencodable immediate");
+  return MIB.buildInstr(Opcode, {CRReg}, {}).addImm(*Imm);
 }
 
 MachineInstrBuilder AIEBaseInstructionSelector::setStatusRegister(
@@ -846,9 +866,13 @@ bool AIEBaseInstructionSelector::selectG_AIE_LOAD_CONV(
   NewInstr.cloneMemRefs(AMI->MemI);
 
   CONVI.eraseFromParent();
-  makeDeadMI(*LoadOp, MRI);
 
-  return constrainSelectedInstRegOperands(*NewInstr.getInstr(), TII, TRI, RBI);
+  if (!constrainSelectedInstRegOperands(*NewInstr.getInstr(), TII, TRI, RBI))
+    return false;
+
+  LoadOp->eraseFromParent();
+
+  return true;
 }
 
 bool AIEBaseInstructionSelector::selectVCONV(MachineInstr &I,
@@ -893,10 +917,13 @@ bool AIEBaseInstructionSelector::selectG_AIE_LOAD_UNPACK(
   if (!canCombineUNPACKLoad(*LoadOp, UNPACKI, MRI))
     return false;
 
+  MIB.setInstr(ShouldAdvanceOp ? *LoadOp : UNPACKI);
   std::optional<AddressingModeInfo> AddrModeInfo =
       getOrDefineAddressingRegister(*LoadOp, MRI);
-  if (!AddrModeInfo)
+  if (!AddrModeInfo) {
+    MIB.setInstr(UNPACKI);
     return false;
+  }
 
   Register DstReg = UNPACKI.getOperand(0).getReg();
   // In this case of G_INTRINSIC operand 1 is target intrinsic
@@ -910,11 +937,6 @@ bool AIEBaseInstructionSelector::selectG_AIE_LOAD_UNPACK(
       ConstantSign ? SignVal.value().Value == 0x1 : false);
 
   assert(LSO && "Unexpected VLDB.UNPACK combine failure");
-
-  if (ShouldAdvanceOp)
-    MIB.setInstr(*LoadOp);
-  else
-    MIB.setInstr(UNPACKI);
 
   setUnpackSizeRegister(MIB, cast<GIntrinsic>(UNPACKI).getIntrinsicID());
 
@@ -937,9 +959,13 @@ bool AIEBaseInstructionSelector::selectG_AIE_LOAD_UNPACK(
                          SignReg);
 
   UNPACKI.eraseFromParent();
-  makeDeadMI(*LoadOp, MRI);
 
-  return constrainSelectedInstRegOperands(*NewInstr.getInstr(), TII, TRI, RBI);
+  if (!constrainSelectedInstRegOperands(*NewInstr.getInstr(), TII, TRI, RBI))
+    return false;
+
+  LoadOp->eraseFromParent();
+
+  return true;
 }
 
 bool AIEBaseInstructionSelector::selectG_AIE_STORE_PACK(
@@ -1024,15 +1050,9 @@ AIEBaseInstructionSelector::getCombinedOpcodeCONVLoad(
   return {};
 }
 
-// Make an instruction trivially dead by creating and distributing new virtual
-// registers to its defs.
-// Erasing the load instruction breaks later on in the selection code. That is
-// because we keep an iterator on erased instructions. This breaks while
-// trying to eliminate a trivially dead instruction which requires access to
-// its memory operands which have been erased, thus leading to a seg fault. To
-// remedy this, we keep the load to be removed by the trivial dead code
-// elimination and we make sure to assign a new virtual register definition to
-// its live operands to respect SSA.
+// Make an instruction that a fused instruction replaces, trivially dead, for
+// instruction selection to erase it: drop its side effects and give its defs,
+// which the fused instruction now defines, new virtual registers.
 void AIEBaseInstructionSelector::makeDeadMI(MachineInstr &MI,
                                             MachineRegisterInfo &MRI) {
   if (MI.getOpcode() == TargetOpcode::G_INTRINSIC_W_SIDE_EFFECTS) {
@@ -1043,6 +1063,9 @@ void AIEBaseInstructionSelector::makeDeadMI(MachineInstr &MI,
     Register NewReg = MRI.cloneVirtualRegister(Def->getReg());
     Def->setReg(NewReg);
   }
+  // This helper cannot make this instruction trivially dead, e.g. a volatile
+  // load, and need to be erased explicitly.
+  assert(isTriviallyDead(MI, MRI) && "Expected a trivially dead instruction");
 }
 
 void AIEBaseInstructionSelector::insertPtrAddForOffset(MachineRegisterInfo &MRI,
@@ -1272,20 +1295,30 @@ bool AIEBaseInstructionSelector::selectSetControlRegister(
   const auto Idx = getIConstantVRegValWithLookThroughOrFail(
       IdxReg, MRI, "Expected const value for control register map index.");
 
-  const Register CtrlReg = TRI.getControlRegister(Idx.Value.getZExtValue());
+  const std::optional<MCRegister> CtrlReg =
+      TRI.getControlRegister(Idx.Value.getZExtValue());
+  if (!CtrlReg)
+    return false;
 
-  // Handle const input val for control regs.
+  // Handle const input val for control regs. A value that no move encodes is
+  // copied from the register that holds it.
   if (const auto Src = getIConstantVRegValWithLookThrough(SrcReg, MRI)) {
     const unsigned SrcConstVal =
-        TRI.matchControlRegisterBitwidth(CtrlReg, Src->Value.getZExtValue());
-
-    MachineInstrBuilder MI = setCtrlRegister(MIB, CtrlReg, SrcConstVal);
-    I.eraseFromParent();
-    return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
+        TRI.matchControlRegisterBitwidth(*CtrlReg, Src->Value.getZExtValue());
+    const unsigned Width =
+        llvm::popcount(TRI.matchControlRegisterBitwidth(*CtrlReg, ~0u));
+    for (const unsigned Opcode : TII.getMovesImmToCtrlReg(*CtrlReg)) {
+      if (const std::optional<int64_t> Imm =
+              getMoveImmediate(TII, Opcode, SrcConstVal, Width)) {
+        MachineInstrBuilder MI = setCtrlRegister(MIB, *CtrlReg, *Imm, Opcode);
+        I.eraseFromParent();
+        return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
+      }
+    }
   }
 
-  auto CopyInstr =
-      MIB.buildInstr(TargetOpcode::COPY, {CtrlReg}, {}).addReg(SrcReg);
+  auto CopyInstr = MIB.buildInstr(TargetOpcode::COPY, {Register(*CtrlReg)}, {})
+                       .addReg(SrcReg);
   if (!selectCopy(*CopyInstr, MRI))
     return false;
 
@@ -1361,14 +1394,17 @@ bool AIEBaseInstructionSelector::selectGetControlRegister(
   const auto Idx = getIConstantVRegValWithLookThroughOrFail(
       IdxReg, MRI, "Expected const value for control register map index.");
 
-  const Register CtrlReg = TRI.getControlRegister(Idx.Value.getZExtValue());
+  const std::optional<MCRegister> CtrlReg =
+      TRI.getControlRegister(Idx.Value.getZExtValue());
+  if (!CtrlReg)
+    return false;
   const MachineFunction &MF = *I.getParent()->getParent();
 
   if (!RBI.constrainGenericRegister(DstReg, *TRI.getGPRRegClass(MF), MRI))
     return false;
 
   auto CopyInstr =
-      MIB.buildInstr(TargetOpcode::COPY, {DstReg}, {}).addReg(CtrlReg);
+      MIB.buildInstr(TargetOpcode::COPY, {DstReg}, {}).addReg(*CtrlReg);
   if (!selectCopy(*CopyInstr, MRI))
     return false;
 
@@ -1411,20 +1447,24 @@ bool AIEBaseInstructionSelector::selectSetStatusRegister(
   const auto Idx = getIConstantVRegValWithLookThroughOrFail(
       IdxReg, MRI, "Expected const value for status register map index.");
 
-  const Register StatusReg = TRI.getStatusRegister(Idx.Value.getZExtValue());
+  const std::optional<MCRegister> StatusReg =
+      TRI.getStatusRegister(Idx.Value.getZExtValue());
+  if (!StatusReg)
+    return false;
 
   // Handle const input val for status regs.
   if (const auto Src = getIConstantVRegValWithLookThrough(SrcReg, MRI)) {
     const unsigned SrcConstVal =
-        TRI.matchStatusRegisterBitwidth(StatusReg, Src->Value.getZExtValue());
+        TRI.matchStatusRegisterBitwidth(*StatusReg, Src->Value.getZExtValue());
 
-    MachineInstrBuilder MI = setStatusRegister(MIB, StatusReg, SrcConstVal);
+    MachineInstrBuilder MI = setStatusRegister(MIB, *StatusReg, SrcConstVal);
     I.eraseFromParent();
     return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
   }
 
   auto CopyInstr =
-      MIB.buildInstr(TargetOpcode::COPY, {StatusReg}, {}).addReg(SrcReg);
+      MIB.buildInstr(TargetOpcode::COPY, {Register(*StatusReg)}, {})
+          .addReg(SrcReg);
   if (!selectCopy(*CopyInstr, MRI))
     return false;
 
@@ -1444,14 +1484,17 @@ bool AIEBaseInstructionSelector::selectGetStatusRegister(
   const auto Idx = getIConstantVRegValWithLookThroughOrFail(
       IdxReg, MRI, "Expected const value for status register map index.");
 
-  const Register StatusReg = TRI.getStatusRegister(Idx.Value.getZExtValue());
+  const std::optional<MCRegister> StatusReg =
+      TRI.getStatusRegister(Idx.Value.getZExtValue());
+  if (!StatusReg)
+    return false;
   const MachineFunction &MF = *I.getParent()->getParent();
 
   if (!RBI.constrainGenericRegister(DstReg, *TRI.getGPRRegClass(MF), MRI))
     return false;
 
   auto CopyInstr =
-      MIB.buildInstr(TargetOpcode::COPY, {DstReg}, {}).addReg(StatusReg);
+      MIB.buildInstr(TargetOpcode::COPY, {DstReg}, {}).addReg(*StatusReg);
   if (!selectCopy(*CopyInstr, MRI))
     return false;
 

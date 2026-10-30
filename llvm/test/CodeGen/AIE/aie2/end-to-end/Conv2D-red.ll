@@ -94,28 +94,28 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; ASM-NEXT:  .LBB0_2: // %inner.loop
 ; ASM-NEXT:    // Parent Loop BB0_1 Depth=1
 ; ASM-NEXT:    // => This Inner Loop Header: Depth=2
-; ASM-NEXT:    vldb wl10, [p0], m6; nopx
-; ASM-NEXT:    vldb wh10, [p0], m6
-; ASM-NEXT:    vldb wl8, [p0], m6
-; ASM-NEXT:    vldb.3d wh8, [p0], d0
-; ASM-NEXT:    nop
-; ASM-NEXT:    vldb wl6, [p1], #32
-; ASM-NEXT:    vldb wh6, [p1], #32
+; ASM-NEXT:    vldb wl10, [p0], m6; nopa ; nops ; nopxm ; nopv
+; ASM-NEXT:    vldb wh10, [p0], m6; nopx
+; ASM-NEXT:    vlda wl8, [p0], m6; vldb wl6, [p1], #32
+; ASM-NEXT:    vlda.3d wh8, [p0], d0
+; ASM-NEXT:    vlda wh6, [p1], #32
 ; ASM-NEXT:    vldb wl4, [p1], #32
-; ASM-NEXT:    vldb wh4, [p1], #32
+; ASM-NEXT:    vlda wh4, [p1], #32
+; ASM-NEXT:    nop
 ; ASM-NEXT:    vshift.align x1, x1, s1, x10, r0
+; ASM-NEXT:    nop
 ; ASM-NEXT:    vshift.align x3, x3, s1, x8, r0
 ; ASM-NEXT:    vshuffle x2, x1, x3, r2
-; ASM-NEXT:    vshuffle x7, x1, x3, r3
-; ASM-NEXT:    vmac cm7, cm7, x2, x6, r4
-; ASM-NEXT:    vmac cm5, cm5, x7, x6, r4
-; ASM-NEXT:    vshuffle x5, x2, x0, r8; vmac cm3, cm3, x2, x4, r4
-; ASM-NEXT:    vshuffle x9, x7, x0, r8; vmac cm1, cm1, x7, x4, r4
-; ASM-NEXT:    vmac cm6, cm6, x5, x6, r4
-; ASM-NEXT:    mov r0, p0; vmac cm4, cm4, x9, x6, r4
-; ASM-NEXT:    and r0, r0, r9; vmac cm2, cm2, x5, x4, r4
+; ASM-NEXT:    vshuffle x5, x2, x0, r8
+; ASM-NEXT:    vshuffle x7, x1, x3, r3; vmac cm7, cm7, x2, x6, r4
+; ASM-NEXT:    vshuffle x9, x7, x0, r8; vmac cm6, cm6, x5, x6, r4
+; ASM-NEXT:    mov r0, p0; vmac cm5, cm5, x7, x6, r4
+; ASM-NEXT:    and r0, r0, r9; vmac cm4, cm4, x9, x6, r4
+; ASM-NEXT:    add r0, r0, #33; vmac cm3, cm3, x2, x4, r4
+; ASM-NEXT:    vmac cm2, cm2, x5, x4, r4
+; ASM-NEXT:    vmac cm1, cm1, x7, x4, r4
 ; ASM-NEXT:  .L_LEnd0:
-; ASM-NEXT:    nopb ; nopa ; nops ; add r0, r0, #33; nopm ; vmac cm0, cm0, x9, x4, r4
+; ASM-NEXT:    nopb ; nopa ; nops ; nopxm ; vmac cm0, cm0, x9, x4, r4
 ; ASM-NEXT:  // %bb.3: // %outer.loop.latch
 ; ASM-NEXT:    // in Loop: Header=BB0_1 Depth=1
 ; ASM-NEXT:    nopb ; nopa ; vst.srs.s16.s32 bmh7, s2, [p3, #32]; nopxm ; nopv

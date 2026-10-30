@@ -107,9 +107,12 @@ BitVector AIE2PRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
 }
 
 bool AIE2PRegisterInfo::isSimplifiableReservedReg(MCRegister PhysReg) const {
-  return SimplifyCRSRRegs && (AIE2P::mCRmRegClass.contains(PhysReg) ||
-                              AIE2P::mSRmRegClass.contains(PhysReg) ||
-                              AIE2P::mCRFPRegClass.contains(PhysReg));
+  // The instructions that set a sticky flag OR into it: they do not overwrite
+  // the value of an earlier write.
+  return SimplifyCRSRRegs && !isReservedStickyReg(PhysReg) &&
+         (AIE2P::mCRmRegClass.contains(PhysReg) ||
+          AIE2P::mSRmRegClass.contains(PhysReg) ||
+          AIE2P::mCRFPRegClass.contains(PhysReg));
 }
 
 const uint32_t *AIE2PRegisterInfo::getNoPreservedMask() const {
@@ -410,9 +413,10 @@ Register AIE2PRegisterInfo::getStackPointerRegister() const {
   return AIE2P::sp;
 }
 
-Register AIE2PRegisterInfo::getControlRegister(unsigned Idx) const {
+std::optional<MCRegister>
+AIE2PRegisterInfo::getControlRegister(unsigned Idx) const {
   // Control Register Map. Keys based on encoding.
-  static std::unordered_map<unsigned, Register> ControlRegisterMap = {
+  static const std::unordered_map<unsigned, MCRegister> ControlRegisterMap = {
       {0, AIE2P::crSat},
       {1, AIE2P::crRnd},
       {2, AIE2P::crFPMask},
@@ -441,14 +445,16 @@ Register AIE2PRegisterInfo::getControlRegister(unsigned Idx) const {
 
   };
 
-  if (ControlRegisterMap.find(Idx) != ControlRegisterMap.end())
-    return ControlRegisterMap[Idx];
-  llvm_unreachable("Unexpected key for control register.");
+  auto It = ControlRegisterMap.find(Idx);
+  if (It == ControlRegisterMap.end())
+    return std::nullopt;
+  return It->second;
 }
 
-Register AIE2PRegisterInfo::getStatusRegister(unsigned Idx) const {
+std::optional<MCRegister>
+AIE2PRegisterInfo::getStatusRegister(unsigned Idx) const {
   // Status Register Map. Keys based on encoding.
-  static std::unordered_map<unsigned, Register> StatusRegisterMap = {
+  static const std::unordered_map<unsigned, MCRegister> StatusRegisterMap = {
       {25, AIE2P::srCarry},     {26, AIE2P::srSS0},
       {27, AIE2P::srMS0},       {28, AIE2P::srSRS_of},
       {29, AIE2P::srUPS_of},    {30, AIE2P::srSparse_of},
@@ -460,9 +466,10 @@ Register AIE2PRegisterInfo::getStatusRegister(unsigned Idx) const {
 
   };
 
-  if (StatusRegisterMap.find(Idx) != StatusRegisterMap.end())
-    return StatusRegisterMap[Idx];
-  llvm_unreachable("Unexpected key for status register.");
+  auto It = StatusRegisterMap.find(Idx);
+  if (It == StatusRegisterMap.end())
+    return std::nullopt;
+  return It->second;
 }
 
 const TargetRegisterClass *
@@ -584,6 +591,9 @@ bool AIE2PRegisterInfo::isReservedStickyReg(MCRegister PhysReg) const {
   case AIE2P::srUPS_of:
   case AIE2P::srFifo_of:
   case AIE2P::srFifo_uf:
+  case AIE2P::srFPNlf:
+  case AIE2P::srFPCnvFx2Fl:
+  case AIE2P::srFPCnvFl2Fx:
     return true;
   default:
     return false;
