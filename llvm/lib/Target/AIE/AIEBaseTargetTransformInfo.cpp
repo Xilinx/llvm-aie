@@ -54,15 +54,15 @@ static cl::opt<bool> AllowAIEJNZD(
              "JNZD when ZOL is disabled, whatever this option says"),
     cl::init(true), cl::Hidden);
 
-/// We currently override MinIterCountHLReject == 1 to
+/// We currently override MinIterCountHL == 2 to
 /// a) remove loop guards and
 /// b) disable HW loop generation
 /// todo: separate loop guard removal from disabling HW Loops.
 /// Note: Any Itercount provided by the user > 0 removes the loop guard in the
 /// middle-end.
-static cl::opt<int> MinIterCountHLReject(
-    "aie-hardware-loops-minitercount", cl::Hidden, cl::init(1),
-    cl::desc("Minimum trip count threshold for HL rejection"));
+static cl::opt<int> MinIterCountHL(
+    "aie-hardware-loops-minitercount", cl::Hidden, cl::init(2),
+    cl::desc("Smallest declared minimum trip count of a hardware loop"));
 
 static cl::opt<bool>
     ForceHLGeneration("aie-force-hl-gen", cl::Hidden, cl::init(false),
@@ -399,7 +399,7 @@ bool AIETTICommon::isHardwareLoopProfitable(
     // A minimum of 0 promises nothing: the loop keeps its zero-trip guard.
     if (MinTripCount && *MinTripCount > 0) {
       // Reject HL for this case.
-      if (*MinTripCount <= MinIterCountHLReject) {
+      if (*MinTripCount < MinIterCountHL) {
         return false;
       }
     } else if (!EnableZOLForLoopsWithoutMinIterCount) {
