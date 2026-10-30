@@ -15,11 +15,17 @@ padda [p0], #2060
 // CHECK: PADDA/PADDS immediates must be multiples of 4
 padda [p0], #6
 
-// CHECK: PADDA cannot handle immediates > +-2^17 on the stack pointer
+// CHECK: PADDA/PADDS cannot handle immediates > +-2^17 on the stack pointer
 padda [sp], #150000
 
-// CHECK: PADDA immediates must be multiples of 32 when incrementing the stack pointer
+// CHECK: PADDA/PADDS immediates must be multiples of 32 when incrementing the stack pointer
 padda [sp], #22
+
+// CHECK: PADDA/PADDS cannot handle immediates > +-2^17 on the stack pointer
+padds [sp], #150000
+
+// CHECK: PADDA/PADDS immediates must be multiples of 32 when incrementing the stack pointer
+padds [sp], #22
 
 // CHECK: MOVA cannot handle immediates > +-2^11
 mova r0, #2000

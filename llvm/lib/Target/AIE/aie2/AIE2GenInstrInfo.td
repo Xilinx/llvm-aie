@@ -521,6 +521,9 @@ let Itinerary = II_PADD in {
       "padda", "[sp], $imm">, AIE2_ag_standalone__ag_pstm_sp_imm;
     def PADDB_sp_imm : AIE2_ldb_ptr_inc_inst_ldb< (outs), (ins imm12x32:$imm),
       "paddb", "[sp], $imm">, AIE2_agb_standalone__agb_pstm_sp_imm;
+    def PADDS_sp_imm : AIE2_st_ptr_inc_inst_st<(outs), (ins imm13x32:$imm),
+                                               "padds", "[sp], $imm">,
+                       AIE2_ag_standalone__ag_pstm_sp_imm;
   }
 }
 
