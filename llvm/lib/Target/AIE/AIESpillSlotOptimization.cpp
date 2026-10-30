@@ -494,10 +494,10 @@ void AIESpillSlotOptimization::emitSubRegAccess(
   // Use TII methods to create spill/reload with correct pseudo opcodes.
   if (SP.IsStore) {
     TII->storeRegToStackSlot(MBB, MI.getIterator(), SI.Reg, IsKill, R.NewFI,
-                             SI.RC, TRI, Register());
+                             SI.RC, Register());
   } else {
     TII->loadRegFromStackSlot(MBB, MI.getIterator(), SI.Reg, R.NewFI, SI.RC,
-                              TRI, Register());
+                              Register());
   }
 
   MachineInstr &NewMI = *std::prev(MI.getIterator());

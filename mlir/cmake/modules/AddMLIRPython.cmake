@@ -796,7 +796,6 @@ function(add_mlir_python_extension libname extname)
       get_property(NB_LIBRARY_TARGET_NAME TARGET ${libname} PROPERTY LINK_LIBRARIES)
       target_compile_options(${NB_LIBRARY_TARGET_NAME}
         PRIVATE
-          -Wall -Wextra -Wpedantic
           -Wno-c++98-compat-extra-semi
           -Wno-cast-qual
           -Wno-covered-switch-default
@@ -804,11 +803,11 @@ function(add_mlir_python_extension libname extname)
           -Wno-nested-anon-types
           -Wno-unused-parameter
           -Wno-zero-length-array
+          -Wno-missing-field-initializers
           ${eh_rtti_enable})
 
       target_compile_options(${libname}
         PRIVATE
-          -Wall -Wextra -Wpedantic
           -Wno-c++98-compat-extra-semi
           -Wno-cast-qual
           -Wno-covered-switch-default
@@ -816,6 +815,7 @@ function(add_mlir_python_extension libname extname)
           -Wno-nested-anon-types
           -Wno-unused-parameter
           -Wno-zero-length-array
+          -Wno-missing-field-initializers
           ${eh_rtti_enable})
     endif()
 

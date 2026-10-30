@@ -139,12 +139,12 @@ define dso_local void @conv2d.for.body.i136(i32 %0, ptr %add.ptr4, ptr %1, ptr %
 ; ASM-NEXT:    vldb.popx x10, [p1, lf1, r25]; movs dc4, dc0
 ; ASM-NEXT:    vldb.pop.3d x1, [p1, lf1, r25, d0]
 ; ASM-NEXT:    movx r16, #7; mov r22, r12
-; ASM-NEXT:    mova dc3, #0; or r19, r8, r8; mov r21, r10
-; ASM-NEXT:    mova r18, #64; vldb.128 wl6, [p5, #0]; or r10, r3, r3; mov s0, r1; movs dc6, dc3
-; ASM-NEXT:    mova r12, #264; vldb.128 wl8, [p5, #64]; or r8, r5, r5; mov dc2, dc3; movs dc5, dc3
+; ASM-NEXT:    mova dc6, #0; or r19, r8, r8; mov r21, r10
+; ASM-NEXT:    mova r18, #64; vldb.128 wl6, [p5, #0]; or r10, r3, r3; mov s0, r1; movs dc3, dc6
+; ASM-NEXT:    mova r12, #264; vldb.128 wl8, [p5, #64]; or r8, r5, r5; mov dc2, dc6; movs dc5, dc6
 ; ASM-NEXT:    vlda.ups.2x cml1, s0, upssign1, [p2], #64; st p7, [sp, #-60]; add r0, r0, #-1; mov s1, r6 // 4-byte Folded Spill
 ; ASM-NEXT:    vlda.ups.2x cmh1, s0, upssign1, [p2], #64; movs p7, p0; movx crupsmode, #0; addm.nc r1, r0, #-1
-; ASM-NEXT:    vlda.ups.2x cml0, s0, upssign1, [p3], #64; vldb x2, [p7], #64; movxm p4, #.LBB0_1; movs dc1, dc3
+; ASM-NEXT:    vlda.ups.2x cml0, s0, upssign1, [p3], #64; vldb x2, [p7], #64; movxm p4, #.LBB0_1; movs dc1, dc6
 ; ASM-NEXT:    vlda.ups.2x cmh0, s0, upssign1, [p3], #64; vldb x4, [p7], #64; movx crsrsmode, #0; vshuffle x10, x10, x1, r2; movs m5, r17
 ; ASM-NEXT:  .LBB0_1: // %steady.stage1.top
 ; ASM-NEXT:    // =>This Loop Header: Depth=1

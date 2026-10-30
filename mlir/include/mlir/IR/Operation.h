@@ -1123,6 +1123,7 @@ public:
       : op(op), theFlags(flags) {}
   OpPrintingFlags &flags() { return theFlags; }
   const OpPrintingFlags &flags() const { return theFlags; }
+  Operation *getOperation() const { return op; }
 
 private:
   Operation *op;

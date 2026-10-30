@@ -1565,8 +1565,9 @@ PressureDiff estimatePressureDiff(const SUnit &SU,
   for (const MachineOperand &D : MI.defs()) {
     if (D.isReg() && D.getReg().isVirtual()) {
       // Note that we aren't in SSA anymore, so D.getReg() might already be live
-      PDiff.addPressureChange(D.getReg(), /*IsDec=*/true, &MRI);
-      DefinedRegs.insert(VRegMaskOrUnit(D.getReg(), LaneBitmask::getAll()));
+      PDiff.addPressureChange(VirtRegOrUnit(D.getReg()), /*IsDec=*/true, &MRI);
+      DefinedRegs.insert(
+          VRegMaskOrUnit(VirtRegOrUnit(D.getReg()), LaneBitmask::getAll()));
     }
   }
   for (const MachineOperand &U : MI.uses()) {
@@ -1574,10 +1575,11 @@ PressureDiff estimatePressureDiff(const SUnit &SU,
       continue;
     // Note that newly-defined registers make in/out regs live again.
     // e.g. %0 should still be live after receding over `%0 = FOO %0`
+    const VirtRegOrUnit VRegOrUnit(U.getReg());
     LaneBitmask LiveLanes =
-        LiveRegs.contains(U.getReg()) & ~DefinedRegs.contains(U.getReg());
+        LiveRegs.contains(VRegOrUnit) & ~DefinedRegs.contains(VRegOrUnit);
     if (LiveLanes.none())
-      PDiff.addPressureChange(U.getReg(), /*IsDec=*/false, &MRI);
+      PDiff.addPressureChange(VRegOrUnit, /*IsDec=*/false, &MRI);
   }
   LLVM_DEBUG(dbgs() << "EstPDiff SU(" << SU.NodeNum << "): ");
   LLVM_DEBUG(PDiff.dump(*MRI.getTargetRegisterInfo()));

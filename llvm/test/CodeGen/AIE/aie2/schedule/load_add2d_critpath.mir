@@ -22,11 +22,11 @@ body:             |
     ; CHECK: liveins: $dc0, $dc4, $p0, $p1, $p2, $p3, $r0, $r1, $r2, $d0_3d:0x0000000000004010
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: renamable $wh0 = VLDA_dmw_lda_w_ag_idx_imm renamable $p0, 32 :: (load (<16 x s16>) from stack - 128)
-    ; CHECK-NEXT: BUNDLE implicit-def $wl0, implicit-def $p4, implicit killed $p0, implicit killed $p3 {
+    ; CHECK-NEXT: BUNDLE implicit-def $wl0, implicit-def $p4, implicit killed $p0, implicit killed $p3 :: (load (<16 x s16>) from stack - 128) {
     ; CHECK-NEXT:   renamable $wl0 = VLDA_dmw_lda_w_ag_idx_imm killed renamable $p0, 0 :: (load (<16 x s16>) from stack - 128)
     ; CHECK-NEXT:   $p4 = MOV_mv_scl killed $p3
     ; CHECK-NEXT: }
-    ; CHECK-NEXT: BUNDLE implicit-def $wl2, implicit-def $p4, implicit $p1, implicit killed $p4 {
+    ; CHECK-NEXT: BUNDLE implicit-def $wl2, implicit-def $p4, implicit $p1, implicit killed $p4 :: (load (<16 x s16>) from stack - 128) {
     ; CHECK-NEXT:   renamable $wl2 = VLDA_dmw_lda_w_ag_idx_imm renamable $p1, 0 :: (load (<16 x s16>) from stack - 128)
     ; CHECK-NEXT:   renamable $p4 = PADDB_ldb_ptr_inc_nrm_imm killed renamable $p4, 60
     ; CHECK-NEXT: }

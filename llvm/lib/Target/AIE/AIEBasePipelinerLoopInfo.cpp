@@ -525,20 +525,19 @@ bool canAllocate(SMSchedule &Sched) {
 
   // Append pressure for each livein register
   for (const VRegMaskOrUnit &LiveInReg : collectLiveInRegs(Seq, MF)) {
-    LLVM_DEBUG(
-        dbgs() << "Add Livein Pressure: "
-               << printReg(LiveInReg.RegUnit, TRI, 0, &MF.getRegInfo()) << ":"
-               << printRegClassOrBank(LiveInReg.RegUnit, MF.getRegInfo(), TRI)
-               << "\n");
+    const Register Reg = LiveInReg.VRegOrUnit.asVirtualReg();
+    LLVM_DEBUG(dbgs() << "Add Livein Pressure: "
+                      << printReg(Reg, TRI, 0, &MF.getRegInfo()) << ":"
+                      << printRegClassOrBank(Reg, MF.getRegInfo(), TRI)
+                      << "\n");
 
     // Ignore partially live regs, the RPTracker does not really know how many
     // pressure units should be added to the current pressure and adds too much.
-    if (LiveInReg.LaneMask !=
-        MF.getRegInfo().getMaxLaneMaskForVReg(LiveInReg.RegUnit)) {
+    if (LiveInReg.LaneMask != MF.getRegInfo().getMaxLaneMaskForVReg(Reg)) {
       LLVM_DEBUG(dbgs() << "Skipped partially live reg\n");
       continue;
     }
-    RPTracker.increaseRegPressure(LiveInReg.RegUnit, LaneBitmask::getNone(),
+    RPTracker.increaseRegPressure(LiveInReg.VRegOrUnit, LaneBitmask::getNone(),
                                   LiveInReg.LaneMask);
   }
 

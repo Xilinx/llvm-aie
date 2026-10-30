@@ -640,9 +640,7 @@ bool AIEBaseInstrInfo::foldImmediate(MachineInstr &UseMI, MachineInstr &DefMI,
   // If constraining fails, DstReg is in an incompatible class (e.g. a control
   // register) and we must bail out.
   const MCInstrDesc &NewMCID = get(*NewOpc);
-  const TargetRegisterInfo *TRI = MRI->getTargetRegisterInfo();
-  const MachineFunction &MF = *UseMI.getParent()->getParent();
-  if (const TargetRegisterClass *OpRC = getRegClass(NewMCID, 0, TRI)) {
+  if (const TargetRegisterClass *OpRC = getRegClass(NewMCID, 0)) {
     if (!MRI->constrainRegClass(DstReg, OpRC))
       return false;
   }
@@ -2289,6 +2287,22 @@ Register AIEBaseInstrInfo::isLoadFromStackSlot(const MachineInstr &MI,
 Register AIEBaseInstrInfo::isStoreToStackSlot(const MachineInstr &MI,
                                               int &FrameIndex) const {
   return isStackSlotMemoryAccess(MI, FrameIndex, /*IsLoad=*/false);
+}
+
+bool AIEBaseInstrInfo::hasLoadFromStackSlot(
+    const MachineInstr &MI,
+    SmallVectorImpl<const MachineMemOperand *> &Accesses) const {
+  if (MI.isBundle())
+    return false;
+  return TargetInstrInfo::hasLoadFromStackSlot(MI, Accesses);
+}
+
+bool AIEBaseInstrInfo::hasStoreToStackSlot(
+    const MachineInstr &MI,
+    SmallVectorImpl<const MachineMemOperand *> &Accesses) const {
+  if (MI.isBundle())
+    return false;
+  return TargetInstrInfo::hasStoreToStackSlot(MI, Accesses);
 }
 
 ArrayRef<AIEBaseInstrInfo::WidenNarrowConversionPair>

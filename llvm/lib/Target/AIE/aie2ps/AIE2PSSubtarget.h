@@ -37,7 +37,6 @@ class AIE2PSSubtarget : public AIE2PSGenSubtargetInfo {
   AIE2AddrSpaceInfo AddrSpaceInfo;
   AIE2PSFrameLowering FrameLowering;
   AIE2PSInstrInfo InstrInfo;
-  AIE2PSRegisterInfo RegInfo;
   AIE2PSTargetLowering TLInfo;
   InstrItineraryData InstrItins;
   SelectionDAGTargetInfo TSInfo;
@@ -77,7 +76,7 @@ public:
   }
   const AIE2PSInstrInfo *getInstrInfo() const override { return &InstrInfo; }
   const AIE2PSRegisterInfo *getRegisterInfo() const override {
-    return &RegInfo;
+    return &InstrInfo.getRegisterInfo();
   }
   const AIE2PSTargetLowering *getTargetLowering() const override {
     return &TLInfo;

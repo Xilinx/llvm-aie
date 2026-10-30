@@ -27,8 +27,12 @@
 namespace llvm {
 
 class AIEInstrInfo : public AIEGenInstrInfo {
+  const AIERegisterInfo RegInfo;
+
 public:
   explicit AIEInstrInfo(const TargetSubtargetInfo &STI);
+
+  const AIERegisterInfo &getRegisterInfo() const { return RegInfo; }
 
   /// Allocate and return a hazard recognizer to use for this target when
   /// scheduling the machine instructions after register allocation.
@@ -51,14 +55,13 @@ public:
   void storeRegToStackSlot(MachineBasicBlock &MBB,
                            MachineBasicBlock::iterator MBBI, Register SrcReg,
                            bool IsKill, int FrameIndex,
-                           const TargetRegisterClass *RC,
-                           const TargetRegisterInfo *TRI, Register VReg,
+                           const TargetRegisterClass *RC, Register VReg,
                            MachineInstr::MIFlag Flags) const override;
 
   void loadRegFromStackSlot(MachineBasicBlock &MBB,
                             MachineBasicBlock::iterator MBBI, Register DstReg,
                             int FrameIndex, const TargetRegisterClass *RC,
-                            const TargetRegisterInfo *TRI, Register VReg,
+                            Register VReg,
                             MachineInstr::MIFlag Flags) const override;
 
   unsigned getInstSizeInBytes(const MachineInstr &MI) const override;

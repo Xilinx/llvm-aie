@@ -944,20 +944,6 @@ body:             |
     PseudoRET implicit $lr, implicit %0
 ...
 
-# Combine G_SHUFFLE_VECTOR into COPY
----
-name: shuffle_vector_to_copy_scalar
-tracksRegLiveness: true
-body:             |
-  bb.1:
-    ; CHECK-LABEL: name: shuffle_vector_to_copy_scalar
-    ; CHECK: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[C]](s32)
-    %1:_(s32) = G_CONSTANT i32 0
-    %2:_(s32) = G_CONSTANT i32 1
-    %0:_(s32) = G_SHUFFLE_VECTOR %1(s32), %2(s32), shufflemask(0)
-    PseudoRET implicit $lr, implicit %0
-...
 ---
 name: shuffle_vector_to_copy_vec
 tracksRegLiveness: true

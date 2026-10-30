@@ -106,11 +106,13 @@ struct CopyTableView {
 };
 
 struct AIEBaseInstrInfo : public TargetInstrInfo {
-  AIEBaseInstrInfo() = default;
+  explicit AIEBaseInstrInfo(const TargetRegisterInfo &TRI)
+      : TargetInstrInfo(TRI) {}
   /// Initializes TargetInstrInfo with the target's control-flow pseudo opcodes.
-  AIEBaseInstrInfo(unsigned CFSetupOpcode, unsigned CFDestroyOpcode,
-                   unsigned CatchRetOpcode, unsigned ReturnOpcode)
-      : TargetInstrInfo(CFSetupOpcode, CFDestroyOpcode, CatchRetOpcode,
+  AIEBaseInstrInfo(const TargetRegisterInfo &TRI, unsigned CFSetupOpcode,
+                   unsigned CFDestroyOpcode, unsigned CatchRetOpcode,
+                   unsigned ReturnOpcode)
+      : TargetInstrInfo(TRI, CFSetupOpcode, CFDestroyOpcode, CatchRetOpcode,
                         ReturnOpcode) {}
   // This codifies the model of ZeroOverheadLoops
   class ZOLSupport {
@@ -1130,6 +1132,15 @@ public:
   /// Returns the stored register, or 0 if not a stack slot store.
   Register isStoreToStackSlot(const MachineInstr &MI,
                               int &FrameIndex) const override;
+
+  /// Bundle headers carry the merged memory operands of their instructions.
+  /// Spills and reloads are reported for the bundled instructions instead.
+  bool hasLoadFromStackSlot(
+      const MachineInstr &MI,
+      SmallVectorImpl<const MachineMemOperand *> &Accesses) const override;
+  bool hasStoreToStackSlot(
+      const MachineInstr &MI,
+      SmallVectorImpl<const MachineMemOperand *> &Accesses) const override;
 
   struct AIEPseudoExpandInfo {
     /// OpCode to expand a PseudoInstruction to. This can be another Pseudo.

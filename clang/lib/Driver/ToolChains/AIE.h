@@ -12,9 +12,9 @@
 #define LLVM_CLANG_LIB_DRIVER_TOOLCHAINS_AIE_H
 
 #include "Gnu.h"
-#include "clang/Driver/Options.h"
 #include "clang/Driver/Tool.h"
 #include "clang/Driver/ToolChain.h"
+#include "clang/Options/Options.h"
 
 namespace clang {
 namespace driver {

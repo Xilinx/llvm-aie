@@ -12,7 +12,7 @@
 #include "clang/Basic/CharInfo.h"
 #include "clang/Driver/Driver.h"
 #include "clang/Driver/DriverDiagnostic.h"
-#include "clang/Driver/Options.h"
+#include "clang/Options/Options.h"
 #include "llvm/Option/ArgList.h"
 #include "llvm/Support/TargetParser.h"
 #include "llvm/Support/raw_ostream.h"

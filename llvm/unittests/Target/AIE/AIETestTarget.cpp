@@ -21,16 +21,18 @@ using namespace llvm;
 
 namespace {
 
+// Include helper functions to define a testing target.
+#include "MFCommon.inc"
+
 // Concrete test InstrInfo class that implements the pure virtual
 // getVarItinInterface() method.
 class AIETestInstrInfo : public AIEBaseInstrInfo {
+  BogusRegisterInfo RegInfo;
+
 public:
-  AIETestInstrInfo() : AIEBaseInstrInfo() {}
+  AIETestInstrInfo() : AIEBaseInstrInfo(RegInfo) {}
   VarItinInterface getVarItinInterface() const override { return {}; }
 };
-
-// Include helper functions to define a testing target.
-#include "MFCommon.inc"
 
 MCSchedModel AIETestSchedModel = {
     1000, // IssueWidth

@@ -41,7 +41,7 @@ body:             |
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   BUNDLE implicit-def $r26, implicit-def $r20, implicit $p4, implicit $dj0, implicit $r0, implicit $r2 {
+  ; CHECK-NEXT:   BUNDLE implicit-def $r26, implicit-def $r20, implicit $p4, implicit $dj0, implicit $r0, implicit $r2 :: (load (s16)) {
   ; CHECK-NEXT:     renamable $r26 = LDA_s16_idx renamable $p4, renamable $dj0 :: (load (s16))
   ; CHECK-NEXT:     renamable $r20 = MUL renamable $r0, renamable $r2
   ; CHECK-NEXT:   }
@@ -51,11 +51,11 @@ body:             |
   ; CHECK-NEXT:   successors: %bb.1(0x7c000000), %bb.2(0x04000000)
   ; CHECK-NEXT:   liveins: $dj0, $p2, $p4, $r0, $r2, $x0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   BUNDLE implicit-def $r26, implicit-def $r20, implicit $p4, implicit $dj0, implicit $r0, implicit $r2 {
+  ; CHECK-NEXT:   BUNDLE implicit-def $r26, implicit-def $r20, implicit $p4, implicit $dj0, implicit $r0, implicit $r2 :: (load (s16)) {
   ; CHECK-NEXT:     renamable $r26 = LDA_s16_idx renamable $p4, renamable $dj0 :: (load (s16))
   ; CHECK-NEXT:     renamable $r20 = MUL renamable $r0, renamable $r2
   ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   BUNDLE implicit-def $p2, implicit-def $r28, implicit-def dead $srcarry, implicit $x0, implicit killed $p2, implicit killed $r20, implicit $r0 {
+  ; CHECK-NEXT:   BUNDLE implicit-def $p2, implicit-def $r28, implicit-def dead $srcarry, implicit $x0, implicit killed $p2, implicit killed $r20, implicit $r0 :: (store (<32 x s16>)) {
   ; CHECK-NEXT:     renamable $p2 = VST_dmx_sts_x_st_pstm_nrm_imm renamable $x0, killed renamable $p2, 64 :: (store (<32 x s16>))
   ; CHECK-NEXT:     renamable $r28 = ADD_alu_r_rr killed renamable $r20, renamable $r0, implicit-def dead $srcarry
   ; CHECK-NEXT:   }
