@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -121,7 +121,7 @@ void getSImmOpValueXStep(const MCInst &MI, unsigned OpNo, APInt &Op,
                          SmallVectorImpl<MCFixup> &Fixups,
                          const MCSubtargetInfo &STI) {
   const MCOperand &MO = MI.getOperand(OpNo);
-  const unsigned FixedZeroBits = CTLog2<step>();
+  const unsigned FixedZeroBits = ConstantLog2<step>();
 
   if (MO.isImm()) {
     constexpr int hexValue = step - 1;

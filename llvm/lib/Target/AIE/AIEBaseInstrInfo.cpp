@@ -641,7 +641,6 @@ bool AIEBaseInstrInfo::foldImmediate(MachineInstr &UseMI, MachineInstr &DefMI,
   // register) and we must bail out.
   const MCInstrDesc &NewMCID = get(*NewOpc);
   const TargetRegisterInfo *TRI = MRI->getTargetRegisterInfo();
-  const MachineFunction &MF = *UseMI.getParent()->getParent();
   if (const TargetRegisterClass *OpRC = getRegClass(NewMCID, 0, TRI)) {
     if (!MRI->constrainRegClass(DstReg, OpRC))
       return false;
