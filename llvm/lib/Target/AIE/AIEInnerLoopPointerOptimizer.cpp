@@ -48,6 +48,8 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 
+#include <utility>
+
 using namespace llvm;
 
 #define DEBUG_TYPE "aie-inner-loop-pointer-optimizer"
@@ -435,29 +437,34 @@ bool AIEInnerLoopPointerOptimizer::normalizePhiToLoadBase(
                       << "\n           stride = " << *StrideVal << "\n");
 
     // --- Transform ---
-    // Insert  new_init = phi_init + Stride  in the preheader (one-time shift).
-    Value *ShiftBase = Phi.getIncomingValueForBlock(Preheader);
-    Value *Shift = StrideVal;
-    // A variable shift of "base + C" becomes "base + (C + Stride)", so the
-    // new init stays a single pointer add from base. Only do this when the
-    // offset add can be hoisted out of an outer loop: otherwise it sits on
-    // the critical path of every outer iteration, while "(base + C) + Stride"
-    // is just two independent pointer adds. Each folded shift keeps a
-    // modifier register live across the outer loops, so cap them per loop.
-    auto *InitGEP = dyn_cast<GetElementPtrInst>(ShiftBase);
-    BasicBlock *const OffsetBB =
-        StrideCI ? nullptr : getShiftOffsetInsertionPoint(L, StrideVal);
-    if (NumFoldedShifts < MaxFoldedShiftsPerLoop && OffsetBB &&
-        OffsetBB != Preheader && InitGEP &&
-        AIEIRUtils::isSimpleI8GEP(InitGEP) &&
-        isa<ConstantInt>(InitGEP->getOperand(1)) &&
-        InitGEP->getOperand(1)->getType() == StrideVal->getType()) {
+    // Pointer and index of the preheader add, new_init = base + index.
+    // A "base + C" init folds into one pointer add from base,
+    // base + (C + Stride), instead of two pointer adds. The scalar add is
+    // hoisted above this loop; in the inner preheader it would sit on the
+    // critical path of every outer iteration, and two independent pointer
+    // adds are cheaper there. Each folded shift keeps a modifier register
+    // live across the outer loops.
+    auto FoldedInit = [&]() -> std::pair<Value *, Value *> {
+      Value *Base = Phi.getIncomingValueForBlock(Preheader);
+      Value *Index = StrideVal;
+      auto *InitGEP = dyn_cast<GetElementPtrInst>(Base);
+      Value *const Offset = InitGEP ? InitGEP->getOperand(1) : nullptr;
+      const bool CanFoldOffset =
+          !StrideCI && NumFoldedShifts < MaxFoldedShiftsPerLoop && InitGEP &&
+          AIEIRUtils::isSimpleI8GEP(InitGEP) && isa<ConstantInt>(Offset) &&
+          Offset->getType() == StrideVal->getType();
+      if (!CanFoldOffset)
+        return {Base, Index};
+      BasicBlock *const OffsetBB = getShiftOffsetInsertionPoint(L, StrideVal);
+      if (!OffsetBB || OffsetBB == Preheader)
+        return {Base, Index};
       IRBuilder<> OffsetBuilder(OffsetBB->getTerminator());
-      Shift = OffsetBuilder.CreateAdd(InitGEP->getOperand(1), StrideVal,
-                                      Phi.getName() + ".shift");
-      ShiftBase = InitGEP->getPointerOperand();
+      Index =
+          OffsetBuilder.CreateAdd(Offset, StrideVal, Phi.getName() + ".shift");
       ++NumFoldedShifts;
-    }
+      return {InitGEP->getPointerOperand(), Index};
+    };
+    auto [ShiftBase, Shift] = FoldedInit();
     IRBuilder<> PreheaderBuilder(Preheader->getTerminator());
     Value *const NewInit = PreheaderBuilder.CreateGEP(
         Int8Ty, ShiftBase, Shift, Phi.getName() + ".shifted.init");
