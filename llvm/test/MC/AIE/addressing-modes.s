@@ -53,6 +53,7 @@
 // CHECK: paddb [p0], #-32
 // CHECK: paddb.2d [p7], d4
 // CHECK: paddb.3d [p6], d3
+// CHECK: padds [sp], #32
 // CHECK: padds [p0], #-32
 // CHECK: padds.2d [p7], d4
 // CHECK: padds.3d [p6], d3
@@ -106,6 +107,7 @@
     paddb.2d [p7], d4
     paddb.3d [p6], d3
 
+    padds [sp], #32
     padds [p0], #-32
     padds.2d [p7], d4
     padds.3d [p6], d3
