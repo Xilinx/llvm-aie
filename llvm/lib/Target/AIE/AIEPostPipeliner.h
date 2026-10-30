@@ -256,7 +256,7 @@ class PostPipeliner {
 
   const AIEHazardRecognizer &HR;
   RegLiveRangeTracker &RegTracker;
-  ScheduleDAGMI *DAG = nullptr;
+  ScheduleDAGInstrs *DAG = nullptr;
   const AIEBaseInstrInfo *TII = nullptr;
 
   // Schedule interpreter for computing modulo live ranges
@@ -404,17 +404,28 @@ public:
                 RegLiveRangeTracker &RegTracker, const MachineFunction &MF);
 
   /// Check whether this is a suitable loop for the PostPipeliner. It also
-  /// leaves some useful information.
+  /// leaves some useful information, and returns false immediately if all
+  /// pipelining modes are disabled.
   bool isPostPipelineCandidate(MachineBasicBlock &LoopBlock);
 
   /// Get a lowerbound for the II required to accommodate the slots.
   /// \pre isPostPipelineCandidate has returned true
   int getResMII(MachineBasicBlock &LoopBlock);
 
+  /// Run the full II×Mode search loop using the two pre-built pipeliner DAGs.
+  /// \p LoopBlock is the loop body to pipeline;
+  /// \p PhysDAG is the DAG built with physical registers;
+  /// \p VirtDAG is the DAG built with virtualized registers.
+  /// Returns true on success; on failure, register state is fully restored.
+  /// \pre isPostPipelineCandidate() returned true for \p LoopBlock.
+  bool trySchedule(MachineBasicBlock &LoopBlock, ScheduleDAGInstrs &PhysDAG,
+                   ScheduleDAGInstrs &VirtDAG);
+
   /// Schedule using the given InitiationInterval. Return true when successful.
   /// In that case calls to the query methods below are legitimate.
   /// \param PipelinerMode The mode the postpipeliner is operating in.
-  bool schedule(ScheduleDAGMI &DAG, int InitiationInterval,
+  /// \p DAG must be a pre-built two-copy pipeliner graph for the given mode.
+  bool schedule(ScheduleDAGInstrs &DAG, int InitiationInterval,
                 PostPipelinerMode PipelinerMode);
 
   // Quick query for the stage count.

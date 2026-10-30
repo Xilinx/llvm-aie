@@ -1903,7 +1903,7 @@ SmallVector<SDep, 4> getPreds(SUnit &SU) {
 // mode where schedule correctness is verified afterwards.
 //
 // \param DAG The scheduling DAG to modify.
-void simplifyReservedRegDeps(ScheduleDAGMI &DAG) {
+void simplifyReservedRegDeps(ScheduleDAGInstrs &DAG) {
   MachineFunction &MF = DAG.MF;
   const TargetRegisterInfo *TRI = MF.getSubtarget().getRegisterInfo();
   const auto *RI = static_cast<const AIEBaseRegisterInfo *>(TRI);
@@ -1922,6 +1922,64 @@ void simplifyReservedRegDeps(ScheduleDAGMI &DAG) {
       SU.removePred(Dep);
     }
   }
+}
+
+/// DataDependenceHelper subclass for pre-built pipeliner graphs.
+/// Applies the same mayAlias() logic as AIEScheduleDAGMI and owns the set of
+/// DAG mutations required for modulo scheduling.
+class AIEPipelinerDAG : public DataDependenceHelper {
+  const BlockState &BS;
+  std::vector<std::unique_ptr<ScheduleDAGMutation>> PipelinerMuts;
+
+protected:
+  bool mayAlias(SUnit *SUa, SUnit *SUb, bool TBAA) override {
+    if (BS.isSafeToIgnoreMemDeps())
+      return false;
+    const int NInstr = BS.getCurrentRegion().getFreeInstructions().size();
+    const int IterA = SUa->NodeNum / NInstr;
+    const int IterB = SUb->NodeNum / NInstr;
+    if (aliasAcrossVirtualUnrolls(SUa->getInstr(), SUb->getInstr(), IterA,
+                                  IterB) == AliasResult::NoAlias)
+      return false;
+    return DataDependenceHelper::mayAlias(SUa, SUb, TBAA);
+  }
+
+public:
+  AIEPipelinerDAG(const MachineSchedContext &Ctx, const BlockState &BS,
+                  AAResults *AA)
+      : DataDependenceHelper(Ctx, /*AddMutators=*/false,
+                             /*ExactLatencies=*/true),
+        BS(BS) {
+    const Triple TT = Ctx.MF->getSubtarget().getTargetTriple();
+    PipelinerMuts = AIEBaseSubtarget::getPostPipelinerDAGMutationsImpl(TT, AA);
+  }
+
+  void applyMutations() {
+    for (auto &M : PipelinerMuts)
+      M->apply(this);
+  }
+};
+
+/// Build a two-copy pipeliner graph directly into \p DAG for the given mode.
+/// For virtual modes, the caller must have called initPipelining() first.
+static void buildPipelinerDAG(AIEPipelinerDAG &DAG, const BlockState &BS,
+                              AAResults *AA, bool SimplifyReserved) {
+  const auto &Region = BS.getCurrentRegion();
+  DAG.clearDAG();
+  for (int Copy = 0; Copy < 2; ++Copy)
+    for (MachineInstr *MI : Region.getFreeInstructions())
+      DAG.initSUnit(*MI);
+  DAG.ExitSU.setInstr(Region.getExitInstr());
+  DAG.makeMaps();
+  const bool TrackLaneMasks = true;
+  const bool AbandonSingleDefs = false;
+  // DataDependenceHelper::buildEdges() (no-arg override) hides the
+  // ScheduleDAGInstrs 6-arg version; use the base class explicitly.
+  static_cast<ScheduleDAGInstrs &>(DAG).buildEdges(
+      AA, nullptr, nullptr, nullptr, TrackLaneMasks, AbandonSingleDefs);
+  if (SimplifyReserved)
+    simplifyReservedRegDeps(DAG);
+  DAG.applyMutations();
 }
 
 } // namespace
@@ -1943,27 +2001,32 @@ void llvm::AIEPostRASchedStrategy::buildGraph(ScheduleDAGMI &DAG, AAResults *AA,
 
   auto &BS = InterBlock.getBlockState(CurMBB);
   const auto &Region = BS.getCurrentRegion();
-  int NCopies = 1;
+
   if (BS.FixPoint.Stage == SchedulingStage::Pipelining) {
     assert(BS.Kind == BlockType::Loop);
     assert(BS.getRegions().size() == 1);
     assert(Region.getBotFixedBundles().empty());
     assert(Region.getTopFixedBundles().empty());
-    // Try to wrap the linear schedule within II.
-    // We create two copies of the loop body, which will make the loop-carried
-    // dependences appear as forward dependences between the first and the
-    // second iteration.
-    NCopies = 2;
-    // Initialize pipelining.
-    BS.initPipelining();
+    const MachineSchedContext &Ctx = *InterBlock.getContext();
+
+    // Build the Physical DAG (no virtualization).
+    BS.PipelinePhysDAG = std::make_unique<AIEPipelinerDAG>(Ctx, BS, AA);
+    buildPipelinerDAG(static_cast<AIEPipelinerDAG &>(*BS.PipelinePhysDAG), BS,
+                      AA, /*SimplifyReserved=*/false);
+
+    // Build the Virtual DAG with register virtualization applied.
+    BS.initPipelining(PostPipelinerMode::Virtual);
+    BS.PipelineVirtDAG = std::make_unique<AIEPipelinerDAG>(Ctx, BS, AA);
+    buildPipelinerDAG(static_cast<AIEPipelinerDAG &>(*BS.PipelineVirtDAG), BS,
+                      AA, /*SimplifyReserved=*/SimplifyReservedRegs);
+    BS.restorePipelining();
+
+    return;
   }
-  DEBUG_BLOCKS(dbgs() << "    buildGraph, NCopies=" << NCopies << "\n");
-  for (int S = 0; S < NCopies; S++) {
-    // Only add SUnits for "free" instructions, fixed instructions will be added
-    // later in a DAGMutator.
-    for (MachineInstr *I : Region.getFreeInstructions()) {
-      DAG.initSUnit(*I);
-    }
+
+  DEBUG_BLOCKS(dbgs() << "    buildGraph\n");
+  for (MachineInstr *I : Region.getFreeInstructions()) {
+    DAG.initSUnit(*I);
   }
   DAG.ExitSU.setInstr(Region.getExitInstr());
   DAG.makeMaps();
@@ -1976,18 +2039,6 @@ void llvm::AIEPostRASchedStrategy::buildGraph(ScheduleDAGMI &DAG, AAResults *AA,
   DAG.buildEdges(Context->AA, RPTracker, PDiffs, LIS, OverrideTrackLaneMasks,
                  AbandonSingleDefs);
   static_cast<AIEScheduleDAGMI &>(DAG).recordDbgInstrs(Region);
-
-  // Apply reserved register dependency simplification when enabled and in
-  // virtualized mode. This relaxes Anti and Output dependencies on
-  // simplifiable reserved registers to give the scheduler maximum freedom.
-  // The correctness of the resulting schedule is verified afterward.
-  const PostPipelinerMode Mode = BS.FixPoint.PipelinerMode;
-  if (SimplifyReservedRegs && (Mode == PostPipelinerMode::Virtual ||
-                               Mode == PostPipelinerMode::ReservedVirtual)) {
-    // Store the simplified registers so PostRegAlloc can verify that true
-    // live ranges on these registers don't overlap.
-    simplifyReservedRegDeps(DAG);
-  }
 }
 
 SUnit &AIEPostRASchedStrategy::addFixedSUnit(MachineInstr &MI, bool IsTop) {
@@ -2040,18 +2091,16 @@ void AIEScheduleDAGMI::schedule() {
   }
   switch (BS.FixPoint.Stage) {
   case SchedulingStage::Pipelining: {
-    // We've gone past regular scheduling. Try to find a valid modulo schedule
-    // If it succeeds, we need to implement it, if we fail we fall back on the
-    // normal loop schedule
-    SchedImpl->buildGraph(*this, AA);
-    postProcessDAG();
-
+    // Delegate DAG construction to buildGraph(). Both pre-built DAGs are
+    // stored in BlockState and remain valid when materializePipeline() runs.
+    getSchedImpl()->buildGraph(*this, AA, nullptr, nullptr, nullptr,
+                               /*TrackLaneMasks=*/false);
     auto &PostSWP = BS.getPostSWP();
-
-    if (PostSWP.schedule(*this, BS.FixPoint.II, BS.FixPoint.PipelinerMode)) {
+    // The full II×Mode search is owned by PostPipeliner::trySchedule().
+    // It uses both pre-built DAGs and handles all register virtualization.
+    if (PostSWP.trySchedule(*BS.TheBlock, *BS.PipelinePhysDAG,
+                            *BS.PipelineVirtDAG))
       BS.setPipelined();
-      LLVM_DEBUG(PostSWP.dump());
-    }
     return;
   }
   default:
