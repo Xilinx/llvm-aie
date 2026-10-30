@@ -28,7 +28,7 @@ extern void tail(int *p, unsigned i);
 // CHECK-NEXT:    [[INC]] = add nuw i32 [[IT_0911]], 1
 // CHECK-NEXT:    tail call void @_Z4workPij(ptr [[P]], i32 noundef [[INC]]) #[[ATTR2]]
 // CHECK-NEXT:    [[CMP1:%.*]] = icmp eq i32 [[INC]], [[SUB]]
-// CHECK-NEXT:    br i1 [[CMP1]], label %[[CLEANUP]], label %[[IF_END]]
+// CHECK-NEXT:    br i1 [[CMP1]], label %[[CLEANUP]], label %[[IF_END]], !llvm.loop [[LOOP2:![0-9]+]]
 // CHECK:       [[CLEANUP]]:
 // CHECK-NEXT:    ret void
 //
@@ -55,7 +55,7 @@ void mid_exit(int *p, unsigned iters) {
 // CHECK-NEXT:    tail call void @_Z4tailPij(ptr [[P]], i32 noundef [[IT_06]]) #[[ATTR2]]
 // CHECK-NEXT:    [[INC]] = add nuw i32 [[IT_06]], 1
 // CHECK-NEXT:    [[EXITCOND_NOT:%.*]] = icmp eq i32 [[INC]], [[ITERS]]
-// CHECK-NEXT:    br i1 [[EXITCOND_NOT]], label %[[FOR_COND_CLEANUP]], label %[[FOR_BODY]], !llvm.loop [[LOOP2:![0-9]+]]
+// CHECK-NEXT:    br i1 [[EXITCOND_NOT]], label %[[FOR_COND_CLEANUP]], label %[[FOR_BODY]], !llvm.loop [[LOOP6:![0-9]+]]
 //
 void latch_exit(int *p, unsigned iters) {
 #pragma clang loop min_iteration_count(4) pipeline(disable)
@@ -75,4 +75,5 @@ void latch_exit(int *p, unsigned iters) {
 // CHECK: [[META3]] = !{!"llvm.loop.mustprogress"}
 // CHECK: [[META4]] = !{!"llvm.loop.itercount.range", i64 4}
 // CHECK: [[META5]] = !{!"llvm.loop.pipeline.disable", i1 true}
+// CHECK: [[LOOP6]] = distinct !{[[LOOP6]], [[META3]], [[META4]], [[META5]]}
 //.

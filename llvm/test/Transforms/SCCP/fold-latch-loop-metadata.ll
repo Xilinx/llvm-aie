@@ -22,7 +22,7 @@ define void @latch_br(ptr %p, i32 %n) {
 ; CHECK-NEXT:    br i1 [[LAST]], label %[[EXIT:.*]], label %[[LATCH]]
 ; CHECK:       [[LATCH]]:
 ; CHECK-NEXT:    [[I_NEXT]] = add i32 [[I]], 1
-; CHECK-NEXT:    br label %[[LOOP]]
+; CHECK-NEXT:    br label %[[LOOP]], !llvm.loop [[LOOP0:![0-9]+]]
 ; CHECK:       [[EXIT]]:
 ; CHECK-NEXT:    ret void
 ;
@@ -55,7 +55,7 @@ define void @latch_switch(ptr %p, i32 %n) {
 ; CHECK-NEXT:    br i1 [[LAST]], label %[[EXIT:.*]], label %[[LATCH]]
 ; CHECK:       [[LATCH]]:
 ; CHECK-NEXT:    [[I_NEXT]] = add i32 [[I]], 1
-; CHECK-NEXT:    br label %[[LOOP]]
+; CHECK-NEXT:    br label %[[LOOP]], !llvm.loop [[LOOP3:![0-9]+]]
 ; CHECK:       [[EXIT]]:
 ; CHECK-NEXT:    ret void
 ;
@@ -82,3 +82,9 @@ exit:
 !1 = !{!"llvm.loop.itercount.range", i64 4}
 !2 = !{!"llvm.loop.pipeline.disable", i1 true}
 !3 = distinct !{!3, !1, !2}
+;.
+; CHECK: [[LOOP0]] = distinct !{[[LOOP0]], [[META1:![0-9]+]], [[META2:![0-9]+]]}
+; CHECK: [[META1]] = !{!"llvm.loop.itercount.range", i64 4}
+; CHECK: [[META2]] = !{!"llvm.loop.pipeline.disable", i1 true}
+; CHECK: [[LOOP3]] = distinct !{[[LOOP3]], [[META1]], [[META2]]}
+;.
