@@ -444,6 +444,30 @@ OuterLoopStructure::tryBuildFrom(MachineBasicBlock &OuterLatch) {
   return OLS;
 }
 
+bool OuterLoopStructure::hasLinearLayout() const {
+  // Check that each consecutive pair of blocks in the OLP structure
+  // is a layout successor. This ensures bundles can be safely moved
+  // between adjacent blocks.
+  auto IsLayoutSucc = [](const MachineBasicBlock *A,
+                         const MachineBasicBlock *B) {
+    return A && B && A->isLayoutSuccessor(B);
+  };
+
+  if (!IsLayoutSucc(OuterPreheader, SteadyTop) ||
+      !IsLayoutSucc(SteadyTop, SteadyInner) ||
+      !IsLayoutSucc(SteadyInner, SteadyBottom))
+    return false;
+
+  if (hasPeeledIterRegion()) {
+    if (!IsLayoutSucc(SteadyBottom, PeeledIterTop) ||
+        !IsLayoutSucc(PeeledIterTop, PeeledIterInner) ||
+        !IsLayoutSucc(PeeledIterInner, PeeledIterBottom))
+      return false;
+  }
+
+  return true;
+}
+
 bool OuterLoopStructure::hasMatchingInnerLoops() const {
   if (!SteadyInner || !PeeledIterInner)
     return false;

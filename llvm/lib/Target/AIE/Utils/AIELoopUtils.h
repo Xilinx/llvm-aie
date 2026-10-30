@@ -217,6 +217,12 @@ struct OuterLoopStructure {
   /// Returns true if this has a peeled iteration region (non-speculative).
   bool hasPeeledIterRegion() const { return !Speculative; }
 
+  /// Returns true if all blocks in the OLP structure are laid out
+  /// consecutively in the function, i.e. each block is the layout successor
+  /// of the previous one. The sibling loop optimizer relies on this property
+  /// for correctness when merging bundles across blocks.
+  bool hasLinearLayout() const;
+
   /// Try to build the structure from an outer loop latch that has OLP metadata.
   /// For speculative loops, only the steady-state region is populated and
   /// Speculative is set to true. Returns nullopt if the CFG doesn't match
