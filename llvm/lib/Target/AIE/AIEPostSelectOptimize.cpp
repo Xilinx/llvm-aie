@@ -507,11 +507,26 @@ using Operation = AIEBaseInstrInfo::AbstractOp::OperationType;
 using AbstractOp = AIEBaseInstrInfo::AbstractOp;
 using OptionalOp = std::optional<AbstractOp>;
 
+// A fictional global variable that symbolizes the read-only tables of the 4x
+// loads (see hasGlobalValue). This is a transient variable that will be
+// discarded in the end.
+const Value *getCommonLookupTable(MachineFunction &MF) {
+  Module &M = *MF.getFunction().getParent();
+  return M.getOrInsertGlobal("__aie_common_lookup_table",
+                             PointerType::getUnqual(M.getContext()));
+}
+
 // Verify if an instruction has a GlobalValue (GV) as operand. In case of
 // true result, add such GV to the GVSet. Under some circumstances, such
 // GV operand can also be virtually retrieved.
 bool hasGlobalValue(MachineInstr *MI, SmallPtrSet<const Value *, 4> &GVSet,
                     MachineRegisterInfo &MRI) {
+
+  // A constant (MOVXM <imm>), an undefined value or a copy of a physical
+  // register (an integer argument) has no virtual register to follow.
+  if (MI->getNumOperands() < 2 || !MI->getOperand(1).isReg() ||
+      !MI->getOperand(1).getReg().isVirtual())
+    return false;
 
   MI = getDefIgnoringCopiesAndBitcasts(MI->getOperand(1).getReg(), MRI);
 
@@ -540,20 +555,14 @@ bool hasGlobalValue(MachineInstr *MI, SmallPtrSet<const Value *, 4> &GVSet,
   // Furthermore, we can address two additional scenarios:
   // 1. Loading the pointer from an external source.
   // 2. Copying the pointer from a physical register.
-  // By limiting our focus in this manner, we streamline the search space to a
-  // well-known structure.
+  // Other addresses get the common table in fixLoadMemOpInfo.
   if (!MI->mayLoad() && !MI->isCopy())
     return false;
 
   if (MI->isCopy() && !MI->getOperand(1).getReg().isPhysical())
     return false;
 
-  // This is a transient variable that will be discarded in the end.
-  Module &M = *MI->getMF()->getFunction().getParent();
-  auto *GV = M.getOrInsertGlobal("__aie_common_lookup_table",
-                                 PointerType::getUnqual(M.getContext()));
-
-  GVSet.insert(GV);
+  GVSet.insert(getCommonLookupTable(*MI->getMF()));
   return true;
 }
 
@@ -650,18 +659,25 @@ bool fixLoadMemOpInfo(MachineFunction &MF, MachineBasicBlock &MBB,
       continue;
 
     SmallPtrSet<const Value *, 4> GVSet;
-    if (traverseVecPointerChain(VOp->VectorSrcRegs[0], GVSet, TII, MRI)) {
-      // Add gathered GlobalValues as MMOs.
-      for (auto GV : GVSet) {
-        // As we only know the base pointer and nothing about the
-        // result of the address calculation, we simply don't assume
-        // size/alignment/offset, so we prevent AA from inferring wrong
-        // information.
-        MachineMemOperand *PtrLoadMMO = MF.getMachineMemOperand(
-            MachinePointerInfo(GV), MachineMemOperand::MOLoad, LLT(), Align());
-        MI.addMemOperand(MF, PtrLoadMMO);
-        Changed = true;
-      }
+    if (!traverseVecPointerChain(VOp->VectorSrcRegs[0], GVSet, TII, MRI)) {
+      // The address does not lead to the tables (pointer arithmetic,
+      // addresses built or loaded as vectors, constants). Without memory
+      // operands, the load would be a barrier for the scheduler.
+      if (!Assume4xLoadReadOnlyData)
+        continue;
+      GVSet.clear();
+      GVSet.insert(getCommonLookupTable(MF));
+    }
+    // Add gathered GlobalValues as MMOs.
+    for (auto GV : GVSet) {
+      // As we only know the base pointer and nothing about the
+      // result of the address calculation, we simply don't assume
+      // size/alignment/offset, so we prevent AA from inferring wrong
+      // information.
+      MachineMemOperand *PtrLoadMMO = MF.getMachineMemOperand(
+          MachinePointerInfo(GV), MachineMemOperand::MOLoad, LLT(), Align());
+      MI.addMemOperand(MF, PtrLoadMMO);
+      Changed = true;
     }
   }
   return Changed;

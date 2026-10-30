@@ -278,7 +278,8 @@ body:             |
     PseudoRET implicit $lr
 ...
 
-# Case 4: here we have the invalid case (SEL (BROADCAST(5), BROADCAST(G)))
+# Case 4: here we have the case (SEL (BROADCAST(5), BROADCAST(G))). A constant
+# base is not traced: the loads get the common lookup table.
 
 ---
 name:            test_4x16_load_sel_invalid1
@@ -309,10 +310,10 @@ body:             |
     ; CHECK-NEXT: [[VSEL_32_:%[0-9]+]]:vec512 = VSEL_32 [[VBCST_32_]], [[VBCST_32_1]], [[MOVXM2]]
     ; CHECK-NEXT: [[COPY8:%[0-9]+]]:ewl = COPY [[VSEL_32_]].sub_256_lo
     ; CHECK-NEXT: [[COPY9:%[0-9]+]]:ewh = COPY [[VSEL_32_]].sub_256_hi
-    ; CHECK-NEXT: [[VLDB_4x16_lo:%[0-9]+]]:vec256 = VLDB_4x16_lo [[COPY8]]
-    ; CHECK-NEXT: [[VLDB_4x16_hi:%[0-9]+]]:vec256 = VLDB_4x16_hi [[COPY8]]
-    ; CHECK-NEXT: [[VLDB_4x16_lo1:%[0-9]+]]:vec256 = VLDB_4x16_lo [[COPY9]]
-    ; CHECK-NEXT: [[VLDB_4x16_hi1:%[0-9]+]]:vec256 = VLDB_4x16_hi [[COPY9]]
+    ; CHECK-NEXT: [[VLDB_4x16_lo:%[0-9]+]]:vec256 = VLDB_4x16_lo [[COPY8]] :: (load unknown-size from @__aie_common_lookup_table, align 1)
+    ; CHECK-NEXT: [[VLDB_4x16_hi:%[0-9]+]]:vec256 = VLDB_4x16_hi [[COPY8]] :: (load unknown-size from @__aie_common_lookup_table, align 1)
+    ; CHECK-NEXT: [[VLDB_4x16_lo1:%[0-9]+]]:vec256 = VLDB_4x16_lo [[COPY9]] :: (load unknown-size from @__aie_common_lookup_table, align 1)
+    ; CHECK-NEXT: [[VLDB_4x16_hi1:%[0-9]+]]:vec256 = VLDB_4x16_hi [[COPY9]] :: (load unknown-size from @__aie_common_lookup_table, align 1)
     ; CHECK-NEXT: $wl0 = COPY [[VLDB_4x16_lo]]
     ; CHECK-NEXT: $wl1 = COPY [[VLDB_4x16_hi]]
     ; CHECK-NEXT: $wl2 = COPY [[VLDB_4x16_lo1]]
@@ -413,7 +414,8 @@ body:             |
 ...
 
 # Case 6: here we have the case where we use a parameter. We cannot bypass the
-# copy because of the physical register (we cannot crash here).
+# copy because of the physical register (we cannot crash here): the load gets
+# the common lookup table.
 
 ---
 name:            test_4x16_load_parameter
@@ -429,7 +431,7 @@ body:             |
     ; CHECK: liveins: $wl2
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec256 = COPY $wl2
-    ; CHECK-NEXT: [[VLDB_4x64_hi:%[0-9]+]]:vec256 = VLDB_4x64_hi [[COPY]]
+    ; CHECK-NEXT: [[VLDB_4x64_hi:%[0-9]+]]:vec256 = VLDB_4x64_hi [[COPY]] :: (load unknown-size from @__aie_common_lookup_table, align 1)
     ; CHECK-NEXT: $wl0 = COPY [[VLDB_4x64_hi]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $wl0
   %1:vec256 = COPY $wl2
