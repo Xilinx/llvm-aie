@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -193,7 +193,7 @@ struct AIEBaseRegisterInfo : public TargetRegisterInfo {
 };
 
 template <int N, unsigned step> bool isEncodableAsNegativeInt(int Value) {
-  return isInt<N + CTLog2<step>() + 1>(Value);
+  return isInt<N + ConstantLog2<step>() + 1>(Value);
 }
 
 } // namespace llvm

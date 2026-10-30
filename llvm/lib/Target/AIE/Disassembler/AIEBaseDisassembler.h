@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -82,7 +82,7 @@ static DecodeStatus decodeSImmOperandXStep(MCInst &Inst, uint64_t Imm,
                                            int64_t Address,
                                            const MCDisassembler *Decoder) {
   assert(isUInt<N>(Imm) && "Invalid immediate");
-  const unsigned FixedZeroBits = CTLog2<step>();
+  const unsigned FixedZeroBits = ConstantLog2<step>();
   if (isNegative)
     // Decode and sign extend a negative number encoded as fixed 1
     // <encoded_length bits> fixedZeroBits
