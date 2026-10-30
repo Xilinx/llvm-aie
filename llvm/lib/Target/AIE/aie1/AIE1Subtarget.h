@@ -67,7 +67,6 @@ public:
   unsigned getCriticalPathLimit() const override {
     return getSchedModel().MispredictPenalty / 2;
   }
-  bool enableWindowScheduler() const override { return true; }
 
   void ParseSubtargetFeatures(StringRef CPU, StringRef TuneCPU, StringRef FS);
 
@@ -86,13 +85,9 @@ public:
     return &TSInfo;
   }
 
-  void
-  adjustSchedDependency(SUnit *Def, int DefOpIdx, SUnit *Use, int UseOpIdx,
-                        SDep &Dep,
-                        const TargetSchedModel *SchedModel) const override {
-    AIEBaseSubtarget::adjustSchedDependency(InstrItins, Def, DefOpIdx, Use,
-                                            UseOpIdx, Dep);
-  }
+  void adjustSchedDependency(SUnit *Def, int DefOpIdx, SUnit *Use, int UseOpIdx,
+                             SDep &Dep,
+                             const TargetSchedModel *SchedModel) const override;
 
 protected:
   std::unique_ptr<CallLowering> CallLoweringInfo;

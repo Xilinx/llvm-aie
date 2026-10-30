@@ -73,14 +73,6 @@ public:
     return &TSInfo;
   }
 
-  void
-  adjustSchedDependency(SUnit *Def, int DefOpIdx, SUnit *Use, int UseOpIdx,
-                        SDep &Dep,
-                        const TargetSchedModel *SchedModel) const override {
-    AIEBaseSubtarget::adjustSchedDependency(InstrItins, Def, DefOpIdx, Use,
-                                            UseOpIdx, Dep);
-  }
-
   bool enableSubRegLiveness() const override { return true; }
 
 protected:

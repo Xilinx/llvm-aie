@@ -12,13 +12,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIEScarceRegScheduling.h"
-#include "AIEBaseInstrInfo.h"
+#include "AIEDataDependenceHelper.h"
 #include "AIERegDefUseTracker.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
-#include "llvm/CodeGen/TargetSchedule.h"
 
 #define DEBUG_TYPE "scarce-reg-sched"
 
@@ -102,9 +101,10 @@ ScarceRange::ScarceRange(const RegLiveRange &LR, const ScheduleDAGInstrs &DAG)
 
 BurstMostUrgentStrategy::BurstMostUrgentStrategy(
     ScheduleDAGInstrs &DAG, ScheduleInfo &Info,
-    const std::vector<ScarceRange> &ScarceRanges, int LatestBias, int II)
+    const std::vector<ScarceRange> &ScarceRanges, int LatestBias, int II,
+    DataDependenceHelper &LatencyHelper)
     : PostPipelinerStrategy(DAG, Info, LatestBias), ScarceRanges(ScarceRanges),
-      CurrentSet(0), II(II) {
+      CurrentSet(0), II(II), LatencyHelper(LatencyHelper) {
 
   assert(!ScarceRanges.empty() &&
          "BurstMostUrgentStrategy requires at least one scarce range");
@@ -294,10 +294,6 @@ void BurstMostUrgentStrategy::simulateAntiDependences(size_t BurstPos) {
   // BurstPos is the position in CurrentOrder for the completed burst.
   const int CompletedRangeIdx = CurrentOrder[BurstPos];
   const auto &CompletedRange = ScarceRanges[CompletedRangeIdx];
-  const auto *const SchedModel = DAG.getSchedModel();
-  const auto *const TII =
-      static_cast<const AIEBaseInstrInfo *>(SchedModel->getInstrInfo());
-  const auto *const ItinData = SchedModel->getInstrItineraries();
 
   LLVM_DEBUG(dbgs() << format("Simulating anti-dependences for range %d\n",
                               CompletedRangeIdx));
@@ -357,10 +353,10 @@ void BurstMostUrgentStrategy::simulateAntiDependences(size_t BurstPos) {
 
         // Compute the anti-dependence latency using the signed variant to
         // support negative latencies.
-        const std::optional<int> Latency = TII->getSignedOperandLatency(
-            ItinData, *UseMI, UseOpIdx, *DefMI, DefOpIdx, SDep::Anti);
-        if (!Latency)
-          continue;
+        const std::optional<int> Latency =
+            LatencyHelper.getSignedOperandLatency(*UseMI, UseOpIdx, *DefMI,
+                                                  DefOpIdx, SDep::Anti);
+        assert(Latency && "Postpipeliner operands must have a latency");
 
         // Determine whether this anti-dep is intra-iteration or loop-carried
         // based on topological order. If DefSUIdx < UseSUIdx, the def is
