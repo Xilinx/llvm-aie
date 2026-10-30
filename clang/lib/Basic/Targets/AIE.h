@@ -113,6 +113,16 @@ public:
   void getTargetDefines(const LangOptions &Opts,
                         MacroBuilder &Builder) const override;
 
+  bool
+  initFeatureMap(llvm::StringMap<bool> &Features, DiagnosticsEngine &Diags,
+                 StringRef CPU,
+                 const std::vector<std::string> &FeaturesVec) const override;
+
+  bool handleTargetFeatures(std::vector<std::string> &Features,
+                            DiagnosticsEngine &Diags) override;
+
+  bool hasFeature(StringRef Feature) const override;
+
   llvm::SmallVector<Builtin::InfosShard> getTargetBuiltins() const override;
 
   BuiltinVaListKind getBuiltinVaListKind() const override {
@@ -160,6 +170,13 @@ public:
   const char *getFloat16Mangling() const override { return "7float16"; }
 
   bool treatFloat16AsVendorType() const override { return true; }
+
+protected:
+  // Subtarget capability bits, mirroring the AIE backend SubtargetFeatures.
+  // Default off; enabled per-generation in initFeatureMap and resolved from the
+  // -target-feature list in handleTargetFeatures.
+  bool HasBFP16 = false;
+  bool HasAcc2048 = false;
 };
 
 } // namespace targets
