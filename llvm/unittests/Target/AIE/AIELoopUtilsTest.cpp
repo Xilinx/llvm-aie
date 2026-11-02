@@ -31,9 +31,9 @@ std::unique_ptr<TargetMachine> createTargetMachine() {
     llvm::errs() << Error << "\n";
     return nullptr;
   }
-  return std::unique_ptr<TargetMachine>(
-      TheTarget->createTargetMachine(TT, "", "", TargetOptions(), std::nullopt,
-                                     std::nullopt, CodeGenOptLevel::Default));
+  return std::unique_ptr<TargetMachine>(TheTarget->createTargetMachine(
+      Triple(TT), "", "", TargetOptions(), std::nullopt, std::nullopt,
+      CodeGenOptLevel::Default));
 }
 
 class AIELoopUtilsTest : public testing::Test {

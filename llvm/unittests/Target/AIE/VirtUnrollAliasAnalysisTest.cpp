@@ -30,8 +30,9 @@ std::unique_ptr<TargetMachine> createTargetMachine() {
   const Target *TheTarget = TargetRegistry::lookupTarget(TT, Error);
   llvm::errs() << Error << "\n";
   return std::unique_ptr<TargetMachine>(static_cast<TargetMachine *>(
-      TheTarget->createTargetMachine(TT, "", "", TargetOptions(), std::nullopt,
-                                     std::nullopt, CodeGenOptLevel::Default)));
+      TheTarget->createTargetMachine(Triple(TT), "", "", TargetOptions(),
+                                     std::nullopt, std::nullopt,
+                                     CodeGenOptLevel::Default)));
 }
 
 class VirtUnrollAliasAnalysisTest : public testing::Test {
