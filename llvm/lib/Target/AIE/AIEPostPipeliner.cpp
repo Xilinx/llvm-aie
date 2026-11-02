@@ -197,7 +197,7 @@ bool PostPipeliner::isPostPipelineCandidate(MachineBasicBlock &LoopBlock) {
 namespace {
 
 // Our definition of side-effect free. There are no implicit defs, no stores
-// and it doesn't touch anything that is live in to the loop.
+// and it doesn't touch anything that is live out of the loop block.
 // We explicitly use the fact that out-of-bounds loads do not cause an
 // exception.
 bool isSideEffectFree(MachineInstr *MI) {
@@ -220,12 +220,12 @@ bool isSideEffectFree(MachineInstr *MI) {
     // subreg's lane mask; otherwise assume all lanes are defined.
     LaneBitmask DefLaneMask =
         SubReg ? TRI.getSubRegIndexLaneMask(SubReg) : LaneBitmask::getAll();
-    return any_of(MBB->getLiveIns(),
+    return any_of(MBB->liveouts(),
                   [Reg, DefLaneMask,
-                   &TRI](const MachineBasicBlock::RegisterMaskPair &LiveIn) {
+                   &TRI](const MachineBasicBlock::RegisterMaskPair &LiveOut) {
                     // Check if registers overlap AND the lane masks intersect.
-                    return TRI.regsOverlap(Reg, LiveIn.PhysReg) &&
-                           (DefLaneMask & LiveIn.LaneMask).any();
+                    return TRI.regsOverlap(Reg, LiveOut.PhysReg) &&
+                           (DefLaneMask & LiveOut.LaneMask).any();
                   });
   });
 }
