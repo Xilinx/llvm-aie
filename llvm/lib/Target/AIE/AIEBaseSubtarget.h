@@ -63,11 +63,6 @@ public:
   void overrideSchedPolicy(MachineSchedPolicy &Policy,
                            const SchedRegion &Region) const override;
 
-  using TargetSubtargetInfo::adjustSchedDependency;
-  void adjustSchedDependency(const InstrItineraryData &Itineraries, SUnit *Def,
-                             int DefOpIdx, SUnit *Use, int UseOpIdx,
-                             SDep &Dep) const;
-
   /// Required DAG mutations during Post-RA scheduling.
   static std::vector<std::unique_ptr<ScheduleDAGMutation>>
   getPostRAMutationsImpl(const Triple &TT, AAResults *AA);

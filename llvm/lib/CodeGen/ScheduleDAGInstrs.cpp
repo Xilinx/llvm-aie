@@ -139,10 +139,9 @@ ScheduleDAGInstrs::ScheduleDAGInstrs(MachineFunction &mf,
 /// tracked to a normal reference to a known object, return the Value
 /// for that object. This function returns false the memory location is
 /// unknown or may alias anything.
-static bool getUnderlyingObjectsForInstr(const MachineInstr *MI,
-                                         const MachineFrameInfo &MFI,
-                                         UnderlyingObjectsVector &Objects,
-                                         const DataLayout &DL) {
+bool ScheduleDAGInstrs::getUnderlyingObjectsForInstr(
+    const MachineInstr *MI, const MachineFrameInfo &MFI,
+    UnderlyingObjectsVector &Objects, const DataLayout &DL) {
   auto AllMMOsOkay = [&]() {
     for (const MachineMemOperand *MMO : MI->memoperands()) {
       // TODO: Figure out whether isAtomic is really necessary (see D57601).
@@ -594,6 +593,8 @@ bool ScheduleDAGInstrs::mayAlias(SUnit *SUa, SUnit *SUb, bool UseTBAA) {
   return SUa->getInstr()->mayAlias(getAAForDep(), *SUb->getInstr(), UseTBAA);
 }
 
+bool ScheduleDAGInstrs::shouldUseTBAA() { return UseTBAA; }
+
 void ScheduleDAGInstrs::addChainDependency (SUnit *SUa, SUnit *SUb,
                                             unsigned Latency) {
   if (mayAlias(SUa, SUb, UseTBAA)) {
@@ -712,62 +713,6 @@ void ScheduleDAGInstrs::recordDbgInstrs() {
   if (DbgMI)
     FirstDbgValue = DbgMI;
 }
-
-class ScheduleDAGInstrs::Value2SUsMap
-    : public SmallMapVector<ValueType, SUList, 4> {
-  /// Current total number of SUs in map.
-  unsigned NumNodes = 0;
-
-  /// 1 for loads, 0 for stores. (see comment in SUList)
-  unsigned TrueMemOrderLatency;
-
-public:
-  Value2SUsMap(unsigned lat = 0) : TrueMemOrderLatency(lat) {}
-
-  /// To keep NumNodes up to date, insert() is used instead of
-  /// this operator w/ push_back().
-  ValueType &operator[](const SUList &Key) {
-    llvm_unreachable("Don't use. Use insert() instead."); };
-
-  /// Adds SU to the SUList of V. If Map grows huge, reduce its size by calling
-  /// reduce().
-  void inline insert(SUnit *SU, ValueType V) {
-    MapVector::operator[](V).push_back(SU);
-    NumNodes++;
-  }
-
-  /// Clears the list of SUs mapped to V.
-  void inline clearList(ValueType V) {
-    iterator Itr = find(V);
-    if (Itr != end()) {
-      assert(NumNodes >= Itr->second.size());
-      NumNodes -= Itr->second.size();
-
-      Itr->second.clear();
-    }
-  }
-
-  /// Clears map from all contents.
-  void clear() {
-    SmallMapVector<ValueType, SUList, 4>::clear();
-    NumNodes = 0;
-  }
-
-  unsigned inline size() const { return NumNodes; }
-
-  /// Counts the number of SUs in this map after a reduction.
-  void reComputeSize() {
-    NumNodes = 0;
-    for (auto &I : *this)
-      NumNodes += I.second.size();
-  }
-
-  unsigned inline getTrueMemOrderLatency() const {
-    return TrueMemOrderLatency;
-  }
-
-  void dump();
-};
 
 void ScheduleDAGInstrs::addChainDependencies(SUnit *SU,
                                              Value2SUsMap &Val2SUsMap) {

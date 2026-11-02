@@ -22,28 +22,33 @@
   ; CHECK-LABEL: f:
   ; CHECK:       // %bb.0: // %entry
   ; CHECK-NEXT:  .LBB0_1: // %preheader
-  ; CHECK-NEXT:    vldb x4, [p4, #0]; nopx
+  ; CHECK-NEXT:    vldb x4, [p4, #0]; nopxm
   ; CHECK-NEXT:    vldb x8, [p5, #0]
   ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    add.nc lc, r0, #-1
-  ; CHECK-NEXT:    vlda x8, [p2, #0]; nopb ; nops ; add.nc ls, pc, #.LBB0_2; addm.nc le, pc, #.L_LEnd0; nopv
+  ; CHECK-NEXT:    vlda x8, [p2, #0]
+  ; CHECK-NEXT:    nop
+  ; CHECK-NEXT:    vldb x4, [p4, #0]
+  ; CHECK-NEXT:    add.nc lc, r0, #-2; addm.nc ls, pc, #.LBB0_2
+  ; CHECK-NEXT:    nopa ; nopb ; nops ; add.nc le, pc, #.L_LEnd0; vmax_lt.bf16 x8, r16, x4, x4; nopv
+  ; CHECK-NEXT:    vlda x8, [p2, #0]; nopb ; nops ; nopx ; vmax_lt.bf16 x4, r16, x4, x0; nopv
   ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
   ; CHECK-NEXT:  .LBB0_2: // %loop
   ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
-  ; CHECK-NEXT:    nopa ; vldb x4, [p4, #0]; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; vmax_lt.bf16 x8, r16, x4, x0; nopv
-  ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopa ; nopb ; vst x8, [p7, #0]; nopxm ; nopv
-  ; CHECK-NEXT:    vlda x8, [p2, #0]; nopb ; vst x8, [p7, #0]; nopxm ; nopv
-  ; CHECK-NEXT:  .L_LEnd0:
+  ; CHECK-NEXT:    nopa ; vldb x4, [p4, #0]; vst x4, [p7, #0]; nopxm ; nopv
+  ; CHECK-NEXT:    nopa ; nopb ; vst x4, [p7, #0]; nopxm ; nopv
   ; CHECK-NEXT:    nopa ; nopb ; vst x8, [p7, #0]; nopx ; vmax_lt.bf16 x8, r16, x4, x4; nopv
+  ; CHECK-NEXT:    vlda x8, [p2, #0]; nopb ; nops ; nopx ; vmax_lt.bf16 x4, r16, x4, x0; nopv
+  ; CHECK-NEXT:  .L_LEnd0:
+  ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
   ; CHECK-NEXT:  // %bb.3: // %exit
-  ; CHECK-NEXT:    nopa ; nopx
-  ; CHECK-NEXT:    ret lr; vmax_lt.bf16 x8, r16, x4, x0
+  ; CHECK-NEXT:    nopa ; nopb ; nopxm ; vst x4, [p7, #0]
+  ; CHECK-NEXT:    vst x4, [p7, #0]
+  ; CHECK-NEXT:    vst x8, [p7, #0]; vmax_lt.bf16 x8, r16, x4, x4
+  ; CHECK-NEXT:    ret lr; vmax_lt.bf16 x4, r16, x4, x0
   ; CHECK-NEXT:    nop // Delay Slot 5
-  ; CHECK-NEXT:    vst x8, [p7, #0] // Delay Slot 4
-  ; CHECK-NEXT:    vst x8, [p7, #0] // Delay Slot 3
-  ; CHECK-NEXT:    vst x8, [p7, #0]; vmax_lt.bf16 x8, r16, x4, x4 // Delay Slot 2
+  ; CHECK-NEXT:    vst x4, [p7, #0] // Delay Slot 4
+  ; CHECK-NEXT:    vst x4, [p7, #0] // Delay Slot 3
+  ; CHECK-NEXT:    vst x8, [p7, #0] // Delay Slot 2
   ; CHECK-NEXT:    nop // Delay Slot 1
   entry:
     br label %preheader

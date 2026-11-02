@@ -197,7 +197,7 @@ bool PostPipeliner::isPostPipelineCandidate(MachineBasicBlock &LoopBlock) {
 namespace {
 
 // Our definition of side-effect free. There are no implicit defs, no stores
-// and it doesn't touch anything that is live in to the loop.
+// and it doesn't touch anything that is live out of the loop block.
 // We explicitly use the fact that out-of-bounds loads do not cause an
 // exception.
 bool isSideEffectFree(MachineInstr *MI) {
@@ -220,12 +220,12 @@ bool isSideEffectFree(MachineInstr *MI) {
     // subreg's lane mask; otherwise assume all lanes are defined.
     LaneBitmask DefLaneMask =
         SubReg ? TRI.getSubRegIndexLaneMask(SubReg) : LaneBitmask::getAll();
-    return any_of(MBB->getLiveIns(),
+    return any_of(MBB->liveouts(),
                   [Reg, DefLaneMask,
-                   &TRI](const MachineBasicBlock::RegisterMaskPair &LiveIn) {
+                   &TRI](const MachineBasicBlock::RegisterMaskPair &LiveOut) {
                     // Check if registers overlap AND the lane masks intersect.
-                    return TRI.regsOverlap(Reg, LiveIn.PhysReg) &&
-                           (DefLaneMask & LiveIn.LaneMask).any();
+                    return TRI.regsOverlap(Reg, LiveOut.PhysReg) &&
+                           (DefLaneMask & LiveOut.LaneMask).any();
                   });
   });
 }
@@ -1146,9 +1146,16 @@ bool PostPipeliner::tryScarceRangePacking() {
   assert(checkAcyclic(ScarceRanges) &&
          "Scarce-only DAG must be acyclic by construction");
 
+  // The post-pipeliner works on complete schedule data, so the helper computes
+  // exact latencies. The context must outlive the helper.
+  MachineSchedContext Context;
+  Context.MF = &DAG->MF;
+  DataDependenceHelper LatencyHelper(Context, /*AddMutators=*/false,
+                                     /*ExactLatencies=*/true);
+
   // Create the strategy once (precomputes predecessors and members).
-  BurstMostUrgentStrategy Strategy(*DAG, Info, ScarceRanges, MinLength + II,
-                                   II);
+  BurstMostUrgentStrategy Strategy(*DAG, Info, ScarceRanges, MinLength + II, II,
+                                   LatencyHelper);
 
   // Enumerate orders and try scheduling with different orderings.
   return enumerateRangeOrders(
@@ -1868,21 +1875,21 @@ bool PostPipeliner::tryAllocateRegisters() {
   });
 
   // Perform register allocation.
-  DenseMap<Register, MCRegister> VRegToPhysReg;
-  const bool Success =
-      AIEPostRegAlloc::allocate(LiveLanesByLRIndex, II, RegTracker, *TRI,
-                                VRegToPhysReg, CurrentAllocStrategyName);
+  PostRegAllocResult Result =
+      AIEPostRegAlloc::allocate(LiveLanesByLRIndex, II, RegTracker, *TRI);
 
-  if (!Success) {
+  if (!Result) {
     LLVM_DEBUG(dbgs() << "PostPipeliner: Register allocation failed\n");
     return false;
   }
 
   LLVM_DEBUG(dbgs() << "PostPipeliner: Register allocation succeeded with "
-                    << VRegToPhysReg.size() << " assignments\n");
+                    << Result.getAssignments().size() << " assignments\n");
+
+  CurrentAllocStrategyName = Result.getWinningStrategyName();
 
   // Apply the register assignments through RegTracker.
-  RegTracker.rewriteToPhysRegs(VRegToPhysReg);
+  RegTracker.rewriteToPhysRegs(Result.getAssignments());
 
   LLVM_DEBUG(dbgs() << "PostPipeliner: Applied register allocation through "
                        "RegTracker\n");
