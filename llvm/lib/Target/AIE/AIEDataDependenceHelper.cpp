@@ -113,8 +113,11 @@ void DataDependenceHelper::addPhysRegDeps(SUnit *SU, unsigned OperIdx) {
     addPhysRegDataDeps(SU, OperIdx);
     // Clear previous uses and defs of this register and its subregisters,
     // unless the def is in a fixed node: its cycle is set externally and need
-    // not respect the order that transitive pruning relies on.
-    if (!(RetainFixedPhysRegDeps && isFixedNode(*SU))) {
+    // not respect the order that transitive pruning relies on. Targets can
+    // also ask to keep all pairwise edges on a register, e.g. so a mutation
+    // can drop one without losing the transitively pruned ones.
+    if (!(RetainFixedPhysRegDeps && isFixedNode(*SU)) &&
+        !TRI->shouldRetainAllPhysRegDeps(Reg)) {
       for (const MCRegUnit Unit : TRI->regunits(Reg)) {
         Uses.eraseAll(Unit);
         if (!MO.isDead())
