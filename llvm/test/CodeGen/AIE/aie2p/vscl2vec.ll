@@ -1178,7 +1178,7 @@ define dso_local %struct.v64bfp16ebs8 @_Z12shuffle_test12v64bfp16ebs8j(%struct.v
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    vshuffle ex0, ex2, ex0, r0 // Delay Slot 2
+; CHECK-NEXT:    vshuffle ex0, ex2, ex2, r0 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %a.coerce.fca.0.extract.i.i = extractvalue %struct.v64bfp16ebs8 %a.coerce, 0
@@ -1199,7 +1199,7 @@ define dso_local %struct.v64bfp16ebs16 @_Z12shuffle_test13v64bfp16ebs16j(%struct
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    vshuffle ex0, ex2, ex0, r0 // Delay Slot 2
+; CHECK-NEXT:    vshuffle ex0, ex2, ex2, r0 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %a.coerce.fca.0.extract.i.i = extractvalue %struct.v64bfp16ebs16 %a.coerce, 0
