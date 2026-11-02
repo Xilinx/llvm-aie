@@ -26,9 +26,9 @@ using namespace llvm;
 
 namespace llvm::AIE {
 
-// operand and the memory latency. Include the stage latency if requested.
+// operand and the memory latency.
 int maxLatency(const MachineInstr *MI, const AIEBaseInstrInfo &InstrInfo,
-               const InstrItineraryData &Itineraries, bool IncludeStages);
+               const InstrItineraryData &Itineraries);
 
 /// Minimum EntrySU latency for a free post-boundary node on an inter-block
 /// edge: the largest PredDepth + edge latency over the preds that have a
@@ -44,8 +44,6 @@ class MaxLatencyFinder {
   MachineBasicBlock *const CurBB;
 
   const bool IsBottomRegion;
-
-  const bool SuccessorsAreScheduled;
 
   /// True when CurBB has no CFG successors (e.g. a return block), requiring
   /// the conservative raw latency as a floor.

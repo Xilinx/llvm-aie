@@ -4,7 +4,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple=aie2 -run-pass=postmisched --issue-limit=1 --debug %s -o - 2>%t.log | FileCheck %s
 # RUN: cat %t.log | FileCheck %s --check-prefix=CHECK-SU
 # REQUIRES: asserts
@@ -47,33 +47,33 @@ body:             |
 # CHECK-SU-LABEL: load_store_chain:%bb.0 entry
 # CHECK-SU: SU(0):   $r6 = LDA_dms_lda_idx_imm $p1, 0 :: (load (s32) from %ir.b)
 # CHECK-SU:   Depth              : 0
-# CHECK-SU:   Height             : 23
+# CHECK-SU:   Height             : 22
 # CHECK-SU: SU(1):   ST_dms_sts_idx_imm $r6, $p0, 0 :: (store (s32) into %ir.a)
 # CHECK-SU:   Depth              : 7
-# CHECK-SU:   Height             : 16
+# CHECK-SU:   Height             : 15
 # CHECK-SU:   Predecessors:
 # CHECK-SU:     SU(0): Data Latency=7 Reg=$r6
 # CHECK-SU: SU(2):   $r6 = LDA_dms_lda_idx_imm $p1, 4 :: (load (s32) from %ir.b)
 # CHECK-SU:   Depth              : 7
-# CHECK-SU:   Height             : 16
+# CHECK-SU:   Height             : 15
 # CHECK-SU:   Predecessors:
 # CHECK-SU:     SU(1): Anti Latency=0(-6)
 # CHECK-SU:     SU(0): Out  Latency=1
 # CHECK-SU: SU(3):   ST_dms_sts_idx_imm $r6, $p0, 4 :: (store (s32) into %ir.a)
 # CHECK-SU:   Depth              : 14
-# CHECK-SU:   Height             : 9
+# CHECK-SU:   Height             : 8
 # CHECK-SU:   Predecessors:
 # CHECK-SU:     SU(2): Data Latency=7 Reg=$r6
 # CHECK-SU:     SU(1): Ord  Latency=1 Memory
 # CHECK-SU: SU(4):   $r6 = LDA_dms_lda_idx_imm $p1, 8 :: (load (s32) from %ir.b)
 # CHECK-SU:   Depth              : 14
-# CHECK-SU:   Height             : 9
+# CHECK-SU:   Height             : 8
 # CHECK-SU:   Predecessors:
 # CHECK-SU:     SU(3): Anti Latency=0(-6)
 # CHECK-SU:     SU(2): Out  Latency=1
 # CHECK-SU: SU(5):   ST_dms_sts_idx_imm $r6, $p0, 8 :: (store (s32) into %ir.a)
 # CHECK-SU:   Depth              : 21
-# CHECK-SU:   Height             : 2
+# CHECK-SU:   Height             : 1
 # CHECK-SU:   Predecessors:
 # CHECK-SU:     SU(4): Data Latency=7 Reg=$r6
 # CHECK-SU:     SU(3): Ord  Latency=1 Memory

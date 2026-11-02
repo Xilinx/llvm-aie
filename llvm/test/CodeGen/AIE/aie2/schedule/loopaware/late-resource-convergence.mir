@@ -87,15 +87,15 @@ body:             |
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   VMOV_mv_mcd $bmh1, implicit $crmcden
-  ; CHECK-NEXT:   $wl0 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0
+  ; CHECK-NEXT:   BUNDLE implicit-def $wl0, implicit $p0, implicit $bmh1, implicit $crmcden {
+  ; CHECK-NEXT:     $wl0 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0
+  ; CHECK-NEXT:     VMOV_mv_mcd $bmh1, implicit $crmcden
+  ; CHECK-NEXT:   }
   ; CHECK-NEXT:   $r3 = LDA_dms_lda_idx_imm $p1, 0
   ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   $cm2 = VMUL_vmac_cm_core_dense $x0, $x1, $r2
   ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   BUNDLE implicit-def $r0, implicit-def $srcarry, implicit-def $cm2, implicit killed $r0, implicit $x0, implicit $x1, implicit $r2 {
-  ; CHECK-NEXT:     $r0 = ADD_add_r_ri killed $r0, -1, implicit-def $srcarry
-  ; CHECK-NEXT:     $cm2 = VMUL_vmac_cm_core_dense $x0, $x1, $r2
-  ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   $r0 = ADD_add_r_ri killed $r0, -1, implicit-def $srcarry
   ; CHECK-NEXT:   PseudoLoopEnd %bb.2, %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
