@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -63,7 +63,7 @@ ABIArgInfo AIEABIInfo::classifyReturnType(QualType RetTy) const {
 
   // Treat an enum type as its underlying type.
   if (const EnumType *EnumTy = RetTy->getAs<EnumType>())
-    RetTy = EnumTy->getOriginalDecl()->getIntegerType();
+    RetTy = EnumTy->getDecl()->getIntegerType();
 
   if (const auto *EIT = RetTy->getAs<BitIntType>())
     if (EIT->getNumBits() > MaxAggregateReturnSize)
@@ -101,7 +101,7 @@ ABIArgInfo AIEABIInfo::classifyArgumentType(QualType Ty) const {
 
   // Treat an enum type as its underlying type.
   if (const auto *EnumTy = Ty->getAs<EnumType>())
-    Ty = EnumTy->getOriginalDecl()->getIntegerType();
+    Ty = EnumTy->getDecl()->getIntegerType();
 
   if (getContext().isPromotableIntegerType(Ty)) {
     return ABIArgInfo::getExtend(Ty);

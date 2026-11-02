@@ -1,3 +1,5 @@
+# Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+# affiliates
 name: "Check code formatting"
 
 permissions:
