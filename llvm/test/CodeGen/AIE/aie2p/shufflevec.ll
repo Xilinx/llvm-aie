@@ -362,6 +362,62 @@ entry:
   ret <2 x i32> %shuffle
 }
 
+define <2 x i32> @test_shuffle_vector_to_extract_subvec_128BitSrc_lo(<4 x i32> noundef %a, <4 x i32> noundef %b) {
+; CHECK-LABEL: test_shuffle_vector_to_extract_subvec_128BitSrc_lo:
+; CHECK:       // %bb.0: // %entry
+; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    vextract.64 r1:r0, x0, #0, vaddsign1 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
+entry:
+  %shuffle = shufflevector <4 x i32> %a, <4 x i32> %b, <2 x i32> <i32 0, i32 1>
+  ret <2 x i32> %shuffle
+}
+
+define <2 x i32> @test_shuffle_vector_to_extract_subvec_128BitSrc_hi(<4 x i32> noundef %a, <4 x i32> noundef %b) {
+; CHECK-LABEL: test_shuffle_vector_to_extract_subvec_128BitSrc_hi:
+; CHECK:       // %bb.0: // %entry
+; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    vextract.64 r1:r0, x0, #1, vaddsign1 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
+entry:
+  %shuffle = shufflevector <4 x i32> %a, <4 x i32> %b, <2 x i32> <i32 2, i32 3>
+  ret <2 x i32> %shuffle
+}
+
+define <4 x i16> @test_shuffle_vector_to_extract_subvec_4xs16Dst_128BitSrc(<8 x i16> noundef %a, <8 x i16> noundef %b) {
+; CHECK-LABEL: test_shuffle_vector_to_extract_subvec_4xs16Dst_128BitSrc:
+; CHECK:       // %bb.0: // %entry
+; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    vextract.64 r1:r0, x0, #1, vaddsign1 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
+entry:
+  %shuffle = shufflevector <8 x i16> %a, <8 x i16> %b, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
+  ret <4 x i16> %shuffle
+}
+
+define <8 x i8> @test_shuffle_vector_to_extract_subvec_8xs8Dst_128BitSrc(<16 x i8> noundef %a, <16 x i8> noundef %b) {
+; CHECK-LABEL: test_shuffle_vector_to_extract_subvec_8xs8Dst_128BitSrc:
+; CHECK:       // %bb.0: // %entry
+; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    vextract.64 r1:r0, x0, #1, vaddsign1 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
+entry:
+  %shuffle = shufflevector <16 x i8> %a, <16 x i8> %b, <8 x i32> <i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
+  ret <8 x i8> %shuffle
+}
+
 define <2 x i32> @test_shuffle_vector_to_extract_subvec_1024BitSrc(<32 x i32> noundef %a, <32 x i32> noundef %b) {
 ; CHECK-LABEL: test_shuffle_vector_to_extract_subvec_1024BitSrc:
 ; CHECK:       // %bb.0: // %entry

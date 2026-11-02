@@ -402,6 +402,25 @@ bool AIELegalizerHelper::legalizeG_UNMERGE_VALUES(LegalizerHelper &Helper,
       FirstTy.getSizeInBits() == 128 && LastTy.getSizeInBits() == 256)
     return legalizeG_UNMERGE_VALUES_128bit(Helper, MI);
 
+  // Splitting a 128-bit vector into two 64-bit halves, e.g. <4 x s32> into two
+  // <2 x s32>: pad the source to a 512-bit vector and extract each half as a
+  // 64-bit subvector.
+  if ((ST.isAIE2P() || ST.isAIE2PS()) && FirstTy.isVector() &&
+      LastTy.isVector() && FirstTy.getSizeInBits() == 64 &&
+      LastTy.getSizeInBits() == 128) {
+    const Register PaddedReg =
+        MIRBuilder
+            .buildInstr(II->getGenericPadVectorOpcode(),
+                        {LastTy.multiplyElements(4)}, {LastReg})
+            .getReg(0);
+    for (unsigned Idx = 0; Idx < 2; ++Idx)
+      MIRBuilder.buildInstr(II->getGenericExtractSubvectorOpcode(),
+                            {MI.getOperand(Idx).getReg()},
+                            {PaddedReg, MIRBuilder.buildConstant(S32, Idx)});
+    MI.eraseFromParent();
+    return true;
+  }
+
   // Splitting a 32-bit vector into two 16-bit halves, e.g. <4 x s8> into two
   // <2 x s8>. The halves are produced by bitcasting the corresponding 16 bits
   // of the source; a G_BUILD_VECTOR of the source elements would instead be
