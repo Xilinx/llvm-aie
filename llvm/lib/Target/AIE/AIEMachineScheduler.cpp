@@ -1334,7 +1334,6 @@ int getEarliestLoopCarriedUse(const SUnit &SU,
   const SUnit *SUInCurrentIteration =
       LoopEdges.getPreBoundaryNode(SU.getInstr());
   assert(SUInCurrentIteration);
-  assert(SUInCurrentIteration->getHeight() >= SU.getHeight());
 
   // Look at loop-carried dependencies to see how early the instruction will be
   // needed in the next iteration.
