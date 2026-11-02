@@ -28,6 +28,31 @@ namespace {
 // Internal Helper Functions
 //===----------------------------------------------------------------------===//
 
+/// Clone a single bundle: all instructions and meta instructions.
+/// Optionally skips NOPs identified by \p SkipNopOpc.
+///
+/// \param MF The MachineFunction used for cloning instructions
+/// \param Src The source bundle to clone
+/// \param FormatInterface Format interface for creating the new bundle
+/// \param SkipNopOpc If non-zero, instructions with this opcode are skipped
+/// \returns A new bundle with cloned instructions
+AIE::MachineBundle cloneBundle(MachineFunction &MF,
+                               const AIE::MachineBundle &Src,
+                               const AIEBaseMCFormats *FormatInterface,
+                               unsigned SkipNopOpc = 0) {
+  AIE::MachineBundle NewBundle(FormatInterface);
+  for (MachineInstr *MI : Src.getInstrs()) {
+    if (SkipNopOpc && MI->getOpcode() == SkipNopOpc)
+      continue;
+    NewBundle.add(MF.CloneMachineInstr(MI));
+  }
+  // Also clone meta instructions (e.g. DelayedSchedBarrier) which are
+  // stored separately and not returned by getInstrs().
+  for (MachineInstr *MI : Src.getMetaInstrs())
+    NewBundle.add(MF.CloneMachineInstr(MI));
+  return NewBundle;
+}
+
 /// Clone a range of bundles [Start, End) from the source bundles.
 /// \param MF The MachineFunction used for cloning instructions
 /// \param Bundles The source bundles to clone from
@@ -44,20 +69,8 @@ cloneBundleRange(MachineFunction &MF, ArrayRef<AIE::MachineBundle> Bundles,
   std::vector<AIE::MachineBundle> ClonedBundles;
   ClonedBundles.reserve(End - Start);
 
-  for (unsigned I = Start; I < End; ++I) {
-    AIE::MachineBundle NewBundle(FormatInterface);
-    for (MachineInstr *MI : Bundles[I].getInstrs()) {
-      MachineInstr *Clone = MF.CloneMachineInstr(MI);
-      NewBundle.add(Clone);
-    }
-    // Also clone meta instructions (e.g. DelayedSchedBarrier) which are
-    // stored separately and not returned by getInstrs().
-    for (MachineInstr *MI : Bundles[I].getMetaInstrs()) {
-      MachineInstr *Clone = MF.CloneMachineInstr(MI);
-      NewBundle.add(Clone);
-    }
-    ClonedBundles.push_back(std::move(NewBundle));
-  }
+  for (unsigned I = Start; I < End; ++I)
+    ClonedBundles.push_back(cloneBundle(MF, Bundles[I], FormatInterface));
 
   return ClonedBundles;
 }
@@ -171,21 +184,9 @@ mergeBundles(MachineFunction &MF, ArrayRef<AIE::MachineBundle> DstBundles,
   MergedBundles.reserve(DstSize);
 
   for (int BundleIdx = 0; BundleIdx < DstSize; ++BundleIdx) {
-    AIE::MachineBundle NewBundle(FormatInterface);
-
-    // Clone destination instructions (skip NOPs)
-    for (MachineInstr *MI : DstBundles[BundleIdx].getInstrs()) {
-      if (MI->getOpcode() != NopOpc) {
-        MachineInstr *Clone = MF.CloneMachineInstr(MI);
-        NewBundle.add(Clone);
-      }
-    }
-    // Also clone destination meta instructions (e.g. DelayedSchedBarrier)
-    // which are stored separately and not returned by getInstrs().
-    for (MachineInstr *MI : DstBundles[BundleIdx].getMetaInstrs()) {
-      MachineInstr *Clone = MF.CloneMachineInstr(MI);
-      NewBundle.add(Clone);
-    }
+    // Clone destination bundle (instructions + meta instructions, skip NOPs)
+    AIE::MachineBundle NewBundle =
+        cloneBundle(MF, DstBundles[BundleIdx], FormatInterface, NopOpc);
 
     // Clone source instructions for trailing bundles
     const int SrcIdx = BundleIdx - MergeOffset;
@@ -267,12 +268,8 @@ std::vector<AIE::MachineBundle> mergeAndAppendBundlesIntoMBB(
                              FormatInterface, NopOpc);
 
   // Clone and append remaining non-merged source bundles
-  for (unsigned I = NumBundlesToMerge, E = SrcBundles.size(); I < E; ++I) {
-    AIE::MachineBundle Cloned(FormatInterface);
-    for (MachineInstr *MI : SrcBundles[I].getInstrs())
-      Cloned.add(MF.CloneMachineInstr(MI));
-    Result.push_back(std::move(Cloned));
-  }
+  for (unsigned I = NumBundlesToMerge, E = SrcBundles.size(); I < E; ++I)
+    Result.push_back(cloneBundle(MF, SrcBundles[I], FormatInterface));
 
   // Replace the entire MBB content with the complete set of bundles
   replaceMBBWithBundles(DstMBB, Result, TII);
