@@ -190,8 +190,11 @@ private:
                const TargetRegisterClass *RC);
   };
 
-  /// Scoring function type - takes pre-computed metrics and returns a score.
-  using ScoringFunction = std::function<unsigned(const VRegMetrics &)>;
+  /// Comparator type for ordering live ranges during allocation.
+  /// Returns true if A should be allocated before B (A has higher priority).
+  /// This is the strict-weak-ordering predicate used directly in std::sort.
+  using ComparatorFunction =
+      std::function<bool(const VRegMetrics &, const VRegMetrics &)>;
 
 public:
   /// Allocate physical registers for live ranges.
@@ -213,7 +216,7 @@ public:
            std::string &OutWinningStrategyName);
 
 private:
-  /// Try to allocate using a specific scoring function for ordering.
+  /// Try to allocate using a specific comparator for ordering.
   /// Returns AllocResult which implicitly converts to bool (true = success).
   /// On success, OutAssign contains the virtual to physical register mapping.
   /// The RegTracker provides the problem description (LiveRanges,
@@ -222,7 +225,7 @@ private:
   tryAllocate(const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex,
               const RegLiveRangeTracker *RegTracker,
               const TargetRegisterInfo &TRI, AllocState &State,
-              ScoringFunction ScoreFn,
+              ComparatorFunction OrderFn,
               DenseMap<Register, MCRegister> &OutAssign);
 
   /// Compute metrics for a live range.
@@ -253,32 +256,50 @@ private:
       const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex,
       const DenseMap<unsigned, PartSet> &AdmissibleRegUnits);
 
-  /// Predefined scoring functions.
-  static unsigned scoreByArea(const VRegMetrics &M) { return M.TotalLanes; }
-  static unsigned scoreByWidth(const VRegMetrics &M) { return M.MaxWidth; }
-  static unsigned scoreByDuration(const VRegMetrics &M) { return M.Duration; }
-  static unsigned scoreByAreaPlusWidth(const VRegMetrics &M) {
-    return M.TotalLanes * 10 + M.MaxWidth;
+  /// Predefined ordering comparators.
+  /// Each returns true if A should be allocated before B.
+  static bool orderByArea(const VRegMetrics &A, const VRegMetrics &B) {
+    return A.TotalLanes > B.TotalLanes;
   }
-  // Score by interference degree - considers both pure and aliasing.
-  static unsigned scoreByInterference(const VRegMetrics &M) {
-    // Pure interference is critical, aliasing interference is secondary.
-    return M.PureInterferenceDegree * 1000 + M.AliasingInterferenceDegree * 10 +
-           M.TotalLanes;
+  static bool orderByWidth(const VRegMetrics &A, const VRegMetrics &B) {
+    return A.MaxWidth > B.MaxWidth;
   }
-  // Score prioritizing scarce register classes (fewer available registers).
-  // Register classes with fewer available registers get HIGHER scores,
-  // so they are allocated FIRST, giving them first pick of registers.
-  static unsigned scoreByScarceRegClass(const VRegMetrics &M) {
-    // Fewer available registers = higher scarceness bonus.
-    // This ensures scarce register classes are allocated first.
-    // Use a large multiplier to make this the dominant factor.
-    unsigned ScarcenessBonus = (100 - M.NumAvailableRegs) * 10000;
-    // Add interference as secondary factor.
-    unsigned InterferenceScore = M.PureInterferenceDegree * 1000 +
-                                 M.AliasingInterferenceDegree * 10 +
-                                 M.TotalLanes;
-    return ScarcenessBonus + InterferenceScore;
+  static bool orderByDuration(const VRegMetrics &A, const VRegMetrics &B) {
+    return A.Duration > B.Duration;
+  }
+  // Area, then width.
+  static bool orderByAreaPlusWidth(const VRegMetrics &A, const VRegMetrics &B) {
+    if (A.TotalLanes != B.TotalLanes)
+      return A.TotalLanes > B.TotalLanes;
+    return A.MaxWidth > B.MaxWidth;
+  }
+  // Most-interfering range first: pure degree, then aliasing degree, then area.
+  static bool orderByInterference(const VRegMetrics &A, const VRegMetrics &B) {
+    if (A.PureInterferenceDegree != B.PureInterferenceDegree)
+      return A.PureInterferenceDegree > B.PureInterferenceDegree;
+    if (A.AliasingInterferenceDegree != B.AliasingInterferenceDegree)
+      return A.AliasingInterferenceDegree > B.AliasingInterferenceDegree;
+    return A.TotalLanes > B.TotalLanes;
+  }
+  // Fewer available registers first. Within the same scarceness, the
+  // most-interfering range goes first.
+  static bool orderByScarceRegClass(const VRegMetrics &A,
+                                    const VRegMetrics &B) {
+    if (A.NumAvailableRegs != B.NumAvailableRegs)
+      return A.NumAvailableRegs < B.NumAvailableRegs;
+    return orderByInterference(A, B);
+  }
+  // Widest register class first (e.g. eEYs, MaxWidth=12, before MaxWidth=6),
+  // then pure interference degree, then aliasing interference degree.
+  // Within a width tier the most interfering range goes first, mirroring the
+  // graph-coloring heuristic of colouring high-degree nodes first.
+  static bool orderByWidthThenInterference(const VRegMetrics &A,
+                                           const VRegMetrics &B) {
+    if (A.MaxWidth != B.MaxWidth)
+      return A.MaxWidth > B.MaxWidth;
+    if (A.PureInterferenceDegree != B.PureInterferenceDegree)
+      return A.PureInterferenceDegree > B.PureInterferenceDegree;
+    return A.AliasingInterferenceDegree > B.AliasingInterferenceDegree;
   }
 
   /// Get allocatable physical registers for a live range.
