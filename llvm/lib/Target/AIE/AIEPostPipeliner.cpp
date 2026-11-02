@@ -1875,21 +1875,21 @@ bool PostPipeliner::tryAllocateRegisters() {
   });
 
   // Perform register allocation.
-  DenseMap<Register, MCRegister> VRegToPhysReg;
-  const bool Success =
-      AIEPostRegAlloc::allocate(LiveLanesByLRIndex, II, RegTracker, *TRI,
-                                VRegToPhysReg, CurrentAllocStrategyName);
+  PostRegAllocResult Result =
+      AIEPostRegAlloc::allocate(LiveLanesByLRIndex, II, RegTracker, *TRI);
 
-  if (!Success) {
+  if (!Result) {
     LLVM_DEBUG(dbgs() << "PostPipeliner: Register allocation failed\n");
     return false;
   }
 
   LLVM_DEBUG(dbgs() << "PostPipeliner: Register allocation succeeded with "
-                    << VRegToPhysReg.size() << " assignments\n");
+                    << Result.getAssignments().size() << " assignments\n");
+
+  CurrentAllocStrategyName = Result.getWinningStrategyName();
 
   // Apply the register assignments through RegTracker.
-  RegTracker.rewriteToPhysRegs(VRegToPhysReg);
+  RegTracker.rewriteToPhysRegs(Result.getAssignments());
 
   LLVM_DEBUG(dbgs() << "PostPipeliner: Applied register allocation through "
                        "RegTracker\n");
