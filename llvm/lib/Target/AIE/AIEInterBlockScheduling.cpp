@@ -832,7 +832,7 @@ MachineInstr *InterBlockScheduling::latencyConverged(BlockState &BS) {
   for (auto &Bundle : reverse(Bottom.Bundles)) {
     DEBUG_LOOPAWARE(dbgs() << "--- Height=" << Height << "---\n");
     for (auto *MI : Bundle.getInstrs()) {
-      int Extending = AIE::maxLatency(MI, *TII, *ItinData, false) - Height;
+      int Extending = AIE::maxLatency(MI, *TII, *ItinData) - Height;
       DEBUG_LOOPAWARE(dbgs()
                       << "Extending=" << Extending << " " << *MI << "\n");
       if (Extending <= 0) {

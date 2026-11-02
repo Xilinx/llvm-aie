@@ -274,15 +274,6 @@ bool hasUnknownSuccessors(
 }
 } // namespace
 
-bool AIEPostRASchedStrategy::successorsAreScheduled(
-    MachineBasicBlock *MBB) const {
-  return !hasUnknownSuccessors(llvm::make_range(RegionBegin, RegionEnd), MBB) &&
-         llvm::all_of(MBB->successors(), [&](MachineBasicBlock *B) {
-           const auto &BS = InterBlock.getBlockState(B);
-           return BS.isScheduled();
-         });
-}
-
 void AIEPostRASchedStrategy::initializeBotScoreBoard() {
 
   if (!InterBlockScoreboard) {

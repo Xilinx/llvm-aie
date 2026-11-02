@@ -422,8 +422,8 @@ define  void @test_huge_stack(i32 noundef %n) #0 {
 ; AIE2P-NEXT:    movs m0, r2 // Delay Slot 5
 ; AIE2P-NEXT:    paddb [p1], m0 // Delay Slot 4
 ; AIE2P-NEXT:    movxm m0, #-40048 // Delay Slot 3
-; AIE2P-NEXT:    paddb [p6], m0 // Delay Slot 2
-; AIE2P-NEXT:    mov sp, p1 // Delay Slot 1
+; AIE2P-NEXT:    mov sp, p1 // Delay Slot 2
+; AIE2P-NEXT:    paddb [p6], m0 // Delay Slot 1
 ; AIE2P-NEXT:    nopa ; nopb ; nops ; jl #extern_call; nopv
 ; AIE2P-NEXT:    nopa ; nopx // Delay Slot 5
 ; AIE2P-NEXT:    nop // Delay Slot 4

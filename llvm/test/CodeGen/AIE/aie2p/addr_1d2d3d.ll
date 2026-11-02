@@ -12,10 +12,10 @@ define dso_local ptr @test_byte_incr(ptr readnone %a, i32 noundef %incr) local_u
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    mov p0, p1 // Delay Slot 4
-; CHECK-NEXT:    mov m0, r0 // Delay Slot 3
-; CHECK-NEXT:    padda [p0], m0 // Delay Slot 2
-; CHECK-NEXT:    nop // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    mov p0, p1 // Delay Slot 3
+; CHECK-NEXT:    mov m0, r0 // Delay Slot 2
+; CHECK-NEXT:    paddb [p0], m0 // Delay Slot 1
 entry:
   %idx.ext.i = trunc i32 %incr to i20
   %add.ptr.i = getelementptr inbounds i8, ptr %a, i20 %idx.ext.i

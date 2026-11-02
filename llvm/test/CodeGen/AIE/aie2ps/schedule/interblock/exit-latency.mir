@@ -227,9 +227,9 @@ body:             |
   ; CHECK-NEXT:   JNZ $r0, %bb.1
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   ACQ_mLockId_imm 0, $r1
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   DelayedSchedBarrier
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3:
