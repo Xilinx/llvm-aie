@@ -83,6 +83,19 @@ int maxLatency(const MachineInstr *MI, const AIEBaseInstrInfo &InstrInfo,
   return Latency;
 }
 
+// The last cycle in which MI reserves a resource.
+static int resourceExtent(const MachineInstr &MI,
+                          const AIEBaseInstrInfo &InstrInfo,
+                          const InstrItineraryData &Itineraries) {
+  if (!MI.isBundle())
+    return InstrInfo.getInstrLatency(&Itineraries, MI);
+  int Extent = 0;
+  for (const MachineInstr &BundledMI : const_bundled_instrs(MI))
+    Extent =
+        std::max(Extent, resourceExtent(BundledMI, InstrInfo, Itineraries));
+  return Extent;
+}
+
 // Check whether this region connects to the successor blocks
 //
 bool MaxLatencyFinder::isBottomRegion(MachineInstr *ExitMI) {
@@ -196,11 +209,15 @@ unsigned MaxLatencyFinder::operator()(MachineInstr &MI) {
 
   const AIE::InterBlockScheduling &IB = Scheduler->getInterBlock();
   // Loop-aware convergence: gradually tighten the ExitSU latency from zero
-  // toward the real value.
+  // toward the real value. The cap also resolves resource conflicts across
+  // the back edge, which can take MI up to its last resource cycle away from
+  // the end of the loop.
   if (IB.getBlockState(CurBB).Kind == BlockType::Loop && IsBottomRegion) {
     if (auto Cap = IB.getLatencyCap(MI)) {
       LLVM_DEBUG(dbgs() << "Capped at " << *Cap << "\n");
-      return std::min(Latency, *Cap);
+      const int Bound =
+          std::max(Latency, resourceExtent(MI, *TII, *Itineraries));
+      return std::min(Bound, *Cap);
     }
   }
 
