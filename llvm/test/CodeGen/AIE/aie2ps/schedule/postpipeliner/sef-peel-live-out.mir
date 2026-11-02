@@ -14,30 +14,28 @@
   define i32 @sef_live_out(ptr noalias %lcp, ptr noalias %ports, ptr noalias %args, i32 %n) {
   ; CHECK-LABEL: sef_live_out:
   ; CHECK:       // %bb.0: // %entry
-  ; CHECK-NEXT:    nopa ; nopb ; nops ; add.nc lc, r0, #0; nopm ; nopv
-  ; CHECK-NEXT:    movxm ls, #.LBB0_1
-  ; CHECK-NEXT:    mova r4, #0; movxm le, #.L_LEnd0
-  ; CHECK-NEXT:    mova r16, #10; mul r18, r4, r24; mov p0, p3
-  ; CHECK-NEXT:    lshl r3, r4, r20; mov r6, r16
+  ; CHECK-NEXT:    nopa ; movxm ls, #.LBB0_1
+  ; CHECK-NEXT:    movxm le, #.L_LEnd0
+  ; CHECK-NEXT:    mova r4, #0; nopb ; nops ; add.nc lc, r0, #0; mov r16, #10; nopv
   ; CHECK-NEXT:  .LBB0_1: // %loop
   ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
-  ; CHECK-NEXT:    lshl r16, r16, r20; mov m0, r18
-  ; CHECK-NEXT:    nopa ; paddb [p0], m0; add r18, r16, #-12; mov dj0, r16
-  ; CHECK-NEXT:    lda r3, [p7, dj0]; add r18, r16, #-4; mov dj0, r18
-  ; CHECK-NEXT:    lda p1, [p7, dj0]; add r18, r16, #-8; mov dj0, r18
-  ; CHECK-NEXT:    lda p1, [p7, dj0]; add r4, r4, #1; mov dj0, r18
+  ; CHECK-NEXT:    mul r3, r4, r24; mov r6, r16
+  ; CHECK-NEXT:    lshl r16, r16, r20; mov p0, p3
+  ; CHECK-NEXT:    add r3, r16, #-12; mov m0, r3
+  ; CHECK-NEXT:    nopa ; paddb [p0], m0; add r3, r16, #-4; mov dj0, r3
+  ; CHECK-NEXT:    lda p1, [p7, dj0]; add r3, r16, #-8; mov dj0, r3
+  ; CHECK-NEXT:    lda p1, [p7, dj0]; lshl r3, r4, r20; mov dj0, r3
+  ; CHECK-NEXT:    lda r3, [p7, dj0]; add r4, r4, #1; mov dj0, r16
   ; CHECK-NEXT:    lda r18, [p7, dj0]; add r16, r6, #4; mov dj0, r3
   ; CHECK-NEXT:    st p0, [p6, dj0]
   ; CHECK-NEXT:    st p2, [p0], #4
   ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    st p1, [p0], #4
   ; CHECK-NEXT:    st p1, [p0], #4
   ; CHECK-NEXT:    st r22, [p0], #4
-  ; CHECK-NEXT:    st r18, [p0, #0]
-  ; CHECK-NEXT:    st r3, [p0, #4]; mul r18, r4, r24; mov p0, p3
+  ; CHECK-NEXT:    st r3, [p0, #0]
   ; CHECK-NEXT:  .L_LEnd0:
-  ; CHECK-NEXT:    nopa ; nopb ; nops ; lshl r3, r4, r20; mov r6, r16; nopv
+  ; CHECK-NEXT:    nopa ; nopb ; st r18, [p0, #4]; nopxm ; nopv
   ; CHECK-NEXT:  // %bb.2: // %exit
   ; CHECK-NEXT:    nopa ; nopb ; nops ; add r0, r6, #1; nopm ; nopv
   ; CHECK-NEXT:    nopa ; ret lr
