@@ -47,7 +47,7 @@ body:             |
   ; CHECK-NEXT:   - Prologue:        bb.1
   ; CHECK-NEXT:   - PrologueBundles: '8'
   ; CHECK-NEXT:   - Epilogue:        bb.4
-  ; CHECK-NEXT:   - EpilogueBundles: '0'
+  ; CHECK-NEXT:   - EpilogueBundles: '6'
   ; CHECK-NEXT:   - VregMode:        Physical
   ; CHECK-NEXT:   - SchedHeuristic:  Config_4_1_0_NodeNum
   ; CHECK-NEXT: ...

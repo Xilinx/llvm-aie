@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Modifications (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its
+// Modifications (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its
 // affiliates
 //
 //===----------------------------------------------------------------------===//
@@ -853,6 +853,10 @@ void MachineSchedulerBase::scheduleRegions(ScheduleDAGInstrs &Scheduler,
 
     MBBRegionsVector MBBRegions;
     getSchedRegions(MBB, MBBRegions, Scheduler.doMBBSchedRegionsTopDown());
+    // A block without instructions has no region. Some targets still need to
+    // schedule it, e.g. to cover latencies that flow through it.
+    if (MBBRegions.empty() && Scheduler.shouldScheduleEmptyBlocks())
+      MBBRegions.push_back(SchedRegion(MBB->end(), MBB->end(), 0));
     bool ScheduleSingleMI = Scheduler.shouldScheduleSingleMIRegions();
     for (const SchedRegion &R : MBBRegions) {
       MachineBasicBlock::iterator I = R.RegionBegin;

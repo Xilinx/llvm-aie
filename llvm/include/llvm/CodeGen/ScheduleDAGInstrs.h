@@ -133,6 +133,10 @@ namespace llvm {
     /// True if regions with a single MI should be scheduled.
     bool ScheduleSingleMIRegions = false;
 
+    /// True if a block without instructions should be scheduled as one empty
+    /// region. getSchedRegions returns no region for such a block.
+    bool ScheduleEmptyBlocks = false;
+
     /// The standard DAG builder does not normally include terminators as DAG
     /// nodes because it does not create the necessary dependencies to prevent
     /// reordering. A specialized scheduler can override
@@ -355,6 +359,10 @@ namespace llvm {
     bool shouldScheduleSingleMIRegions() const {
       return ScheduleSingleMIRegions;
     }
+
+    /// Whether a block without instructions should be scheduled as one empty
+    /// region.
+    bool shouldScheduleEmptyBlocks() const { return ScheduleEmptyBlocks; }
 
     /// Returns an iterator to the top of the current scheduling region.
     MachineBasicBlock::iterator begin() const { return RegionBegin; }

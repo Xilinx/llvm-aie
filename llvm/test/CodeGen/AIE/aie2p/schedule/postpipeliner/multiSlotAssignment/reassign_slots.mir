@@ -44,6 +44,12 @@
   ; CHECK-NEXT:  .L_LEnd0:
   ; CHECK-NEXT:    vlda.fill.512 [p0, lf0, r24]; nopb ; nops ; nopxm ; nopv
   ; CHECK-NEXT:  // %bb.3:
+  ; CHECK-NEXT:    nopa ; nopx
+  ; CHECK-NEXT:    nop
+  ; CHECK-NEXT:    nop
+  ; CHECK-NEXT:    nop
+  ; CHECK-NEXT:    nop
+  ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    .p2align 4
   ; CHECK-NEXT:  .LBB0_4:
   ; CHECK-NEXT:    nopa ; ret lr
