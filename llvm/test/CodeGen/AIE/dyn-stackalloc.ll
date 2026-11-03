@@ -16,7 +16,7 @@ define void @test_simple_dyn_alloca(i32 noundef %n) {
 ; AIE2-LABEL: test_simple_dyn_alloca:
 ; AIE2:       // %bb.0: // %entry
 ; AIE2-NEXT:    paddb [sp], #32; nopa ; nops ; nopxm ; nopv
-; AIE2-NEXT:    nopa ; movx r1, #2
+; AIE2-NEXT:    mova r1, #2; nopx
 ; AIE2-NEXT:    st p7, [sp, #-28] // 4-byte Folded Spill
 ; AIE2-NEXT:    mov p7, sp
 ; AIE2-NEXT:    mov p1, sp
@@ -125,17 +125,17 @@ define void @test_loop_dyn_alloca(i32 noundef %n) {
 ; AIE2-NEXT:    st p7, [sp, #-32] // 4-byte Folded Spill
 ; AIE2-NEXT:    mov p7, sp
 ; AIE2-NEXT:    st r16, [sp, #-60] // 4-byte Folded Spill
-; AIE2-NEXT:    movx r16, #1
+; AIE2-NEXT:    mova r16, #1
 ; AIE2-NEXT:    st r17, [sp, #-56] // 4-byte Folded Spill
-; AIE2-NEXT:    movx r17, #0
+; AIE2-NEXT:    mova r17, #0
 ; AIE2-NEXT:    st r18, [sp, #-52] // 4-byte Folded Spill
-; AIE2-NEXT:    movx r18, #10
+; AIE2-NEXT:    mova r18, #10
 ; AIE2-NEXT:    st r19, [sp, #-48] // 4-byte Folded Spill
-; AIE2-NEXT:    movx r19, #2
+; AIE2-NEXT:    mova r19, #2
 ; AIE2-NEXT:    st r20, [sp, #-44] // 4-byte Folded Spill
-; AIE2-NEXT:    movx r20, #-32
+; AIE2-NEXT:    mova r20, #-32
 ; AIE2-NEXT:    st r21, [sp, #-40] // 4-byte Folded Spill
-; AIE2-NEXT:    movx r21, #0
+; AIE2-NEXT:    mova r21, #0
 ; AIE2-NEXT:    st lr, [sp, #-64] // 4-byte Folded Spill
 ; AIE2-NEXT:    st p6, [sp, #-36] // 4-byte Folded Spill
 ; AIE2-NEXT:    padda [p7], #-64
