@@ -78,6 +78,7 @@ define void @simple_loop(i32 noundef %n, ptr nocapture readonly %in, ptr nocaptu
 ; AIE2P-NEXT:  .L_LEnd0:
 ; AIE2P-NEXT:    nopa ; nopb ; st r3, [p1, dj0]; add r2, r2, #-1; nopm ; nopv
 ; AIE2P-NEXT:  // %bb.3: // %for.cond.cleanup
+; AIE2P-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
 ; AIE2P-NEXT:  .LBB0_4: // %for.cond.cleanup
 ; AIE2P-NEXT:    nopa ; ret lr
 ; AIE2P-NEXT:    nop // Delay Slot 5
@@ -112,6 +113,7 @@ define void @simple_loop(i32 noundef %n, ptr nocapture readonly %in, ptr nocaptu
 ; AIE2PS-NEXT:  .L_LEnd0:
 ; AIE2PS-NEXT:    nopa ; nopb ; st r6, [p1, dj0]; add r4, r4, #-1; nopm ; nopv
 ; AIE2PS-NEXT:  // %bb.3: // %for.cond.cleanup
+; AIE2PS-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
 ; AIE2PS-NEXT:  .LBB0_4: // %for.cond.cleanup
 ; AIE2PS-NEXT:    nopa ; ret lr
 ; AIE2PS-NEXT:    nop // Delay Slot 5
@@ -147,6 +149,7 @@ define void @simple_loop(i32 noundef %n, ptr nocapture readonly %in, ptr nocaptu
 ; AIE2PS-ABS-NEXT:  .L_LEnd0:
 ; AIE2PS-ABS-NEXT:    nopa ; nopb ; st r6, [p1, dj0]; add r4, r4, #-1; nopm ; nopv
 ; AIE2PS-ABS-NEXT:  // %bb.3: // %for.cond.cleanup
+; AIE2PS-ABS-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
 ; AIE2PS-ABS-NEXT:  .LBB0_4: // %for.cond.cleanup
 ; AIE2PS-ABS-NEXT:    nopa ; ret lr
 ; AIE2PS-ABS-NEXT:    nop // Delay Slot 5

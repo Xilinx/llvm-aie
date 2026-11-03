@@ -948,6 +948,20 @@ void AIEPostRASchedStrategy::enterMBB(MachineBasicBlock *MBB) {
   IsBottomRegion = true;
 }
 
+void AIEPostRASchedStrategy::initPolicy(MachineBasicBlock::iterator Begin,
+                                        MachineBasicBlock::iterator End,
+                                        unsigned NumRegionInstrs) {
+  // The base class reaches the MachineFunction through Begin, which is the end
+  // iterator for an empty block. Use the base defaults instead; AIE picks its
+  // scheduling direction elsewhere.
+  if (Begin == End && CurMBB && Begin == CurMBB->end()) {
+    RegionPolicy.OnlyTopDown = true;
+    RegionPolicy.OnlyBottomUp = false;
+    return;
+  }
+  PostGenericScheduler::initPolicy(Begin, End, NumRegionInstrs);
+}
+
 static MachineBasicBlock::iterator
 materializeEmptyBundles(std::vector<MachineBundle> Bundles,
                         MachineBasicBlock *BB, MachineBasicBlock::iterator It,

@@ -339,7 +339,8 @@ class RegionEndEdges : public ScheduleDAGMutation {
     SUnit &ExitSU = DAG->ExitSU;
     SmallVector<SDep, 8> ToRemove;
     for (const SDep &Pred : ExitSU.Preds) {
-      if (Pred.isPin())
+      // Pin edges and the EntrySU edge from RegionStartEdges stay.
+      if (Pred.isPin() || Pred.getSUnit() == &DAG->EntrySU)
         continue;
       ToRemove.push_back(Pred);
     }
@@ -441,7 +442,7 @@ class RegionEndEdges : public ScheduleDAGMutation {
     // Pin edges keep their latency: subtracting 1 from a BotFixed link of 1
     // would make it 0. Every other ExitSU predecessor was added above.
     for (SDep &PredEdge : DAG->ExitSU.Preds) {
-      if (PredEdge.isPin())
+      if (PredEdge.isPin() || PredEdge.getSUnit() == &DAG->EntrySU)
         continue;
       unsigned BackwardLatency =
           PredEdge.getLatency() ? PredEdge.getLatency() - 1 : 0;
@@ -474,7 +475,8 @@ class RegionStartEdges : public ScheduleDAGMutation {
     if (PredEdgeList.empty())
       return;
     AIE::InterBlockEdges *PredEdges = PredEdgeList.front();
-    if (!IB.getBlockState(PredEdges->getPred()).isPipelined())
+    const AIE::BlockState &LoopBS = IB.getBlockState(PredEdges->getPred());
+    if (!LoopBS.isPipelined())
       return;
 
     for (SUnit &SU : DAG->SUnits) {
@@ -494,6 +496,61 @@ class RegionStartEdges : public ScheduleDAGMutation {
       Dep.setLatency(MaxDepth);
       SU.addPred(Dep, /*Required=*/true);
     }
+
+    addEntryToExitEdge(DAG, IB.getBlockState(BB), LoopBS, *PredEdges);
+  }
+
+  /// Latency of the edge from \p SU to the ExitSU of \p IBEdges.
+  static int getLatencyToExitSU(const SUnit &SU,
+                                const AIE::InterBlockEdges &IBEdges) {
+    // RegionEndEdges adds exactly one edge from each SUnit to ExitSU.
+    const auto *EdgeToExit = llvm::find_if(SU.Succs, [&](const SDep &Edge) {
+      return Edge.getSUnit() == &IBEdges.ExitSU;
+    });
+    assert(EdgeToExit != SU.Succs.end() && "SUnit without an edge to ExitSU");
+    return EdgeToExit->getSignedLatency();
+  }
+
+  /// The free-SU edges in apply() only cover consumers inside this region. A
+  /// consumer behind this block is only protected if the region spans the
+  /// latency that crosses the boundary into the cross-BB DDG's ExitSU:
+  /// EntrySU -> ExitSU.
+  static void addEntryToExitEdge(ScheduleDAGInstrs *DAG,
+                                 const AIE::BlockState &BS,
+                                 const AIE::BlockState &LoopBS,
+                                 const AIE::InterBlockEdges &IBEdges) {
+    assert(LoopBS.isPipelined() &&
+           "Only reached for successors of a pipelined loop");
+    if (&BS.getCurrentRegion() != &BS.getTop())
+      return;
+
+    // A pre-boundary node at depth D (-1 is the last bundle) with latency L to
+    // the DDG's ExitSU needs D + L cycles of this region.
+    int Latency = 0;
+    for (const SDep &ExitingEdge : IBEdges.ExitSU.Preds) {
+      const SUnit *ExitingSU = ExitingEdge.getSUnit();
+      // Filter out edges that do not cross the BB boundary
+      if (!IBEdges.isPredecessorNode(ExitingSU))
+        continue;
+      const std::optional<int> Depth =
+          IBEdges.getPreDepths().getDistance(ExitingSU);
+      // The predecessor is a pipelined loop, so its side only holds the loop
+      // tail and BottomInsert clones, and buildGraph records a depth for both.
+      assert(Depth && "Pre-boundary node of a pipelined loop has no depth");
+      const int LatencyToExit = getLatencyToExitSU(*ExitingSU, IBEdges);
+      LLVM_DEBUG(dbgs() << "RegionStartEdges: depth " << *Depth
+                        << " ExitSU latency " << LatencyToExit << ": "
+                        << *ExitingSU->getInstr());
+      Latency = std::max(Latency, *Depth + LatencyToExit);
+    }
+    if (Latency <= 0)
+      return;
+
+    LLVM_DEBUG(dbgs() << "RegionStartEdges: EntrySU -> ExitSU latency "
+                      << Latency << "\n");
+    SDep Dep(&DAG->EntrySU, SDep::Artificial);
+    Dep.setLatency(Latency);
+    DAG->ExitSU.addPred(Dep, /*Required=*/true);
   }
 
 public:

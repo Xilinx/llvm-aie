@@ -48,6 +48,10 @@ public:
   /// Called after each region entry.
   void initialize(ScheduleDAGMI *Dag) override;
 
+  void initPolicy(MachineBasicBlock::iterator Begin,
+                  MachineBasicBlock::iterator End,
+                  unsigned NumRegionInstrs) override;
+
   /// Decides which zone to schedule from, and pick a node from it.
   /// As a consequence, this can change the value of \p IsTopDown.
   /// This may also bump the cycle until a instruction is ready to be issued.
@@ -301,7 +305,14 @@ private:
 /// regions.
 class AIEScheduleDAGMI final : public ScheduleDAGMI {
 public:
-  using ScheduleDAGMI::ScheduleDAGMI;
+  AIEScheduleDAGMI(MachineSchedContext *C,
+                   std::unique_ptr<MachineSchedStrategy> S,
+                   bool RemoveKillFlags)
+      : ScheduleDAGMI(C, std::move(S), RemoveKillFlags) {
+    // An empty dedicated loop exit can still need cycles for the latencies
+    // that flow through it.
+    ScheduleEmptyBlocks = true;
+  }
 
   void enterRegion(MachineBasicBlock *BB, MachineBasicBlock::iterator Begin,
                    MachineBasicBlock::iterator End,

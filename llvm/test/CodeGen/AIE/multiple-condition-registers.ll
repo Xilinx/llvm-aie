@@ -168,6 +168,7 @@ define void @invariant_guard_nested_loop(ptr noalias %out, ptr noalias %in, i32 
 ; CHECK-AIE2PS-NEXT:    nopa ; nopb ; st r21:r20, [p0, dj0]; lshl r22, r18, r6; mov dj0, r22; nopv
 ; CHECK-AIE2PS-NEXT:  // %bb.4: // %outer.latch
 ; CHECK-AIE2PS-NEXT:    // in Loop: Header=BB0_1 Depth=1
+; CHECK-AIE2PS-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
 ; CHECK-AIE2PS-NEXT:  .LBB0_5: // %outer.latch
 ; CHECK-AIE2PS-NEXT:    // in Loop: Header=BB0_1 Depth=1
 ; CHECK-AIE2PS-NEXT:    nopa ; nopb ; nops ; add r0, r0, #-1; nopm ; nopv
