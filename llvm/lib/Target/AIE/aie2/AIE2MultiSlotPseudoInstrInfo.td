@@ -26,9 +26,10 @@ let mayLoad = false, mayStore = false, hasSideEffects = false, Itinerary = II_PA
                           "padd_imm_pseudo", "[$ptr], $imm", [PADDA_lda_ptr_inc_idx_imm, PADDS_st_ptr_inc_idx_imm] >;
   }
   let Defs = [SP], Uses = [SP] in {
-    def PADD_sp_imm_pseudo : MultiSlot_Pseudo< (outs ), (ins imm12x32:$imm),
-                             "padd_sp_imm_pseudo", "[sp], $imm",
-                             [PADDB_sp_imm, PADDA_sp_imm] >;
+    def PADD_sp_imm_pseudo
+        : MultiSlot_Pseudo<
+              (outs), (ins imm12x32:$imm), "padd_sp_imm_pseudo",
+              "[sp], $imm", [PADDB_sp_imm, PADDA_sp_imm, PADDS_sp_imm]>;
   }
 }
 
