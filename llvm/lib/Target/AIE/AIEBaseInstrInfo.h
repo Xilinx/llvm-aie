@@ -25,6 +25,8 @@
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
 #include "llvm/CodeGen/TargetRegisterInfo.h"
+#include "llvm/CodeGenTypes/LowLevelType.h"
+#include "llvm/Support/Alignment.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <optional>
 #include <set>
@@ -510,6 +512,21 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   virtual unsigned getOffsetMemOpcode(unsigned BaseMemOpcode) const {
     llvm_unreachable("Target didn't implement getOffsetMemOpcode");
   }
+
+  /// Return the granularity H to which the hardware rounds down the address
+  /// of an access made by the selected (post-ISel) load or store instruction
+  /// \p Opcode, which accesses \p NumAccessBytes bytes: an access to address
+  /// A touches the bytes starting at A & ~(H - 1). Return std::nullopt if the
+  /// target gives no such guarantee.
+  ///
+  /// The default assumes that a vector access of a power of two number of
+  /// bytes, at least 16, ignores the address bits below its own width, which
+  /// is the natural-width model of the memory interface. Targets override this
+  /// for opcodes that deviate.
+  virtual std::optional<Align>
+  getSelectedMemAccessAddrTruncation(unsigned Opcode,
+                                     unsigned NumAccessBytes) const;
+
   virtual std::optional<unsigned>
   getCombinedPostIncOpcode(MachineInstr &BaseMemI, MachineInstr &PtrAddI,
                            TypeSize Size) const {

@@ -2170,6 +2170,13 @@ void AIEBaseInstrInfo::insertSelect(MachineBasicBlock &MBB,
       .addReg(Support->getSelectSrcOperand(InputOperands, 2));
 }
 
+std::optional<Align> AIEBaseInstrInfo::getSelectedMemAccessAddrTruncation(
+    unsigned Opcode, unsigned NumAccessBytes) const {
+  if (NumAccessBytes < 16 || !isPowerOf2_32(NumAccessBytes))
+    return std::nullopt;
+  return Align(NumAccessBytes);
+}
+
 bool AIEBaseInstrInfo::areMemAccessesTriviallyDisjoint(
     const MachineInstr &MIa, const MachineInstr &MIb) const {
   if (!MIa.hasOneMemOperand() || !MIb.hasOneMemOperand())
