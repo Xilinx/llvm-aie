@@ -152,7 +152,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - OS: ubuntu-latest
+          - OS: ubuntu-24.04
             ARCH: x86_64
           - OS: windows-2022
             ARCH: AMD64
