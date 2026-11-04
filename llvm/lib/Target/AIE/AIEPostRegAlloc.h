@@ -217,6 +217,9 @@ private:
     void place(Register VReg, Register PhysReg,
                const AIE::LivenessVector &VRegMasks,
                const TargetRegisterClass *RC);
+
+    /// Undo place(): clear the RegUnits place() occupied for VRegMasks.
+    void unplace(Register PhysReg, const AIE::LivenessVector &VRegMasks);
   };
 
   /// Comparator type for ordering live ranges during allocation.
@@ -225,8 +228,8 @@ private:
   using ComparatorFunction =
       std::function<bool(const VRegMetrics &, const VRegMetrics &)>;
 
-  /// Live ranges under allocation and the occupancy they share.
-  /// Shared by tryAllocate and the upcoming exact search.
+  /// Live ranges under allocation and the occupancy they share. Used by both
+  /// the heuristic and the exact search.
   struct Placement {
     const DenseMap<unsigned, AIE::LivenessVector> &LiveLanes;
     const DenseSet<MCRegister> &AvailableRegs;
@@ -248,6 +251,9 @@ private:
 
     /// Assign PhysReg to LR and mark its units occupied.
     void place(const RegLiveRange &LR, Register PhysReg);
+
+    /// Undo place() for LR.
+    void unplace(const RegLiveRange &LR);
   };
 
 public:
@@ -279,6 +285,23 @@ private:
               const TargetRegisterInfo &TRI, AllocState &State,
               ComparatorFunction OrderFn,
               DenseMap<Register, MCRegister> &OutAssign);
+
+  /// Result of the budgeted exact permutation search.
+  /// Feasible: a register assignment was found.
+  /// Infeasible: every order was tried and none succeeded.
+  /// Unknown: the node budget was exhausted. The assignment is
+  /// kept only when the result is Feasible.
+  enum class ExactResult { Feasible, Infeasible, Unknown };
+
+  /// Budgeted exact allocator. Tries every order of the virtual live ranges,
+  /// assigning the first legal register in each position. Backtracking keeps a
+  /// placed prefix, and a prefix with no legal register is pruned. Stops when
+  /// the node budget is spent. Used instead of the heuristics when
+  /// -aie-postregalloc-exact-budget is non-zero.
+  static ExactResult tryAllocateExact(
+      const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex,
+      const RegLiveRangeTracker &RegTracker, const TargetRegisterInfo &TRI,
+      AllocState &State, DenseMap<Register, MCRegister> &OutAssign);
 
   /// Compute metrics for a live range.
   /// \param LR The live range to compute metrics for.
