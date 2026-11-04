@@ -1400,6 +1400,21 @@ bool AIEPostRASchedStrategy::tryCandidate(SchedCandidate &Cand,
   // The following relies on BotReadyCycle for comparisons, as this corresponds
   // to the actual cycle in which the SU will be emitted.
   if (!Zone.isTop()) {
+    const BlockState &BS = getInterBlock().getBlockState(CurMBB);
+    if (BS.getOLPMembership()) {
+      const auto &TryMI = *TryCand.SU->getInstr();
+      const auto &CandMI = *Cand.SU->getInstr();
+      const auto *TheTII = getTII(*DAG);
+      // In OLP blocks, when both candidates are ZOL setup instructions,
+      // prefer scheduling the loop counter (LC) definition last (bottom-up).
+      // This places LC at the top of the block, so LS/LE appear after it
+      // in program order, which benefits the sibling loop optimizer.
+      if (TheTII->isZeroOverheadLoopSetupInstr(TryMI) &&
+          TheTII->isZeroOverheadLoopSetupInstr(CandMI) &&
+          tryLess(TheTII->isZOLTripCountDef(TryMI),
+                  TheTII->isZOLTripCountDef(CandMI), TryCand, Cand, NodeOrder))
+        return TryCand.Reason != NoCand;
+    }
 
     // Prefer placing down instructions with long dependence chains, regardless
     // of their emission cycle. This helps scheduling the critical path first.
@@ -1414,7 +1429,6 @@ bool AIEPostRASchedStrategy::tryCandidate(SchedCandidate &Cand,
     // first iteration. That is because it decides the slot assignments for
     // multi-slot instructions. This rule can probably be deleted once the
     // loop-aware scheduler knows how to reassign those.
-    const BlockState &BS = getInterBlock().getBlockState(CurMBB);
     if (UseLoopHeuristics && BS.Kind == AIE::BlockType::Loop &&
         BS.getRegions().size() == 1 && BS.FixPoint.NumIters > 0) {
       if (const InterBlockEdges *LoopEdgesPtr = BS.getLoopSelfEdge()) {

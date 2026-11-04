@@ -145,9 +145,9 @@ define dso_local void @gemm_int8_psum_0_v2(ptr noalias %p_a, ptr noalias %p_b, p
 ; CHECK-NEXT:    vlda.3d x6, [p0], d0; nopb ; nopx ; vmul dm4, x0, x2, r12
 ; CHECK-NEXT:    vldb x1, [p1], m4; vaddmac dm2, dm2, dm4, x8, x10, r10
 ; CHECK-NEXT:    vlda.3d x10, [p1], d1; vaddmac dm1, dm1, dm4, x6, x1, r10
-; CHECK-NEXT:    vldb x8, [p0], #64; add.nc ls, pc, #.LBB0_2; vaddmac dm0, dm0, dm4, x8, x1, r10
-; CHECK-NEXT:    vlda.3d x6, [p0], d0; add.nc le, pc, #.L_LEnd1; vshuffle x3, x1, x1, r0
-; CHECK-NEXT:    nopa ; vldb x1, [p1], m4; nops ; add.nc lc, r30, #-3; vshuffle x5, x3, x3, r2; nopv
+; CHECK-NEXT:    vldb x8, [p0], #64; add.nc lc, r30, #-3; vaddmac dm0, dm0, dm4, x8, x1, r10
+; CHECK-NEXT:    vlda.3d x6, [p0], d0; add.nc ls, pc, #.LBB0_2; vshuffle x3, x1, x1, r0
+; CHECK-NEXT:    nopa ; vldb x1, [p1], m4; nops ; add.nc le, pc, #.L_LEnd1; vshuffle x5, x3, x3, r2; nopv
 ; CHECK-NEXT:    vlda.3d x10, [p1], d1; nopb ; nops ; nopx ; vshuffle x7, x10, x10, r4; nopv
 ; CHECK-NEXT:    nopa ; vldb x8, [p0], #64; nops ; nopx ; vshuffle x9, x7, x7, r6; vmac dm5, dm5, x8, x5, r8
 ; CHECK-NEXT:    vlda.3d x6, [p0], d0; nopb ; nops ; nopx ; vshuffle x3, x1, x1, r0; vmac dm2, dm2, x6, x5, r8

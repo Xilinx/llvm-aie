@@ -266,9 +266,9 @@ define weak_odr dso_local void @gemm_int8_opt_32_8_8(ptr noalias nonnull align 4
 ; ASM-NEXT:    // Child Loop BB0_3 Depth 2
 ; ASM-NEXT:    vlda.3d x4, [p1], d1; vldb x1, [p0], #64; nops ; nopxm ; vaddmac dm2, dm2, dm4, x6, x1, r12
 ; ASM-NEXT:    nopa ; vldb x10, [p0], #64; nopx ; vaddmac dm1, dm1, dm4, x10, x1, r12
-; ASM-NEXT:    vldb.3d x8, [p0], d0; add.nc ls, pc, #.LBB0_3; vaddmac dm0, dm0, dm4, x4, x1, r12
-; ASM-NEXT:    vldb x6, [p3], m4; add.nc le, pc, #.L_LEnd1; vshuffle x3, x4, x4, r0
-; ASM-NEXT:    vlda.3d x4, [p1], d1; vldb x1, [p0], #64; nops ; add.nc lc, r16, #-3; vshuffle x5, x3, x3, r2; nopv
+; ASM-NEXT:    vldb.3d x8, [p0], d0; add.nc lc, r16, #-3; vaddmac dm0, dm0, dm4, x4, x1, r12
+; ASM-NEXT:    vldb x6, [p3], m4; add.nc ls, pc, #.LBB0_3; vshuffle x3, x4, x4, r0
+; ASM-NEXT:    vlda.3d x4, [p1], d1; vldb x1, [p0], #64; nops ; add.nc le, pc, #.L_LEnd1; vshuffle x5, x3, x3, r2; nopv
 ; ASM-NEXT:    nopa ; vldb x10, [p0], #64; nops ; nopxm ; nopv
 ; ASM-NEXT:    nopa ; vldb.3d x8, [p0], d0; nops ; nopxm ; vmac dm3, dm3, x1, x5, r10
 ; ASM-NEXT:    nopa ; vldb x6, [p3], m4; nops ; nopx ; vshuffle x3, x4, x4, r0; vmac dm2, dm2, x10, x5, r10
