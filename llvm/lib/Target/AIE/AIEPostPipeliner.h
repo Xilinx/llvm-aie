@@ -204,6 +204,9 @@ public:
   virtual int mobility(const SUnit &N) { return latest(N) - earliest(N); }
   // Select from top or from bottom.
   virtual bool fromTop() { return true; }
+  // True if \p SU may be selected now. Default: all preds (top-down) or
+  // succs (bottom-up) of the first iteration are already scheduled.
+  virtual bool isAvailable(const SUnit &SU);
   // Report a fully committed node. Called after scheduleNode() and
   // commitCycle(), so Info[N.NodeNum].Scheduled is true and
   // Info[N.NodeNum].Cycle holds the assigned cycle.
@@ -218,6 +221,10 @@ public:
   fitInInterval(const SUnit &SU, int Earliest, int Latest, int II,
                 const AIEHazardRecognizer &HR,
                 ResourceScoreboard<FuncUnitWrapper> &Scoreboard);
+
+protected:
+  // True if the neighbour of \p Dep is an unscheduled first-iteration node.
+  bool isUnscheduledInIter(const SDep &Dep) const;
 };
 
 class PostPipeliner; // Forward declaration for scheduleAllRuns.
