@@ -72,7 +72,7 @@ public:
   bool selectG_AIE_LOAD_UPS(MachineInstr &StoreI, MachineRegisterInfo &MRI,
                             std::optional<unsigned> crUPSModeVal) override;
   bool select512BitG_AIE_LOAD_UPS(MachineInstr &UPSI, LoadStoreOpcodes &LSO,
-                                  AddressingModeInfo &AMI, Register DstReg,
+                                  AddressingModeInfo &AMInfo, Register DstReg,
                                   Register ShftReg, Register SignReg,
                                   bool ConstantSign, MachineRegisterInfo &MRI);
   bool selectWriteTM(MachineInstr &I, MachineRegisterInfo &MRI);
@@ -82,12 +82,12 @@ public:
                                       std::optional<APInt> Offset);
   bool selectG_AIE_LOAD_STORE(MachineInstr &I, MachineRegisterInfo &MRI);
   bool select512BitG_AIE_LOAD_STORE(MachineInstr &I, LoadStoreOpcodes &LSO,
-                                    AddressingModeInfo &AMI,
+                                    AddressingModeInfo &AMInfo,
                                     MachineRegisterInfo &MRI);
   bool selectG_AIE_STORE_SRS(MachineInstr &StoreI,
                              MachineRegisterInfo &MRI) override;
   bool select512BitG_AIE_STORE_SRS(LoadStoreOpcodes &LSO,
-                                   AddressingModeInfo &AMI, Register SrcReg,
+                                   AddressingModeInfo &AMInfo, Register SrcReg,
                                    Register ShftReg, Register SignReg,
                                    bool ConstantSign, MachineRegisterInfo &MRI);
   bool selectG_AIE_STORE_CONV(MachineInstr &StoreI, MachineRegisterInfo &MRI);
@@ -1668,7 +1668,7 @@ AIE2InstructionSelector::getOrDefineAddressingRegister(
 }
 
 bool AIE2InstructionSelector::select512BitG_AIE_LOAD_UPS(
-    MachineInstr &UPSI, LoadStoreOpcodes &LSO, AddressingModeInfo &AMI,
+    MachineInstr &UPSI, LoadStoreOpcodes &LSO, AddressingModeInfo &AMInfo,
     Register DstReg, Register ShftReg, Register SignReg, bool ConstantSign,
     MachineRegisterInfo &MRI) {
   assert(LSO.OffsetOpcode &&
@@ -1678,7 +1678,7 @@ bool AIE2InstructionSelector::select512BitG_AIE_LOAD_UPS(
   Register Low512 = MRI.createVirtualRegister(RC);
   Register High512 = MRI.createVirtualRegister(RC);
 
-  switch (AMI.MemI.getOpcode()) {
+  switch (AMInfo.MemI.getOpcode()) {
   case AIE2::G_LOAD:
   case AIE2::G_AIE_POSTINC_LOAD:
   case AIE2::G_AIE_POSTINC_2D_LOAD:
@@ -1686,21 +1686,22 @@ bool AIE2InstructionSelector::select512BitG_AIE_LOAD_UPS(
     auto LoadHigher = MIB.buildInstr(*LSO.OffsetOpcode)
                           .addDef(High512)
                           .addUse(ShftReg)
-                          .addUse(AMI.PtrOp.getReg())
+                          .addUse(AMInfo.PtrOp.getReg())
                           .addImm(32); // Offset
 
     auto LoadLower = MIB.buildInstr(LSO.ISelOpcode, {Low512}, {});
 
     // We have to skip the first Def (the 1024-bit Dst-Reg)
-    for (auto *Def = AMI.MemI.defs().begin() + 1; Def != AMI.MemI.defs().end();
-         Def++)
+    for (auto *Def = AMInfo.MemI.defs().begin() + 1;
+         Def != AMInfo.MemI.defs().end(); Def++)
       LoadLower.addDef(Def->getReg());
 
     LoadLower.addReg(ShftReg);
 
-    addAddressingMode(LoadLower, AMI, LSO.FitsImmediateRange, false, MRI);
+    addAddressingMode(LoadLower, AMInfo, LSO.FitsImmediateRange, false, MRI,
+                      /*NumAccessBytes=*/std::nullopt);
 
-    addSplitMemOperands(AMI.MemI, LoadHigher, LoadLower, 0, 2);
+    addSplitMemOperands(AMInfo.MemI, LoadHigher, LoadLower, 0, 2);
 
     if (!ConstantSign)
       setUnsetCtrlRegister(MIB, *LoadHigher, *LoadLower, MRI, AIE2::crUPSSign,
@@ -1719,7 +1720,7 @@ bool AIE2InstructionSelector::select512BitG_AIE_LOAD_UPS(
         !RBI.constrainGenericRegister(DstReg, AIE2::ACC1024RegClass, MRI))
       return false;
 
-    AMI.MemI.eraseFromParent();
+    AMInfo.MemI.eraseFromParent();
 
     return true;
   }
@@ -1730,15 +1731,15 @@ bool AIE2InstructionSelector::select512BitG_AIE_LOAD_UPS(
           MIB.buildInstr(*LSO.OffsetOpcode)
               .addDef(High512)
               .addUse(ShftReg)
-              .addUse(AMI.PtrOp.getReg())
-              .addImm(AMI.ImmediateOffset->getSExtValue() + 32); // Offset
+              .addUse(AMInfo.PtrOp.getReg())
+              .addImm(AMInfo.ImmediateOffset->getSExtValue() + 32); // Offset
     } else {
       // In this case we have to emit an PTR_ADD to evaluate the offset
-      insertPtrAddForOffset(MRI, AMI.MemI);
+      insertPtrAddForOffset(MRI, AMInfo.MemI);
       LoadHigher = MIB.buildInstr(*LSO.OffsetOpcode)
                        .addDef(High512)
                        .addUse(ShftReg)
-                       .addUse(AMI.PtrOp.getReg())
+                       .addUse(AMInfo.PtrOp.getReg())
                        .addImm(32); // Offset
     }
 
@@ -1746,16 +1747,16 @@ bool AIE2InstructionSelector::select512BitG_AIE_LOAD_UPS(
 
     LoadLower.addReg(ShftReg);
 
-    LoadLower.addUse(AMI.PtrOp.getReg());
+    LoadLower.addUse(AMInfo.PtrOp.getReg());
     if (LSO.FitsImmediateRange) {
-      LoadLower.addImm(AMI.ImmediateOffset->getSExtValue()); // Offset
+      LoadLower.addImm(AMInfo.ImmediateOffset->getSExtValue()); // Offset
     } else {
       // In this case we have already inserted a PTR_ADD to add the offset to
       // the base pointer
       LoadLower.addImm(0); // Offset
     }
 
-    addSplitMemOperands(AMI.MemI, LoadHigher, LoadLower, 0, 2);
+    addSplitMemOperands(AMInfo.MemI, LoadHigher, LoadLower, 0, 2);
 
     if (!ConstantSign)
       setUnsetCtrlRegister(MIB, *LoadHigher, *LoadLower, MRI, AIE2::crUPSSign,
@@ -1774,7 +1775,7 @@ bool AIE2InstructionSelector::select512BitG_AIE_LOAD_UPS(
         !RBI.constrainGenericRegister(DstReg, AIE2::ACC1024RegClass, MRI))
       return false;
 
-    AMI.MemI.eraseFromParent();
+    AMInfo.MemI.eraseFromParent();
 
     return true;
   }
@@ -1803,9 +1804,9 @@ bool AIE2InstructionSelector::selectG_AIE_LOAD_UPS(
       LoadOp->getParent() != UPSI.getParent() || !MRI.hasOneUse(LoadResult))
     return false;
 
-  std::optional<AddressingModeInfo> AMI =
+  std::optional<AddressingModeInfo> AMInfo =
       getOrDefineAddressingRegister(*LoadOp, MRI);
-  if (!AMI)
+  if (!AMInfo)
     return false;
 
   Register DstReg = UPSI.getOperand(0).getReg();
@@ -1818,17 +1819,18 @@ bool AIE2InstructionSelector::selectG_AIE_LOAD_UPS(
   bool ConstantSign = false;
   if (auto SignVal = getIConstantVRegValWithLookThrough(SignReg, MRI)) {
     // SignVal = 1 for signed and 0 for dynamically signed
-    LSO = getCombinedOpcodeSRSUPS(AMI->MemI, UPSI, AMI->ImmediateOffset,
+    LSO = getCombinedOpcodeSRSUPS(AMInfo->MemI, UPSI, AMInfo->ImmediateOffset,
                                   SignVal.value().Value == 0x1);
     ConstantSign = true;
   } else {
-    LSO = getCombinedOpcodeSRSUPS(AMI->MemI, UPSI, AMI->ImmediateOffset, false);
+    LSO = getCombinedOpcodeSRSUPS(AMInfo->MemI, UPSI, AMInfo->ImmediateOffset,
+                                  false);
   }
 
   assert(LSO && "Unexpected VLDA.UPS combine failure");
 
   if (MRI.getType(LoadResult).getSizeInBits() == 512) {
-    return select512BitG_AIE_LOAD_UPS(UPSI, *LSO, *AMI, DstReg, ShftReg,
+    return select512BitG_AIE_LOAD_UPS(UPSI, *LSO, *AMInfo, DstReg, ShftReg,
                                       SignReg, ConstantSign, MRI);
   }
 
@@ -1836,15 +1838,15 @@ bool AIE2InstructionSelector::selectG_AIE_LOAD_UPS(
 
   NewInstr.addDef(DstReg);
   // Skip first def, which is the value directly fed into the UPS unit
-  for (auto *Def = std::next(AMI->MemI.defs().begin());
-       Def != AMI->MemI.defs().end(); ++Def)
+  for (auto *Def = std::next(AMInfo->MemI.defs().begin());
+       Def != AMInfo->MemI.defs().end(); ++Def)
     NewInstr.addDef(Def->getReg());
 
   NewInstr.addUse(ShftReg);
 
-  addAddressingMode(NewInstr, *AMI, LSO->FitsImmediateRange, false, MRI);
+  addAddressingMode(NewInstr, *AMInfo, LSO->FitsImmediateRange, false, MRI);
 
-  NewInstr.cloneMemRefs(AMI->MemI);
+  NewInstr.cloneMemRefs(AMInfo->MemI);
 
   if (!ConstantSign)
     setUnsetCtrlRegister(MIB, *NewInstr, MRI, AIE2::crUPSSign, SignReg);
@@ -1854,7 +1856,7 @@ bool AIE2InstructionSelector::selectG_AIE_LOAD_UPS(
   if (!constrainSelectedInstRegOperands(*NewInstr.getInstr(), TII, TRI, RBI))
     return false;
 
-  AMI->MemI.eraseFromParent();
+  AMInfo->MemI.eraseFromParent();
 
   return true;
 }
@@ -2811,7 +2813,7 @@ bool AIE2InstructionSelector::selectG_AIE_STORE_PACK(MachineInstr &StoreI,
 }
 
 bool AIE2InstructionSelector::select512BitG_AIE_STORE_SRS(
-    LoadStoreOpcodes &LSO, AddressingModeInfo &AMI, Register SrcReg,
+    LoadStoreOpcodes &LSO, AddressingModeInfo &AMInfo, Register SrcReg,
     Register ShftReg, Register SignReg, bool ConstantSign,
     MachineRegisterInfo &MRI) {
   assert(LSO.OffsetOpcode && "Expected an offset opcode for 512-bit VST.SRS!?");
@@ -2820,7 +2822,7 @@ bool AIE2InstructionSelector::select512BitG_AIE_STORE_SRS(
   Register Low512 = MRI.createVirtualRegister(RC);
   Register High512 = MRI.createVirtualRegister(RC);
 
-  switch (AMI.MemI.getOpcode()) {
+  switch (AMInfo.MemI.getOpcode()) {
   case AIE2::G_STORE:
   case AIE2::G_AIE_POSTINC_STORE:
   case AIE2::G_AIE_POSTINC_2D_STORE:
@@ -2830,27 +2832,28 @@ bool AIE2InstructionSelector::select512BitG_AIE_STORE_SRS(
     auto HigherBits = MIB.buildInstr(TargetOpcode::COPY, {High512}, {})
                           .addReg(SrcReg, 0, AIE2::sub_512_hi);
     auto StoreHigher = MIB.buildInstr(*LSO.OffsetOpcode)
-                           .addReg(AMI.PtrOp.getReg())
+                           .addReg(AMInfo.PtrOp.getReg())
                            .addImm(32) // Offset
                            .addReg(HigherBits.getReg(0))
                            .addReg(ShftReg);
 
     auto StoreLower = MIB.buildInstr(LSO.ISelOpcode);
 
-    for (auto Def : AMI.MemI.defs())
+    for (auto Def : AMInfo.MemI.defs())
       StoreLower.addDef(Def.getReg());
 
-    addAddressingMode(StoreLower, AMI, LSO.FitsImmediateRange, false, MRI);
+    addAddressingMode(StoreLower, AMInfo, LSO.FitsImmediateRange, false, MRI,
+                      /*NumAccessBytes=*/std::nullopt);
 
     StoreLower.addReg(LowerBits.getReg(0)).addReg(ShftReg);
 
-    addSplitMemOperands(AMI.MemI, StoreHigher, StoreLower, 0, 2);
+    addSplitMemOperands(AMInfo.MemI, StoreHigher, StoreLower, 0, 2);
 
     if (!ConstantSign)
       setUnsetCtrlRegister(MIB, *StoreHigher, *StoreLower, MRI, AIE2::crSRSSign,
                            SignReg);
 
-    AMI.MemI.eraseFromParent();
+    AMInfo.MemI.eraseFromParent();
     return constrainSelectedInstRegOperands(*StoreLower, TII, TRI, RBI) &&
            constrainSelectedInstRegOperands(*StoreHigher, TII, TRI, RBI);
   }
@@ -2864,15 +2867,15 @@ bool AIE2InstructionSelector::select512BitG_AIE_STORE_SRS(
     if (LSO.FitsImmediateRange) {
       StoreHigher =
           MIB.buildInstr(*LSO.OffsetOpcode)
-              .addReg(AMI.PtrOp.getReg())
-              .addImm(AMI.ImmediateOffset->getSExtValue() + 32) // Offset
+              .addReg(AMInfo.PtrOp.getReg())
+              .addImm(AMInfo.ImmediateOffset->getSExtValue() + 32) // Offset
               .addReg(HigherBits.getReg(0))
               .addReg(ShftReg);
     } else {
       // In this case we have to emit an PTR_ADD to evaluate the offset
-      insertPtrAddForOffset(MRI, AMI.MemI);
+      insertPtrAddForOffset(MRI, AMInfo.MemI);
       StoreHigher = MIB.buildInstr(*LSO.OffsetOpcode)
-                        .addReg(AMI.PtrOp.getReg())
+                        .addReg(AMInfo.PtrOp.getReg())
                         .addImm(32) // Offset
                         .addReg(HigherBits.getReg(0))
                         .addReg(ShftReg);
@@ -2880,9 +2883,9 @@ bool AIE2InstructionSelector::select512BitG_AIE_STORE_SRS(
 
     auto StoreLower = MIB.buildInstr(LSO.ISelOpcode);
 
-    StoreLower.addUse(AMI.PtrOp.getReg());
+    StoreLower.addUse(AMInfo.PtrOp.getReg());
     if (LSO.FitsImmediateRange) {
-      StoreLower.addImm(AMI.ImmediateOffset->getSExtValue()); // Offset
+      StoreLower.addImm(AMInfo.ImmediateOffset->getSExtValue()); // Offset
     } else {
       // In this case we have already inserted a PTR_ADD to add the offset to
       // the base pointer
@@ -2891,13 +2894,13 @@ bool AIE2InstructionSelector::select512BitG_AIE_STORE_SRS(
 
     StoreLower.addReg(LowerBits.getReg(0)).addReg(ShftReg);
 
-    addSplitMemOperands(AMI.MemI, StoreHigher, StoreLower, 0, 2);
+    addSplitMemOperands(AMInfo.MemI, StoreHigher, StoreLower, 0, 2);
 
     if (!ConstantSign)
       setUnsetCtrlRegister(MIB, *StoreHigher, *StoreLower, MRI, AIE2::crSRSSign,
                            SignReg);
 
-    AMI.MemI.eraseFromParent();
+    AMInfo.MemI.eraseFromParent();
     return constrainSelectedInstRegOperands(*StoreLower, TII, TRI, RBI) &&
            constrainSelectedInstRegOperands(*StoreHigher, TII, TRI, RBI);
   }
@@ -2918,9 +2921,9 @@ bool AIE2InstructionSelector::selectG_AIE_STORE_SRS(MachineInstr &StoreI,
       StoreI.getParent() != SrsOp->getParent() || !MRI.hasOneUse(SrsResult))
     return false;
 
-  std::optional<AddressingModeInfo> AMI =
+  std::optional<AddressingModeInfo> AMInfo =
       getOrDefineAddressingRegister(StoreI, MRI);
-  if (!AMI)
+  if (!AMInfo)
     return false;
 
   // Note: Operand 1 is the ID of the intrinsic
@@ -2932,18 +2935,19 @@ bool AIE2InstructionSelector::selectG_AIE_STORE_SRS(MachineInstr &StoreI,
   bool ConstantSign = false;
   if (auto SignVal = getIConstantVRegValWithLookThrough(SignReg, MRI)) {
     // SignVal = 1 for signed and 0 for dynamically signed
-    LSO = getCombinedOpcodeSRSUPS(StoreI, *SrsOp, AMI->ImmediateOffset,
+    LSO = getCombinedOpcodeSRSUPS(StoreI, *SrsOp, AMInfo->ImmediateOffset,
                                   SignVal.value().Value == 0x1);
     ConstantSign = true;
   } else {
-    LSO = getCombinedOpcodeSRSUPS(StoreI, *SrsOp, AMI->ImmediateOffset, false);
+    LSO =
+        getCombinedOpcodeSRSUPS(StoreI, *SrsOp, AMInfo->ImmediateOffset, false);
   }
 
   assert(LSO && "Unexpected VST.SRS combine failure");
 
   if (MRI.getType(SrsResult).getSizeInBits() == 512) {
     makeDeadMI(*SrsOp, MRI);
-    return select512BitG_AIE_STORE_SRS(*LSO, *AMI, SrcReg, ShftReg, SignReg,
+    return select512BitG_AIE_STORE_SRS(*LSO, *AMInfo, SrcReg, ShftReg, SignReg,
                                        ConstantSign, MRI);
   }
 
@@ -2952,7 +2956,7 @@ bool AIE2InstructionSelector::selectG_AIE_STORE_SRS(MachineInstr &StoreI,
   for (auto Def : StoreI.defs())
     NewInstr.addDef(Def.getReg());
 
-  addAddressingMode(NewInstr, *AMI, LSO->FitsImmediateRange, false, MRI);
+  addAddressingMode(NewInstr, *AMInfo, LSO->FitsImmediateRange, false, MRI);
 
   NewInstr.addUse(SrcReg);
   NewInstr.addUse(ShftReg);
@@ -3051,12 +3055,12 @@ bool AIE2InstructionSelector::selectG_AIE_STORE_CONV(MachineInstr &StoreI,
 }
 
 bool AIE2InstructionSelector::select512BitG_AIE_LOAD_STORE(
-    MachineInstr &I, LoadStoreOpcodes &LSO, AddressingModeInfo &AMI,
+    MachineInstr &I, LoadStoreOpcodes &LSO, AddressingModeInfo &AMInfo,
     MachineRegisterInfo &MRI) {
   assert(LSO.OffsetOpcode &&
          "Expected an offset opcode for 512-bit load/store!?");
 
-  LLT SrcDstTy = MRI.getType(AMI.SrcDstOp.getReg());
+  LLT SrcDstTy = MRI.getType(AMInfo.SrcDstOp.getReg());
   bool IsAccumulator = SrcDstTy.getElementType().getSizeInBits() == 64;
   const TargetRegisterClass *RC256 =
       IsAccumulator ? &AIE2::ACC256RegClass : &AIE2::VEC256RegClass;
@@ -3065,73 +3069,89 @@ bool AIE2InstructionSelector::select512BitG_AIE_LOAD_STORE(
   Register Low256 = MRI.createVirtualRegister(RC256);
   Register High256 = MRI.createVirtualRegister(RC256);
 
-  switch (AMI.MemI.getOpcode()) {
+  // Each piece of the split access is a 256-bit memory access. The pointer a
+  // piece uses is obtained through getAccessPointer, given the opcode of the
+  // piece and its byte offset relative to the pointer operand of the original
+  // access.
+  const unsigned PieceBytes = 32;
+  auto GetPiecePtr = [&](unsigned PieceOpcode, int64_t PieceByteOffset) {
+    return getAccessPointer(AMInfo.PtrOp.getReg(), PieceOpcode, PieceByteOffset,
+                            PieceBytes);
+  };
+
+  switch (AMInfo.MemI.getOpcode()) {
   case AIE2::G_STORE:
   case AIE2::G_AIE_POSTINC_STORE:
   case AIE2::G_AIE_POSTINC_2D_STORE:
   case AIE2::G_AIE_POSTINC_3D_STORE: {
     auto LowerBits = MIB.buildInstr(TargetOpcode::COPY, {Low256}, {})
-                         .addReg(AMI.SrcDstOp.getReg(), 0, AIE2::sub_256_lo);
-    auto HigherBits = MIB.buildInstr(TargetOpcode::COPY, {High256}, {})
-                          .addReg(AMI.SrcDstOp.getReg(), 0, AIE2::sub_256_hi);
+                         .addReg(AMInfo.SrcDstOp.getReg(), 0, AIE2::sub_256_lo);
+    auto HigherBits =
+        MIB.buildInstr(TargetOpcode::COPY, {High256}, {})
+            .addReg(AMInfo.SrcDstOp.getReg(), 0, AIE2::sub_256_hi);
 
     auto StoreHigher = MIB.buildInstr(*LSO.OffsetOpcode, {}, {})
                            .addReg(HigherBits.getReg(0))
-                           .addReg(AMI.PtrOp.getReg())
-                           .addImm(32); // Offset
+                           .addReg(GetPiecePtr(*LSO.OffsetOpcode, PieceBytes))
+                           .addImm(PieceBytes);
     auto StoreLower = MIB.buildInstr(LSO.ISelOpcode, {}, {});
 
-    for (auto Def : AMI.MemI.defs())
+    for (auto Def : AMInfo.MemI.defs())
       StoreLower.addDef(Def.getReg());
 
     StoreLower.addReg(LowerBits.getReg(0));
 
-    addAddressingMode(StoreLower, AMI, LSO.FitsImmediateRange, false, MRI);
+    addAddressingMode(StoreLower, AMInfo, LSO.FitsImmediateRange, false, MRI,
+                      PieceBytes);
 
-    addSplitMemOperands(AMI.MemI, StoreHigher, StoreLower, 0, 2);
+    addSplitMemOperands(AMInfo.MemI, StoreHigher, StoreLower, 0, 2);
 
-    AMI.MemI.eraseFromParent();
+    AMInfo.MemI.eraseFromParent();
     return constrainSelectedInstRegOperands(*StoreLower, TII, TRI, RBI) &&
            constrainSelectedInstRegOperands(*StoreHigher, TII, TRI, RBI);
   }
   case AIE2::G_AIE_OFFSET_STORE: {
     auto LowerBits = MIB.buildInstr(TargetOpcode::COPY, {Low256}, {})
-                         .addReg(AMI.SrcDstOp.getReg(), 0, AIE2::sub_256_lo);
-    auto HigherBits = MIB.buildInstr(TargetOpcode::COPY, {High256}, {})
-                          .addReg(AMI.SrcDstOp.getReg(), 0, AIE2::sub_256_hi);
+                         .addReg(AMInfo.SrcDstOp.getReg(), 0, AIE2::sub_256_lo);
+    auto HigherBits =
+        MIB.buildInstr(TargetOpcode::COPY, {High256}, {})
+            .addReg(AMInfo.SrcDstOp.getReg(), 0, AIE2::sub_256_hi);
 
     MachineInstrBuilder StoreHigher;
     if (LSO.FitsImmediateRange) {
-      StoreHigher =
-          MIB.buildInstr(*LSO.OffsetOpcode, {}, {})
-              .addReg(HigherBits.getReg(0))
-              .addReg(AMI.PtrOp.getReg())
-              .addImm(AMI.ImmediateOffset->getSExtValue() + 32); // Offset
-    } else {
-      // In this case we have to emit an PTR_ADD to evaluate the offset
-      insertPtrAddForOffset(MRI, AMI.MemI);
+      const int64_t HighOffset =
+          AMInfo.ImmediateOffset->getSExtValue() + PieceBytes;
       StoreHigher = MIB.buildInstr(*LSO.OffsetOpcode, {}, {})
                         .addReg(HigherBits.getReg(0))
-                        .addReg(AMI.PtrOp.getReg())
-                        .addImm(32); // Offset
+                        .addReg(GetPiecePtr(*LSO.OffsetOpcode, HighOffset))
+                        .addImm(HighOffset);
+    } else {
+      // In this case we have to emit an PTR_ADD to evaluate the offset
+      insertPtrAddForOffset(MRI, AMInfo.MemI);
+      StoreHigher = MIB.buildInstr(*LSO.OffsetOpcode, {}, {})
+                        .addReg(HigherBits.getReg(0))
+                        .addReg(GetPiecePtr(*LSO.OffsetOpcode, PieceBytes))
+                        .addImm(PieceBytes);
     }
 
     auto StoreLower = MIB.buildInstr(LSO.ISelOpcode, {}, {});
 
     StoreLower.addReg(LowerBits.getReg(0));
 
-    StoreLower.addUse(AMI.PtrOp.getReg());
+    StoreLower.addUse(GetPiecePtr(
+        LSO.ISelOpcode,
+        LSO.FitsImmediateRange ? AMInfo.ImmediateOffset->getSExtValue() : 0));
     if (LSO.FitsImmediateRange) {
-      StoreLower.addImm(AMI.ImmediateOffset->getSExtValue()); // Offset
+      StoreLower.addImm(AMInfo.ImmediateOffset->getSExtValue()); // Offset
     } else {
       // In this case we have already inserted a PTR_ADD to add the offset to
       // the base pointer
       StoreLower.addImm(0); // Offset
     }
 
-    addSplitMemOperands(AMI.MemI, StoreHigher, StoreLower, 0, 2);
+    addSplitMemOperands(AMInfo.MemI, StoreHigher, StoreLower, 0, 2);
 
-    AMI.MemI.eraseFromParent();
+    AMInfo.MemI.eraseFromParent();
     return constrainSelectedInstRegOperands(*StoreLower, TII, TRI, RBI) &&
            constrainSelectedInstRegOperands(*StoreHigher, TII, TRI, RBI);
   }
@@ -3141,27 +3161,28 @@ bool AIE2InstructionSelector::select512BitG_AIE_LOAD_STORE(
   case AIE2::G_AIE_POSTINC_3D_LOAD: {
     auto LoadHigher = MIB.buildInstr(*LSO.OffsetOpcode, {}, {})
                           .addDef(High256)
-                          .addUse(AMI.PtrOp.getReg())
-                          .addImm(32); // Offset
+                          .addUse(GetPiecePtr(*LSO.OffsetOpcode, PieceBytes))
+                          .addImm(PieceBytes);
 
     auto LoadLower = MIB.buildInstr(LSO.ISelOpcode, {Low256}, {});
     // We have to skip the first Def (the 512-bit Dst-Reg)
-    for (auto *Def = AMI.MemI.defs().begin() + 1; Def != AMI.MemI.defs().end();
-         Def++)
+    for (auto *Def = AMInfo.MemI.defs().begin() + 1;
+         Def != AMInfo.MemI.defs().end(); Def++)
       LoadLower.addDef(Def->getReg());
 
-    addAddressingMode(LoadLower, AMI, LSO.FitsImmediateRange, false, MRI);
+    addAddressingMode(LoadLower, AMInfo, LSO.FitsImmediateRange, false, MRI,
+                      PieceBytes);
 
-    addSplitMemOperands(AMI.MemI, LoadHigher, LoadLower, 0, 2);
+    addSplitMemOperands(AMInfo.MemI, LoadHigher, LoadLower, 0, 2);
 
-    MIB.buildInstr(AIE2::REG_SEQUENCE, {AMI.SrcDstOp.getReg()}, {})
+    MIB.buildInstr(AIE2::REG_SEQUENCE, {AMInfo.SrcDstOp.getReg()}, {})
         .addReg(Low256)
         .addImm(AIE2::sub_256_lo)
         .addReg(High256)
         .addImm(AIE2::sub_256_hi);
 
-    Register SrcDstReg = AMI.SrcDstOp.getReg();
-    AMI.MemI.eraseFromParent();
+    Register SrcDstReg = AMInfo.SrcDstOp.getReg();
+    AMInfo.MemI.eraseFromParent();
     return constrainSelectedInstRegOperands(*LoadLower, TII, TRI, RBI) &&
            constrainSelectedInstRegOperands(*LoadHigher, TII, TRI, RBI) &&
            RBI.constrainGenericRegister(SrcDstReg, *RC512, MRI);
@@ -3169,40 +3190,45 @@ bool AIE2InstructionSelector::select512BitG_AIE_LOAD_STORE(
   case AIE2::G_AIE_OFFSET_LOAD: {
     MachineInstrBuilder LoadHigher;
     if (LSO.FitsImmediateRange) {
-      LoadHigher =
-          MIB.buildInstr(*LSO.OffsetOpcode, {}, {})
-              .addDef(High256)
-              .addUse(AMI.PtrOp.getReg())
-              .addImm(AMI.ImmediateOffset->getSExtValue() + 32); // Offset
-    } else {
-      // In this case we have to emit an PTR_ADD to evaluate the offset
-      insertPtrAddForOffset(MRI, AMI.MemI);
+      const int64_t HighOffset =
+          AMInfo.ImmediateOffset->getSExtValue() + PieceBytes;
       LoadHigher = MIB.buildInstr(*LSO.OffsetOpcode, {}, {})
                        .addDef(High256)
-                       .addUse(AMI.PtrOp.getReg())
-                       .addImm(32); // Offset
+                       .addUse(GetPiecePtr(*LSO.OffsetOpcode, HighOffset))
+                       .addImm(HighOffset);
+    } else {
+      // In this case we have to emit an PTR_ADD to evaluate the offset
+      insertPtrAddForOffset(MRI, AMInfo.MemI);
+      LoadHigher = MIB.buildInstr(*LSO.OffsetOpcode, {}, {})
+                       .addDef(High256)
+                       .addUse(GetPiecePtr(*LSO.OffsetOpcode, PieceBytes))
+                       .addImm(PieceBytes);
     }
 
     auto LoadLower =
-        MIB.buildInstr(LSO.ISelOpcode, {Low256}, {}).addUse(AMI.PtrOp.getReg());
+        MIB.buildInstr(LSO.ISelOpcode, {Low256}, {})
+            .addUse(GetPiecePtr(LSO.ISelOpcode,
+                                LSO.FitsImmediateRange
+                                    ? AMInfo.ImmediateOffset->getSExtValue()
+                                    : 0));
     if (LSO.FitsImmediateRange) {
-      LoadLower.addImm(AMI.ImmediateOffset->getSExtValue()); // Offset
+      LoadLower.addImm(AMInfo.ImmediateOffset->getSExtValue()); // Offset
     } else {
       // In this case we have already inserted a PTR_ADD to add the offset to
       // the base pointer
       LoadLower.addImm(0); // Offset
     }
 
-    addSplitMemOperands(AMI.MemI, LoadHigher, LoadLower, 0, 2);
+    addSplitMemOperands(AMInfo.MemI, LoadHigher, LoadLower, 0, 2);
 
-    MIB.buildInstr(AIE2::REG_SEQUENCE, {AMI.SrcDstOp.getReg()}, {})
+    MIB.buildInstr(AIE2::REG_SEQUENCE, {AMInfo.SrcDstOp.getReg()}, {})
         .addReg(Low256)
         .addImm(AIE2::sub_256_lo)
         .addReg(High256)
         .addImm(AIE2::sub_256_hi);
 
-    Register SrcDstReg = AMI.SrcDstOp.getReg();
-    AMI.MemI.eraseFromParent();
+    Register SrcDstReg = AMInfo.SrcDstOp.getReg();
+    AMInfo.MemI.eraseFromParent();
     return constrainSelectedInstRegOperands(*LoadLower, TII, TRI, RBI) &&
            constrainSelectedInstRegOperands(*LoadHigher, TII, TRI, RBI) &&
            RBI.constrainGenericRegister(SrcDstReg, *RC512, MRI);
@@ -3274,31 +3300,32 @@ bool AIE2InstructionSelector::selectG_AIE_LOAD_STORE(MachineInstr &I,
       selectG_AIE_STORE_PACK(I, MRI))
     return true;
 
-  std::optional<AddressingModeInfo> AMI = getOrDefineAddressingRegister(I, MRI);
-  if (!AMI)
+  std::optional<AddressingModeInfo> AMInfo =
+      getOrDefineAddressingRegister(I, MRI);
+  if (!AMInfo)
     return false;
 
   LoadStoreOpcodes LSO =
-      getLoadStoreOpcode(AMI->MemI, MRI, RBI, AMI->ImmediateOffset);
-  LLT SrcDstTy = MRI.getType(AMI->SrcDstOp.getReg());
+      getLoadStoreOpcode(AMInfo->MemI, MRI, RBI, AMInfo->ImmediateOffset);
+  LLT SrcDstTy = MRI.getType(AMInfo->SrcDstOp.getReg());
 
   if (SrcDstTy.getSizeInBits() == 512)
-    return select512BitG_AIE_LOAD_STORE(I, LSO, *AMI, MRI);
+    return select512BitG_AIE_LOAD_STORE(I, LSO, *AMInfo, MRI);
 
   MachineInstrBuilder NewInstr = MIB.buildInstr(LSO.ISelOpcode);
 
-  for (auto Def : AMI->MemI.defs())
+  for (auto Def : AMInfo->MemI.defs())
     NewInstr.addDef(Def.getReg());
 
-  if (AMI->MemI.mayStore())
+  if (AMInfo->MemI.mayStore())
     // If the MemOp is a STORE the first use is the value to be stored
-    NewInstr.addUse(AMI->SrcDstOp.getReg());
+    NewInstr.addUse(AMInfo->SrcDstOp.getReg());
 
-  addAddressingMode(NewInstr, *AMI, LSO.FitsImmediateRange, true, MRI);
+  addAddressingMode(NewInstr, *AMInfo, LSO.FitsImmediateRange, true, MRI);
 
-  NewInstr.cloneMemRefs(AMI->MemI);
+  NewInstr.cloneMemRefs(AMInfo->MemI);
 
-  AMI->MemI.eraseFromParent();
+  AMInfo->MemI.eraseFromParent();
 
   return constrainSelectedInstRegOperands(*NewInstr, TII, TRI, RBI);
 }

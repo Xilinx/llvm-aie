@@ -121,9 +121,49 @@ public:
                            unsigned SplitFactor);
   /// Given the AddressingModeInfo, FitsImmediateRange and whether the
   /// instruction supports frame index rendering add the correct operands to MIB
-  void addAddressingMode(MachineInstrBuilder &MIB, AddressingModeInfo &AMI,
+  /// \p NumAccessBytes is the number of bytes accessed by the instruction in
+  /// MIB, or std::nullopt if unknown. A caller that splits an access passes
+  /// the size of the piece, or std::nullopt. See getAccessPointer().
+  void addAddressingMode(MachineInstrBuilder &MIB, AddressingModeInfo &AMInfo,
+                         bool FitsImmediateRange, bool RenderFrameIndex,
+                         MachineRegisterInfo &MRI,
+                         std::optional<unsigned> NumAccessBytes);
+  /// Same as above, for an instruction in MIB that accesses memory like
+  /// AMInfo.MemI does, as a fused instruction does. The number of bytes is the
+  /// size of the memory access of AMInfo.MemI, if known.
+  void addAddressingMode(MachineInstrBuilder &MIB, AddressingModeInfo &AMInfo,
                          bool FitsImmediateRange, bool RenderFrameIndex,
                          MachineRegisterInfo &MRI);
+  /// Single point through which the pointer operand of a selected load or
+  /// store is obtained. \p PtrReg is the pointer of the original access and
+  /// \p Opcode the selected instruction that will use the returned pointer.
+  /// \p ByteOffset is the constant byte offset applied to \p PtrReg for this
+  /// particular access, if known. \p NumAccessBytes is the number of bytes
+  /// covered by this particular access, or std::nullopt if unknown. A caller
+  /// that splits a wide access passes the size of the piece, not of the whole
+  /// access. The address truncation of the selected instruction is given by
+  /// AIEBaseInstrInfo::getSelectedMemAccessAddrTruncation(). Selected loads
+  /// and stores must use the returned register as their pointer, which allows
+  /// redundant address arithmetic to be absorbed here, leaving the original
+  /// computation to dead code elimination. Currently, under
+  /// -aie-isel-absorb-addr-truncating-mask, a pointer Q = P & ~(M - 1) is
+  /// replaced by P if the instruction ignores the bits that the mask clears
+  /// and \p ByteOffset is a multiple of M. The same holds for a pointer
+  /// Q + C, with a constant C, where the offset that has to be a multiple of M
+  /// is C + \p ByteOffset; the addition is then rebuilt on P. Otherwise this
+  /// returns \p PtrReg unchanged.
+  Register getAccessPointer(Register PtrReg, unsigned Opcode,
+                            std::optional<int64_t> ByteOffset,
+                            std::optional<unsigned> NumAccessBytes);
+  /// If \p PtrReg is Q = P & ~(M - 1) and an access of \p NumAccessBytes bytes
+  /// by \p Opcode at \p Offset from Q may use P instead, return P. Otherwise
+  /// return \p PtrReg.
+  Register getUnmaskedBase(Register PtrReg, unsigned Opcode, int64_t Offset,
+                           unsigned NumAccessBytes);
+  /// If \p PtrReg is Q + C with a constant C, and the access can use P + C
+  /// instead, select and return that addition. Otherwise return \p PtrReg.
+  Register getUnmaskedPtrAdd(Register PtrReg, unsigned Opcode,
+                             int64_t ByteOffset, unsigned NumAccessBytes);
   /// Select into a REG_SEQUENCE instruction of two 32-bit R registers to
   /// one 64-bit L register.
   bool selectLRegSequence(MachineIRBuilder &MIB, MachineInstr &I,
