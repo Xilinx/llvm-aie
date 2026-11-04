@@ -8262,13 +8262,13 @@ define inreg <16 x i8> @bitcast_v4f32_to_v16i8_scalar(<4 x float> inreg %a, i32 
 ; VI-NEXT:  ; %bb.1: ; %cmp.false
 ; VI-NEXT:    s_lshr_b32 s10, s19, 24
 ; VI-NEXT:    s_lshr_b32 s11, s19, 16
-; VI-NEXT:    s_lshr_b32 s13, s19, 8
-; VI-NEXT:    s_lshr_b32 s12, s18, 16
+; VI-NEXT:    s_lshr_b32 s12, s19, 8
+; VI-NEXT:    s_lshr_b32 s13, s18, 16
 ; VI-NEXT:    s_lshr_b32 s14, s18, 8
 ; VI-NEXT:    s_lshr_b32 s15, s17, 24
 ; VI-NEXT:    s_lshr_b32 s20, s17, 16
-; VI-NEXT:    s_lshr_b32 s22, s17, 8
-; VI-NEXT:    s_lshr_b32 s21, s16, 16
+; VI-NEXT:    s_lshr_b32 s21, s17, 8
+; VI-NEXT:    s_lshr_b32 s22, s16, 16
 ; VI-NEXT:    s_lshr_b32 s23, s16, 8
 ; VI-NEXT:    s_lshr_b64 s[6:7], s[18:19], 24
 ; VI-NEXT:    s_lshr_b64 s[4:5], s[16:17], 24
@@ -8293,15 +8293,15 @@ define inreg <16 x i8> @bitcast_v4f32_to_v16i8_scalar(<4 x float> inreg %a, i32 
 ; VI-NEXT:    s_branch .LBB49_5
 ; VI-NEXT:  .LBB49_3:
 ; VI-NEXT:    ; implicit-def: $sgpr23
-; VI-NEXT:    ; implicit-def: $sgpr21
-; VI-NEXT:    ; implicit-def: $sgpr4
 ; VI-NEXT:    ; implicit-def: $sgpr22
+; VI-NEXT:    ; implicit-def: $sgpr4
+; VI-NEXT:    ; implicit-def: $sgpr21
 ; VI-NEXT:    ; implicit-def: $sgpr20
 ; VI-NEXT:    ; implicit-def: $sgpr15
 ; VI-NEXT:    ; implicit-def: $sgpr14
-; VI-NEXT:    ; implicit-def: $sgpr12
-; VI-NEXT:    ; implicit-def: $sgpr6
 ; VI-NEXT:    ; implicit-def: $sgpr13
+; VI-NEXT:    ; implicit-def: $sgpr6
+; VI-NEXT:    ; implicit-def: $sgpr12
 ; VI-NEXT:    ; implicit-def: $sgpr11
 ; VI-NEXT:    ; implicit-def: $sgpr10
 ; VI-NEXT:    s_branch .LBB49_2
@@ -8311,13 +8311,13 @@ define inreg <16 x i8> @bitcast_v4f32_to_v16i8_scalar(<4 x float> inreg %a, i32 
 ; VI-NEXT:    v_mov_b32_e32 v16, s18
 ; VI-NEXT:    v_mov_b32_e32 v17, s19
 ; VI-NEXT:    v_mov_b32_e32 v1, s23
-; VI-NEXT:    v_mov_b32_e32 v2, s21
-; VI-NEXT:    v_mov_b32_e32 v5, s22
+; VI-NEXT:    v_mov_b32_e32 v2, s22
+; VI-NEXT:    v_mov_b32_e32 v5, s21
 ; VI-NEXT:    v_mov_b32_e32 v6, s20
 ; VI-NEXT:    v_mov_b32_e32 v7, s15
 ; VI-NEXT:    v_mov_b32_e32 v9, s14
-; VI-NEXT:    v_mov_b32_e32 v10, s12
-; VI-NEXT:    v_mov_b32_e32 v13, s13
+; VI-NEXT:    v_mov_b32_e32 v10, s13
+; VI-NEXT:    v_mov_b32_e32 v13, s12
 ; VI-NEXT:    v_mov_b32_e32 v14, s11
 ; VI-NEXT:    v_mov_b32_e32 v15, s10
 ; VI-NEXT:    v_mov_b32_e32 v11, s6
@@ -8337,13 +8337,13 @@ define inreg <16 x i8> @bitcast_v4f32_to_v16i8_scalar(<4 x float> inreg %a, i32 
 ; GFX9-NEXT:  ; %bb.1: ; %cmp.false
 ; GFX9-NEXT:    s_lshr_b32 s10, s19, 24
 ; GFX9-NEXT:    s_lshr_b32 s11, s19, 16
-; GFX9-NEXT:    s_lshr_b32 s13, s19, 8
-; GFX9-NEXT:    s_lshr_b32 s12, s18, 16
+; GFX9-NEXT:    s_lshr_b32 s12, s19, 8
+; GFX9-NEXT:    s_lshr_b32 s13, s18, 16
 ; GFX9-NEXT:    s_lshr_b32 s14, s18, 8
 ; GFX9-NEXT:    s_lshr_b32 s15, s17, 24
 ; GFX9-NEXT:    s_lshr_b32 s20, s17, 16
-; GFX9-NEXT:    s_lshr_b32 s22, s17, 8
-; GFX9-NEXT:    s_lshr_b32 s21, s16, 16
+; GFX9-NEXT:    s_lshr_b32 s21, s17, 8
+; GFX9-NEXT:    s_lshr_b32 s22, s16, 16
 ; GFX9-NEXT:    s_lshr_b32 s23, s16, 8
 ; GFX9-NEXT:    s_lshr_b64 s[6:7], s[18:19], 24
 ; GFX9-NEXT:    s_lshr_b64 s[4:5], s[16:17], 24
@@ -8368,15 +8368,15 @@ define inreg <16 x i8> @bitcast_v4f32_to_v16i8_scalar(<4 x float> inreg %a, i32 
 ; GFX9-NEXT:    s_branch .LBB49_5
 ; GFX9-NEXT:  .LBB49_3:
 ; GFX9-NEXT:    ; implicit-def: $sgpr23
-; GFX9-NEXT:    ; implicit-def: $sgpr21
-; GFX9-NEXT:    ; implicit-def: $sgpr4
 ; GFX9-NEXT:    ; implicit-def: $sgpr22
+; GFX9-NEXT:    ; implicit-def: $sgpr4
+; GFX9-NEXT:    ; implicit-def: $sgpr21
 ; GFX9-NEXT:    ; implicit-def: $sgpr20
 ; GFX9-NEXT:    ; implicit-def: $sgpr15
 ; GFX9-NEXT:    ; implicit-def: $sgpr14
-; GFX9-NEXT:    ; implicit-def: $sgpr12
-; GFX9-NEXT:    ; implicit-def: $sgpr6
 ; GFX9-NEXT:    ; implicit-def: $sgpr13
+; GFX9-NEXT:    ; implicit-def: $sgpr6
+; GFX9-NEXT:    ; implicit-def: $sgpr12
 ; GFX9-NEXT:    ; implicit-def: $sgpr11
 ; GFX9-NEXT:    ; implicit-def: $sgpr10
 ; GFX9-NEXT:    s_branch .LBB49_2
@@ -8386,13 +8386,13 @@ define inreg <16 x i8> @bitcast_v4f32_to_v16i8_scalar(<4 x float> inreg %a, i32 
 ; GFX9-NEXT:    v_mov_b32_e32 v16, s18
 ; GFX9-NEXT:    v_mov_b32_e32 v17, s19
 ; GFX9-NEXT:    v_mov_b32_e32 v1, s23
-; GFX9-NEXT:    v_mov_b32_e32 v2, s21
-; GFX9-NEXT:    v_mov_b32_e32 v5, s22
+; GFX9-NEXT:    v_mov_b32_e32 v2, s22
+; GFX9-NEXT:    v_mov_b32_e32 v5, s21
 ; GFX9-NEXT:    v_mov_b32_e32 v6, s20
 ; GFX9-NEXT:    v_mov_b32_e32 v7, s15
 ; GFX9-NEXT:    v_mov_b32_e32 v9, s14
-; GFX9-NEXT:    v_mov_b32_e32 v10, s12
-; GFX9-NEXT:    v_mov_b32_e32 v13, s13
+; GFX9-NEXT:    v_mov_b32_e32 v10, s13
+; GFX9-NEXT:    v_mov_b32_e32 v13, s12
 ; GFX9-NEXT:    v_mov_b32_e32 v14, s11
 ; GFX9-NEXT:    v_mov_b32_e32 v15, s10
 ; GFX9-NEXT:    v_mov_b32_e32 v11, s6
@@ -8413,13 +8413,13 @@ define inreg <16 x i8> @bitcast_v4f32_to_v16i8_scalar(<4 x float> inreg %a, i32 
 ; GFX11-NEXT:  ; %bb.1: ; %cmp.false
 ; GFX11-NEXT:    s_lshr_b32 s9, s3, 24
 ; GFX11-NEXT:    s_lshr_b32 s10, s3, 16
-; GFX11-NEXT:    s_lshr_b32 s12, s3, 8
-; GFX11-NEXT:    s_lshr_b32 s11, s2, 16
+; GFX11-NEXT:    s_lshr_b32 s11, s3, 8
+; GFX11-NEXT:    s_lshr_b32 s12, s2, 16
 ; GFX11-NEXT:    s_lshr_b32 s13, s2, 8
 ; GFX11-NEXT:    s_lshr_b32 s14, s1, 24
 ; GFX11-NEXT:    s_lshr_b32 s15, s1, 16
-; GFX11-NEXT:    s_lshr_b32 s17, s1, 8
-; GFX11-NEXT:    s_lshr_b32 s16, s0, 16
+; GFX11-NEXT:    s_lshr_b32 s16, s1, 8
+; GFX11-NEXT:    s_lshr_b32 s17, s0, 16
 ; GFX11-NEXT:    s_lshr_b32 s18, s0, 8
 ; GFX11-NEXT:    s_lshr_b64 s[6:7], s[2:3], 24
 ; GFX11-NEXT:    s_lshr_b64 s[4:5], s[0:1], 24
@@ -8447,26 +8447,26 @@ define inreg <16 x i8> @bitcast_v4f32_to_v16i8_scalar(<4 x float> inreg %a, i32 
 ; GFX11-NEXT:    s_branch .LBB49_5
 ; GFX11-NEXT:  .LBB49_3:
 ; GFX11-NEXT:    ; implicit-def: $sgpr18
-; GFX11-NEXT:    ; implicit-def: $sgpr16
-; GFX11-NEXT:    ; implicit-def: $sgpr4
 ; GFX11-NEXT:    ; implicit-def: $sgpr17
+; GFX11-NEXT:    ; implicit-def: $sgpr4
+; GFX11-NEXT:    ; implicit-def: $sgpr16
 ; GFX11-NEXT:    ; implicit-def: $sgpr15
 ; GFX11-NEXT:    ; implicit-def: $sgpr14
 ; GFX11-NEXT:    ; implicit-def: $sgpr13
-; GFX11-NEXT:    ; implicit-def: $sgpr11
-; GFX11-NEXT:    ; implicit-def: $sgpr6
 ; GFX11-NEXT:    ; implicit-def: $sgpr12
+; GFX11-NEXT:    ; implicit-def: $sgpr6
+; GFX11-NEXT:    ; implicit-def: $sgpr11
 ; GFX11-NEXT:    ; implicit-def: $sgpr10
 ; GFX11-NEXT:    ; implicit-def: $sgpr9
 ; GFX11-NEXT:    s_branch .LBB49_2
 ; GFX11-NEXT:  .LBB49_4:
 ; GFX11-NEXT:    v_dual_mov_b32 v18, s0 :: v_dual_mov_b32 v19, s1
 ; GFX11-NEXT:    v_dual_mov_b32 v16, s2 :: v_dual_mov_b32 v17, s3
-; GFX11-NEXT:    v_dual_mov_b32 v1, s18 :: v_dual_mov_b32 v2, s16
-; GFX11-NEXT:    v_dual_mov_b32 v5, s17 :: v_dual_mov_b32 v6, s15
-; GFX11-NEXT:    v_dual_mov_b32 v7, s14 :: v_dual_mov_b32 v10, s11
+; GFX11-NEXT:    v_dual_mov_b32 v1, s18 :: v_dual_mov_b32 v2, s17
+; GFX11-NEXT:    v_dual_mov_b32 v5, s16 :: v_dual_mov_b32 v6, s15
+; GFX11-NEXT:    v_dual_mov_b32 v7, s14 :: v_dual_mov_b32 v10, s12
 ; GFX11-NEXT:    v_dual_mov_b32 v9, s13 :: v_dual_mov_b32 v14, s10
-; GFX11-NEXT:    v_mov_b32_e32 v13, s12
+; GFX11-NEXT:    v_mov_b32_e32 v13, s11
 ; GFX11-NEXT:    v_mov_b32_e32 v15, s9
 ; GFX11-NEXT:    v_mov_b32_e32 v11, s6
 ; GFX11-NEXT:    v_mov_b32_e32 v3, s4
@@ -16219,14 +16219,14 @@ define inreg <16 x i8> @bitcast_v2f64_to_v16i8_scalar(<2 x double> inreg %a, i32
 ; VI-NEXT:    s_cmp_lg_u32 s20, 0
 ; VI-NEXT:    s_cbranch_scc0 .LBB85_3
 ; VI-NEXT:  ; %bb.1: ; %cmp.false
-; VI-NEXT:    s_lshr_b32 s15, s19, 24
-; VI-NEXT:    s_lshr_b32 s14, s19, 16
-; VI-NEXT:    s_lshr_b32 s13, s19, 8
+; VI-NEXT:    s_lshr_b32 s12, s19, 24
+; VI-NEXT:    s_lshr_b32 s11, s19, 16
+; VI-NEXT:    s_lshr_b32 s10, s19, 8
 ; VI-NEXT:    s_lshr_b32 s21, s18, 16
 ; VI-NEXT:    s_lshr_b32 s20, s18, 8
-; VI-NEXT:    s_lshr_b32 s12, s17, 24
-; VI-NEXT:    s_lshr_b32 s11, s17, 16
-; VI-NEXT:    s_lshr_b32 s10, s17, 8
+; VI-NEXT:    s_lshr_b32 s15, s17, 24
+; VI-NEXT:    s_lshr_b32 s14, s17, 16
+; VI-NEXT:    s_lshr_b32 s13, s17, 8
 ; VI-NEXT:    s_lshr_b32 s23, s16, 16
 ; VI-NEXT:    s_lshr_b32 s22, s16, 8
 ; VI-NEXT:    s_lshr_b64 s[6:7], s[18:19], 24
@@ -16252,15 +16252,15 @@ define inreg <16 x i8> @bitcast_v2f64_to_v16i8_scalar(<2 x double> inreg %a, i32
 ; VI-NEXT:    ; implicit-def: $sgpr22
 ; VI-NEXT:    ; implicit-def: $sgpr23
 ; VI-NEXT:    ; implicit-def: $sgpr4
-; VI-NEXT:    ; implicit-def: $sgpr10
-; VI-NEXT:    ; implicit-def: $sgpr11
-; VI-NEXT:    ; implicit-def: $sgpr12
-; VI-NEXT:    ; implicit-def: $sgpr20
-; VI-NEXT:    ; implicit-def: $sgpr21
-; VI-NEXT:    ; implicit-def: $sgpr6
 ; VI-NEXT:    ; implicit-def: $sgpr13
 ; VI-NEXT:    ; implicit-def: $sgpr14
 ; VI-NEXT:    ; implicit-def: $sgpr15
+; VI-NEXT:    ; implicit-def: $sgpr20
+; VI-NEXT:    ; implicit-def: $sgpr21
+; VI-NEXT:    ; implicit-def: $sgpr6
+; VI-NEXT:    ; implicit-def: $sgpr10
+; VI-NEXT:    ; implicit-def: $sgpr11
+; VI-NEXT:    ; implicit-def: $sgpr12
 ; VI-NEXT:    s_branch .LBB85_2
 ; VI-NEXT:  .LBB85_4:
 ; VI-NEXT:    v_mov_b32_e32 v18, s16
@@ -16273,12 +16273,12 @@ define inreg <16 x i8> @bitcast_v2f64_to_v16i8_scalar(<2 x double> inreg %a, i32
 ; VI-NEXT:    v_mov_b32_e32 v9, s20
 ; VI-NEXT:    v_mov_b32_e32 v3, s4
 ; VI-NEXT:    v_mov_b32_e32 v11, s6
-; VI-NEXT:    v_mov_b32_e32 v15, s15
-; VI-NEXT:    v_mov_b32_e32 v14, s14
-; VI-NEXT:    v_mov_b32_e32 v13, s13
-; VI-NEXT:    v_mov_b32_e32 v7, s12
-; VI-NEXT:    v_mov_b32_e32 v6, s11
-; VI-NEXT:    v_mov_b32_e32 v5, s10
+; VI-NEXT:    v_mov_b32_e32 v15, s12
+; VI-NEXT:    v_mov_b32_e32 v14, s11
+; VI-NEXT:    v_mov_b32_e32 v13, s10
+; VI-NEXT:    v_mov_b32_e32 v7, s15
+; VI-NEXT:    v_mov_b32_e32 v6, s14
+; VI-NEXT:    v_mov_b32_e32 v5, s13
 ; VI-NEXT:  .LBB85_5: ; %end
 ; VI-NEXT:    v_mov_b32_e32 v0, v18
 ; VI-NEXT:    v_mov_b32_e32 v4, v19
@@ -16292,14 +16292,14 @@ define inreg <16 x i8> @bitcast_v2f64_to_v16i8_scalar(<2 x double> inreg %a, i32
 ; GFX9-NEXT:    s_cmp_lg_u32 s20, 0
 ; GFX9-NEXT:    s_cbranch_scc0 .LBB85_3
 ; GFX9-NEXT:  ; %bb.1: ; %cmp.false
-; GFX9-NEXT:    s_lshr_b32 s15, s19, 24
-; GFX9-NEXT:    s_lshr_b32 s14, s19, 16
-; GFX9-NEXT:    s_lshr_b32 s13, s19, 8
+; GFX9-NEXT:    s_lshr_b32 s12, s19, 24
+; GFX9-NEXT:    s_lshr_b32 s11, s19, 16
+; GFX9-NEXT:    s_lshr_b32 s10, s19, 8
 ; GFX9-NEXT:    s_lshr_b32 s21, s18, 16
 ; GFX9-NEXT:    s_lshr_b32 s20, s18, 8
-; GFX9-NEXT:    s_lshr_b32 s12, s17, 24
-; GFX9-NEXT:    s_lshr_b32 s11, s17, 16
-; GFX9-NEXT:    s_lshr_b32 s10, s17, 8
+; GFX9-NEXT:    s_lshr_b32 s15, s17, 24
+; GFX9-NEXT:    s_lshr_b32 s14, s17, 16
+; GFX9-NEXT:    s_lshr_b32 s13, s17, 8
 ; GFX9-NEXT:    s_lshr_b32 s23, s16, 16
 ; GFX9-NEXT:    s_lshr_b32 s22, s16, 8
 ; GFX9-NEXT:    s_lshr_b64 s[6:7], s[18:19], 24
@@ -16325,15 +16325,15 @@ define inreg <16 x i8> @bitcast_v2f64_to_v16i8_scalar(<2 x double> inreg %a, i32
 ; GFX9-NEXT:    ; implicit-def: $sgpr22
 ; GFX9-NEXT:    ; implicit-def: $sgpr23
 ; GFX9-NEXT:    ; implicit-def: $sgpr4
-; GFX9-NEXT:    ; implicit-def: $sgpr10
-; GFX9-NEXT:    ; implicit-def: $sgpr11
-; GFX9-NEXT:    ; implicit-def: $sgpr12
-; GFX9-NEXT:    ; implicit-def: $sgpr20
-; GFX9-NEXT:    ; implicit-def: $sgpr21
-; GFX9-NEXT:    ; implicit-def: $sgpr6
 ; GFX9-NEXT:    ; implicit-def: $sgpr13
 ; GFX9-NEXT:    ; implicit-def: $sgpr14
 ; GFX9-NEXT:    ; implicit-def: $sgpr15
+; GFX9-NEXT:    ; implicit-def: $sgpr20
+; GFX9-NEXT:    ; implicit-def: $sgpr21
+; GFX9-NEXT:    ; implicit-def: $sgpr6
+; GFX9-NEXT:    ; implicit-def: $sgpr10
+; GFX9-NEXT:    ; implicit-def: $sgpr11
+; GFX9-NEXT:    ; implicit-def: $sgpr12
 ; GFX9-NEXT:    s_branch .LBB85_2
 ; GFX9-NEXT:  .LBB85_4:
 ; GFX9-NEXT:    v_mov_b32_e32 v18, s16
@@ -16346,12 +16346,12 @@ define inreg <16 x i8> @bitcast_v2f64_to_v16i8_scalar(<2 x double> inreg %a, i32
 ; GFX9-NEXT:    v_mov_b32_e32 v9, s20
 ; GFX9-NEXT:    v_mov_b32_e32 v3, s4
 ; GFX9-NEXT:    v_mov_b32_e32 v11, s6
-; GFX9-NEXT:    v_mov_b32_e32 v15, s15
-; GFX9-NEXT:    v_mov_b32_e32 v14, s14
-; GFX9-NEXT:    v_mov_b32_e32 v13, s13
-; GFX9-NEXT:    v_mov_b32_e32 v7, s12
-; GFX9-NEXT:    v_mov_b32_e32 v6, s11
-; GFX9-NEXT:    v_mov_b32_e32 v5, s10
+; GFX9-NEXT:    v_mov_b32_e32 v15, s12
+; GFX9-NEXT:    v_mov_b32_e32 v14, s11
+; GFX9-NEXT:    v_mov_b32_e32 v13, s10
+; GFX9-NEXT:    v_mov_b32_e32 v7, s15
+; GFX9-NEXT:    v_mov_b32_e32 v6, s14
+; GFX9-NEXT:    v_mov_b32_e32 v5, s13
 ; GFX9-NEXT:  .LBB85_5: ; %end
 ; GFX9-NEXT:    v_mov_b32_e32 v0, v18
 ; GFX9-NEXT:    v_mov_b32_e32 v4, v19
@@ -16366,14 +16366,14 @@ define inreg <16 x i8> @bitcast_v2f64_to_v16i8_scalar(<2 x double> inreg %a, i32
 ; GFX11-NEXT:    s_mov_b32 s8, 0
 ; GFX11-NEXT:    s_cbranch_scc0 .LBB85_3
 ; GFX11-NEXT:  ; %bb.1: ; %cmp.false
-; GFX11-NEXT:    s_lshr_b32 s14, s3, 24
-; GFX11-NEXT:    s_lshr_b32 s13, s3, 16
-; GFX11-NEXT:    s_lshr_b32 s12, s3, 8
+; GFX11-NEXT:    s_lshr_b32 s11, s3, 24
+; GFX11-NEXT:    s_lshr_b32 s10, s3, 16
+; GFX11-NEXT:    s_lshr_b32 s9, s3, 8
 ; GFX11-NEXT:    s_lshr_b32 s16, s2, 16
 ; GFX11-NEXT:    s_lshr_b32 s15, s2, 8
-; GFX11-NEXT:    s_lshr_b32 s11, s1, 24
-; GFX11-NEXT:    s_lshr_b32 s10, s1, 16
-; GFX11-NEXT:    s_lshr_b32 s9, s1, 8
+; GFX11-NEXT:    s_lshr_b32 s14, s1, 24
+; GFX11-NEXT:    s_lshr_b32 s13, s1, 16
+; GFX11-NEXT:    s_lshr_b32 s12, s1, 8
 ; GFX11-NEXT:    s_lshr_b32 s18, s0, 16
 ; GFX11-NEXT:    s_lshr_b32 s17, s0, 8
 ; GFX11-NEXT:    s_lshr_b64 s[6:7], s[2:3], 24
@@ -16401,27 +16401,27 @@ define inreg <16 x i8> @bitcast_v2f64_to_v16i8_scalar(<2 x double> inreg %a, i32
 ; GFX11-NEXT:    ; implicit-def: $sgpr17
 ; GFX11-NEXT:    ; implicit-def: $sgpr18
 ; GFX11-NEXT:    ; implicit-def: $sgpr4
-; GFX11-NEXT:    ; implicit-def: $sgpr9
-; GFX11-NEXT:    ; implicit-def: $sgpr10
-; GFX11-NEXT:    ; implicit-def: $sgpr11
-; GFX11-NEXT:    ; implicit-def: $sgpr15
-; GFX11-NEXT:    ; implicit-def: $sgpr16
-; GFX11-NEXT:    ; implicit-def: $sgpr6
 ; GFX11-NEXT:    ; implicit-def: $sgpr12
 ; GFX11-NEXT:    ; implicit-def: $sgpr13
 ; GFX11-NEXT:    ; implicit-def: $sgpr14
+; GFX11-NEXT:    ; implicit-def: $sgpr15
+; GFX11-NEXT:    ; implicit-def: $sgpr16
+; GFX11-NEXT:    ; implicit-def: $sgpr6
+; GFX11-NEXT:    ; implicit-def: $sgpr9
+; GFX11-NEXT:    ; implicit-def: $sgpr10
+; GFX11-NEXT:    ; implicit-def: $sgpr11
 ; GFX11-NEXT:    s_branch .LBB85_2
 ; GFX11-NEXT:  .LBB85_4:
 ; GFX11-NEXT:    v_dual_mov_b32 v18, s0 :: v_dual_mov_b32 v17, s3
 ; GFX11-NEXT:    v_dual_mov_b32 v16, s2 :: v_dual_mov_b32 v19, s1
 ; GFX11-NEXT:    v_dual_mov_b32 v2, s18 :: v_dual_mov_b32 v1, s17
 ; GFX11-NEXT:    v_dual_mov_b32 v10, s16 :: v_dual_mov_b32 v9, s15
-; GFX11-NEXT:    v_dual_mov_b32 v3, s4 :: v_dual_mov_b32 v14, s13
-; GFX11-NEXT:    v_dual_mov_b32 v11, s6 :: v_dual_mov_b32 v6, s10
-; GFX11-NEXT:    v_mov_b32_e32 v15, s14
-; GFX11-NEXT:    v_mov_b32_e32 v13, s12
-; GFX11-NEXT:    v_mov_b32_e32 v7, s11
-; GFX11-NEXT:    v_mov_b32_e32 v5, s9
+; GFX11-NEXT:    v_dual_mov_b32 v3, s4 :: v_dual_mov_b32 v14, s10
+; GFX11-NEXT:    v_dual_mov_b32 v11, s6 :: v_dual_mov_b32 v6, s13
+; GFX11-NEXT:    v_mov_b32_e32 v15, s11
+; GFX11-NEXT:    v_mov_b32_e32 v13, s9
+; GFX11-NEXT:    v_mov_b32_e32 v7, s14
+; GFX11-NEXT:    v_mov_b32_e32 v5, s12
 ; GFX11-NEXT:  .LBB85_5: ; %end
 ; GFX11-NEXT:    v_mov_b32_e32 v0, v18
 ; GFX11-NEXT:    v_mov_b32_e32 v4, v19
@@ -19761,13 +19761,13 @@ define inreg <16 x i8> @bitcast_v8i16_to_v16i8_scalar(<8 x i16> inreg %a, i32 in
 ; GFX9-NEXT:  ; %bb.1: ; %cmp.false
 ; GFX9-NEXT:    s_lshr_b32 s10, s19, 24
 ; GFX9-NEXT:    s_lshr_b32 s11, s19, 16
-; GFX9-NEXT:    s_lshr_b32 s13, s19, 8
-; GFX9-NEXT:    s_lshr_b32 s12, s18, 16
+; GFX9-NEXT:    s_lshr_b32 s12, s19, 8
+; GFX9-NEXT:    s_lshr_b32 s13, s18, 16
 ; GFX9-NEXT:    s_lshr_b32 s14, s18, 8
 ; GFX9-NEXT:    s_lshr_b32 s15, s17, 24
 ; GFX9-NEXT:    s_lshr_b32 s20, s17, 16
-; GFX9-NEXT:    s_lshr_b32 s22, s17, 8
-; GFX9-NEXT:    s_lshr_b32 s21, s16, 16
+; GFX9-NEXT:    s_lshr_b32 s21, s17, 8
+; GFX9-NEXT:    s_lshr_b32 s22, s16, 16
 ; GFX9-NEXT:    s_lshr_b32 s23, s16, 8
 ; GFX9-NEXT:    s_lshr_b64 s[6:7], s[18:19], 24
 ; GFX9-NEXT:    s_lshr_b64 s[4:5], s[16:17], 24
@@ -19792,15 +19792,15 @@ define inreg <16 x i8> @bitcast_v8i16_to_v16i8_scalar(<8 x i16> inreg %a, i32 in
 ; GFX9-NEXT:    s_branch .LBB97_5
 ; GFX9-NEXT:  .LBB97_3:
 ; GFX9-NEXT:    ; implicit-def: $sgpr23
-; GFX9-NEXT:    ; implicit-def: $sgpr21
-; GFX9-NEXT:    ; implicit-def: $sgpr4
 ; GFX9-NEXT:    ; implicit-def: $sgpr22
+; GFX9-NEXT:    ; implicit-def: $sgpr4
+; GFX9-NEXT:    ; implicit-def: $sgpr21
 ; GFX9-NEXT:    ; implicit-def: $sgpr20
 ; GFX9-NEXT:    ; implicit-def: $sgpr15
 ; GFX9-NEXT:    ; implicit-def: $sgpr14
-; GFX9-NEXT:    ; implicit-def: $sgpr12
-; GFX9-NEXT:    ; implicit-def: $sgpr6
 ; GFX9-NEXT:    ; implicit-def: $sgpr13
+; GFX9-NEXT:    ; implicit-def: $sgpr6
+; GFX9-NEXT:    ; implicit-def: $sgpr12
 ; GFX9-NEXT:    ; implicit-def: $sgpr11
 ; GFX9-NEXT:    ; implicit-def: $sgpr10
 ; GFX9-NEXT:    s_branch .LBB97_2
@@ -19810,13 +19810,13 @@ define inreg <16 x i8> @bitcast_v8i16_to_v16i8_scalar(<8 x i16> inreg %a, i32 in
 ; GFX9-NEXT:    v_mov_b32_e32 v16, s18
 ; GFX9-NEXT:    v_mov_b32_e32 v17, s19
 ; GFX9-NEXT:    v_mov_b32_e32 v1, s23
-; GFX9-NEXT:    v_mov_b32_e32 v2, s21
-; GFX9-NEXT:    v_mov_b32_e32 v5, s22
+; GFX9-NEXT:    v_mov_b32_e32 v2, s22
+; GFX9-NEXT:    v_mov_b32_e32 v5, s21
 ; GFX9-NEXT:    v_mov_b32_e32 v6, s20
 ; GFX9-NEXT:    v_mov_b32_e32 v7, s15
 ; GFX9-NEXT:    v_mov_b32_e32 v9, s14
-; GFX9-NEXT:    v_mov_b32_e32 v10, s12
-; GFX9-NEXT:    v_mov_b32_e32 v13, s13
+; GFX9-NEXT:    v_mov_b32_e32 v10, s13
+; GFX9-NEXT:    v_mov_b32_e32 v13, s12
 ; GFX9-NEXT:    v_mov_b32_e32 v14, s11
 ; GFX9-NEXT:    v_mov_b32_e32 v15, s10
 ; GFX9-NEXT:    v_mov_b32_e32 v11, s6
@@ -19837,13 +19837,13 @@ define inreg <16 x i8> @bitcast_v8i16_to_v16i8_scalar(<8 x i16> inreg %a, i32 in
 ; GFX11-NEXT:  ; %bb.1: ; %cmp.false
 ; GFX11-NEXT:    s_lshr_b32 s9, s3, 24
 ; GFX11-NEXT:    s_lshr_b32 s10, s3, 16
-; GFX11-NEXT:    s_lshr_b32 s12, s3, 8
-; GFX11-NEXT:    s_lshr_b32 s11, s2, 16
+; GFX11-NEXT:    s_lshr_b32 s11, s3, 8
+; GFX11-NEXT:    s_lshr_b32 s12, s2, 16
 ; GFX11-NEXT:    s_lshr_b32 s13, s2, 8
 ; GFX11-NEXT:    s_lshr_b32 s14, s1, 24
 ; GFX11-NEXT:    s_lshr_b32 s15, s1, 16
-; GFX11-NEXT:    s_lshr_b32 s17, s1, 8
-; GFX11-NEXT:    s_lshr_b32 s16, s0, 16
+; GFX11-NEXT:    s_lshr_b32 s16, s1, 8
+; GFX11-NEXT:    s_lshr_b32 s17, s0, 16
 ; GFX11-NEXT:    s_lshr_b32 s18, s0, 8
 ; GFX11-NEXT:    s_lshr_b64 s[6:7], s[2:3], 24
 ; GFX11-NEXT:    s_lshr_b64 s[4:5], s[0:1], 24
@@ -19871,26 +19871,26 @@ define inreg <16 x i8> @bitcast_v8i16_to_v16i8_scalar(<8 x i16> inreg %a, i32 in
 ; GFX11-NEXT:    s_branch .LBB97_5
 ; GFX11-NEXT:  .LBB97_3:
 ; GFX11-NEXT:    ; implicit-def: $sgpr18
-; GFX11-NEXT:    ; implicit-def: $sgpr16
-; GFX11-NEXT:    ; implicit-def: $sgpr4
 ; GFX11-NEXT:    ; implicit-def: $sgpr17
+; GFX11-NEXT:    ; implicit-def: $sgpr4
+; GFX11-NEXT:    ; implicit-def: $sgpr16
 ; GFX11-NEXT:    ; implicit-def: $sgpr15
 ; GFX11-NEXT:    ; implicit-def: $sgpr14
 ; GFX11-NEXT:    ; implicit-def: $sgpr13
-; GFX11-NEXT:    ; implicit-def: $sgpr11
-; GFX11-NEXT:    ; implicit-def: $sgpr6
 ; GFX11-NEXT:    ; implicit-def: $sgpr12
+; GFX11-NEXT:    ; implicit-def: $sgpr6
+; GFX11-NEXT:    ; implicit-def: $sgpr11
 ; GFX11-NEXT:    ; implicit-def: $sgpr10
 ; GFX11-NEXT:    ; implicit-def: $sgpr9
 ; GFX11-NEXT:    s_branch .LBB97_2
 ; GFX11-NEXT:  .LBB97_4:
 ; GFX11-NEXT:    v_dual_mov_b32 v18, s0 :: v_dual_mov_b32 v19, s1
 ; GFX11-NEXT:    v_dual_mov_b32 v16, s2 :: v_dual_mov_b32 v17, s3
-; GFX11-NEXT:    v_dual_mov_b32 v1, s18 :: v_dual_mov_b32 v2, s16
-; GFX11-NEXT:    v_dual_mov_b32 v5, s17 :: v_dual_mov_b32 v6, s15
-; GFX11-NEXT:    v_dual_mov_b32 v7, s14 :: v_dual_mov_b32 v10, s11
+; GFX11-NEXT:    v_dual_mov_b32 v1, s18 :: v_dual_mov_b32 v2, s17
+; GFX11-NEXT:    v_dual_mov_b32 v5, s16 :: v_dual_mov_b32 v6, s15
+; GFX11-NEXT:    v_dual_mov_b32 v7, s14 :: v_dual_mov_b32 v10, s12
 ; GFX11-NEXT:    v_dual_mov_b32 v9, s13 :: v_dual_mov_b32 v14, s10
-; GFX11-NEXT:    v_mov_b32_e32 v13, s12
+; GFX11-NEXT:    v_mov_b32_e32 v13, s11
 ; GFX11-NEXT:    v_mov_b32_e32 v15, s9
 ; GFX11-NEXT:    v_mov_b32_e32 v11, s6
 ; GFX11-NEXT:    v_mov_b32_e32 v3, s4
@@ -22678,16 +22678,16 @@ define inreg <16 x i8> @bitcast_v8f16_to_v16i8_scalar(<8 x half> inreg %a, i32 i
 ; VI-NEXT:    s_cmp_lg_u32 s20, 0
 ; VI-NEXT:    s_cbranch_scc0 .LBB105_3
 ; VI-NEXT:  ; %bb.1: ; %cmp.false
-; VI-NEXT:    s_lshr_b32 s14, s19, 24
+; VI-NEXT:    s_lshr_b32 s11, s19, 24
 ; VI-NEXT:    s_lshr_b32 s20, s19, 16
-; VI-NEXT:    s_lshr_b32 s11, s19, 8
+; VI-NEXT:    s_lshr_b32 s10, s19, 8
 ; VI-NEXT:    s_lshr_b32 s21, s18, 16
 ; VI-NEXT:    s_lshr_b32 s13, s18, 8
 ; VI-NEXT:    s_lshr_b32 s15, s17, 24
 ; VI-NEXT:    s_lshr_b32 s22, s17, 16
-; VI-NEXT:    s_lshr_b32 s10, s17, 8
+; VI-NEXT:    s_lshr_b32 s12, s17, 8
 ; VI-NEXT:    s_lshr_b32 s23, s16, 16
-; VI-NEXT:    s_lshr_b32 s12, s16, 8
+; VI-NEXT:    s_lshr_b32 s14, s16, 8
 ; VI-NEXT:    s_lshr_b64 s[6:7], s[18:19], 24
 ; VI-NEXT:    s_lshr_b64 s[4:5], s[16:17], 24
 ; VI-NEXT:    s_cbranch_execnz .LBB105_4
@@ -22723,18 +22723,18 @@ define inreg <16 x i8> @bitcast_v8f16_to_v16i8_scalar(<8 x half> inreg %a, i32 i
 ; VI-NEXT:    v_bfe_u32 v7, v6, 8, 8
 ; VI-NEXT:    s_branch .LBB105_5
 ; VI-NEXT:  .LBB105_3:
-; VI-NEXT:    ; implicit-def: $sgpr12
+; VI-NEXT:    ; implicit-def: $sgpr14
 ; VI-NEXT:    ; implicit-def: $sgpr23
 ; VI-NEXT:    ; implicit-def: $sgpr4
-; VI-NEXT:    ; implicit-def: $sgpr10
+; VI-NEXT:    ; implicit-def: $sgpr12
 ; VI-NEXT:    ; implicit-def: $sgpr22
 ; VI-NEXT:    ; implicit-def: $sgpr15
 ; VI-NEXT:    ; implicit-def: $sgpr13
 ; VI-NEXT:    ; implicit-def: $sgpr21
 ; VI-NEXT:    ; implicit-def: $sgpr6
-; VI-NEXT:    ; implicit-def: $sgpr11
+; VI-NEXT:    ; implicit-def: $sgpr10
 ; VI-NEXT:    ; implicit-def: $sgpr20
-; VI-NEXT:    ; implicit-def: $sgpr14
+; VI-NEXT:    ; implicit-def: $sgpr11
 ; VI-NEXT:    s_branch .LBB105_2
 ; VI-NEXT:  .LBB105_4:
 ; VI-NEXT:    v_mov_b32_e32 v2, s23
@@ -22745,12 +22745,12 @@ define inreg <16 x i8> @bitcast_v8f16_to_v16i8_scalar(<8 x half> inreg %a, i32 i
 ; VI-NEXT:    v_mov_b32_e32 v17, s17
 ; VI-NEXT:    v_mov_b32_e32 v8, s18
 ; VI-NEXT:    v_mov_b32_e32 v16, s19
-; VI-NEXT:    v_mov_b32_e32 v15, s14
+; VI-NEXT:    v_mov_b32_e32 v15, s11
 ; VI-NEXT:    v_mov_b32_e32 v7, s15
 ; VI-NEXT:    v_mov_b32_e32 v9, s13
-; VI-NEXT:    v_mov_b32_e32 v13, s11
-; VI-NEXT:    v_mov_b32_e32 v1, s12
-; VI-NEXT:    v_mov_b32_e32 v5, s10
+; VI-NEXT:    v_mov_b32_e32 v13, s10
+; VI-NEXT:    v_mov_b32_e32 v1, s14
+; VI-NEXT:    v_mov_b32_e32 v5, s12
 ; VI-NEXT:    v_mov_b32_e32 v11, s6
 ; VI-NEXT:    v_mov_b32_e32 v3, s4
 ; VI-NEXT:  .LBB105_5: ; %end
@@ -22766,13 +22766,13 @@ define inreg <16 x i8> @bitcast_v8f16_to_v16i8_scalar(<8 x half> inreg %a, i32 i
 ; GFX9-NEXT:  ; %bb.1: ; %cmp.false
 ; GFX9-NEXT:    s_lshr_b32 s10, s19, 24
 ; GFX9-NEXT:    s_lshr_b32 s11, s19, 16
-; GFX9-NEXT:    s_lshr_b32 s13, s19, 8
-; GFX9-NEXT:    s_lshr_b32 s12, s18, 16
+; GFX9-NEXT:    s_lshr_b32 s12, s19, 8
+; GFX9-NEXT:    s_lshr_b32 s13, s18, 16
 ; GFX9-NEXT:    s_lshr_b32 s14, s18, 8
 ; GFX9-NEXT:    s_lshr_b32 s15, s17, 24
 ; GFX9-NEXT:    s_lshr_b32 s20, s17, 16
-; GFX9-NEXT:    s_lshr_b32 s22, s17, 8
-; GFX9-NEXT:    s_lshr_b32 s21, s16, 16
+; GFX9-NEXT:    s_lshr_b32 s21, s17, 8
+; GFX9-NEXT:    s_lshr_b32 s22, s16, 16
 ; GFX9-NEXT:    s_lshr_b32 s23, s16, 8
 ; GFX9-NEXT:    s_lshr_b64 s[6:7], s[18:19], 24
 ; GFX9-NEXT:    s_lshr_b64 s[4:5], s[16:17], 24
@@ -22798,15 +22798,15 @@ define inreg <16 x i8> @bitcast_v8f16_to_v16i8_scalar(<8 x half> inreg %a, i32 i
 ; GFX9-NEXT:    s_branch .LBB105_5
 ; GFX9-NEXT:  .LBB105_3:
 ; GFX9-NEXT:    ; implicit-def: $sgpr23
-; GFX9-NEXT:    ; implicit-def: $sgpr21
-; GFX9-NEXT:    ; implicit-def: $sgpr4
 ; GFX9-NEXT:    ; implicit-def: $sgpr22
+; GFX9-NEXT:    ; implicit-def: $sgpr4
+; GFX9-NEXT:    ; implicit-def: $sgpr21
 ; GFX9-NEXT:    ; implicit-def: $sgpr20
 ; GFX9-NEXT:    ; implicit-def: $sgpr15
 ; GFX9-NEXT:    ; implicit-def: $sgpr14
-; GFX9-NEXT:    ; implicit-def: $sgpr12
-; GFX9-NEXT:    ; implicit-def: $sgpr6
 ; GFX9-NEXT:    ; implicit-def: $sgpr13
+; GFX9-NEXT:    ; implicit-def: $sgpr6
+; GFX9-NEXT:    ; implicit-def: $sgpr12
 ; GFX9-NEXT:    ; implicit-def: $sgpr11
 ; GFX9-NEXT:    ; implicit-def: $sgpr10
 ; GFX9-NEXT:    s_branch .LBB105_2
@@ -22816,13 +22816,13 @@ define inreg <16 x i8> @bitcast_v8f16_to_v16i8_scalar(<8 x half> inreg %a, i32 i
 ; GFX9-NEXT:    v_mov_b32_e32 v16, s18
 ; GFX9-NEXT:    v_mov_b32_e32 v17, s19
 ; GFX9-NEXT:    v_mov_b32_e32 v1, s23
-; GFX9-NEXT:    v_mov_b32_e32 v2, s21
-; GFX9-NEXT:    v_mov_b32_e32 v5, s22
+; GFX9-NEXT:    v_mov_b32_e32 v2, s22
+; GFX9-NEXT:    v_mov_b32_e32 v5, s21
 ; GFX9-NEXT:    v_mov_b32_e32 v6, s20
 ; GFX9-NEXT:    v_mov_b32_e32 v7, s15
 ; GFX9-NEXT:    v_mov_b32_e32 v9, s14
-; GFX9-NEXT:    v_mov_b32_e32 v10, s12
-; GFX9-NEXT:    v_mov_b32_e32 v13, s13
+; GFX9-NEXT:    v_mov_b32_e32 v10, s13
+; GFX9-NEXT:    v_mov_b32_e32 v13, s12
 ; GFX9-NEXT:    v_mov_b32_e32 v14, s11
 ; GFX9-NEXT:    v_mov_b32_e32 v15, s10
 ; GFX9-NEXT:    v_mov_b32_e32 v11, s6
@@ -22843,13 +22843,13 @@ define inreg <16 x i8> @bitcast_v8f16_to_v16i8_scalar(<8 x half> inreg %a, i32 i
 ; GFX11-NEXT:  ; %bb.1: ; %cmp.false
 ; GFX11-NEXT:    s_lshr_b32 s9, s3, 24
 ; GFX11-NEXT:    s_lshr_b32 s10, s3, 16
-; GFX11-NEXT:    s_lshr_b32 s12, s3, 8
-; GFX11-NEXT:    s_lshr_b32 s11, s2, 16
+; GFX11-NEXT:    s_lshr_b32 s11, s3, 8
+; GFX11-NEXT:    s_lshr_b32 s12, s2, 16
 ; GFX11-NEXT:    s_lshr_b32 s13, s2, 8
 ; GFX11-NEXT:    s_lshr_b32 s14, s1, 24
 ; GFX11-NEXT:    s_lshr_b32 s15, s1, 16
-; GFX11-NEXT:    s_lshr_b32 s17, s1, 8
-; GFX11-NEXT:    s_lshr_b32 s16, s0, 16
+; GFX11-NEXT:    s_lshr_b32 s16, s1, 8
+; GFX11-NEXT:    s_lshr_b32 s17, s0, 16
 ; GFX11-NEXT:    s_lshr_b32 s18, s0, 8
 ; GFX11-NEXT:    s_lshr_b64 s[6:7], s[2:3], 24
 ; GFX11-NEXT:    s_lshr_b64 s[4:5], s[0:1], 24
@@ -22877,26 +22877,26 @@ define inreg <16 x i8> @bitcast_v8f16_to_v16i8_scalar(<8 x half> inreg %a, i32 i
 ; GFX11-NEXT:    s_branch .LBB105_5
 ; GFX11-NEXT:  .LBB105_3:
 ; GFX11-NEXT:    ; implicit-def: $sgpr18
-; GFX11-NEXT:    ; implicit-def: $sgpr16
-; GFX11-NEXT:    ; implicit-def: $sgpr4
 ; GFX11-NEXT:    ; implicit-def: $sgpr17
+; GFX11-NEXT:    ; implicit-def: $sgpr4
+; GFX11-NEXT:    ; implicit-def: $sgpr16
 ; GFX11-NEXT:    ; implicit-def: $sgpr15
 ; GFX11-NEXT:    ; implicit-def: $sgpr14
 ; GFX11-NEXT:    ; implicit-def: $sgpr13
-; GFX11-NEXT:    ; implicit-def: $sgpr11
-; GFX11-NEXT:    ; implicit-def: $sgpr6
 ; GFX11-NEXT:    ; implicit-def: $sgpr12
+; GFX11-NEXT:    ; implicit-def: $sgpr6
+; GFX11-NEXT:    ; implicit-def: $sgpr11
 ; GFX11-NEXT:    ; implicit-def: $sgpr10
 ; GFX11-NEXT:    ; implicit-def: $sgpr9
 ; GFX11-NEXT:    s_branch .LBB105_2
 ; GFX11-NEXT:  .LBB105_4:
 ; GFX11-NEXT:    v_dual_mov_b32 v18, s0 :: v_dual_mov_b32 v19, s1
 ; GFX11-NEXT:    v_dual_mov_b32 v16, s2 :: v_dual_mov_b32 v17, s3
-; GFX11-NEXT:    v_dual_mov_b32 v1, s18 :: v_dual_mov_b32 v2, s16
-; GFX11-NEXT:    v_dual_mov_b32 v5, s17 :: v_dual_mov_b32 v6, s15
-; GFX11-NEXT:    v_dual_mov_b32 v7, s14 :: v_dual_mov_b32 v10, s11
+; GFX11-NEXT:    v_dual_mov_b32 v1, s18 :: v_dual_mov_b32 v2, s17
+; GFX11-NEXT:    v_dual_mov_b32 v5, s16 :: v_dual_mov_b32 v6, s15
+; GFX11-NEXT:    v_dual_mov_b32 v7, s14 :: v_dual_mov_b32 v10, s12
 ; GFX11-NEXT:    v_dual_mov_b32 v9, s13 :: v_dual_mov_b32 v14, s10
-; GFX11-NEXT:    v_mov_b32_e32 v13, s12
+; GFX11-NEXT:    v_mov_b32_e32 v13, s11
 ; GFX11-NEXT:    v_mov_b32_e32 v15, s9
 ; GFX11-NEXT:    v_mov_b32_e32 v11, s6
 ; GFX11-NEXT:    v_mov_b32_e32 v3, s4
@@ -24650,16 +24650,16 @@ define inreg <16 x i8> @bitcast_v8bf16_to_v16i8_scalar(<8 x bfloat> inreg %a, i3
 ; VI-NEXT:    s_cmp_lg_u32 s20, 0
 ; VI-NEXT:    s_cbranch_scc0 .LBB109_3
 ; VI-NEXT:  ; %bb.1: ; %cmp.false
-; VI-NEXT:    s_lshr_b32 s21, s19, 24
-; VI-NEXT:    s_lshr_b32 s20, s19, 16
-; VI-NEXT:    s_lshr_b32 s15, s19, 8
+; VI-NEXT:    s_lshr_b32 s15, s19, 24
+; VI-NEXT:    s_lshr_b32 s14, s19, 16
+; VI-NEXT:    s_lshr_b32 s13, s19, 8
 ; VI-NEXT:    s_lshr_b32 s23, s18, 16
 ; VI-NEXT:    s_lshr_b32 s22, s18, 8
 ; VI-NEXT:    s_lshr_b32 s12, s17, 24
 ; VI-NEXT:    s_lshr_b32 s11, s17, 16
 ; VI-NEXT:    s_lshr_b32 s10, s17, 8
-; VI-NEXT:    s_lshr_b32 s14, s16, 16
-; VI-NEXT:    s_lshr_b32 s13, s16, 8
+; VI-NEXT:    s_lshr_b32 s21, s16, 16
+; VI-NEXT:    s_lshr_b32 s20, s16, 8
 ; VI-NEXT:    s_lshr_b64 s[6:7], s[18:19], 24
 ; VI-NEXT:    s_lshr_b64 s[4:5], s[16:17], 24
 ; VI-NEXT:    s_cbranch_execnz .LBB109_4
@@ -24753,8 +24753,8 @@ define inreg <16 x i8> @bitcast_v8bf16_to_v16i8_scalar(<8 x bfloat> inreg %a, i3
 ; VI-NEXT:    v_lshrrev_b32_e32 v11, 8, v0
 ; VI-NEXT:    s_branch .LBB109_5
 ; VI-NEXT:  .LBB109_3:
-; VI-NEXT:    ; implicit-def: $sgpr13
-; VI-NEXT:    ; implicit-def: $sgpr14
+; VI-NEXT:    ; implicit-def: $sgpr20
+; VI-NEXT:    ; implicit-def: $sgpr21
 ; VI-NEXT:    ; implicit-def: $sgpr4
 ; VI-NEXT:    ; implicit-def: $sgpr10
 ; VI-NEXT:    ; implicit-def: $sgpr11
@@ -24762,9 +24762,9 @@ define inreg <16 x i8> @bitcast_v8bf16_to_v16i8_scalar(<8 x bfloat> inreg %a, i3
 ; VI-NEXT:    ; implicit-def: $sgpr22
 ; VI-NEXT:    ; implicit-def: $sgpr23
 ; VI-NEXT:    ; implicit-def: $sgpr6
+; VI-NEXT:    ; implicit-def: $sgpr13
+; VI-NEXT:    ; implicit-def: $sgpr14
 ; VI-NEXT:    ; implicit-def: $sgpr15
-; VI-NEXT:    ; implicit-def: $sgpr20
-; VI-NEXT:    ; implicit-def: $sgpr21
 ; VI-NEXT:    s_branch .LBB109_2
 ; VI-NEXT:  .LBB109_4:
 ; VI-NEXT:    v_mov_b32_e32 v8, s18
@@ -24773,11 +24773,11 @@ define inreg <16 x i8> @bitcast_v8bf16_to_v16i8_scalar(<8 x bfloat> inreg %a, i3
 ; VI-NEXT:    v_mov_b32_e32 v4, s17
 ; VI-NEXT:    v_mov_b32_e32 v10, s23
 ; VI-NEXT:    v_mov_b32_e32 v9, s22
-; VI-NEXT:    v_mov_b32_e32 v15, s21
-; VI-NEXT:    v_mov_b32_e32 v14, s20
-; VI-NEXT:    v_mov_b32_e32 v13, s15
-; VI-NEXT:    v_mov_b32_e32 v2, s14
-; VI-NEXT:    v_mov_b32_e32 v11, s13
+; VI-NEXT:    v_mov_b32_e32 v15, s15
+; VI-NEXT:    v_mov_b32_e32 v14, s14
+; VI-NEXT:    v_mov_b32_e32 v13, s13
+; VI-NEXT:    v_mov_b32_e32 v2, s21
+; VI-NEXT:    v_mov_b32_e32 v11, s20
 ; VI-NEXT:    v_mov_b32_e32 v7, s12
 ; VI-NEXT:    v_mov_b32_e32 v6, s11
 ; VI-NEXT:    v_mov_b32_e32 v5, s10
@@ -24795,16 +24795,16 @@ define inreg <16 x i8> @bitcast_v8bf16_to_v16i8_scalar(<8 x bfloat> inreg %a, i3
 ; GFX9-NEXT:    s_cmp_lg_u32 s20, 0
 ; GFX9-NEXT:    s_cbranch_scc0 .LBB109_3
 ; GFX9-NEXT:  ; %bb.1: ; %cmp.false
-; GFX9-NEXT:    s_lshr_b32 s12, s19, 24
-; GFX9-NEXT:    s_lshr_b32 s23, s19, 16
-; GFX9-NEXT:    s_lshr_b32 s15, s19, 8
+; GFX9-NEXT:    s_lshr_b32 s11, s19, 24
+; GFX9-NEXT:    s_lshr_b32 s22, s19, 16
+; GFX9-NEXT:    s_lshr_b32 s13, s19, 8
 ; GFX9-NEXT:    s_lshr_b32 s21, s18, 16
 ; GFX9-NEXT:    s_lshr_b32 s20, s18, 8
 ; GFX9-NEXT:    s_lshr_b32 s10, s17, 24
-; GFX9-NEXT:    s_lshr_b32 s22, s17, 16
-; GFX9-NEXT:    s_lshr_b32 s11, s17, 8
-; GFX9-NEXT:    s_lshr_b32 s14, s16, 16
-; GFX9-NEXT:    s_lshr_b32 s13, s16, 8
+; GFX9-NEXT:    s_lshr_b32 s23, s17, 16
+; GFX9-NEXT:    s_lshr_b32 s12, s17, 8
+; GFX9-NEXT:    s_lshr_b32 s15, s16, 16
+; GFX9-NEXT:    s_lshr_b32 s14, s16, 8
 ; GFX9-NEXT:    s_lshr_b64 s[6:7], s[18:19], 24
 ; GFX9-NEXT:    s_lshr_b64 s[4:5], s[16:17], 24
 ; GFX9-NEXT:    s_cbranch_execnz .LBB109_4
@@ -24902,34 +24902,34 @@ define inreg <16 x i8> @bitcast_v8bf16_to_v16i8_scalar(<8 x bfloat> inreg %a, i3
 ; GFX9-NEXT:    v_lshrrev_b32_e32 v1, 8, v1
 ; GFX9-NEXT:    s_branch .LBB109_5
 ; GFX9-NEXT:  .LBB109_3:
-; GFX9-NEXT:    ; implicit-def: $sgpr13
 ; GFX9-NEXT:    ; implicit-def: $sgpr14
+; GFX9-NEXT:    ; implicit-def: $sgpr15
 ; GFX9-NEXT:    ; implicit-def: $sgpr4
-; GFX9-NEXT:    ; implicit-def: $sgpr11
-; GFX9-NEXT:    ; implicit-def: $sgpr22
+; GFX9-NEXT:    ; implicit-def: $sgpr12
+; GFX9-NEXT:    ; implicit-def: $sgpr23
 ; GFX9-NEXT:    ; implicit-def: $sgpr10
 ; GFX9-NEXT:    ; implicit-def: $sgpr20
 ; GFX9-NEXT:    ; implicit-def: $sgpr21
 ; GFX9-NEXT:    ; implicit-def: $sgpr6
-; GFX9-NEXT:    ; implicit-def: $sgpr15
-; GFX9-NEXT:    ; implicit-def: $sgpr23
-; GFX9-NEXT:    ; implicit-def: $sgpr12
+; GFX9-NEXT:    ; implicit-def: $sgpr13
+; GFX9-NEXT:    ; implicit-def: $sgpr22
+; GFX9-NEXT:    ; implicit-def: $sgpr11
 ; GFX9-NEXT:    s_branch .LBB109_2
 ; GFX9-NEXT:  .LBB109_4:
 ; GFX9-NEXT:    v_mov_b32_e32 v8, s18
 ; GFX9-NEXT:    v_mov_b32_e32 v16, s19
-; GFX9-NEXT:    v_mov_b32_e32 v14, s23
+; GFX9-NEXT:    v_mov_b32_e32 v14, s22
 ; GFX9-NEXT:    v_mov_b32_e32 v0, s16
 ; GFX9-NEXT:    v_mov_b32_e32 v17, s17
-; GFX9-NEXT:    v_mov_b32_e32 v6, s22
+; GFX9-NEXT:    v_mov_b32_e32 v6, s23
 ; GFX9-NEXT:    v_mov_b32_e32 v10, s21
 ; GFX9-NEXT:    v_mov_b32_e32 v9, s20
-; GFX9-NEXT:    v_mov_b32_e32 v15, s12
-; GFX9-NEXT:    v_mov_b32_e32 v13, s15
-; GFX9-NEXT:    v_mov_b32_e32 v2, s14
-; GFX9-NEXT:    v_mov_b32_e32 v1, s13
+; GFX9-NEXT:    v_mov_b32_e32 v15, s11
+; GFX9-NEXT:    v_mov_b32_e32 v13, s13
+; GFX9-NEXT:    v_mov_b32_e32 v2, s15
+; GFX9-NEXT:    v_mov_b32_e32 v1, s14
 ; GFX9-NEXT:    v_mov_b32_e32 v7, s10
-; GFX9-NEXT:    v_mov_b32_e32 v5, s11
+; GFX9-NEXT:    v_mov_b32_e32 v5, s12
 ; GFX9-NEXT:    v_mov_b32_e32 v11, s6
 ; GFX9-NEXT:    v_mov_b32_e32 v3, s4
 ; GFX9-NEXT:  .LBB109_5: ; %end
@@ -24944,16 +24944,16 @@ define inreg <16 x i8> @bitcast_v8bf16_to_v16i8_scalar(<8 x bfloat> inreg %a, i3
 ; GFX11-TRUE16-NEXT:    s_mov_b32 s8, 0
 ; GFX11-TRUE16-NEXT:    s_cbranch_scc0 .LBB109_3
 ; GFX11-TRUE16-NEXT:  ; %bb.1: ; %cmp.false
-; GFX11-TRUE16-NEXT:    s_lshr_b32 s11, s3, 24
-; GFX11-TRUE16-NEXT:    s_lshr_b32 s18, s3, 16
-; GFX11-TRUE16-NEXT:    s_lshr_b32 s14, s3, 8
+; GFX11-TRUE16-NEXT:    s_lshr_b32 s10, s3, 24
+; GFX11-TRUE16-NEXT:    s_lshr_b32 s17, s3, 16
+; GFX11-TRUE16-NEXT:    s_lshr_b32 s12, s3, 8
 ; GFX11-TRUE16-NEXT:    s_lshr_b32 s16, s2, 16
 ; GFX11-TRUE16-NEXT:    s_lshr_b32 s15, s2, 8
 ; GFX11-TRUE16-NEXT:    s_lshr_b32 s9, s1, 24
-; GFX11-TRUE16-NEXT:    s_lshr_b32 s17, s1, 16
-; GFX11-TRUE16-NEXT:    s_lshr_b32 s10, s1, 8
-; GFX11-TRUE16-NEXT:    s_lshr_b32 s13, s0, 16
-; GFX11-TRUE16-NEXT:    s_lshr_b32 s12, s0, 8
+; GFX11-TRUE16-NEXT:    s_lshr_b32 s18, s1, 16
+; GFX11-TRUE16-NEXT:    s_lshr_b32 s11, s1, 8
+; GFX11-TRUE16-NEXT:    s_lshr_b32 s14, s0, 16
+; GFX11-TRUE16-NEXT:    s_lshr_b32 s13, s0, 8
 ; GFX11-TRUE16-NEXT:    s_lshr_b64 s[6:7], s[2:3], 24
 ; GFX11-TRUE16-NEXT:    s_lshr_b64 s[4:5], s[0:1], 24
 ; GFX11-TRUE16-NEXT:    s_and_not1_b32 vcc_lo, exec_lo, s8
@@ -25056,27 +25056,27 @@ define inreg <16 x i8> @bitcast_v8bf16_to_v16i8_scalar(<8 x bfloat> inreg %a, i3
 ; GFX11-TRUE16-NEXT:    v_lshrrev_b32_e32 v9, 8, v9
 ; GFX11-TRUE16-NEXT:    s_branch .LBB109_5
 ; GFX11-TRUE16-NEXT:  .LBB109_3:
-; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr12
 ; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr13
+; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr14
 ; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr4
-; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr10
-; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr17
+; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr11
+; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr18
 ; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr9
 ; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr15
 ; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr16
 ; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr6
-; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr14
-; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr18
-; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr11
+; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr12
+; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr17
+; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr10
 ; GFX11-TRUE16-NEXT:    s_branch .LBB109_2
 ; GFX11-TRUE16-NEXT:  .LBB109_4:
 ; GFX11-TRUE16-NEXT:    v_dual_mov_b32 v8, s2 :: v_dual_mov_b32 v17, s1
 ; GFX11-TRUE16-NEXT:    v_dual_mov_b32 v16, s3 :: v_dual_mov_b32 v9, s15
-; GFX11-TRUE16-NEXT:    v_dual_mov_b32 v14, s18 :: v_dual_mov_b32 v15, s11
-; GFX11-TRUE16-NEXT:    v_dual_mov_b32 v0, s0 :: v_dual_mov_b32 v13, s14
-; GFX11-TRUE16-NEXT:    v_dual_mov_b32 v6, s17 :: v_dual_mov_b32 v1, s12
+; GFX11-TRUE16-NEXT:    v_dual_mov_b32 v14, s17 :: v_dual_mov_b32 v15, s10
+; GFX11-TRUE16-NEXT:    v_dual_mov_b32 v0, s0 :: v_dual_mov_b32 v13, s12
+; GFX11-TRUE16-NEXT:    v_dual_mov_b32 v6, s18 :: v_dual_mov_b32 v1, s13
 ; GFX11-TRUE16-NEXT:    v_dual_mov_b32 v10, s16 :: v_dual_mov_b32 v7, s9
-; GFX11-TRUE16-NEXT:    v_dual_mov_b32 v2, s13 :: v_dual_mov_b32 v5, s10
+; GFX11-TRUE16-NEXT:    v_dual_mov_b32 v2, s14 :: v_dual_mov_b32 v5, s11
 ; GFX11-TRUE16-NEXT:    v_mov_b32_e32 v11, s6
 ; GFX11-TRUE16-NEXT:    v_mov_b32_e32 v3, s4
 ; GFX11-TRUE16-NEXT:  .LBB109_5: ; %end
@@ -25091,16 +25091,16 @@ define inreg <16 x i8> @bitcast_v8bf16_to_v16i8_scalar(<8 x bfloat> inreg %a, i3
 ; GFX11-FAKE16-NEXT:    s_mov_b32 s8, 0
 ; GFX11-FAKE16-NEXT:    s_cbranch_scc0 .LBB109_3
 ; GFX11-FAKE16-NEXT:  ; %bb.1: ; %cmp.false
-; GFX11-FAKE16-NEXT:    s_lshr_b32 s11, s3, 24
-; GFX11-FAKE16-NEXT:    s_lshr_b32 s18, s3, 16
-; GFX11-FAKE16-NEXT:    s_lshr_b32 s14, s3, 8
+; GFX11-FAKE16-NEXT:    s_lshr_b32 s10, s3, 24
+; GFX11-FAKE16-NEXT:    s_lshr_b32 s17, s3, 16
+; GFX11-FAKE16-NEXT:    s_lshr_b32 s12, s3, 8
 ; GFX11-FAKE16-NEXT:    s_lshr_b32 s16, s2, 16
 ; GFX11-FAKE16-NEXT:    s_lshr_b32 s15, s2, 8
 ; GFX11-FAKE16-NEXT:    s_lshr_b32 s9, s1, 24
-; GFX11-FAKE16-NEXT:    s_lshr_b32 s17, s1, 16
-; GFX11-FAKE16-NEXT:    s_lshr_b32 s10, s1, 8
-; GFX11-FAKE16-NEXT:    s_lshr_b32 s13, s0, 16
-; GFX11-FAKE16-NEXT:    s_lshr_b32 s12, s0, 8
+; GFX11-FAKE16-NEXT:    s_lshr_b32 s18, s1, 16
+; GFX11-FAKE16-NEXT:    s_lshr_b32 s11, s1, 8
+; GFX11-FAKE16-NEXT:    s_lshr_b32 s14, s0, 16
+; GFX11-FAKE16-NEXT:    s_lshr_b32 s13, s0, 8
 ; GFX11-FAKE16-NEXT:    s_lshr_b64 s[6:7], s[2:3], 24
 ; GFX11-FAKE16-NEXT:    s_lshr_b64 s[4:5], s[0:1], 24
 ; GFX11-FAKE16-NEXT:    s_and_not1_b32 vcc_lo, exec_lo, s8
@@ -25203,27 +25203,27 @@ define inreg <16 x i8> @bitcast_v8bf16_to_v16i8_scalar(<8 x bfloat> inreg %a, i3
 ; GFX11-FAKE16-NEXT:    v_lshrrev_b32_e32 v9, 8, v9
 ; GFX11-FAKE16-NEXT:    s_branch .LBB109_5
 ; GFX11-FAKE16-NEXT:  .LBB109_3:
-; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr12
 ; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr13
+; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr14
 ; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr4
-; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr10
-; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr17
+; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr11
+; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr18
 ; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr9
 ; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr15
 ; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr16
 ; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr6
-; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr14
-; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr18
-; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr11
+; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr12
+; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr17
+; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr10
 ; GFX11-FAKE16-NEXT:    s_branch .LBB109_2
 ; GFX11-FAKE16-NEXT:  .LBB109_4:
 ; GFX11-FAKE16-NEXT:    v_dual_mov_b32 v8, s2 :: v_dual_mov_b32 v17, s1
 ; GFX11-FAKE16-NEXT:    v_dual_mov_b32 v16, s3 :: v_dual_mov_b32 v9, s15
-; GFX11-FAKE16-NEXT:    v_dual_mov_b32 v14, s18 :: v_dual_mov_b32 v15, s11
-; GFX11-FAKE16-NEXT:    v_dual_mov_b32 v0, s0 :: v_dual_mov_b32 v13, s14
-; GFX11-FAKE16-NEXT:    v_dual_mov_b32 v6, s17 :: v_dual_mov_b32 v1, s12
+; GFX11-FAKE16-NEXT:    v_dual_mov_b32 v14, s17 :: v_dual_mov_b32 v15, s10
+; GFX11-FAKE16-NEXT:    v_dual_mov_b32 v0, s0 :: v_dual_mov_b32 v13, s12
+; GFX11-FAKE16-NEXT:    v_dual_mov_b32 v6, s18 :: v_dual_mov_b32 v1, s13
 ; GFX11-FAKE16-NEXT:    v_dual_mov_b32 v10, s16 :: v_dual_mov_b32 v7, s9
-; GFX11-FAKE16-NEXT:    v_dual_mov_b32 v2, s13 :: v_dual_mov_b32 v5, s10
+; GFX11-FAKE16-NEXT:    v_dual_mov_b32 v2, s14 :: v_dual_mov_b32 v5, s11
 ; GFX11-FAKE16-NEXT:    v_mov_b32_e32 v11, s6
 ; GFX11-FAKE16-NEXT:    v_mov_b32_e32 v3, s4
 ; GFX11-FAKE16-NEXT:  .LBB109_5: ; %end
