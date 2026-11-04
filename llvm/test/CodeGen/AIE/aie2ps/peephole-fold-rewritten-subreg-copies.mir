@@ -29,9 +29,7 @@ body: |
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:acc512 = COPY [[VADD_f_vacc_half_fp]].sub_512_acc_lo
     ; CHECK-NEXT: [[COPY4:%[0-9]+]]:vec512 = COPY [[COPY3]]
     ; CHECK-NEXT: [[VEXTRACT_64_vec_extract_imm_vaddSign1_:%[0-9]+]]:el = VEXTRACT_64_vec_extract_imm_vaddSign1 [[COPY4]], 0, implicit $vaddsign1
-    ; CHECK-NEXT: [[COPY5:%[0-9]+]]:acc512 = COPY [[VADD_f_vacc_half_fp]].sub_512_acc_lo
-    ; CHECK-NEXT: [[COPY6:%[0-9]+]]:vec512 = COPY [[COPY5]]
-    ; CHECK-NEXT: [[VEXTRACT_64_vec_extract_imm_vaddSign1_1:%[0-9]+]]:el = VEXTRACT_64_vec_extract_imm_vaddSign1 [[COPY6]], 1, implicit $vaddsign1
+    ; CHECK-NEXT: [[VEXTRACT_64_vec_extract_imm_vaddSign1_1:%[0-9]+]]:el = VEXTRACT_64_vec_extract_imm_vaddSign1 [[COPY4]], 1, implicit $vaddsign1
     ; CHECK-NEXT: $l0 = COPY [[VEXTRACT_64_vec_extract_imm_vaddSign1_]]
     ; CHECK-NEXT: $l1 = COPY [[VEXTRACT_64_vec_extract_imm_vaddSign1_1]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $l0, implicit $l1

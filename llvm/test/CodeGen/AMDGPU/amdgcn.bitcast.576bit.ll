@@ -22531,22 +22531,22 @@ define inreg <36 x i16> @bitcast_v9f64_to_v36i16_scalar(<9 x double> inreg %a, i
 ; GFX11-TRUE16-NEXT:    s_cbranch_scc0 .LBB49_3
 ; GFX11-TRUE16-NEXT:  ; %bb.1: ; %cmp.false
 ; GFX11-TRUE16-NEXT:    s_lshr_b32 s5, s29, 16
-; GFX11-TRUE16-NEXT:    s_lshr_b32 s14, s28, 16
+; GFX11-TRUE16-NEXT:    s_lshr_b32 s9, s28, 16
 ; GFX11-TRUE16-NEXT:    s_lshr_b32 s6, s27, 16
-; GFX11-TRUE16-NEXT:    s_lshr_b32 s15, s26, 16
+; GFX11-TRUE16-NEXT:    s_lshr_b32 s11, s26, 16
 ; GFX11-TRUE16-NEXT:    s_lshr_b32 s7, s25, 16
-; GFX11-TRUE16-NEXT:    s_lshr_b32 s40, s24, 16
+; GFX11-TRUE16-NEXT:    s_lshr_b32 s13, s24, 16
 ; GFX11-TRUE16-NEXT:    s_lshr_b32 s8, s23, 16
-; GFX11-TRUE16-NEXT:    s_lshr_b32 s41, s22, 16
-; GFX11-TRUE16-NEXT:    s_lshr_b32 s9, s21, 16
-; GFX11-TRUE16-NEXT:    s_lshr_b32 s42, s20, 16
-; GFX11-TRUE16-NEXT:    s_lshr_b32 s10, s19, 16
+; GFX11-TRUE16-NEXT:    s_lshr_b32 s15, s22, 16
+; GFX11-TRUE16-NEXT:    s_lshr_b32 s10, s21, 16
+; GFX11-TRUE16-NEXT:    s_lshr_b32 s41, s20, 16
+; GFX11-TRUE16-NEXT:    s_lshr_b32 s12, s19, 16
 ; GFX11-TRUE16-NEXT:    s_lshr_b32 s43, s18, 16
-; GFX11-TRUE16-NEXT:    s_lshr_b32 s11, s17, 16
+; GFX11-TRUE16-NEXT:    s_lshr_b32 s14, s17, 16
 ; GFX11-TRUE16-NEXT:    s_lshr_b32 s44, s16, 16
-; GFX11-TRUE16-NEXT:    s_lshr_b32 s12, s3, 16
+; GFX11-TRUE16-NEXT:    s_lshr_b32 s40, s3, 16
 ; GFX11-TRUE16-NEXT:    s_lshr_b32 s45, s2, 16
-; GFX11-TRUE16-NEXT:    s_lshr_b32 s13, s1, 16
+; GFX11-TRUE16-NEXT:    s_lshr_b32 s42, s1, 16
 ; GFX11-TRUE16-NEXT:    s_lshr_b32 s46, s0, 16
 ; GFX11-TRUE16-NEXT:    s_and_not1_b32 vcc_lo, exec_lo, s4
 ; GFX11-TRUE16-NEXT:    s_cbranch_vccnz .LBB49_4
@@ -22581,22 +22581,22 @@ define inreg <36 x i16> @bitcast_v9f64_to_v36i16_scalar(<9 x double> inreg %a, i
 ; GFX11-TRUE16-NEXT:    s_branch .LBB49_5
 ; GFX11-TRUE16-NEXT:  .LBB49_3:
 ; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr46
-; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr13
-; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr45
-; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr12
-; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr44
-; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr11
-; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr43
-; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr10
 ; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr42
-; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr9
-; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr41
-; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr8
+; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr45
 ; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr40
-; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr7
-; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr15
-; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr6
+; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr44
 ; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr14
+; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr43
+; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr12
+; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr41
+; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr10
+; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr15
+; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr8
+; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr13
+; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr7
+; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr11
+; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr6
+; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr9
 ; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr5
 ; GFX11-TRUE16-NEXT:    s_branch .LBB49_2
 ; GFX11-TRUE16-NEXT:  .LBB49_4:
@@ -22609,15 +22609,15 @@ define inreg <36 x i16> @bitcast_v9f64_to_v36i16_scalar(<9 x double> inreg %a, i
 ; GFX11-TRUE16-NEXT:    v_dual_mov_b32 v12, s24 :: v_dual_mov_b32 v13, s25
 ; GFX11-TRUE16-NEXT:    v_dual_mov_b32 v14, s26 :: v_dual_mov_b32 v15, s27
 ; GFX11-TRUE16-NEXT:    v_dual_mov_b32 v16, s28 :: v_dual_mov_b32 v17, s29
-; GFX11-TRUE16-NEXT:    v_dual_mov_b32 v34, s46 :: v_dual_mov_b32 v35, s13
-; GFX11-TRUE16-NEXT:    v_dual_mov_b32 v32, s45 :: v_dual_mov_b32 v33, s12
-; GFX11-TRUE16-NEXT:    v_dual_mov_b32 v30, s44 :: v_dual_mov_b32 v31, s11
-; GFX11-TRUE16-NEXT:    v_dual_mov_b32 v28, s43 :: v_dual_mov_b32 v29, s10
-; GFX11-TRUE16-NEXT:    v_dual_mov_b32 v26, s42 :: v_dual_mov_b32 v27, s9
-; GFX11-TRUE16-NEXT:    v_dual_mov_b32 v24, s41 :: v_dual_mov_b32 v25, s8
-; GFX11-TRUE16-NEXT:    v_dual_mov_b32 v22, s40 :: v_dual_mov_b32 v23, s7
-; GFX11-TRUE16-NEXT:    v_dual_mov_b32 v20, s15 :: v_dual_mov_b32 v21, s6
-; GFX11-TRUE16-NEXT:    v_dual_mov_b32 v18, s14 :: v_dual_mov_b32 v19, s5
+; GFX11-TRUE16-NEXT:    v_dual_mov_b32 v34, s46 :: v_dual_mov_b32 v35, s42
+; GFX11-TRUE16-NEXT:    v_dual_mov_b32 v32, s45 :: v_dual_mov_b32 v33, s40
+; GFX11-TRUE16-NEXT:    v_dual_mov_b32 v30, s44 :: v_dual_mov_b32 v31, s14
+; GFX11-TRUE16-NEXT:    v_dual_mov_b32 v28, s43 :: v_dual_mov_b32 v29, s12
+; GFX11-TRUE16-NEXT:    v_dual_mov_b32 v26, s41 :: v_dual_mov_b32 v27, s10
+; GFX11-TRUE16-NEXT:    v_dual_mov_b32 v24, s15 :: v_dual_mov_b32 v25, s8
+; GFX11-TRUE16-NEXT:    v_dual_mov_b32 v22, s13 :: v_dual_mov_b32 v23, s7
+; GFX11-TRUE16-NEXT:    v_dual_mov_b32 v20, s11 :: v_dual_mov_b32 v21, s6
+; GFX11-TRUE16-NEXT:    v_dual_mov_b32 v18, s9 :: v_dual_mov_b32 v19, s5
 ; GFX11-TRUE16-NEXT:  .LBB49_5: ; %end
 ; GFX11-TRUE16-NEXT:    s_delay_alu instid0(VALU_DEP_3) | instskip(NEXT) | instid1(VALU_DEP_4)
 ; GFX11-TRUE16-NEXT:    v_dual_mov_b32 v32, v32 :: v_dual_mov_b32 v31, v31
@@ -22661,22 +22661,22 @@ define inreg <36 x i16> @bitcast_v9f64_to_v36i16_scalar(<9 x double> inreg %a, i
 ; GFX11-FAKE16-NEXT:    s_cbranch_scc0 .LBB49_3
 ; GFX11-FAKE16-NEXT:  ; %bb.1: ; %cmp.false
 ; GFX11-FAKE16-NEXT:    s_lshr_b32 s5, s29, 16
-; GFX11-FAKE16-NEXT:    s_lshr_b32 s14, s28, 16
+; GFX11-FAKE16-NEXT:    s_lshr_b32 s9, s28, 16
 ; GFX11-FAKE16-NEXT:    s_lshr_b32 s6, s27, 16
-; GFX11-FAKE16-NEXT:    s_lshr_b32 s15, s26, 16
+; GFX11-FAKE16-NEXT:    s_lshr_b32 s11, s26, 16
 ; GFX11-FAKE16-NEXT:    s_lshr_b32 s7, s25, 16
-; GFX11-FAKE16-NEXT:    s_lshr_b32 s40, s24, 16
+; GFX11-FAKE16-NEXT:    s_lshr_b32 s13, s24, 16
 ; GFX11-FAKE16-NEXT:    s_lshr_b32 s8, s23, 16
-; GFX11-FAKE16-NEXT:    s_lshr_b32 s41, s22, 16
-; GFX11-FAKE16-NEXT:    s_lshr_b32 s9, s21, 16
-; GFX11-FAKE16-NEXT:    s_lshr_b32 s42, s20, 16
-; GFX11-FAKE16-NEXT:    s_lshr_b32 s10, s19, 16
+; GFX11-FAKE16-NEXT:    s_lshr_b32 s15, s22, 16
+; GFX11-FAKE16-NEXT:    s_lshr_b32 s10, s21, 16
+; GFX11-FAKE16-NEXT:    s_lshr_b32 s41, s20, 16
+; GFX11-FAKE16-NEXT:    s_lshr_b32 s12, s19, 16
 ; GFX11-FAKE16-NEXT:    s_lshr_b32 s43, s18, 16
-; GFX11-FAKE16-NEXT:    s_lshr_b32 s11, s17, 16
+; GFX11-FAKE16-NEXT:    s_lshr_b32 s14, s17, 16
 ; GFX11-FAKE16-NEXT:    s_lshr_b32 s44, s16, 16
-; GFX11-FAKE16-NEXT:    s_lshr_b32 s12, s3, 16
+; GFX11-FAKE16-NEXT:    s_lshr_b32 s40, s3, 16
 ; GFX11-FAKE16-NEXT:    s_lshr_b32 s45, s2, 16
-; GFX11-FAKE16-NEXT:    s_lshr_b32 s13, s1, 16
+; GFX11-FAKE16-NEXT:    s_lshr_b32 s42, s1, 16
 ; GFX11-FAKE16-NEXT:    s_lshr_b32 s46, s0, 16
 ; GFX11-FAKE16-NEXT:    s_and_not1_b32 vcc_lo, exec_lo, s4
 ; GFX11-FAKE16-NEXT:    s_cbranch_vccnz .LBB49_4
@@ -22711,22 +22711,22 @@ define inreg <36 x i16> @bitcast_v9f64_to_v36i16_scalar(<9 x double> inreg %a, i
 ; GFX11-FAKE16-NEXT:    s_branch .LBB49_5
 ; GFX11-FAKE16-NEXT:  .LBB49_3:
 ; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr46
-; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr13
-; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr45
-; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr12
-; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr44
-; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr11
-; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr43
-; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr10
 ; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr42
-; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr9
-; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr41
-; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr8
+; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr45
 ; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr40
-; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr7
-; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr15
-; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr6
+; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr44
 ; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr14
+; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr43
+; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr12
+; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr41
+; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr10
+; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr15
+; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr8
+; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr13
+; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr7
+; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr11
+; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr6
+; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr9
 ; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr5
 ; GFX11-FAKE16-NEXT:    s_branch .LBB49_2
 ; GFX11-FAKE16-NEXT:  .LBB49_4:
@@ -22740,12 +22740,12 @@ define inreg <36 x i16> @bitcast_v9f64_to_v36i16_scalar(<9 x double> inreg %a, i
 ; GFX11-FAKE16-NEXT:    v_dual_mov_b32 v11, s21 :: v_dual_mov_b32 v16, s27
 ; GFX11-FAKE16-NEXT:    v_dual_mov_b32 v9, s23 :: v_dual_mov_b32 v14, s29
 ; GFX11-FAKE16-NEXT:    v_dual_mov_b32 v34, s46 :: v_dual_mov_b32 v7, s43
-; GFX11-FAKE16-NEXT:    v_dual_mov_b32 v2, s45 :: v_dual_mov_b32 v27, s42
-; GFX11-FAKE16-NEXT:    v_dual_mov_b32 v30, s44 :: v_dual_mov_b32 v21, s14
-; GFX11-FAKE16-NEXT:    v_dual_mov_b32 v26, s41 :: v_dual_mov_b32 v35, s13
-; GFX11-FAKE16-NEXT:    v_dual_mov_b32 v12, s40 :: v_dual_mov_b32 v33, s12
-; GFX11-FAKE16-NEXT:    v_dual_mov_b32 v22, s15 :: v_dual_mov_b32 v31, s10
-; GFX11-FAKE16-NEXT:    v_dual_mov_b32 v32, s11 :: v_dual_mov_b32 v29, s9
+; GFX11-FAKE16-NEXT:    v_dual_mov_b32 v2, s45 :: v_dual_mov_b32 v27, s41
+; GFX11-FAKE16-NEXT:    v_dual_mov_b32 v30, s44 :: v_dual_mov_b32 v21, s9
+; GFX11-FAKE16-NEXT:    v_dual_mov_b32 v26, s15 :: v_dual_mov_b32 v35, s42
+; GFX11-FAKE16-NEXT:    v_dual_mov_b32 v12, s13 :: v_dual_mov_b32 v33, s40
+; GFX11-FAKE16-NEXT:    v_dual_mov_b32 v22, s11 :: v_dual_mov_b32 v31, s12
+; GFX11-FAKE16-NEXT:    v_dual_mov_b32 v32, s14 :: v_dual_mov_b32 v29, s10
 ; GFX11-FAKE16-NEXT:    v_dual_mov_b32 v28, s8 :: v_dual_mov_b32 v25, s7
 ; GFX11-FAKE16-NEXT:    v_dual_mov_b32 v24, s6 :: v_dual_mov_b32 v23, s5
 ; GFX11-FAKE16-NEXT:  .LBB49_5: ; %end
@@ -25390,22 +25390,22 @@ define inreg <36 x half> @bitcast_v9f64_to_v36f16_scalar(<9 x double> inreg %a, 
 ; GFX11-TRUE16-NEXT:    s_cbranch_scc0 .LBB53_3
 ; GFX11-TRUE16-NEXT:  ; %bb.1: ; %cmp.false
 ; GFX11-TRUE16-NEXT:    s_lshr_b32 s5, s29, 16
-; GFX11-TRUE16-NEXT:    s_lshr_b32 s14, s28, 16
+; GFX11-TRUE16-NEXT:    s_lshr_b32 s9, s28, 16
 ; GFX11-TRUE16-NEXT:    s_lshr_b32 s6, s27, 16
-; GFX11-TRUE16-NEXT:    s_lshr_b32 s15, s26, 16
+; GFX11-TRUE16-NEXT:    s_lshr_b32 s11, s26, 16
 ; GFX11-TRUE16-NEXT:    s_lshr_b32 s7, s25, 16
-; GFX11-TRUE16-NEXT:    s_lshr_b32 s40, s24, 16
+; GFX11-TRUE16-NEXT:    s_lshr_b32 s13, s24, 16
 ; GFX11-TRUE16-NEXT:    s_lshr_b32 s8, s23, 16
-; GFX11-TRUE16-NEXT:    s_lshr_b32 s41, s22, 16
-; GFX11-TRUE16-NEXT:    s_lshr_b32 s9, s21, 16
-; GFX11-TRUE16-NEXT:    s_lshr_b32 s42, s20, 16
-; GFX11-TRUE16-NEXT:    s_lshr_b32 s10, s19, 16
+; GFX11-TRUE16-NEXT:    s_lshr_b32 s15, s22, 16
+; GFX11-TRUE16-NEXT:    s_lshr_b32 s10, s21, 16
+; GFX11-TRUE16-NEXT:    s_lshr_b32 s41, s20, 16
+; GFX11-TRUE16-NEXT:    s_lshr_b32 s12, s19, 16
 ; GFX11-TRUE16-NEXT:    s_lshr_b32 s43, s18, 16
-; GFX11-TRUE16-NEXT:    s_lshr_b32 s11, s17, 16
+; GFX11-TRUE16-NEXT:    s_lshr_b32 s14, s17, 16
 ; GFX11-TRUE16-NEXT:    s_lshr_b32 s44, s16, 16
-; GFX11-TRUE16-NEXT:    s_lshr_b32 s12, s3, 16
+; GFX11-TRUE16-NEXT:    s_lshr_b32 s40, s3, 16
 ; GFX11-TRUE16-NEXT:    s_lshr_b32 s45, s2, 16
-; GFX11-TRUE16-NEXT:    s_lshr_b32 s13, s1, 16
+; GFX11-TRUE16-NEXT:    s_lshr_b32 s42, s1, 16
 ; GFX11-TRUE16-NEXT:    s_lshr_b32 s46, s0, 16
 ; GFX11-TRUE16-NEXT:    s_and_not1_b32 vcc_lo, exec_lo, s4
 ; GFX11-TRUE16-NEXT:    s_cbranch_vccnz .LBB53_4
@@ -25440,22 +25440,22 @@ define inreg <36 x half> @bitcast_v9f64_to_v36f16_scalar(<9 x double> inreg %a, 
 ; GFX11-TRUE16-NEXT:    s_branch .LBB53_5
 ; GFX11-TRUE16-NEXT:  .LBB53_3:
 ; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr46
-; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr13
-; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr45
-; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr12
-; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr44
-; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr11
-; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr43
-; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr10
 ; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr42
-; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr9
-; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr41
-; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr8
+; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr45
 ; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr40
-; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr7
-; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr15
-; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr6
+; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr44
 ; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr14
+; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr43
+; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr12
+; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr41
+; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr10
+; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr15
+; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr8
+; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr13
+; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr7
+; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr11
+; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr6
+; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr9
 ; GFX11-TRUE16-NEXT:    ; implicit-def: $sgpr5
 ; GFX11-TRUE16-NEXT:    s_branch .LBB53_2
 ; GFX11-TRUE16-NEXT:  .LBB53_4:
@@ -25468,15 +25468,15 @@ define inreg <36 x half> @bitcast_v9f64_to_v36f16_scalar(<9 x double> inreg %a, 
 ; GFX11-TRUE16-NEXT:    v_dual_mov_b32 v12, s24 :: v_dual_mov_b32 v13, s25
 ; GFX11-TRUE16-NEXT:    v_dual_mov_b32 v14, s26 :: v_dual_mov_b32 v15, s27
 ; GFX11-TRUE16-NEXT:    v_dual_mov_b32 v16, s28 :: v_dual_mov_b32 v17, s29
-; GFX11-TRUE16-NEXT:    v_dual_mov_b32 v34, s46 :: v_dual_mov_b32 v35, s13
-; GFX11-TRUE16-NEXT:    v_dual_mov_b32 v32, s45 :: v_dual_mov_b32 v33, s12
-; GFX11-TRUE16-NEXT:    v_dual_mov_b32 v30, s44 :: v_dual_mov_b32 v31, s11
-; GFX11-TRUE16-NEXT:    v_dual_mov_b32 v28, s43 :: v_dual_mov_b32 v29, s10
-; GFX11-TRUE16-NEXT:    v_dual_mov_b32 v26, s42 :: v_dual_mov_b32 v27, s9
-; GFX11-TRUE16-NEXT:    v_dual_mov_b32 v24, s41 :: v_dual_mov_b32 v25, s8
-; GFX11-TRUE16-NEXT:    v_dual_mov_b32 v22, s40 :: v_dual_mov_b32 v23, s7
-; GFX11-TRUE16-NEXT:    v_dual_mov_b32 v20, s15 :: v_dual_mov_b32 v21, s6
-; GFX11-TRUE16-NEXT:    v_dual_mov_b32 v18, s14 :: v_dual_mov_b32 v19, s5
+; GFX11-TRUE16-NEXT:    v_dual_mov_b32 v34, s46 :: v_dual_mov_b32 v35, s42
+; GFX11-TRUE16-NEXT:    v_dual_mov_b32 v32, s45 :: v_dual_mov_b32 v33, s40
+; GFX11-TRUE16-NEXT:    v_dual_mov_b32 v30, s44 :: v_dual_mov_b32 v31, s14
+; GFX11-TRUE16-NEXT:    v_dual_mov_b32 v28, s43 :: v_dual_mov_b32 v29, s12
+; GFX11-TRUE16-NEXT:    v_dual_mov_b32 v26, s41 :: v_dual_mov_b32 v27, s10
+; GFX11-TRUE16-NEXT:    v_dual_mov_b32 v24, s15 :: v_dual_mov_b32 v25, s8
+; GFX11-TRUE16-NEXT:    v_dual_mov_b32 v22, s13 :: v_dual_mov_b32 v23, s7
+; GFX11-TRUE16-NEXT:    v_dual_mov_b32 v20, s11 :: v_dual_mov_b32 v21, s6
+; GFX11-TRUE16-NEXT:    v_dual_mov_b32 v18, s9 :: v_dual_mov_b32 v19, s5
 ; GFX11-TRUE16-NEXT:  .LBB53_5: ; %end
 ; GFX11-TRUE16-NEXT:    s_delay_alu instid0(VALU_DEP_3) | instskip(NEXT) | instid1(VALU_DEP_4)
 ; GFX11-TRUE16-NEXT:    v_dual_mov_b32 v32, v32 :: v_dual_mov_b32 v31, v31
@@ -25520,22 +25520,22 @@ define inreg <36 x half> @bitcast_v9f64_to_v36f16_scalar(<9 x double> inreg %a, 
 ; GFX11-FAKE16-NEXT:    s_cbranch_scc0 .LBB53_3
 ; GFX11-FAKE16-NEXT:  ; %bb.1: ; %cmp.false
 ; GFX11-FAKE16-NEXT:    s_lshr_b32 s5, s29, 16
-; GFX11-FAKE16-NEXT:    s_lshr_b32 s14, s28, 16
+; GFX11-FAKE16-NEXT:    s_lshr_b32 s9, s28, 16
 ; GFX11-FAKE16-NEXT:    s_lshr_b32 s6, s27, 16
-; GFX11-FAKE16-NEXT:    s_lshr_b32 s15, s26, 16
+; GFX11-FAKE16-NEXT:    s_lshr_b32 s11, s26, 16
 ; GFX11-FAKE16-NEXT:    s_lshr_b32 s7, s25, 16
-; GFX11-FAKE16-NEXT:    s_lshr_b32 s40, s24, 16
+; GFX11-FAKE16-NEXT:    s_lshr_b32 s13, s24, 16
 ; GFX11-FAKE16-NEXT:    s_lshr_b32 s8, s23, 16
-; GFX11-FAKE16-NEXT:    s_lshr_b32 s41, s22, 16
-; GFX11-FAKE16-NEXT:    s_lshr_b32 s9, s21, 16
-; GFX11-FAKE16-NEXT:    s_lshr_b32 s42, s20, 16
-; GFX11-FAKE16-NEXT:    s_lshr_b32 s10, s19, 16
+; GFX11-FAKE16-NEXT:    s_lshr_b32 s15, s22, 16
+; GFX11-FAKE16-NEXT:    s_lshr_b32 s10, s21, 16
+; GFX11-FAKE16-NEXT:    s_lshr_b32 s41, s20, 16
+; GFX11-FAKE16-NEXT:    s_lshr_b32 s12, s19, 16
 ; GFX11-FAKE16-NEXT:    s_lshr_b32 s43, s18, 16
-; GFX11-FAKE16-NEXT:    s_lshr_b32 s11, s17, 16
+; GFX11-FAKE16-NEXT:    s_lshr_b32 s14, s17, 16
 ; GFX11-FAKE16-NEXT:    s_lshr_b32 s44, s16, 16
-; GFX11-FAKE16-NEXT:    s_lshr_b32 s12, s3, 16
+; GFX11-FAKE16-NEXT:    s_lshr_b32 s40, s3, 16
 ; GFX11-FAKE16-NEXT:    s_lshr_b32 s45, s2, 16
-; GFX11-FAKE16-NEXT:    s_lshr_b32 s13, s1, 16
+; GFX11-FAKE16-NEXT:    s_lshr_b32 s42, s1, 16
 ; GFX11-FAKE16-NEXT:    s_lshr_b32 s46, s0, 16
 ; GFX11-FAKE16-NEXT:    s_and_not1_b32 vcc_lo, exec_lo, s4
 ; GFX11-FAKE16-NEXT:    s_cbranch_vccnz .LBB53_4
@@ -25570,22 +25570,22 @@ define inreg <36 x half> @bitcast_v9f64_to_v36f16_scalar(<9 x double> inreg %a, 
 ; GFX11-FAKE16-NEXT:    s_branch .LBB53_5
 ; GFX11-FAKE16-NEXT:  .LBB53_3:
 ; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr46
-; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr13
-; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr45
-; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr12
-; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr44
-; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr11
-; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr43
-; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr10
 ; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr42
-; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr9
-; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr41
-; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr8
+; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr45
 ; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr40
-; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr7
-; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr15
-; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr6
+; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr44
 ; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr14
+; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr43
+; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr12
+; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr41
+; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr10
+; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr15
+; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr8
+; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr13
+; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr7
+; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr11
+; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr6
+; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr9
 ; GFX11-FAKE16-NEXT:    ; implicit-def: $sgpr5
 ; GFX11-FAKE16-NEXT:    s_branch .LBB53_2
 ; GFX11-FAKE16-NEXT:  .LBB53_4:
@@ -25599,12 +25599,12 @@ define inreg <36 x half> @bitcast_v9f64_to_v36f16_scalar(<9 x double> inreg %a, 
 ; GFX11-FAKE16-NEXT:    v_dual_mov_b32 v11, s21 :: v_dual_mov_b32 v16, s27
 ; GFX11-FAKE16-NEXT:    v_dual_mov_b32 v9, s23 :: v_dual_mov_b32 v14, s29
 ; GFX11-FAKE16-NEXT:    v_dual_mov_b32 v34, s46 :: v_dual_mov_b32 v7, s43
-; GFX11-FAKE16-NEXT:    v_dual_mov_b32 v2, s45 :: v_dual_mov_b32 v27, s42
-; GFX11-FAKE16-NEXT:    v_dual_mov_b32 v30, s44 :: v_dual_mov_b32 v21, s14
-; GFX11-FAKE16-NEXT:    v_dual_mov_b32 v26, s41 :: v_dual_mov_b32 v35, s13
-; GFX11-FAKE16-NEXT:    v_dual_mov_b32 v12, s40 :: v_dual_mov_b32 v33, s12
-; GFX11-FAKE16-NEXT:    v_dual_mov_b32 v22, s15 :: v_dual_mov_b32 v31, s10
-; GFX11-FAKE16-NEXT:    v_dual_mov_b32 v32, s11 :: v_dual_mov_b32 v29, s9
+; GFX11-FAKE16-NEXT:    v_dual_mov_b32 v2, s45 :: v_dual_mov_b32 v27, s41
+; GFX11-FAKE16-NEXT:    v_dual_mov_b32 v30, s44 :: v_dual_mov_b32 v21, s9
+; GFX11-FAKE16-NEXT:    v_dual_mov_b32 v26, s15 :: v_dual_mov_b32 v35, s42
+; GFX11-FAKE16-NEXT:    v_dual_mov_b32 v12, s13 :: v_dual_mov_b32 v33, s40
+; GFX11-FAKE16-NEXT:    v_dual_mov_b32 v22, s11 :: v_dual_mov_b32 v31, s12
+; GFX11-FAKE16-NEXT:    v_dual_mov_b32 v32, s14 :: v_dual_mov_b32 v29, s10
 ; GFX11-FAKE16-NEXT:    v_dual_mov_b32 v28, s8 :: v_dual_mov_b32 v25, s7
 ; GFX11-FAKE16-NEXT:    v_dual_mov_b32 v24, s6 :: v_dual_mov_b32 v23, s5
 ; GFX11-FAKE16-NEXT:  .LBB53_5: ; %end
@@ -29591,23 +29591,23 @@ define inreg <36 x i16> @bitcast_v36f16_to_v36i16_scalar(<36 x half> inreg %a, i
 ; SI-NEXT:    v_cvt_f16_f32_e32 v55, s27
 ; SI-NEXT:    v_cvt_f16_f32_e32 v40, s28
 ; SI-NEXT:    v_cvt_f16_f32_e32 v14, v1
-; SI-NEXT:    v_cvt_f16_f32_e32 v26, v4
+; SI-NEXT:    v_cvt_f16_f32_e32 v28, v4
 ; SI-NEXT:    v_cvt_f16_f32_e32 v10, v5
-; SI-NEXT:    v_cvt_f16_f32_e32 v24, v8
+; SI-NEXT:    v_cvt_f16_f32_e32 v26, v8
 ; SI-NEXT:    v_cvt_f16_f32_e32 v8, v9
-; SI-NEXT:    v_cvt_f16_f32_e32 v22, v12
+; SI-NEXT:    v_cvt_f16_f32_e32 v24, v12
 ; SI-NEXT:    v_cvt_f16_f32_e32 v6, v13
-; SI-NEXT:    v_cvt_f16_f32_e32 v19, v16
+; SI-NEXT:    v_cvt_f16_f32_e32 v22, v16
 ; SI-NEXT:    v_cvt_f16_f32_e32 v4, v17
-; SI-NEXT:    v_cvt_f16_f32_e32 v11, v20
+; SI-NEXT:    v_cvt_f16_f32_e32 v15, v20
 ; SI-NEXT:    v_cvt_f16_f32_e32 v2, v21
 ; SI-NEXT:    v_cvt_f16_f32_e32 v34, s17
-; SI-NEXT:    v_cvt_f16_f32_e32 v21, s18
+; SI-NEXT:    v_cvt_f16_f32_e32 v19, s18
 ; SI-NEXT:    v_cvt_f16_f32_e32 v32, s21
-; SI-NEXT:    v_cvt_f16_f32_e32 v18, s22
+; SI-NEXT:    v_cvt_f16_f32_e32 v17, s22
 ; SI-NEXT:    v_cvt_f16_f32_e32 v30, s25
-; SI-NEXT:    v_cvt_f16_f32_e32 v16, s26
-; SI-NEXT:    v_cvt_f16_f32_e32 v28, s29
+; SI-NEXT:    v_cvt_f16_f32_e32 v12, s26
+; SI-NEXT:    v_cvt_f16_f32_e32 v20, s29
 ; SI-NEXT:    v_cmp_ne_u32_e32 vcc, 0, v23
 ; SI-NEXT:    s_and_b64 s[4:5], vcc, exec
 ; SI-NEXT:    s_cbranch_scc0 .LBB59_4
@@ -29615,7 +29615,7 @@ define inreg <36 x i16> @bitcast_v36f16_to_v36i16_scalar(<36 x half> inreg %a, i
 ; SI-NEXT:    s_cbranch_execnz .LBB59_3
 ; SI-NEXT:  .LBB59_2: ; %cmp.true
 ; SI-NEXT:    v_cvt_f32_f16_e32 v5, v44
-; SI-NEXT:    v_cvt_f32_f16_e32 v3, v21
+; SI-NEXT:    v_cvt_f32_f16_e32 v3, v19
 ; SI-NEXT:    v_cvt_f32_f16_e32 v1, v34
 ; SI-NEXT:    v_cvt_f32_f16_e32 v2, v2
 ; SI-NEXT:    v_add_f32_e32 v5, 0x38000000, v5
@@ -29625,10 +29625,10 @@ define inreg <36 x i16> @bitcast_v36f16_to_v36i16_scalar(<36 x half> inreg %a, i
 ; SI-NEXT:    v_add_f32_e32 v1, 0x38000000, v1
 ; SI-NEXT:    v_lshlrev_b32_e32 v5, 16, v44
 ; SI-NEXT:    v_cvt_f16_f32_e32 v1, v1
-; SI-NEXT:    v_or_b32_e32 v21, v3, v5
+; SI-NEXT:    v_or_b32_e32 v19, v3, v5
 ; SI-NEXT:    v_cvt_f32_f16_e32 v5, v41
-; SI-NEXT:    v_cvt_f32_f16_e32 v3, v18
-; SI-NEXT:    v_lshlrev_b32_e32 v20, 16, v1
+; SI-NEXT:    v_cvt_f32_f16_e32 v3, v17
+; SI-NEXT:    v_lshlrev_b32_e32 v18, 16, v1
 ; SI-NEXT:    v_cvt_f32_f16_e32 v1, v32
 ; SI-NEXT:    v_add_f32_e32 v5, 0x38000000, v5
 ; SI-NEXT:    v_cvt_f16_f32_e32 v41, v5
@@ -29637,10 +29637,10 @@ define inreg <36 x i16> @bitcast_v36f16_to_v36i16_scalar(<36 x half> inreg %a, i
 ; SI-NEXT:    v_add_f32_e32 v1, 0x38000000, v1
 ; SI-NEXT:    v_lshlrev_b32_e32 v5, 16, v41
 ; SI-NEXT:    v_cvt_f16_f32_e32 v1, v1
-; SI-NEXT:    v_or_b32_e32 v18, v3, v5
+; SI-NEXT:    v_or_b32_e32 v17, v3, v5
 ; SI-NEXT:    v_cvt_f32_f16_e32 v5, v55
-; SI-NEXT:    v_cvt_f32_f16_e32 v3, v16
-; SI-NEXT:    v_lshlrev_b32_e32 v17, 16, v1
+; SI-NEXT:    v_cvt_f32_f16_e32 v3, v12
+; SI-NEXT:    v_lshlrev_b32_e32 v16, 16, v1
 ; SI-NEXT:    v_cvt_f32_f16_e32 v1, v30
 ; SI-NEXT:    v_add_f32_e32 v5, 0x38000000, v5
 ; SI-NEXT:    v_cvt_f16_f32_e32 v55, v5
@@ -29649,11 +29649,11 @@ define inreg <36 x i16> @bitcast_v36f16_to_v36i16_scalar(<36 x half> inreg %a, i
 ; SI-NEXT:    v_add_f32_e32 v1, 0x38000000, v1
 ; SI-NEXT:    v_lshlrev_b32_e32 v5, 16, v55
 ; SI-NEXT:    v_cvt_f16_f32_e32 v1, v1
-; SI-NEXT:    v_or_b32_e32 v16, v3, v5
+; SI-NEXT:    v_or_b32_e32 v12, v3, v5
 ; SI-NEXT:    v_cvt_f32_f16_e32 v5, v52
 ; SI-NEXT:    v_cvt_f32_f16_e32 v3, v14
-; SI-NEXT:    v_lshlrev_b32_e32 v15, 16, v1
-; SI-NEXT:    v_cvt_f32_f16_e32 v1, v28
+; SI-NEXT:    v_lshlrev_b32_e32 v11, 16, v1
+; SI-NEXT:    v_cvt_f32_f16_e32 v1, v20
 ; SI-NEXT:    v_add_f32_e32 v5, 0x38000000, v5
 ; SI-NEXT:    v_cvt_f16_f32_e32 v52, v5
 ; SI-NEXT:    v_add_f32_e32 v3, 0x38000000, v3
@@ -29665,7 +29665,7 @@ define inreg <36 x i16> @bitcast_v36f16_to_v36i16_scalar(<36 x half> inreg %a, i
 ; SI-NEXT:    v_cvt_f32_f16_e32 v5, v50
 ; SI-NEXT:    v_cvt_f32_f16_e32 v3, v10
 ; SI-NEXT:    v_lshlrev_b32_e32 v13, 16, v1
-; SI-NEXT:    v_cvt_f32_f16_e32 v1, v26
+; SI-NEXT:    v_cvt_f32_f16_e32 v1, v28
 ; SI-NEXT:    v_add_f32_e32 v5, 0x38000000, v5
 ; SI-NEXT:    v_cvt_f16_f32_e32 v50, v5
 ; SI-NEXT:    v_add_f32_e32 v3, 0x38000000, v3
@@ -29677,7 +29677,7 @@ define inreg <36 x i16> @bitcast_v36f16_to_v36i16_scalar(<36 x half> inreg %a, i
 ; SI-NEXT:    v_cvt_f32_f16_e32 v5, v49
 ; SI-NEXT:    v_cvt_f32_f16_e32 v3, v8
 ; SI-NEXT:    v_lshlrev_b32_e32 v9, 16, v1
-; SI-NEXT:    v_cvt_f32_f16_e32 v1, v24
+; SI-NEXT:    v_cvt_f32_f16_e32 v1, v26
 ; SI-NEXT:    v_add_f32_e32 v5, 0x38000000, v5
 ; SI-NEXT:    v_cvt_f16_f32_e32 v49, v5
 ; SI-NEXT:    v_add_f32_e32 v3, 0x38000000, v3
@@ -29689,7 +29689,7 @@ define inreg <36 x i16> @bitcast_v36f16_to_v36i16_scalar(<36 x half> inreg %a, i
 ; SI-NEXT:    v_cvt_f32_f16_e32 v5, v39
 ; SI-NEXT:    v_cvt_f32_f16_e32 v3, v6
 ; SI-NEXT:    v_lshlrev_b32_e32 v7, 16, v1
-; SI-NEXT:    v_cvt_f32_f16_e32 v1, v22
+; SI-NEXT:    v_cvt_f32_f16_e32 v1, v24
 ; SI-NEXT:    v_add_f32_e32 v5, 0x38000000, v5
 ; SI-NEXT:    v_cvt_f16_f32_e32 v39, v5
 ; SI-NEXT:    v_add_f32_e32 v3, 0x38000000, v3
@@ -29702,7 +29702,7 @@ define inreg <36 x i16> @bitcast_v36f16_to_v36i16_scalar(<36 x half> inreg %a, i
 ; SI-NEXT:    v_cvt_f32_f16_e32 v3, v4
 ; SI-NEXT:    v_cvt_f32_f16_e32 v4, v37
 ; SI-NEXT:    v_lshlrev_b32_e32 v5, 16, v1
-; SI-NEXT:    v_cvt_f32_f16_e32 v1, v19
+; SI-NEXT:    v_cvt_f32_f16_e32 v1, v22
 ; SI-NEXT:    v_add_f32_e32 v3, 0x38000000, v3
 ; SI-NEXT:    v_add_f32_e32 v4, 0x38000000, v4
 ; SI-NEXT:    v_cvt_f16_f32_e32 v37, v4
@@ -29713,67 +29713,67 @@ define inreg <36 x i16> @bitcast_v36f16_to_v36i16_scalar(<36 x half> inreg %a, i
 ; SI-NEXT:    v_cvt_f16_f32_e32 v2, v2
 ; SI-NEXT:    v_or_b32_e32 v4, v3, v4
 ; SI-NEXT:    v_lshlrev_b32_e32 v3, 16, v1
-; SI-NEXT:    v_cvt_f32_f16_e32 v1, v11
-; SI-NEXT:    v_cvt_f32_f16_e32 v11, v36
-; SI-NEXT:    v_cvt_f32_f16_e32 v12, v43
-; SI-NEXT:    v_cvt_f32_f16_e32 v19, v42
+; SI-NEXT:    v_cvt_f32_f16_e32 v1, v15
+; SI-NEXT:    v_cvt_f32_f16_e32 v15, v36
+; SI-NEXT:    v_cvt_f32_f16_e32 v20, v43
+; SI-NEXT:    v_cvt_f32_f16_e32 v21, v42
 ; SI-NEXT:    v_cvt_f32_f16_e32 v22, v38
-; SI-NEXT:    v_add_f32_e32 v11, 0x38000000, v11
-; SI-NEXT:    v_cvt_f16_f32_e32 v36, v11
-; SI-NEXT:    v_add_f32_e32 v12, 0x38000000, v12
-; SI-NEXT:    v_cvt_f16_f32_e32 v12, v12
+; SI-NEXT:    v_add_f32_e32 v15, 0x38000000, v15
+; SI-NEXT:    v_cvt_f16_f32_e32 v36, v15
+; SI-NEXT:    v_add_f32_e32 v20, 0x38000000, v20
+; SI-NEXT:    v_cvt_f16_f32_e32 v20, v20
 ; SI-NEXT:    v_add_f32_e32 v1, 0x38000000, v1
-; SI-NEXT:    v_lshlrev_b32_e32 v11, 16, v36
-; SI-NEXT:    v_or_b32_e32 v2, v2, v11
-; SI-NEXT:    v_cvt_f32_f16_e32 v11, v45
-; SI-NEXT:    v_or_b32_e32 v43, v12, v17
-; SI-NEXT:    v_add_f32_e32 v12, 0x38000000, v19
-; SI-NEXT:    v_cvt_f32_f16_e32 v19, v54
-; SI-NEXT:    v_add_f32_e32 v11, 0x38000000, v11
-; SI-NEXT:    v_cvt_f16_f32_e32 v11, v11
-; SI-NEXT:    v_cvt_f16_f32_e32 v12, v12
-; SI-NEXT:    v_add_f32_e32 v19, 0x38000000, v19
-; SI-NEXT:    v_cvt_f16_f32_e32 v19, v19
-; SI-NEXT:    v_or_b32_e32 v45, v11, v20
-; SI-NEXT:    v_cvt_f32_f16_e32 v11, v40
-; SI-NEXT:    v_or_b32_e32 v42, v12, v15
-; SI-NEXT:    v_cvt_f32_f16_e32 v12, v53
-; SI-NEXT:    v_or_b32_e32 v54, v19, v9
-; SI-NEXT:    v_add_f32_e32 v11, 0x38000000, v11
-; SI-NEXT:    v_cvt_f16_f32_e32 v11, v11
-; SI-NEXT:    v_cvt_f32_f16_e32 v19, v48
+; SI-NEXT:    v_lshlrev_b32_e32 v15, 16, v36
+; SI-NEXT:    v_or_b32_e32 v2, v2, v15
+; SI-NEXT:    v_cvt_f32_f16_e32 v15, v45
+; SI-NEXT:    v_or_b32_e32 v43, v20, v16
+; SI-NEXT:    v_add_f32_e32 v20, 0x38000000, v21
+; SI-NEXT:    v_cvt_f32_f16_e32 v21, v54
+; SI-NEXT:    v_add_f32_e32 v15, 0x38000000, v15
+; SI-NEXT:    v_cvt_f16_f32_e32 v15, v15
+; SI-NEXT:    v_cvt_f16_f32_e32 v20, v20
+; SI-NEXT:    v_add_f32_e32 v21, 0x38000000, v21
+; SI-NEXT:    v_cvt_f16_f32_e32 v21, v21
+; SI-NEXT:    v_or_b32_e32 v45, v15, v18
+; SI-NEXT:    v_cvt_f32_f16_e32 v15, v40
+; SI-NEXT:    v_or_b32_e32 v42, v20, v11
+; SI-NEXT:    v_cvt_f32_f16_e32 v20, v53
+; SI-NEXT:    v_or_b32_e32 v54, v21, v9
+; SI-NEXT:    v_add_f32_e32 v15, 0x38000000, v15
+; SI-NEXT:    v_cvt_f16_f32_e32 v15, v15
+; SI-NEXT:    v_cvt_f32_f16_e32 v21, v48
 ; SI-NEXT:    v_cvt_f16_f32_e32 v1, v1
-; SI-NEXT:    v_add_f32_e32 v12, 0x38000000, v12
-; SI-NEXT:    v_or_b32_e32 v40, v11, v13
-; SI-NEXT:    v_cvt_f32_f16_e32 v11, v51
-; SI-NEXT:    v_add_f32_e32 v19, 0x38000000, v19
+; SI-NEXT:    v_add_f32_e32 v20, 0x38000000, v20
+; SI-NEXT:    v_or_b32_e32 v40, v15, v13
+; SI-NEXT:    v_cvt_f32_f16_e32 v15, v51
+; SI-NEXT:    v_add_f32_e32 v21, 0x38000000, v21
 ; SI-NEXT:    v_add_f32_e32 v22, 0x38000000, v22
-; SI-NEXT:    v_cvt_f16_f32_e32 v12, v12
-; SI-NEXT:    v_add_f32_e32 v11, 0x38000000, v11
-; SI-NEXT:    v_cvt_f16_f32_e32 v11, v11
-; SI-NEXT:    v_cvt_f16_f32_e32 v19, v19
+; SI-NEXT:    v_cvt_f16_f32_e32 v20, v20
+; SI-NEXT:    v_add_f32_e32 v15, 0x38000000, v15
+; SI-NEXT:    v_cvt_f16_f32_e32 v15, v15
+; SI-NEXT:    v_cvt_f16_f32_e32 v21, v21
 ; SI-NEXT:    v_cvt_f16_f32_e32 v22, v22
 ; SI-NEXT:    v_lshlrev_b32_e32 v1, 16, v1
-; SI-NEXT:    v_or_b32_e32 v53, v12, v7
-; SI-NEXT:    v_or_b32_e32 v51, v11, v5
-; SI-NEXT:    v_or_b32_e32 v48, v19, v3
+; SI-NEXT:    v_or_b32_e32 v53, v20, v7
+; SI-NEXT:    v_or_b32_e32 v51, v15, v5
+; SI-NEXT:    v_or_b32_e32 v48, v21, v3
 ; SI-NEXT:    v_or_b32_e32 v38, v22, v1
-; SI-NEXT:    v_lshr_b64 v[34:35], v[20:21], 16
-; SI-NEXT:    v_lshr_b64 v[32:33], v[17:18], 16
-; SI-NEXT:    v_lshr_b64 v[30:31], v[15:16], 16
-; SI-NEXT:    v_lshr_b64 v[28:29], v[13:14], 16
-; SI-NEXT:    v_lshr_b64 v[26:27], v[9:10], 16
-; SI-NEXT:    v_lshr_b64 v[24:25], v[7:8], 16
-; SI-NEXT:    v_lshr_b64 v[22:23], v[5:6], 16
-; SI-NEXT:    v_lshr_b64 v[19:20], v[3:4], 16
-; SI-NEXT:    v_lshr_b64 v[11:12], v[1:2], 16
+; SI-NEXT:    v_lshr_b64 v[34:35], v[18:19], 16
+; SI-NEXT:    v_lshr_b64 v[32:33], v[16:17], 16
+; SI-NEXT:    v_lshr_b64 v[30:31], v[11:12], 16
+; SI-NEXT:    v_lshr_b64 v[20:21], v[13:14], 16
+; SI-NEXT:    v_lshr_b64 v[28:29], v[9:10], 16
+; SI-NEXT:    v_lshr_b64 v[26:27], v[7:8], 16
+; SI-NEXT:    v_lshr_b64 v[24:25], v[5:6], 16
+; SI-NEXT:    v_lshr_b64 v[22:23], v[3:4], 16
+; SI-NEXT:    v_lshr_b64 v[15:16], v[1:2], 16
 ; SI-NEXT:  .LBB59_3: ; %end
 ; SI-NEXT:    v_lshlrev_b32_e32 v1, 16, v34
 ; SI-NEXT:    v_and_b32_e32 v3, 0xffff, v45
 ; SI-NEXT:    v_or_b32_e32 v1, v3, v1
 ; SI-NEXT:    buffer_store_dword v1, v0, s[0:3], 0 offen
 ; SI-NEXT:    s_waitcnt expcnt(0)
-; SI-NEXT:    v_and_b32_e32 v1, 0xffff, v21
+; SI-NEXT:    v_and_b32_e32 v1, 0xffff, v19
 ; SI-NEXT:    v_lshlrev_b32_e32 v3, 16, v44
 ; SI-NEXT:    v_or_b32_e32 v1, v1, v3
 ; SI-NEXT:    v_add_i32_e32 v3, vcc, 4, v0
@@ -29785,7 +29785,7 @@ define inreg <36 x i16> @bitcast_v36f16_to_v36i16_scalar(<36 x half> inreg %a, i
 ; SI-NEXT:    v_add_i32_e32 v3, vcc, 8, v0
 ; SI-NEXT:    buffer_store_dword v1, v3, s[0:3], 0 offen
 ; SI-NEXT:    s_waitcnt expcnt(0)
-; SI-NEXT:    v_and_b32_e32 v1, 0xffff, v18
+; SI-NEXT:    v_and_b32_e32 v1, 0xffff, v17
 ; SI-NEXT:    v_lshlrev_b32_e32 v3, 16, v41
 ; SI-NEXT:    v_or_b32_e32 v1, v1, v3
 ; SI-NEXT:    v_add_i32_e32 v3, vcc, 12, v0
@@ -29797,13 +29797,13 @@ define inreg <36 x i16> @bitcast_v36f16_to_v36i16_scalar(<36 x half> inreg %a, i
 ; SI-NEXT:    v_add_i32_e32 v3, vcc, 16, v0
 ; SI-NEXT:    buffer_store_dword v1, v3, s[0:3], 0 offen
 ; SI-NEXT:    s_waitcnt expcnt(0)
-; SI-NEXT:    v_and_b32_e32 v1, 0xffff, v16
+; SI-NEXT:    v_and_b32_e32 v1, 0xffff, v12
 ; SI-NEXT:    v_lshlrev_b32_e32 v3, 16, v55
 ; SI-NEXT:    v_or_b32_e32 v1, v1, v3
 ; SI-NEXT:    v_add_i32_e32 v3, vcc, 20, v0
 ; SI-NEXT:    buffer_store_dword v1, v3, s[0:3], 0 offen
 ; SI-NEXT:    s_waitcnt expcnt(0)
-; SI-NEXT:    v_lshlrev_b32_e32 v1, 16, v28
+; SI-NEXT:    v_lshlrev_b32_e32 v1, 16, v20
 ; SI-NEXT:    v_and_b32_e32 v3, 0xffff, v40
 ; SI-NEXT:    v_or_b32_e32 v1, v3, v1
 ; SI-NEXT:    v_add_i32_e32 v3, vcc, 24, v0
@@ -29816,7 +29816,7 @@ define inreg <36 x i16> @bitcast_v36f16_to_v36i16_scalar(<36 x half> inreg %a, i
 ; SI-NEXT:    buffer_store_dword v1, v3, s[0:3], 0 offen
 ; SI-NEXT:    s_waitcnt expcnt(0)
 ; SI-NEXT:    v_and_b32_e32 v1, 0xffff, v54
-; SI-NEXT:    v_lshlrev_b32_e32 v3, 16, v26
+; SI-NEXT:    v_lshlrev_b32_e32 v3, 16, v28
 ; SI-NEXT:    v_or_b32_e32 v1, v1, v3
 ; SI-NEXT:    v_add_i32_e32 v3, vcc, 32, v0
 ; SI-NEXT:    buffer_store_dword v1, v3, s[0:3], 0 offen
@@ -29828,7 +29828,7 @@ define inreg <36 x i16> @bitcast_v36f16_to_v36i16_scalar(<36 x half> inreg %a, i
 ; SI-NEXT:    buffer_store_dword v1, v3, s[0:3], 0 offen
 ; SI-NEXT:    s_waitcnt expcnt(0)
 ; SI-NEXT:    v_and_b32_e32 v1, 0xffff, v53
-; SI-NEXT:    v_lshlrev_b32_e32 v3, 16, v24
+; SI-NEXT:    v_lshlrev_b32_e32 v3, 16, v26
 ; SI-NEXT:    v_or_b32_e32 v1, v1, v3
 ; SI-NEXT:    v_add_i32_e32 v3, vcc, 40, v0
 ; SI-NEXT:    buffer_store_dword v1, v3, s[0:3], 0 offen
@@ -29840,7 +29840,7 @@ define inreg <36 x i16> @bitcast_v36f16_to_v36i16_scalar(<36 x half> inreg %a, i
 ; SI-NEXT:    buffer_store_dword v1, v3, s[0:3], 0 offen
 ; SI-NEXT:    s_waitcnt expcnt(0)
 ; SI-NEXT:    v_and_b32_e32 v1, 0xffff, v51
-; SI-NEXT:    v_lshlrev_b32_e32 v3, 16, v22
+; SI-NEXT:    v_lshlrev_b32_e32 v3, 16, v24
 ; SI-NEXT:    v_or_b32_e32 v1, v1, v3
 ; SI-NEXT:    v_add_i32_e32 v3, vcc, 48, v0
 ; SI-NEXT:    buffer_store_dword v1, v3, s[0:3], 0 offen
@@ -29852,7 +29852,7 @@ define inreg <36 x i16> @bitcast_v36f16_to_v36i16_scalar(<36 x half> inreg %a, i
 ; SI-NEXT:    buffer_store_dword v1, v3, s[0:3], 0 offen
 ; SI-NEXT:    s_waitcnt expcnt(0)
 ; SI-NEXT:    v_and_b32_e32 v1, 0xffff, v48
-; SI-NEXT:    v_lshlrev_b32_e32 v3, 16, v19
+; SI-NEXT:    v_lshlrev_b32_e32 v3, 16, v22
 ; SI-NEXT:    v_or_b32_e32 v1, v1, v3
 ; SI-NEXT:    v_add_i32_e32 v3, vcc, 56, v0
 ; SI-NEXT:    buffer_store_dword v1, v3, s[0:3], 0 offen
@@ -29864,7 +29864,7 @@ define inreg <36 x i16> @bitcast_v36f16_to_v36i16_scalar(<36 x half> inreg %a, i
 ; SI-NEXT:    buffer_store_dword v1, v3, s[0:3], 0 offen
 ; SI-NEXT:    s_waitcnt expcnt(0)
 ; SI-NEXT:    v_and_b32_e32 v1, 0xffff, v38
-; SI-NEXT:    v_lshlrev_b32_e32 v3, 16, v11
+; SI-NEXT:    v_lshlrev_b32_e32 v3, 16, v15
 ; SI-NEXT:    v_or_b32_e32 v1, v1, v3
 ; SI-NEXT:    v_add_i32_e32 v3, vcc, 64, v0
 ; SI-NEXT:    buffer_store_dword v1, v3, s[0:3], 0 offen

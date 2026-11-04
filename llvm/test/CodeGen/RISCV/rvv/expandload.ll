@@ -703,16 +703,15 @@ define <128 x i16> @test_expandload_v128i16(ptr %base, <128 x i1> %mask, <128 x 
 ; CHECK-RV32-NEXT:    mul a0, a0, a1
 ; CHECK-RV32-NEXT:    add a0, sp, a0
 ; CHECK-RV32-NEXT:    addi a0, a0, 16
-; CHECK-RV32-NEXT:    vl8r.v v24, (a0) # vscale x 64-byte Folded Reload
+; CHECK-RV32-NEXT:    vl8r.v v16, (a0) # vscale x 64-byte Folded Reload
 ; CHECK-RV32-NEXT:    csrr a0, vlenb
 ; CHECK-RV32-NEXT:    slli a0, a0, 3
 ; CHECK-RV32-NEXT:    add a0, sp, a0
 ; CHECK-RV32-NEXT:    addi a0, a0, 16
-; CHECK-RV32-NEXT:    vl8r.v v16, (a0) # vscale x 64-byte Folded Reload
-; CHECK-RV32-NEXT:    vrgather.vv v24, v16, v8, v0.t
+; CHECK-RV32-NEXT:    vl8r.v v24, (a0) # vscale x 64-byte Folded Reload
+; CHECK-RV32-NEXT:    vrgather.vv v16, v24, v8, v0.t
 ; CHECK-RV32-NEXT:    addi a0, sp, 16
 ; CHECK-RV32-NEXT:    vl8r.v v8, (a0) # vscale x 64-byte Folded Reload
-; CHECK-RV32-NEXT:    vmv.v.v v16, v24
 ; CHECK-RV32-NEXT:    csrr a0, vlenb
 ; CHECK-RV32-NEXT:    slli a0, a0, 5
 ; CHECK-RV32-NEXT:    add sp, sp, a0
