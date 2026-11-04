@@ -12,7 +12,7 @@
 # RUN:   --aie-simplify-reserved-regs \
 # RUN:   --aie-postpipeliner-minii=2 \
 # RUN:   --aie-postpipeliner-maxii=2 \
-# RUN:   --debug-only=postpipeliner \
+# RUN:   --debug-only=aie-postregalloc,postpipeliner \
 # RUN:   -o /dev/null 2>&1 | FileCheck %s
 # REQUIRES: asserts
 
@@ -26,8 +26,12 @@
 #
 # Because the VSRS results are in x0/x1 (different registers), register
 # allocation cannot fail on those live ranges; any rejection must be due
-# to the crSRSMode implicit-use live range conflict.
+# to the crSRSMode implicit-use live range conflict. Those non-virtualizable
+# ranges are pinned into occupancy as fixed physical constraints before
+# assignment search begins.
 #
+# CHECK: Fixed: LR#{{[0-9]+}} -> $crsrsmode
+# CHECK: Fixed conflict on LR#{{[0-9]+}} - infeasible
 # CHECK: PostPipeliner: Register allocation failed
 
 --- |

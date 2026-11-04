@@ -74,12 +74,13 @@ static cl::opt<int>
 
 PipelineScheduleVisitor::~PipelineScheduleVisitor() {}
 
-std::optional<int> PostPipelinerStrategy::fitInInterval(
-    const SUnit &SU, int First, int Last, int II, const AIEHazardRecognizer &HR,
-    ResourceScoreboard<FuncUnitWrapper> &Scoreboard) {
+static std::optional<int>
+scanInterval(const SUnit &SU, int First, int Last, int II,
+             const AIEHazardRecognizer &HR,
+             ResourceScoreboard<FuncUnitWrapper> &Scoreboard, bool FromTop) {
   MachineInstr &MI = *SU.getInstr();
   assert(First <= Last);
-  const int Step = fromTop() ? 1 : -1;
+  const int Step = FromTop ? 1 : -1;
   if (Step < 0) {
     std::swap(First, Last);
   }
@@ -93,6 +94,26 @@ std::optional<int> PostPipelinerStrategy::fitInInterval(
   }
 
   return std::nullopt;
+}
+
+std::optional<int> PostPipelinerStrategy::fitInInterval(
+    const SUnit &SU, int First, int Last, int II, const AIEHazardRecognizer &HR,
+    ResourceScoreboard<FuncUnitWrapper> &Scoreboard) {
+  return scanInterval(SU, First, Last, II, HR, Scoreboard, fromTop());
+}
+
+bool PostPipelinerStrategy::isUnscheduledInIter(const SDep &Dep) const {
+  const SUnit *SU = Dep.getSUnit();
+  if (SU->isBoundaryNode())
+    return false;
+  const int N = SU->NodeNum;
+  return N < Info.NInstr && !Info[N].Scheduled;
+}
+
+bool PostPipelinerStrategy::isAvailable(const SUnit &SU) {
+  auto &Edges = fromTop() ? SU.Preds : SU.Succs;
+  return none_of(Edges,
+                 [this](const SDep &Dep) { return isUnscheduledInIter(Dep); });
 }
 
 class PostPipelineDumper : public PipelineScheduleVisitor {
@@ -882,24 +903,12 @@ int PostPipeliner::mostUrgent(PostPipelinerStrategy &Strategy) {
   }
   assert(FirstUnscheduled <= LastUnscheduled);
 
-  auto NotScheduled = [this](const auto &Dep) {
-    auto *SU = Dep.getSUnit();
-    if (SU->isBoundaryNode()) {
-      return false;
-    }
-    int N = SU->NodeNum;
-    return N < NInstr && !Info[N].Scheduled;
-  };
-
   int Best = -1;
   LLVM_DEBUG(dbgs() << "Available:");
   for (int K = FirstUnscheduled; K <= LastUnscheduled; K++) {
     const auto &SU = DAG->SUnits[K];
-    auto &Edges = Strategy.fromTop() ? SU.Preds : SU.Succs;
-    // Check whether it is available
-    if (Info[K].Scheduled || any_of(Edges, NotScheduled)) {
+    if (Info[K].Scheduled || !Strategy.isAvailable(SU))
       continue;
-    }
     LLVM_DEBUG(dbgs() << " SU" << K);
     if (Best == -1 || Strategy.better(SU, DAG->SUnits[Best])) {
       Best = K;
@@ -1552,6 +1561,131 @@ static const ConfigStrategy::Configuration Heuristics[] = {
     {1, false, false, 1, {Prio::NodeNum}, {}}, // pure bottom up
 };
 
+// Place data sinks first, then pull producers ALAP toward them to shorten
+// live ranges under modulo pressure.
+class EarlyConsumerStrategy : public PostPipelinerStrategy {
+  // Data preds of already-placed nodes (producer pull).
+  std::set<int> AnchoredPreds;
+
+  unsigned numInIterDataSuccs(const SUnit &SU) const {
+    return count_if(SU.Succs, [this](const SDep &Dep) {
+      if (Dep.getKind() != SDep::Data)
+        return false;
+      const SUnit *S = Dep.getSUnit();
+      return !S->isBoundaryNode() && (int)S->NodeNum < Info.NInstr;
+    });
+  }
+
+  // True if Edges contains a placed in-iteration data neighbour.
+  bool hasPlacedInIterDataNeighbour(ArrayRef<SDep> Edges) const {
+    return any_of(Edges, [this](const SDep &Dep) {
+      if (Dep.getKind() != SDep::Data)
+        return false;
+      const SUnit *Neigh = Dep.getSUnit();
+      if (Neigh->isBoundaryNode())
+        return false;
+      const int N = Neigh->NodeNum;
+      return N < Info.NInstr && Info[N].Scheduled;
+    });
+  }
+
+  // Not opened symmetrically. SU1 and SU3 both have no in-iteration data
+  // successors, so better() cannot tell them apart by width:
+  //
+  //   SU0: %r1 = load       ; data predecessor of SU1
+  //   SU1: %acc = mac %r1   ; Latest = 10, no data successor
+  //   SU2: use %r3          ; anti predecessor of SU3
+  //   SU3: %r3 = load       ; Latest = 4, no data predecessor or successor
+  //
+  // SU1 is the node to place early: selected() can then pull SU0 toward it.
+  // SU3 has nothing to pull. If both were available, better() would prefer
+  // the smaller Latest and pick SU3, and fit() would place it at the window
+  // midpoint. SuccReady keeps SU3 out because it has no in-iteration data
+  // predecessor. SU3 waits until SU2 is placed (PredReady). SU1 is available
+  // immediately, before SU0.
+  bool isAvailable(const SUnit &SU) override {
+    // All in-iteration predecessors are placed.
+    const bool PredReady = none_of(
+        SU.Preds, [this](const SDep &Dep) { return isUnscheduledInIter(Dep); });
+    const bool HasInIterDataPred = any_of(SU.Preds, [this](const SDep &Dep) {
+      if (Dep.getKind() != SDep::Data)
+        return false;
+      const SUnit *P = Dep.getSUnit();
+      return !P->isBoundaryNode() && (int)P->NodeNum < Info.NInstr;
+    });
+    // Needs an in-iteration data predecessor to pull toward this node.
+    // In-iteration data successors must already be placed. Anti and output
+    // successors are ignored.
+    const bool SuccReady =
+        HasInIterDataPred && none_of(SU.Succs, [this](const SDep &Dep) {
+          return Dep.getKind() == SDep::Data && isUnscheduledInIter(Dep);
+        });
+    return PredReady || SuccReady;
+  }
+
+  bool better(const SUnit &A, const SUnit &B) override {
+    // Lexicographic: Anchored, Width (fewer in-iter Data succs), Latest,
+    // NodeNum.
+    const bool AnchoredA = AnchoredPreds.count(A.NodeNum);
+    const bool AnchoredB = AnchoredPreds.count(B.NodeNum);
+    if (AnchoredA != AnchoredB)
+      return AnchoredA > AnchoredB;
+
+    const unsigned WidthA = numInIterDataSuccs(A);
+    const unsigned WidthB = numInIterDataSuccs(B);
+    if (WidthA != WidthB)
+      return WidthA < WidthB;
+
+    if (Info[A.NodeNum].Latest != Info[B.NodeNum].Latest)
+      return Info[A.NodeNum].Latest < Info[B.NodeNum].Latest;
+
+    return A.NodeNum < B.NodeNum;
+  }
+
+  void selected(const SUnit &N) override {
+    // Pull in Data predecessors of the placed node.
+    for (auto &PDep : N.Preds) {
+      if (PDep.getKind() != SDep::Data)
+        continue;
+      AnchoredPreds.insert(PDep.getSUnit()->NodeNum);
+    }
+  }
+
+public:
+  using PostPipelinerStrategy::PostPipelinerStrategy;
+
+  std::string name() override {
+    return "EarlyConsumer_" + std::to_string(LatestBias);
+  }
+
+  std::optional<int>
+  fitInInterval(const SUnit &SU, int Earliest, int Latest, int II,
+                const AIEHazardRecognizer &HR,
+                ResourceScoreboard<FuncUnitWrapper> &Scoreboard) override {
+    const bool HasPlacedSucc = hasPlacedInIterDataNeighbour(SU.Succs);
+    const bool HasPlacedPred = hasPlacedInIterDataNeighbour(SU.Preds);
+    // Anchors (no placed neighbours): start at the window midpoint so
+    // ASAP does not crush producers and ALAP does not crush anti-deps
+    // into later groups. The two halves are complementary.
+    if (!HasPlacedSucc && !HasPlacedPred && Earliest < Latest) {
+      const int Mid = (Earliest + Latest) / 2;
+      // ASAP in the upper half, then ALAP in the lower half.
+      auto Result =
+          scanInterval(SU, Mid, Latest, II, HR, Scoreboard, /*FromTop=*/true);
+      if (!Result && Mid > Earliest)
+        Result = scanInterval(SU, Earliest, Mid - 1, II, HR, Scoreboard,
+                              /*FromTop=*/false);
+      return Result;
+    }
+    // Neighbour-anchored: ALAP toward a placed data consumer even when a
+    // predecessor is also placed; otherwise ASAP (unanchored single-cycle
+    // windows and placed-pred cases). Prefer succ so producers sink next
+    // to consumers.
+    return scanInterval(SU, Earliest, Latest, II, HR, Scoreboard,
+                        /*FromTop=*/!HasPlacedSucc);
+  }
+};
+
 /// Spreads independent instructions apart by deferring one instruction per
 /// run to first-fit+1, cycling through all NodeNums in scheduling order.
 /// Construction initializes state for the first run (DeferAt=0). nextRun()
@@ -1680,6 +1814,17 @@ bool PostPipeliner::tryApproaches() {
     }
     DEBUG_SUMMARY(dbgs() << "    Strategy " << S.name() << " failed\n");
   }
+
+  // Early consumers: place sinks first, then pull producers ALAP toward them.
+  for (const int ExtraStages : {0, 1}) {
+    EarlyConsumerStrategy S(*DAG, Info, MinLength + ExtraStages * II);
+    if (S.isEnabled()) {
+      resetSchedule(/*FullReset=*/true);
+      if (scheduleWithStrategy(S))
+        return true;
+    }
+  }
+
   IterCountSlackStrategy Relaxed(*DAG, Info, MinLength + II);
   if (Relaxed.isEnabled()) {
     resetSchedule(/*FullReset=*/true);
@@ -1780,10 +1925,8 @@ bool PostPipeliner::applySolver(const SolverData &Data, SWPSolver &Solver,
   // order to save solver time. We extract the cycles, and make a final check
   // for all constraints using a dedicated strategy.
   auto Schedule = Solver.getSUCycles();
-  DEBUG_SUMMARY(dbgs() << "Solver found "; for (auto C
-                                                : Schedule) dbgs()
-                                           << C << ", ";
-                dbgs() << "\n";);
+  DEBUG_SUMMARY(dbgs() << "Solver found ";
+                for (auto C : Schedule) dbgs() << C << ", "; dbgs() << "\n";);
   CheckFixedSchedule S{*DAG, Info, II * NS, Schedule, "Solver"};
   resetSchedule(/*FullReset=*/true);
   DEBUG_SUMMARY(dbgs() << "--- Strategy " << S.name() << "\n");

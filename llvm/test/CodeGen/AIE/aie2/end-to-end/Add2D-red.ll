@@ -34,7 +34,7 @@ declare { ptr, i20, i20 } @llvm.aie2.add.3d(ptr, i20, i20, i20, i20, i20, i20, i
 define void @add2d(ptr noalias %params, ptr noalias %ifm1_data, ptr noalias %ifm2_data, ptr noalias %ofm_data, ptr %.out, ptr %conv.i.i.i.out, ptr %idx.ext9.out, ptr %.out1, ptr %.out2, ptr %.out3, ptr %.out4, ptr %.out5, ptr %conv.i.i.i.i.i.out, ptr %.out6, ptr %conv.i.i.i46.out, ptr %xtraiter.out, ptr %in_ptr1.051.unr.ce.out, ptr %in_ptr2.0.in50.unr.ce.out, ptr %out_ptr.049.unr.ce.out, ptr %itr_left_cnt0.048.unr.ce.out, ptr %itr_left_cnt1.047.unr.ce.out) #3 {
 ; ASM-LABEL: add2d:
 ; ASM:       // %bb.0: // %newFuncRoot
-; ASM-NEXT:    nopb ; lda r2, [p0, #64]; padds [p0], #40; nopxm ; nopv
+; ASM-NEXT:    paddb [p0], #40; lda r2, [p0, #64]; nops ; nopxm ; nopv
 ; ASM-NEXT:    lda m2, [p0], #-4; nopx
 ; ASM-NEXT:    lda m5, [p0], #8
 ; ASM-NEXT:    lda m4, [p0], #8

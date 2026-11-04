@@ -106,16 +106,17 @@ bool AIE2AsmParser::validateInstruction(MCInst &Inst, OperandVector &Operands) {
                    "PADDB immediates must be multiples of 4");
     break;
   }
-  case AIE2::PADDA_sp_imm: {
+  case AIE2::PADDA_sp_imm:
+  case AIE2::PADDS_sp_imm: {
     const int64_t Imm = Inst.getOperand(0).getImm();
     if (!isValidImm<13, 5>(Imm))
       return Error(
           Operands[3]->getStartLoc(),
-          "PADDA cannot handle immediates > +-2^17 on the stack pointer");
+          "PADDA/PADDS cannot handle immediates > +-2^17 on the stack pointer");
     if (Imm % 32 != 0)
       return Error(Operands[3]->getStartLoc(),
-                   "PADDA immediates must be multiples of 32 when incrementing "
-                   "the stack pointer");
+                   "PADDA/PADDS immediates must be multiples of 32 when "
+                   "incrementing the stack pointer");
     break;
   }
   case AIE2::MOVA_lda_cg: {

@@ -22,6 +22,7 @@
 #include "AIEMaxNumRegUnits.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/SmallBitVector.h"
 #include "llvm/CodeGen/Register.h"
 #include "llvm/MC/MCRegister.h"
 #include <functional>
@@ -212,10 +213,18 @@ private:
     /// occupied at any live cycle.
     bool canPlace(Register PhysReg, const AIE::LivenessVector &VRegMasks) const;
 
-    /// Place VReg in PhysReg (marks PhysReg's RegUnits occupied per cycle).
-    void place(Register VReg, Register PhysReg,
-               const AIE::LivenessVector &VRegMasks,
-               const TargetRegisterClass *RC);
+    /// Mark PhysReg's RegUnits occupied per cycle according to VRegMasks.
+    void place(Register PhysReg, const AIE::LivenessVector &VRegMasks);
+
+    /// Undo place(): clear the RegUnits place() occupied for VRegMasks.
+    void unplace(Register PhysReg, const AIE::LivenessVector &VRegMasks);
+
+    /// Pin non-virtualizable live ranges into CycleOccupancy. Returns false
+    /// when two fixed ranges conflict. Virtualizable ranges left physical
+    /// (RESERVED / reserved-overlap) are skipped: they constrain nothing.
+    bool pinFixedRanges(
+        const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex,
+        const RegLiveRangeTracker &RegTracker);
   };
 
   /// Comparator type for ordering live ranges during allocation.
@@ -223,6 +232,34 @@ private:
   /// This is the strict-weak-ordering predicate used directly in std::sort.
   using ComparatorFunction =
       std::function<bool(const VRegMetrics &, const VRegMetrics &)>;
+
+  /// Live ranges under allocation and the occupancy they share. Used by both
+  /// the heuristic and the exact search.
+  struct Placement {
+    const DenseMap<unsigned, AIE::LivenessVector> &LiveLanes;
+    const DenseSet<MCRegister> &AvailableRegs;
+    AllocState &State;
+    DenseMap<Register, MCRegister> &OutAssign;
+    SmallBitVector Placed;
+    SmallVector<const RegLiveRange *, 32> Ranges;
+
+    /// Collect the live ranges that take part in allocation.
+    Placement(const DenseMap<unsigned, AIE::LivenessVector> &Lanes,
+              const RegLiveRangeTracker &Tracker, AllocState &InState,
+              DenseMap<Register, MCRegister> &InAssign);
+
+    /// Per-cycle lane masks of LR.
+    const AIE::LivenessVector &masks(const RegLiveRange &LR) const;
+
+    /// Admissible, available registers that LR can still occupy.
+    std::vector<Register> candidates(const RegLiveRange &LR) const;
+
+    /// Assign PhysReg to LR and mark its units occupied.
+    void place(const RegLiveRange &LR, Register PhysReg);
+
+    /// Undo place() for LR.
+    void unplace(const RegLiveRange &LR);
+  };
 
 public:
   /// Allocate physical registers for live ranges.
@@ -244,13 +281,32 @@ private:
   /// Returns AllocResult which implicitly converts to bool (true = success).
   /// On success, OutAssign contains the virtual to physical register mapping.
   /// The RegTracker provides the problem description (LiveRanges,
-  /// AvailableRegs, AdmissibleRegs per LR).
+  /// AvailableRegs, AdmissibleRegs per LR). The next live range is selected by
+  /// Minimum Remaining Values (fewest effective physical-register candidates),
+  /// with OrderFn as tie-break.
   static AllocResult
   tryAllocate(const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex,
               const RegLiveRangeTracker *RegTracker,
               const TargetRegisterInfo &TRI, AllocState &State,
               ComparatorFunction OrderFn,
               DenseMap<Register, MCRegister> &OutAssign);
+
+  /// Result of the budgeted exact permutation search.
+  /// Feasible: a register assignment was found.
+  /// Infeasible: every order was tried and none succeeded.
+  /// Unknown: the node budget was exhausted. The assignment is
+  /// kept only when the result is Feasible.
+  enum class ExactResult { Feasible, Infeasible, Unknown };
+
+  /// Budgeted exact allocator. Tries every order of the virtual live ranges,
+  /// assigning the first legal register in each position. Backtracking keeps a
+  /// placed prefix, and a prefix with no legal register is pruned. Stops when
+  /// the node budget is spent. Used instead of the heuristics when
+  /// -aie-postregalloc-exact-budget is non-zero.
+  static ExactResult tryAllocateExact(
+      const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex,
+      const RegLiveRangeTracker &RegTracker, const TargetRegisterInfo &TRI,
+      AllocState &State, DenseMap<Register, MCRegister> &OutAssign);
 
   /// Compute metrics for a live range.
   /// \param LR The live range to compute metrics for.
@@ -325,13 +381,6 @@ private:
       return A.PureInterferenceDegree > B.PureInterferenceDegree;
     return A.AliasingInterferenceDegree > B.AliasingInterferenceDegree;
   }
-
-  /// Get allocatable physical registers for a live range.
-  /// Returns the intersection of AdmissibleRegs (semantic constraint from
-  /// instruction encoding) and AvailableRegs (global availability).
-  static std::vector<Register>
-  getCandidatePhysRegs(const DenseSet<MCRegister> &AdmissibleRegs,
-                       const DenseSet<MCRegister> &AvailableRegs);
 
   /// Dump live range metrics for debugging.
   static void dumpVRegMetrics(const DenseMap<unsigned, VRegMetrics> &AllMetrics,
