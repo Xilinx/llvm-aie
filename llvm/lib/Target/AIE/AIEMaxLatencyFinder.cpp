@@ -53,17 +53,17 @@ static int getExitDepth(const InterBlockEdges &SE,
 }
 
 // Compute the latency of this instruction. We take the maximum of the
-// operand and the memory latency. Include the stage latency if requested.
+// operand and the memory latency. Resources used in later stages are covered
+// by the interblock scoreboard.
 int maxLatency(const MachineInstr *MI, const AIEBaseInstrInfo &InstrInfo,
-               const InstrItineraryData &Itineraries, bool IncludeStages) {
+               const InstrItineraryData &Itineraries) {
 
   // If we have a Bundle, query maxLatency for each bundled instruction.
   if (MI->isBundle()) {
     int BundleLatency = 0;
     for (const MachineInstr &BundledMI : const_bundled_instrs(*MI)) {
-      BundleLatency = std::max(
-          maxLatency(&BundledMI, InstrInfo, Itineraries, IncludeStages),
-          BundleLatency);
+      BundleLatency = std::max(maxLatency(&BundledMI, InstrInfo, Itineraries),
+                               BundleLatency);
     }
     return BundleLatency;
   }
@@ -79,12 +79,21 @@ int maxLatency(const MachineInstr *MI, const AIEBaseInstrInfo &InstrInfo,
     Latency = std::max(Latency, int(*OpLat));
   }
   Latency = std::max(Latency, InstrInfo.getConservativeMemoryLatency(SrcClass));
-  if (IncludeStages) {
-    int StageLatency = InstrInfo.getInstrLatency(&Itineraries, *MI);
-    Latency = std::max(Latency, StageLatency);
-  }
 
   return Latency;
+}
+
+// The last cycle in which MI reserves a resource.
+static int resourceExtent(const MachineInstr &MI,
+                          const AIEBaseInstrInfo &InstrInfo,
+                          const InstrItineraryData &Itineraries) {
+  if (!MI.isBundle())
+    return InstrInfo.getInstrLatency(&Itineraries, MI);
+  int Extent = 0;
+  for (const MachineInstr &BundledMI : const_bundled_instrs(MI))
+    Extent =
+        std::max(Extent, resourceExtent(BundledMI, InstrInfo, Itineraries));
+  return Extent;
 }
 
 // Check whether this region connects to the successor blocks
@@ -112,9 +121,7 @@ MaxLatencyFinder::MaxLatencyFinder(ScheduleDAGInstrs *DAG)
       TII(static_cast<const AIEBaseInstrInfo *>(DAG->TII)),
       Itineraries(DAG->getSchedModel()->getInstrItineraries()),
       TRI(DAG->MF.getSubtarget().getRegisterInfo()), CurBB(DAG->getBB()),
-      IsBottomRegion(isBottomRegion(DAG->ExitSU.getInstr())),
-      SuccessorsAreScheduled(IsBottomRegion && CurBB &&
-                             Scheduler->successorsAreScheduled(CurBB)) {
+      IsBottomRegion(isBottomRegion(DAG->ExitSU.getInstr())) {
   HasUnknownSuccessors = CurBB && CurBB->succ_empty();
   // PerSuccEdges graph was built by InterBlockScheduling::buildPerSuccEdges.
   // Update post-depths now that the scheduler may have produced bundles.
@@ -187,10 +194,7 @@ int MaxLatencyFinder::computeEffectiveLatency(MachineInstr &MI) {
 
 unsigned MaxLatencyFinder::operator()(MachineInstr &MI) {
   LLVM_DEBUG(dbgs() << NoDebug(MI) << "\n");
-  // If we don't use interblock information, include the 'StageLatency'
-  // in maxLatency. This influences the height parameters, telling the
-  // scheduler to prefer deep-pipeline instructions over shorter ones.
-  int Latency = maxLatency(&MI, *TII, *Itineraries, !SuccessorsAreScheduled);
+  int Latency = maxLatency(&MI, *TII, *Itineraries);
   LLVM_DEBUG(dbgs() << "MaxLatency=" << Latency << "\n");
   if (!CurBB) {
     // This indicates we are called from an abstract block, e.g.
@@ -205,11 +209,15 @@ unsigned MaxLatencyFinder::operator()(MachineInstr &MI) {
 
   const AIE::InterBlockScheduling &IB = Scheduler->getInterBlock();
   // Loop-aware convergence: gradually tighten the ExitSU latency from zero
-  // toward the real value.
+  // toward the real value. The cap also resolves resource conflicts across
+  // the back edge, which can take MI up to its last resource cycle away from
+  // the end of the loop.
   if (IB.getBlockState(CurBB).Kind == BlockType::Loop && IsBottomRegion) {
     if (auto Cap = IB.getLatencyCap(MI)) {
       LLVM_DEBUG(dbgs() << "Capped at " << *Cap << "\n");
-      return std::min(Latency, *Cap);
+      const int Bound =
+          std::max(Latency, resourceExtent(MI, *TII, *Itineraries));
+      return std::min(Bound, *Cap);
     }
   }
 

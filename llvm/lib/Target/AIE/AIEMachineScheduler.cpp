@@ -274,15 +274,6 @@ bool hasUnknownSuccessors(
 }
 } // namespace
 
-bool AIEPostRASchedStrategy::successorsAreScheduled(
-    MachineBasicBlock *MBB) const {
-  return !hasUnknownSuccessors(llvm::make_range(RegionBegin, RegionEnd), MBB) &&
-         llvm::all_of(MBB->successors(), [&](MachineBasicBlock *B) {
-           const auto &BS = InterBlock.getBlockState(B);
-           return BS.isScheduled();
-         });
-}
-
 void AIEPostRASchedStrategy::initializeBotScoreBoard() {
 
   if (!InterBlockScoreboard) {
@@ -1343,7 +1334,6 @@ int getEarliestLoopCarriedUse(const SUnit &SU,
   const SUnit *SUInCurrentIteration =
       LoopEdges.getPreBoundaryNode(SU.getInstr());
   assert(SUInCurrentIteration);
-  assert(SUInCurrentIteration->getHeight() >= SU.getHeight());
 
   // Look at loop-carried dependencies to see how early the instruction will be
   // needed in the next iteration.

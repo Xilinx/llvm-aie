@@ -91,9 +91,6 @@ public:
   /// a block connects with successors.
   bool doMBBSchedRegionsTopDown() const override { return false; }
 
-  /// Return true if all the successor MBB are scheduled and converged.
-  bool successorsAreScheduled(MachineBasicBlock *MBB) const;
-
   /// Initialize Bot scoreboard by replaying all Bundles from the
   /// successor blocks of CurBB for InterBlock scheduling
   /// Populate the Bot scoreboard from scheduled successors.

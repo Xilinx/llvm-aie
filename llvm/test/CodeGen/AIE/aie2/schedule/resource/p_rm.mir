@@ -4,7 +4,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -march=aie2 -verify-machineinstrs -run-pass=postmisched %topdown-multi --verify-machineinstrs %s -o - | FileCheck %s
 
 # Several slots conflict on reading pointers/modifiers in E1
@@ -31,8 +31,9 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: E1_MOV_SCL_E1_ST
-    ; CHECK: ST_dms_sts_idx_imm killed $m3, killed $p1, 0
-    ; CHECK-NEXT: $r1 = MOV_mv_scl killed $dj0
+    ; CHECK: $r1 = MOV_mv_scl killed $dj0
+    ; CHECK-NEXT: ST_dms_sts_idx_imm killed $m3, killed $p1, 0
+    ; CHECK-NEXT: NOP
   $r1 = MOV_mv_scl $dj0
   ST_dms_sts_idx_imm $m3, $p1, 0
 ...
@@ -43,8 +44,9 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: E1_MOV_SCL_E1_ST_2D
-    ; CHECK: $p1, $dc0 = ST_2D_dms_sts killed $m3, killed $p1, $d0
-    ; CHECK-NEXT: $r1 = MOV_mv_scl killed $dj0
+    ; CHECK: $r1 = MOV_mv_scl $dj0
+    ; CHECK-NEXT: $p1, $dc0 = ST_2D_dms_sts killed $m3, killed $p1, killed $d0
+    ; CHECK-NEXT: NOP
   $r1 = MOV_mv_scl $dj0
   $p1, $dc0 = ST_2D_dms_sts $m3, $p1, $d0
 ...
@@ -55,8 +57,9 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: E1_MOV_SCL_E1_ST_3D
-    ; CHECK: $p1, $dc0, $dc4 = ST_3D_dms_sts killed $m3, killed $p1, $d0_3d
-    ; CHECK-NEXT: $r1 = MOV_mv_scl killed $dj0
+    ; CHECK: $r1 = MOV_mv_scl $dj0
+    ; CHECK-NEXT: $p1, $dc0, $dc4 = ST_3D_dms_sts killed $m3, killed $p1, killed $d0_3d
+    ; CHECK-NEXT: NOP
   $r1 = MOV_mv_scl $dj0
   $p1, $dc0, $dc4 = ST_3D_dms_sts $m3, $p1, $d0_3d
 ...
@@ -488,8 +491,9 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: E1_II_MOV_SCL_E1_II_ST_MS
-    ; CHECK: MOV_mv_scl2ms killed $m3
-    ; CHECK-NEXT: $r1 = MOV_mv_scl killed $dj0
+    ; CHECK: $r1 = MOV_mv_scl killed $dj0
+    ; CHECK-NEXT: MOV_mv_scl2ms killed $m3
+    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
   $r1 = MOV_mv_scl $dj0
   MOV_mv_scl2ms $m3
