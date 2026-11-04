@@ -382,6 +382,30 @@ void InterBlockScheduling::enterFunction(MachineFunction *MF) {
     }
   }
 
+  // Propagate OLP membership to non-latch OLP blocks. Every latch that
+  // successfully built an OuterLoopContext tags its SteadyTop, SteadyBottom,
+  // PeeledIterTop, and PeeledIterBottom so they can discover the OLP
+  // structure via getOLPMembership().
+  for (auto &BlockEntry : Blocks) {
+    BlockState &OwnerBS = BlockEntry.second;
+    if (!OwnerBS.getOuterLoopContext())
+      continue;
+    const auto &OLP = *OwnerBS.getOuterLoopContext();
+    auto TagBlock = [&](MachineBasicBlock *Member) {
+      auto It = Blocks.find(Member);
+      assert(It != Blocks.end() && "Missing BlockState for MBB");
+      It->second.setOLPOwner(&OwnerBS);
+    };
+    TagBlock(OLP.SteadyTop);
+    TagBlock(OLP.SteadyInner);
+    TagBlock(OLP.SteadyBottom);
+    if (OLP.hasPeeledIterRegion()) {
+      TagBlock(OLP.PeeledIterTop);
+      TagBlock(OLP.PeeledIterInner);
+      TagBlock(OLP.PeeledIterBottom);
+    }
+  }
+
   // Compute the scheduling order once up-front. We use it for both the
   // region gathering phase and the scheduling phase, even if the former
   // is independent of order.
@@ -2087,16 +2111,14 @@ void BlockState::clearSchedule() {
 
 void BlockState::setBlockProperties() {
   // Try to build OuterLoopContext if this block is an outer-loop pipelined
-  // loop latch. This also determines if it's an epilogue of an outer-pipelined
-  // loop.
+  // loop latch.
   OuterLoopContext = AIELoopUtils::OuterLoopStructure::tryBuildFrom(*TheBlock);
-  IsEpilogueOfOuterPipelinedLoop = OuterLoopContext.has_value();
 
   // We never skip AA check. Except for epilogues of outer-pipelined loops.
   // This is a pre-condition of the optimization (sometimes restrict information
   // may not help).
   auto Overrides = AIE::LoopOptionOverrides(*TheBlock);
-  IsSafeToIgnoreMemDeps = IsEpilogueOfOuterPipelinedLoop
+  IsSafeToIgnoreMemDeps = OuterLoopContext.has_value()
                               ? true
                               : Overrides.get(PostSchedIgnoreMemoryDeps);
 }
