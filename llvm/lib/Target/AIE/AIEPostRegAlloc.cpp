@@ -125,15 +125,13 @@ bool AIEPostRegAlloc::AllocState::canPlace(
   return true;
 }
 
-// Place VReg in PhysReg (marks lane-accurate RegUnits occupied per cycle).
-void AIEPostRegAlloc::AllocState::place(Register VReg, Register PhysReg,
-                                        const AIE::LivenessVector &VRegMasks,
-                                        const TargetRegisterClass *RC) {
+// Mark PhysReg's lane-accurate RegUnits occupied per cycle.
+void AIEPostRegAlloc::AllocState::place(Register PhysReg,
+                                        const AIE::LivenessVector &VRegMasks) {
   for (size_t C = 0; C < VRegMasks.size(); ++C)
     CycleOccupancy[C] |= laneActiveUnits(PhysReg, VRegMasks[C].getLanes(), TRI);
 
-  LLVM_DEBUG(dbgs() << "  Placed " << printReg(VReg, TRI) << " in "
-                    << printReg(PhysReg, TRI) << "\n");
+  LLVM_DEBUG(dbgs() << "  Occupied " << printReg(PhysReg, TRI) << "\n");
 }
 
 // Clear the RegUnits place() occupied for VRegMasks.
@@ -142,6 +140,32 @@ void AIEPostRegAlloc::AllocState::unplace(
   for (size_t C = 0; C < VRegMasks.size(); ++C)
     CycleOccupancy[C] &=
         ~laneActiveUnits(PhysReg, VRegMasks[C].getLanes(), TRI);
+}
+
+bool AIEPostRegAlloc::AllocState::pinFixedRanges(
+    const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex,
+    const RegLiveRangeTracker &RegTracker) {
+  // A virtualizable range without a VReg was left physical because it is
+  // RESERVED or overlaps a RESERVED base. That register is not in the pool,
+  // so the range constrains nothing. Non-virtualizable ranges are fixed
+  // physical constraints: pin their base into occupancy.
+  for (const RegLiveRange &LR : RegTracker.getLiveRanges()) {
+    if (LR.getVReg().isValid() || LR.isVirtualizable())
+      continue;
+    auto It = LiveLanesByLRIndex.find(LR.getIndex());
+    if (It == LiveLanesByLRIndex.end())
+      continue;
+    Register BaseReg = LR.getBaseReg();
+    LLVM_DEBUG(dbgs() << "  Fixed: LR#" << LR.getIndex() << " -> "
+                      << printReg(BaseReg, TRI) << "\n");
+    if (!canPlace(BaseReg, It->second)) {
+      LLVM_DEBUG(dbgs() << "  Fixed conflict on LR#" << LR.getIndex()
+                        << " - infeasible\n");
+      return false;
+    }
+    place(BaseReg, It->second);
+  }
+  return true;
 }
 
 // Build register class interference graph with asymmetric weights.
@@ -260,14 +284,10 @@ AIEPostRegAlloc::Placement::Placement(
     : LiveLanes(Lanes), AvailableRegs(Tracker.getAvailablePhysRegs()),
       State(InState), OutAssign(InAssign),
       Placed(Tracker.getLiveRanges().size()) {
-  // Non-virtualizable ranges are kept: they hold a register the pool can hand
-  // out, so they must occupy it. A virtualizable range without a VReg was left
-  // physical because it is RESERVED or overlaps a RESERVED base. That register
-  // is not in the pool, so the range constrains nothing.
+  // Only virtualized ranges take part in assignment. Fixed ranges must already
+  // be pinned into State via AllocState::pinFixedRanges.
   for (const RegLiveRange &LR : Tracker.getLiveRanges()) {
-    if (!LiveLanes.count(LR.getIndex()))
-      continue;
-    if (LR.isVirtualizable() && !LR.getVReg().isValid())
+    if (!LR.getVReg().isValid() || !LiveLanes.count(LR.getIndex()))
       continue;
     Ranges.push_back(&LR);
   }
@@ -290,9 +310,9 @@ AIEPostRegAlloc::Placement::candidates(const RegLiveRange &LR) const {
 
 void AIEPostRegAlloc::Placement::place(const RegLiveRange &LR,
                                        Register PhysReg) {
-  State.place(LR.getVReg(), PhysReg, masks(LR), LR.getRegisterClass());
-  if (LR.getVReg().isValid())
-    OutAssign[LR.getVReg()] = PhysReg.asMCReg();
+  assert(LR.getVReg().isValid() && "Only virtualized ranges are assigned");
+  State.place(PhysReg, masks(LR));
+  OutAssign[LR.getVReg()] = PhysReg.asMCReg();
   Placed.set(LR.getIndex());
 }
 
@@ -371,10 +391,12 @@ AIEPostRegAlloc::AllocResult AIEPostRegAlloc::tryAllocate(
     AllocState &State, ComparatorFunction OrderFn,
     DenseMap<Register, MCRegister> &OutAssign) {
 
-  // Reset per-attempt state.
+  // Reset per-attempt state and seed fixed (non-virtualizable) occupancy.
   std::fill(State.CycleOccupancy.begin(), State.CycleOccupancy.end(),
             PartSet());
   OutAssign.clear();
+  if (!State.pinFixedRanges(LiveLanesByLRIndex, *RegTracker))
+    return AllocResult(/*InfeasibleSchedule=*/true);
 
   Placement Work(LiveLanesByLRIndex, *RegTracker, State, OutAssign);
 
@@ -484,34 +506,16 @@ AIEPostRegAlloc::ExactResult AIEPostRegAlloc::tryAllocateExact(
   std::fill(State.CycleOccupancy.begin(), State.CycleOccupancy.end(),
             PartSet());
   OutAssign.clear();
+  if (!State.pinFixedRanges(LiveLanesByLRIndex, RegTracker)) {
+    LLVM_DEBUG(dbgs() << "Exact: infeasible, fixed-range conflict\n");
+    return ExactResult::Infeasible;
+  }
 
   Placement Work(LiveLanesByLRIndex, RegTracker, State, OutAssign);
 
-  // Pin non-virtual ranges that have exactly one legal register. They already
-  // occupy a register the pool can hand out and are not part of the
-  // permutation.
-  for (const RegLiveRange *LR : Work.Ranges) {
-    if (LR->getVReg().isValid() || Work.Placed.test(LR->getIndex()))
-      continue;
-    const std::vector<Register> Cands = Work.candidates(*LR);
-    if (Cands.empty()) {
-      LLVM_DEBUG(dbgs() << "Exact: infeasible, pinned range has no register\n");
-      return ExactResult::Infeasible;
-    }
-    if (Cands.size() == 1) {
-      LLVM_DEBUG(dbgs() << "  Pinned: LR#" << LR->getIndex() << " -> "
-                        << printReg(Cands[0], &TRI) << "\n");
-      Work.place(*LR, Cands[0]);
-    }
-  }
-
   SmallVector<unsigned, 32> Order;
-  for (const RegLiveRange *LR : Work.Ranges) {
-    if (!LR->getVReg().isValid() || Work.Placed.test(LR->getIndex()))
-      continue;
+  for (const RegLiveRange *LR : Work.Ranges)
     Order.push_back(LR->getIndex());
-  }
-  llvm::sort(Order);
 
   // Orders are generated by swapping the next range into position, so a placed
   // prefix stays occupied while its suffixes are tried. A range with no legal

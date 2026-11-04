@@ -213,13 +213,18 @@ private:
     /// occupied at any live cycle.
     bool canPlace(Register PhysReg, const AIE::LivenessVector &VRegMasks) const;
 
-    /// Place VReg in PhysReg (marks PhysReg's RegUnits occupied per cycle).
-    void place(Register VReg, Register PhysReg,
-               const AIE::LivenessVector &VRegMasks,
-               const TargetRegisterClass *RC);
+    /// Mark PhysReg's RegUnits occupied per cycle according to VRegMasks.
+    void place(Register PhysReg, const AIE::LivenessVector &VRegMasks);
 
     /// Undo place(): clear the RegUnits place() occupied for VRegMasks.
     void unplace(Register PhysReg, const AIE::LivenessVector &VRegMasks);
+
+    /// Pin non-virtualizable live ranges into CycleOccupancy. Returns false
+    /// when two fixed ranges conflict. Virtualizable ranges left physical
+    /// (RESERVED / reserved-overlap) are skipped: they constrain nothing.
+    bool pinFixedRanges(
+        const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex,
+        const RegLiveRangeTracker &RegTracker);
   };
 
   /// Comparator type for ordering live ranges during allocation.
