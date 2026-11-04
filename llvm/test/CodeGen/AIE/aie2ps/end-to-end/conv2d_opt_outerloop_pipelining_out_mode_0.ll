@@ -201,8 +201,8 @@ define void @conv2d_opt_outerloop_out_mode_0(
 ; ASM-NEXT:  .LBB0_5: // %steady.stage1.top
 ; ASM-NEXT:    // =>This Loop Header: Depth=1
 ; ASM-NEXT:    // Child Loop BB0_6 Depth 2
-; ASM-NEXT:    vlda x4, [p7], #64; vldb.pop.3d x6, [p0, lf0, r24, d0]; nops ; add.nc ls, pc, #.LBB0_6; nopm ; vmul dm3, x0, x6, r12
-; ASM-NEXT:    vlda x2, [p7], #64; vldb.popx x8, [p0, lf0, r24]; nops ; add.nc lc, r18, #-6; addm.nc le, pc, #.L_LEnd1; vmul dm2, x0, x8, r12
+; ASM-NEXT:    vlda x4, [p7], #64; vldb.pop.3d x6, [p0, lf0, r24, d0]; nops ; add.nc lc, r18, #-6; nopm ; vmul dm3, x0, x6, r12
+; ASM-NEXT:    vlda x2, [p7], #64; vldb.popx x8, [p0, lf0, r24]; nops ; add.nc ls, pc, #.LBB0_6; addm.nc le, pc, #.L_LEnd1; vmul dm2, x0, x8, r12
 ; ASM-NEXT:    vlda x4, [p7], #64; vldb.pop.3d x6, [p0, lf0, r24, d0]; nops ; nopxm ; vaddmac dm1, dm1, dm3, x10, x2, r10
 ; ASM-NEXT:    vlda x2, [p7], #64; vldb.popx x8, [p0, lf0, r24]; nops ; nopxm ; vaddmac dm0, dm0, dm2, x10, x4, r10
 ; ASM-NEXT:    vlda x4, [p7], #64; vldb.pop.3d x6, [p0, lf0, r24, d0]; nops ; nopx ; vshuffle x10, x8, x6, r4; nopv
