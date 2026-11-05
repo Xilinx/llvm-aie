@@ -779,7 +779,7 @@ bool TypeInfer::EnforceSameSize(TypeSetByHwMode &A, TypeSetByHwMode &B) {
   if (B.empty())
     Changed |= EnforceAny(B);
 
-  typedef SmallSet<TypeSize, 2, TypeSizeComparator> TypeSizeSet;
+  using TypeSizeSet = SmallSet<TypeSize, 2, TypeSizeComparator>;
 
   auto NoSize = [](const TypeSizeSet &Sizes, MVT T) -> bool {
     return !Sizes.contains(T.getSizeInBits());
@@ -4142,7 +4142,7 @@ void CodeGenDAGPatterns::ParseInstructions() {
   }
 }
 
-typedef std::pair<TreePatternNode *, unsigned> NameRecord;
+using NameRecord = std::pair<TreePatternNode *, unsigned>;
 
 static void FindNames(TreePatternNode &P,
                       std::map<StringRef, NameRecord> &Names,
@@ -4608,7 +4608,7 @@ void CodeGenDAGPatterns::ExpandHwModeBasedTypes() {
 }
 
 /// Dependent variable map for CodeGenDAGPattern variant generation
-typedef StringMap<int> DepVarMap;
+using DepVarMap = StringMap<int>;
 
 static void FindDepVarsOf(TreePatternNode &N, DepVarMap &DepMap) {
   if (N.isLeaf()) {

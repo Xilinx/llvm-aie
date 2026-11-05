@@ -140,7 +140,7 @@ void test_put_ms(v2float16 val) { put_ms(val); }
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call i32 @llvm.aie2ps.put.ms.nb(i32 [[TMP0]], i32 [[TLAST]])
 // CHECK-NEXT:    [[TOBOOL_I:%.*]] = icmp ne i32 [[TMP1]], 0
 // CHECK-NEXT:    [[STOREDV_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
-// CHECK-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS]], align 1, !tbaa [[TBAA2:![0-9]+]]
+// CHECK-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS]], align 1, !tbaa [[TBAA6:![0-9]+]]
 // CHECK-NEXT:    ret void
 //
 void test_put_ms_nb(v2float16 val, int tlast, bool &success) {
@@ -154,7 +154,7 @@ void test_put_ms_nb(v2float16 val, int tlast, bool &success) {
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call i32 @llvm.aie2ps.put.ms.nb(i32 [[TMP0]], i32 0)
 // CHECK-NEXT:    [[TOBOOL_I:%.*]] = icmp ne i32 [[TMP1]], 0
 // CHECK-NEXT:    [[STOREDV_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
-// CHECK-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS]], align 1, !tbaa [[TBAA2]]
+// CHECK-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS]], align 1, !tbaa [[TBAA6]]
 // CHECK-NEXT:    ret void
 //
 void test_put_ms_nb(v2float16 val, bool &success) { put_ms_nb(val, success); }
@@ -433,7 +433,6 @@ void test_put_ms(v64float16 val, int en, int tlast) { put_ms(val, en, tlast); }
 //
 v2float16 test_get_ss_v2float16() { return get_ss_v2float16(); }
 
-//
 // CHECK-LABEL: define dso_local noundef <2 x half> @_Z21test_get_ss_v2float16Rb(
 // CHECK-SAME: ptr nonnull writeonly align 1 captures(none) dereferenceable(1) initializes((0, 1)) [[TLAST:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
@@ -443,7 +442,7 @@ v2float16 test_get_ss_v2float16() { return get_ss_v2float16(); }
 // CHECK-NEXT:    [[TMP3:%.*]] = bitcast i32 [[TMP2]] to <2 x half>
 // CHECK-NEXT:    [[TMP4:%.*]] = trunc i32 [[TMP1]] to i8
 // CHECK-NEXT:    [[STOREDV_I:%.*]] = and i8 [[TMP4]], 1
-// CHECK-NEXT:    store i8 [[STOREDV_I]], ptr [[TLAST]], align 1, !tbaa [[TBAA2]]
+// CHECK-NEXT:    store i8 [[STOREDV_I]], ptr [[TLAST]], align 1, !tbaa [[TBAA6]]
 // CHECK-NEXT:    ret <2 x half> [[TMP3]]
 //
 v2float16 test_get_ss_v2float16(bool &tlast) { return get_ss_v2float16(tlast); }
@@ -458,7 +457,7 @@ v2float16 test_get_ss_v2float16(bool &tlast) { return get_ss_v2float16(tlast); }
 // CHECK-NEXT:    [[TMP4:%.*]] = trunc i32 [[TMP1]] to i8
 // CHECK-NEXT:    [[TMP5:%.*]] = lshr i8 [[TMP4]], 1
 // CHECK-NEXT:    [[STOREDV_I:%.*]] = and i8 [[TMP5]], 1
-// CHECK-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS]], align 1, !tbaa [[TBAA2]]
+// CHECK-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS]], align 1, !tbaa [[TBAA6]]
 // CHECK-NEXT:    ret <2 x half> [[TMP3]]
 //
 v2float16 test_get_ss_nb_v2float16(bool &success) { return get_ss_nb_v2float16(success); }
@@ -472,10 +471,10 @@ v2float16 test_get_ss_nb_v2float16(bool &success) { return get_ss_nb_v2float16(s
 // CHECK-NEXT:    [[TMP3:%.*]] = bitcast i32 [[TMP2]] to <2 x half>
 // CHECK-NEXT:    [[TMP4:%.*]] = trunc i32 [[TMP1]] to i8
 // CHECK-NEXT:    [[STOREDV_I:%.*]] = and i8 [[TMP4]], 1
-// CHECK-NEXT:    store i8 [[STOREDV_I]], ptr [[TLAST]], align 1, !tbaa [[TBAA2]]
+// CHECK-NEXT:    store i8 [[STOREDV_I]], ptr [[TLAST]], align 1, !tbaa [[TBAA6]]
 // CHECK-NEXT:    [[TMP5:%.*]] = lshr i8 [[TMP4]], 1
 // CHECK-NEXT:    [[STOREDV3_I:%.*]] = and i8 [[TMP5]], 1
-// CHECK-NEXT:    store i8 [[STOREDV3_I]], ptr [[SUCCESS]], align 1, !tbaa [[TBAA2]]
+// CHECK-NEXT:    store i8 [[STOREDV3_I]], ptr [[SUCCESS]], align 1, !tbaa [[TBAA6]]
 // CHECK-NEXT:    ret <2 x half> [[TMP3]]
 //
 v2float16 test_get_ss_nb_v2float16(bool &success, bool &tlast) {
@@ -696,8 +695,8 @@ v32float16 test_get_ss_v32float16() { return get_ss_v32float16(); }
 //
 v64float16 test_get_ss_v64float16() { return get_ss_v64float16(); }
 //.
-// CHECK: [[TBAA2]] = !{[[META3:![0-9]+]], [[META3]], i64 0}
-// CHECK: [[META3]] = !{!"bool", [[META4:![0-9]+]], i64 0}
-// CHECK: [[META4]] = !{!"omnipotent char", [[META5:![0-9]+]], i64 0}
+// CHECK: [[META4:![0-9]+]] = !{!"omnipotent char", [[META5:![0-9]+]], i64 0}
 // CHECK: [[META5]] = !{!"Simple C++ TBAA"}
+// CHECK: [[TBAA6]] = !{[[META7:![0-9]+]], [[META7]], i64 0}
+// CHECK: [[META7]] = !{!"bool", [[META4]], i64 0}
 //.

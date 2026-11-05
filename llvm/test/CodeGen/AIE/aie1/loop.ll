@@ -10,7 +10,7 @@
 ; ModuleID = 'test.bc'
 ; CHECK-LABEL:_main:                                  // @_main
 ; Check for Early loop exit
-; CHECK:        bnez    {{r[0-9]+}}, .LBB0_4
+; CHECK:        bnez    {{r[0-9]+}}, .LBB0_3
 ; CHECK:.LBB0_1:                                // %for.body.preheader
 ; CHECK:        .p2align        4
 ; CHECK:.LBB0_2:                                // %for.body
@@ -18,7 +18,7 @@
 ; CHECK:        beqz    {{r[0-9]+}}, .LBB0_2
 ; If the loop doesnt execute
 ; CHECK:        .p2align        4
-; CHECK:.LBB0_4:
+; CHECK:.LBB0_3:
 ; CHECK:        ret lr
 ; CHECK:.Lfunc_end0:
 

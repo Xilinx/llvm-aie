@@ -264,7 +264,7 @@ void AIESplitInstrReplacer::rewriteInstruction(
       // This is the first "split atomic" operand of a reg tuple, find the other
       // operands that belong to the tuple, and add it to the new MIB.
       const TargetRegisterClass *TupleRC =
-          TII->getRegClass(TII->get(OpcodeWithTuple), TupleOpIdx, TRI);
+          TII->getRegClass(TII->get(OpcodeWithTuple), TupleOpIdx);
       assert(TupleRC && "Cannot find RC for super-reg");
       addRegOperand(MIB, FirstMO, SRM->SubRegsSplit, *TupleRC, TRI);
       SplitOpIdx += SRM->SubRegsSplit.size();

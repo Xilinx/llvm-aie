@@ -818,26 +818,6 @@ body: |
     PseudoRET implicit $lr, implicit %1
 ...
 
-# ShuffleVec also concatenates constants into vectors
-
----
-name: test_shuffle_vec_16_to_32
-body: |
-  bb.0:
-    ; CHECK-LABEL: name: test_shuffle_vec_16_to_32
-    ; CHECK: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 8
-    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 16
-    ; CHECK-NEXT: [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
-    ; CHECK-NEXT: [[OR:%[0-9]+]]:_(s32) = G_OR [[C2]], [[C1]]
-    ; CHECK-NEXT: [[SHL:%[0-9]+]]:_(s32) = G_SHL [[C]], [[C1]](s32)
-    ; CHECK-NEXT: [[OR1:%[0-9]+]]:_(s32) = G_OR [[OR]], [[SHL]]
-    ; CHECK-NEXT: [[BITCAST:%[0-9]+]]:_(<2 x s16>) = G_BITCAST [[OR1]](s32)
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[BITCAST]](<2 x s16>)
-    %0:_(s16) = G_CONSTANT i16 8
-    %1:_(s16) = G_CONSTANT i16 16
-    %2:_(<2 x s16>) = G_SHUFFLE_VECTOR %0(s16), %1(s16), shufflemask(1, 0)
-    PseudoRET implicit $lr, implicit %2
-...
 
 # AArch64 supports transforming the same type dst and src, so we do here as well. It has a different
 # behaviour in that it enlarges the size of the destination vector, shuffles the bigger vector and

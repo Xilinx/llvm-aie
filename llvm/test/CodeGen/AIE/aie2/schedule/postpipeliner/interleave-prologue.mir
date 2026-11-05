@@ -213,33 +213,33 @@ body:             |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   $lc = ADD_NC $r0, -7
   ; CHECK-NEXT:   $ls = MOVXM_lng_cg %bb.2
-  ; CHECK-NEXT:   BUNDLE implicit-def $wh6, implicit-def $wl6, implicit-def $p0, implicit-def $le, implicit killed $p0 {
+  ; CHECK-NEXT:   BUNDLE implicit-def $wh6, implicit-def $wl6, implicit-def $p0, implicit-def $le, implicit killed $p0 :: (load (<16 x s16>)) {
   ; CHECK-NEXT:     $wh6 = VLDA_dmw_lda_w_ag_idx_imm $p0, 32 :: (load (<16 x s16>))
   ; CHECK-NEXT:     $wl6, $p0 = VLDB_dmw_ldb_ag_pstm_nrm_imm killed $p0, 64 :: (load (<16 x s16>))
   ; CHECK-NEXT:     $le = MOVXM_lng_cg <mcsymbol .L_LEnd0>
   ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   BUNDLE implicit-def $wh6, implicit-def $wl6, implicit-def $p0, implicit killed $p0 {
+  ; CHECK-NEXT:   BUNDLE implicit-def $wh6, implicit-def $wl6, implicit-def $p0, implicit killed $p0 :: (load (<16 x s16>)) {
   ; CHECK-NEXT:     $wh6 = VLDA_dmw_lda_w_ag_idx_imm $p0, 32 :: (load (<16 x s16>))
   ; CHECK-NEXT:     $wl6, $p0 = VLDB_dmw_ldb_ag_pstm_nrm_imm killed $p0, 64 :: (load (<16 x s16>))
   ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   BUNDLE implicit-def $wh6, implicit-def $wl6, implicit-def $p0, implicit killed $p0 {
+  ; CHECK-NEXT:   BUNDLE implicit-def $wh6, implicit-def $wl6, implicit-def $p0, implicit killed $p0 :: (load (<16 x s16>)) {
   ; CHECK-NEXT:     $wh6 = VLDA_dmw_lda_w_ag_idx_imm $p0, 32 :: (load (<16 x s16>))
   ; CHECK-NEXT:     $wl6, $p0 = VLDB_dmw_ldb_ag_pstm_nrm_imm killed $p0, 64 :: (load (<16 x s16>))
   ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   BUNDLE implicit-def $wh6, implicit-def $wl6, implicit-def $p0, implicit killed $p0 {
+  ; CHECK-NEXT:   BUNDLE implicit-def $wh6, implicit-def $wl6, implicit-def $p0, implicit killed $p0 :: (load (<16 x s16>)) {
   ; CHECK-NEXT:     $wh6 = VLDA_dmw_lda_w_ag_idx_imm $p0, 32 :: (load (<16 x s16>))
   ; CHECK-NEXT:     $wl6, $p0 = VLDB_dmw_ldb_ag_pstm_nrm_imm killed $p0, 64 :: (load (<16 x s16>))
   ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   BUNDLE implicit-def $wh6, implicit-def $wl6, implicit-def $p0, implicit killed $p0 {
+  ; CHECK-NEXT:   BUNDLE implicit-def $wh6, implicit-def $wl6, implicit-def $p0, implicit killed $p0 :: (load (<16 x s16>)) {
   ; CHECK-NEXT:     $wh6 = VLDA_dmw_lda_w_ag_idx_imm $p0, 32 :: (load (<16 x s16>))
   ; CHECK-NEXT:     $wl6, $p0 = VLDB_dmw_ldb_ag_pstm_nrm_imm killed $p0, 64 :: (load (<16 x s16>))
   ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   BUNDLE implicit-def $wh6, implicit-def $wl6, implicit-def $p0, implicit-def $r1, implicit killed $p0 {
+  ; CHECK-NEXT:   BUNDLE implicit-def $wh6, implicit-def $wl6, implicit-def $p0, implicit-def $r1, implicit killed $p0 :: (load (<16 x s16>)) {
   ; CHECK-NEXT:     $wh6 = VLDA_dmw_lda_w_ag_idx_imm $p0, 32 :: (load (<16 x s16>))
   ; CHECK-NEXT:     $wl6, $p0 = VLDB_dmw_ldb_ag_pstm_nrm_imm killed $p0, 64 :: (load (<16 x s16>))
   ; CHECK-NEXT:     $r1 = MOVX_alu_cg 0
   ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   BUNDLE implicit-def $wh6, implicit-def $wl6, implicit-def $p0, implicit-def $x0, implicit killed $p0, implicit killed $r1 {
+  ; CHECK-NEXT:   BUNDLE implicit-def $wh6, implicit-def $wl6, implicit-def $p0, implicit-def $x0, implicit killed $p0, implicit killed $r1 :: (load (<16 x s16>)) {
   ; CHECK-NEXT:     $wh6 = VLDA_dmw_lda_w_ag_idx_imm $p0, 32 :: (load (<16 x s16>))
   ; CHECK-NEXT:     $wl6, $p0 = VLDB_dmw_ldb_ag_pstm_nrm_imm killed $p0, 64 :: (load (<16 x s16>))
   ; CHECK-NEXT:     $x0 = VBCST_16 killed $r1
@@ -249,7 +249,7 @@ body:             |
   ; CHECK-NEXT:   successors: %bb.1(0x7c000000), %bb.2(0x04000000)
   ; CHECK-NEXT:   liveins: $p0, $p1, $r0, $m0, $x0, $x2, $x4
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   BUNDLE implicit-def $wh6, implicit-def $wl6, implicit-def $p0, implicit-def $x0, implicit killed $p0, implicit killed $x0 {
+  ; CHECK-NEXT:   BUNDLE implicit-def $wh6, implicit-def $wl6, implicit-def $p0, implicit-def $x0, implicit killed $p0, implicit killed $x0 :: (load (<16 x s16>)) {
   ; CHECK-NEXT:     $wh6 = VLDA_dmw_lda_w_ag_idx_imm $p0, 32 :: (load (<16 x s16>))
   ; CHECK-NEXT:     $wl6, $p0 = VLDB_dmw_ldb_ag_pstm_nrm_imm killed $p0, 64 :: (load (<16 x s16>))
   ; CHECK-NEXT:     $x0 = VADD_16 killed $x0, internal $x6

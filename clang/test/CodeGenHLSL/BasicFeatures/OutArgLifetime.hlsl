@@ -9,11 +9,11 @@
 // CHECK-SAME: ptr noalias noundef nonnull align 4 dereferenceable(4) [[I:%.*]]) #[[ATTR0:[0-9]+]] {
 // CHECK-NEXT:  [[ENTRY:.*:]]
 // CHECK-NEXT:    [[I_ADDR:%.*]] = alloca ptr, align 4
-// CHECK-NEXT:    store ptr [[I]], ptr [[I_ADDR]], align 4, !tbaa [[TBAA3:![0-9]+]]
-// CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[I_ADDR]], align 4, !tbaa [[TBAA3]]
-// CHECK-NEXT:    [[TMP1:%.*]] = load i32, ptr [[TMP0]], align 4, !tbaa [[TBAA8:![0-9]+]]
+// CHECK-NEXT:    store ptr [[I]], ptr [[I_ADDR]], align 4, !tbaa [[INTPTR_TBAA7:![0-9]+]]
+// CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[I_ADDR]], align 4, !tbaa [[INTPTR_TBAA7]], !nonnull [[META10:![0-9]+]], !align [[META11:![0-9]+]]
+// CHECK-NEXT:    [[TMP1:%.*]] = load i32, ptr [[TMP0]], align 4, !tbaa [[INT_TBAA3:![0-9]+]]
 // CHECK-NEXT:    [[ADD:%.*]] = add nsw i32 [[TMP1]], 1
-// CHECK-NEXT:    store i32 [[ADD]], ptr [[TMP0]], align 4, !tbaa [[TBAA8]]
+// CHECK-NEXT:    store i32 [[ADD]], ptr [[TMP0]], align 4, !tbaa [[INT_TBAA3]]
 // CHECK-NEXT:    ret void
 //
 void increment(inout int I) { I += 1; }
@@ -22,9 +22,9 @@ void increment(inout int I) { I += 1; }
 // CHECK-SAME: ptr noalias noundef nonnull align 4 dereferenceable(4) [[I:%.*]]) #[[ATTR0]] {
 // CHECK-NEXT:  [[ENTRY:.*:]]
 // CHECK-NEXT:    [[I_ADDR:%.*]] = alloca ptr, align 4
-// CHECK-NEXT:    store ptr [[I]], ptr [[I_ADDR]], align 4, !tbaa [[TBAA3]]
-// CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[I_ADDR]], align 4, !tbaa [[TBAA3]]
-// CHECK-NEXT:    store i32 0, ptr [[TMP0]], align 4, !tbaa [[TBAA8]]
+// CHECK-NEXT:    store ptr [[I]], ptr [[I_ADDR]], align 4, !tbaa [[INTPTR_TBAA7]]
+// CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[I_ADDR]], align 4, !tbaa [[INTPTR_TBAA7]], !nonnull [[META10]], !align [[META11]]
+// CHECK-NEXT:    store i32 0, ptr [[TMP0]], align 4, !tbaa [[INT_TBAA3]]
 // CHECK-NEXT:    ret void
 //
 void reset(out int I) { I = 0; }
@@ -46,11 +46,13 @@ export int out_test() {
 }
 
 //.
-// CHECK: [[TBAA3]] = !{[[META4:![0-9]+]], [[META4]], i64 0}
-// CHECK: [[META4]] = !{!"p1 int", [[META5:![0-9]+]], i64 0}
-// CHECK: [[META5]] = !{!"any pointer", [[META6:![0-9]+]], i64 0}
-// CHECK: [[META6]] = !{!"omnipotent char", [[META7:![0-9]+]], i64 0}
-// CHECK: [[META7]] = !{!"Simple C++ TBAA"}
-// CHECK: [[TBAA8]] = !{[[META9:![0-9]+]], [[META9]], i64 0}
-// CHECK: [[META9]] = !{!"int", [[META6]], i64 0}
+// CHECK: [[INT_TBAA3]] = !{[[META4:![0-9]+]], [[META4]], i64 0}
+// CHECK: [[META4]] = !{!"int", [[META5:![0-9]+]], i64 0}
+// CHECK: [[META5]] = !{!"omnipotent char", [[META6:![0-9]+]], i64 0}
+// CHECK: [[META6]] = !{!"Simple C++ TBAA"}
+// CHECK: [[INTPTR_TBAA7]] = !{[[META8:![0-9]+]], [[META8]], i64 0}
+// CHECK: [[META8]] = !{!"p1 int", [[META9:![0-9]+]], i64 0}
+// CHECK: [[META9]] = !{!"any pointer", [[META5]], i64 0}
+// CHECK: [[META10]] = !{}
+// CHECK: [[META11]] = !{i64 4}
 //.

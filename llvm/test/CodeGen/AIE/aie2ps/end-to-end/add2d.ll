@@ -60,7 +60,7 @@ define dso_local void @add2d.for.body(i32 %unroll_iter, ptr addrspace(5) %0, ptr
 ; ASM-NEXT:    lda p4, [p6, #-4]; nopb ; movs p6, p0; add.nc lc, r0, #0; mov dc4, dc0; nopv
 ; ASM-NEXT:  .LBB0_1: // %for.body
 ; ASM-NEXT:    // =>This Inner Loop Header: Depth=1
-; ASM-NEXT:    vlda.ups.4x cml1, s1, upssign1, [p5], #64; nopb ; nopxm
+; ASM-NEXT:    vlda.ups.4x cml1, s1, upssign1, [p6], #64; nopb ; nopxm
 ; ASM-NEXT:    vlda.3d.ups.4x cml0, s0, upssign0, [p1], d0
 ; ASM-NEXT:    nop
 ; ASM-NEXT:    nop
@@ -73,12 +73,12 @@ define dso_local void @add2d.for.body(i32 %unroll_iter, ptr addrspace(5) %0, ptr
 ; ASM-NEXT:    nop
 ; ASM-NEXT:    nop
 ; ASM-NEXT:    nop
-; ASM-NEXT:    vst.srs.4x cml2, s1, srssign0, [p0], #32
+; ASM-NEXT:    vst.srs.4x cml2, s1, srssign0, [p5], #32
 ; ASM-NEXT:    nop
 ; ASM-NEXT:    nop
 ; ASM-NEXT:    vlda.3d.ups.4x cml3, s0, upssign0, [p1], d0
 ; ASM-NEXT:    st p1, [p2, #0]
-; ASM-NEXT:    vlda.ups.4x cml4, s1, upssign1, [p6, #32]
+; ASM-NEXT:    vlda.ups.4x cml4, s1, upssign1, [p0, #32]
 ; ASM-NEXT:    nop
 ; ASM-NEXT:    nop
 ; ASM-NEXT:    nop
@@ -90,11 +90,11 @@ define dso_local void @add2d.for.body(i32 %unroll_iter, ptr addrspace(5) %0, ptr
 ; ASM-NEXT:    nop
 ; ASM-NEXT:    nop
 ; ASM-NEXT:    nop
-; ASM-NEXT:    vst.srs.4x cml5, s1, srssign0, [p0], #32
-; ASM-NEXT:    st p5, [p3, #0]
-; ASM-NEXT:    mov p6, p5
+; ASM-NEXT:    vst.srs.4x cml5, s1, srssign0, [p5], #32
+; ASM-NEXT:    st p6, [p3, #0]
+; ASM-NEXT:    mov p0, p6
 ; ASM-NEXT:  .L_LEnd0:
-; ASM-NEXT:    nopa ; nopb ; st p0, [p4, #0]; nopxm ; nopv
+; ASM-NEXT:    nopa ; nopb ; st p5, [p4, #0]; nopxm ; nopv
 ; ASM-NEXT:  // %bb.2: // %for.cond.cleanup.unr-lcssa.loopexit.exitStub
 ; ASM-NEXT:    lda p6, [sp, #-64]; nopb ; nopx // 4-byte Folded Reload
 ; ASM-NEXT:    ret lr

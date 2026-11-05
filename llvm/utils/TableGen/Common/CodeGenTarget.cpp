@@ -26,7 +26,6 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/TableGen/Error.h"
 #include "llvm/TableGen/Record.h"
-#include <iterator>
 #include <tuple>
 using namespace llvm;
 
@@ -83,7 +82,7 @@ CodeGenTarget::CodeGenTarget(const RecordKeeper &records)
   MacroFusions = Records.getAllDerivedDefinitions("Fusion");
 }
 
-CodeGenTarget::~CodeGenTarget() {}
+CodeGenTarget::~CodeGenTarget() = default;
 
 StringRef CodeGenTarget::getName() const { return TargetRec->getName(); }
 

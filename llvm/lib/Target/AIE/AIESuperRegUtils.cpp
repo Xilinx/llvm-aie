@@ -235,8 +235,7 @@ static void rewriteOperandsToSubRegs(
     // Make sure the right reg class is applied, some MIs might use compound
     // classes with both 20 and 32 bits registers.
     const TargetRegisterClass *OpRC = TII.getRegClass(
-        RegOp.getParent()->getDesc(), RegOp.getParent()->getOperandNo(&RegOp),
-        &TRI);
+        RegOp.getParent()->getDesc(), RegOp.getParent()->getOperandNo(&RegOp));
     MRI.constrainRegClass(SubRegToVReg[SubReg], OpRC);
 
     LLVM_DEBUG(dbgs() << "        to " << *RegOp.getParent());

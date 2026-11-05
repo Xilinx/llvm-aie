@@ -36,7 +36,6 @@
 #include "llvm/CodeGen/SpillPlacement.h"
 #include "llvm/CodeGen/Spiller.h"
 #include "llvm/CodeGen/TargetRegisterInfo.h"
-#include <algorithm>
 #include <cstdint>
 #include <memory>
 #include <queue>
@@ -341,7 +340,7 @@ private:
   MCRegister tryRegionSplit(const LiveInterval &, AllocationOrder &,
                             SmallVectorImpl<Register> &);
   /// Calculate cost of region splitting around the specified register.
-  unsigned calculateRegionSplitCostAroundReg(MCPhysReg PhysReg,
+  unsigned calculateRegionSplitCostAroundReg(MCRegister PhysReg,
                                              AllocationOrder &Order,
                                              BlockFrequency &BestCost,
                                              unsigned &NumCands,
@@ -356,7 +355,7 @@ private:
                            bool HasCompact,
                            SmallVectorImpl<Register> &NewVRegs);
   /// Try to split VirtReg around physical Hint register.
-  bool trySplitAroundHintReg(MCPhysReg Hint, const LiveInterval &VirtReg,
+  bool trySplitAroundHintReg(MCRegister Hint, const LiveInterval &VirtReg,
                              SmallVectorImpl<Register> &NewVRegs,
                              AllocationOrder &Order);
   /// Check other options before using a callee-saved register for the first

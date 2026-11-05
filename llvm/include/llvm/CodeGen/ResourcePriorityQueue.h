@@ -78,7 +78,7 @@ struct resource_sort {
 
   public:
     ResourcePriorityQueue(SelectionDAGISel *IS);
-    ~ResourcePriorityQueue();
+    ~ResourcePriorityQueue() override;
 
     bool isBottomUp() const override { return false; }
 

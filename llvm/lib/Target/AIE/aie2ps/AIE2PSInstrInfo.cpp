@@ -52,8 +52,9 @@ const AIE2PSMCFormats AIE2PSFormats;
 } // namespace
 
 AIE2PSInstrInfo::AIE2PSInstrInfo(const TargetSubtargetInfo &STI)
-    : AIE2PSGenInstrInfo(STI, AIE2PS::ADJCALLSTACKUP,
-                         AIE2PS::ADJCALLSTACKDOWN) {
+    : AIE2PSGenInstrInfo(STI, RegInfo, AIE2PS::ADJCALLSTACKUP,
+                         AIE2PS::ADJCALLSTACKDOWN),
+      RegInfo(STI.getHwMode()) {
   FormatInterface = &AIE2PSFormats;
   FuncUnitWrapper::setFormatInterface(FormatInterface);
 }
@@ -660,9 +661,9 @@ void AIE2PSInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                           MachineBasicBlock::iterator I,
                                           Register SrcReg, bool IsKill, int FI,
                                           const TargetRegisterClass *RC,
-                                          const TargetRegisterInfo *TRI,
                                           Register VReg,
                                           MachineInstr::MIFlag Flags) const {
+  const TargetRegisterInfo *TRI = &getRegisterInfo();
   DebugLoc DL;
   if (I != MBB.end())
     DL = I->getDebugLoc();
@@ -689,7 +690,7 @@ void AIE2PSInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
     BuildMI(MBB, I, DL, get(AIE2PS::COPY), TmpReg)
         .addReg(SrcReg, getKillRegState(IsKill));
     return storeRegToStackSlot(MBB, I, TmpReg, /*IsKill*/ true, FI, BounceRC,
-                               TRI, VReg, Flags);
+                               VReg, Flags);
   };
 
   if (regClassMatches(AIE2PS::eRRegClass, RC, SrcReg)) {
@@ -798,10 +799,12 @@ void AIE2PSInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
 }
 
 // Load a register to a stack slot.  Used in eliminating FrameIndex pseduo-ops.
-void AIE2PSInstrInfo::loadRegFromStackSlot(
-    MachineBasicBlock &MBB, MachineBasicBlock::iterator I, Register DstReg,
-    int FI, const TargetRegisterClass *RC, const TargetRegisterInfo *TRI,
-    Register VReg, MachineInstr::MIFlag Flags) const {
+void AIE2PSInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
+                                           MachineBasicBlock::iterator I,
+                                           Register DstReg, int FI,
+                                           const TargetRegisterClass *RC,
+                                           Register VReg,
+                                           MachineInstr::MIFlag Flags) const {
   DebugLoc DL;
   if (I != MBB.end())
     DL = I->getDebugLoc();
@@ -822,7 +825,7 @@ void AIE2PSInstrInfo::loadRegFromStackSlot(
   auto bounceViaRegClass = [&](const TargetRegisterClass *BounceRC) {
     MachineRegisterInfo &MRI = MBB.getParent()->getRegInfo();
     Register TmpReg = MRI.createVirtualRegister(BounceRC);
-    loadRegFromStackSlot(MBB, I, TmpReg, FI, BounceRC, TRI, VReg, Flags);
+    loadRegFromStackSlot(MBB, I, TmpReg, FI, BounceRC, VReg, Flags);
     BuildMI(MBB, I, DL, get(AIE2PS::COPY), DstReg)
         .addReg(TmpReg, getKillRegState(true));
     return;

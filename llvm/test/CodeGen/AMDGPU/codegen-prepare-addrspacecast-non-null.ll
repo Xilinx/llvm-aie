@@ -333,11 +333,11 @@ define void @recursive_phis(i1 %cond, ptr addrspace(5) %ptr) {
 ; DAGISEL-ASM-NEXT:    s_xor_b64 s[8:9], vcc, -1
 ; DAGISEL-ASM-NEXT:    s_mov_b64 s[6:7], 0
 ; DAGISEL-ASM-NEXT:    v_mov_b32_e32 v2, 7
+; DAGISEL-ASM-NEXT:    v_mov_b32_e32 v1, s5
 ; DAGISEL-ASM-NEXT:  .LBB11_3: ; %finally
 ; DAGISEL-ASM-NEXT:    ; =>This Inner Loop Header: Depth=1
 ; DAGISEL-ASM-NEXT:    s_and_b64 s[10:11], exec, s[8:9]
 ; DAGISEL-ASM-NEXT:    s_or_b64 s[6:7], s[10:11], s[6:7]
-; DAGISEL-ASM-NEXT:    v_mov_b32_e32 v1, s5
 ; DAGISEL-ASM-NEXT:    flat_store_dword v[0:1], v2
 ; DAGISEL-ASM-NEXT:    s_waitcnt vmcnt(0)
 ; DAGISEL-ASM-NEXT:    s_andn2_b64 exec, exec, s[6:7]

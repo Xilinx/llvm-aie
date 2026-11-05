@@ -46,7 +46,7 @@ std::unique_ptr<TargetMachine> createAIE2PTargetMachine() {
   if (!TheTarget)
     return nullptr;
   return std::unique_ptr<TargetMachine>(TheTarget->createTargetMachine(
-      TargetTriple, "", "", TargetOptions(), std::nullopt, std::nullopt,
+      Triple(TargetTriple), "", "", TargetOptions(), std::nullopt, std::nullopt,
       CodeGenOptLevel::Default));
 }
 

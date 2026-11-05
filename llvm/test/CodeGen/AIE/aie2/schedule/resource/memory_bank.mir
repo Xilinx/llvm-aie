@@ -15,7 +15,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: VLDA_VLDB_noBank_BankA
-    ; CHECK: BUNDLE implicit-def $wl2, implicit-def $wl1, implicit killed $p0 {
+    ; CHECK: BUNDLE implicit-def $wl2, implicit-def $wl1, implicit killed $p0 :: (load (<8 x s32>)), (load (<8 x s32>), addrspace 5) {
     ; CHECK-NEXT:   $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0 :: (load (<8 x s32>))
     ; CHECK-NEXT:   $wl1 = VLDB_dmw_ldb_ag_idx_imm killed $p0, 0 :: (load (<8 x s32>), addrspace 5)
     ; CHECK-NEXT: }
@@ -35,7 +35,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: VLDA_VLDB_BankA_noBank
-    ; CHECK: BUNDLE implicit-def $wl2, implicit-def $wl1, implicit killed $p0 {
+    ; CHECK: BUNDLE implicit-def $wl2, implicit-def $wl1, implicit killed $p0 :: (load (<8 x s32>), addrspace 5), (load (<8 x s32>)) {
     ; CHECK-NEXT:   $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0 :: (load (<8 x s32>), addrspace 5)
     ; CHECK-NEXT:   $wl1 = VLDB_dmw_ldb_ag_idx_imm killed $p0, 0 :: (load (<8 x s32>))
     ; CHECK-NEXT: }
@@ -235,7 +235,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: VLDA_VLDB_different_bank_A_and_B
-    ; CHECK: BUNDLE implicit-def $wl2, implicit-def $wl1, implicit killed $p0 {
+    ; CHECK: BUNDLE implicit-def $wl2, implicit-def $wl1, implicit killed $p0 :: (load (<8 x s32>), addrspace 6), (load (<8 x s32>), addrspace 5) {
     ; CHECK-NEXT:   $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0 :: (load (<8 x s32>), addrspace 6)
     ; CHECK-NEXT:   $wl1 = VLDB_dmw_ldb_ag_idx_imm killed $p0, 0 :: (load (<8 x s32>), addrspace 5)
     ; CHECK-NEXT: }
@@ -255,7 +255,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: VLDA_VLDB_different_bank_A_and_C
-    ; CHECK: BUNDLE implicit-def $wl2, implicit-def $wl1, implicit killed $p0 {
+    ; CHECK: BUNDLE implicit-def $wl2, implicit-def $wl1, implicit killed $p0 :: (load (<8 x s32>), addrspace 7), (load (<8 x s32>), addrspace 5) {
     ; CHECK-NEXT:   $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0 :: (load (<8 x s32>), addrspace 7)
     ; CHECK-NEXT:   $wl1 = VLDB_dmw_ldb_ag_idx_imm killed $p0, 0 :: (load (<8 x s32>), addrspace 5)
     ; CHECK-NEXT: }
@@ -275,7 +275,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: VLDA_VLDB_different_bank_A_and_D
-    ; CHECK: BUNDLE implicit-def $wl2, implicit-def $wl1, implicit killed $p0 {
+    ; CHECK: BUNDLE implicit-def $wl2, implicit-def $wl1, implicit killed $p0 :: (load (<8 x s32>), addrspace 8), (load (<8 x s32>), addrspace 5) {
     ; CHECK-NEXT:   $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0 :: (load (<8 x s32>), addrspace 8)
     ; CHECK-NEXT:   $wl1 = VLDB_dmw_ldb_ag_idx_imm killed $p0, 0 :: (load (<8 x s32>), addrspace 5)
     ; CHECK-NEXT: }
@@ -295,7 +295,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: VLDA_VLDB_different_bank_B_and_C
-    ; CHECK: BUNDLE implicit-def $wl2, implicit-def $wl1, implicit killed $p0 {
+    ; CHECK: BUNDLE implicit-def $wl2, implicit-def $wl1, implicit killed $p0 :: (load (<8 x s32>), addrspace 7), (load (<8 x s32>), addrspace 6) {
     ; CHECK-NEXT:   $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0 :: (load (<8 x s32>), addrspace 7)
     ; CHECK-NEXT:   $wl1 = VLDB_dmw_ldb_ag_idx_imm killed $p0, 0 :: (load (<8 x s32>), addrspace 6)
     ; CHECK-NEXT: }
@@ -315,7 +315,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: VLDA_VLDB_different_bank_B_and_D
-    ; CHECK: BUNDLE implicit-def $wl2, implicit-def $wl1, implicit killed $p0 {
+    ; CHECK: BUNDLE implicit-def $wl2, implicit-def $wl1, implicit killed $p0 :: (load (<8 x s32>), addrspace 8), (load (<8 x s32>), addrspace 6) {
     ; CHECK-NEXT:   $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0 :: (load (<8 x s32>), addrspace 8)
     ; CHECK-NEXT:   $wl1 = VLDB_dmw_ldb_ag_idx_imm killed $p0, 0 :: (load (<8 x s32>), addrspace 6)
     ; CHECK-NEXT: }
@@ -335,7 +335,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: VLDA_VLDB_different_bank_C_and_D
-    ; CHECK: BUNDLE implicit-def $wl2, implicit-def $wl1, implicit killed $p0 {
+    ; CHECK: BUNDLE implicit-def $wl2, implicit-def $wl1, implicit killed $p0 :: (load (<8 x s32>), addrspace 8), (load (<8 x s32>), addrspace 7) {
     ; CHECK-NEXT:   $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0 :: (load (<8 x s32>), addrspace 8)
     ; CHECK-NEXT:   $wl1 = VLDB_dmw_ldb_ag_idx_imm killed $p0, 0 :: (load (<8 x s32>), addrspace 7)
     ; CHECK-NEXT: }
@@ -356,11 +356,11 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: VLDA_VLDB_different_bank_A_B_C_D
-    ; CHECK: BUNDLE implicit-def $wl2, implicit-def $wl1, implicit $p0 {
+    ; CHECK: BUNDLE implicit-def $wl2, implicit-def $wl1, implicit $p0 :: (load (<8 x s32>), addrspace 6), (load (<8 x s32>), addrspace 5) {
     ; CHECK-NEXT:   $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0 :: (load (<8 x s32>), addrspace 6)
     ; CHECK-NEXT:   $wl1 = VLDB_dmw_ldb_ag_idx_imm $p0, 0 :: (load (<8 x s32>), addrspace 5)
     ; CHECK-NEXT: }
-    ; CHECK-NEXT: BUNDLE implicit-def $wh2, implicit-def $wh1, implicit killed $p0 {
+    ; CHECK-NEXT: BUNDLE implicit-def $wh2, implicit-def $wh1, implicit killed $p0 :: (load (<8 x s32>), addrspace 8), (load (<8 x s32>), addrspace 7) {
     ; CHECK-NEXT:   $wh2 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0 :: (load (<8 x s32>), addrspace 8)
     ; CHECK-NEXT:   $wh1 = VLDB_dmw_ldb_ag_idx_imm killed $p0, 0 :: (load (<8 x s32>), addrspace 7)
     ; CHECK-NEXT: }
@@ -419,7 +419,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: VLDA_VLDB_different_bank_AB_C
-    ; CHECK: BUNDLE implicit-def $wl2, implicit-def $wl1, implicit killed $p0 {
+    ; CHECK: BUNDLE implicit-def $wl2, implicit-def $wl1, implicit killed $p0 :: (load (<8 x s32>), addrspace 7), (load (<8 x s32>), addrspace 9) {
     ; CHECK-NEXT:   $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0 :: (load (<8 x s32>), addrspace 7)
     ; CHECK-NEXT:   $wl1 = VLDB_dmw_ldb_ag_idx_imm killed $p0, 0 :: (load (<8 x s32>), addrspace 9)
     ; CHECK-NEXT: }
@@ -440,7 +440,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: VLDA_VLDB_different_bank_AB_D
-    ; CHECK: BUNDLE implicit-def $wl2, implicit-def $wl1, implicit killed $p0 {
+    ; CHECK: BUNDLE implicit-def $wl2, implicit-def $wl1, implicit killed $p0 :: (load (<8 x s32>), addrspace 8), (load (<8 x s32>), addrspace 9) {
     ; CHECK-NEXT:   $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0 :: (load (<8 x s32>), addrspace 8)
     ; CHECK-NEXT:   $wl1 = VLDB_dmw_ldb_ag_idx_imm killed $p0, 0 :: (load (<8 x s32>), addrspace 9)
     ; CHECK-NEXT: }
@@ -478,7 +478,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: VLDA_VLDB_different_bank_AC_B
-    ; CHECK: BUNDLE implicit-def $wl2, implicit-def $wl1, implicit killed $p0 {
+    ; CHECK: BUNDLE implicit-def $wl2, implicit-def $wl1, implicit killed $p0 :: (load (<8 x s32>), addrspace 6), (load (<8 x s32>), addrspace 10) {
     ; CHECK-NEXT:   $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0 :: (load (<8 x s32>), addrspace 6)
     ; CHECK-NEXT:   $wl1 = VLDB_dmw_ldb_ag_idx_imm killed $p0, 0 :: (load (<8 x s32>), addrspace 10)
     ; CHECK-NEXT: }
@@ -516,7 +516,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: VLDA_VLDB_different_bank_AC_D
-    ; CHECK: BUNDLE implicit-def $wl2, implicit-def $wl1, implicit killed $p0 {
+    ; CHECK: BUNDLE implicit-def $wl2, implicit-def $wl1, implicit killed $p0 :: (load (<8 x s32>), addrspace 8), (load (<8 x s32>), addrspace 10) {
     ; CHECK-NEXT:   $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0 :: (load (<8 x s32>), addrspace 8)
     ; CHECK-NEXT:   $wl1 = VLDB_dmw_ldb_ag_idx_imm killed $p0, 0 :: (load (<8 x s32>), addrspace 10)
     ; CHECK-NEXT: }
@@ -554,7 +554,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: VLDA_VLDB_different_bank_AD_B
-    ; CHECK: BUNDLE implicit-def $wl2, implicit-def $wl1, implicit killed $p0 {
+    ; CHECK: BUNDLE implicit-def $wl2, implicit-def $wl1, implicit killed $p0 :: (load (<8 x s32>), addrspace 6), (load (<8 x s32>), addrspace 11) {
     ; CHECK-NEXT:   $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0 :: (load (<8 x s32>), addrspace 6)
     ; CHECK-NEXT:   $wl1 = VLDB_dmw_ldb_ag_idx_imm killed $p0, 0 :: (load (<8 x s32>), addrspace 11)
     ; CHECK-NEXT: }
@@ -574,7 +574,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: VLDA_VLDB_different_bank_AD_C
-    ; CHECK: BUNDLE implicit-def $wl2, implicit-def $wl1, implicit killed $p0 {
+    ; CHECK: BUNDLE implicit-def $wl2, implicit-def $wl1, implicit killed $p0 :: (load (<8 x s32>), addrspace 7), (load (<8 x s32>), addrspace 11) {
     ; CHECK-NEXT:   $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0 :: (load (<8 x s32>), addrspace 7)
     ; CHECK-NEXT:   $wl1 = VLDB_dmw_ldb_ag_idx_imm killed $p0, 0 :: (load (<8 x s32>), addrspace 11)
     ; CHECK-NEXT: }
@@ -612,7 +612,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: VLDA_VLDB_different_bank_BC_A
-    ; CHECK: BUNDLE implicit-def $wl2, implicit-def $wl1, implicit killed $p0 {
+    ; CHECK: BUNDLE implicit-def $wl2, implicit-def $wl1, implicit killed $p0 :: (load (<8 x s32>), addrspace 5), (load (<8 x s32>), addrspace 12) {
     ; CHECK-NEXT:   $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0 :: (load (<8 x s32>), addrspace 5)
     ; CHECK-NEXT:   $wl1 = VLDB_dmw_ldb_ag_idx_imm killed $p0, 0 :: (load (<8 x s32>), addrspace 12)
     ; CHECK-NEXT: }
@@ -668,7 +668,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: VLDA_VLDB_different_bank_BC_D
-    ; CHECK: BUNDLE implicit-def $wl2, implicit-def $wl1, implicit killed $p0 {
+    ; CHECK: BUNDLE implicit-def $wl2, implicit-def $wl1, implicit killed $p0 :: (load (<8 x s32>), addrspace 8), (load (<8 x s32>), addrspace 12) {
     ; CHECK-NEXT:   $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0 :: (load (<8 x s32>), addrspace 8)
     ; CHECK-NEXT:   $wl1 = VLDB_dmw_ldb_ag_idx_imm killed $p0, 0 :: (load (<8 x s32>), addrspace 12)
     ; CHECK-NEXT: }
@@ -688,7 +688,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: VLDA_VLDB_different_bank_BD_A
-    ; CHECK: BUNDLE implicit-def $wl2, implicit-def $wl1, implicit killed $p0 {
+    ; CHECK: BUNDLE implicit-def $wl2, implicit-def $wl1, implicit killed $p0 :: (load (<8 x s32>), addrspace 5), (load (<8 x s32>), addrspace 13) {
     ; CHECK-NEXT:   $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0 :: (load (<8 x s32>), addrspace 5)
     ; CHECK-NEXT:   $wl1 = VLDB_dmw_ldb_ag_idx_imm killed $p0, 0 :: (load (<8 x s32>), addrspace 13)
     ; CHECK-NEXT: }
@@ -726,7 +726,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: VLDA_VLDB_different_bank_BD_C
-    ; CHECK: BUNDLE implicit-def $wl2, implicit-def $wl1, implicit killed $p0 {
+    ; CHECK: BUNDLE implicit-def $wl2, implicit-def $wl1, implicit killed $p0 :: (load (<8 x s32>), addrspace 7), (load (<8 x s32>), addrspace 13) {
     ; CHECK-NEXT:   $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0 :: (load (<8 x s32>), addrspace 7)
     ; CHECK-NEXT:   $wl1 = VLDB_dmw_ldb_ag_idx_imm killed $p0, 0 :: (load (<8 x s32>), addrspace 13)
     ; CHECK-NEXT: }
@@ -764,7 +764,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: VLDA_VLDB_different_bank_CD_A
-    ; CHECK: BUNDLE implicit-def $wl2, implicit-def $wl1, implicit killed $p0 {
+    ; CHECK: BUNDLE implicit-def $wl2, implicit-def $wl1, implicit killed $p0 :: (load (<8 x s32>), addrspace 5), (load (<8 x s32>), addrspace 14) {
     ; CHECK-NEXT:   $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0 :: (load (<8 x s32>), addrspace 5)
     ; CHECK-NEXT:   $wl1 = VLDB_dmw_ldb_ag_idx_imm killed $p0, 0 :: (load (<8 x s32>), addrspace 14)
     ; CHECK-NEXT: }
@@ -784,7 +784,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: VLDA_VLDB_different_bank_CD_B
-    ; CHECK: BUNDLE implicit-def $wl2, implicit-def $wl1, implicit killed $p0 {
+    ; CHECK: BUNDLE implicit-def $wl2, implicit-def $wl1, implicit killed $p0 :: (load (<8 x s32>), addrspace 6), (load (<8 x s32>), addrspace 14) {
     ; CHECK-NEXT:   $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0 :: (load (<8 x s32>), addrspace 6)
     ; CHECK-NEXT:   $wl1 = VLDB_dmw_ldb_ag_idx_imm killed $p0, 0 :: (load (<8 x s32>), addrspace 14)
     ; CHECK-NEXT: }
@@ -914,7 +914,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: VLDA_VLDB_different_bank_AB_CD
-    ; CHECK: BUNDLE implicit-def $wl2, implicit-def $wl1, implicit killed $p0 {
+    ; CHECK: BUNDLE implicit-def $wl2, implicit-def $wl1, implicit killed $p0 :: (load (<8 x s32>), addrspace 14), (load (<8 x s32>), addrspace 9) {
     ; CHECK-NEXT:   $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0 :: (load (<8 x s32>), addrspace 14)
     ; CHECK-NEXT:   $wl1 = VLDB_dmw_ldb_ag_idx_imm killed $p0, 0 :: (load (<8 x s32>), addrspace 9)
     ; CHECK-NEXT: }
@@ -970,7 +970,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: VLDA_VLDB_different_bank_AC_BD
-    ; CHECK: BUNDLE implicit-def $wl2, implicit-def $wl1, implicit killed $p0 {
+    ; CHECK: BUNDLE implicit-def $wl2, implicit-def $wl1, implicit killed $p0 :: (load (<8 x s32>), addrspace 13), (load (<8 x s32>), addrspace 10) {
     ; CHECK-NEXT:   $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0 :: (load (<8 x s32>), addrspace 13)
     ; CHECK-NEXT:   $wl1 = VLDB_dmw_ldb_ag_idx_imm killed $p0, 0 :: (load (<8 x s32>), addrspace 10)
     ; CHECK-NEXT: }
@@ -1008,7 +1008,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: VLDA_VLDB_different_bank_AD_BC
-    ; CHECK: BUNDLE implicit-def $wl2, implicit-def $wl1, implicit killed $p0 {
+    ; CHECK: BUNDLE implicit-def $wl2, implicit-def $wl1, implicit killed $p0 :: (load (<8 x s32>), addrspace 12), (load (<8 x s32>), addrspace 11) {
     ; CHECK-NEXT:   $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0 :: (load (<8 x s32>), addrspace 12)
     ; CHECK-NEXT:   $wl1 = VLDB_dmw_ldb_ag_idx_imm killed $p0, 0 :: (load (<8 x s32>), addrspace 11)
     ; CHECK-NEXT: }
@@ -1102,11 +1102,11 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: VLDA_VLDB_different_bank_ABCD
-    ; CHECK: BUNDLE implicit-def $wl2, implicit-def $wl1, implicit $p0 {
+    ; CHECK: BUNDLE implicit-def $wl2, implicit-def $wl1, implicit $p0 :: (load (<8 x s32>), addrspace 6), (load (<8 x s32>), addrspace 5) {
     ; CHECK-NEXT:   $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0 :: (load (<8 x s32>), addrspace 6)
     ; CHECK-NEXT:   $wl1 = VLDB_dmw_ldb_ag_idx_imm $p0, 0 :: (load (<8 x s32>), addrspace 5)
     ; CHECK-NEXT: }
-    ; CHECK-NEXT: BUNDLE implicit-def $wh2, implicit-def $wh1, implicit killed $p0 {
+    ; CHECK-NEXT: BUNDLE implicit-def $wh2, implicit-def $wh1, implicit killed $p0 :: (load (<8 x s32>), addrspace 8), (load (<8 x s32>), addrspace 7) {
     ; CHECK-NEXT:   $wh2 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0 :: (load (<8 x s32>), addrspace 8)
     ; CHECK-NEXT:   $wh1 = VLDB_dmw_ldb_ag_idx_imm killed $p0, 0 :: (load (<8 x s32>), addrspace 7)
     ; CHECK-NEXT: }

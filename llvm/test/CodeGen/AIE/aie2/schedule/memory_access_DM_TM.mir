@@ -15,7 +15,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: LDA_TM_VLDB_without_AS
-    ; CHECK: BUNDLE implicit-def $r0, implicit-def $wl2, implicit killed $p0 {
+    ; CHECK: BUNDLE implicit-def $r0, implicit-def $wl2, implicit killed $p0 :: (load (s32) from custom "TileMemory", addrspace 15), (load (<8 x s32>)) {
     ; CHECK-NEXT:   $r0 = LDA_TM $p0 :: (load (s32) from custom "TileMemory", addrspace 15)
     ; CHECK-NEXT:   $wl2 = VLDB_dmw_ldb_ag_idx_imm killed $p0, 0 :: (load (<8 x s32>))
     ; CHECK-NEXT: }
@@ -35,7 +35,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: LDA_TM_VLDB_from_BankA
-    ; CHECK: BUNDLE implicit-def $r0, implicit-def $wl2, implicit killed $p0 {
+    ; CHECK: BUNDLE implicit-def $r0, implicit-def $wl2, implicit killed $p0 :: (load (s32) from custom "TileMemory", addrspace 15), (load (<8 x s32>), addrspace 5) {
     ; CHECK-NEXT:   $r0 = LDA_TM $p0 :: (load (s32) from custom "TileMemory", addrspace 15)
     ; CHECK-NEXT:   $wl2 = VLDB_dmw_ldb_ag_idx_imm killed $p0, 0 :: (load (<8 x s32>), addrspace 5)
     ; CHECK-NEXT: }
@@ -55,7 +55,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: LDA_TM_VLDB_from_BankB
-    ; CHECK: BUNDLE implicit-def $r0, implicit-def $wl2, implicit killed $p0 {
+    ; CHECK: BUNDLE implicit-def $r0, implicit-def $wl2, implicit killed $p0 :: (load (s32) from custom "TileMemory", addrspace 15), (load (<8 x s32>), addrspace 6) {
     ; CHECK-NEXT:   $r0 = LDA_TM $p0 :: (load (s32) from custom "TileMemory", addrspace 15)
     ; CHECK-NEXT:   $wl2 = VLDB_dmw_ldb_ag_idx_imm killed $p0, 0 :: (load (<8 x s32>), addrspace 6)
     ; CHECK-NEXT: }
@@ -75,7 +75,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: LDA_TM_VLDB_from_BankC
-    ; CHECK: BUNDLE implicit-def $r0, implicit-def $wl2, implicit killed $p0 {
+    ; CHECK: BUNDLE implicit-def $r0, implicit-def $wl2, implicit killed $p0 :: (load (s32) from custom "TileMemory", addrspace 15), (load (<8 x s32>), addrspace 7) {
     ; CHECK-NEXT:   $r0 = LDA_TM $p0 :: (load (s32) from custom "TileMemory", addrspace 15)
     ; CHECK-NEXT:   $wl2 = VLDB_dmw_ldb_ag_idx_imm killed $p0, 0 :: (load (<8 x s32>), addrspace 7)
     ; CHECK-NEXT: }
@@ -95,7 +95,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: LDA_TM_VLDB_from_BankD
-    ; CHECK: BUNDLE implicit-def $r0, implicit-def $wl2, implicit killed $p0 {
+    ; CHECK: BUNDLE implicit-def $r0, implicit-def $wl2, implicit killed $p0 :: (load (s32) from custom "TileMemory", addrspace 15), (load (<8 x s32>), addrspace 8) {
     ; CHECK-NEXT:   $r0 = LDA_TM $p0 :: (load (s32) from custom "TileMemory", addrspace 15)
     ; CHECK-NEXT:   $wl2 = VLDB_dmw_ldb_ag_idx_imm killed $p0, 0 :: (load (<8 x s32>), addrspace 8)
     ; CHECK-NEXT: }
