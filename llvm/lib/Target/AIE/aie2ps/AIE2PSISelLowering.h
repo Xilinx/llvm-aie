@@ -36,7 +36,7 @@ public:
       Type *Ty, CallingConv::ID CallConv, bool isVarArg,
       const DataLayout &DL) const override;
 
-  bool getTgtMemIntrinsic(IntrinsicInfo &Info, const CallInst &I,
+  bool getTgtMemIntrinsic(IntrinsicInfo &Info, const CallBase &I,
                           MachineFunction &MF,
                           unsigned Intrinsic) const override;
 };

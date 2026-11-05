@@ -150,9 +150,7 @@ public:
   void push_back(TypeRange value) {
     // The lifetime of a TypeRange can't be guaranteed, so we'll need to
     // allocate a storage for it.
-    llvm::OwningArrayRef<Type> storage(value.size());
-    llvm::copy(value, storage.begin());
-    allocatedTypeRanges.emplace_back(std::move(storage));
+    allocatedTypeRanges.emplace_back(value.begin(), value.end());
     typeRanges.push_back(allocatedTypeRanges.back());
     results.push_back(&typeRanges.back());
   }
@@ -172,9 +170,7 @@ public:
   void push_back(ValueRange value) {
     // The lifetime of a ValueRange can't be guaranteed, so we'll need to
     // allocate a storage for it.
-    llvm::OwningArrayRef<Value> storage(value.size());
-    llvm::copy(value, storage.begin());
-    allocatedValueRanges.emplace_back(std::move(storage));
+    allocatedValueRanges.emplace_back(value.begin(), value.end());
     valueRanges.push_back(allocatedValueRanges.back());
     results.push_back(&valueRanges.back());
   }
@@ -204,8 +200,8 @@ protected:
   SmallVector<ValueRange> valueRanges;
   /// Memory allocated to store ranges in the result list whose lifetime was
   /// generated in the native function.
-  SmallVector<llvm::OwningArrayRef<Type>> allocatedTypeRanges;
-  SmallVector<llvm::OwningArrayRef<Value>> allocatedValueRanges;
+  SmallVector<std::vector<Type>> allocatedTypeRanges;
+  SmallVector<std::vector<Value>> allocatedValueRanges;
 };
 
 //===----------------------------------------------------------------------===//

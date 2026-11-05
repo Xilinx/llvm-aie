@@ -76,6 +76,8 @@ struct VersionEntry {
 
 LLVM_ABI StringRef getELFRelocationTypeName(uint32_t Machine, uint32_t Type,
                                    uint32_t Flags = 0);
+LLVM_ABI StringRef getRISCVVendorRelocationTypeName(uint32_t Type,
+                                                    StringRef Vendor);
 LLVM_ABI uint32_t getELFRelativeRelocationType(uint32_t Machine);
 LLVM_ABI StringRef getELFSectionTypeName(uint32_t Machine, uint32_t Type);
 

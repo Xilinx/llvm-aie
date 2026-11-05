@@ -19,9 +19,11 @@
 ; RUN:   | grep -v 'Verify generated machine code' | FileCheck -match-full-lines -strict-whitespace -check-prefixes=AIE-O23 %s
 
 ; AIE-O0:Target Library Information
+; AIE-O0-NEXT:Runtime Library Function Analysis
 ; AIE-O0-NEXT:Target Pass Configuration
 ; AIE-O0-NEXT:Machine Module Information
 ; AIE-O0-NEXT:Target Transform Information
+; AIE-O0-NEXT:Library Function Lowering Analysis
 ; AIE-O0-NEXT:Create Garbage Collector Module Metadata
 ; AIE-O0-NEXT:Assumption Cache Tracker
 ; AIE-O0-NEXT:Machine Branch Probability Analysis
@@ -99,9 +101,11 @@
 ; AIE-O0-NEXT:      Free MachineFunction
 
 ; AIE-O1:Target Library Information
+; AIE-O1-NEXT:Runtime Library Function Analysis
 ; AIE-O1-NEXT:Target Pass Configuration
 ; AIE-O1-NEXT:Machine Module Information
 ; AIE-O1-NEXT:Target Transform Information
+; AIE-O1-NEXT:Library Function Lowering Analysis
 ; AIE-O1-NEXT:Assumption Cache Tracker
 ; AIE-O1-NEXT:AIE complex addressing modes based Alias Analysis
 ; AIE-O1-NEXT:External Alias Analysis
@@ -337,9 +341,11 @@
 ; AIE-O1-NEXT:      Free MachineFunction
 
 ; AIE-O23:Target Library Information
+; AIE-O23-NEXT:Runtime Library Function Analysis
 ; AIE-O23-NEXT:Target Pass Configuration
 ; AIE-O23-NEXT:Machine Module Information
 ; AIE-O23-NEXT:Target Transform Information
+; AIE-O23-NEXT:Library Function Lowering Analysis
 ; AIE-O23-NEXT:Assumption Cache Tracker
 ; AIE-O23-NEXT:AIE complex addressing modes based Alias Analysis
 ; AIE-O23-NEXT:External Alias Analysis

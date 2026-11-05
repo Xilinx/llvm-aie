@@ -23,6 +23,9 @@ def ptr0 : PtrValueType<i20, 0>;
 //===----------------------------------------------------------------------===//
 
 include "AIE2RegisterInfo.td"
+
+// Pseudo instructions with pointer operands use the pointer register class.
+defm : RemapAllTargetPseudoPointerOperands<eP>;
 include "AIE2Schedule.td"
 include "AIE2CallingConv.td"
 include "AIE2RegisterBanks.td"

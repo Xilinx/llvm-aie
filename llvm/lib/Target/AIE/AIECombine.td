@@ -22,6 +22,20 @@ def aie_reassoc_ptradd : GICombineRule<
 
 // Explicitly listing each generic combine here ensures direct visibility and
 // control over all functionalities.
+// Upstream merge_combines without combine_build_unmerge: its narrow
+// G_IMPLICIT_DEF / G_CONCAT_VECTORS results (e.g. <2 x s8>) are not legal on AIE.
+def aie_merge_combines : GICombineGroup<[
+  unmerge_anyext_build_vector,
+  unmerge_merge,
+  merge_unmerge,
+  unmerge_cst,
+  unmerge_undef,
+  unmerge_dead_to_trunc,
+  unmerge_zext_to_zext,
+  merge_of_x_and_undef,
+  merge_of_x_and_zero
+]>;
+
 def aie_generic_combines : GICombineGroup<[trivial_combines, vector_ops_combines,
   insert_vec_elt_combines, extract_vec_elt_combines, combines_for_extload,
   combine_extracted_vector_load,
@@ -32,7 +46,7 @@ def aie_generic_combines : GICombineGroup<[trivial_combines, vector_ops_combines
   width_reduction_combines, select_combines,
   known_bits_simplifications, cast_combines,
   not_cmp_fold, opt_brcond_by_inverting_cond,
-  trunc_shift, merge_combines,
+  trunc_shift, aie_merge_combines,
   const_combines, xor_of_and_with_same_reg, ptr_add_with_zero,
   shift_immed_chain, shift_of_shifted_logic_chain, load_or_combine,
   div_rem_to_divrem, funnel_shift_combines, commute_shift,

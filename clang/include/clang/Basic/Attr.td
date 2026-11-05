@@ -514,7 +514,7 @@ def TargetMicrosoftRecordLayout : TargetArch<["x86", "x86_64", "arm", "thumb",
   let CustomCode = [{ Target.hasMicrosoftRecordLayout() }];
 }
 
-def TargetMustTailAvaiable:  TargetSpec {
+def TargetMustTailAvailable:  TargetSpec {
   let CustomCode = [{ Target.hasMustTail() }];
 }
 
@@ -747,6 +747,17 @@ class Attr {
   // our existing general parsing we need to have a separate flag that
   // opts an attribute into strict parsing of attribute parameters
   bit StrictEnumParameters = 0;
+  // Set to true for attributes which have Sema checks which requires the type
+  // to be deduced.
+  // When `IsTypeDependent` is set to true, you should add an `ActOn*Attr`
+  // function to `Sema.h`. The signature of the function must be:
+  // `void ActOn*Attr(Decl *, const Attr *);` where the `Decl *` is the
+  // declaration the attribute will be attached to; its type will have already
+  // been deduced, and the `Attr *` is the attribute being applied to that
+  // declaration. This function should handle all type-sensitive semantics for
+  // the attribute. This function will be automatically called by
+  // `Sema::CheckAttributesOnDeducedType()`.
+  bit IsTypeDependent = 0;
   // Lists language options, one of which is required to be true for the
   // attribute to be applicable. If empty, no language options are required.
   list<LangOpt> LangOpts = [];
@@ -1406,6 +1417,7 @@ def Cleanup : InheritableAttr {
   let Args = [DeclArgument<Function, "FunctionDecl">];
   let Subjects = SubjectList<[LocalVar]>;
   let Documentation = [CleanupDocs];
+  let IsTypeDependent = 1;
   // FIXME: DeclArgument should be reworked to also store the
   // Expr instead of adding attr specific hacks like the following.
   // See the discussion in https://github.com/llvm/llvm-project/pull/14023.
@@ -1911,7 +1923,7 @@ def NoMerge : DeclOrStmtAttr {
                              "functions, statements and variables">;
 }
 
-def MustTail : StmtAttr, TargetSpecificAttr<TargetMustTailAvaiable> {
+def MustTail : StmtAttr, TargetSpecificAttr<TargetMustTailAvailable> {
   let Spellings = [Clang<"musttail">];
   let Documentation = [MustTailDocs];
   let Subjects = SubjectList<[ReturnStmt], ErrorDiag, "return statements">;
@@ -2064,6 +2076,12 @@ def Restrict : InheritableAttr {
               ParamIdxArgument<"DeallocatorPtrArgIndex", /*opt=*/ 1>];
   let Subjects = SubjectList<[Function]>;
   let Documentation = [RestrictDocs];
+}
+
+def MallocSpan : InheritableAttr {
+  let Spellings = [Clang<"malloc_span">];
+  let Subjects = SubjectList<[Function]>;
+  let Documentation = [MallocSpanDocs];
 }
 
 def LayoutVersion : InheritableAttr, TargetSpecificAttr<TargetMicrosoftRecordLayout> {
@@ -4396,14 +4414,27 @@ def CFGuard : InheritableAttr, TargetSpecificAttr<TargetWindows> {
 def MSStruct : InheritableAttr {
   let Spellings = [GCC<"ms_struct">];
   let Subjects = SubjectList<[Record]>;
-  let Documentation = [Undocumented];
-  let SimpleHandler = 1;
+  let Documentation = [MSStructDocs];
+}
+
+def GCCStruct : InheritableAttr {
+  let Spellings = [GCC<"gcc_struct">];
+  let Subjects = SubjectList<[Record]>;
+  let Documentation = [MSStructDocs]; // Covers this attribute too.
 }
 
 def DLLExport : InheritableAttr, TargetSpecificAttr<TargetHasDLLImportExport> {
   let Spellings = [Declspec<"dllexport">, GCC<"dllexport">];
   let Subjects = SubjectList<[Function, Var, CXXRecord, ObjCInterface]>;
   let Documentation = [DLLExportDocs];
+}
+
+def DLLExportOnDecl : InheritableAttr, TargetSpecificAttr<TargetHasDLLImportExport> {
+  // This attribute is only used to warn if there was a `__declspec(dllexport)`
+  // on a declaration, but not on the defintion of an explicit instantiation
+  let Spellings = [];
+  let Subjects = SubjectList<[CXXRecord]>;
+  let Documentation = [InternalOnly];
 }
 
 def DLLExportStaticLocal : InheritableAttr, TargetSpecificAttr<TargetHasDLLImportExport> {
@@ -5200,6 +5231,14 @@ def HLSLVkConstantId : InheritableAttr {
   let Documentation = [VkConstantIdDocs];
 }
 
+def HLSLVkLocation : HLSLAnnotationAttr {
+  let Spellings = [CXX11<"vk", "location">];
+  let Args = [IntArgument<"Location">];
+  let Subjects = SubjectList<[ParmVar, Field, Function], ErrorDiag>;
+  let LangOpts = [HLSL];
+  let Documentation = [HLSLVkLocationDocs];
+}
+
 def RandomizeLayout : InheritableAttr {
   let Spellings = [GCC<"randomize_layout">];
   let Subjects = SubjectList<[Record]>;
@@ -5350,4 +5389,12 @@ def NonString : InheritableAttr {
   let Spellings = [GCC<"nonstring">];
   let Subjects = SubjectList<[Var, Field]>;
   let Documentation = [NonStringDocs];
+}
+
+def ModularFormat : InheritableAttr {
+  let Spellings = [Clang<"modular_format">];
+  let Args = [IdentifierArgument<"ModularImplFn">, StringArgument<"ImplName">,
+              VariadicStringArgument<"Aspects">];
+  let Subjects = SubjectList<[Function]>;
+  let Documentation = [ModularFormatDocs];
 }

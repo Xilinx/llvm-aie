@@ -13,7 +13,8 @@
 // depending on a real target.
 class BogusTargetLowering : public TargetLowering {
 public:
-  BogusTargetLowering(TargetMachine &TM) : TargetLowering(TM) {}
+  BogusTargetLowering(const TargetMachine &TM, const TargetSubtargetInfo &STI)
+      : TargetLowering(TM, STI) {}
 };
 
 class BogusFrameLowering : public TargetFrameLowering {
@@ -105,7 +106,7 @@ public:
       : TargetSubtargetInfo(Triple(""), CPU, TuneCPU, "", {}, {}, ProcDescs,
                             nullptr, nullptr, nullptr, nullptr, nullptr,
                             nullptr),
-        FL(), TL(TM) {}
+        FL(), TL(TM, *this) {}
   ~TestSubTarget() override = default;
 
   const TargetFrameLowering *getFrameLowering() const override { return &FL; }

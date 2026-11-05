@@ -20,9 +20,11 @@
 ; REQUIRES: asserts
 
 ; AIE-O0123:Target Library Information
+; AIE-O0123-NEXT:Runtime Library Function Analysis
 ; AIE-O0123-NEXT:Target Pass Configuration
 ; AIE-O0123-NEXT:Machine Module Information
 ; AIE-O0123-NEXT:Target Transform Information
+; AIE-O0123-NEXT:Library Function Lowering Analysis
 
 ; AIE-O123-NEXT:Assumption Cache Tracker
 ; AIE-O123-NEXT:AIE complex addressing modes based Alias Analysis

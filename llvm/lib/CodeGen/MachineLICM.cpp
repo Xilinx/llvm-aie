@@ -496,7 +496,7 @@ static void applyBitsNotInRegMaskToRegUnitsMask(const TargetRegisterInfo &TRI,
 
       if (PhysReg && !((Word >> Bit) & 1)) {
         for (MCRegUnit Unit : TRI.regunits(PhysReg))
-          RUsFromRegsNotInMask.set(Unit);
+          RUsFromRegsNotInMask.set(static_cast<unsigned>(Unit));
       }
     }
   }
@@ -547,7 +547,8 @@ void MachineLICMImpl::ProcessMI(MachineInstr *MI, BitVector &RUDefs,
           // not safe to hoist.
           // Note this isn't a final check, as we haven't gathered all the loop
           // register definitions yet.
-          if (RUDefs.test(Unit) || RUClobbers.test(Unit)) {
+          if (RUDefs.test(static_cast<unsigned>(Unit)) ||
+              RUClobbers.test(static_cast<unsigned>(Unit))) {
             HasNonInvariantUse = true;
             break;
           }
@@ -568,16 +569,16 @@ void MachineLICMImpl::ProcessMI(MachineInstr *MI, BitVector &RUDefs,
     // register, then this is not safe.  Two defs is indicated by setting a
     // PhysRegClobbers bit.
     for (MCRegUnit Unit : TRI->regunits(Reg)) {
-      if (RUDefs.test(Unit)) {
-        RUClobbers.set(Unit);
+      if (RUDefs.test(static_cast<unsigned>(Unit))) {
+        RUClobbers.set(static_cast<unsigned>(Unit));
         RuledOut = true;
-      } else if (RUClobbers.test(Unit)) {
+      } else if (RUClobbers.test(static_cast<unsigned>(Unit))) {
         // MI defined register is seen defined by another instruction in
         // the loop, it cannot be a LICM candidate.
         RuledOut = true;
       }
 
-      RUDefs.set(Unit);
+      RUDefs.set(static_cast<unsigned>(Unit));
     }
   }
 
@@ -624,10 +625,10 @@ void MachineLICMImpl::HoistRegionPostRA(MachineLoop *CurLoop) {
       const TargetLowering &TLI = *MF.getSubtarget().getTargetLowering();
       if (MCRegister Reg = TLI.getExceptionPointerRegister(PersonalityFn))
         for (MCRegUnit Unit : TRI->regunits(Reg))
-          RUClobbers.set(Unit);
+          RUClobbers.set(static_cast<unsigned>(Unit));
       if (MCRegister Reg = TLI.getExceptionSelectorRegister(PersonalityFn))
         for (MCRegUnit Unit : TRI->regunits(Reg))
-          RUClobbers.set(Unit);
+          RUClobbers.set(static_cast<unsigned>(Unit));
     }
 
     SpeculationState = SpeculateUnknown;
@@ -643,8 +644,9 @@ void MachineLICMImpl::HoistRegionPostRA(MachineLoop *CurLoop) {
       auto LiveInUnit = (*RUI).first;
       LaneBitmask UnitMask = (*RUI).second;
       // Check if the livein lanes overlap with the lanes touched by LiveInUnit
-      if ((UnitMask & LiveInMask).any() && RUDefs.test(LiveInUnit)) {
-        RUClobbers.set(LiveInUnit);
+      if ((UnitMask & LiveInMask).any() &&
+          RUDefs.test(static_cast<unsigned>(LiveInUnit))) {
+        RUClobbers.set(static_cast<unsigned>(LiveInUnit));
       }
     }
   }
@@ -660,7 +662,7 @@ void MachineLICMImpl::HoistRegionPostRA(MachineLoop *CurLoop) {
       if (!Reg)
         continue;
       for (MCRegUnit Unit : TRI->regunits(Reg))
-        TermRUs.set(Unit);
+        TermRUs.set(static_cast<unsigned>(Unit));
     }
   }
 
@@ -680,7 +682,8 @@ void MachineLICMImpl::HoistRegionPostRA(MachineLoop *CurLoop) {
     Register Def = Candidate.Def;
     bool Safe = true;
     for (MCRegUnit Unit : TRI->regunits(Def)) {
-      if (RUClobbers.test(Unit) || TermRUs.test(Unit)) {
+      if (RUClobbers.test(static_cast<unsigned>(Unit)) ||
+          TermRUs.test(static_cast<unsigned>(Unit))) {
         Safe = false;
         break;
       }
@@ -694,7 +697,8 @@ void MachineLICMImpl::HoistRegionPostRA(MachineLoop *CurLoop) {
       if (!MO.getReg())
         continue;
       for (MCRegUnit Unit : TRI->regunits(MO.getReg())) {
-        if (RUDefs.test(Unit) || RUClobbers.test(Unit)) {
+        if (RUDefs.test(static_cast<unsigned>(Unit)) ||
+            RUClobbers.test(static_cast<unsigned>(Unit))) {
           // If it's using a non-loop-invariant register, then it's obviously
           // not safe to hoist.
           Safe = false;

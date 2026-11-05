@@ -137,7 +137,7 @@ bool AIE2PSTargetLowering::functionArgumentNeedsConsecutiveRegisters(
 }
 
 bool AIE2PSTargetLowering::getTgtMemIntrinsic(IntrinsicInfo &Info,
-                                              const CallInst &I,
+                                              const CallBase &I,
                                               MachineFunction &MF,
                                               unsigned Intrinsic) const {
   switch (Intrinsic) {
