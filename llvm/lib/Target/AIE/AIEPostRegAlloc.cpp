@@ -310,13 +310,27 @@ AIEPostRegAlloc::Placement::Placement(
     DenseMap<Register, MCRegister> &InAssign)
     : LiveLanes(Lanes), AvailableRegs(Tracker.getAvailablePhysRegs()),
       State(InState), OutAssign(InAssign),
-      Placed(Tracker.getLiveRanges().size()) {
+      Placed(Tracker.getLiveRanges().size()),
+      AllCands(Tracker.getLiveRanges().size()),
+      Cands(Tracker.getLiveRanges().size()),
+      NumCands(Tracker.getLiveRanges().size()),
+      LiveCycles(Tracker.getLiveRanges().size()) {
   // Only virtualized ranges take part in assignment. Fixed ranges must already
   // be pinned into State via AllocState::pinFixedRanges.
   for (const RegLiveRange &LR : Tracker.getLiveRanges()) {
     if (!LR.getVReg().isValid() || !LiveLanes.count(LR.getIndex()))
       continue;
     Ranges.push_back(&LR);
+    const unsigned Index = LR.getIndex();
+    AllCands[Index] =
+        getCandidatePhysRegs(LR.getAdmissibleRegs(), AvailableRegs);
+    Cands[Index].resize(AllCands[Index].size());
+    const auto &Elements = masks(LR).getElements();
+    LiveCycles[Index].resize(Elements.size());
+    for (size_t C = 0, E = Elements.size(); C != E; ++C)
+      if (Elements[C].getLanes().any())
+        LiveCycles[Index].set(C);
+    refresh(LR);
   }
 }
 
@@ -325,14 +339,38 @@ AIEPostRegAlloc::Placement::masks(const RegLiveRange &LR) const {
   return LiveLanes.find(LR.getIndex())->second;
 }
 
-std::vector<Register>
-AIEPostRegAlloc::Placement::candidates(const RegLiveRange &LR) const {
-  std::vector<Register> Cands;
-  for (Register PhysReg :
-       getCandidatePhysRegs(LR.getAdmissibleRegs(), AvailableRegs))
-    if (State.canPlace(PhysReg, masks(LR)))
-      Cands.push_back(PhysReg);
-  return Cands;
+unsigned
+AIEPostRegAlloc::Placement::numCandidates(const RegLiveRange &LR) const {
+  return NumCands[LR.getIndex()];
+}
+
+Register
+AIEPostRegAlloc::Placement::firstCandidate(const RegLiveRange &LR) const {
+  const int First = Cands[LR.getIndex()].find_first();
+  return First < 0 ? Register() : AllCands[LR.getIndex()][First];
+}
+
+// Whether LR and Other are live at a common cycle and PhysReg shares a unit
+// with an admissible register of Other.
+bool AIEPostRegAlloc::Placement::mayBlock(const RegLiveRange &LR,
+                                          MCRegister PhysReg,
+                                          const RegLiveRange &Other) const {
+  return LiveCycles[LR.getIndex()].anyCommon(LiveCycles[Other.getIndex()]) &&
+         State.PhysRegUnitSets.find(PhysReg)->second.overlap(
+             State.AdmissibleRegUnits.find(Other.getIndex())->second);
+}
+
+void AIEPostRegAlloc::Placement::refresh(const RegLiveRange &LR) {
+  const std::vector<Register> &Regs = AllCands[LR.getIndex()];
+  BitVector &Admitted = Cands[LR.getIndex()];
+  unsigned &Count = NumCands[LR.getIndex()];
+  Admitted.reset();
+  Count = 0;
+  for (unsigned I = 0, E = Regs.size(); I != E; ++I)
+    if (State.canPlace(Regs[I], masks(LR))) {
+      Admitted.set(I);
+      ++Count;
+    }
 }
 
 void AIEPostRegAlloc::Placement::place(const RegLiveRange &LR,
@@ -341,6 +379,25 @@ void AIEPostRegAlloc::Placement::place(const RegLiveRange &LR,
   State.place(PhysReg, masks(LR));
   OutAssign[LR.getVReg()] = PhysReg.asMCReg();
   Placed.set(LR.getIndex());
+
+  // The occupancy only grew, by units of PhysReg: drop the candidates of the
+  // unplaced ranges that now conflict. Candidates of a placed range are
+  // recomputed when it is unplaced.
+  const PartSet &Units = State.PhysRegUnitSets.find(PhysReg)->second;
+  for (const RegLiveRange *Other : Ranges) {
+    if (Placed.test(Other->getIndex()) ||
+        !mayBlock(LR, PhysReg.asMCReg(), *Other))
+      continue;
+    const std::vector<Register> &Regs = AllCands[Other->getIndex()];
+    BitVector &Admitted = Cands[Other->getIndex()];
+    unsigned &Count = NumCands[Other->getIndex()];
+    for (int I = Admitted.find_first(); I >= 0; I = Admitted.find_next(I))
+      if (State.PhysRegUnitSets.find(Regs[I])->second.overlap(Units) &&
+          !State.canPlace(Regs[I], masks(*Other))) {
+        Admitted.reset(I);
+        --Count;
+      }
+  }
 }
 
 void AIEPostRegAlloc::Placement::unplace(const RegLiveRange &LR) {
@@ -349,6 +406,13 @@ void AIEPostRegAlloc::Placement::unplace(const RegLiveRange &LR) {
   State.unplace(PhysReg, masks(LR));
   OutAssign.erase(LR.getVReg());
   Placed.reset(LR.getIndex());
+
+  // The occupancy shrank: recompute LR's candidates and those of the unplaced
+  // ranges that the placement could have blocked.
+  for (const RegLiveRange *Other : Ranges)
+    if (Other == &LR || (!Placed.test(Other->getIndex()) &&
+                         mayBlock(LR, PhysReg.asMCReg(), *Other)))
+      refresh(*Other);
 }
 
 // Compute metrics for a live range.
@@ -436,16 +500,17 @@ AIEPostRegAlloc::AllocResult AIEPostRegAlloc::tryAllocate(
       for (const RegLiveRange *LR : Work.Ranges) {
         if (Work.Placed.test(LR->getIndex()))
           continue;
-        const std::vector<Register> Cands = Work.candidates(*LR);
-        if (Cands.empty()) {
+        const unsigned NumCands = Work.numCandidates(*LR);
+        if (NumCands == 0) {
           LLVM_DEBUG(dbgs() << "  Choice-0 on LR#" << LR->getIndex()
                             << " - infeasible\n");
           return false;
         }
-        if (Cands.size() == 1) {
+        if (NumCands == 1) {
+          const Register PhysReg = Work.firstCandidate(*LR);
           LLVM_DEBUG(dbgs() << "  Forced: LR#" << LR->getIndex() << " -> "
-                            << printReg(Cands[0], &TRI) << "\n");
-          Work.place(*LR, Cands[0]);
+                            << printReg(PhysReg, &TRI) << "\n");
+          Work.place(*LR, PhysReg);
           Progress = true;
         }
       }
@@ -457,22 +522,21 @@ AIEPostRegAlloc::AllocResult AIEPostRegAlloc::tryAllocate(
   // ties. nullopt when every virtual range is already placed.
   struct Choice {
     const RegLiveRange *LR = nullptr;
-    std::vector<Register> Cands;
+    unsigned NumCands = 0;
   };
   const auto SelectMinRemaining = [&]() -> std::optional<Choice> {
     std::optional<Choice> Best;
     for (const RegLiveRange *LR : Work.Ranges) {
       if (!LR->getVReg().isValid() || Work.Placed.test(LR->getIndex()))
         continue;
-      std::vector<Register> Cands = Work.candidates(*LR);
-      const unsigned Count = Cands.size();
+      const unsigned Count = Work.numCandidates(*LR);
       const VRegMetrics &Metrics =
           State.AllMetrics.find(LR->getIndex())->second;
-      if (!Best || Count < Best->Cands.size() ||
-          (Count == Best->Cands.size() &&
+      if (!Best || Count < Best->NumCands ||
+          (Count == Best->NumCands &&
            OrderFn(Metrics,
                    State.AllMetrics.find(Best->LR->getIndex())->second)))
-        Best = Choice{LR, std::move(Cands)};
+        Best = Choice{LR, Count};
     }
     return Best;
   };
@@ -494,7 +558,6 @@ AIEPostRegAlloc::AllocResult AIEPostRegAlloc::tryAllocate(
       break; // All placed.
 
     const RegLiveRange &LR = *Best->LR;
-    const std::vector<Register> &EffectiveCands = Best->Cands;
     const unsigned LRIndex = LR.getIndex();
     const TargetRegisterClass *RC = LR.getRegisterClass();
     const auto &Metrics = State.AllMetrics[LRIndex];
@@ -506,12 +569,12 @@ AIEPostRegAlloc::AllocResult AIEPostRegAlloc::tryAllocate(
                       << ", alias_int=" << Metrics.AliasingInterferenceDegree
                       << ")\n");
 
-    if (EffectiveCands.empty()) {
+    if (Best->NumCands == 0) {
       LLVM_DEBUG(dbgs() << "  Failed to find suitable physreg!\n");
       return AllocResult(/*InfeasibleSchedule=*/false);
     }
 
-    Register ChosenPhys = EffectiveCands.front();
+    Register ChosenPhys = Work.firstCandidate(LR);
     LLVM_DEBUG(dbgs() << "  Trying " << printReg(ChosenPhys, &TRI) << "\n");
     Work.place(LR, ChosenPhys);
     ++NumScoredPlacements;
@@ -558,12 +621,12 @@ AIEPostRegAlloc::ExactResult AIEPostRegAlloc::tryAllocateExact(
       ++Nodes;
 
       const RegLiveRange &LR = RegTracker[Order[Pos]];
-      const std::vector<Register> Cands = Work.candidates(LR);
-      if (Cands.empty()) {
+      const Register PhysReg = Work.firstCandidate(LR);
+      if (!PhysReg.isValid()) {
         std::swap(Order[Pos], Order[I]);
         continue;
       }
-      Work.place(LR, Cands.front());
+      Work.place(LR, PhysReg);
       const ExactResult Sub = Search(Search, Pos + 1);
       if (Sub == ExactResult::Feasible)
         return Sub;
