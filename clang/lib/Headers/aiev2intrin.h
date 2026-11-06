@@ -58,6 +58,11 @@ event_warning() { return __builtin_aiev2_event(2); }
 INTRINSIC(void)
 event_error() { return __builtin_aiev2_event(3); }
 
+// Returns the 64-bit value of the free-running tile cycle counter.
+INTRINSIC(unsigned long long) get_cycles() {
+  return __builtin_readcyclecounter();
+}
+
 #if defined(__cplusplus) && !defined(__AIECC__DISABLE_READ_WRITE_TM)
 // Read/Write for Tile Memory Map
 INTRINSIC(uint32) read_tm(uint32 regAddr, uint32 TMAddrSpaceStart = 0x80000) {

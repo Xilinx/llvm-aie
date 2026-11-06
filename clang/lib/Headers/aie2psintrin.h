@@ -87,6 +87,11 @@ event_warning() { return __builtin_aie2ps_event(2); }
 INTRINSIC(void)
 event_error() { return __builtin_aie2ps_event(3); }
 
+// Returns the 64-bit value of the free-running tile cycle counter.
+INTRINSIC(unsigned long long) get_cycles() {
+  return __builtin_readcyclecounter();
+}
+
 // Refer tile_control_aie2gen.h in Vitis TA for TM_address_space_start_addr.
 // Read/Write for Tile Memory Map
 #if defined(__cplusplus) && !defined(__AIECC__DISABLE_READ_WRITE_TM)

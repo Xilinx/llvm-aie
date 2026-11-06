@@ -79,6 +79,10 @@ BitVector AIE2RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   // LR is also always implicitly defined.
   markSuperRegs(Reserved, AIE2::lr);
 
+  // The tile counter is never allocated nor defined by any instruction, it is
+  // only implicitly read by MOV_CNTR.
+  markSuperRegs(Reserved, AIE2::tile_cntr);
+
   // Reserve control and status registers
   for (auto &Reg : AIE2::mCRmRegClass) {
     markSuperRegs(Reserved, Reg);
