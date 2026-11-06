@@ -82,22 +82,17 @@ body: |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY $x1
-    ; CHECK-NEXT: [[VSUB_32_:%[0-9]+]]:vec512 = VSUB_32 [[COPY]], [[COPY1]]
-    ; CHECK-NEXT: [[VEQZ_32_:%[0-9]+]]:ers16 = VEQZ_32 [[VSUB_32_]]
-    ; CHECK-NEXT: [[VLT_32_vaddSign1_:%[0-9]+]]:ers16 = VLT_32_vaddSign1 [[COPY]], [[COPY1]], implicit $vaddsign1
-    ; CHECK-NEXT: [[OR:%[0-9]+]]:er = OR [[VLT_32_vaddSign1_]], [[VEQZ_32_]]
-    ; CHECK-NEXT: $r0 = COPY [[OR]]
+    ; CHECK-NEXT: [[VGE_32_vaddSign1_:%[0-9]+]]:ers16 = VGE_32_vaddSign1 [[COPY1]], [[COPY]], implicit $vaddsign1
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:er = COPY [[VGE_32_vaddSign1_]]
+    ; CHECK-NEXT: $r0 = COPY [[COPY2]]
     ;
     ; AIE2PS-LABEL: name: test_icmp_V16S32_sle
     ; AIE2PS: liveins: $x0, $x1
     ; AIE2PS-NEXT: {{  $}}
     ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x0
     ; AIE2PS-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY $x1
-    ; AIE2PS-NEXT: [[VSUB_32_:%[0-9]+]]:vec512 = VSUB_32 [[COPY]], [[COPY1]], implicit $crbf8conf, implicit $crfp8conf
-    ; AIE2PS-NEXT: [[VEQZ_32_:%[0-9]+]]:mrs16m = VEQZ_32 [[VSUB_32_]], implicit $crbf8conf, implicit $crfp8conf
-    ; AIE2PS-NEXT: [[VLT_32_vaddSign1_:%[0-9]+]]:mrs16m = VLT_32_vaddSign1 [[COPY]], [[COPY1]], implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
-    ; AIE2PS-NEXT: [[OR:%[0-9]+]]:mlockid_reg = OR [[VLT_32_vaddSign1_]], [[VEQZ_32_]]
-    ; AIE2PS-NEXT: [[COPY2:%[0-9]+]]:er = COPY [[OR]]
+    ; AIE2PS-NEXT: [[VGE_32_vaddSign1_:%[0-9]+]]:mrs16m = VGE_32_vaddSign1 [[COPY1]], [[COPY]], implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    ; AIE2PS-NEXT: [[COPY2:%[0-9]+]]:er = COPY [[VGE_32_vaddSign1_]]
     ; AIE2PS-NEXT: $r0 = COPY [[COPY2]]
     %0:vregbank(<16 x s32>) = COPY $x0
     %1:vregbank(<16 x s32>) = COPY $x1
@@ -118,22 +113,17 @@ body: |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY $x1
-    ; CHECK-NEXT: [[VSUB_32_:%[0-9]+]]:vec512 = VSUB_32 [[COPY]], [[COPY1]]
-    ; CHECK-NEXT: [[VEQZ_32_:%[0-9]+]]:ers16 = VEQZ_32 [[VSUB_32_]]
-    ; CHECK-NEXT: [[VLT_32_vaddSign0_:%[0-9]+]]:ers16 = VLT_32_vaddSign0 [[COPY]], [[COPY1]], implicit $vaddsign0
-    ; CHECK-NEXT: [[OR:%[0-9]+]]:er = OR [[VLT_32_vaddSign0_]], [[VEQZ_32_]]
-    ; CHECK-NEXT: $r0 = COPY [[OR]]
+    ; CHECK-NEXT: [[VGE_32_vaddSign0_:%[0-9]+]]:ers16 = VGE_32_vaddSign0 [[COPY1]], [[COPY]], implicit $vaddsign0
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:er = COPY [[VGE_32_vaddSign0_]]
+    ; CHECK-NEXT: $r0 = COPY [[COPY2]]
     ;
     ; AIE2PS-LABEL: name: test_icmp_V16S32_ule
     ; AIE2PS: liveins: $x0, $x1
     ; AIE2PS-NEXT: {{  $}}
     ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x0
     ; AIE2PS-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY $x1
-    ; AIE2PS-NEXT: [[VSUB_32_:%[0-9]+]]:vec512 = VSUB_32 [[COPY]], [[COPY1]], implicit $crbf8conf, implicit $crfp8conf
-    ; AIE2PS-NEXT: [[VEQZ_32_:%[0-9]+]]:mrs16m = VEQZ_32 [[VSUB_32_]], implicit $crbf8conf, implicit $crfp8conf
-    ; AIE2PS-NEXT: [[VLT_32_vaddSign0_:%[0-9]+]]:mrs16m = VLT_32_vaddSign0 [[COPY]], [[COPY1]], implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
-    ; AIE2PS-NEXT: [[OR:%[0-9]+]]:mlockid_reg = OR [[VLT_32_vaddSign0_]], [[VEQZ_32_]]
-    ; AIE2PS-NEXT: [[COPY2:%[0-9]+]]:er = COPY [[OR]]
+    ; AIE2PS-NEXT: [[VGE_32_vaddSign0_:%[0-9]+]]:mrs16m = VGE_32_vaddSign0 [[COPY1]], [[COPY]], implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    ; AIE2PS-NEXT: [[COPY2:%[0-9]+]]:er = COPY [[VGE_32_vaddSign0_]]
     ; AIE2PS-NEXT: $r0 = COPY [[COPY2]]
     %0:vregbank(<16 x s32>) = COPY $x0
     %1:vregbank(<16 x s32>) = COPY $x1
@@ -216,20 +206,17 @@ body: |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY $x1
-    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo -1
-    ; CHECK-NEXT: [[VGE_32_vaddSign1_:%[0-9]+]]:ers16 = VGE_32_vaddSign1 [[COPY1]], [[COPY]], implicit $vaddsign1
-    ; CHECK-NEXT: [[XOR:%[0-9]+]]:er = XOR [[VGE_32_vaddSign1_]], [[MOV_RLC_imm11_pseudo]]
-    ; CHECK-NEXT: $r0 = COPY [[XOR]]
+    ; CHECK-NEXT: [[VLT_32_vaddSign1_:%[0-9]+]]:ers16 = VLT_32_vaddSign1 [[COPY1]], [[COPY]], implicit $vaddsign1
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:er = COPY [[VLT_32_vaddSign1_]]
+    ; CHECK-NEXT: $r0 = COPY [[COPY2]]
     ;
     ; AIE2PS-LABEL: name: test_icmp_V16S32_sgt
     ; AIE2PS: liveins: $x0, $x1
     ; AIE2PS-NEXT: {{  $}}
     ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x0
     ; AIE2PS-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY $x1
-    ; AIE2PS-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mlockid_reg = MOV_RLC_imm11_pseudo -1
-    ; AIE2PS-NEXT: [[VGE_32_vaddSign1_:%[0-9]+]]:mrs16m = VGE_32_vaddSign1 [[COPY1]], [[COPY]], implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
-    ; AIE2PS-NEXT: [[XOR:%[0-9]+]]:mlockid_reg = XOR [[VGE_32_vaddSign1_]], [[MOV_RLC_imm11_pseudo]]
-    ; AIE2PS-NEXT: [[COPY2:%[0-9]+]]:er = COPY [[XOR]]
+    ; AIE2PS-NEXT: [[VLT_32_vaddSign1_:%[0-9]+]]:mrs16m = VLT_32_vaddSign1 [[COPY1]], [[COPY]], implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    ; AIE2PS-NEXT: [[COPY2:%[0-9]+]]:er = COPY [[VLT_32_vaddSign1_]]
     ; AIE2PS-NEXT: $r0 = COPY [[COPY2]]
     %0:vregbank(<16 x s32>) = COPY $x0
     %1:vregbank(<16 x s32>) = COPY $x1
@@ -250,20 +237,17 @@ body: |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY $x1
-    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo -1
-    ; CHECK-NEXT: [[VGE_32_vaddSign0_:%[0-9]+]]:ers16 = VGE_32_vaddSign0 [[COPY1]], [[COPY]], implicit $vaddsign0
-    ; CHECK-NEXT: [[XOR:%[0-9]+]]:er = XOR [[VGE_32_vaddSign0_]], [[MOV_RLC_imm11_pseudo]]
-    ; CHECK-NEXT: $r0 = COPY [[XOR]]
+    ; CHECK-NEXT: [[VLT_32_vaddSign0_:%[0-9]+]]:ers16 = VLT_32_vaddSign0 [[COPY1]], [[COPY]], implicit $vaddsign0
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:er = COPY [[VLT_32_vaddSign0_]]
+    ; CHECK-NEXT: $r0 = COPY [[COPY2]]
     ;
     ; AIE2PS-LABEL: name: test_icmp_V16S32_ugt
     ; AIE2PS: liveins: $x0, $x1
     ; AIE2PS-NEXT: {{  $}}
     ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x0
     ; AIE2PS-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY $x1
-    ; AIE2PS-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mlockid_reg = MOV_RLC_imm11_pseudo -1
-    ; AIE2PS-NEXT: [[VGE_32_vaddSign0_:%[0-9]+]]:mrs16m = VGE_32_vaddSign0 [[COPY1]], [[COPY]], implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
-    ; AIE2PS-NEXT: [[XOR:%[0-9]+]]:mlockid_reg = XOR [[VGE_32_vaddSign0_]], [[MOV_RLC_imm11_pseudo]]
-    ; AIE2PS-NEXT: [[COPY2:%[0-9]+]]:er = COPY [[XOR]]
+    ; AIE2PS-NEXT: [[VLT_32_vaddSign0_:%[0-9]+]]:mrs16m = VLT_32_vaddSign0 [[COPY1]], [[COPY]], implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    ; AIE2PS-NEXT: [[COPY2:%[0-9]+]]:er = COPY [[VLT_32_vaddSign0_]]
     ; AIE2PS-NEXT: $r0 = COPY [[COPY2]]
     %0:vregbank(<16 x s32>) = COPY $x0
     %1:vregbank(<16 x s32>) = COPY $x1
@@ -409,22 +393,16 @@ body: |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY $x1
-    ; CHECK-NEXT: [[VSUB_16_:%[0-9]+]]:vec512 = VSUB_16 [[COPY]], [[COPY1]]
-    ; CHECK-NEXT: [[VEQZ_16_:%[0-9]+]]:ers16 = VEQZ_16 [[VSUB_16_]]
-    ; CHECK-NEXT: [[VLT_16_vaddSign1_:%[0-9]+]]:ers16 = VLT_16_vaddSign1 [[COPY]], [[COPY1]], implicit $vaddsign1
-    ; CHECK-NEXT: [[OR:%[0-9]+]]:er = OR [[VLT_16_vaddSign1_]], [[VEQZ_16_]]
-    ; CHECK-NEXT: $r0 = COPY [[OR]]
+    ; CHECK-NEXT: [[VGE_16_vaddSign1_:%[0-9]+]]:ers16 = VGE_16_vaddSign1 [[COPY1]], [[COPY]], implicit $vaddsign1
+    ; CHECK-NEXT: $r0 = COPY [[VGE_16_vaddSign1_]]
     ;
     ; AIE2PS-LABEL: name: test_icmp_V32S16_sle
     ; AIE2PS: liveins: $x0, $x1
     ; AIE2PS-NEXT: {{  $}}
     ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x0
     ; AIE2PS-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY $x1
-    ; AIE2PS-NEXT: [[VSUB_16_:%[0-9]+]]:vec512 = VSUB_16 [[COPY]], [[COPY1]], implicit $crbf8conf, implicit $crfp8conf
-    ; AIE2PS-NEXT: [[VEQZ_16_:%[0-9]+]]:mrs16m = VEQZ_16 [[VSUB_16_]], implicit $crbf8conf, implicit $crfp8conf
-    ; AIE2PS-NEXT: [[VLT_16_vaddSign1_:%[0-9]+]]:mrs16m = VLT_16_vaddSign1 [[COPY]], [[COPY1]], implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
-    ; AIE2PS-NEXT: [[OR:%[0-9]+]]:mlockid_reg = OR [[VLT_16_vaddSign1_]], [[VEQZ_16_]]
-    ; AIE2PS-NEXT: $r0 = COPY [[OR]]
+    ; AIE2PS-NEXT: [[VGE_16_vaddSign1_:%[0-9]+]]:mrs16m = VGE_16_vaddSign1 [[COPY1]], [[COPY]], implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    ; AIE2PS-NEXT: $r0 = COPY [[VGE_16_vaddSign1_]]
     %0:vregbank(<32 x s16>) = COPY $x0
     %1:vregbank(<32 x s16>) = COPY $x1
     %2:gprregbank(<32 x s1>) = G_AIE_VECTOR_ICMP intpred(sle), %0, %1
@@ -443,22 +421,16 @@ body: |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY $x1
-    ; CHECK-NEXT: [[VSUB_16_:%[0-9]+]]:vec512 = VSUB_16 [[COPY]], [[COPY1]]
-    ; CHECK-NEXT: [[VEQZ_16_:%[0-9]+]]:ers16 = VEQZ_16 [[VSUB_16_]]
-    ; CHECK-NEXT: [[VLT_16_vaddSign0_:%[0-9]+]]:ers16 = VLT_16_vaddSign0 [[COPY]], [[COPY1]], implicit $vaddsign0
-    ; CHECK-NEXT: [[OR:%[0-9]+]]:er = OR [[VLT_16_vaddSign0_]], [[VEQZ_16_]]
-    ; CHECK-NEXT: $r0 = COPY [[OR]]
+    ; CHECK-NEXT: [[VGE_16_vaddSign0_:%[0-9]+]]:ers16 = VGE_16_vaddSign0 [[COPY1]], [[COPY]], implicit $vaddsign0
+    ; CHECK-NEXT: $r0 = COPY [[VGE_16_vaddSign0_]]
     ;
     ; AIE2PS-LABEL: name: test_icmp_V32S16_ule
     ; AIE2PS: liveins: $x0, $x1
     ; AIE2PS-NEXT: {{  $}}
     ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x0
     ; AIE2PS-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY $x1
-    ; AIE2PS-NEXT: [[VSUB_16_:%[0-9]+]]:vec512 = VSUB_16 [[COPY]], [[COPY1]], implicit $crbf8conf, implicit $crfp8conf
-    ; AIE2PS-NEXT: [[VEQZ_16_:%[0-9]+]]:mrs16m = VEQZ_16 [[VSUB_16_]], implicit $crbf8conf, implicit $crfp8conf
-    ; AIE2PS-NEXT: [[VLT_16_vaddSign0_:%[0-9]+]]:mrs16m = VLT_16_vaddSign0 [[COPY]], [[COPY1]], implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
-    ; AIE2PS-NEXT: [[OR:%[0-9]+]]:mlockid_reg = OR [[VLT_16_vaddSign0_]], [[VEQZ_16_]]
-    ; AIE2PS-NEXT: $r0 = COPY [[OR]]
+    ; AIE2PS-NEXT: [[VGE_16_vaddSign0_:%[0-9]+]]:mrs16m = VGE_16_vaddSign0 [[COPY1]], [[COPY]], implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    ; AIE2PS-NEXT: $r0 = COPY [[VGE_16_vaddSign0_]]
     %0:vregbank(<32 x s16>) = COPY $x0
     %1:vregbank(<32 x s16>) = COPY $x1
     %2:gprregbank(<32 x s1>) = G_AIE_VECTOR_ICMP intpred(ule), %0, %1
@@ -533,20 +505,16 @@ body: |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY $x1
-    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo -1
-    ; CHECK-NEXT: [[VGE_16_vaddSign1_:%[0-9]+]]:ers16 = VGE_16_vaddSign1 [[COPY1]], [[COPY]], implicit $vaddsign1
-    ; CHECK-NEXT: [[XOR:%[0-9]+]]:er = XOR [[VGE_16_vaddSign1_]], [[MOV_RLC_imm11_pseudo]]
-    ; CHECK-NEXT: $r0 = COPY [[XOR]]
+    ; CHECK-NEXT: [[VLT_16_vaddSign1_:%[0-9]+]]:ers16 = VLT_16_vaddSign1 [[COPY1]], [[COPY]], implicit $vaddsign1
+    ; CHECK-NEXT: $r0 = COPY [[VLT_16_vaddSign1_]]
     ;
     ; AIE2PS-LABEL: name: test_icmp_V32S16_sgt
     ; AIE2PS: liveins: $x0, $x1
     ; AIE2PS-NEXT: {{  $}}
     ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x0
     ; AIE2PS-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY $x1
-    ; AIE2PS-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mlockid_reg = MOV_RLC_imm11_pseudo -1
-    ; AIE2PS-NEXT: [[VGE_16_vaddSign1_:%[0-9]+]]:mrs16m = VGE_16_vaddSign1 [[COPY1]], [[COPY]], implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
-    ; AIE2PS-NEXT: [[XOR:%[0-9]+]]:mlockid_reg = XOR [[VGE_16_vaddSign1_]], [[MOV_RLC_imm11_pseudo]]
-    ; AIE2PS-NEXT: $r0 = COPY [[XOR]]
+    ; AIE2PS-NEXT: [[VLT_16_vaddSign1_:%[0-9]+]]:mrs16m = VLT_16_vaddSign1 [[COPY1]], [[COPY]], implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    ; AIE2PS-NEXT: $r0 = COPY [[VLT_16_vaddSign1_]]
     %0:vregbank(<32 x s16>) = COPY $x0
     %1:vregbank(<32 x s16>) = COPY $x1
     %2:gprregbank(<32 x s1>) = G_AIE_VECTOR_ICMP intpred(sgt), %0, %1
@@ -565,20 +533,16 @@ body: |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY $x1
-    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo -1
-    ; CHECK-NEXT: [[VGE_16_vaddSign0_:%[0-9]+]]:ers16 = VGE_16_vaddSign0 [[COPY1]], [[COPY]], implicit $vaddsign0
-    ; CHECK-NEXT: [[XOR:%[0-9]+]]:er = XOR [[VGE_16_vaddSign0_]], [[MOV_RLC_imm11_pseudo]]
-    ; CHECK-NEXT: $r0 = COPY [[XOR]]
+    ; CHECK-NEXT: [[VLT_16_vaddSign0_:%[0-9]+]]:ers16 = VLT_16_vaddSign0 [[COPY1]], [[COPY]], implicit $vaddsign0
+    ; CHECK-NEXT: $r0 = COPY [[VLT_16_vaddSign0_]]
     ;
     ; AIE2PS-LABEL: name: test_icmp_V32S16_ugt
     ; AIE2PS: liveins: $x0, $x1
     ; AIE2PS-NEXT: {{  $}}
     ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x0
     ; AIE2PS-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY $x1
-    ; AIE2PS-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mlockid_reg = MOV_RLC_imm11_pseudo -1
-    ; AIE2PS-NEXT: [[VGE_16_vaddSign0_:%[0-9]+]]:mrs16m = VGE_16_vaddSign0 [[COPY1]], [[COPY]], implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
-    ; AIE2PS-NEXT: [[XOR:%[0-9]+]]:mlockid_reg = XOR [[VGE_16_vaddSign0_]], [[MOV_RLC_imm11_pseudo]]
-    ; AIE2PS-NEXT: $r0 = COPY [[XOR]]
+    ; AIE2PS-NEXT: [[VLT_16_vaddSign0_:%[0-9]+]]:mrs16m = VLT_16_vaddSign0 [[COPY1]], [[COPY]], implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    ; AIE2PS-NEXT: $r0 = COPY [[VLT_16_vaddSign0_]]
     %0:vregbank(<32 x s16>) = COPY $x0
     %1:vregbank(<32 x s16>) = COPY $x1
     %2:gprregbank(<32 x s1>) = G_AIE_VECTOR_ICMP intpred(ugt), %0, %1
@@ -717,32 +681,16 @@ body: |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY $x1
-    ; CHECK-NEXT: [[VLT_8_vaddSign1_:%[0-9]+]]:el = VLT_8_vaddSign1 [[COPY1]], [[COPY]], implicit $vaddsign1
-    ; CHECK-NEXT: [[VLT_8_vaddSign1_1:%[0-9]+]]:el = VLT_8_vaddSign1 [[COPY1]], [[COPY]], implicit $vaddsign1
-    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo -1
-    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:mlockid_reg = COPY [[VLT_8_vaddSign1_1]].sub_l_odd
-    ; CHECK-NEXT: [[XOR:%[0-9]+]]:mlockid_reg = XOR [[COPY2]], [[MOV_RLC_imm11_pseudo]]
-    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo1:%[0-9]+]]:er = MOV_RLC_imm11_pseudo -1
-    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:mlockid_reg = COPY [[VLT_8_vaddSign1_]].sub_l_even
-    ; CHECK-NEXT: [[XOR1:%[0-9]+]]:mlockid_reg = XOR [[COPY3]], [[MOV_RLC_imm11_pseudo1]]
-    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:el = REG_SEQUENCE [[XOR1]], %subreg.sub_l_even, [[XOR]], %subreg.sub_l_odd
-    ; CHECK-NEXT: $l0 = COPY [[REG_SEQUENCE]]
+    ; CHECK-NEXT: [[VGE_8_vaddSign1_:%[0-9]+]]:el = VGE_8_vaddSign1 [[COPY1]], [[COPY]], implicit $vaddsign1
+    ; CHECK-NEXT: $l0 = COPY [[VGE_8_vaddSign1_]]
     ;
     ; AIE2PS-LABEL: name: test_icmp_V64S8_sle
     ; AIE2PS: liveins: $x0, $x1
     ; AIE2PS-NEXT: {{  $}}
     ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x0
     ; AIE2PS-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY $x1
-    ; AIE2PS-NEXT: [[VLT_8_vaddSign1_:%[0-9]+]]:el = VLT_8_vaddSign1 [[COPY1]], [[COPY]], implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
-    ; AIE2PS-NEXT: [[VLT_8_vaddSign1_1:%[0-9]+]]:el = VLT_8_vaddSign1 [[COPY1]], [[COPY]], implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
-    ; AIE2PS-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mlockid_reg = MOV_RLC_imm11_pseudo -1
-    ; AIE2PS-NEXT: [[COPY2:%[0-9]+]]:ero = COPY [[VLT_8_vaddSign1_1]].sub_l_odd
-    ; AIE2PS-NEXT: [[XOR:%[0-9]+]]:ero = XOR [[COPY2]], [[MOV_RLC_imm11_pseudo]]
-    ; AIE2PS-NEXT: [[MOV_RLC_imm11_pseudo1:%[0-9]+]]:mlockid_reg = MOV_RLC_imm11_pseudo -1
-    ; AIE2PS-NEXT: [[COPY3:%[0-9]+]]:ere = COPY [[VLT_8_vaddSign1_]].sub_l_even
-    ; AIE2PS-NEXT: [[XOR1:%[0-9]+]]:ere = XOR [[COPY3]], [[MOV_RLC_imm11_pseudo1]]
-    ; AIE2PS-NEXT: [[REG_SEQUENCE:%[0-9]+]]:el = REG_SEQUENCE [[XOR1]], %subreg.sub_l_even, [[XOR]], %subreg.sub_l_odd
-    ; AIE2PS-NEXT: $l0 = COPY [[REG_SEQUENCE]]
+    ; AIE2PS-NEXT: [[VGE_8_vaddSign1_:%[0-9]+]]:el = VGE_8_vaddSign1 [[COPY1]], [[COPY]], implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    ; AIE2PS-NEXT: $l0 = COPY [[VGE_8_vaddSign1_]]
     %0:vregbank(<64 x s8>) = COPY $x0
     %1:vregbank(<64 x s8>) = COPY $x1
     %2:gprregbank(<64 x s1>) = G_AIE_VECTOR_ICMP intpred(sle), %0, %1
@@ -761,32 +709,16 @@ body: |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY $x1
-    ; CHECK-NEXT: [[VLT_8_vaddSign0_:%[0-9]+]]:el = VLT_8_vaddSign0 [[COPY1]], [[COPY]], implicit $vaddsign0
-    ; CHECK-NEXT: [[VLT_8_vaddSign0_1:%[0-9]+]]:el = VLT_8_vaddSign0 [[COPY1]], [[COPY]], implicit $vaddsign0
-    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo -1
-    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:mlockid_reg = COPY [[VLT_8_vaddSign0_1]].sub_l_odd
-    ; CHECK-NEXT: [[XOR:%[0-9]+]]:mlockid_reg = XOR [[COPY2]], [[MOV_RLC_imm11_pseudo]]
-    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo1:%[0-9]+]]:er = MOV_RLC_imm11_pseudo -1
-    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:mlockid_reg = COPY [[VLT_8_vaddSign0_]].sub_l_even
-    ; CHECK-NEXT: [[XOR1:%[0-9]+]]:mlockid_reg = XOR [[COPY3]], [[MOV_RLC_imm11_pseudo1]]
-    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:el = REG_SEQUENCE [[XOR1]], %subreg.sub_l_even, [[XOR]], %subreg.sub_l_odd
-    ; CHECK-NEXT: $l0 = COPY [[REG_SEQUENCE]]
+    ; CHECK-NEXT: [[VGE_8_vaddSign0_:%[0-9]+]]:el = VGE_8_vaddSign0 [[COPY1]], [[COPY]], implicit $vaddsign0
+    ; CHECK-NEXT: $l0 = COPY [[VGE_8_vaddSign0_]]
     ;
     ; AIE2PS-LABEL: name: test_icmp_V64S8_ule
     ; AIE2PS: liveins: $x0, $x1
     ; AIE2PS-NEXT: {{  $}}
     ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x0
     ; AIE2PS-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY $x1
-    ; AIE2PS-NEXT: [[VLT_8_vaddSign0_:%[0-9]+]]:el = VLT_8_vaddSign0 [[COPY1]], [[COPY]], implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
-    ; AIE2PS-NEXT: [[VLT_8_vaddSign0_1:%[0-9]+]]:el = VLT_8_vaddSign0 [[COPY1]], [[COPY]], implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
-    ; AIE2PS-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mlockid_reg = MOV_RLC_imm11_pseudo -1
-    ; AIE2PS-NEXT: [[COPY2:%[0-9]+]]:ero = COPY [[VLT_8_vaddSign0_1]].sub_l_odd
-    ; AIE2PS-NEXT: [[XOR:%[0-9]+]]:ero = XOR [[COPY2]], [[MOV_RLC_imm11_pseudo]]
-    ; AIE2PS-NEXT: [[MOV_RLC_imm11_pseudo1:%[0-9]+]]:mlockid_reg = MOV_RLC_imm11_pseudo -1
-    ; AIE2PS-NEXT: [[COPY3:%[0-9]+]]:ere = COPY [[VLT_8_vaddSign0_]].sub_l_even
-    ; AIE2PS-NEXT: [[XOR1:%[0-9]+]]:ere = XOR [[COPY3]], [[MOV_RLC_imm11_pseudo1]]
-    ; AIE2PS-NEXT: [[REG_SEQUENCE:%[0-9]+]]:el = REG_SEQUENCE [[XOR1]], %subreg.sub_l_even, [[XOR]], %subreg.sub_l_odd
-    ; AIE2PS-NEXT: $l0 = COPY [[REG_SEQUENCE]]
+    ; AIE2PS-NEXT: [[VGE_8_vaddSign0_:%[0-9]+]]:el = VGE_8_vaddSign0 [[COPY1]], [[COPY]], implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    ; AIE2PS-NEXT: $l0 = COPY [[VGE_8_vaddSign0_]]
     %0:vregbank(<64 x s8>) = COPY $x0
     %1:vregbank(<64 x s8>) = COPY $x1
     %2:gprregbank(<64 x s1>) = G_AIE_VECTOR_ICMP intpred(ule), %0, %1
@@ -862,32 +794,16 @@ body: |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY $x1
-    ; CHECK-NEXT: [[VGE_8_vaddSign1_:%[0-9]+]]:el = VGE_8_vaddSign1 [[COPY1]], [[COPY]], implicit $vaddsign1
-    ; CHECK-NEXT: [[VGE_8_vaddSign1_1:%[0-9]+]]:el = VGE_8_vaddSign1 [[COPY1]], [[COPY]], implicit $vaddsign1
-    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo -1
-    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:mlockid_reg = COPY [[VGE_8_vaddSign1_1]].sub_l_odd
-    ; CHECK-NEXT: [[XOR:%[0-9]+]]:mlockid_reg = XOR [[COPY2]], [[MOV_RLC_imm11_pseudo]]
-    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo1:%[0-9]+]]:er = MOV_RLC_imm11_pseudo -1
-    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:mlockid_reg = COPY [[VGE_8_vaddSign1_]].sub_l_even
-    ; CHECK-NEXT: [[XOR1:%[0-9]+]]:mlockid_reg = XOR [[COPY3]], [[MOV_RLC_imm11_pseudo1]]
-    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:el = REG_SEQUENCE [[XOR1]], %subreg.sub_l_even, [[XOR]], %subreg.sub_l_odd
-    ; CHECK-NEXT: $l0 = COPY [[REG_SEQUENCE]]
+    ; CHECK-NEXT: [[VLT_8_vaddSign1_:%[0-9]+]]:el = VLT_8_vaddSign1 [[COPY1]], [[COPY]], implicit $vaddsign1
+    ; CHECK-NEXT: $l0 = COPY [[VLT_8_vaddSign1_]]
     ;
     ; AIE2PS-LABEL: name: test_icmp_V64S8_sgt
     ; AIE2PS: liveins: $x0, $x1
     ; AIE2PS-NEXT: {{  $}}
     ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x0
     ; AIE2PS-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY $x1
-    ; AIE2PS-NEXT: [[VGE_8_vaddSign1_:%[0-9]+]]:el = VGE_8_vaddSign1 [[COPY1]], [[COPY]], implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
-    ; AIE2PS-NEXT: [[VGE_8_vaddSign1_1:%[0-9]+]]:el = VGE_8_vaddSign1 [[COPY1]], [[COPY]], implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
-    ; AIE2PS-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mlockid_reg = MOV_RLC_imm11_pseudo -1
-    ; AIE2PS-NEXT: [[COPY2:%[0-9]+]]:ero = COPY [[VGE_8_vaddSign1_1]].sub_l_odd
-    ; AIE2PS-NEXT: [[XOR:%[0-9]+]]:ero = XOR [[COPY2]], [[MOV_RLC_imm11_pseudo]]
-    ; AIE2PS-NEXT: [[MOV_RLC_imm11_pseudo1:%[0-9]+]]:mlockid_reg = MOV_RLC_imm11_pseudo -1
-    ; AIE2PS-NEXT: [[COPY3:%[0-9]+]]:ere = COPY [[VGE_8_vaddSign1_]].sub_l_even
-    ; AIE2PS-NEXT: [[XOR1:%[0-9]+]]:ere = XOR [[COPY3]], [[MOV_RLC_imm11_pseudo1]]
-    ; AIE2PS-NEXT: [[REG_SEQUENCE:%[0-9]+]]:el = REG_SEQUENCE [[XOR1]], %subreg.sub_l_even, [[XOR]], %subreg.sub_l_odd
-    ; AIE2PS-NEXT: $l0 = COPY [[REG_SEQUENCE]]
+    ; AIE2PS-NEXT: [[VLT_8_vaddSign1_:%[0-9]+]]:el = VLT_8_vaddSign1 [[COPY1]], [[COPY]], implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    ; AIE2PS-NEXT: $l0 = COPY [[VLT_8_vaddSign1_]]
     %0:vregbank(<64 x s8>) = COPY $x0
     %1:vregbank(<64 x s8>) = COPY $x1
     %2:gprregbank(<64 x s1>) = G_AIE_VECTOR_ICMP intpred(sgt), %0, %1
@@ -906,32 +822,16 @@ body: |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY $x1
-    ; CHECK-NEXT: [[VGE_8_vaddSign0_:%[0-9]+]]:el = VGE_8_vaddSign0 [[COPY1]], [[COPY]], implicit $vaddsign0
-    ; CHECK-NEXT: [[VGE_8_vaddSign0_1:%[0-9]+]]:el = VGE_8_vaddSign0 [[COPY1]], [[COPY]], implicit $vaddsign0
-    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo -1
-    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:mlockid_reg = COPY [[VGE_8_vaddSign0_1]].sub_l_odd
-    ; CHECK-NEXT: [[XOR:%[0-9]+]]:mlockid_reg = XOR [[COPY2]], [[MOV_RLC_imm11_pseudo]]
-    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo1:%[0-9]+]]:er = MOV_RLC_imm11_pseudo -1
-    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:mlockid_reg = COPY [[VGE_8_vaddSign0_]].sub_l_even
-    ; CHECK-NEXT: [[XOR1:%[0-9]+]]:mlockid_reg = XOR [[COPY3]], [[MOV_RLC_imm11_pseudo1]]
-    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:el = REG_SEQUENCE [[XOR1]], %subreg.sub_l_even, [[XOR]], %subreg.sub_l_odd
-    ; CHECK-NEXT: $l0 = COPY [[REG_SEQUENCE]]
+    ; CHECK-NEXT: [[VLT_8_vaddSign0_:%[0-9]+]]:el = VLT_8_vaddSign0 [[COPY1]], [[COPY]], implicit $vaddsign0
+    ; CHECK-NEXT: $l0 = COPY [[VLT_8_vaddSign0_]]
     ;
     ; AIE2PS-LABEL: name: test_icmp_V64S8_ugt
     ; AIE2PS: liveins: $x0, $x1
     ; AIE2PS-NEXT: {{  $}}
     ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x0
     ; AIE2PS-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY $x1
-    ; AIE2PS-NEXT: [[VGE_8_vaddSign0_:%[0-9]+]]:el = VGE_8_vaddSign0 [[COPY1]], [[COPY]], implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
-    ; AIE2PS-NEXT: [[VGE_8_vaddSign0_1:%[0-9]+]]:el = VGE_8_vaddSign0 [[COPY1]], [[COPY]], implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
-    ; AIE2PS-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mlockid_reg = MOV_RLC_imm11_pseudo -1
-    ; AIE2PS-NEXT: [[COPY2:%[0-9]+]]:ero = COPY [[VGE_8_vaddSign0_1]].sub_l_odd
-    ; AIE2PS-NEXT: [[XOR:%[0-9]+]]:ero = XOR [[COPY2]], [[MOV_RLC_imm11_pseudo]]
-    ; AIE2PS-NEXT: [[MOV_RLC_imm11_pseudo1:%[0-9]+]]:mlockid_reg = MOV_RLC_imm11_pseudo -1
-    ; AIE2PS-NEXT: [[COPY3:%[0-9]+]]:ere = COPY [[VGE_8_vaddSign0_]].sub_l_even
-    ; AIE2PS-NEXT: [[XOR1:%[0-9]+]]:ere = XOR [[COPY3]], [[MOV_RLC_imm11_pseudo1]]
-    ; AIE2PS-NEXT: [[REG_SEQUENCE:%[0-9]+]]:el = REG_SEQUENCE [[XOR1]], %subreg.sub_l_even, [[XOR]], %subreg.sub_l_odd
-    ; AIE2PS-NEXT: $l0 = COPY [[REG_SEQUENCE]]
+    ; AIE2PS-NEXT: [[VLT_8_vaddSign0_:%[0-9]+]]:el = VLT_8_vaddSign0 [[COPY1]], [[COPY]], implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    ; AIE2PS-NEXT: $l0 = COPY [[VLT_8_vaddSign0_]]
     %0:vregbank(<64 x s8>) = COPY $x0
     %1:vregbank(<64 x s8>) = COPY $x1
     %2:gprregbank(<64 x s1>) = G_AIE_VECTOR_ICMP intpred(ugt), %0, %1
