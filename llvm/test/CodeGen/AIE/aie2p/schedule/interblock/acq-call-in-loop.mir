@@ -62,10 +62,10 @@ body:             |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   JL_lng 0, implicit-def $lr
   ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   ACQ_mLockId_imm 49, $r8
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   DelayedSchedBarrier implicit $p0, implicit $p1
   ; CHECK-NEXT:   JNZ $r9, %bb.1
   ; CHECK-NEXT:   NOP
