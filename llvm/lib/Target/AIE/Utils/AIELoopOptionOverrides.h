@@ -88,6 +88,25 @@ public:
       auto It = IntVals.find(Opt.ArgStr);
       if (It != IntVals.end())
         return static_cast<T>(It->second);
+
+      // Enum cl::opts may carry their value as a string in metadata
+      // (e.g. !"hw" for OuterLoopType). Resolve through the parser's
+      // registered value table. const_cast is safe: we only read from
+      // the parser; getParser() is non-const in the LLVM API.
+      // Only enum types use the generic parser with getNumOptions/getOption;
+      // bool/int parsers are specialized and lack those methods.
+      if constexpr (std::is_enum_v<T>) {
+        auto StrIt = StrVals.find(Opt.ArgStr);
+        if (StrIt != StrVals.end()) {
+          auto &P = const_cast<cl::opt<T> &>(Opt).getParser();
+          for (unsigned I = 0, E = P.getNumOptions(); I < E; ++I) {
+            if (P.getOption(I) == StrIt->second)
+              return static_cast<const cl::OptionValue<T> &>(
+                         P.getOptionValue(I))
+                  .getValue();
+          }
+        }
+      }
     }
     return Opt;
   }
@@ -101,7 +120,7 @@ public:
     if constexpr (std::is_same_v<T, std::string>)
       return StrVals.contains(Opt.ArgStr);
     else
-      return IntVals.contains(Opt.ArgStr);
+      return IntVals.contains(Opt.ArgStr) || StrVals.contains(Opt.ArgStr);
   }
 
   bool hasOverrides() const { return !IntVals.empty() || !StrVals.empty(); }
