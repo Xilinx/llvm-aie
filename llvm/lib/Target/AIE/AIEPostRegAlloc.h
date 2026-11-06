@@ -20,6 +20,8 @@
 
 #include "AIELivenessVector.h"
 #include "AIEMaxNumRegUnits.h"
+#include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/SmallBitVector.h"
@@ -243,7 +245,17 @@ private:
     SmallBitVector Placed;
     SmallVector<const RegLiveRange *, 32> Ranges;
 
-    /// Collect the live ranges that take part in allocation.
+    /// Per live range index: the admissible, available registers.
+    std::vector<std::vector<Register>> AllCands;
+    /// Per live range index: the registers of AllCands that the occupancy
+    /// admits. Kept current for the unplaced ranges.
+    std::vector<std::vector<Register>> Cands;
+    /// Per live range index: the cycles with live lanes.
+    std::vector<BitVector> LiveCycles;
+
+    /// Collect the live ranges that take part in allocation. The occupancy
+    /// of State must not change outside place() and unplace() while this
+    /// object is used.
     Placement(const DenseMap<unsigned, AIE::LivenessVector> &Lanes,
               const RegLiveRangeTracker &Tracker, AllocState &InState,
               DenseMap<Register, MCRegister> &InAssign);
@@ -252,13 +264,21 @@ private:
     const AIE::LivenessVector &masks(const RegLiveRange &LR) const;
 
     /// Admissible, available registers that LR can still occupy.
-    std::vector<Register> candidates(const RegLiveRange &LR) const;
+    ArrayRef<Register> candidates(const RegLiveRange &LR) const;
 
     /// Assign PhysReg to LR and mark its units occupied.
     void place(const RegLiveRange &LR, Register PhysReg);
 
     /// Undo place() for LR.
     void unplace(const RegLiveRange &LR);
+
+  private:
+    /// Whether placing LR in PhysReg can change the candidates of Other.
+    bool mayBlock(const RegLiveRange &LR, MCRegister PhysReg,
+                  const RegLiveRange &Other) const;
+
+    /// Recompute Cands of LR from AllCands.
+    void refresh(const RegLiveRange &LR);
   };
 
 public:
