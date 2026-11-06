@@ -386,6 +386,7 @@ add_header_macro(
     .llvm-libc-types.lldiv_t
     .llvm-libc-types.locale_t
     .llvm-libc-types.size_t
+    .llvm-libc-types.wchar_t
     .llvm_libc_common_h
 )
 
