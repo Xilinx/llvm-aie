@@ -58,6 +58,8 @@ AIE::AIE(Ctx &ctx) : TargetInfo(ctx) {
   // AIE link scripts and linker tests use address zero by default.
   defaultImageBase = 0;
   symbolicRel = -1;
+  // Relocation type 0 is a real AIE relocation (R_AIE_0), not a dynamic one.
+  iRelSymbolicRel = -1;
   nopInstrs = nopInstructions;
 }
 

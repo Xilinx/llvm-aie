@@ -95,12 +95,17 @@ public:
     //  Larger constants require an add.
     return TTI::TCC_Basic;
   }
-  InstructionCost getMaskedMemoryOpCost(
-      unsigned Opcode, Type *Src, Align Alignment, unsigned AddressSpace,
-      TTI::TargetCostKind CostKind = TTI::TCK_RecipThroughput) const override {
-    // Default cost is 32.  We can do better than that, but what is the real
-    // cost?
-    return TTI::TCC_Basic;
+  InstructionCost
+  getMemIntrinsicInstrCost(const MemIntrinsicCostAttributes &MICA,
+                           TTI::TargetCostKind CostKind) const override {
+    switch (MICA.getID()) {
+    case Intrinsic::masked_load:
+    case Intrinsic::masked_store:
+      // Default cost is 32.  We can do better than that, but what is the real
+      // cost?
+      return TTI::TCC_Basic;
+    }
+    return BaseT::getMemIntrinsicInstrCost(MICA, CostKind);
   }
 
   // AIE vector arithmetic operates on 512-bit registers. The default

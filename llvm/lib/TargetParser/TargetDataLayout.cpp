@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/StringRef.h"
@@ -246,6 +249,10 @@ static std::string computePowerDataLayout(const Triple &T, StringRef ABIName) {
     Ret += "-i128:128-n32:64";
   else
     Ret += "-n32";
+
+  // The ABI alignment for doubles on AIX is 4 bytes.
+  if (T.isOSAIX())
+    Ret += "-f64:32:64";
 
   // Specify the vector alignment explicitly. For v256i1 and v512i1, the
   // calculated alignment would be 256*alignment(i1) and 512*alignment(i1),
@@ -594,7 +601,14 @@ std::string Triple::computeDataLayout(StringRef ABIName) const {
   case Triple::x86:
   case Triple::x86_64:
     return computeX86DataLayout(*this);
+  case Triple::aie:
+  case Triple::aie2:
+  case Triple::aie2p:
+  case Triple::aie2ps:
+    return "e-m:e-p:20:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-f32:32:32-i64:32-"
+           "f64:32-a:0:32-n32";
   case Triple::xcore:
+    return "e-m:e-p:32:32-i1:8:32-i8:8:32-i16:16:32-i64:32-f64:32-a:0:32-n32";
   case Triple::xtensa:
     return "e-m:e-p:32:32-i8:8:32-i16:16:32-i64:64-n32";
   case Triple::nvptx:

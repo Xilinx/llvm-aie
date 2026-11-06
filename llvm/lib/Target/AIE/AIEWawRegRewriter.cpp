@@ -405,7 +405,7 @@ void AIEWawRegRewriter::revertAllocation(
   auto GetRegUnits = [&](MCPhysReg Reg) {
     BitVector Units(NumRegUnits);
     for (MCRegUnit Unit : TRI->regunits(Reg))
-      Units.set(Unit);
+      Units.set(static_cast<unsigned>(Unit));
     return Units;
   };
 
@@ -782,8 +782,9 @@ MCPhysReg AIEWawRegRewriter::getReplacementPhysReg(const Register VReg,
   /// Whether \p PhysReg was ever used for re-assigning a vreg
   auto WasUsedForReassignment = [TRI = this->TRI,
                                  &UsedUnits](MCPhysReg PhysReg) {
-    return any_of(TRI->regunits(PhysReg),
-                  [&UsedUnits](MCRegUnit RU) { return UsedUnits.test(RU); });
+    return any_of(TRI->regunits(PhysReg), [&UsedUnits](MCRegUnit RU) {
+      return UsedUnits.test(static_cast<unsigned>(RU));
+    });
   };
 
   LLVM_DEBUG(dbgs() << "     Try to re-assign" << printReg(VReg, TRI) << "\n");

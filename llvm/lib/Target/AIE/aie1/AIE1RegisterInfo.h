@@ -45,6 +45,10 @@ struct AIERegisterInfo : public AIEGenRegisterInfo {
   const TargetRegisterClass *
   getPointerRegClass(unsigned Kind = 0) const override;
 
+  const TargetRegisterClass *
+  getLargestLegalSuperClass(const TargetRegisterClass *RC,
+                            const MachineFunction &MF) const override;
+
   bool requiresRegisterScavenging(const MachineFunction &MF) const override {
     return true;
   }

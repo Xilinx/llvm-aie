@@ -229,6 +229,17 @@ AIERegisterInfo::getPointerRegClass(unsigned Kind) const {
   return &AIE::PTRRegClass;
 }
 
+const TargetRegisterClass *
+AIERegisterInfo::getLargestLegalSuperClass(const TargetRegisterClass *RC,
+                                           const MachineFunction &MF) const {
+  // GPR0 holds a single register. Let the register allocator widen split and
+  // reloaded values to GPR where no use requires r0, otherwise two GPR0 values
+  // needed by the same instruction cannot be allocated.
+  if (RC == &AIE::GPR0RegClass)
+    return &AIE::GPRRegClass;
+  return RC;
+}
+
 const uint32_t *
 AIERegisterInfo::getCallPreservedMask(const MachineFunction &MF,
                                       CallingConv::ID /*CC*/) const {

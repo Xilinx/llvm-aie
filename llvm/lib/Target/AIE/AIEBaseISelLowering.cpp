@@ -39,7 +39,7 @@ cl::opt<bool>
 
 AIEBaseTargetLowering::AIEBaseTargetLowering(const TargetMachine &TM,
                                              const AIEBaseSubtarget &STI)
-    : TargetLowering(TM), Subtarget(STI) {
+    : TargetLowering(TM, STI), Subtarget(STI) {
 
   AIEABI::ABI ABI = Subtarget.getTargetABI();
   assert(ABI == AIEABI::ABI_VITIS && "Only VITIS ABI supported");

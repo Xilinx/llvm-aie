@@ -56,7 +56,7 @@ void AIEPostRegAlloc::AllocState::init(
       PartSet &PhysRegUnits = this->PhysRegUnitSets[Reg];
       if (PhysRegUnits.empty())
         for (MCRegUnitIterator UI(Reg, InTRI); UI.isValid(); ++UI)
-          PhysRegUnits.set(*UI);
+          PhysRegUnits.set(static_cast<unsigned>(*UI));
       LRUnits |= PhysRegUnits;
     }
     this->AdmissibleRegUnits[LR.getIndex()] = LRUnits;
@@ -108,7 +108,7 @@ static PartSet laneActiveUnits(Register PhysReg, LaneBitmask Mask,
        ++MUI) {
     auto [Unit, UnitMask] = *MUI;
     if ((UnitMask & Mask).any())
-      Units.set(Unit);
+      Units.set(static_cast<unsigned>(Unit));
   }
   return Units;
 }

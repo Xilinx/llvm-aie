@@ -23,6 +23,7 @@ def TestArch : Target {
 
 def Reg : Register<"reg">;
 def RegClass : RegisterClass<"foo", [i32], 0, (add Reg)>;
+defm : RemapAllTargetPseudoPointerOperands<RegClass>;
 
 def Op : Operand<i32>;
 
