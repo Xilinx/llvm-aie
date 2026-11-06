@@ -126,6 +126,11 @@ public:
     return OriginalDescs.empty() && CloneToOriginal.empty();
   }
 };
+/// Build a top-down resource scoreboard from the given bundles.
+ResourceScoreboard<FuncUnitWrapper>
+createTopDownScoreboard(ArrayRef<MachineBundle> Bundles,
+                        const AIEHazardRecognizer &HR,
+                        const AIEAlternateDescriptors &SelectedDescriptors);
 
 /// Parameters that drive fixpoint convergence
 class FixedpointState {
@@ -282,9 +287,15 @@ class BlockState {
   // This holds an instance of the PostPipeliner for candidate loops.
   std::unique_ptr<PostPipeliner> PostSWP;
 
-  // This holds the information if this is an epilogue of a loop that was
-  // optimized by the outer-loop pipeliner.
-  bool IsEpilogueOfOuterPipelinedLoop = false;
+  // This holds the outer loop structure if this block is an outer-loop
+  // pipelined loop latch.
+  std::optional<AIELoopUtils::OuterLoopStructure> OuterLoopContext;
+
+  /// If this block belongs to an OLP structure (as SteadyTop, SteadyBottom,
+  /// PeeledTop, etc.), points to the BlockState of the latch that owns the
+  /// OuterLoopContext. Set during enterFunction once all BlockStates are
+  /// created.
+  const BlockState *OLPOwner = nullptr;
 
   // This holds the information whether it is safe to drop memory dependencies,
   // for example, a load -> process -> store using the same pointer, where
@@ -399,11 +410,29 @@ public:
 
   int getScheduleLength() const;
 
-  bool isEpilogueOfOuterPipelinedLoop() const {
-    return IsEpilogueOfOuterPipelinedLoop;
+  bool isSafeToIgnoreMemDeps() const { return IsSafeToIgnoreMemDeps; }
+
+  /// Return the outer loop context if this block is an outer-loop pipelined
+  /// loop latch.
+  const std::optional<AIELoopUtils::OuterLoopStructure> &
+  getOuterLoopContext() const {
+    return OuterLoopContext;
   }
 
-  bool isSafeToIgnoreMemDeps() const { return IsSafeToIgnoreMemDeps; }
+  /// Get the OuterLoopStructure this block participates in, or nullptr.
+  /// Works for any member of an OLP structure (SteadyTop, SteadyBottom,
+  /// PeeledTop, PeeledBottom, etc.), not just the latch.
+  const AIELoopUtils::OuterLoopStructure *getOLPMembership() const {
+    if (OLPOwner)
+      return &*OLPOwner->getOuterLoopContext();
+    if (OuterLoopContext)
+      return &*OuterLoopContext;
+    return nullptr;
+  }
+
+  /// Set the OLP owner for this block. Called during enterFunction to
+  /// propagate OLP membership from the latch block to all OLP members.
+  void setOLPOwner(const BlockState *Owner) { OLPOwner = Owner; }
 
 protected:
   void setBlockProperties();
@@ -603,6 +632,10 @@ public:
   // pipelined loop.
   std::optional<ArrayRef<MachineBundle>>
   getSWPLoopBundlesForEpilogue(BlockState &Epilogue);
+
+  /// Provide access to the Blocks map for external optimizers
+  /// (e.g. SiblingLoopOptimizer).
+  auto &getBlocks() { return Blocks; }
 
   /// If \p LoopMBB is not the only Predecessor of \p CurrentMBB, create a
   /// dedicated Exit MBB by splitting the edge between LoopMBB and CurrentBB

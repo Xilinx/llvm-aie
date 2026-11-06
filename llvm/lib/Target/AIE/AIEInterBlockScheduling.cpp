@@ -21,8 +21,10 @@
 #include "AIEMaxLatencyFinder.h"
 #include "AIEMultiSlotInstrMaterializer.h"
 #include "AIERegDefUseTracker.h"
+#include "AIESiblingLoopOptimizer.h"
 #include "Utils/AIELoopOptionOverrides.h"
 #include "Utils/AIELoopUtils.h"
+#include "Utils/AIEMachineBundleUtils.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/ADT/STLExtras.h"
@@ -131,6 +133,10 @@ static cl::opt<bool> PostPipelinerVRegReservedMode(
     "aie-postpipeliner-vreg-reserved-mode", cl::Hidden, cl::init(false),
     cl::desc("[AIE] Enable reserved virtual register mode for the "
              "postpipeliner (virtualizes ranges overlapping RESERVED bases)"));
+static cl::opt<bool> OptimizeSiblingLoops(
+    "aie-optimize-sibling-loops", cl::init(true),
+    cl::desc("[AIE] Optimize sibling loops by merging matching prologue "
+             "bundles into epilogue"));
 
 namespace llvm::AIE {
 
@@ -284,6 +290,10 @@ MachineInstr *checkResourceConflictsTopDown(
   return ConflictMI;
 }
 
+/// Calculate how many cycles of slack exist between Epilogue and Prologue.
+/// Builds an inter-block DAG and computes min(Distance - Latency) for all
+/// cross-boundary edges. Returns the maximum safe overlap (0 if none).
+
 InterBlockScheduling::InterBlockScheduling(const MachineSchedContext *C,
                                            bool InterBlock)
     : Context(C), InterBlockScoreboard(InterBlock) {}
@@ -369,6 +379,30 @@ void InterBlockScheduling::enterFunction(MachineFunction *MF) {
     // we have created Loops in the first place, as indicated by LoopAware.
     for (auto &[_, BS] : Blocks) {
       classifyBlock(BS);
+    }
+  }
+
+  // Propagate OLP membership to non-latch OLP blocks. Every latch that
+  // successfully built an OuterLoopContext tags its SteadyTop, SteadyBottom,
+  // PeeledIterTop, and PeeledIterBottom so they can discover the OLP
+  // structure via getOLPMembership().
+  for (auto &BlockEntry : Blocks) {
+    BlockState &OwnerBS = BlockEntry.second;
+    if (!OwnerBS.getOuterLoopContext())
+      continue;
+    const auto &OLP = *OwnerBS.getOuterLoopContext();
+    auto TagBlock = [&](MachineBasicBlock *Member) {
+      auto It = Blocks.find(Member);
+      assert(It != Blocks.end() && "Missing BlockState for MBB");
+      It->second.setOLPOwner(&OwnerBS);
+    };
+    TagBlock(OLP.SteadyTop);
+    TagBlock(OLP.SteadyInner);
+    TagBlock(OLP.SteadyBottom);
+    if (OLP.hasPeeledIterRegion()) {
+      TagBlock(OLP.PeeledIterTop);
+      TagBlock(OLP.PeeledIterInner);
+      TagBlock(OLP.PeeledIterBottom);
     }
   }
 
@@ -489,6 +523,8 @@ void InterBlockScheduling::emitLoopRemarks() {
 
 void InterBlockScheduling::leaveFunction() {
   DEBUG_BLOCKS(dbgs() << "<< leaveFunction\n");
+  if (OptimizeSiblingLoops)
+    SiblingLoopOptimizer(*this, *HR, *TII, SelectedAltDescs, *Context).run();
   emitLoopRemarks();
   Blocks.clear();
   MatTracker.clear();
@@ -2074,16 +2110,15 @@ void BlockState::clearSchedule() {
 }
 
 void BlockState::setBlockProperties() {
-  // We use the classification engine as a place to determine if this block
-  // is the epilogue of an outerloop pipelined loop.
-  IsEpilogueOfOuterPipelinedLoop =
-      AIELoopUtils::isOuterLoopPipelined(*TheBlock);
+  // Try to build OuterLoopContext if this block is an outer-loop pipelined
+  // loop latch.
+  OuterLoopContext = AIELoopUtils::OuterLoopStructure::tryBuildFrom(*TheBlock);
 
   // We never skip AA check. Except for epilogues of outer-pipelined loops.
   // This is a pre-condition of the optimization (sometimes restrict information
   // may not help).
   auto Overrides = AIE::LoopOptionOverrides(*TheBlock);
-  IsSafeToIgnoreMemDeps = IsEpilogueOfOuterPipelinedLoop
+  IsSafeToIgnoreMemDeps = OuterLoopContext.has_value()
                               ? true
                               : Overrides.get(PostSchedIgnoreMemoryDeps);
 }
