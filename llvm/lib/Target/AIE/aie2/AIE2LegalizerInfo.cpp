@@ -546,6 +546,9 @@ AIE2LegalizerInfo::AIE2LegalizerInfo(const AIE2Subtarget &ST) : AIEHelper(ST) {
 
   getActionDefinitionsBuilder(G_BRINDIRECT).legalFor({P0});
 
+  // The tile counter is read as a 64-bit scalar.
+  getActionDefinitionsBuilder(G_READCYCLECOUNTER).legalFor({S64});
+
   // Variadic functions
   getActionDefinitionsBuilder(G_VASTART).custom();
   getActionDefinitionsBuilder(G_VAARG).custom();

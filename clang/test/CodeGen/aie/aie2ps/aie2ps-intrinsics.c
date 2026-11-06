@@ -22,3 +22,10 @@ void events() {
   event_warning();
   event_error();
 }
+
+// CHECK-LABEL: @cycles(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = call i64 @llvm.readcyclecounter()
+// CHECK-NEXT:    ret i64 [[TMP0]]
+//
+unsigned long long cycles() { return get_cycles(); }

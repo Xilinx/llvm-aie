@@ -24,6 +24,9 @@ def PseudoFI : Pseudo<(outs eP:$dst), (ins i32imm:$imm)>;
 // SCHED_BARRIER
 def : Pat<(int_aie2p_sched_barrier), (SCHED_BARRIER)>;
 
+// Read the 64-bit tile cycle counter
+def : Pat<(i64 (readcyclecounter)), (MOV_alu_mv_mv_mv_cntr2l)>;
+
 // A bare frameindex. Placeholder until eliminateFrameIndex.
 def : Pat<(ptr0 frameindex:$fi), (PseudoFI(frameindex_to_targetframeindex $fi))>;
 

@@ -2240,7 +2240,6 @@ inline __attribute__((always_inline)) void fifo_st_flush_conv_3d_byte(v16cbfloat
 inline __attribute__((always_inline)) void acquire_equal(const void * , unsigned int , unsigned int );
 inline __attribute__((always_inline)) void release(const void * , unsigned int , int );
 inline __attribute__((always_inline)) void release(const void * , unsigned int , int , int );
-inline __attribute__((always_inline)) unsigned long long get_cycles();
 inline __attribute__((always_inline)) void put_ms_packet_header(int , unsigned int , unsigned int );
 inline __attribute__((always_inline)) void put_ms_packet_header(unsigned int , unsigned int );
 inline __attribute__((always_inline)) void put_ms_nb_packet_header(int , unsigned int , unsigned int , bool & );

@@ -739,7 +739,7 @@ let Itinerary = II_MOVd6 in {
 }
 
 // 5.5 MOV – Move tile counter
-let Itinerary = II_MOV_CNTR in
+let Itinerary = II_MOV_CNTR, hasSideEffects = true in
   let Uses = [tile_cntr] in {
   def MOV_CNTR : AIE2_mv_cntr2c_inst_mv< (outs eL:$dst), (ins ), "mov", "$dst, cntr">;
 }

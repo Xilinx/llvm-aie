@@ -2059,7 +2059,6 @@ inline __attribute__((always_inline)) void * delay4(void * );
 inline __attribute__((always_inline)) void * delay5(void * );
 inline __attribute__((always_inline)) void * delay6(void * );
 inline __attribute__((always_inline)) v64int4 * floor(v64int4 * );
-inline __attribute__((always_inline)) unsigned long long get_cycles();
 inline __attribute__((always_inline)) void put_ms_packet_header(int , unsigned int , unsigned int );
 inline __attribute__((always_inline)) void put_ms_packet_header(unsigned int , unsigned int );
 inline __attribute__((always_inline)) void put_ms_nb_packet_header(int , unsigned int , unsigned int , bool & );
