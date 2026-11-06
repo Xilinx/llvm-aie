@@ -2301,13 +2301,6 @@ bool AIE2PSInstructionSelector::extractBFP640SubReg(
     const Register SrcBFP640Reg, const Register DstMantissaReg,
     const Register DstSubTileReg, const Register DstExpReg,
     MachineRegisterInfo &MRI) {
-  if (!RBI.constrainGenericRegister(DstMantissaReg, AIE2PS::VEC512RegClass,
-                                    MRI))
-    return false;
-  if (!RBI.constrainGenericRegister(DstSubTileReg, AIE2PS::mGGsRegClass, MRI))
-    return false;
-  if (!RBI.constrainGenericRegister(DstExpReg, AIE2PS::mEEsRegClass, MRI))
-    return false;
   const Register BFP320LReg =
       MRI.createVirtualRegister(&AIE2PS::mEWlv_bisRegClass);
   MIB.buildInstr(TargetOpcode::COPY, {BFP320LReg}, {})
@@ -2326,21 +2319,34 @@ bool AIE2PSInstructionSelector::extractBFP640SubReg(
   const Register G1Reg = MRI.createVirtualRegister(&AIE2PS::mGsRegClass);
   const Register E1Reg = MRI.createVirtualRegister(&AIE2PS::mEsRegClass);
   extractBFP320SubReg(BFP320HReg, W1Reg, G1Reg, E1Reg);
-  MIB.buildInstr(TargetOpcode::REG_SEQUENCE, {DstMantissaReg}, {})
-      .addReg(W0Reg)
-      .addImm(AIE2PS::sub_256_lo)
-      .addReg(W1Reg)
-      .addImm(AIE2PS::sub_256_hi);
-  MIB.buildInstr(TargetOpcode::REG_SEQUENCE, {DstSubTileReg}, {})
-      .addReg(G0Reg)
-      .addImm(AIE2PS::sub_lo_exp)
-      .addReg(G1Reg)
-      .addImm(AIE2PS::sub_hi_exp);
-  MIB.buildInstr(TargetOpcode::REG_SEQUENCE, {DstExpReg}, {})
-      .addReg(E0Reg)
-      .addImm(AIE2PS::sub_lo_exp)
-      .addReg(E1Reg)
-      .addImm(AIE2PS::sub_hi_exp);
+  MachineInstr *MantissaMI =
+      MIB.buildInstr(TargetOpcode::REG_SEQUENCE, {DstMantissaReg}, {})
+          .addReg(W0Reg)
+          .addImm(AIE2PS::sub_256_lo)
+          .addReg(W1Reg)
+          .addImm(AIE2PS::sub_256_hi);
+  MachineInstr *SubTileMI =
+      MIB.buildInstr(TargetOpcode::REG_SEQUENCE, {DstSubTileReg}, {})
+          .addReg(G0Reg)
+          .addImm(AIE2PS::sub_lo_exp)
+          .addReg(G1Reg)
+          .addImm(AIE2PS::sub_hi_exp);
+  MachineInstr *ExpMI =
+      MIB.buildInstr(TargetOpcode::REG_SEQUENCE, {DstExpReg}, {})
+          .addReg(E0Reg)
+          .addImm(AIE2PS::sub_lo_exp)
+          .addReg(E1Reg)
+          .addImm(AIE2PS::sub_hi_exp);
+  // The users of the results may already be selected and may have constrained
+  // them to other classes of the same bank, e.g. eL for a G_UNMERGE_VALUES of
+  // the exponent. constrainOperandRegClass then defines a register of the
+  // required class and copies it to the result.
+  constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, *MantissaMI,
+                           AIE2PS::VEC512RegClass, MantissaMI->getOperand(0));
+  constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, *SubTileMI,
+                           AIE2PS::mGGsRegClass, SubTileMI->getOperand(0));
+  constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, *ExpMI,
+                           AIE2PS::mEEsRegClass, ExpMI->getOperand(0));
   return true;
 }
 
@@ -2348,25 +2354,21 @@ bool AIE2PSInstructionSelector::extractBFP384SubReg(
     const Register DstBFP384Reg, const Register DstMantissaReg,
     const Register DstSignBitReg, const Register DstSubTileReg,
     const Register DstExpReg, MachineRegisterInfo &MRI) {
-  // Constrain output registers to concrete register classes
-  if (!RBI.constrainGenericRegister(DstMantissaReg, AIE2PS::VEC256RegClass,
-                                    MRI))
-    return false;
-  if (!RBI.constrainGenericRegister(DstSignBitReg, AIE2PS::mFsRegClass, MRI))
-    return false;
-  if (!RBI.constrainGenericRegister(DstSubTileReg, AIE2PS::mGsRegClass, MRI))
-    return false;
-  if (!RBI.constrainGenericRegister(DstExpReg, AIE2PS::mEsRegClass, MRI))
-    return false;
-
-  MIB.buildInstr(TargetOpcode::COPY, {DstMantissaReg}, {})
-      .addReg(DstBFP384Reg, 0, AIE2PS::sub_few_bfp_w);
-  MIB.buildInstr(TargetOpcode::COPY, {DstSignBitReg}, {})
-      .addReg(DstBFP384Reg, 0, AIE2PS::sub_few_bfp_f64);
-  MIB.buildInstr(TargetOpcode::COPY, {DstSubTileReg}, {})
-      .addReg(DstBFP384Reg, 0, AIE2PS::sub_few_bfp_g32);
-  MIB.buildInstr(TargetOpcode::COPY, {DstExpReg}, {})
-      .addReg(DstBFP384Reg, 0, AIE2PS::sub_few_bfp_e32);
+  // The users of the results may already be selected and may have constrained
+  // them to other classes of the same bank, e.g. eR for a G_ADD of the
+  // exponent. constrainOperandRegClass then defines a register of the
+  // required class and copies it to the result.
+  auto ExtractField = [&](Register DstReg, unsigned SubReg,
+                          const TargetRegisterClass &RC) {
+    MachineInstr *CopyMI = MIB.buildInstr(TargetOpcode::COPY, {DstReg}, {})
+                               .addReg(DstBFP384Reg, 0, SubReg);
+    constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, *CopyMI, RC,
+                             CopyMI->getOperand(0));
+  };
+  ExtractField(DstMantissaReg, AIE2PS::sub_few_bfp_w, AIE2PS::VEC256RegClass);
+  ExtractField(DstSignBitReg, AIE2PS::sub_few_bfp_f64, AIE2PS::mFsRegClass);
+  ExtractField(DstSubTileReg, AIE2PS::sub_few_bfp_g32, AIE2PS::mGsRegClass);
+  ExtractField(DstExpReg, AIE2PS::sub_few_bfp_e32, AIE2PS::mEsRegClass);
   return true;
 }
 
@@ -2376,26 +2378,8 @@ bool AIE2PSInstructionSelector::extractBFP768SubReg(
     const Register DstSign1Reg, const Register DstSubTile0Reg,
     const Register DstSubTile1Reg, const Register DstExp0Reg,
     const Register DstExp1Reg, MachineRegisterInfo &MRI) {
-  // Constrain output registers to concrete register classes
-  if (!RBI.constrainGenericRegister(DstMantissa0Reg, AIE2PS::VEC256RegClass,
-                                    MRI))
-    return false;
-  if (!RBI.constrainGenericRegister(DstMantissa1Reg, AIE2PS::VEC256RegClass,
-                                    MRI))
-    return false;
-  if (!RBI.constrainGenericRegister(DstSign0Reg, AIE2PS::mFsRegClass, MRI))
-    return false;
-  if (!RBI.constrainGenericRegister(DstSign1Reg, AIE2PS::mFsRegClass, MRI))
-    return false;
-  if (!RBI.constrainGenericRegister(DstSubTile0Reg, AIE2PS::mGsRegClass, MRI))
-    return false;
-  if (!RBI.constrainGenericRegister(DstSubTile1Reg, AIE2PS::mGsRegClass, MRI))
-    return false;
-  if (!RBI.constrainGenericRegister(DstExp0Reg, AIE2PS::mEsRegClass, MRI))
-    return false;
-  if (!RBI.constrainGenericRegister(DstExp1Reg, AIE2PS::mEsRegClass, MRI))
-    return false;
-
+  // The output registers are constrained (or redirected) by
+  // extractBFP384SubReg.
   // === COPY BFP768 (mFEXv) to Sub registers ===
   // Each fex register is 768 bits with subregisters: two 384 bits few
   const Register BFP384_lo = MRI.createVirtualRegister(&AIE2PS::mFEWmRegClass);
@@ -2418,15 +2402,8 @@ bool AIE2PSInstructionSelector::selectVSHUFFLEBFP640(MachineInstr &I,
   const Register DstSubTileReg = I.getOperand(1).getReg();
   const Register DstExpReg = I.getOperand(2).getReg();
 
-  // Constrain output registers to concrete register classes
-  if (!RBI.constrainGenericRegister(DstMantissaReg, AIE2PS::VEC512RegClass,
-                                    MRI))
-    return false;
-  if (!RBI.constrainGenericRegister(DstSubTileReg, AIE2PS::mGGsRegClass, MRI))
-    return false;
-  if (!RBI.constrainGenericRegister(DstExpReg, AIE2PS::mEEsRegClass, MRI))
-    return false;
-
+  // The output registers are constrained (or redirected) by
+  // extractBFP640SubReg.
   // Combine into ex register (640 bits)
   const Register DstReg = MRI.createVirtualRegister(&AIE2PS::mEXsRegClass);
 
