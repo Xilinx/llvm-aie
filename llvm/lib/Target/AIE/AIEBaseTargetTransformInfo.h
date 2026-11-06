@@ -176,24 +176,31 @@ public:
     return (StoreSizeInBits == 8) ? 4 : (StoreSizeInBits == 16) ? 2 : 1;
   }
 
-  // This load vector factor of 1 basically prevents load vectorization which is
-  // deemed too expensive. The reason being that we have to shift out each
-  // element after the block load and perform a sign extension for each, whereas
-  // the scalarized approach results in only 4 part-word loads with implicit
-  // sign extension.
+  // Allow merging two consecutive i8 loads into a single 16-bit load.
+  // We limit to 2 elements (not 4) because extracting each element from a
+  // <2 x i8> loaded as a 16-bit word requires only one shift and one
+  // extend instruction, keeping the extraction overhead low. With 4 elements
+  // (<4 x i8> loaded as a 32-bit word), each extraction needs a different
+  // shift amount plus an extend, making it more expensive than four
+  // individual part-word loads with implicit sign extension.
   unsigned getLoadVectorFactor(unsigned VF, unsigned LoadSizeInBits,
                                unsigned ChainSizeInBytes,
                                VectorType *VecTy) const override {
-    // Block load vectorization, it is costly to extract elements from vectors.
+    if (LoadSizeInBits == 8)
+      return 2;
+    // Block other load vectorization, it is costly to extract elements
+    // from vectors.
     return 1;
   }
 
   bool isLegalToVectorizeStoreChain(unsigned ChainSizeInBytes, Align Alignment,
                                     unsigned AddrSpace) const override {
-    // Start from 4 byte sequences, to reach word stores. Alignment is
-    // considered by default by the pass.
+    // Allow 2-byte store chains (e.g. two i8 stores merged into one
+    // 16-bit store) as well as the existing 4-byte chains. This is
+    // beneficial because part-word stores are LMS (load-modify-store)
+    // operations that are more expensive than word-aligned stores.
     // Default return of allowsMisalignedMemoryAccesses is false.
-    return ChainSizeInBytes >= 4;
+    return ChainSizeInBytes >= 2;
   }
 
   /// Congruent IVs are induction variables that have the same SCEV expression,

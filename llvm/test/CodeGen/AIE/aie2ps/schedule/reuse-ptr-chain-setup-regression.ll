@@ -73,31 +73,24 @@ define void @setup(ptr noalias nonnull align 64 dereferenceable(72) %params, ptr
 ; CHECK-NEXT:    st r0, [p2, #0]
 ; CHECK-NEXT:    st r6, [p2, #16]
 ; CHECK-NEXT:  .LBB0_2: // %sw.epilog
-; CHECK-NEXT:    mova m0, #4; nopx
-; CHECK-NEXT:    paddb [p1], m0
-; CHECK-NEXT:    lda r0, [p1], #4; mov dj0, #30
-; CHECK-NEXT:    st.s8 r0, [p0, dj0]
+; CHECK-NEXT:    mova m0, #4; nopb ; nops ; nopxm ; nopv
+; CHECK-NEXT:    paddb [p1], m0; nopx
+; CHECK-NEXT:    lda.u8 r0, [p1], #4
+; CHECK-NEXT:    lda.s16 r2, [p1, #0]
+; CHECK-NEXT:    lda.u8 r4, [p1, #4]; mov dj0, #28
+; CHECK-NEXT:    st.s16 r2, [p0, dj0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    lda.s16 r0, [p1, #0]; mov dj0, #28
+; CHECK-NEXT:    mov dj0, #30
 ; CHECK-NEXT:    st.s16 r0, [p0, dj0]
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    lda r0, [p1, #4]; mov dj0, #31
-; CHECK-NEXT:    st.s8 r0, [p0, dj0]
-; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    movx r2, #8 // Delay Slot 5
+; CHECK-NEXT:    lshl r2, r4, r2 // Delay Slot 4
+; CHECK-NEXT:    or r0, r0, r2 // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
