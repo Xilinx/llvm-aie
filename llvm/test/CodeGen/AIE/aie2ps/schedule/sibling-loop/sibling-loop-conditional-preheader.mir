@@ -1,0 +1,132 @@
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc -mtriple=aie2ps --start-before=postmisched -verify-machineinstrs \
+# RUN:     -debug-only=sched-blocks -o /dev/null %s 2>&1 \
+# RUN:   | FileCheck %s --check-prefix=DBG
+# REQUIRES: asserts
+#
+# Test sibling loop optimization: skip when preheader has a conditional branch.
+#
+# The outer preheader (bb.0) has 2 successors (a conditional branch to both
+# steady_top and exit). isSafeForSiblingMerge() requires the preheader to
+# have exactly 1 successor, so the optimizer skips this loop.
+#
+# DBG: Skipping: OLP blocks are not in linear layout order
+--- |
+  define void @conditional_preheader() {
+  outer_preheader:
+    br i1 true, label %steady_top, label %exit
+  steady_top:
+    br label %steady_inner
+  steady_inner:
+    br i1 true, label %steady_inner, label %steady_bottom, !llvm.loop !0
+  steady_bottom:
+    br i1 true, label %steady_top, label %last_iter_top, !llvm.loop !3
+  last_iter_top:
+    br label %last_iter_inner
+  last_iter_inner:
+    br i1 true, label %last_iter_inner, label %last_iter_bottom, !llvm.loop !0
+  last_iter_bottom:
+    br label %exit
+  exit:
+    ret void
+  }
+
+  !0 = distinct !{!0, !1, !2}
+  !1 = !{!"llvm.loop.mustprogress"}
+  !2 = !{!"llvm.loop.itercount.range", i64 4}
+  !3 = distinct !{!3, !1, !4, !5}
+  !4 = !{!"llvm.loop.itercount.range", i32 1}
+  !5 = !{!"llvm.loop.hint.aie_outerloop_pipeliner_success", i64 1}
+...
+---
+name:            conditional_preheader
+alignment:       16
+legalized:       true
+regBankSelected: true
+selected:        true
+tracksRegLiveness: true
+noPhis:          true
+isSSA:           false
+noVRegs:         true
+body:             |
+  bb.0.outer_preheader:
+    successors: %bb.1(0x40000000), %bb.7(0x40000000)
+    liveins: $r0
+
+    renamable $r1 = MOV_RLC_imm11_pseudo 1
+    renamable $r1 = GE killed renamable $r1, renamable $r0
+    JNZ killed renamable $r1, %bb.7
+    DelayedSchedBarrier
+
+  bb.1.steady_top:
+    successors: %bb.2(0x80000000)
+    liveins: $dm0:0x000000030000000C, $dm1:0x000000030000000C, $dm2:0x000000030000000C, $dm3:0x000000030000000C, $r10, $r12, $r28, $x0, $x1, $x2, $x4, $x6, $x8, $x10
+
+    renamable $dm4 = VMUL_vmul_vmul_cm_core_X_X renamable $x4, renamable $x2, renamable $r12
+    renamable $dm3 = VADDMAC_vaddmac_vmul_cm_core_X_X killed renamable $dm3, renamable $dm4, renamable $x6, renamable $x10, renamable $r10
+    renamable $dm2 = VADDMAC_vaddmac_vmul_cm_core_X_X killed renamable $dm2, killed renamable $dm4, renamable $x8, killed renamable $x10, renamable $r10
+    renamable $dm4 = VMUL_vmul_vmul_cm_core_X_X renamable $x4, renamable $x0, renamable $r12
+    renamable $dm1 = VADDMAC_vaddmac_vmul_cm_core_X_X killed renamable $dm1, renamable $dm4, killed renamable $x6, renamable $x1, renamable $r10
+    renamable $dm0 = VADDMAC_vaddmac_vmul_cm_core_X_X killed renamable $dm0, killed renamable $dm4, killed renamable $x8, killed renamable $x1, renamable $r10
+    $lc = ADD_NC_add_lc_ri $r28, 0
+    SET_LS_REL_pseudo %bb.2, implicit-def $ls, implicit $pc
+    SET_LE_REL_pseudo <mcsymbol .L_LEnd1>, implicit-def $le, implicit $pc
+
+  bb.2.steady_inner:
+    successors: %bb.2(0x7c000000), %bb.3(0x04000000)
+    liveins: $m3, $p1, $r2, $r4, $r6, $d1_3d:0x3800000040001C00
+
+    renamable $x1, renamable $p1 = VLD_x_pstm_nrm_pseudo killed renamable $p1, renamable $m3
+    $x10, $p1, $dc1, $dc5 = VLD_3D_x_pseudo killed $p1, $d1_3d
+    renamable $x3 = VSHUFFLE_vec_shuffle_x killed renamable $x1, undef renamable $x1, renamable $r2
+    renamable $x5 = VSHUFFLE_vec_shuffle_x killed renamable $x3, undef renamable $x3, renamable $r4
+    renamable $x7 = VSHUFFLE_vec_shuffle_x killed renamable $x10, undef renamable $x10, renamable $r6
+    PseudoLoopEnd <mcsymbol .L_LEnd1>, %bb.2
+
+  bb.3.steady_bottom:
+    successors: %bb.1(0x7c000000), %bb.4(0x04000000)
+    liveins: $p5, $r30
+
+    $r3 = JNZD $r30, $p5, implicit-def $srcarry
+    DelayedSchedBarrier
+
+  bb.4.last_iter_top:
+    successors: %bb.5(0x80000000)
+    liveins: $dm0:0x000000030000000C, $dm1:0x000000030000000C, $dm2:0x000000030000000C, $dm3:0x000000030000000C, $r10, $r12, $r28, $x0, $x1, $x2, $x4, $x6, $x8, $x10
+
+    renamable $dm4 = VMUL_vmul_vmul_cm_core_X_X renamable $x4, killed renamable $x2, renamable $r12
+    renamable $dm3 = VADDMAC_vaddmac_vmul_cm_core_X_X killed renamable $dm3, renamable $dm4, renamable $x6, renamable $x10, renamable $r10
+    renamable $dm2 = VADDMAC_vaddmac_vmul_cm_core_X_X killed renamable $dm2, killed renamable $dm4, renamable $x8, killed renamable $x10, renamable $r10
+    renamable $dm4 = VMUL_vmul_vmul_cm_core_X_X killed renamable $x4, killed renamable $x0, killed renamable $r12
+    renamable $dm1 = VADDMAC_vaddmac_vmul_cm_core_X_X killed renamable $dm1, renamable $dm4, killed renamable $x6, renamable $x1, renamable $r10
+    renamable $dm0 = VADDMAC_vaddmac_vmul_cm_core_X_X killed renamable $dm0, killed renamable $dm4, killed renamable $x8, killed renamable $x1, killed renamable $r10
+    $lc = ADD_NC_add_lc_ri $r28, 0
+    SET_LS_REL_pseudo %bb.5, implicit-def $ls, implicit $pc
+    SET_LE_REL_pseudo <mcsymbol .L_LEnd0>, implicit-def $le, implicit $pc
+
+  bb.5.last_iter_inner:
+    successors: %bb.5(0x7c000000), %bb.6(0x04000000)
+    liveins: $m3, $p0, $p1, $r2, $r4, $d0_3d:0x3800000040001C00, $d1_3d:0x3800000040001C00
+
+    renamable $x1, renamable $p1 = VLD_x_pstm_nrm_pseudo killed renamable $p1, renamable $m3
+    $x10, $p1, $dc1, $dc5 = VLD_3D_x_pseudo killed $p1, $d1_3d
+    renamable $x8, renamable $p0 = VLD_x_pstm_nrm_imm_pseudo killed renamable $p0, 64
+    $x6, $p0, $dc0, $dc4 = VLD_3D_x_pseudo killed $p0, $d0_3d
+    renamable $x3 = VSHUFFLE_vec_shuffle_x killed renamable $x1, undef renamable $x1, renamable $r2
+    renamable $x5 = VSHUFFLE_vec_shuffle_x killed renamable $x3, undef renamable $x3, renamable $r4
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.5
+
+  bb.6.last_iter_bottom:
+    successors: %bb.7(0x80000000)
+
+    DelayedSchedBarrier
+
+  bb.7.exit:
+    RET implicit $lr
+    DelayedSchedBarrier
+...

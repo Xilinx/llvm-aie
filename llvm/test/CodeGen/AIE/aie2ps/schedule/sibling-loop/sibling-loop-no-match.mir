@@ -1,0 +1,384 @@
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc -mtriple=aie2ps --start-before=postmisched -verify-machineinstrs \
+# RUN:     -debug-only=sched-blocks -o /dev/null %s 2>&1 \
+# RUN:   | FileCheck %s --check-prefix=DBG
+# REQUIRES: asserts
+#
+# Test sibling loop optimization: no merge due to non-matching prologues.
+#
+# Generated from conv2d_opt_outerloop_pipelining_out_mode_0.ll with:
+#   llc -mtriple=aie2ps -O2 --aie-enable-outer-loop-pipelining
+#       --aie-enable-sibling-loop-vreg-merge=false -stop-before=postmisched
+#
+# OLP structure:
+#   bb.0-bb.4 (OuterPreheader) -> bb.5 (SteadyTop/Prologue)
+#   -> bb.6 (SteadyInner) -> bb.7 (SteadyBottom/Epilogue/Latch)
+#   -> bb.8 (PeeledIterTop) -> bb.9 (PeeledIterInner)
+#   -> bb.10 (PeeledIterBottom)
+#
+# Without the AIESiblingLoopVRegMerger, the two prologues (SteadyTop
+# and PeeledIterTop) use different physical registers for the same
+# logical operations. This causes countMatchingLeadingBundles to
+# return 0 because the leading bundles differ in register operands.
+#
+# Result: The optimizer detects the OLP structure but finds no matching
+# bundles between the two prologues and bails out immediately.
+#
+# Verify the optimizer finds no matching bundles.
+
+# DBG: optimizeSiblingLoops: Processing outer loop latch 7
+# DBG: No matching bundles between prologues
+--- |
+  define void @conv2d_opt_outerloop_out_mode_0() {
+  entry:
+    br label %if.else.i
+  if.else.i:
+    br label %if.end.i
+  if.end.i:
+    br label %if.then87.i
+  if.then87.i:
+    br label %_Z24setup_conv2d_iter_paramsR13conv2d_params.exit
+  _Z24setup_conv2d_iter_paramsR13conv2d_params.exit:
+    br label %steady_top
+  steady_top:
+    br label %steady_inner
+  steady_inner:
+    br i1 true, label %steady_inner, label %steady_bottom, !llvm.loop !0
+  steady_bottom:
+    br i1 true, label %if.end.i, label %last_iter_top, !llvm.loop !3
+  last_iter_top:
+    br label %last_iter_inner
+  last_iter_inner:
+    br i1 true, label %last_iter_inner, label %last_iter_bottom, !llvm.loop !0
+  last_iter_bottom:
+    ret void
+  }
+
+  !0 = distinct !{!0, !1, !2}
+  !1 = !{!"llvm.loop.mustprogress"}
+  !2 = !{!"llvm.loop.itercount.range", i64 4}
+  !3 = distinct !{!3, !1, !4, !5}
+  !4 = !{!"llvm.loop.itercount.range", i32 1}
+  !5 = !{!"llvm.loop.hint.aie_outerloop_pipeliner_success", i64 1}
+...
+---
+name:            conv2d_opt_outerloop_out_mode_0
+alignment:       16
+legalized:       true
+regBankSelected: true
+selected:        true
+tracksRegLiveness: true
+noPhis:          true
+isSSA:           false
+noVRegs:         true
+body:             |
+  bb.0.entry:
+    successors: %bb.2(0x40000000), %bb.1(0x40000000)
+    liveins: $p0, $p1, $p2, $p3, $p4, $p5, $r8, $r10, $r12, $p6, $p7
+  
+    frame-setup PADDXM_pstm_sp_imm 64, implicit-def $sp, implicit $sp
+    $r19 = MOV_OR_pseudo killed $r8
+    $r21 = MOV_OR_pseudo killed $r10
+    $r23 = MOV_OR_pseudo killed $r12
+    ST_dms_sts_scalar_spill killed $p6, -64, implicit $sp
+    ST_dms_sts_scalar_spill killed $p7, -60, implicit $sp
+    renamable $dj0 = MOV_PD_imm11_pseudo 92
+    renamable $r4 = LDA_dms_lda_scalar_ld_idx renamable $p3, renamable $dj0
+    renamable $dj1 = MOV_PD_imm11_pseudo 18
+    renamable $r6 = LDA_u8_idx renamable $p3, killed renamable $dj1
+    renamable $r0 = MOVXM_lng_cg 16777216
+    renamable $r2 = MOVXM_lng_cg 33554431
+    renamable $r0 = ADD_alu_r_rr renamable $r4, killed renamable $r0, implicit-def dead $srcarry
+    renamable $r16 = MOV_RLC_imm11_pseudo -24
+    renamable $r16 = LSHL renamable $r0, killed renamable $r16
+    renamable $r2 = LTU killed renamable $r2, renamable $r0
+    renamable $r20 = samesign LTU renamable $r16, renamable $r6
+    renamable $r18 = MOV_RLC_imm11_pseudo 3
+    renamable $r27 = AND killed renamable $r2, killed renamable $r20
+    renamable $r24 = MOV_RLC_imm11_pseudo 0
+    renamable $r2 = SEL_NEZ renamable $r18, renamable $r24, killed renamable $r27
+    renamable $r20 = MOV_RLC_imm11_pseudo 1
+    renamable $r22 = EQ renamable $r16, renamable $r20
+    renamable $r26 = EQ renamable $r16, renamable $r6
+    renamable $r28 = LSHL renamable $r26, renamable $r20
+    renamable $r22 = disjoint OR killed renamable $r28, killed renamable $r22
+    renamable $r2 = nuw nsw ADD_alu_r_rr killed renamable $r22, killed renamable $r2, implicit-def dead $srcarry
+    renamable $m0 = MOV_PD_imm11_pseudo 96
+    renamable $r22 = LDA_u8_idx_imm renamable $p3, 7
+    ST_dms_sts_scalar_st_idx killed renamable $r0, renamable $p3, killed renamable $dj0
+    renamable $p3 = nuw nusw inbounds PADD_mod_pseudo killed renamable $p3, killed renamable $m0
+    renamable $m0 = MOV_PD_imm11_pseudo -20
+    renamable $r27 = LTU renamable $r20, renamable $r6
+    renamable $r0 = SEL_NEZ killed renamable $r2, renamable $r24, killed renamable $r27
+    renamable $p3 = ST_s8_pstm_nrm renamable $r0, killed renamable $p3, killed renamable $m0, implicit-def $pe2_ads, implicit $pe2_ads
+    renamable $r28 = samesign LTU renamable $r20, renamable $r0
+    renamable $r2 = EQ killed renamable $r22, renamable $r20
+    renamable $r22 = AND killed renamable $r2, killed renamable $r26
+    renamable $r2 = MOV_RLC_imm11_pseudo 5
+    ST_dms_sts_scalar_st_idx_imm killed renamable $r28, renamable $p3, 0
+    JNZ killed renamable $r22, %bb.2
+    DelayedSchedBarrier
+  
+  bb.1.if.else.i:
+    successors: %bb.2(0x80000000)
+    liveins: $p0, $p1, $p2, $p3, $p4, $p5, $r0, $r2, $r4, $r6, $r16, $r24, $r19, $r21, $r23
+  
+    renamable $dj0 = MOV_PD_imm11_pseudo -48
+    renamable $r18 = LDA_s8_idx renamable $p3, killed renamable $dj0
+    renamable $r20 = ADD_add_r_ri renamable $r18, -4, implicit-def dead $srcarry
+    renamable $r20 = EXTEND_u8 killed renamable $r20
+    renamable $r22 = MOV_RLC_imm11_pseudo 254
+    renamable $r20 = LTU killed renamable $r20, killed renamable $r22
+    renamable $r22 = MOV_RLC_imm11_pseudo 8
+    renamable $r26 = EXTEND_u8 renamable $r18
+    renamable $r22 = NE renamable $r26, killed renamable $r22
+    renamable $r20 = AND killed renamable $r22, killed renamable $r20
+    renamable $r22 = MOV_RLC_imm11_pseudo 4
+    renamable $r26 = NE killed renamable $r26, renamable $r2
+    renamable $r18 = LSHL killed renamable $r18, killed renamable $r22
+    renamable $r27 = AND killed renamable $r26, killed renamable $r20
+    renamable $r18 = SEL_NEZ killed renamable $r18, renamable $r24, killed renamable $r27
+    renamable $r20 = AND renamable $r0, renamable $r2
+    renamable $r20 = NEZ killed renamable $r20
+    renamable $r18 = disjoint OR killed renamable $r18, renamable $r0
+  
+  bb.2.if.end.i:
+    successors: %bb.3(0x40000000), %bb.4(0x40000000)
+    liveins: $p0, $p1, $p2, $p3, $p4, $p5, $r0, $r2, $r4, $r6, $r16, $r18, $r20, $r24, $r19, $r21, $r23
+  
+    renamable $m0 = MOV_PD_imm11_pseudo 4
+    renamable $p3 = nuw nusw inbounds PADD_mod_pseudo killed renamable $p3, killed renamable $m0
+    renamable $p3 = ST_dms_sts_scalar_st_pstm_nrm_imm killed renamable $r20, killed renamable $p3, 24
+    ST_s8_idx_imm killed renamable $r18, renamable $p3, 0, implicit-def dead $pe2_ads, implicit $pe2_ads
+    renamable $r20 = NE killed renamable $r16, killed renamable $r6
+    renamable $r6 = MOV_RLC_imm11_pseudo 2
+    renamable $r18 = MOV_RLC_imm11_pseudo 9
+    renamable $r16 = MOV_RLC_imm11_pseudo 256
+    JNZ killed renamable $r20, %bb.4
+    DelayedSchedBarrier
+  
+  bb.3.if.then87.i:
+    successors: %bb.4(0x80000000)
+    liveins: $p0, $p1, $p2, $p3, $p4, $p5, $r0, $r2, $r4, $r6, $r16, $r18, $r24, $r19, $r21, $r23
+  
+    renamable $r20 = MOVXM_lng_cg 16777215
+    renamable $r4 = AND killed renamable $r4, killed renamable $r20
+    ST_dms_sts_scalar_st_idx_imm killed renamable $r4, renamable $p3, -12
+  
+  bb.4._Z24setup_conv2d_iter_paramsR13conv2d_params.exit:
+    successors: %bb.5(0x80000000)
+    liveins: $p0, $p1, $p2, $p3, $p4, $p5, $r0, $r2, $r6, $r16, $r18, $r24, $r19, $r21, $r23
+  
+    renamable $m0 = MOV_PD_imm11_pseudo -20
+    renamable $p3 = nuw nusw inbounds PADD_mod_pseudo killed renamable $p3, killed renamable $m0
+    renamable $m0 = MOV_PD_imm11_pseudo 36
+    renamable $r22, renamable $p3 = LDA_dms_lda_scalar_ld_pstm_nrm killed renamable $p3, killed renamable $m0
+    renamable $m0 = MOV_PD_imm11_pseudo 100
+    $p6 = MOV_scalar_pseudo $p3
+    renamable $p6 = nuw nusw inbounds PADD_mod_pseudo killed renamable $p6, killed renamable $m0
+    renamable $m0 = MOV_PD_imm11_pseudo 116
+    renamable $r17, renamable $p6 = LDA_dms_lda_scalar_ld_pstm_nrm killed renamable $p6, killed renamable $m0
+    renamable $m0 = MOV_PD_imm11_pseudo -120
+    renamable $dn3, renamable $p6 = LDA_dms_lda_scalar_ld_pstm_nrm killed renamable $p6, killed renamable $m0
+    renamable $m0 = MOV_PD_imm11_pseudo -104
+    renamable $m3, renamable $p6 = LDA_dms_lda_scalar_ld_pstm_nrm killed renamable $p6, renamable $m0
+    renamable $r20, renamable $p6 = LDA_dms_lda_scalar_ld_pstm_nrm killed renamable $p6, killed renamable $m0
+    renamable $m0 = MOV_PD_imm11_pseudo 132
+    renamable $r26, renamable $p6 = LDA_s16_pstm_nrm killed renamable $p6, killed renamable $m0
+    renamable $m0, renamable $p6 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p6, -8
+    renamable $dn0, renamable $p6 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p6, -8
+    renamable $dj0, renamable $p6 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p6, 12
+    renamable $dn4, renamable $p6 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p6, -8
+    renamable $m1 = MOV_PD_imm11_pseudo 188
+    renamable $dj4, renamable $p6 = LDA_dms_lda_scalar_ld_pstm_nrm killed renamable $p6, killed renamable $m1
+    renamable $r30 = LDA_dms_lda_scalar_ld_idx_imm renamable $p3, 0
+    renamable $m1 = MOV_PD_imm11_pseudo -284
+    renamable $r4, renamable $p6 = LDA_dms_lda_scalar_ld_pstm_nrm killed renamable $p6, killed renamable $m1
+    renamable $m1 = MOV_PD_imm11_pseudo 76
+    renamable $r3, renamable $p6 = LDA_dms_lda_scalar_ld_pstm_nrm killed renamable $p6, killed renamable $m1
+    renamable $m1 = MOV_PD_imm11_pseudo 52
+    renamable $dj1 = MOV_PD_imm11_pseudo -56
+    renamable $r28, renamable $p6 = LDA_dms_lda_scalar_ld_pstm_nrm killed renamable $p6, killed renamable $m1
+    renamable $r1 = LDA_dms_lda_scalar_ld_idx killed renamable $p3, killed renamable $dj1
+    renamable $m1, renamable $p6 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p6, -8
+    renamable $r5 = MOV_RLC_imm11_pseudo 2
+    renamable $dn1, renamable $p6 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p6, -8
+    renamable $r7 = nsw LSHL renamable $r22, renamable $r5
+    renamable $dj1, renamable $p6 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p6, 12
+    renamable $r30 = nsw LSHL killed renamable $r30, renamable $r5
+    renamable $m2 = MOV_PD_imm11_pseudo 32
+    renamable $dn5, renamable $p6 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p6, -8
+    renamable $r30 = ADD_alu_r_rr killed renamable $r7, killed renamable $r30, implicit-def dead $srcarry
+    renamable $dj5, renamable $p6 = LDA_dms_lda_scalar_ld_pstm_nrm killed renamable $p6, killed renamable $m2
+    renamable $r7 = samesign LTU killed renamable $r0, killed renamable $r6
+    renamable $m2, renamable $p6 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p6, -8
+    renamable $r0 = MOV_RLC_imm11_pseudo 0
+    renamable $dn2, renamable $p6 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p6, -8
+    renamable $r0 = SUB killed renamable $r0, killed renamable $r22, implicit-def dead $srcarry
+    renamable $dj2, renamable $p6 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p6, 12
+    renamable $r22 = nsw LSHL killed renamable $r0, killed renamable $r5
+    renamable $m4 = MOV_PD_imm11_pseudo -162
+    renamable $dn6, renamable $p6 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p6, -8
+    renamable $r0 = MOV_RLC_imm11_pseudo -8
+    renamable $dj6, renamable $p6 = LDA_dms_lda_scalar_ld_pstm_nrm killed renamable $p6, killed renamable $m4
+    renamable $r0 = LSHL renamable $r26, killed renamable $r0
+    renamable $r6 = LDA_s8_idx_imm renamable $p6, 0
+    renamable $r26 = EXTEND_u8 killed renamable $r26
+    renamable $r0 = EXTEND_s8 killed renamable $r0
+    renamable $dj7 = MOV_PD_imm11_pseudo 226
+    renamable $r18 = LSHL killed renamable $r3, killed renamable $r18
+    renamable $r5 = LDA_dms_lda_scalar_ld_idx killed renamable $p6, killed renamable $dj7
+    renamable $r3 = ADD_alu_r_rr renamable $r30, renamable $r22, implicit-def dead $srcarry
+    renamable $r26 = nuw LSHL renamable $r7, killed renamable $r26
+    renamable $r8 = disjoint OR killed renamable $r18, killed renamable $r16
+    renamable $dc7 = MOV_PD_imm11_pseudo 0
+    $m4 = MOV_scalar_pseudo killed $r30
+    renamable $r10 = disjoint OR renamable $r8, killed renamable $r7
+    renamable $r18 = MOV_RLC_imm11_pseudo 7
+    renamable $r16 = MOV_RLC_imm11_pseudo 16
+    $p3 = MOV_scalar_pseudo $p1
+    renamable $p3 = PADD_mod_pseudo killed renamable $p3, killed renamable $m4
+    $m4 = MOV_scalar_pseudo killed $r3
+    renamable $r12 = MOV_RLC_imm11_pseudo 264
+    renamable $r18 = LSHL renamable $r28, killed renamable $r18
+    renamable $p1 = PADD_mod_pseudo killed renamable $p1, killed renamable $m4
+    renamable $x0 = VBCST_32 killed renamable $r26
+    $m4 = MOV_scalar_pseudo killed $r18
+    renamable $r18 = ADD_add_r_ri killed renamable $r28, -1, implicit-def dead $srcarry
+    renamable $r30 = MOV_RLC_imm11_pseudo 63
+    $dj3 = MOV_scalar_pseudo killed $r22
+    $s0 = MOV_alu_mv_mv_mv_scl killed $r0
+    $crupsmode = MOVX_mvx_cr_imm 0
+    renamable $cml1, renamable $p4 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_imm_upsSign1 renamable $s0, killed renamable $p4, 64, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    renamable $cmh1, renamable $p4 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_imm_upsSign1 renamable $s0, killed renamable $p4, 64, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $x10, $p0, $lf0, $r24 = VLDB_POPX $r30, $r30, $p0, undef $lf0, $r24, implicit-def $lfe, implicit-def $srfifo_uf, implicit undef $lfe
+    $dc0 = MOV_scalar_pseudo $dc7
+    $dc4 = MOV_scalar_pseudo $dc7
+    $x1, $p0, $lf0, $r24, $dc0, $dc4 = VLD_POP_512_3D_pseudo $p0, $lf0, $r24, $d0_3d, implicit-def $srfifo_uf
+    renamable $wl6 = VLD_128_idx_pseudo renamable $p3, killed renamable $dj3
+    renamable $cml0, renamable $p5 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_imm_upsSign1 renamable $s0, killed renamable $p5, 64, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    renamable $wl8 = VLD_128_idx_imm_pseudo renamable $p1, 16
+    renamable $cmh0, renamable $p5 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_imm_upsSign1 renamable $s0, killed renamable $p5, 64, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $p7 = MOV_scalar_pseudo $p3
+    renamable $x2, renamable $p7 = VLD_x_pstm_nrm_imm_pseudo killed renamable $p7, 64
+    renamable $x4, renamable $p7 = VLD_x_pstm_nrm_imm_pseudo killed renamable $p7, 64
+    renamable $x10 = VSHUFFLE_vec_shuffle_x killed renamable $x10, killed renamable $x1, renamable $r4
+    renamable $r0 = ADD_add_r_ri killed renamable $r20, -1, implicit-def dead $srcarry
+    renamable $r3 = ADDM_NC_mv_add_ri killed renamable $r0, -1
+    $dc3 = MOV_scalar_pseudo $dc7
+    $dc6 = MOV_scalar_pseudo $dc7
+    $dc2 = MOV_scalar_pseudo $dc7
+    $dc5 = MOV_scalar_pseudo $dc7
+    $dc1 = MOV_scalar_pseudo $dc7
+    renamable $p6 = MOVXM_lng_cg %bb.5
+    $s1 = MOV_alu_mv_mv_mv_scl $r6
+    $crsrsmode = MOVX_mvx_cr_imm 0
+    $m5 = MOV_scalar_pseudo $r5
+    $dj3 = MOV_scalar_pseudo $r17
+  
+  bb.5.steady_top:
+    successors: %bb.6(0x80000000)
+    liveins: $lfe, $dc0, $dc1, $dc2, $dc3, $dc4, $dc5, $dc6, $dc7, $dj0, $dj1, $dj2, $dj4, $dj5, $dj6, $dm0:0x000000030000000C, $dm1:0x000000030000000C, $dn0, $dn1, $dn2, $dn3, $dn4, $dn5, $dn6, $m0, $m1, $m2, $m3, $m4, $p1, $p2, $p3, $p4, $p5, $p6, $p7, $plfr0:0x00000000A2000040, $r1, $r2, $r3, $r4, $r5, $r6, $r8, $r10, $r12, $r16, $r17, $r18, $r30, $s0, $s1, $x0, $x2, $x4, $x6:0x0000000000000002, $x8:0x0000000000000002, $x10, $crsrsmode, $m5, $crupsmode, $dj3, $r19, $r21, $r23
+  
+    renamable $dm2 = VMUL_vmul_vmul_cm_core_X_X renamable $x0, renamable $x6, renamable $r12
+    renamable $dm3 = VMUL_vmul_vmul_cm_core_X_X renamable $x0, renamable $x8, renamable $r12
+    renamable $dm1 = VADDMAC_vaddmac_vmul_cm_core_X_X killed renamable $dm1, killed renamable $dm2, renamable $x10, killed renamable $x2, renamable $r10
+    renamable $dm0 = VADDMAC_vaddmac_vmul_cm_core_X_X killed renamable $dm0, killed renamable $dm3, killed renamable $x10, killed renamable $x4, renamable $r10
+    $lc = ADD_NC_add_lc_ri $r18, 0
+    SET_LS_REL_pseudo %bb.6, implicit-def $ls, implicit $pc
+    SET_LE_REL_pseudo <mcsymbol .L_LEnd1>, implicit-def $le, implicit $pc
+  
+  bb.6.steady_inner:
+    successors: %bb.6(0x7c000000), %bb.7(0x04000000)
+    liveins: $lfe, $dc0, $dc1, $dc2, $dc3, $dc4, $dc5, $dc6, $dc7, $dj0, $dj1, $dj2, $dj4, $dj5, $dj6, $dm0:0x000000030000000C, $dm1:0x000000030000000C, $dn0, $dn1, $dn2, $dn3, $dn4, $dn5, $dn6, $m0, $m1, $m2, $m3, $m4, $p1, $p2, $p3, $p4, $p5, $p6, $p7, $plfr0:0x00000000A2000040, $r1, $r2, $r3, $r4, $r5, $r6, $r8, $r10, $r12, $r16, $r17, $r18, $r30, $s0, $s1, $x0, $d0_3d:0x7800000040001C00, $crsrsmode, $m5, $crupsmode, $dj3, $r19, $r21, $r23
+  
+    $x10, $p0, $lf0, $r24 = VLDB_POPX $r30, $r30, $p0, $lf0, $r24, implicit-def $lfe, implicit-def $srfifo_uf, implicit $lfe
+    $x8, $p0, $lf0, $r24, $dc0, $dc4 = VLD_POP_512_3D_pseudo $p0, $lf0, $r24, $d0_3d, implicit-def $srfifo_uf
+    renamable $x6, renamable $p7 = VLD_x_pstm_nrm_imm_pseudo killed renamable $p7, 64
+    renamable $x4, renamable $p7 = VLD_x_pstm_nrm_imm_pseudo killed renamable $p7, 64
+    renamable $x2 = VSHUFFLE_vec_shuffle_x killed renamable $x10, killed renamable $x8, renamable $r4
+    renamable $dm1 = VMAC_vmac_vmul_cm_core_X_X killed renamable $dm1, renamable $x2, killed renamable $x6, renamable $r8
+    renamable $dm0 = VMAC_vmac_vmul_cm_core_X_X killed renamable $dm0, killed renamable $x2, killed renamable $x4, renamable $r8
+    PseudoLoopEnd <mcsymbol .L_LEnd1>, %bb.6
+  
+  bb.7.steady_bottom:
+    successors: %bb.5(0x7c000000), %bb.8(0x04000000)
+    liveins: $lfe, $d3:0x0000000040000C00, $dc0, $dc1, $dc2, $dc3, $dc5, $dc6, $dc7, $dj0, $dj1, $dj2, $dj4, $dj5, $dj6, $dm0:0x000000030000000C, $dm1:0x000000030000000C, $dn0, $dn1, $dn2, $dn3, $dn4, $dn5, $dn6, $m0, $m1, $m2, $m3, $m4, $p1, $p2, $p3, $p4, $p5, $p6, $plfr0:0x00000000A2000040, $r1, $r2, $r3, $r4, $r5, $r6, $r8, $r10, $r12, $r16, $r17, $r18, $r30, $s0, $s1, $x0, $d0_3d:0x7000000040001C00, $d1_3d:0x3800000040001C00, $d2_3d:0x3800000040001C00, $crsrsmode, $m5, $crupsmode, $dj3, $r19, $r21, $r23
+  
+    $srssign0 = MOV_alu_mv_mv_mv_scl $r1
+    renamable $p2 = VST_SRS_4x_dmx_sts_srs_dm_pstm_nrm_srsSign0 killed renamable $dm1, renamable $s1, killed renamable $p2, renamable $m5, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    renamable $cml1, renamable $p4 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_imm_upsSign1 renamable $s0, killed renamable $p4, 64, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $p0, $dc1, $dc5 = PADD_3D_pseudo $p0, $d1_3d
+    renamable $p3 = PADD_mod_pseudo killed renamable $p3, renamable $m4
+    renamable $cmh1, renamable $p4 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_imm_upsSign1 renamable $s0, killed renamable $p4, 64, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $x10, $p0, $lf0, $r24 = VLDB_POPX $r30, $r30, $p0, $lf0, $r24, implicit-def $lfe, implicit-def $srfifo_uf, implicit $lfe
+    $p2, $dc3 = VST_2D_SRS_4x_dmx_sts_srs_dm_srsSign0 killed $dm0, $s1, killed $p2, $d3, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    renamable $cml0, renamable $p5 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_imm_upsSign1 renamable $s0, killed renamable $p5, 64, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $p3, $dc2, $dc6 = PADD_3D_pseudo killed $p3, $d2_3d
+    renamable $cmh0, renamable $p5 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_imm_upsSign1 renamable $s0, killed renamable $p5, 64, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $p7 = MOV_scalar_pseudo $p3
+    renamable $x2, renamable $p7 = VLD_x_pstm_nrm_imm_pseudo killed renamable $p7, 64
+    $r0 = MOV_alu_mv_mv_mv_scl $dc6
+    renamable $r0 = nuw nsw LSHL killed renamable $r0, renamable $r2
+    $dc4 = MOV_scalar_pseudo $dc7
+    $x1, $p0, $lf0, $r24, $dc0, $dc4 = VLD_POP_512_3D_pseudo $p0, $lf0, $r24, $d0_3d, implicit-def $srfifo_uf
+    renamable $x4, renamable $p7 = VLD_x_pstm_nrm_imm_pseudo killed renamable $p7, 64
+    renamable $r20 = disjoint OR renamable $r0, renamable $r16
+    $dj7 = MOV_scalar_pseudo killed $r0
+    renamable $wl6 = VLD_128_idx_pseudo renamable $p1, killed renamable $dj7
+    $dj7 = MOV_scalar_pseudo killed $r20
+    renamable $wl8 = VLD_128_idx_pseudo renamable $p1, killed renamable $dj7
+    renamable $x10 = VSHUFFLE_vec_shuffle_x killed renamable $x10, killed renamable $x1, renamable $r4
+    $srssign0 = MOVX_mvx_cr_imm 0
+    $r3 = JNZD $r3, $p6, implicit-def $srcarry
+    DelayedSchedBarrier
+  
+  bb.8.last_iter_top:
+    successors: %bb.9(0x80000000)
+    liveins: $lfe, $dc0, $dc4, $dj0, $dj4, $dm0:0x000000030000000C, $dm1:0x000000030000000C, $dn0, $dn4, $m0, $p2, $p7, $plfr0:0x00000000A2000040, $r1, $r4, $r5, $r6, $r8, $r10, $r12, $r18, $r30, $x0, $x2, $x4, $x6:0x0000000000000002, $x8:0x0000000000000002, $x10, $r19, $r21, $r23
+  
+    renamable $dm2 = VMUL_vmul_vmul_cm_core_X_X renamable $x0, renamable $x6, renamable $r12
+    renamable $dm3 = VMUL_vmul_vmul_cm_core_X_X killed renamable $x0, renamable $x8, killed renamable $r12
+    renamable $dm1 = VADDMAC_vaddmac_vmul_cm_core_X_X killed renamable $dm1, killed renamable $dm2, renamable $x10, killed renamable $x2, renamable $r10
+    renamable $dm0 = VADDMAC_vaddmac_vmul_cm_core_X_X killed renamable $dm0, killed renamable $dm3, killed renamable $x10, killed renamable $x4, killed renamable $r10
+    $lc = ADD_NC_add_lc_ri $r18, 0
+    SET_LS_REL_pseudo %bb.9, implicit-def $ls, implicit $pc
+    SET_LE_REL_pseudo <mcsymbol .L_LEnd0>, implicit-def $le, implicit $pc
+  
+  bb.9.last_iter_inner:
+    successors: %bb.9(0x7c000000), %bb.10(0x04000000)
+    liveins: $lfe, $dc0, $dc4, $dj0, $dj4, $dm0:0x000000030000000C, $dm1:0x000000030000000C, $dn0, $dn4, $m0, $p2, $p7, $plfr0:0x00000000A2000040, $r1, $r4, $r5, $r6, $r8, $r30, $d0_3d:0x3800000040001C00, $r19, $r21, $r23
+  
+    $x8, $p0, $lf0, $r24 = VLDB_POPX $r30, $r30, $p0, $lf0, $r24, implicit-def $lfe, implicit-def $srfifo_uf, implicit $lfe
+    $x6, $p0, $lf0, $r24, $dc0, $dc4 = VLD_POP_512_3D_pseudo $p0, $lf0, $r24, $d0_3d, implicit-def $srfifo_uf
+    renamable $x4, renamable $p7 = VLD_x_pstm_nrm_imm_pseudo killed renamable $p7, 64
+    renamable $x2, renamable $p7 = VLD_x_pstm_nrm_imm_pseudo killed renamable $p7, 64
+    renamable $x0 = VSHUFFLE_vec_shuffle_x killed renamable $x8, killed renamable $x6, renamable $r4
+    renamable $dm1 = VMAC_vmac_vmul_cm_core_X_X killed renamable $dm1, renamable $x0, killed renamable $x4, renamable $r8
+    renamable $dm0 = VMAC_vmac_vmul_cm_core_X_X killed renamable $dm0, killed renamable $x0, killed renamable $x2, renamable $r8
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.9
+  
+  bb.10.last_iter_bottom:
+    liveins: $dm0:0x000000030000000C, $dm1:0x000000030000000C, $p2, $r1, $r5, $r6, $r19, $r21, $r23
+  
+    $crsrsmode = MOVX_mvx_cr_imm 0
+    $s0 = MOV_alu_mv_mv_mv_scl killed $r6
+    $srssign0 = MOV_alu_mv_mv_mv_scl killed $r1
+    VST_SRS_4x_dmx_sts_srs_dm_idx_imm_srsSign0 killed renamable $dm1, renamable $s0, renamable $p2, 0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $dj0 = MOV_scalar_pseudo killed $r5
+    VST_SRS_4x_dmx_sts_srs_dm_idx_srsSign0 killed renamable $dm0, killed renamable $s0, killed renamable $p2, killed renamable $dj0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $srssign0 = MOVX_mvx_cr_imm 0
+    $p7 = LDA_dms_lda_scalar_spill -60, implicit $sp
+    $p6 = LDA_dms_lda_scalar_spill -64, implicit $sp
+    $r12 = MOV_OR_pseudo killed $r23
+    $r10 = MOV_OR_pseudo killed $r21
+    $r8 = MOV_OR_pseudo killed $r19
+    frame-destroy PADDXM_pstm_sp_imm -64, implicit-def $sp, implicit $sp
+    RET implicit $lr
+    DelayedSchedBarrier
+...
