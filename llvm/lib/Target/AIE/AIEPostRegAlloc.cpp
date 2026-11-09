@@ -44,23 +44,12 @@ void AIEPostRegAlloc::AllocState::init(
   const unsigned II = LiveLanesByLRIndex.begin()->second.size();
   this->CycleOccupancy.assign(II, PartSet());
 
-  // Pre-compute the per-physreg PartSet cache and the per-LR admissible
-  // RegUnit set. The admissible set is the union of RegUnits of all admissible
-  // physical registers, i.e., all RegUnits that this live range could
-  // potentially occupy.
-  this->PhysRegUnitSets.clear();
+  // Point at the tracker's per-physreg PartSet cache and copy the per-LR
+  // admissible RegUnit set.
+  this->PhysRegUnitSets = &RegTracker->getPhysRegUnitSets();
   this->AdmissibleRegUnits.clear();
-  for (const RegLiveRange &LR : RegTracker->getLiveRanges()) {
-    PartSet LRUnits;
-    for (MCRegister Reg : LR.getAdmissibleRegs()) {
-      PartSet &PhysRegUnits = this->PhysRegUnitSets[Reg];
-      if (PhysRegUnits.empty())
-        for (MCRegUnitIterator UI(Reg, InTRI); UI.isValid(); ++UI)
-          PhysRegUnits.set(*UI);
-      LRUnits |= PhysRegUnits;
-    }
-    this->AdmissibleRegUnits[LR.getIndex()] = LRUnits;
-  }
+  for (const RegLiveRange &LR : RegTracker->getLiveRanges())
+    this->AdmissibleRegUnits[LR.getIndex()] = LR.getAdmissibleRegUnits();
 
   const auto &AvailableRegs = RegTracker->getAvailablePhysRegs();
 
@@ -356,7 +345,7 @@ bool AIEPostRegAlloc::Placement::mayBlock(const RegLiveRange &LR,
                                           MCRegister PhysReg,
                                           const RegLiveRange &Other) const {
   return LiveCycles[LR.getIndex()].anyCommon(LiveCycles[Other.getIndex()]) &&
-         State.PhysRegUnitSets.find(PhysReg)->second.overlap(
+         State.PhysRegUnitSets->find(PhysReg)->second.overlap(
              State.AdmissibleRegUnits.find(Other.getIndex())->second);
 }
 
@@ -383,7 +372,7 @@ void AIEPostRegAlloc::Placement::place(const RegLiveRange &LR,
   // The occupancy only grew, by units of PhysReg: drop the candidates of the
   // unplaced ranges that now conflict. Candidates of a placed range are
   // recomputed when it is unplaced.
-  const PartSet &Units = State.PhysRegUnitSets.find(PhysReg)->second;
+  const PartSet &Units = State.PhysRegUnitSets->find(PhysReg)->second;
   for (const RegLiveRange *Other : Ranges) {
     if (Placed.test(Other->getIndex()) ||
         !mayBlock(LR, PhysReg.asMCReg(), *Other))
@@ -392,7 +381,7 @@ void AIEPostRegAlloc::Placement::place(const RegLiveRange &LR,
     BitVector &Admitted = Cands[Other->getIndex()];
     unsigned &Count = NumCands[Other->getIndex()];
     for (int I = Admitted.find_first(); I >= 0; I = Admitted.find_next(I))
-      if (State.PhysRegUnitSets.find(Regs[I])->second.overlap(Units) &&
+      if (State.PhysRegUnitSets->find(Regs[I])->second.overlap(Units) &&
           !State.canPlace(Regs[I], masks(*Other))) {
         Admitted.reset(I);
         --Count;

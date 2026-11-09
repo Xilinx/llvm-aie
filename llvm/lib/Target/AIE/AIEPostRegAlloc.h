@@ -183,11 +183,10 @@ private:
     std::vector<PartSet> CycleOccupancy;
 
     // Cached RegUnit set per physical register.
-    DenseMap<MCRegister, PartSet> PhysRegUnitSets;
+    const DenseMap<MCRegister, PartSet> *PhysRegUnitSets = nullptr;
 
-    // Pre-computed admissible RegUnit set per live range index.
-    // The admissible set is the union of PhysRegUnitSets for every admissible
-    // physical register of the live range.
+    // Pre-computed admissible RegUnit set per live range index, copied from
+    // RegLiveRange::getAdmissibleRegUnits() during init.
     DenseMap<unsigned, PartSet> AdmissibleRegUnits;
 
     /// Pre-computed interference graphs (reused across scoring attempts).

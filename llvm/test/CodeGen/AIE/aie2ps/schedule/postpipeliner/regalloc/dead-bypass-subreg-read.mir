@@ -5,17 +5,23 @@
 #
 # (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
 
-# FIXME: A dead e destination still writes MV_Bypass one cycle before the
-# register-file write. The next mov reads el through that bypass. mEEa and
-# mEla share no register: e4 overlaps el4 only because el4 is its low half, so
-# the admissible regunit sets overlap without being equal. Skipping that
-# partial overlap lets post-regalloc place the el read on el4, so the mov
-# observes the dead vmov instead of its own source.
+# A dead e destination still writes MV_Bypass one cycle before the register-file
+# write. The next mov reads el through that bypass on the RF-write cycle. mEEa
+# and mEla share no register: e4 overlaps el4 only because el4 is its low half,
+# so the admissible regunit sets overlap without being equal. buildLiveLanes
+# keeps that early lane for the partial overlap, so post-regalloc keeps the el
+# read on el5 instead of the low half of the dead e4.
 #
-# The CHECKs below capture the current buggy schedule:
-#   mov el4, el1
-#   vmov e4, e0
-#   mov el6, el4   ; source is the low half of the previous dest
+# The CHECKs can only show which register was chosen, so the point is the
+# timing. Cycles are relative to the first mov (issue + 1 reads the source,
+# issue + 2 writes the RF, the bypass is published one cycle before the RF):
+#   0: mov  X, el1        X is the el value read by the third instruction
+#   1: vmov e4, e0
+#   2: mov  el6, X        vmov publishes e4 (el4 and eh4) on MV_Bypass
+#   3: mov reads X; vmov writes e4 to the RF; reads of el4 take the bypass
+# With X = el4 the third mov reads el4 on the bypass and gets the low half of
+# the dead vmov result (from e0) instead of el1. With X = el5 nothing aliases
+# e4, so it reads its own value. Swapping X from el4 to el5 is the fix.
 #
 # Contrast dead-bypass-alias-read.mir, where both sides are mXm and the overlap
 # is the same register.
@@ -41,11 +47,11 @@
   ; CHECK-NEXT:    .p2align 4
   ; CHECK-NEXT:  .LBB0_1: // %loop_body
   ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
-  ; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; mov el4, el1; nopv
+  ; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; mov el5, el1; nopv
   ; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; vmov e4, e0; nopv
-  ; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; mov el6, el4; nopv
+  ; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; mov el6, el5; nopv
   ; CHECK-NEXT:  .L_LEnd0:
-  ; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; mov el5, el6; nopv
+  ; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; mov el4, el6; nopv
   ; CHECK-NEXT:    .p2align 4
   ; CHECK-NEXT:  // %bb.2: // %exit
   ; CHECK-NEXT:    nopa ; ret lr
@@ -92,7 +98,7 @@ body:             |
     ; el5 is produced just before the dead e write and consumed just after, so
     ; it is live on the bypass-publish cycle. e0 stays fixed, and e8-e11 stay
     ; live, leaving e4 as the dead destination. el4 is that destination's low
-    ; half. The CHECKs currently allow the el read to land there.
+    ; half; the CHECKs keep the el read off it.
     $el5 = MOV_alu_mv_mv_mv_e_mv_el_to_el $el1
     dead $e4 = VMOV_alu_mv_mv_mv_ee $e0
     $el6 = MOV_alu_mv_mv_mv_e_mv_el_to_el killed $el5

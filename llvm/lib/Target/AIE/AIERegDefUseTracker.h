@@ -23,6 +23,7 @@
 
 #include "AIEBaseInstrInfo.h"
 #include "AIEBaseRegisterInfo.h"
+#include "AIEMaxNumRegUnits.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
@@ -86,6 +87,9 @@ private:
   // Note: this is separate from availability - PostRegAlloc intersects this
   // with the global available registers set to get candidates.
   DenseSet<MCRegister> AdmissibleRegs;
+
+  // Union of register units of AdmissibleRegs. Valid after analyze().
+  PartSet AdmissibleRegUnits;
 
   // Virtual register assigned to this live range (if virtualized)
   Register VReg;
@@ -153,6 +157,16 @@ public:
   const DenseSet<MCRegister> &getAdmissibleRegs() const {
     return AdmissibleRegs;
   }
+
+  /// Get the union of register units of AdmissibleRegs. Valid after analyze().
+  const PartSet &getAdmissibleRegUnits() const { return AdmissibleRegUnits; }
+
+  /// Fill AdmissibleRegUnits with the union of register units of
+  /// AdmissibleRegs. \p PhysRegUnits caches each physical register's unit set
+  /// across live ranges so the same register is not expanded twice. Called
+  /// once at the end of analyze().
+  void fillAdmissibleRegUnits(const TargetRegisterInfo *TRI,
+                              DenseMap<MCRegister, PartSet> &PhysRegUnits);
 
   /// Check if a register is admissible for this live range.
   bool isAdmissible(MCRegister Reg) const {
@@ -265,6 +279,10 @@ class RegLiveRangeTracker {
 
   // Cached available physical registers (computed during analyze)
   DenseSet<MCRegister> AvailablePhysRegs;
+
+  // Cached RegUnit set per admissible physical register (computed during
+  // analyze). Built while filling each live range's AdmissibleRegUnits.
+  DenseMap<MCRegister, PartSet> PhysRegUnitSets;
 
   // Cached most promising scarce range set (computed during analyze)
   std::vector<const RegLiveRange *> MostPromisingScarceRanges;
@@ -514,6 +532,12 @@ public:
   /// Returns the cached value computed during analyze()
   const DenseSet<MCRegister> &getAvailablePhysRegs() const {
     return AvailablePhysRegs;
+  }
+
+  /// Get the cached RegUnit set per admissible physical register.
+  /// Valid after analyze().
+  const DenseMap<MCRegister, PartSet> &getPhysRegUnitSets() const {
+    return PhysRegUnitSets;
   }
 
   /// Rewrite virtual registers to physical registers using the provided
