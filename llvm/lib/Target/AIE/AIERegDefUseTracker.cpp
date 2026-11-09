@@ -1045,56 +1045,55 @@ unsigned RegLiveRangeTracker::getOrCreateLiveRangeForOperand(
     Cover |= TRI->getSubRegIndexLaneMask(SubIdxIt.getSubRegIndex());
   if (Cover.none())
     Cover = LaneBitmask::getAll();
-  auto It = llvm::find_if(
-      State.LiveRegs, [Reg, IsUse, Cover, MO, &State, this](const auto &Entry) {
-        if (!TRI->regsOverlap(Reg, Entry.first))
-          return false;
+  auto It = llvm::find_if(State.LiveRegs, [Reg, IsUse, Cover, MO, &State,
+                                           this](const auto &Entry) {
+    if (!TRI->regsOverlap(Reg, Entry.first))
+      return false;
 
-        // Registers overlap - now check if lanes overlap.
-        const MCRegister LiveReg = Entry.first;
-        const LaneBitmask LiveLanes = Entry.second.second;
+    // Registers overlap - now check if lanes overlap.
+    const MCRegister LiveReg = Entry.first;
+    const LaneBitmask LiveLanes = Entry.second.second;
 
-        // If LiveReg equals Reg, check if any lanes are live.
-        if (LiveReg == Reg) {
-          // A read consumes every lane of Reg. Lanes already redefined below
-          // carry the value of that later def, not the one this read observes,
-          // so the read belongs to an earlier range. Joining here would glue
-          // two distinct values into one range and orphan the earlier producer.
-          // Splitting is only safe when the still-live lanes have no producer
-          // above: otherwise both reads share that producer, and the split
-          // would drop the earlier range's pending lanes from LiveRegs.
-          if (IsUse)
-            return (Cover & ~LiveLanes).none() ||
-                   areLanesDefinedBefore(Reg, LiveLanes, *MO->getParent(),
-                                         State);
-          return LiveLanes.any();
-        }
+    // If LiveReg equals Reg, check if any lanes are live.
+    if (LiveReg == Reg) {
+      // A read consumes every lane of Reg. Lanes already redefined below
+      // carry the value of that later def, not the one this read observes,
+      // so the read belongs to an earlier range. Joining here would glue
+      // two distinct values into one range and orphan the earlier producer.
+      // Splitting is only safe when the still-live lanes have no producer
+      // above: otherwise both reads share that producer, and the split
+      // would drop the earlier range's pending lanes from LiveRegs.
+      if (IsUse)
+        return (Cover & ~LiveLanes).none() ||
+               areLanesDefinedBefore(Reg, LiveLanes, *MO->getParent(), State);
+      return LiveLanes.any();
+    }
 
-        // Check if Reg is a subreg of LiveReg.
-        for (MCSubRegIndexIterator SubIdxIt(LiveReg, TRI); SubIdxIt.isValid();
-             ++SubIdxIt) {
-          if (SubIdxIt.getSubReg() == Reg) {
-            // Reg is a subreg of LiveReg - check if Reg's lanes are live.
-            const LaneBitmask RegLanes =
-                TRI->getSubRegIndexLaneMask(SubIdxIt.getSubRegIndex());
-            return (LiveLanes & RegLanes).any();
-          }
-        }
+    // Check if Reg is a subreg of LiveReg.
+    for (MCSubRegIndexIterator SubIdxIt(LiveReg, TRI); SubIdxIt.isValid();
+         ++SubIdxIt) {
+      if (SubIdxIt.getSubReg() == Reg) {
+        // Reg is a subreg of LiveReg - check if Reg's lanes are live.
+        const LaneBitmask RegLanes =
+            TRI->getSubRegIndexLaneMask(SubIdxIt.getSubRegIndex());
+        return (LiveLanes & RegLanes).any();
+      }
+    }
 
-        // Check if LiveReg is a subreg of Reg.
-        for (MCSubRegIndexIterator SubIdxIt(Reg, TRI); SubIdxIt.isValid();
-             ++SubIdxIt) {
-          if (SubIdxIt.getSubReg() == LiveReg) {
-            // LiveReg is a subreg of Reg - if any lanes of LiveReg are live,
-            // they overlap with Reg.
-            return LiveLanes.any();
-          }
-        }
-
-        // Registers overlap but no subreg relationship - conservatively treat
-        // as overlapping if any lanes are live.
+    // Check if LiveReg is a subreg of Reg.
+    for (MCSubRegIndexIterator SubIdxIt(Reg, TRI); SubIdxIt.isValid();
+         ++SubIdxIt) {
+      if (SubIdxIt.getSubReg() == LiveReg) {
+        // LiveReg is a subreg of Reg - if any lanes of LiveReg are live,
+        // they overlap with Reg.
         return LiveLanes.any();
-      });
+      }
+    }
+
+    // Registers overlap but no subreg relationship - conservatively treat
+    // as overlapping if any lanes are live.
+    return LiveLanes.any();
+  });
 
   if (It != State.LiveRegs.end()) {
     const int LRIdx = It->second.first;
@@ -1596,9 +1595,14 @@ void RegLiveRangeTracker::finalizeAvailabilityAndScarcity(
   // This happens AFTER register class filtering.
   pruneByFullCoverage();
 
-  // Assign compact indices now that all filtering is finalized.
-  for (unsigned I = 0; I < LiveRanges.size(); ++I)
-    LiveRanges[I].setIndex(I);
+  // Assign compact indices now that all filtering is finalized, and
+  // precompute the admissible RegUnit PartSet for each live range.
+  PhysRegUnitSets.clear();
+  for (unsigned I = 0; I < LiveRanges.size(); ++I) {
+    RegLiveRange &LR = LiveRanges[I];
+    LR.setIndex(I);
+    LR.fillAdmissibleRegUnits(TRI, PhysRegUnitSets);
+  }
 
   // Compute and cache available physical registers.
   const DenseSet<MCRegister> ReservedRegs = collectReservedBaseRegs();
@@ -1677,6 +1681,19 @@ void RegLiveRangeTracker::analyze(MachineBasicBlock &MBB,
   // Finalize availability and scarcity.  Must run after any filtering so that
   // discarded ranges do not inflate AvailablePhysRegs.
   finalizeAvailabilityAndScarcity(MBB, State);
+}
+
+void RegLiveRange::fillAdmissibleRegUnits(
+    const TargetRegisterInfo *TRI,
+    DenseMap<MCRegister, PartSet> &PhysRegUnits) {
+  AdmissibleRegUnits.clear();
+  for (MCRegister Reg : AdmissibleRegs) {
+    PartSet &RegUnits = PhysRegUnits[Reg];
+    if (RegUnits.empty())
+      for (MCRegUnitIterator UI(Reg, TRI); UI.isValid(); ++UI)
+        RegUnits.set(*UI);
+    AdmissibleRegUnits |= RegUnits;
+  }
 }
 
 void RegLiveRange::setRegisterClass(const TargetRegisterClass *RC) {

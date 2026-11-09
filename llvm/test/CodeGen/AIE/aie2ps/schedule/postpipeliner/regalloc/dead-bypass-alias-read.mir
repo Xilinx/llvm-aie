@@ -5,16 +5,11 @@
 #
 # (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
 
-# FIXME: A dead VMIN/VMAX vector destination still writes the MV_Bypass one
-# cycle before the register-file write. The next instruction's vector source
-# is read through that same bypass on the RF-write cycle. Skipping the dead
-# bypass lane lets post-regalloc place both on one x register, so the second
-# instruction sees the previous clip result instead of its own source.
-#
-# The CHECKs below capture the current buggy schedule:
-#   vmin_ge.16 x5, r16, x7, x8
-#   vmax_lt.16 x6, r16, x5, x9   ; source is previous dest
-#   vmin_ge.16 x4, r16, x6, x10  ; source is previous dest
+# A dead VMIN/VMAX vector destination still writes the MV_Bypass one cycle
+# before the register-file write. The next instruction's vector source is
+# read through that same bypass on the RF-write cycle. buildLiveLanes keeps
+# that early lane when an aliasing bypass reader is present, so post-regalloc
+# cannot reuse the dead destination as the next clip's source.
 #
 # Contrast minmax-deadrange.mir: both r16 defs are dead and nothing reads
 # r16, so skipping those bypass lanes is correct and II=2 stays legal.
@@ -41,9 +36,9 @@
   ; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; vadd.16 x5, x1, x1; nopv
   ; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; vadd.16 x6, x2, x2; nopv
   ; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; vadd.16 x4, x3, x3; nopv
-  ; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; vmin_ge.16 x5, r16, x7, x8, vaddsign1; nopv
-  ; CHECK-NEXT:    nopa ; nopb ; nopx ; vmax_lt.16 x6, r16, x5, x9, vaddsign1
-  ; CHECK-NEXT:    vmin_ge.16 x4, r16, x6, x10, vaddsign1
+  ; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; vmin_ge.16 x7, r16, x7, x8, vaddsign1; nopv
+  ; CHECK-NEXT:    nopa ; nopb ; nopx ; vmax_lt.16 x5, r16, x5, x9, vaddsign1
+  ; CHECK-NEXT:    vmin_ge.16 x6, r16, x6, x10, vaddsign1
   ; CHECK-NEXT:  .L_LEnd0:
   ; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; vmax_lt.16 x4, r16, x4, x11, vaddsign1; nopv
   ; CHECK-NEXT:    .p2align 4

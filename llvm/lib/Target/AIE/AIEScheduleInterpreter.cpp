@@ -239,6 +239,29 @@ static LaneBitmask getLaneMaskFor(const TargetRegisterInfo &TRI,
   return TRI.getSubRegIndexLaneMask(SubRegIdx);
 }
 
+// True when a same-class bypass read at WriteOffset may share a phys reg with
+// Writer. That read is live on the early bypass-publish cycle, which the
+// write's RF lane alone does not cover. Scan every cycle with that offset:
+// the event schedule has one iteration across stages.
+static bool hasSharedRegBypassRead(const EventSchedule &Schedule,
+                                   int WriteOffset, int II,
+                                   unsigned WriteLRIndex,
+                                   unsigned ForwardingClass,
+                                   const RegLiveRangeTracker &Tracker) {
+  const PartSet &WriterUnits = Tracker[WriteLRIndex].getAdmissibleRegUnits();
+  for (int C = WriteOffset; C < static_cast<int>(Schedule.size()); C += II) {
+    for (const RFEvent &Event : Schedule[C]) {
+      if (Event.Type != EventType::Read ||
+          Event.ForwardingClass != ForwardingClass ||
+          Event.LRIndex == WriteLRIndex)
+        continue;
+      if (WriterUnits.overlap(Tracker[Event.LRIndex].getAdmissibleRegUnits()))
+        return true;
+    }
+  }
+  return false;
+}
+
 DenseMap<unsigned, AIE::LivenessVector> AIEScheduleInterpreter::buildLiveLanes(
     const EventSchedule &Schedule, int II,
     const RegLiveRangeTracker &Tracker) const {
@@ -285,14 +308,13 @@ DenseMap<unsigned, AIE::LivenessVector> AIEScheduleInterpreter::buildLiveLanes(
         // RF write occupies register file at ModuloCycle.
         LiveLanesByLRIndex[Event.LRIndex][ModuloCycle] |= M;
 
-        // If this write uses a bypass, mark bypass write one cycle earlier.
-        // For dead ranges (no uses) the bypassed value has no reader, so the
-        // bypass write occupancy contributes no real constraint and is skipped.
-        // Without this, two dead writes to the same scarce register with
-        // adjacent issue cycles create an artificial interference through the
-        // bypass write slot that prevents both from being allocated.
+        // Forwarding write: also occupy one cycle earlier. Skip that for a
+        // dead def unless a same-class bypass read may share its phys reg
+        // (hasSharedRegBypassRead); otherwise scarce dead defs stay allocable.
         if (Event.ForwardingClass != 0 &&
-            Tracker[Event.LRIndex].getNumUses() > 0) {
+            (Tracker[Event.LRIndex].getNumUses() > 0 ||
+             hasSharedRegBypassRead(Schedule, ModuloCycle, II, Event.LRIndex,
+                                    Event.ForwardingClass, Tracker))) {
           const int BypassWriteCycle = C - 1;
           if (BypassWriteCycle >= 0) {
             const int BypassModuloCycle = BypassWriteCycle % II;
