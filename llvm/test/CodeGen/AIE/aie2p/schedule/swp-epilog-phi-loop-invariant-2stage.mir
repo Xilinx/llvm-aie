@@ -207,7 +207,7 @@ body:             |
   ; CHECK-NEXT: bb.5:
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[PHI5:%[0-9]+]]:er = PHI [[PHI1]], %bb.4
+  ; CHECK-NEXT:   [[PHI5:%[0-9]+]]:er = PHI [[MOV_RLC_imm11_pseudo4]], %bb.4
   ; CHECK-NEXT:   [[PHI6:%[0-9]+]]:acc2048 = PHI [[VMAC_vmul_cm_core_X_X]], %bb.4
   ; CHECK-NEXT:   [[PHI7:%[0-9]+]]:vec512 = PHI [[VLD_x_idx_pseudo2]], %bb.4
   ; CHECK-NEXT:   [[PHI8:%[0-9]+]]:vec512 = PHI [[VLD_x_idx_pseudo3]], %bb.4
