@@ -496,6 +496,8 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
       .widenScalarToNextPow2(0)
       .clampScalar(0, S20, S20);
 
+  getActionDefinitionsBuilder(G_PTRMASK).custom();
+
   // We support pointer arithmetic on both GPRs (32-bits) and pointer regs
   // (20-bits, where the scalar addend resides in a MOD register). To allow
   // specifying alternative register bank mappings, we need to truncate the RHS
@@ -880,6 +882,8 @@ bool AIE2PLegalizerInfo::legalizeCustom(
     return AIEHelper.legalizeG_UNMERGE_VALUES(Helper, MI);
   case TargetOpcode::G_SEXT_INREG:
     return AIEHelper.legalizeG_SEXT_INREG(Helper, MI);
+  case TargetOpcode::G_PTRMASK:
+    return AIEHelper.legalizeG_PTRMASK(Helper, MI);
   case TargetOpcode::G_SELECT:
     return AIEHelper.legalizeG_SELECT(Helper, MI, /* MaxBitSize */ 512);
   case TargetOpcode::G_CONCAT_VECTORS:

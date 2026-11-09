@@ -111,6 +111,7 @@ public:
   bool isUnaligned20BitStore(const LegalityQuery &Query) const;
   bool legalize_G_STORE(LegalizerHelper &Helper, GStore &StoreI) const;
   bool legalizeG_ICMP(LegalizerHelper &Helper, GICmp &ICmp) const;
+  bool legalizeG_PTRMASK(LegalizerHelper &Helper, MachineInstr &MI) const;
 };
 
 } // namespace llvm
