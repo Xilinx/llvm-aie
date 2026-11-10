@@ -163,23 +163,23 @@ define dso_local void @gemm_int8_psum_1_v2(ptr noalias %p_a, ptr noalias %p_b, p
 ; CHECK-NEXT:    vlda x1, [p1], m3; paddb.2d [p3], d2; nops ; nopx ; vshuffle x5, x3, x3, r2; vmac dm1, dm1, x8, x9, r8
 ; CHECK-NEXT:    vldb.3d x3, [p1], d1; vshuffle x7, x10, x10, r4; vmac dm0, dm0, x6, x9, r8
 ; CHECK-NEXT:    vlda.ups.2x bmll3, s0, upssign1, [p3, #0]; vshuffle x9, x7, x7, r6; vmac dm5, dm5, x8, x5, r8
-; CHECK-NEXT:    vldb x6, [p0], #64; vshuffle x3, x1, x1, r0; vmac dm2, dm2, x6, x5, r8
-; CHECK-NEXT:    vldb.3d x8, [p0], d0; vshuffle x5, x3, x3, r2; vmac dm1, dm1, x8, x9, r8
-; CHECK-NEXT:    vshuffle x7, x10, x10, r4; vmac dm0, dm0, x6, x9, r8
-; CHECK-NEXT:    vlda bmll5, [p2], #64; vshuffle x9, x7, x7, r6; vmac dm5, dm5, x8, x5, r8
-; CHECK-NEXT:    vlda bmlh5, [p2], #64; mov s0, r18; vmac dm2, dm2, x6, x5, r8
-; CHECK-NEXT:    vlda bmhl5, [p2], #64; mov s0, r16; vmac dm1, dm1, x8, x9, r8
-; CHECK-NEXT:    vlda bmhh5, [p2], #64; vmac dm0, dm0, x6, x9, r8
-; CHECK-NEXT:    vlda bmll2, [p2], #64
-; CHECK-NEXT:    vlda bmlh2, [p2], #64; vsrs.2x wl10, bmll3, s0, srssign1
-; CHECK-NEXT:    vlda bmhl2, [p2], #64; vst bmll5, [p4], #64
-; CHECK-NEXT:    vlda bmhh2, [p2], #64; vst bmlh5, [p4], #64
-; CHECK-NEXT:    vlda bmll1, [p2], #64; vst bmhl5, [p4], #64
-; CHECK-NEXT:    vlda bmlh1, [p2], #64; vst bmhh5, [p4], #64; vsel.32 x4, x4, x10, r17
-; CHECK-NEXT:    vlda bmhl1, [p2], #64; vst bmll2, [p4], #64; vshift x10, x10, x0, r30
-; CHECK-NEXT:    vlda bmhh1, [p2], #64; vst bmlh2, [p4], #64; vsel.32 x2, x2, x10, r17
-; CHECK-NEXT:    vlda bmll0, [p2], #64; vst bmhl2, [p4], #64; vshuffle x10, x1, x1, r20
-; CHECK-NEXT:    vlda bmlh0, [p2], #64; vst bmhh2, [p4], #64; vshuffle x1, x3, x3, r24
+; CHECK-NEXT:    vlda bmll5, [p2], #64; vldb x6, [p0], #64; vshuffle x3, x1, x1, r0; vmac dm2, dm2, x6, x5, r8
+; CHECK-NEXT:    vlda bmlh5, [p2], #64; vldb.3d x8, [p0], d0; vshuffle x5, x3, x3, r2; vmac dm1, dm1, x8, x9, r8
+; CHECK-NEXT:    vlda bmhl5, [p2], #64; vshuffle x7, x10, x10, r4; vmac dm0, dm0, x6, x9, r8
+; CHECK-NEXT:    vlda bmhh5, [p2], #64; vshuffle x9, x7, x7, r6; vmac dm6, dm5, x8, x5, r8
+; CHECK-NEXT:    vlda bmll2, [p2], #64; mov s0, r18; vmac dm7, dm2, x6, x5, r8
+; CHECK-NEXT:    vlda bmlh2, [p2], #64; mov s0, r16; vmac dm1, dm1, x8, x9, r8
+; CHECK-NEXT:    vlda bmhl2, [p2], #64; vmac dm0, dm0, x6, x9, r8
+; CHECK-NEXT:    vlda bmhh2, [p2], #64
+; CHECK-NEXT:    vsrs.2x wl10, bmll3, s0, srssign1
+; CHECK-NEXT:    vst bmll6, [p4], #64
+; CHECK-NEXT:    vst bmlh6, [p4], #64
+; CHECK-NEXT:    vlda bmll1, [p2], #64; vst bmhl6, [p4], #64
+; CHECK-NEXT:    vlda bmlh1, [p2], #64; vst bmhh6, [p4], #64; vsel.32 x4, x4, x10, r17
+; CHECK-NEXT:    vlda bmhl1, [p2], #64; vst bmll7, [p4], #64; vshift x10, x10, x0, r30
+; CHECK-NEXT:    vlda bmhh1, [p2], #64; vst bmlh7, [p4], #64; vsel.32 x2, x2, x10, r17
+; CHECK-NEXT:    vlda bmll0, [p2], #64; vst bmhl7, [p4], #64; vshuffle x10, x1, x1, r20
+; CHECK-NEXT:    vlda bmlh0, [p2], #64; vst bmhh7, [p4], #64; vshuffle x1, x3, x3, r24
 ; CHECK-NEXT:    vlda bmhl0, [p2], #64; vst bmll1, [p4], #64; vshuffle x10, x10, x10, r22
 ; CHECK-NEXT:    vlda bmhh0, [p2], #64; vldb x1, [p1], m3; vst bmlh1, [p4], #64; nopx ; vshuffle x1, x1, x1, r26; vmul dm4, x0, x4, r12
 ; CHECK-NEXT:    vlda.3d x10, [p1], d1; vst bmhl1, [p4], #64; jnzd r1, r1, p5
