@@ -6,6 +6,7 @@
 #
 # (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple aie2 -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck %s --check-prefix=AIE2
+# RUN: llc -mtriple aie2p -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck %s --check-prefix=AIE2P
 # RUN: llc -mtriple aie2ps -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck %s --check-prefix=AIE2PS
 
 ---
@@ -28,6 +29,22 @@ body: |
     ; AIE2-NEXT: [[BITCAST2:%[0-9]+]]:_(<2 x s16>) = G_BITCAST [[OR]](s32)
     ; AIE2-NEXT: $r0 = COPY [[BITCAST2]](<2 x s16>)
     ; AIE2-NEXT: PseudoRET implicit $lr, implicit $r0
+    ;
+    ; AIE2P-LABEL: name: load_v2s8_align2
+    ; AIE2P: liveins: $p0
+    ; AIE2P-NEXT: {{  $}}
+    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
+    ; AIE2P-NEXT: [[LOAD:%[0-9]+]]:_(s32) = G_LOAD [[COPY]](p0) :: (load (s16))
+    ; AIE2P-NEXT: [[TRUNC:%[0-9]+]]:_(s16) = G_TRUNC [[LOAD]](s32)
+    ; AIE2P-NEXT: [[BITCAST:%[0-9]+]]:_(<2 x s8>) = G_BITCAST [[TRUNC]](s16)
+    ; AIE2P-NEXT: [[BITCAST1:%[0-9]+]]:_(s16) = G_BITCAST [[BITCAST]](<2 x s8>)
+    ; AIE2P-NEXT: [[ANYEXT:%[0-9]+]]:_(s32) = G_ANYEXT [[BITCAST1]](s16)
+    ; AIE2P-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 8
+    ; AIE2P-NEXT: [[SHL:%[0-9]+]]:_(s32) = G_SHL [[ANYEXT]], [[C]](s32)
+    ; AIE2P-NEXT: [[OR:%[0-9]+]]:_(s32) = G_OR [[ANYEXT]], [[SHL]]
+    ; AIE2P-NEXT: [[BITCAST2:%[0-9]+]]:_(<2 x s16>) = G_BITCAST [[OR]](s32)
+    ; AIE2P-NEXT: $r0 = COPY [[BITCAST2]](<2 x s16>)
+    ; AIE2P-NEXT: PseudoRET implicit $lr, implicit $r0
     ;
     ; AIE2PS-LABEL: name: load_v2s8_align2
     ; AIE2PS: liveins: $p0
@@ -76,6 +93,27 @@ body: |
     ; AIE2-NEXT: [[BITCAST2:%[0-9]+]]:_(<2 x s16>) = G_BITCAST [[OR1]](s32)
     ; AIE2-NEXT: $r0 = COPY [[BITCAST2]](<2 x s16>)
     ; AIE2-NEXT: PseudoRET implicit $lr, implicit $r0
+    ;
+    ; AIE2P-LABEL: name: load_v2s8_align1
+    ; AIE2P: liveins: $p0
+    ; AIE2P-NEXT: {{  $}}
+    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
+    ; AIE2P-NEXT: [[ZEXTLOAD:%[0-9]+]]:_(s32) = G_ZEXTLOAD [[COPY]](p0) :: (load (s8))
+    ; AIE2P-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 1
+    ; AIE2P-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C]](s20)
+    ; AIE2P-NEXT: [[LOAD:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD]](p0) :: (load (s8) from unknown-address + 1)
+    ; AIE2P-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 8
+    ; AIE2P-NEXT: [[SHL:%[0-9]+]]:_(s32) = G_SHL [[LOAD]], [[C1]](s32)
+    ; AIE2P-NEXT: [[OR:%[0-9]+]]:_(s32) = G_OR [[SHL]], [[ZEXTLOAD]]
+    ; AIE2P-NEXT: [[TRUNC:%[0-9]+]]:_(s16) = G_TRUNC [[OR]](s32)
+    ; AIE2P-NEXT: [[BITCAST:%[0-9]+]]:_(<2 x s8>) = G_BITCAST [[TRUNC]](s16)
+    ; AIE2P-NEXT: [[BITCAST1:%[0-9]+]]:_(s16) = G_BITCAST [[BITCAST]](<2 x s8>)
+    ; AIE2P-NEXT: [[ANYEXT:%[0-9]+]]:_(s32) = G_ANYEXT [[BITCAST1]](s16)
+    ; AIE2P-NEXT: [[SHL1:%[0-9]+]]:_(s32) = G_SHL [[ANYEXT]], [[C1]](s32)
+    ; AIE2P-NEXT: [[OR1:%[0-9]+]]:_(s32) = G_OR [[ANYEXT]], [[SHL1]]
+    ; AIE2P-NEXT: [[BITCAST2:%[0-9]+]]:_(<2 x s16>) = G_BITCAST [[OR1]](s32)
+    ; AIE2P-NEXT: $r0 = COPY [[BITCAST2]](<2 x s16>)
+    ; AIE2P-NEXT: PseudoRET implicit $lr, implicit $r0
     ;
     ; AIE2PS-LABEL: name: load_v2s8_align1
     ; AIE2PS: liveins: $p0
@@ -128,6 +166,26 @@ body: |
     ; AIE2-NEXT: [[ANYEXT:%[0-9]+]]:_(s32) = G_ANYEXT [[BITCAST2]](s16)
     ; AIE2-NEXT: G_STORE [[ANYEXT]](s32), [[COPY]](p0) :: (store (s16))
     ; AIE2-NEXT: PseudoRET implicit $lr
+    ;
+    ; AIE2P-LABEL: name: store_v2s8_align2
+    ; AIE2P: liveins: $p0, $r0
+    ; AIE2P-NEXT: {{  $}}
+    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
+    ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:_(<2 x s16>) = COPY $r0
+    ; AIE2P-NEXT: [[BITCAST:%[0-9]+]]:_(s32) = G_BITCAST [[COPY1]](<2 x s16>)
+    ; AIE2P-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 8
+    ; AIE2P-NEXT: [[LSHR:%[0-9]+]]:_(s32) = G_LSHR [[BITCAST]], [[C]](s32)
+    ; AIE2P-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 65280
+    ; AIE2P-NEXT: [[AND:%[0-9]+]]:_(s32) = G_AND [[LSHR]], [[C1]]
+    ; AIE2P-NEXT: [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 255
+    ; AIE2P-NEXT: [[AND1:%[0-9]+]]:_(s32) = G_AND [[BITCAST]], [[C2]]
+    ; AIE2P-NEXT: [[OR:%[0-9]+]]:_(s32) = G_OR [[AND1]], [[AND]]
+    ; AIE2P-NEXT: [[TRUNC:%[0-9]+]]:_(s16) = G_TRUNC [[OR]](s32)
+    ; AIE2P-NEXT: [[BITCAST1:%[0-9]+]]:_(<2 x s8>) = G_BITCAST [[TRUNC]](s16)
+    ; AIE2P-NEXT: [[BITCAST2:%[0-9]+]]:_(s16) = G_BITCAST [[BITCAST1]](<2 x s8>)
+    ; AIE2P-NEXT: [[ANYEXT:%[0-9]+]]:_(s32) = G_ANYEXT [[BITCAST2]](s16)
+    ; AIE2P-NEXT: G_STORE [[ANYEXT]](s32), [[COPY]](p0) :: (store (s16))
+    ; AIE2P-NEXT: PseudoRET implicit $lr
     ;
     ; AIE2PS-LABEL: name: store_v2s8_align2
     ; AIE2PS: liveins: $p0, $r0
@@ -185,6 +243,32 @@ body: |
     ; AIE2-NEXT: G_STORE [[ANYEXT]](s32), [[COPY]](p0) :: (store (s8))
     ; AIE2-NEXT: G_STORE [[LSHR1]](s32), [[PTR_ADD]](p0) :: (store (s8) into unknown-address + 1)
     ; AIE2-NEXT: PseudoRET implicit $lr
+    ;
+    ; AIE2P-LABEL: name: store_v2s8_align1
+    ; AIE2P: liveins: $p0, $r0
+    ; AIE2P-NEXT: {{  $}}
+    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
+    ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:_(<2 x s16>) = COPY $r0
+    ; AIE2P-NEXT: [[BITCAST:%[0-9]+]]:_(s32) = G_BITCAST [[COPY1]](<2 x s16>)
+    ; AIE2P-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 8
+    ; AIE2P-NEXT: [[LSHR:%[0-9]+]]:_(s32) = G_LSHR [[BITCAST]], [[C]](s32)
+    ; AIE2P-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 65280
+    ; AIE2P-NEXT: [[AND:%[0-9]+]]:_(s32) = G_AND [[LSHR]], [[C1]]
+    ; AIE2P-NEXT: [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 255
+    ; AIE2P-NEXT: [[AND1:%[0-9]+]]:_(s32) = G_AND [[BITCAST]], [[C2]]
+    ; AIE2P-NEXT: [[OR:%[0-9]+]]:_(s32) = G_OR [[AND1]], [[AND]]
+    ; AIE2P-NEXT: [[TRUNC:%[0-9]+]]:_(s16) = G_TRUNC [[OR]](s32)
+    ; AIE2P-NEXT: [[BITCAST1:%[0-9]+]]:_(<2 x s8>) = G_BITCAST [[TRUNC]](s16)
+    ; AIE2P-NEXT: [[BITCAST2:%[0-9]+]]:_(s16) = G_BITCAST [[BITCAST1]](<2 x s8>)
+    ; AIE2P-NEXT: [[ANYEXT:%[0-9]+]]:_(s32) = G_ANYEXT [[BITCAST2]](s16)
+    ; AIE2P-NEXT: [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 65535
+    ; AIE2P-NEXT: [[AND2:%[0-9]+]]:_(s32) = G_AND [[ANYEXT]], [[C3]]
+    ; AIE2P-NEXT: [[LSHR1:%[0-9]+]]:_(s32) = G_LSHR [[AND2]], [[C]](s32)
+    ; AIE2P-NEXT: [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 1
+    ; AIE2P-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C4]](s20)
+    ; AIE2P-NEXT: G_STORE [[ANYEXT]](s32), [[COPY]](p0) :: (store (s8))
+    ; AIE2P-NEXT: G_STORE [[LSHR1]](s32), [[PTR_ADD]](p0) :: (store (s8) into unknown-address + 1)
+    ; AIE2P-NEXT: PseudoRET implicit $lr
     ;
     ; AIE2PS-LABEL: name: store_v2s8_align1
     ; AIE2PS: liveins: $p0, $r0

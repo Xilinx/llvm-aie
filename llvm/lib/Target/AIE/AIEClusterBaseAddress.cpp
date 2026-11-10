@@ -430,10 +430,13 @@ bool AIEClusterBaseAddress::rerootChainsInBlock(MachineBasicBlock &MBB,
 
 /// Recursively search bottom up for Load instrs in the use chain of \p MI .
 /// Stop the search when Exiting \p MBB . Return all found Load MachineInstr in
-/// \p LoadsFeedingInstrs .
+/// \p LoadsFeedingInstrs . \p Visited tracks already-explored nodes so that
+/// each instruction in the DAG is visited at most once, avoiding exponential
+/// path enumeration when a value is used by multiple operands.
 void findLoadsFeedingInstr(MachineInstr &MI, MachineBasicBlock *MBB,
                            std::set<MachineInstr *> &LoadsFeedingInstrs,
-                           const MachineRegisterInfo &MRI) {
+                           const MachineRegisterInfo &MRI,
+                           SmallPtrSetImpl<MachineInstr *> &Visited) {
   for (MachineOperand &MO : MI.uses()) {
     if (!MO.isReg())
       continue;
@@ -449,12 +452,17 @@ void findLoadsFeedingInstr(MachineInstr &MI, MachineBasicBlock *MBB,
     if (UseMI->getParent() != MBB || UseMI->isPHI())
       continue;
 
+    // Skip already-visited instructions to avoid exponential traversal of
+    // DAGs where a value is consumed by multiple operands at each level.
+    if (!Visited.insert(UseMI).second)
+      continue;
+
     if (UseMI->mayLoad()) {
       LoadsFeedingInstrs.emplace(UseMI);
       LLVM_DEBUG(dbgs() << "Found Feeding Load " << *UseMI);
     }
 
-    findLoadsFeedingInstr(*UseMI, MBB, LoadsFeedingInstrs, MRI);
+    findLoadsFeedingInstr(*UseMI, MBB, LoadsFeedingInstrs, MRI, Visited);
   }
 }
 
@@ -468,7 +476,8 @@ AIEClusterBaseAddress::getLoadsFeedingCondBranch(MachineBasicBlock &MBB) const {
   std::set<MachineInstr *> LoadsFeedingCondBranch;
   for (auto &MI : make_range(MBB.getFirstTerminator(), MBB.end())) {
     if (MI.isConditionalBranch()) {
-      findLoadsFeedingInstr(MI, &MBB, LoadsFeedingCondBranch, *MRI);
+      SmallPtrSet<MachineInstr *, 16> Visited;
+      findLoadsFeedingInstr(MI, &MBB, LoadsFeedingCondBranch, *MRI, Visited);
       break;
     }
   }

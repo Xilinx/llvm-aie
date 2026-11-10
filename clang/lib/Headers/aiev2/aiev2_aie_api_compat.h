@@ -1460,7 +1460,6 @@ inline __attribute__((always_inline)) void * delay4(void * );
 inline __attribute__((always_inline)) void * delay5(void * );
 inline __attribute__((always_inline)) void * delay6(void * );
 inline __attribute__((always_inline)) v16cint16_compress * floor(v16cint16_compress * );
-inline __attribute__((always_inline)) unsigned long long get_cycles();
 inline __attribute__((always_inline)) unsigned int packet_header(unsigned int , unsigned int );
 inline __attribute__((always_inline)) unsigned int ctrl_packet_header(unsigned int , unsigned int , unsigned int , unsigned int );
 inline __attribute__((always_inline)) v16accfloat mul_elem_16_accuracy_low_inner(v16float , v16float , int );

@@ -353,7 +353,11 @@ void AIEPostRASchedStrategy::initializeBotScoreBoard() {
   // When getBlockedResourceCap returns a value, this is a loop-aware
   // scheduling block. Its FirstBlockedCycle is determined solely by the cap
   // and not by successor information, so exclude it from CanUseSuccessors.
-  const auto Cap = InterBlock.getBlockedResourceCap(CurMBB);
+  // The cap covers the cycles after the bottom region, the loop's back edge.
+  // The other regions end at a call or a barrier that the scheduler can't see
+  // past: they block every cycle.
+  const auto Cap =
+      IsBottomRegion ? InterBlock.getBlockedResourceCap(CurMBB) : std::nullopt;
 
   // Successor information is only applicable for bottom regions without
   // unknown successors and not under loop-aware scheduling (which uses a

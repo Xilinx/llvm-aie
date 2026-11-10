@@ -1408,3 +1408,101 @@ body:             |
     PseudoRET implicit $lr, implicit $x0, implicit $g0, implicit $e0
 
 ...
+---
+# The users of the sub-tile and exponent results are selected first and
+# constrain them to eL, which is incompatible with the mGGs/mEEs classes the
+# pop defines. Check that the selector copies them over.
+name:            test_fifo_ld_pop_BFP640_unmerge_subtile_exp
+alignment:       16
+legalized:       true
+regBankSelected: true
+selected:        false
+body:             |
+  bb.1.entry:
+    liveins: $p0, $p1
+
+    ; CHECK-LABEL: name: test_fifo_ld_pop_BFP640_unmerge_subtile_exp
+    ; CHECK: liveins: $p0, $p1
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:eps = COPY $p1
+    ; CHECK-NEXT: [[DEF:%[0-9]+]]:eldfiforeg = IMPLICIT_DEF
+    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mrf2a = MOV_RLC_imm11_pseudo 0
+    ; CHECK-NEXT: [[VLD_POP_640_normal_pop_pseudo:%[0-9]+]]:mexa, [[VLD_POP_640_normal_pop_pseudo1:%[0-9]+]]:eps, [[VLD_POP_640_normal_pop_pseudo2:%[0-9]+]]:eldfiforeg, [[VLD_POP_640_normal_pop_pseudo3:%[0-9]+]]:mrf2a = VLD_POP_640_normal_pop_pseudo [[COPY1]], [[DEF]], [[MOV_RLC_imm11_pseudo]], implicit-def $srfifo_uf
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:mewlv_bis = COPY [[VLD_POP_640_normal_pop_pseudo]].sub_bfp320_lo
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:vec256 = COPY [[COPY2]].sub_bfp_v256
+    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:mgs = COPY [[COPY2]].sub_bfp_g32
+    ; CHECK-NEXT: [[COPY5:%[0-9]+]]:mes = COPY [[COPY2]].sub_bfp_e32
+    ; CHECK-NEXT: [[COPY6:%[0-9]+]]:mewhv = COPY [[VLD_POP_640_normal_pop_pseudo]].sub_bfp320_hi
+    ; CHECK-NEXT: [[COPY7:%[0-9]+]]:vec256 = COPY [[COPY6]].sub_bfp_v256
+    ; CHECK-NEXT: [[COPY8:%[0-9]+]]:mgs = COPY [[COPY6]].sub_bfp_g32
+    ; CHECK-NEXT: [[COPY9:%[0-9]+]]:mes = COPY [[COPY6]].sub_bfp_e32
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec512 = REG_SEQUENCE [[COPY3]], %subreg.sub_256_lo, [[COPY7]], %subreg.sub_256_hi
+    ; CHECK-NEXT: [[REG_SEQUENCE1:%[0-9]+]]:mggs = REG_SEQUENCE [[COPY4]], %subreg.sub_lo_exp, [[COPY8]], %subreg.sub_hi_exp
+    ; CHECK-NEXT: [[COPY10:%[0-9]+]]:el = COPY [[REG_SEQUENCE1]]
+    ; CHECK-NEXT: [[REG_SEQUENCE2:%[0-9]+]]:mees = REG_SEQUENCE [[COPY5]], %subreg.sub_lo_exp, [[COPY9]], %subreg.sub_hi_exp
+    ; CHECK-NEXT: [[COPY11:%[0-9]+]]:el = COPY [[REG_SEQUENCE2]]
+    ; CHECK-NEXT: [[COPY12:%[0-9]+]]:mlockid_reg = COPY [[COPY10]].sub_l_even
+    ; CHECK-NEXT: [[COPY13:%[0-9]+]]:er = COPY [[COPY10]].sub_l_odd
+    ; CHECK-NEXT: [[COPY14:%[0-9]+]]:mlockid_reg = COPY [[COPY11]].sub_l_even
+    ; CHECK-NEXT: [[COPY15:%[0-9]+]]:er = COPY [[COPY11]].sub_l_odd
+    ; CHECK-NEXT: [[ADD_alu_r_rr:%[0-9]+]]:mlockid_reg = ADD_alu_r_rr [[COPY12]], [[COPY14]], implicit-def dead $srcarry
+    ; CHECK-NEXT: ST_dms_sts_scalar_st_idx_imm [[ADD_alu_r_rr]], [[COPY]], 0 :: (store (s32))
+    ; CHECK-NEXT: PseudoRET implicit $lr
+    %0:ptrregbank(p0) = COPY $p0
+    %1:ptrregbank(p0) = COPY $p1
+    %2:fiforegbank(<32 x s32>) = G_IMPLICIT_DEF
+    %3:gprregbank(s32) = G_CONSTANT i32 0
+    %4:ptrregbank(p0), %5:fiforegbank(<32 x s32>), %6:gprregbank(s32), %7:vregbank(<16 x s32>), %8:gprregbank(<2 x s32>), %9:gprregbank(<2 x s32>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2ps.fifo.ld.pop.BFP640), %1(p0), %2(<32 x s32>), %3(s32)
+    %10:gprregbank(s32), %11:gprregbank(s32) = G_UNMERGE_VALUES %8(<2 x s32>)
+    %12:gprregbank(s32), %13:gprregbank(s32) = G_UNMERGE_VALUES %9(<2 x s32>)
+    %14:gprregbank(s32) = G_ADD %10, %12
+    G_STORE %14(s32), %0(p0) :: (store (s32))
+    PseudoRET implicit $lr
+
+...
+---
+# Same for the 32-bit results of the BFP768 pop, which a G_ADD constrains to
+# eR.
+name:            test_fifo_ld_pop_BFP768_add_subtile_exp
+alignment:       16
+legalized:       true
+regBankSelected: true
+selected:        false
+body:             |
+  bb.1.entry:
+    liveins: $p0, $p1
+
+    ; CHECK-LABEL: name: test_fifo_ld_pop_BFP768_add_subtile_exp
+    ; CHECK: liveins: $p0, $p1
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:eps = COPY $p1
+    ; CHECK-NEXT: [[DEF:%[0-9]+]]:eldfiforeg = IMPLICIT_DEF
+    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mrf2a = MOV_RLC_imm11_pseudo 0
+    ; CHECK-NEXT: [[VLD_POP_768_normal_pop_pseudo:%[0-9]+]]:mfexa, [[VLD_POP_768_normal_pop_pseudo1:%[0-9]+]]:eps, [[VLD_POP_768_normal_pop_pseudo2:%[0-9]+]]:eldfiforeg, [[VLD_POP_768_normal_pop_pseudo3:%[0-9]+]]:mrf2a = VLD_POP_768_normal_pop_pseudo [[COPY1]], [[DEF]], [[MOV_RLC_imm11_pseudo]], implicit-def $srfifo_uf
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:mfewm = COPY [[VLD_POP_768_normal_pop_pseudo]].sub_bfp384_lo
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:vec256 = COPY [[COPY2]].sub_few_bfp_w
+    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:mfs = COPY [[COPY2]].sub_few_bfp_f64
+    ; CHECK-NEXT: [[COPY5:%[0-9]+]]:mgs = COPY [[COPY2]].sub_few_bfp_g32
+    ; CHECK-NEXT: [[COPY6:%[0-9]+]]:mlockid_reg = COPY [[COPY5]]
+    ; CHECK-NEXT: [[COPY7:%[0-9]+]]:mes = COPY [[COPY2]].sub_few_bfp_e32
+    ; CHECK-NEXT: [[COPY8:%[0-9]+]]:mlockid_reg = COPY [[COPY7]]
+    ; CHECK-NEXT: [[COPY9:%[0-9]+]]:mfewm = COPY [[VLD_POP_768_normal_pop_pseudo]].sub_bfp384_hi
+    ; CHECK-NEXT: [[COPY10:%[0-9]+]]:vec256 = COPY [[COPY9]].sub_few_bfp_w
+    ; CHECK-NEXT: [[COPY11:%[0-9]+]]:mfs = COPY [[COPY9]].sub_few_bfp_f64
+    ; CHECK-NEXT: [[COPY12:%[0-9]+]]:mgs = COPY [[COPY9]].sub_few_bfp_g32
+    ; CHECK-NEXT: [[COPY13:%[0-9]+]]:mes = COPY [[COPY9]].sub_few_bfp_e32
+    ; CHECK-NEXT: [[ADD_alu_r_rr:%[0-9]+]]:mlockid_reg = ADD_alu_r_rr [[COPY6]], [[COPY8]], implicit-def dead $srcarry
+    ; CHECK-NEXT: ST_dms_sts_scalar_st_idx_imm [[ADD_alu_r_rr]], [[COPY]], 0 :: (store (s32))
+    ; CHECK-NEXT: PseudoRET implicit $lr
+    %0:ptrregbank(p0) = COPY $p0
+    %1:ptrregbank(p0) = COPY $p1
+    %2:fiforegbank(<32 x s32>) = G_IMPLICIT_DEF
+    %3:gprregbank(s32) = G_CONSTANT i32 0
+    %4:ptrregbank(p0), %5:fiforegbank(<32 x s32>), %6:gprregbank(s32), %7:vregbank(<8 x s32>), %8:vregbank(<8 x s32>), %9:gprregbank(<2 x s32>), %10:gprregbank(<2 x s32>), %11:gprregbank(s32), %12:gprregbank(s32), %13:gprregbank(s32), %14:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2ps.fifo.ld.pop.BFP768), %1(p0), %2(<32 x s32>), %3(s32)
+    %15:gprregbank(s32) = G_ADD %11, %13
+    G_STORE %15(s32), %0(p0) :: (store (s32))
+    PseudoRET implicit $lr
+
+...

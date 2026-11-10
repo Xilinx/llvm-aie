@@ -571,13 +571,14 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
       .bitcastIf(
           [=](const LegalityQuery &Query) {
             const LLT &Ty = Query.Types[0];
-            return Ty.isVector() &&
-                   (Ty.getSizeInBits() == 64 || Ty.getSizeInBits() == 32);
+            const unsigned Size = Ty.getSizeInBits();
+            return Ty.isVector() && (Size == 16 || Size == 32 || Size == 64);
           },
           [=](const LegalityQuery &Query) {
             const LLT Ty = Query.Types[0];
             const unsigned Size = Ty.getSizeInBits();
-            assert(Size % 32 == 0);
+            assert((Size == 16 || Size == 32 || Size == 64) &&
+                   "Unexpected vector size");
             return std::pair(0, LLT::scalar(Size));
           })
       .clampScalar(0, S32, S32)
@@ -818,6 +819,9 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
   getActionDefinitionsBuilder(G_BRJT).custom();
 
   getActionDefinitionsBuilder(G_BRINDIRECT).legalFor({P0});
+
+  // The tile counter is read as a 64-bit scalar.
+  getActionDefinitionsBuilder(G_READCYCLECOUNTER).legalFor({S64});
 
   // Variadic functions
   getActionDefinitionsBuilder(G_VASTART).custom();
