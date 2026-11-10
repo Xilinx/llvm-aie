@@ -6,6 +6,7 @@
 ;
 ; (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc -O2 -mtriple=aie2 %s --verify-machineinstrs -o - | FileCheck %s --check-prefix=AIE2
+; RUN: llc -O2 -mtriple=aie2p %s --verify-machineinstrs -o - | FileCheck %s --check-prefix=AIE2P
 ; RUN: llc -O2 -mtriple=aie2ps %s --verify-machineinstrs -o - | FileCheck %s --check-prefix=AIE2PS
 
 define <2 x i8> @load_v2i8_align2(ptr %p) {
@@ -23,6 +24,21 @@ define <2 x i8> @load_v2i8_align2(ptr %p) {
 ; AIE2-NEXT:    mova r2, #8; extend.u8 r1, r1 // Delay Slot 3
 ; AIE2-NEXT:    lshl r1, r1, r2 // Delay Slot 2
 ; AIE2-NEXT:    or r0, r0, r1 // Delay Slot 1
+;
+; AIE2P-LABEL: load_v2i8_align2:
+; AIE2P:       // %bb.0:
+; AIE2P-NEXT:    lda.s16 r0, [p0, #0]; nopxm
+; AIE2P-NEXT:    nop
+; AIE2P-NEXT:    nop
+; AIE2P-NEXT:    nop
+; AIE2P-NEXT:    nop
+; AIE2P-NEXT:    nop
+; AIE2P-NEXT:    ret lr; mov r1, #-8
+; AIE2P-NEXT:    lshl r1, r0, r1 // Delay Slot 5
+; AIE2P-NEXT:    extend.u8 r0, r0 // Delay Slot 4
+; AIE2P-NEXT:    mova r2, #8; extend.u8 r1, r1 // Delay Slot 3
+; AIE2P-NEXT:    lshl r1, r1, r2 // Delay Slot 2
+; AIE2P-NEXT:    or r0, r0, r1 // Delay Slot 1
 ;
 ; AIE2PS-LABEL: load_v2i8_align2:
 ; AIE2PS:       // %bb.0:
@@ -61,6 +77,24 @@ define <2 x i8> @load_v2i8_align1(ptr %p) {
 ; AIE2-NEXT:    lshl r1, r1, r2 // Delay Slot 2
 ; AIE2-NEXT:    or r0, r0, r1 // Delay Slot 1
 ;
+; AIE2P-LABEL: load_v2i8_align1:
+; AIE2P:       // %bb.0:
+; AIE2P-NEXT:    lda.s8 r0, [p0, #1]; nopb ; nopxm ; nops
+; AIE2P-NEXT:    lda.u8 r1, [p0, #0]
+; AIE2P-NEXT:    nop
+; AIE2P-NEXT:    nop
+; AIE2P-NEXT:    nop
+; AIE2P-NEXT:    nop
+; AIE2P-NEXT:    movx r2, #8
+; AIE2P-NEXT:    lshl r0, r0, r2
+; AIE2P-NEXT:    or r0, r0, r1
+; AIE2P-NEXT:    ret lr; mov r1, #-8
+; AIE2P-NEXT:    lshl r1, r0, r1 // Delay Slot 5
+; AIE2P-NEXT:    extend.u8 r0, r0 // Delay Slot 4
+; AIE2P-NEXT:    extend.u8 r1, r1 // Delay Slot 3
+; AIE2P-NEXT:    lshl r1, r1, r2 // Delay Slot 2
+; AIE2P-NEXT:    or r0, r0, r1 // Delay Slot 1
+;
 ; AIE2PS-LABEL: load_v2i8_align1:
 ; AIE2PS:       // %bb.0:
 ; AIE2PS-NEXT:    lda.s8 r0, [p0, #1]; nopb ; nopxm ; nops
@@ -94,6 +128,17 @@ define void @store_v2i8_align2(ptr %p, <2 x i8> %v) {
 ; AIE2-NEXT:    nop // Delay Slot 2
 ; AIE2-NEXT:    nop // Delay Slot 1
 ;
+; AIE2P-LABEL: store_v2i8_align2:
+; AIE2P:       // %bb.0:
+; AIE2P-NEXT:    st.s16 r0, [p0, #0]; nopb ; nops ; nopxm ; nopv
+; AIE2P-NEXT:    nop
+; AIE2P-NEXT:    ret lr
+; AIE2P-NEXT:    nop // Delay Slot 5
+; AIE2P-NEXT:    nop // Delay Slot 4
+; AIE2P-NEXT:    nop // Delay Slot 3
+; AIE2P-NEXT:    nop // Delay Slot 2
+; AIE2P-NEXT:    nop // Delay Slot 1
+;
 ; AIE2PS-LABEL: store_v2i8_align2:
 ; AIE2PS:       // %bb.0:
 ; AIE2PS-NEXT:    st.s16 r0, [p0, #0]; nopb ; nops ; nopxm ; nopv
@@ -126,6 +171,24 @@ define void @store_v2i8_align1(ptr %p, <2 x i8> %v) {
 ; AIE2-NEXT:    lshl r0, r0, r1 // Delay Slot 3
 ; AIE2-NEXT:    nop // Delay Slot 2
 ; AIE2-NEXT:    nop // Delay Slot 1
+;
+; AIE2P-LABEL: store_v2i8_align1:
+; AIE2P:       // %bb.0:
+; AIE2P-NEXT:    st.s8 r0, [p0, #0]; nopxm
+; AIE2P-NEXT:    nop
+; AIE2P-NEXT:    nop
+; AIE2P-NEXT:    nop
+; AIE2P-NEXT:    nop
+; AIE2P-NEXT:    nop
+; AIE2P-NEXT:    nop
+; AIE2P-NEXT:    st.s8 r0, [p0, #1]
+; AIE2P-NEXT:    nop
+; AIE2P-NEXT:    ret lr
+; AIE2P-NEXT:    nop // Delay Slot 5
+; AIE2P-NEXT:    mova r1, #-8; extend.u16 r0, r0 // Delay Slot 4
+; AIE2P-NEXT:    lshl r0, r0, r1 // Delay Slot 3
+; AIE2P-NEXT:    nop // Delay Slot 2
+; AIE2P-NEXT:    nop // Delay Slot 1
 ;
 ; AIE2PS-LABEL: store_v2i8_align1:
 ; AIE2PS:       // %bb.0:
