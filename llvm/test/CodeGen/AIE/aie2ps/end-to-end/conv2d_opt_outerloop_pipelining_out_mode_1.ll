@@ -210,21 +210,21 @@ define void @conv2d_opt_outerloop_out_mode_1(
 ; ASM-NEXT:    vlda x4, [p7], #64; paddb.3d [p2], d2; nops ; nopx ; vshuffle x10, x8, x6, r6; vmac dm1, dm1, x10, x4, r8
 ; ASM-NEXT:    vlda x2, [p7], #64; vldb.popx x6, [p0, lf0, r24]; nops ; nopx ; mov r0, dc6; vmac dm0, dm0, x10, x2, r8
 ; ASM-NEXT:    nopa ; vldb.pop.3d x1, [p0, lf0, r24, d0]; movs p7, p2; lshl r0, r0, r4; vshuffle x10, x8, x6, r6; vmac dm1, dm1, x10, x4, r8
-; ASM-NEXT:    vlda x2, [p7], #64; or r26, r0, r20; mov dj3, r0; vmac dm0, dm0, x10, x2, r8
-; ASM-NEXT:    movs dj3, r26; vldb.128 wl8, [p1, dj3]; eq r0, r18, r2; vshuffle x10, x8, x6, r6; vmac dm1, dm1, x10, x4, r8
-; ASM-NEXT:    vldb.128 wl10, [p1, dj3]; vmac dm0, dm0, x10, x2, r8
-; ASM-NEXT:    vldb x4, [p7], #64; vshuffle x10, x8, x6, r6; vmac dm1, dm1, x10, x4, r8
-; ASM-NEXT:    vlda.ups.2x cml1, s0, upssign1, [p3], #64; vmac dm0, dm0, x10, x2, r8
-; ASM-NEXT:    vlda.ups.2x cml0, s0, upssign1, [p6], #64; vmac dm1, dm1, x10, x4, r8
+; ASM-NEXT:    vlda.ups.2x cml1, s0, upssign1, [p3], #64; nopb ; or r26, r0, r20; mov dj3, r0; vmac dm0, dm0, x10, x2, r8
+; ASM-NEXT:    vlda.ups.2x cml0, s0, upssign1, [p6], #64; vldb.128 wl8, [p1, dj3]; movs dj3, r26; eq r0, r18, r2; vshuffle x10, x8, x6, r6; vmac dm1, dm1, x10, x4, r8
+; ASM-NEXT:    vlda.ups.2x cmh0, s0, upssign1, [p6], #64; vldb x2, [p7], #64; vmac dm0, dm0, x10, x2, r8
+; ASM-NEXT:    vldb.128 wl10, [p1, dj3]; vshuffle x10, x8, x6, r6; vmac dm1, dm1, x10, x4, r8
 ; ASM-NEXT:    vlda.ups.2x cmh1, s0, upssign1, [p3], #64; vmac dm0, dm0, x10, x2, r8
-; ASM-NEXT:    vlda.ups.2x cmh0, s0, upssign1, [p6], #64; vshuffle x6, x6, x1, r6
+; ASM-NEXT:    vldb x4, [p7], #64; vmac dm5, dm1, x10, x4, r8
+; ASM-NEXT:    vmac dm7, dm0, x10, x2, r8
+; ASM-NEXT:    vshuffle x6, x6, x1, r6
 ; ASM-NEXT:    nop
 ; ASM-NEXT:    vldb.popx x8, [p0, lf0, r24]; jz r0, #.LBB0_5
 ; ASM-NEXT:    vldb.pop.3d x6, [p0, lf0, r24, d0] // Delay Slot 5
-; ASM-NEXT:    vldb.popx x8, [p0, lf0, r24]; vst.srs.2x cml1, s1, srssign1, [p4], #64 // Delay Slot 4
-; ASM-NEXT:    vlda x4, [p7], #64; vldb.pop.3d x6, [p0, lf0, r24, d0]; vst.srs.2x cml0, s1, srssign1, [p5], #64 // Delay Slot 3
-; ASM-NEXT:    vlda x2, [p7], #64; vldb.popx x8, [p0, lf0, r24]; vst.srs.2x cmh1, s1, srssign1, [p4], #64 // Delay Slot 2
-; ASM-NEXT:    vlda x4, [p7], #64; vldb.pop.3d x6, [p0, lf0, r24, d0]; vst.srs.2x cmh0, s1, srssign1, [p5], #64; add.nc lc, r22, #-6; nopm ; vmul dm3, x0, x8, r12 // Delay Slot 1
+; ASM-NEXT:    vldb.popx x8, [p0, lf0, r24]; vst.srs.2x cml5, s1, srssign1, [p4], #64 // Delay Slot 4
+; ASM-NEXT:    vlda x4, [p7], #64; vldb.pop.3d x6, [p0, lf0, r24, d0]; vst.srs.2x cml7, s1, srssign1, [p5], #64 // Delay Slot 3
+; ASM-NEXT:    vlda x2, [p7], #64; vldb.popx x8, [p0, lf0, r24]; vst.srs.2x cmh5, s1, srssign1, [p4], #64 // Delay Slot 2
+; ASM-NEXT:    vlda x4, [p7], #64; vldb.pop.3d x6, [p0, lf0, r24, d0]; vst.srs.2x cmh7, s1, srssign1, [p5], #64; add.nc lc, r22, #-6; nopm ; vmul dm3, x0, x8, r12 // Delay Slot 1
 ; ASM-NEXT:  // %bb.8: // %lastiter.stage1.top
 ; ASM-NEXT:    vlda x2, [p7], #64; vldb.popx x8, [p0, lf0, r24]; nops ; add.nc ls, pc, #.LBB0_9; addm.nc le, pc, #.L_LEnd0; vmul dm2, x0, x10, r12
 ; ASM-NEXT:    vlda x4, [p7], #64; vldb.pop.3d x6, [p0, lf0, r24, d0]; nops ; nopxm ; vaddmac dm1, dm1, dm3, x6, x2, r10

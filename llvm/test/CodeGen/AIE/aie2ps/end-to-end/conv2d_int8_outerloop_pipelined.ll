@@ -172,16 +172,16 @@ define dso_local void @conv2d(i32 %0, ptr %add.ptr3, ptr %cond, ptr %cond.i, ptr
 ; ASM-NEXT:    movs m1, r1; mov dj5, r28; vmac dm0, dm0, x6, x0, r8
 ; ASM-NEXT:    vshuffle x6, x4, x4, r6; vmac dm1, dm1, x6, x2, r8
 ; ASM-NEXT:    vmac dm0, dm0, x6, x0, r8
-; ASM-NEXT:    vmac dm1, dm1, x6, x2, r8
-; ASM-NEXT:    vmac dm0, dm0, x6, x0, r8
+; ASM-NEXT:    vmac dm5, dm1, x6, x2, r8
+; ASM-NEXT:    vmac dm7, dm0, x6, x0, r8
 ; ASM-NEXT:    nop
 ; ASM-NEXT:    nop
 ; ASM-NEXT:    nop
 ; ASM-NEXT:    nop
-; ASM-NEXT:    vst.srs.4x cmh1, s1, srssign0, [p2, dj1]; mov dj1, r29
-; ASM-NEXT:    vst.srs.4x cml1, s1, srssign0, [p2, #0]; mov p2, p4
-; ASM-NEXT:    vst.srs.4x cml0, s1, srssign0, [p4, #0]; paddb [p2], m6; mov m6, r19
-; ASM-NEXT:    vst.2d.srs.4x cmh0, s1, srssign0, [p2], d5; paddb [p1], m6; movx srssign0, #0; mov m6, r21
+; ASM-NEXT:    vst.srs.4x cmh5, s1, srssign0, [p2, dj1]; mov dj1, r29
+; ASM-NEXT:    vst.srs.4x cml5, s1, srssign0, [p2, #0]; mov p2, p4
+; ASM-NEXT:    vst.srs.4x cml7, s1, srssign0, [p4, #0]; paddb [p2], m6; mov m6, r19
+; ASM-NEXT:    vst.2d.srs.4x cmh7, s1, srssign0, [p2], d5; paddb [p1], m6; movx srssign0, #0; mov m6, r21
 ; ASM-NEXT:    padda [p6], m6; paddb.3d [p1], d3; movs dj5, r25; mov r7, dc5
 ; ASM-NEXT:    vlda.ups.2x cml1, s0, upssign1, [p1], m7; paddb.3d [p6], d2; jnzd r16, r16, p3; movs dn5, r27
 ; ASM-NEXT:    vlda.ups.2x cmh1, s0, upssign1, [p1], m4; mov dc5, r5 // Delay Slot 5
