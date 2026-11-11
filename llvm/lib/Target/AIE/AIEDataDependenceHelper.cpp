@@ -394,9 +394,16 @@ void DataDependenceHelper::setLatency(SUnit *Src, int SrcOpIdx, SUnit *Dst,
   if (Dep.isArtificial())
     return;
 
-  // WAW dependences on virtual registers are not refined by the itineraries
-  // and keep a zero latency.
-  if (Kind == SDep::Output && Dep.getReg().isVirtual())
+  // WAW dependences on virtual registers keep a zero latency in pre-RA
+  // scheduling. In post-RA scheduling (exact latencies), a virtual register of
+  // the post-pipeliner's virtual modes stands for one physical register: the
+  // later write must land after the earlier one, as for physical registers.
+  // An instruction and its copy in the next iteration write II cycles apart;
+  // that edge keeps a zero latency.
+  if (Kind == SDep::Output && Dep.getReg().isVirtual() &&
+      (!ExactLatencies ||
+       (PipeliningNInstr > 0 &&
+        Src->NodeNum % PipeliningNInstr == Dst->NodeNum % PipeliningNInstr)))
     return;
   assert(SrcOpIdx >= 0 && DstOpIdx >= 0);
 
