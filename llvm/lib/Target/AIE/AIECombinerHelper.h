@@ -363,6 +363,9 @@ bool matchLoadInttoptrFold(MachineInstr &MI, MachineRegisterInfo &MRI,
                            CombinerHelper &Helper,
                            GISelChangeObserver &Observer, BuildFnTy &MatchInfo);
 
+bool matchPtrMaskOfPtrAdd(MachineInstr &MI, MachineRegisterInfo &MRI,
+                          BuildFnTy &MatchInfo);
+
 bool matchExtractVecEltAssertBcst(MachineInstr &MI, MachineRegisterInfo &MRI,
                                   const AIEBaseInstrInfo &TII,
                                   GISelChangeObserver &Observer,
