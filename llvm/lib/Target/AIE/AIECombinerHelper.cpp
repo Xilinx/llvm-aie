@@ -5272,6 +5272,48 @@ bool llvm::matchLoadInttoptrFold(MachineInstr &MI, MachineRegisterInfo &MRI,
   return true;
 }
 
+/// Match G_PTRMASK (G_PTR_ADD P, C), M where M clears exactly the low bits
+/// below an alignment A and C is a multiple of A. Then
+///   (P + C) & ~(A - 1) == (P & ~(A - 1)) + C
+/// so the addition can be applied after the mask. This exposes the constant
+/// as a load/store offset and lets instruction selection absorb the mask
+/// into the access.
+bool llvm::matchPtrMaskOfPtrAdd(MachineInstr &MI, MachineRegisterInfo &MRI,
+                                BuildFnTy &MatchInfo) {
+  assert(MI.getOpcode() == TargetOpcode::G_PTRMASK);
+
+  const Register DstReg = MI.getOperand(0).getReg();
+  const Register PtrReg = MI.getOperand(1).getReg();
+  const Register MaskReg = MI.getOperand(2).getReg();
+
+  const auto Mask = getIConstantVRegValWithLookThrough(MaskReg, MRI);
+  if (!Mask || !Mask->Value.isNegatedPowerOf2() ||
+      Mask->Value.countr_zero() == 0)
+    return false;
+
+  const MachineInstr *PtrAdd = MRI.getVRegDef(PtrReg);
+  if (!PtrAdd || PtrAdd->getOpcode() != TargetOpcode::G_PTR_ADD)
+    return false;
+
+  const Register BaseReg = PtrAdd->getOperand(1).getReg();
+  const Register OffsetReg = PtrAdd->getOperand(2).getReg();
+  const auto Offset = getIConstantVRegValWithLookThrough(OffsetReg, MRI);
+  if (!Offset)
+    return false;
+
+  const uint64_t Alignment = uint64_t(1) << Mask->Value.countr_zero();
+  if ((static_cast<uint64_t>(Offset->Value.getSExtValue()) & (Alignment - 1)) !=
+      0)
+    return false;
+
+  MatchInfo = [=, &MRI](MachineIRBuilder &B) {
+    const Register MaskedReg = MRI.cloneVirtualRegister(DstReg);
+    B.buildPtrMask(MaskedReg, BaseReg, MaskReg);
+    B.buildPtrAdd(DstReg, MaskedReg, OffsetReg);
+  };
+  return true;
+}
+
 /// Narrow operations that are fed by zext from s20.
 /// Covers G_STORE.
 bool llvm::matchNarrowZext(MachineInstr &MI, MachineRegisterInfo &MRI,
