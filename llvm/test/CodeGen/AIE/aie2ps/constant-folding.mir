@@ -19,7 +19,6 @@ body: |
     ; CHECK-LABEL: name: test_imm_constant_fold_shift_reg
     ; CHECK: liveins: $p0, $d1, $bmhh0, $cml0, $dm0, $s0, $p2, $d1
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 0
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ed = COPY $d1
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:mbmm = COPY $bmhh0
@@ -49,14 +48,13 @@ body: |
     ; CHECK-LABEL: name: test_imm_constant_fold_large_imm_r27_singleton
     ; CHECK: liveins: $p0, $d1, $bmhh0, $cml0, $dm0, $s0, $p2, $d1, $r23, $r22
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: [[MOVXM_lng_cg:%[0-9]+]]:er = MOVXM_lng_cg 544654748
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ed = COPY $d1
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:mbmm = COPY $bmhh0
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:mcmm = COPY $cml0
     ; CHECK-NEXT: [[COPY4:%[0-9]+]]:edm = COPY $dm0
-    ; CHECK-NEXT: [[MOVXM_lng_cg1:%[0-9]+]]:mr27_select = MOVXM_lng_cg 544654748
-    ; CHECK-NEXT: $r15 = SEL_EQZ $r23, $r22, [[MOVXM_lng_cg1]]
+    ; CHECK-NEXT: [[MOVXM_lng_cg:%[0-9]+]]:mr27_select = MOVXM_lng_cg 544654748
+    ; CHECK-NEXT: $r15 = SEL_EQZ $r23, $r22, [[MOVXM_lng_cg]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r15
     %21:er = MOVXM_lng_cg 544654748
     %20:ep = COPY $p0
