@@ -645,12 +645,17 @@ bool AIEBaseInstrInfo::foldImmediate(MachineInstr &UseMI, MachineInstr &DefMI,
       return false;
   }
 
-  MachineBasicBlock &MBB = *UseMI.getParent();
-  const DebugLoc &DL = UseMI.getDebugLoc();
-  BuildMI(MBB, UseMI, DL, NewMCID, DstReg).addImm(ImmAPInt.getSExtValue());
+  // The caller keeps using UseMI after we return, so rewrite it in place.
+  // setDesc notifies PeepholeOpt while UseMI still reads as a COPY.
+  UseMI.setDesc(NewMCID);
+  for (unsigned I = UseMI.getNumOperands(); I > 1; --I)
+    UseMI.removeOperand(I - 1);
+  UseMI.addOperand(MachineOperand::CreateImm(ImmAPInt.getSExtValue()));
 
-  // Remove the old COPY
-  UseMI.eraseFromParent();
+  if (Reg.isVirtual() && MRI->use_nodbg_empty(Reg)) {
+    MRI->markUsesInDebugValueAsUndef(Reg);
+    DefMI.eraseFromParent();
+  }
 
   ++NumFoldImmSuccesses;
   return true;
