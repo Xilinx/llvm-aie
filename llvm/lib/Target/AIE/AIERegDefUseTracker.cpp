@@ -1696,6 +1696,20 @@ void RegLiveRange::fillAdmissibleRegUnits(
   }
 }
 
+PartSet RegLiveRange::getLaneUnits(LaneBitmask Mask,
+                                   const TargetRegisterInfo *TRI) const {
+  PartSet Units;
+  if (Mask.none())
+    return Units;
+  for (MCRegister Reg : AdmissibleRegs)
+    for (MCRegUnitMaskIterator MUI(Reg, TRI); MUI.isValid(); ++MUI) {
+      const auto [Unit, UnitMask] = *MUI;
+      if ((UnitMask & Mask).any())
+        Units.set(Unit);
+    }
+  return Units;
+}
+
 void RegLiveRange::setRegisterClass(const TargetRegisterClass *RC) {
   RegisterClass = RC;
 
