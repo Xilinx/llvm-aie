@@ -44,12 +44,8 @@ void AIEPostRegAlloc::AllocState::init(
   const unsigned II = LiveLanesByLRIndex.begin()->second.size();
   this->CycleOccupancy.assign(II, PartSet());
 
-  // Point at the tracker's per-physreg PartSet cache and copy the per-LR
-  // admissible RegUnit set.
+  // Point at the tracker's per-physreg PartSet cache.
   this->PhysRegUnitSets = &RegTracker->getPhysRegUnitSets();
-  this->AdmissibleRegUnits.clear();
-  for (const RegLiveRange &LR : RegTracker->getLiveRanges())
-    this->AdmissibleRegUnits[LR.getIndex()] = LR.getAdmissibleRegUnits();
 
   const auto &AvailableRegs = RegTracker->getAvailablePhysRegs();
 
@@ -64,7 +60,7 @@ void AIEPostRegAlloc::AllocState::init(
 
   // Build live range interference graph once.
   this->VRegInterferenceGraph = AIEPostRegAlloc::buildVRegInterferenceGraph(
-      LiveLanesByLRIndex, AdmissibleRegUnits);
+      LiveLanesByLRIndex, RegTracker->getLiveRanges());
 
   // Pre-compute metrics for all live ranges that have been virtualized.
   // Non-virtualized ranges (RESERVED or policy-excluded) have no VReg and
@@ -242,36 +238,37 @@ AIEPostRegAlloc::buildRCInterferenceGraph(const DenseSet<unsigned> &UsedRCIds,
 AIEPostRegAlloc::WeightedSymmetricGraph
 AIEPostRegAlloc::buildVRegInterferenceGraph(
     const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex,
-    const DenseMap<unsigned, PartSet> &AdmissibleRegUnits) {
-
+    ArrayRef<RegLiveRange> LiveRanges) {
   WeightedSymmetricGraph Graph;
 
-  // Live ranges with a non-empty admissible RegUnit set.
-  std::vector<std::pair<unsigned, const PartSet *>> Candidates;
-  for (const auto &[LRIndex, _] : LiveLanesByLRIndex) {
-    const auto It = AdmissibleRegUnits.find(LRIndex);
-    if (It == AdmissibleRegUnits.end() || It->second.empty())
+  // Live ranges that have liveness data and a non-empty admissible RegUnit
+  // set, paired with that liveness data.
+  std::vector<std::pair<const RegLiveRange *, const AIE::LivenessVector *>>
+      Candidates;
+  for (const RegLiveRange &LR : LiveRanges) {
+    if (LR.getAdmissibleRegUnits().empty())
       continue;
-    Candidates.emplace_back(LRIndex, &It->second);
+    const auto It = LiveLanesByLRIndex.find(LR.getIndex());
+    if (It == LiveLanesByLRIndex.end())
+      continue;
+    Candidates.emplace_back(&LR, &It->second);
   }
 
   // Check all pairs of live ranges.
   // Use symmetry: only check pairs where I < J.
   for (size_t I = 0; I < Candidates.size(); ++I) {
-    const auto &[LRIndex1, Units1] = Candidates[I];
-    const auto &Masks1 = LiveLanesByLRIndex.find(LRIndex1)->second;
+    const auto &[LR1, Masks1] = Candidates[I];
 
     for (size_t J = I + 1; J < Candidates.size(); ++J) {
-      const auto &[LRIndex2, Units2] = Candidates[J];
+      const auto &[LR2, Masks2] = Candidates[J];
 
       // First check if their admissible RegUnit sets overlap.
-      if (!Units1->overlap(*Units2))
+      if (!LR1->getAdmissibleRegUnits().overlap(LR2->getAdmissibleRegUnits()))
         continue;
 
       // Then check temporal concurrency: are they live at the same cycle?
-      const auto &Masks2 = LiveLanesByLRIndex.find(LRIndex2)->second;
-      if (Masks1.overlaps(Masks2))
-        Graph.addInterference(LRIndex1, LRIndex2);
+      if (Masks1->overlaps(*Masks2))
+        Graph.addInterference(LR1->getIndex(), LR2->getIndex());
     }
   }
 
@@ -346,7 +343,7 @@ bool AIEPostRegAlloc::Placement::mayBlock(const RegLiveRange &LR,
                                           const RegLiveRange &Other) const {
   return LiveCycles[LR.getIndex()].anyCommon(LiveCycles[Other.getIndex()]) &&
          State.PhysRegUnitSets->find(PhysReg)->second.overlap(
-             State.AdmissibleRegUnits.find(Other.getIndex())->second);
+             Other.getAdmissibleRegUnits());
 }
 
 void AIEPostRegAlloc::Placement::refresh(const RegLiveRange &LR) {
