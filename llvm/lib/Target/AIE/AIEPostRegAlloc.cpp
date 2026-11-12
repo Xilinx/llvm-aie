@@ -102,10 +102,15 @@ static PartSet laneActiveUnits(Register PhysReg, LaneBitmask Mask,
 // Units = laneActiveUnits(PhysReg, VRegMasks[C]). Stop and return false as
 // soon as Fn returns false. A live range keeps the same lane mask over runs of
 // cycles, so the units are computed once per run.
+// The units recorded in the liveness are expressed over all admissible
+// registers of the live range, so restricted to the units of PhysReg they must
+// equal the lane-derived units.
 template <typename FnT>
-static bool forEachLiveCycle(Register PhysReg,
-                             const AIE::LivenessVector &VRegMasks,
-                             const TargetRegisterInfo *TRI, FnT Fn) {
+static bool
+forEachLiveCycle(Register PhysReg, const AIE::LivenessVector &VRegMasks,
+                 const TargetRegisterInfo *TRI,
+                 const DenseMap<MCRegister, PartSet> &UnitSets, FnT Fn) {
+  (void)UnitSets;
   LaneBitmask RunMask = LaneBitmask::getNone();
   PartSet Units;
   const auto &Elements = VRegMasks.getElements();
@@ -117,6 +122,9 @@ static bool forEachLiveCycle(Register PhysReg,
       Units = laneActiveUnits(PhysReg, Mask, TRI);
       RunMask = Mask;
     }
+    assert((Elements[C].getUnits() &
+            UnitSets.find(PhysReg.asMCReg())->second) == Units &&
+           "Liveness units must match lane-derived units of the register");
     if (!Fn(C, Units))
       return false;
   }
@@ -126,7 +134,7 @@ static bool forEachLiveCycle(Register PhysReg,
 // Check if PhysReg can accommodate VRegMasks without conflicts.
 bool AIEPostRegAlloc::AllocState::canPlace(
     Register PhysReg, const AIE::LivenessVector &VRegMasks) const {
-  return forEachLiveCycle(PhysReg, VRegMasks, TRI,
+  return forEachLiveCycle(PhysReg, VRegMasks, TRI, *PhysRegUnitSets,
                           [&](size_t C, const PartSet &Active) {
                             return !Active.overlap(CycleOccupancy[C]);
                           });
@@ -135,7 +143,7 @@ bool AIEPostRegAlloc::AllocState::canPlace(
 // Mark PhysReg's lane-accurate RegUnits occupied per cycle.
 void AIEPostRegAlloc::AllocState::place(Register PhysReg,
                                         const AIE::LivenessVector &VRegMasks) {
-  forEachLiveCycle(PhysReg, VRegMasks, TRI,
+  forEachLiveCycle(PhysReg, VRegMasks, TRI, *PhysRegUnitSets,
                    [&](size_t C, const PartSet &Active) {
                      CycleOccupancy[C] |= Active;
                      return true;
@@ -147,7 +155,7 @@ void AIEPostRegAlloc::AllocState::place(Register PhysReg,
 // Clear the RegUnits place() occupied for VRegMasks.
 void AIEPostRegAlloc::AllocState::unplace(
     Register PhysReg, const AIE::LivenessVector &VRegMasks) {
-  forEachLiveCycle(PhysReg, VRegMasks, TRI,
+  forEachLiveCycle(PhysReg, VRegMasks, TRI, *PhysRegUnitSets,
                    [&](size_t C, const PartSet &Active) {
                      CycleOccupancy[C] &= ~Active;
                      return true;

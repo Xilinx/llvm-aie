@@ -276,6 +276,18 @@ DenseMap<unsigned, AIE::LivenessVector> AIEScheduleInterpreter::buildLiveLanes(
   // State: tracks which lanes are currently live when scanning backward.
   DenseMap<unsigned, LaneBitmask> ActiveMask;
 
+  // The lane-to-RegUnit mapping depends on the registers admissible for the
+  // live range, so cache it per (live range, mask).
+  DenseMap<std::pair<unsigned, uint64_t>, PartSet> UnitsCache;
+  const auto UnitsFor = [&](unsigned LRIndex,
+                            LaneBitmask M) -> const PartSet & {
+    const auto [It, Inserted] =
+        UnitsCache.try_emplace({LRIndex, M.getAsInteger()});
+    if (Inserted)
+      It->second = Tracker[LRIndex].getLaneUnits(M, &TRI);
+    return It->second;
+  };
+
   // Process cycles backward.
   int MaxCycle = Schedule.size() - 1;
   for (int C = MaxCycle; C >= 0; --C) {
@@ -287,7 +299,8 @@ DenseMap<unsigned, AIE::LivenessVector> AIEScheduleInterpreter::buildLiveLanes(
       if (Mask.any()) {
         if (!LiveLanesByLRIndex.count(LRIndex))
           LiveLanesByLRIndex[LRIndex] = AIE::LivenessVector(II);
-        LiveLanesByLRIndex[LRIndex][ModuloCycle] |= Mask;
+        LiveLanesByLRIndex[LRIndex][ModuloCycle].addLanes(
+            Mask, UnitsFor(LRIndex, Mask));
 
         LLVM_DEBUG(dbgs() << "    Lanes " << PrintLaneMask(Mask) << " for LR#"
                           << LRIndex << " live entering cycle " << C
@@ -306,7 +319,8 @@ DenseMap<unsigned, AIE::LivenessVector> AIEScheduleInterpreter::buildLiveLanes(
           LiveLanesByLRIndex[Event.LRIndex] = AIE::LivenessVector(II);
 
         // RF write occupies register file at ModuloCycle.
-        LiveLanesByLRIndex[Event.LRIndex][ModuloCycle] |= M;
+        const PartSet &MUnits = UnitsFor(Event.LRIndex, M);
+        LiveLanesByLRIndex[Event.LRIndex][ModuloCycle].addLanes(M, MUnits);
 
         // Forwarding write: also occupy one cycle earlier. Skip that for a
         // dead def unless a same-class bypass read may share its phys reg
@@ -322,7 +336,8 @@ DenseMap<unsigned, AIE::LivenessVector> AIEScheduleInterpreter::buildLiveLanes(
                 Event.ForwardingClass);
             // Record the same lane mask as the RF write: bypass and RF share
             // the same def and the same register address.
-            LiveLanesByLRIndex[Event.LRIndex][BypassModuloCycle] |= M;
+            LiveLanesByLRIndex[Event.LRIndex][BypassModuloCycle].addLanes(
+                M, MUnits);
 
             LLVM_DEBUG(dbgs()
                        << "    Bypass write of class " << Event.ForwardingClass

@@ -168,6 +168,12 @@ public:
   void fillAdmissibleRegUnits(const TargetRegisterInfo *TRI,
                               DenseMap<MCRegister, PartSet> &PhysRegUnits);
 
+  /// Return the subset of AdmissibleRegUnits covered by the lanes in \p Mask,
+  /// taken over all admissible registers. The mapping from lanes to register
+  /// units depends on the register, so it is only defined relative to the
+  /// admissible registers of this live range.
+  PartSet getLaneUnits(LaneBitmask Mask, const TargetRegisterInfo *TRI) const;
+
   /// Check if a register is admissible for this live range.
   bool isAdmissible(MCRegister Reg) const {
     return AdmissibleRegs.contains(Reg);
