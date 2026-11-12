@@ -16,6 +16,7 @@
 #ifndef LLVM_LIB_TARGET_AIE_AIELIVENESSVECTOR_H
 #define LLVM_LIB_TARGET_AIE_AIELIVENESSVECTOR_H
 
+#include "AIEMaxNumRegUnits.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/MC/LaneBitmask.h"
 
@@ -29,6 +30,9 @@ namespace AIE {
 /// Tracks both register file lanes and bypass usage to detect conflicts.
 class Liveness {
   LaneBitmask Lanes;
+  // RegUnits occupied at this cycle, expressed relative to the admissible
+  // registers of the live range. Redundant with Lanes during migration.
+  PartSet Units;
   // Set of bypass classes being read from at this cycle.
   SmallVector<unsigned, 2> BypassReads;
   // Set of bypass classes being written to at this cycle.
@@ -46,6 +50,12 @@ public:
 
   /// Set the lane mask.
   void setLanes(LaneBitmask L) { Lanes = L; }
+
+  /// Get the occupied RegUnits.
+  const PartSet &getUnits() const { return Units; }
+
+  /// Add lanes together with the RegUnits they cover.
+  void addLanes(LaneBitmask L, const PartSet &U);
 
   /// Add a bypass read for a specific forwarding class.
   void addBypassRead(unsigned ForwardingClass);
