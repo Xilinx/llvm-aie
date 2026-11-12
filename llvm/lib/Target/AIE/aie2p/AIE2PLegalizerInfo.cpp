@@ -292,8 +292,11 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
 
   getActionDefinitionsBuilder(G_SEXT_INREG).custom();
 
+  // The vector unit has no lane-wise shift by a vector of amounts: shift the
+  // lanes one by one.
   getActionDefinitionsBuilder({G_ASHR, G_LSHR, G_SHL})
       .legalFor({{S32, S32}})
+      .scalarize(0)
       .widenScalarToNextPow2(0)
       .clampScalar(0, S32, S32)
       .clampScalar(1, S32, S32);
@@ -415,8 +418,11 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
                                G_SADDSAT, G_SSUBSAT})
       .lower();
 
+  // The vector unit multiplies into accumulators only: multiply the lanes of a
+  // vector G_MUL one by one.
   getActionDefinitionsBuilder(G_MUL)
       .legalFor({S32})
+      .scalarize(0)
       .widenScalarToNextPow2(0)
       .minScalar(0, S32)
       .libcallFor({S64});
