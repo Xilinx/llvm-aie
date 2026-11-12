@@ -149,6 +149,7 @@ add_llvm_target(AIECodeGen
    AIEPreISelCombiner.cpp
    AIEInterBlockScheduling.cpp
    AIESiblingLoopOptimizer.cpp
+   AIETailDuplication.cpp
    AIEISelDAGToDAG.cpp
    AIELivenessVector.cpp
    AIELegalizerHelper.cpp

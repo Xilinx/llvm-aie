@@ -19,6 +19,7 @@
 #include "AIECombiners.h"
 #include "AIEMachineFunctionInfo.h"
 #include "AIEMachineScheduler.h"
+#include "AIETailDuplication.h"
 #include "AIETargetObjectFile.h"
 #include "TargetInfo/AIETargetInfo.h"
 #include "aie1/AIE1TargetMachine.h"
@@ -33,9 +34,9 @@
 #include "llvm/CodeGen/GlobalISel/InstructionSelect.h"
 #include "llvm/CodeGen/GlobalISel/Legalizer.h"
 #include "llvm/CodeGen/GlobalISel/RegBankSelect.h"
+#include "llvm/CodeGen/MIRParser/MIParser.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBundle.h"
-#include "llvm/CodeGen/MIRParser/MIParser.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 #include "llvm/CodeGen/TargetPassConfig.h"
@@ -210,6 +211,8 @@ extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeAIETarget() {
   initializeAIEOuterLoopPipelinerPass(*PR);
   initializeAIEInnerLoopVersioningPass(*PR);
   initializeAIESpillSlotOptimizationPass(*PR);
+  initializeAIETailDuplicateEarlyPass(*PR);
+  initializeAIETailDuplicateLatePass(*PR);
 }
 
 static Reloc::Model getEffectiveRelocModel(const Triple &TT,
@@ -369,6 +372,17 @@ AIEBasePassConfig::AIEBasePassConfig(TargetMachine &TM, PassManagerBase &PM)
     : TargetPassConfig(TM, PM) {
   EnableTailMerge = EnableTailMergingOpt;
   EnableCustomAliasAnalysis = EnableCustomAliasAnalysisOpt;
+
+  // Substitute the generic tail duplication passes with AIE-specific versions
+  // that use a higher duplication threshold. We use internal passes rather
+  // than extending the generic code via the TII::getTailDuplicateSize hook
+  // because:
+  //  - The hook adds extra logic to the common TailDuplication infrastructure.
+  //  - Changing the hook's default can affect tests across other targets.
+  //  - An internal pass gives us full control over the threshold and
+  //    behavior without touching common code.
+  substitutePass(&EarlyTailDuplicateLegacyID, &AIETailDuplicateEarlyID);
+  substitutePass(&TailDuplicateLegacyID, &AIETailDuplicateLateID);
 }
 
 void AIEBasePassConfig::addIRPasses() {

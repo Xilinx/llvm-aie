@@ -218,7 +218,7 @@
 ; AIE-O1-NEXT:      ResetMachineFunction
 ; AIE-O1-NEXT:      Finalize ISel and expand pseudo-instructions
 ; AIE-O1-NEXT:      Lazy Machine Block Frequency Analysis
-; AIE-O1-NEXT:      Early Tail Duplication
+; AIE-O1-NEXT:      AIE Early Tail Duplication
 ; AIE-O1-NEXT:      Optimize machine instruction PHIs
 ; AIE-O1-NEXT:      Slot index numbering
 ; AIE-O1-NEXT:      Merge disjoint stack slots
@@ -294,7 +294,7 @@
 ; AIE-O1-NEXT:      Machine Late Instructions Cleanup Pass
 ; AIE-O1-NEXT:      Control Flow Optimizer
 ; AIE-O1-NEXT:      Lazy Machine Block Frequency Analysis
-; AIE-O1-NEXT:      Tail Duplication
+; AIE-O1-NEXT:      AIE Tail Duplication
 ; AIE-O1-NEXT:      Machine Copy Propagation Pass
 ; AIE-O1-NEXT:      Machine Copy Propagation Pass
 ; AIE-O1-NEXT:      Post-RA pseudo instruction expansion pass
@@ -457,7 +457,7 @@
 ; AIE-O23-NEXT:      ResetMachineFunction
 ; AIE-O23-NEXT:      Finalize ISel and expand pseudo-instructions
 ; AIE-O23-NEXT:      Lazy Machine Block Frequency Analysis
-; AIE-O23-NEXT:      Early Tail Duplication
+; AIE-O23-NEXT:      AIE Early Tail Duplication
 ; AIE-O23-NEXT:      Optimize machine instruction PHIs
 ; AIE-O23-NEXT:      Slot index numbering
 ; AIE-O23-NEXT:      Merge disjoint stack slots
@@ -541,7 +541,7 @@
 ; AIE-O23-NEXT:      Machine Late Instructions Cleanup Pass
 ; AIE-O23-NEXT:      Control Flow Optimizer
 ; AIE-O23-NEXT:      Lazy Machine Block Frequency Analysis
-; AIE-O23-NEXT:      Tail Duplication
+; AIE-O23-NEXT:      AIE Tail Duplication
 ; AIE-O23-NEXT:      Machine Copy Propagation Pass
 ; AIE-O23-NEXT:      Machine Copy Propagation Pass
 ; AIE-O23-NEXT:      Post-RA pseudo instruction expansion pass
