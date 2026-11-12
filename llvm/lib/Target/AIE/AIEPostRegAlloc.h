@@ -20,6 +20,7 @@
 
 #include "AIELivenessVector.h"
 #include "AIEMaxNumRegUnits.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
@@ -184,10 +185,6 @@ private:
 
     // Cached RegUnit set per physical register.
     const DenseMap<MCRegister, PartSet> *PhysRegUnitSets = nullptr;
-
-    // Pre-computed admissible RegUnit set per live range index, copied from
-    // RegLiveRange::getAdmissibleRegUnits() during init.
-    DenseMap<unsigned, PartSet> AdmissibleRegUnits;
 
     /// Pre-computed interference graphs (reused across scoring attempts).
     WeightedAsymmetricGraph RCInterferenceGraph;
@@ -355,10 +352,15 @@ private:
   buildRCInterferenceGraph(const DenseSet<unsigned> &UsedRCIds,
                            const TargetRegisterInfo &TRI);
 
-  /// Build live range interference graph (symmetric).
+  /// Build live range interference graph (symmetric). Two live ranges
+  /// interfere when their admissible RegUnit sets overlap and they are live
+  /// at a common cycle.
+  /// \param LiveLanesByLRIndex Per-cycle lane masks keyed by live range index.
+  /// \param LiveRanges All live ranges of the tracker, indexed by
+  ///        RegLiveRange::getIndex().
   static WeightedSymmetricGraph buildVRegInterferenceGraph(
       const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex,
-      const DenseMap<unsigned, PartSet> &AdmissibleRegUnits);
+      ArrayRef<RegLiveRange> LiveRanges);
 
   /// Predefined ordering comparators.
   /// Each returns true if A should be allocated before B.
