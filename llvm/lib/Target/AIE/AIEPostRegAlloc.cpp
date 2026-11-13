@@ -80,52 +80,24 @@ void AIEPostRegAlloc::AllocState::init(
   }
 }
 
-// RegUnits of PhysReg covered by Mask. Empty when Mask is empty.
-// Only units whose coverage intersects Mask are included, so non-overlapping
-// sub-registers of a composite can be co-allocated. Bypass cycles carry the
-// same lane mask as the RF write (same def, same register).
-static PartSet laneActiveUnits(Register PhysReg, LaneBitmask Mask,
-                               const TargetRegisterInfo *TRI) {
-  PartSet Units;
-  if (!Mask.any())
-    return Units;
-  for (MCRegUnitMaskIterator MUI(PhysReg.asMCReg(), TRI); MUI.isValid();
-       ++MUI) {
-    auto [Unit, UnitMask] = *MUI;
-    if ((UnitMask & Mask).any())
-      Units.set(Unit);
-  }
-  return Units;
-}
-
-// Call Fn(C, Units) for each cycle C at which VRegMasks has live lanes, with
-// Units = laneActiveUnits(PhysReg, VRegMasks[C]). Stop and return false as
-// soon as Fn returns false. A live range keeps the same lane mask over runs of
-// cycles, so the units are computed once per run.
+// Call Fn(C, Units) for each cycle C at which VRegMasks occupies RegUnits,
+// with Units the occupied RegUnits restricted to those of PhysReg. Only the
+// units whose coverage is live are included, so non-overlapping sub-registers
+// of a composite can be co-allocated. Stop and return false as soon as Fn
+// returns false.
 // The units recorded in the liveness are expressed over all admissible
-// registers of the live range, so restricted to the units of PhysReg they must
-// equal the lane-derived units.
+// registers of the live range, which are pairwise unit-disjoint, so the
+// restriction to PhysReg is exact.
 template <typename FnT>
 static bool
 forEachLiveCycle(Register PhysReg, const AIE::LivenessVector &VRegMasks,
-                 const TargetRegisterInfo *TRI,
                  const DenseMap<MCRegister, PartSet> &UnitSets, FnT Fn) {
-  (void)UnitSets;
-  LaneBitmask RunMask = LaneBitmask::getNone();
-  PartSet Units;
+  const PartSet &RegUnits = UnitSets.find(PhysReg.asMCReg())->second;
   const auto &Elements = VRegMasks.getElements();
   for (size_t C = 0, E = Elements.size(); C != E; ++C) {
-    const LaneBitmask Mask = Elements[C].getLanes();
-    if (Mask.none())
+    if (Elements[C].getUnits().empty())
       continue;
-    if (Mask != RunMask) {
-      Units = laneActiveUnits(PhysReg, Mask, TRI);
-      RunMask = Mask;
-    }
-    assert((Elements[C].getUnits() &
-            UnitSets.find(PhysReg.asMCReg())->second) == Units &&
-           "Liveness units must match lane-derived units of the register");
-    if (!Fn(C, Units))
+    if (!Fn(C, Elements[C].getUnits() & RegUnits))
       return false;
   }
   return true;
@@ -134,7 +106,7 @@ forEachLiveCycle(Register PhysReg, const AIE::LivenessVector &VRegMasks,
 // Check if PhysReg can accommodate VRegMasks without conflicts.
 bool AIEPostRegAlloc::AllocState::canPlace(
     Register PhysReg, const AIE::LivenessVector &VRegMasks) const {
-  return forEachLiveCycle(PhysReg, VRegMasks, TRI, *PhysRegUnitSets,
+  return forEachLiveCycle(PhysReg, VRegMasks, *PhysRegUnitSets,
                           [&](size_t C, const PartSet &Active) {
                             return !Active.overlap(CycleOccupancy[C]);
                           });
@@ -143,7 +115,7 @@ bool AIEPostRegAlloc::AllocState::canPlace(
 // Mark PhysReg's lane-accurate RegUnits occupied per cycle.
 void AIEPostRegAlloc::AllocState::place(Register PhysReg,
                                         const AIE::LivenessVector &VRegMasks) {
-  forEachLiveCycle(PhysReg, VRegMasks, TRI, *PhysRegUnitSets,
+  forEachLiveCycle(PhysReg, VRegMasks, *PhysRegUnitSets,
                    [&](size_t C, const PartSet &Active) {
                      CycleOccupancy[C] |= Active;
                      return true;
@@ -155,7 +127,7 @@ void AIEPostRegAlloc::AllocState::place(Register PhysReg,
 // Clear the RegUnits place() occupied for VRegMasks.
 void AIEPostRegAlloc::AllocState::unplace(
     Register PhysReg, const AIE::LivenessVector &VRegMasks) {
-  forEachLiveCycle(PhysReg, VRegMasks, TRI, *PhysRegUnitSets,
+  forEachLiveCycle(PhysReg, VRegMasks, *PhysRegUnitSets,
                    [&](size_t C, const PartSet &Active) {
                      CycleOccupancy[C] &= ~Active;
                      return true;
@@ -322,7 +294,7 @@ AIEPostRegAlloc::Placement::Placement(
     const auto &Elements = masks(LR).getElements();
     LiveCycles[Index].resize(Elements.size());
     for (size_t C = 0, E = Elements.size(); C != E; ++C)
-      if (Elements[C].getLanes().any())
+      if (Elements[C].getUnits().any())
         LiveCycles[Index].set(C);
     refresh(LR);
   }
@@ -420,11 +392,23 @@ AIEPostRegAlloc::VRegMetrics AIEPostRegAlloc::computeMetrics(
   VRegMetrics Metrics = {0, 0, 0, 0, 0, 0};
 
   const unsigned LRIndex = LR.getIndex();
+  const TargetRegisterClass *RC = LR.getRegisterClass();
+
+  // Lane counts are derived from the occupied RegUnits: a full register
+  // occupies all admissible RegUnits and has as many lanes as its class.
+  const unsigned ClassLanes = RC->getLaneMask().getNumLanes();
+  const unsigned AdmissibleUnits = LR.getAdmissibleRegUnits().count();
+  assert(AdmissibleUnits > 0 && "Virtualized range must have RegUnits");
 
   // Compute basic metrics.
-  for (const auto &Mask : Masks.getElements()) {
-    if (Mask.any()) {
-      const unsigned LanesInCycle = Mask.getNumLanes();
+  for (const auto &Live : Masks.getElements()) {
+    if (Live.any()) {
+      const unsigned UnitsInCycle = Live.getUnits().count();
+      assert((UnitsInCycle * ClassLanes) % AdmissibleUnits == 0 &&
+             "Occupied units must be proportional to lanes");
+      const unsigned LanesInCycle = UnitsInCycle * ClassLanes / AdmissibleUnits;
+      assert(LanesInCycle == Live.getNumLanes() &&
+             "Unit-derived lane count must match the lane mask");
       Metrics.TotalLanes += LanesInCycle;
       Metrics.MaxWidth = std::max(Metrics.MaxWidth, LanesInCycle);
       Metrics.Duration++;
@@ -432,7 +416,6 @@ AIEPostRegAlloc::VRegMetrics AIEPostRegAlloc::computeMetrics(
   }
 
   // Compute pure and aliasing interference degrees.
-  const TargetRegisterClass *RC = LR.getRegisterClass();
   const unsigned RCId = RC->getID();
 
   for (const auto &[OtherLRIndex, _] : LivenessByLRIndex) {
