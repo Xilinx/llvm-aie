@@ -4,7 +4,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -O2 -mtriple=aie2 -run-pass=aie-hardware-loops %s -o - | FileCheck %s
 
 ---
@@ -19,6 +19,7 @@ body:             |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   renamable $r1 = MOVA_lda_cg 0
   ; CHECK-NEXT:   renamable $r2 = LDA_dms_lda_idx_imm renamable $p0, 0 :: (load (s32))
+  ; CHECK-NEXT:   $r0 = ADD_NC $r0, 1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1 (align 16):
   ; CHECK-NEXT:   successors: %bb.1(0x7c000000), %bb.2(0x04000000)
@@ -33,8 +34,8 @@ body:             |
   ; CHECK-NEXT:   renamable $r2 = nsw ADD killed renamable $r2, killed renamable $r3, implicit-def $srcarry
   ; CHECK-NEXT:   ST_dms_sts_idx_imm renamable $r2, renamable $p0, 0 :: (store (s32))
   ; CHECK-NEXT:   renamable $r1 = nuw nsw ADD_add_r_ri killed renamable $r1, 1, implicit-def $srcarry
-  ; CHECK-NEXT:   renamable $p2 = MOVXM_lng_cg %bb.1
-  ; CHECK-NEXT:   $r0 = PseudoJNZD $r0, $p2, implicit-def $srcarry
+  ; CHECK-NEXT:   $r0 = ADD_NC $r0, -1
+  ; CHECK-NEXT:   PseudoJNZ $r0, %bb.1
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2 (align 16):
