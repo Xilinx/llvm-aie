@@ -200,6 +200,8 @@ add_header_macro(
   DEPENDS
     .llvm_libc_common_h
     .inttypes
+    .llvm-libc-types.in_addr
+    .llvm-libc-types.in_addr_t
 )
 
 file(MAKE_DIRECTORY ${LIBC_INCLUDE_DIR}/netinet)
@@ -384,6 +386,7 @@ add_header_macro(
     .llvm-libc-types.lldiv_t
     .llvm-libc-types.locale_t
     .llvm-libc-types.size_t
+    .llvm-libc-types.wchar_t
     .llvm_libc_common_h
 )
 

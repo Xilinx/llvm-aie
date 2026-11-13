@@ -97,7 +97,7 @@ static PartSet laneActiveUnits(Register PhysReg, LaneBitmask Mask,
        ++MUI) {
     auto [Unit, UnitMask] = *MUI;
     if ((UnitMask & Mask).any())
-      Units.set(Unit);
+      Units.set(static_cast<unsigned>(Unit));
   }
   return Units;
 }

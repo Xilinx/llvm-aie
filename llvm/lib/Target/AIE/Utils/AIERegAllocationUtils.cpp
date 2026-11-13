@@ -28,7 +28,8 @@ MCPhysReg AIERegAllocationUtils::findFreeNonOverlappingPhysReg(
       continue;
 
     if (llvm::any_of(TRI.regunits(PhysReg), [&](MCRegUnit Unit) {
-          return !ReservedRegUnits.empty() && ReservedRegUnits.test(Unit);
+          return !ReservedRegUnits.empty() &&
+                 ReservedRegUnits.test(static_cast<unsigned>(Unit));
         }))
       continue;
 
@@ -43,5 +44,5 @@ void AIERegAllocationUtils::reserveRegUnits(MCPhysReg PhysReg,
                                             const TargetRegisterInfo &TRI,
                                             BitVector &ReservedRegUnits) {
   for (MCRegUnit Unit : TRI.regunits(PhysReg))
-    ReservedRegUnits.set(Unit);
+    ReservedRegUnits.set(static_cast<unsigned>(Unit));
 }

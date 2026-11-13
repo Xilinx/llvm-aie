@@ -328,7 +328,7 @@ bool AIEInnerLoopVersioning::runOnFunction(Function &F) {
 
 Value *AIELoopVersioner::expandTripCount(const SCEV *TC,
                                          Instruction *InsertPt) const {
-  SCEVExpander Exp(SE, InsertPt->getDataLayout(), "lver.tc");
+  SCEVExpander Exp(SE, "lver.tc");
   if (!Exp.isSafeToExpandAt(TC, InsertPt))
     return nullptr;
   return Exp.expandCodeFor(TC, TC->getType(), InsertPt);

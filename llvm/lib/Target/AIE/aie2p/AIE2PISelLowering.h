@@ -40,7 +40,7 @@ public:
   // I wonder why this isn't the default.
   bool isCheapToSpeculateCtlz(Type *) const override { return true; }
 
-  bool getTgtMemIntrinsic(IntrinsicInfo &Info, const CallInst &I,
+  bool getTgtMemIntrinsic(IntrinsicInfo &Info, const CallBase &I,
                           MachineFunction &MF,
                           unsigned Intrinsic) const override;
 };

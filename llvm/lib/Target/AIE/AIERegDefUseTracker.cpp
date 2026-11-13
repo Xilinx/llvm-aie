@@ -1691,7 +1691,7 @@ void RegLiveRange::fillAdmissibleRegUnits(
     PartSet &RegUnits = PhysRegUnits[Reg];
     if (RegUnits.empty())
       for (MCRegUnitIterator UI(Reg, TRI); UI.isValid(); ++UI)
-        RegUnits.set(*UI);
+        RegUnits.set(static_cast<unsigned>(*UI));
     AdmissibleRegUnits |= RegUnits;
   }
 }

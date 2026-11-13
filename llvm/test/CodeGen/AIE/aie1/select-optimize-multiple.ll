@@ -321,27 +321,17 @@ define i32 @cmovdiffcc(i1 zeroext %a, i1 zeroext %b, i32 %c, i32 %d, i32 %e, i32
 ; CHECK-LABEL: cmovdiffcc:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    padda [sp], #32
+; CHECK-NEXT:    lda.spil r12, [sp, #-8]
+; CHECK-NEXT:    lda.spil r13, [sp, #-4]
+; CHECK-NEXT:    mov r0, r7
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    st.spil r7, [sp, #-28] // 4-byte Folded Spill
-; CHECK-NEXT:    lda.spil r12, [sp, #-40]
-; CHECK-NEXT:    lda.spil r0, [sp, #-28] // 4-byte Folded Reload
-; CHECK-NEXT:    st.spil r6, [sp, #-32] // 4-byte Folded Spill
-; CHECK-NEXT:    lda.spil r13, [sp, #-36]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ite_nez r12, r9, r12, r0
-; CHECK-NEXT:    lda.spil r0, [sp, #-32] // 4-byte Folded Reload
-; CHECK-NEXT:    padda [sp], #-32
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
+; CHECK-NEXT:    mov r0, r6
 ; CHECK-NEXT:    ite_nez r13, r8, r13, r0
 ; CHECK-NEXT:    add r0, r13, r12
 ; CHECK-NEXT:    ret lr
@@ -363,29 +353,23 @@ define i32 @selectframeindex(i1 zeroext %a, i1 zeroext %b, i32 %c, i32 %d, i32 %
 ; CHECK-LABEL: selectframeindex:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    padda [sp], #32
-; CHECK-NEXT:    mov.s12 m0, #-40
-; CHECK-NEXT:    st.spil r7, [sp, #-32] // 4-byte Folded Spill
-; CHECK-NEXT:    lda.spil r0, [sp, #-32] // 4-byte Folded Reload
 ; CHECK-NEXT:    mov r12, sp
 ; CHECK-NEXT:    mov p0, r12
-; CHECK-NEXT:    padda [p0], m0
 ; CHECK-NEXT:    mov p1, r12
-; CHECK-NEXT:    mov.s12 m0, #-36
-; CHECK-NEXT:    padda [p1], m0
-; CHECK-NEXT:    mov r13, p0
+; CHECK-NEXT:    padda [p0], #-8
+; CHECK-NEXT:    padda [p1], #-4
+; CHECK-NEXT:    mov r0, r7
 ; CHECK-NEXT:    mov r12, p1
+; CHECK-NEXT:    mov r13, p0
 ; CHECK-NEXT:    ite_nez r12, r12, r13, r0
-; CHECK-NEXT:    st.spil r6, [sp, #-28] // 4-byte Folded Spill
-; CHECK-NEXT:    lda.spil r0, [sp, #-28] // 4-byte Folded Reload
 ; CHECK-NEXT:    mov p0, r12
 ; CHECK-NEXT:    lda r12, [p0]
-; CHECK-NEXT:    padda [sp], #-32
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
+; CHECK-NEXT:    mov r0, r6
 ; CHECK-NEXT:    ite_nez r13, r8, r9, r0
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    add r0, r13, r12
 ; CHECK-NEXT:    ret lr

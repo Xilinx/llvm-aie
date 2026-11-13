@@ -60,7 +60,6 @@ add_llvm_unittest(CodeGenTests
   TypeTraitsTest.cpp
   TargetOptionsTest.cpp
   TestAsmPrinter.cpp
-  MLRegAllocDevelopmentFeatures.cpp
   X86MCInstLowerTest.cpp
   )
 

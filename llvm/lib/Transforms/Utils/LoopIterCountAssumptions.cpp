@@ -165,9 +165,7 @@ void tryInsertIterationAssumption(ICmpInst &LoopCmpInstr, Loop &CurrentLoop,
   // entry of the Loop Header.
   IRBuilder<> Builder(dyn_cast<Instruction>(InsertionPoint));
 
-  SCEVExpander Expander(
-      SE, CurrentLoop.getLoopPreheader()->getDataLayout(),
-      "expanded");
+  SCEVExpander Expander(SE, "expanded");
 
   Value *LHS = expandValueAtIteration(LoopCmpInstr.getOperand(0), SE, Expander,
                                       InsertionPoint, &CurrentLoop, IterCount);
