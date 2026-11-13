@@ -1,0 +1,1062 @@
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc -mtriple=aie2ps --start-before=postmisched -verify-machineinstrs \
+# RUN:     -debug-only=sched-blocks -o /dev/null %s 2>&1 \
+# RUN:   | FileCheck %s --check-prefix=DBG
+# RUN: llc -mtriple=aie2ps --start-before=postmisched -verify-machineinstrs \
+# RUN:     --stop-after=postmisched -o - %s 2>/dev/null \
+# RUN:   | FileCheck %s --check-prefix=MIR
+# REQUIRES: asserts
+#
+# Test sibling loop optimization: partial merge degraded by resource conflict.
+#
+# Generated from conv2d_opt_outerloop_pipelining_out_mode_0.ll with:
+#   llc -mtriple=aie2ps -O2 --aie-enable-outer-loop-pipelining -stop-before=postmisched
+#
+# OLP structure:
+#   bb.0-bb.6 (OuterPreheader) -> bb.7 (SteadyTop/Prologue)
+#   -> bb.8 (SteadyInner) -> bb.9 (SteadyBottom/Epilogue/Latch)
+#   -> bb.10 (PeeledIterTop) -> bb.11 (PeeledIterInner)
+#   -> bb.12 (PeeledIterBottom)
+#
+# Slack analysis:
+#   The epilogue (bb.9) has 17 bundles, the prologue (bb.7) has 12 bundles.
+#   The tightest cross-boundary edge has:
+#     Height=6 Depth=8 Lat=6 Slack=8
+#   This is a 6-cycle latency dependency between an epilogue instruction
+#   at Height=6 and a prologue instruction at Depth=8. Both paths
+#   (Epilogue->SteadyPrologue and Epilogue->LastIterPrologue) have
+#   slack=8. MaxMerge = min(6 matching, 8 slack, 8 slack) = 6.
+#
+# Resource analysis:
+#   At MergeCount=6, the 6th prologue bundle contains:
+#     $lc = ADD_NC_add_lc_ri $r18, -6
+#   This ADD_NC instruction writes to the loop counter ($lc), conflicting
+#   with the epilogue bundle at delta=-1 (the last epilogue cycle) which
+#   also uses the scalar ALU that writes to $lc. The conflict is detected
+#   with "Conflict (delta=-1)".
+#
+#   At MergeCount=5, no such conflict exists because the conflicting
+#   ADD_NC bundle is no longer in the merge window. The check passes.
+#
+# Result: 5 of 6 matching bundles are merged. The $lc setup instruction
+# remains in the prologue and is not overlapped with the epilogue.
+#
+# Verify sufficient slack.
+# DBG: optimizeSiblingLoops: Processing outer loop latch
+# DBG: Found 6 matching bundles
+# DBG: Slack (Epilogue->SteadyPrologue): 8 cycles
+# DBG: Slack (Epilogue->LastIterPrologue): 8 cycles
+#
+# Verify resource conflict at MergeCount=6, fallback to 5.
+# DBG: checkResourceMergeability: EpilogueSize=17 SteadyPrologueSize=12 LastPrologueIterSize=12 MaxMerge=6
+# DBG: Trying MergeCount=6
+# DBG: Conflict (delta=-1):
+# DBG: Trying MergeCount=5
+# DBG: Resource mergeability check passed with 5 bundles
+#
+# Verify final merge result.
+# DBG: Sibling loop optimization complete: moved 5 bundles
+#
+# Verify the epilogue (bb.7) contains merged prologue instructions.
+# The ADD_NC_add_lc_ri ($lc setup) should NOT appear in bb.7, confirming
+# the 6th bundle was excluded due to the resource conflict.
+# MIR-LABEL: bb.7.steady.stage1.bottom.and.stage0.top:
+# MIR-NOT:   ADD_NC_add_lc_ri
+# MIR:       JNZD
+--- |
+  
+  ; Function Attrs: mustprogress
+  define void @conv2d_opt_outerloop_out_mode_0(ptr noalias %ifm, ptr noalias %wts, ptr noalias %ofm, ptr nonnull align 64 dereferenceable(384) %conv2d_params, ptr noalias %psum_0_tdm, ptr noalias %psum_1_tdm) local_unnamed_addr #0 {
+  entry:
+    %0 = getelementptr inbounds nuw i8, ptr %conv2d_params, i20 92
+    %1 = load i32, ptr %0, align 4, !tbaa !0
+    %add.i = add i32 %1, 16777216
+    store i32 %add.i, ptr %0, align 4, !tbaa !0
+    %shr.i = lshr i32 %add.i, 24
+    %num_ifm_depth_iter.i = getelementptr inbounds nuw i8, ptr %conv2d_params, i20 18
+    %2 = load i8, ptr %num_ifm_depth_iter.i, align 2, !tbaa !3
+    %conv2.i = zext i8 %2 to i32
+    %cmp.i = icmp ugt i8 %2, 1
+    %cmp5.i = icmp eq i32 %shr.i, 1
+    %conv6.i = zext i1 %cmp5.i to i8
+    %cmp10.i = icmp eq i32 %shr.i, %conv2.i
+    %mul.i = select i1 %cmp10.i, i8 2, i8 0
+    %add12.i = or disjoint i8 %mul.i, %conv6.i
+    %cmp14.i = icmp ugt i32 %add.i, 33554431
+    %cmp18.i = icmp samesign ult i32 %shr.i, %conv2.i
+    %3 = select i1 %cmp14.i, i1 %cmp18.i, i1 false
+    %conv19.i = select i1 %3, i8 3, i8 0
+    %add21.i = add nuw nsw i8 %add12.i, %conv19.i
+    %conv23.i = select i1 %cmp.i, i8 %add21.i, i8 0
+    %io_mode.i = getelementptr inbounds nuw i8, ptr %conv2d_params, i20 96
+    store i8 %conv23.i, ptr %io_mode.i, align 32, !tbaa !8
+    %narrow.i = icmp samesign ugt i8 %conv23.i, 1
+    %not..i = zext i1 %narrow.i to i32
+    %psum_in.i = getelementptr inbounds nuw i8, ptr %conv2d_params, i20 76
+    store i32 %not..i, ptr %psum_in.i, align 4, !tbaa !9
+    %out_mode.i = getelementptr inbounds nuw i8, ptr %conv2d_params, i20 7
+    %4 = load i8, ptr %out_mode.i, align 1, !tbaa !10
+    %cmp53.i = icmp eq i8 %4, 1
+    %or.cond.i = select i1 %cmp53.i, i1 %cmp10.i, i1 false
+    br i1 %or.cond.i, label %if.end.i, label %if.else.i
+  
+  if.else.i:                                        ; preds = %entry
+    %conv_type.i = getelementptr inbounds nuw i8, ptr %conv2d_params, i20 28
+    %5 = load i8, ptr %conv_type.i, align 4, !tbaa !11
+    %6 = add i8 %5, -4
+    %7 = icmp ult i8 %6, -2
+    %cmp39.i = icmp ne i8 %5, 8
+    %mulbool119.i = and i1 %cmp39.i, %7
+    %cmp49.i = icmp ne i8 %5, 5
+    %mulbool.i = and i1 %cmp49.i, %mulbool119.i
+    %8 = and i8 %conv23.i, 5
+    %narrow121.i = icmp ne i8 %8, 0
+    %not.120.i = zext i1 %narrow121.i to i32
+    %shl.i = shl i8 %5, 4
+    %mul75.i = select i1 %mulbool.i, i8 %shl.i, i8 0
+    %add79.i = or disjoint i8 %mul75.i, %conv23.i
+    br label %if.end.i
+  
+  if.end.i:                                         ; preds = %if.else.i, %entry
+    %not.120.sink.i = phi i32 [ %not.120.i, %if.else.i ], [ 1, %entry ]
+    %add79.sink.i = phi i8 [ %add79.i, %if.else.i ], [ 3, %entry ]
+    %9 = icmp eq i32 %shr.i, %conv2.i
+    %10 = getelementptr inbounds nuw i8, ptr %conv2d_params, i20 80
+    store i32 %not.120.sink.i, ptr %10, align 16, !tbaa !12
+    %11 = getelementptr inbounds nuw i8, ptr %conv2d_params, i20 104
+    store i8 %add79.sink.i, ptr %11, align 8, !tbaa !13
+    br i1 %9, label %if.then87.i, label %_Z24setup_conv2d_iter_paramsR13conv2d_params.exit
+  
+  if.then87.i:                                      ; preds = %if.end.i
+    %and.i = and i32 %1, 16777215
+    %sunkaddr = getelementptr inbounds nuw i8, ptr %conv2d_params, i20 92
+    store i32 %and.i, ptr %sunkaddr, align 4, !tbaa !0
+    br label %_Z24setup_conv2d_iter_paramsR13conv2d_params.exit
+  
+  _Z24setup_conv2d_iter_paramsR13conv2d_params.exit: ; preds = %if.then87.i, %if.end.i
+    %hdr_len = getelementptr inbounds nuw i8, ptr %conv2d_params, i20 84
+    %12 = load i32, ptr %hdr_len, align 4, !tbaa !14
+    %idx.ext = trunc i32 %12 to i20
+    %add.ptr = getelementptr inbounds i32, ptr %wts, i20 %idx.ext
+    %wts_offset = getelementptr inbounds nuw i8, ptr %conv2d_params, i20 120
+    %13 = load i32, ptr %wts_offset, align 8, !tbaa !15
+    %idx.ext2 = trunc i32 %13 to i20
+    %add.ptr3 = getelementptr inbounds i32, ptr %add.ptr, i20 %idx.ext2
+    %14 = icmp samesign ult i8 %conv23.i, 2
+    tail call void @llvm.experimental.noalias.scope.decl(metadata !16)
+    tail call void @llvm.experimental.noalias.scope.decl(metadata !19)
+    tail call void @llvm.experimental.noalias.scope.decl(metadata !21)
+    tail call void @llvm.experimental.noalias.scope.decl(metadata !23)
+    tail call void @llvm.experimental.noalias.scope.decl(metadata !25)
+    %internal_param.i = getelementptr inbounds nuw i8, ptr %conv2d_params, i20 64
+    %idx.neg.i = sub i20 0, %idx.ext
+    %add.ptr.i = getelementptr inbounds i32, ptr %add.ptr3, i20 %idx.neg.i
+    %inc_Xo.i = getelementptr inbounds nuw i8, ptr %conv2d_params, i20 220
+    %15 = load i32, ptr %inc_Xo.i, align 4, !tbaa !27, !noalias !28
+    %num_X.i = getelementptr inbounds nuw i8, ptr %conv2d_params, i20 336
+    %16 = load i32, ptr %num_X.i, align 16, !tbaa !29, !noalias !28
+    %inc_Co.i = getelementptr inbounds nuw i8, ptr %conv2d_params, i20 216
+    %17 = load i32, ptr %inc_Co.i, align 8, !tbaa !30, !noalias !28
+    %outer_g.i = getelementptr inbounds nuw i8, ptr %conv2d_params, i20 112
+    %18 = load i32, ptr %outer_g.i, align 16, !tbaa !31, !noalias !28
+    %sub.i = zext i1 %14 to i32
+    %shift_bias_init.i = getelementptr inbounds nuw i8, ptr %conv2d_params, i20 8
+    %19 = load <2 x i8>, ptr %shift_bias_init.i, align 8, !tbaa !0, !noalias !28
+    %20 = extractelement <2 x i8> %19, i32 0
+    %21 = extractelement <2 x i8> %19, i32 1
+    %conv187.i = zext nneg i8 %20 to i32
+    %shl.i31 = shl nuw i32 %sub.i, %conv187.i
+    %splat.splatinsert.i.i = insertelement <16 x i32> poison, i32 %shl.i31, i64 0
+    %splat.splat.i.i = shufflevector <16 x i32> %splat.splatinsert.i.i, <16 x i32> poison, <16 x i32> zeroinitializer
+    %22 = bitcast <16 x i32> %splat.splat.i.i to <64 x i8>
+    %conv10.i = sext i8 %21 to i32
+    %iterator_inner_incr2.i = getelementptr inbounds nuw i8, ptr %conv2d_params, i20 140
+    %23 = load i32, ptr %iterator_inner_incr2.i, align 4, !tbaa !32, !noalias !28
+    %iterator_inner_wrap0.i = getelementptr inbounds nuw i8, ptr %conv2d_params, i20 132
+    %24 = load i32, ptr %iterator_inner_wrap0.i, align 4, !tbaa !33, !noalias !28
+    %iterator_inner_incr0.i = getelementptr inbounds nuw i8, ptr %conv2d_params, i20 124
+    %25 = load i32, ptr %iterator_inner_incr0.i, align 4, !tbaa !34, !noalias !28
+    %iterator_inner_wrap1.i = getelementptr inbounds nuw i8, ptr %conv2d_params, i20 136
+    %26 = load i32, ptr %iterator_inner_wrap1.i, align 8, !tbaa !35, !noalias !28
+    %iterator_inner_incr1.i = getelementptr inbounds nuw i8, ptr %conv2d_params, i20 128
+    %27 = load i32, ptr %iterator_inner_incr1.i, align 64, !tbaa !36, !noalias !28
+    %28 = trunc i32 %23 to i20
+    %29 = trunc i32 %24 to i20
+    %30 = trunc i32 %25 to i20
+    %31 = trunc i32 %26 to i20
+    %32 = trunc i32 %27 to i20
+    %shfl_1.i = getelementptr inbounds nuw i8, ptr %conv2d_params, i20 316
+    %33 = load i32, ptr %shfl_1.i, align 4, !tbaa !37, !noalias !28
+    %ifm_sign.i = getelementptr inbounds nuw i8, ptr %conv2d_params, i20 32
+    %34 = load i32, ptr %ifm_sign.i, align 32, !tbaa !38, !noalias !28
+    %shl20.i.i.i = shl i32 %34, 9
+    %or22.i.i.i = or disjoint i32 %shl20.i.i.i, 256
+    %or25.i.i.i = or disjoint i32 %or22.i.i.i, %sub.i
+    %inner_g.i = getelementptr inbounds nuw i8, ptr %conv2d_params, i20 108
+    %35 = load i32, ptr %inner_g.i, align 4, !tbaa !39, !noalias !28
+    %iterator_outer_incr2.i = getelementptr inbounds nuw i8, ptr %conv2d_params, i20 160
+    %36 = load i32, ptr %iterator_outer_incr2.i, align 32, !tbaa !40, !noalias !28
+    %iterator_outer_wrap0.i = getelementptr inbounds nuw i8, ptr %conv2d_params, i20 152
+    %37 = load i32, ptr %iterator_outer_wrap0.i, align 8, !tbaa !41, !noalias !28
+    %iterator_outer_incr0.i = getelementptr inbounds nuw i8, ptr %conv2d_params, i20 144
+    %38 = load i32, ptr %iterator_outer_incr0.i, align 16, !tbaa !42, !noalias !28
+    %iterator_outer_wrap1.i = getelementptr inbounds nuw i8, ptr %conv2d_params, i20 156
+    %39 = load i32, ptr %iterator_outer_wrap1.i, align 4, !tbaa !43, !noalias !28
+    %iterator_outer_incr1.i = getelementptr inbounds nuw i8, ptr %conv2d_params, i20 148
+    %40 = load i32, ptr %iterator_outer_incr1.i, align 4, !tbaa !44, !noalias !28
+    %41 = trunc i32 %36 to i20
+    %42 = trunc i32 %38 to i20
+    %43 = trunc i32 %40 to i20
+    %44 = trunc i32 %37 to i20
+    %45 = trunc i32 %39 to i20
+    %iterator_weights_incr2.i = getelementptr inbounds nuw i8, ptr %conv2d_params, i20 180
+    %46 = load i32, ptr %iterator_weights_incr2.i, align 4, !tbaa !45, !noalias !28
+    %iterator_weights_wrap0.i = getelementptr inbounds nuw i8, ptr %conv2d_params, i20 172
+    %47 = load i32, ptr %iterator_weights_wrap0.i, align 4, !tbaa !46, !noalias !28
+    %iterator_weights_incr0.i = getelementptr inbounds nuw i8, ptr %conv2d_params, i20 164
+    %48 = load i32, ptr %iterator_weights_incr0.i, align 4, !tbaa !47, !noalias !28
+    %iterator_weights_wrap1.i = getelementptr inbounds nuw i8, ptr %conv2d_params, i20 176
+    %49 = load i32, ptr %iterator_weights_wrap1.i, align 16, !tbaa !48, !noalias !28
+    %iterator_weights_incr1.i = getelementptr inbounds nuw i8, ptr %conv2d_params, i20 168
+    %50 = load i32, ptr %iterator_weights_incr1.i, align 8, !tbaa !49, !noalias !28
+    %51 = trunc i32 %46 to i20
+    %52 = trunc i32 %48 to i20
+    %53 = trunc i32 %50 to i20
+    %54 = trunc i32 %47 to i20
+    %55 = trunc i32 %49 to i20
+    %56 = load i32, ptr %internal_param.i, align 64, !tbaa !50, !noalias !28
+    %shift_out.i = getelementptr inbounds nuw i8, ptr %conv2d_params, i20 6
+    %57 = load i8, ptr %shift_out.i, align 2, !tbaa !51, !noalias !28
+    %conv91.i = sext i8 %57 to i32
+    %inc_S_0.i = getelementptr inbounds nuw i8, ptr %conv2d_params, i20 232
+    %58 = load i32, ptr %inc_S_0.i, align 8, !tbaa !52, !noalias !28
+    %idx.ext.i216.i = trunc i32 %58 to i20
+    %59 = trunc i32 %17 to i20
+    %60 = trunc i32 %15 to i20
+    %61 = trunc i32 %16 to i20
+    %62 = trunc i32 %35 to i20
+    %63 = shl i20 %62, 7
+    %64 = add i32 %35, -1
+    br label %stage0.top
+  
+  stage0.top:                                       ; preds = %_Z24setup_conv2d_iter_paramsR13conv2d_params.exit
+    %p_w.0.i.steady.top = addrspacecast ptr %add.ptr3 to ptr addrspace(6)
+    %p_psum_in_0.0.i.steady.top = addrspacecast ptr %psum_0_tdm to ptr addrspace(6)
+    %p_psum_in_1.0.i.steady.top = addrspacecast ptr %psum_1_tdm to ptr addrspace(7)
+    %p_in.0.i.steady.top = addrspacecast ptr %ifm to ptr addrspace(5)
+    %mul.i32.steady.top = shl nuw nsw i32 0, 5
+    %idx.ext.i.i.steady.top = trunc i32 %mul.i32.steady.top to i20
+    %add.ptr.i.i.steady.top = getelementptr inbounds i8, ptr %add.ptr.i, i20 %idx.ext.i.i.steady.top
+    %add.ptr.ascast.i.i.steady.top = addrspacecast ptr %add.ptr.i.i.steady.top to ptr addrspace(6)
+    %.top = load <4 x i32>, ptr addrspace(6) %add.ptr.ascast.i.i.steady.top, align 16, !tbaa !0, !alias.scope !19, !noalias !53
+    %shuffle.i.i.i.steady.top = shufflevector <4 x i32> %.top, <4 x i32> poison, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
+    %shuffle1.i.i.i.steady.top = shufflevector <8 x i32> %shuffle.i.i.i.steady.top, <8 x i32> poison, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
+    %.top3 = bitcast <16 x i32> %shuffle1.i.i.i.steady.top to <64 x i8>
+    %.top4 = load <32 x i16>, ptr addrspace(6) %p_psum_in_0.0.i.steady.top, align 64, !tbaa !0, !alias.scope !21, !noalias !54
+    %.top5 = tail call noundef <32 x i32> @llvm.aie2ps.acc32.v32.I512.ups(<32 x i16> %.top4, i32 range(i32 -128, 128) %conv10.i, i32 1)
+    %.top6 = bitcast <32 x i32> %.top5 to <16 x i64>
+    %add.ptr.i190.i.steady.top = getelementptr inbounds nuw i8, ptr %psum_0_tdm, i20 64
+    %add.ptr.ascast.i191.i.steady.top = addrspacecast ptr %add.ptr.i190.i.steady.top to ptr addrspace(6)
+    %.top7 = load <32 x i16>, ptr addrspace(6) %add.ptr.ascast.i191.i.steady.top, align 64, !tbaa !0, !alias.scope !21, !noalias !54
+    %.top8 = tail call noundef <32 x i32> @llvm.aie2ps.acc32.v32.I512.ups(<32 x i16> %.top7, i32 range(i32 -128, 128) %conv10.i, i32 1)
+    %.top9 = bitcast <32 x i32> %.top8 to <16 x i64>
+    %shuffle2.i.i.i.steady.top = shufflevector <16 x i64> %.top6, <16 x i64> %.top9, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
+    %.top10 = bitcast <32 x i64> %shuffle2.i.i.i.steady.top to <64 x i32>
+    %add.i33.steady.top = or disjoint i32 %mul.i32.steady.top, 16
+    %idx.ext.i195.i.steady.top = trunc i32 %add.i33.steady.top to i20
+    %add.ptr.i196.i.steady.top = getelementptr inbounds i8, ptr %add.ptr.i, i20 %idx.ext.i195.i.steady.top
+    %add.ptr.ascast.i197.i.steady.top = addrspacecast ptr %add.ptr.i196.i.steady.top to ptr addrspace(6)
+    %.top11 = load <4 x i32>, ptr addrspace(6) %add.ptr.ascast.i197.i.steady.top, align 16, !tbaa !0, !alias.scope !19, !noalias !53
+    %shuffle.i.i198.i.steady.top = shufflevector <4 x i32> %.top11, <4 x i32> poison, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
+    %shuffle1.i.i199.i.steady.top = shufflevector <8 x i32> %shuffle.i.i198.i.steady.top, <8 x i32> poison, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
+    %.top12 = bitcast <16 x i32> %shuffle1.i.i199.i.steady.top to <64 x i8>
+    %.top13 = load <32 x i16>, ptr addrspace(7) %p_psum_in_1.0.i.steady.top, align 64, !tbaa !0, !alias.scope !23, !noalias !55
+    %.top14 = tail call noundef <32 x i32> @llvm.aie2ps.acc32.v32.I512.ups(<32 x i16> %.top13, i32 range(i32 -128, 128) %conv10.i, i32 1)
+    %.top15 = bitcast <32 x i32> %.top14 to <16 x i64>
+    %add.ptr.i202.i.steady.top = getelementptr inbounds nuw i8, ptr %psum_1_tdm, i20 64
+    %add.ptr.ascast.i203.i.steady.top = addrspacecast ptr %add.ptr.i202.i.steady.top to ptr addrspace(7)
+    %.top16 = load <32 x i16>, ptr addrspace(7) %add.ptr.ascast.i203.i.steady.top, align 64, !tbaa !0, !alias.scope !23, !noalias !55
+    %.top17 = tail call noundef <32 x i32> @llvm.aie2ps.acc32.v32.I512.ups(<32 x i16> %.top16, i32 range(i32 -128, 128) %conv10.i, i32 1)
+    %.top18 = bitcast <32 x i32> %.top17 to <16 x i64>
+    %shuffle2.i.i205.i.steady.top = shufflevector <16 x i64> %.top15, <16 x i64> %.top18, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
+    %.top19 = bitcast <32 x i64> %shuffle2.i.i205.i.steady.top to <64 x i32>
+    %.top20 = tail call { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, <16 x i32> } @llvm.aie2ps.fifo.ld.popx.p5.p5(ptr addrspace(5) %p_in.0.i.steady.top, <32 x i32> poison, i32 0, <16 x i32> poison, i32 63), !alias.scope !16, !noalias !56
+    %.top21 = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, <16 x i32> } %.top20, 0
+    %.top22 = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, <16 x i32> } %.top20, 1
+    %.top23 = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, <16 x i32> } %.top20, 2
+    %.top24 = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, <16 x i32> } %.top20, 3
+    %.top25 = trunc nuw i32 0 to i20
+    %.top26 = tail call { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, i20, i20 } @llvm.aie2ps.fifo.ld.pop.3d.unaligned.p5.p5(ptr addrspace(5) %.top22, <32 x i32> %.top23, i32 %.top24, i20 %28, i20 %29, i20 %.top25, i20 %30, i20 %31, i20 0, i20 %32), !alias.scope !16, !noalias !56
+    %.top27 = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, i20, i20 } %.top26, 0
+    %.top28 = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, i20, i20 } %.top26, 4
+    %.top29 = zext i20 %.top28 to i32
+    %.top30 = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, i20, i20 } %.top26, 5
+    %.top31 = zext i20 %.top30 to i32
+    %.top32 = bitcast <64 x i8> %.top21 to <16 x i32>
+    %.top33 = bitcast <64 x i8> %.top27 to <16 x i32>
+    %.top34 = tail call <16 x i32> @llvm.aie2ps.vshuffle(<16 x i32> %.top32, <16 x i32> %.top33, i32 %33)
+    %.top35 = load <32 x i16>, ptr addrspace(6) %p_w.0.i.steady.top, align 64, !tbaa !0, !alias.scope !19, !noalias !53
+    %add.ptr.i209.i.steady.top = getelementptr inbounds nuw i8, ptr %add.ptr3, i20 64
+    %add.ptr.ascast.i210.i.steady.top = addrspacecast ptr %add.ptr.i209.i.steady.top to ptr addrspace(6)
+    %.top36 = load <32 x i16>, ptr addrspace(6) %add.ptr.ascast.i210.i.steady.top, align 64, !tbaa !0, !alias.scope !19, !noalias !53
+    %.top37 = bitcast <16 x i32> %.top34 to <32 x i16>
+    %p_in_fifo.sroa.0.1248.i.steady.top = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, i20, i20 } %.top26, 2
+    %p_in_fifo.sroa.10.1249.i.steady.top = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, i20, i20 } %.top26, 3
+    %p_in_fifo.sroa.19235.1250.i.steady.top = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, <16 x i32> } %.top20, 4
+    %p_in.1251.i.steady.top = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, i20, i20 } %.top26, 1
+    %p_w.0.in.pn257.i.shifted.init.chained.steady.top = getelementptr i8, ptr %add.ptr.i209.i.steady.top, i20 64
+    %add.ptr.i193.i.chained.steady.top = getelementptr inbounds i8, ptr %add.ptr.i190.i.steady.top, i20 64
+    %add.ptr.i206.i.chained.steady.top = getelementptr inbounds i8, ptr %add.ptr.i202.i.steady.top, i20 64
+    %outer.jnzd.tc = sub i32 %18, 1
+    %outer.ctr.init = call i32 @llvm.start.loop.iterations.i32(i32 %outer.jnzd.tc)
+    br label %steady.stage1.top
+  
+  steady.stage1.top:                                ; preds = %stage0.top, %steady.stage1.bottom.and.stage0.top
+    %p_w.0.in277.i.steady = phi ptr [ %85, %steady.stage1.bottom.and.stage0.top ], [ %add.ptr3, %stage0.top ]
+    %p_out.0276.i.steady = phi ptr [ %92, %steady.stage1.bottom.and.stage0.top ], [ %ofm, %stage0.top ]
+    %iterator_pout_cnt0.0269.i.steady = phi i32 [ %91, %steady.stage1.bottom.and.stage0.top ], [ 0, %stage0.top ]
+    %iterator_weights_cnt1.0268.i.steady = phi i32 [ %84, %steady.stage1.bottom.and.stage0.top ], [ 0, %stage0.top ]
+    %iterator_weights_cnt0.0267.i.steady = phi i32 [ %82, %steady.stage1.bottom.and.stage0.top ], [ 0, %stage0.top ]
+    %iterator_outer_cnt1.0266.i.steady = phi i32 [ %76, %steady.stage1.bottom.and.stage0.top ], [ 0, %stage0.top ]
+    %iterator_outer_cnt0.0265.i.steady = phi i32 [ %74, %steady.stage1.bottom.and.stage0.top ], [ 0, %stage0.top ]
+    %.phi73 = phi <64 x i8> [ %.top3, %stage0.top ], [ %.bottom38, %steady.stage1.bottom.and.stage0.top ]
+    %.phi80 = phi <64 x i32> [ %.top10, %stage0.top ], [ %.bottom45, %steady.stage1.bottom.and.stage0.top ]
+    %.phi82 = phi <64 x i8> [ %.top12, %stage0.top ], [ %.bottom47, %steady.stage1.bottom.and.stage0.top ]
+    %.phi89 = phi <64 x i32> [ %.top19, %stage0.top ], [ %.bottom54, %steady.stage1.bottom.and.stage0.top ]
+    %.phi99 = phi i32 [ %.top29, %stage0.top ], [ %.bottom64, %steady.stage1.bottom.and.stage0.top ]
+    %.phi101 = phi i32 [ %.top31, %stage0.top ], [ %.bottom66, %steady.stage1.bottom.and.stage0.top ]
+    %.phi105 = phi <32 x i16> [ %.top35, %stage0.top ], [ %.bottom70, %steady.stage1.bottom.and.stage0.top ]
+    %.phi106 = phi <32 x i16> [ %.top36, %stage0.top ], [ %.bottom71, %steady.stage1.bottom.and.stage0.top ]
+    %.phi107 = phi <32 x i16> [ %.top37, %stage0.top ], [ %.bottom72, %steady.stage1.bottom.and.stage0.top ]
+    %p_in_fifo.sroa.0.1248.i.steady.phi = phi <32 x i32> [ %p_in_fifo.sroa.0.1248.i.steady.top, %stage0.top ], [ %p_in_fifo.sroa.0.1248.i.steady.bottom, %steady.stage1.bottom.and.stage0.top ]
+    %p_in_fifo.sroa.10.1249.i.steady.phi = phi i32 [ %p_in_fifo.sroa.10.1249.i.steady.top, %stage0.top ], [ %p_in_fifo.sroa.10.1249.i.steady.bottom, %steady.stage1.bottom.and.stage0.top ]
+    %p_in_fifo.sroa.19235.1250.i.steady.phi = phi <16 x i32> [ %p_in_fifo.sroa.19235.1250.i.steady.top, %stage0.top ], [ %p_in_fifo.sroa.19235.1250.i.steady.bottom, %steady.stage1.bottom.and.stage0.top ]
+    %p_in.1251.i.steady.phi = phi ptr addrspace(5) [ %p_in.1251.i.steady.top, %stage0.top ], [ %p_in.1251.i.steady.bottom, %steady.stage1.bottom.and.stage0.top ]
+    %p_w.0.in.pn257.i.shifted.init.chained.steady.phi = phi ptr [ %p_w.0.in.pn257.i.shifted.init.chained.steady.top, %stage0.top ], [ %p_w.0.in.pn257.i.shifted.init.chained.steady.bottom, %steady.stage1.bottom.and.stage0.top ]
+    %add.ptr.i193.i.chained.steady.phi = phi ptr [ %add.ptr.i193.i.chained.steady.top, %stage0.top ], [ %add.ptr.i193.i.chained.steady.bottom, %steady.stage1.bottom.and.stage0.top ]
+    %add.ptr.i206.i.chained.steady.phi = phi ptr [ %add.ptr.i206.i.chained.steady.top, %stage0.top ], [ %add.ptr.i206.i.chained.steady.bottom, %steady.stage1.bottom.and.stage0.top ]
+    %outer.ctr = phi i32 [ %outer.ctr.init, %stage0.top ], [ %outer.ctr.next, %steady.stage1.bottom.and.stage0.top ]
+    %65 = tail call noundef <64 x i32> @llvm.aie2ps.I512.I512.ACC2048.mul.conf(<64 x i8> %22, <64 x i8> %.phi73, i32 264)
+    %66 = tail call noundef <64 x i32> @llvm.aie2ps.I512.I512.ACC2048.mul.conf(<64 x i8> %22, <64 x i8> %.phi82, i32 264)
+    %67 = tail call noundef <64 x i32> @llvm.aie2ps.I512.I512.ACC2048.addmac.conf(<32 x i16> %.phi107, <32 x i16> %.phi105, <64 x i32> %.phi80, <64 x i32> %65, i32 %or25.i.i.i)
+    %68 = tail call noundef <64 x i32> @llvm.aie2ps.I512.I512.ACC2048.addmac.conf(<32 x i16> %.phi107, <32 x i16> %.phi106, <64 x i32> %.phi89, <64 x i32> %66, i32 %or25.i.i.i)
+    call void @llvm.set.loop.iterations.i32(i32 %64)
+    br label %steady.stage1.inner.for.body55.i
+  
+  steady.stage1.bottom.and.stage0.top:              ; preds = %steady.stage1.inner.for.body55.i
+    %scevgep.i.steady = getelementptr i8, ptr %p_w.0.in277.i.steady, i20 %63
+    %69 = addrspacecast ptr addrspace(5) %p_in.1.i.steady to ptr
+    %70 = trunc nuw i32 %iterator_outer_cnt0.0265.i.steady to i20
+    %71 = trunc nuw i32 %iterator_outer_cnt1.0266.i.steady to i20
+    %72 = tail call { ptr, i20, i20 } @llvm.aie2ps.add.3d(ptr %69, i20 %41, i20 %42, i20 %43, i20 %44, i20 %70, i20 %45, i20 %71)
+    %73 = extractvalue { ptr, i20, i20 } %72, 1
+    %74 = zext i20 %73 to i32
+    %75 = extractvalue { ptr, i20, i20 } %72, 2
+    %76 = zext i20 %75 to i32
+    %77 = extractvalue { ptr, i20, i20 } %72, 0
+    %78 = trunc nuw i32 %iterator_weights_cnt0.0267.i.steady to i20
+    %79 = trunc nuw i32 %iterator_weights_cnt1.0268.i.steady to i20
+    %80 = tail call { ptr, i20, i20 } @llvm.aie2ps.add.3d(ptr nonnull %scevgep.i.steady, i20 %51, i20 %52, i20 %53, i20 %54, i20 %78, i20 %55, i20 %79)
+    %81 = extractvalue { ptr, i20, i20 } %80, 1
+    %82 = zext i20 %81 to i32
+    %83 = extractvalue { ptr, i20, i20 } %80, 2
+    %84 = zext i20 %83 to i32
+    %85 = extractvalue { ptr, i20, i20 } %80, 0
+    %86 = tail call noundef <64 x i8> @llvm.aie2ps.I512.v64.acc32.srs(<64 x i32> %112, i32 range(i32 -128, 128) %conv91.i, i32 %56)
+    store <64 x i8> %86, ptr %p_out.0276.i.steady, align 64, !tbaa !0, !alias.scope !25, !noalias !57
+    %add.ptr.i217.i.steady = getelementptr inbounds i8, ptr %p_out.0276.i.steady, i20 %idx.ext.i216.i
+    %87 = tail call noundef <64 x i8> @llvm.aie2ps.I512.v64.acc32.srs(<64 x i32> %113, i32 range(i32 -128, 128) %conv91.i, i32 %56)
+    store <64 x i8> %87, ptr %add.ptr.i217.i.steady, align 64, !tbaa !0, !alias.scope !25, !noalias !57
+    %88 = trunc nuw i32 %iterator_pout_cnt0.0269.i.steady to i20
+    %89 = tail call { ptr, i20 } @llvm.aie2ps.add.2d(ptr nonnull %add.ptr.i217.i.steady, i20 %59, i20 %60, i20 %61, i20 %88)
+    %90 = extractvalue { ptr, i20 } %89, 1
+    %91 = zext i20 %90 to i32
+    %92 = extractvalue { ptr, i20 } %89, 0
+    %p_w.0.i.steady.bottom = addrspacecast ptr %85 to ptr addrspace(6)
+    %p_psum_in_0.0.i.steady.bottom = addrspacecast ptr %add.ptr.i193.i.chained.steady.phi to ptr addrspace(6)
+    %p_psum_in_1.0.i.steady.bottom = addrspacecast ptr %add.ptr.i206.i.chained.steady.phi to ptr addrspace(7)
+    %p_in.0.i.steady.bottom = addrspacecast ptr %77 to ptr addrspace(5)
+    %mul.i32.steady.bottom = shl nuw nsw i32 %84, 5
+    %idx.ext.i.i.steady.bottom = trunc i32 %mul.i32.steady.bottom to i20
+    %add.ptr.i.i.steady.bottom = getelementptr inbounds i8, ptr %add.ptr.i, i20 %idx.ext.i.i.steady.bottom
+    %add.ptr.ascast.i.i.steady.bottom = addrspacecast ptr %add.ptr.i.i.steady.bottom to ptr addrspace(6)
+    %.bottom = load <4 x i32>, ptr addrspace(6) %add.ptr.ascast.i.i.steady.bottom, align 16, !tbaa !0, !alias.scope !19, !noalias !53
+    %shuffle.i.i.i.steady.bottom = shufflevector <4 x i32> %.bottom, <4 x i32> poison, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
+    %shuffle1.i.i.i.steady.bottom = shufflevector <8 x i32> %shuffle.i.i.i.steady.bottom, <8 x i32> poison, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
+    %.bottom38 = bitcast <16 x i32> %shuffle1.i.i.i.steady.bottom to <64 x i8>
+    %.bottom39 = load <32 x i16>, ptr addrspace(6) %p_psum_in_0.0.i.steady.bottom, align 64, !tbaa !0, !alias.scope !21, !noalias !54
+    %.bottom40 = tail call noundef <32 x i32> @llvm.aie2ps.acc32.v32.I512.ups(<32 x i16> %.bottom39, i32 range(i32 -128, 128) %conv10.i, i32 1)
+    %.bottom41 = bitcast <32 x i32> %.bottom40 to <16 x i64>
+    %add.ptr.i190.i.steady.bottom = getelementptr inbounds nuw i8, ptr %add.ptr.i193.i.chained.steady.phi, i20 64
+    %add.ptr.ascast.i191.i.steady.bottom = addrspacecast ptr %add.ptr.i190.i.steady.bottom to ptr addrspace(6)
+    %.bottom42 = load <32 x i16>, ptr addrspace(6) %add.ptr.ascast.i191.i.steady.bottom, align 64, !tbaa !0, !alias.scope !21, !noalias !54
+    %.bottom43 = tail call noundef <32 x i32> @llvm.aie2ps.acc32.v32.I512.ups(<32 x i16> %.bottom42, i32 range(i32 -128, 128) %conv10.i, i32 1)
+    %.bottom44 = bitcast <32 x i32> %.bottom43 to <16 x i64>
+    %shuffle2.i.i.i.steady.bottom = shufflevector <16 x i64> %.bottom41, <16 x i64> %.bottom44, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
+    %.bottom45 = bitcast <32 x i64> %shuffle2.i.i.i.steady.bottom to <64 x i32>
+    %add.i33.steady.bottom = or disjoint i32 %mul.i32.steady.bottom, 16
+    %idx.ext.i195.i.steady.bottom = trunc i32 %add.i33.steady.bottom to i20
+    %add.ptr.i196.i.steady.bottom = getelementptr inbounds i8, ptr %add.ptr.i, i20 %idx.ext.i195.i.steady.bottom
+    %add.ptr.ascast.i197.i.steady.bottom = addrspacecast ptr %add.ptr.i196.i.steady.bottom to ptr addrspace(6)
+    %.bottom46 = load <4 x i32>, ptr addrspace(6) %add.ptr.ascast.i197.i.steady.bottom, align 16, !tbaa !0, !alias.scope !19, !noalias !53
+    %shuffle.i.i198.i.steady.bottom = shufflevector <4 x i32> %.bottom46, <4 x i32> poison, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
+    %shuffle1.i.i199.i.steady.bottom = shufflevector <8 x i32> %shuffle.i.i198.i.steady.bottom, <8 x i32> poison, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
+    %.bottom47 = bitcast <16 x i32> %shuffle1.i.i199.i.steady.bottom to <64 x i8>
+    %.bottom48 = load <32 x i16>, ptr addrspace(7) %p_psum_in_1.0.i.steady.bottom, align 64, !tbaa !0, !alias.scope !23, !noalias !55
+    %.bottom49 = tail call noundef <32 x i32> @llvm.aie2ps.acc32.v32.I512.ups(<32 x i16> %.bottom48, i32 range(i32 -128, 128) %conv10.i, i32 1)
+    %.bottom50 = bitcast <32 x i32> %.bottom49 to <16 x i64>
+    %add.ptr.i202.i.steady.bottom = getelementptr inbounds nuw i8, ptr %add.ptr.i206.i.chained.steady.phi, i20 64
+    %add.ptr.ascast.i203.i.steady.bottom = addrspacecast ptr %add.ptr.i202.i.steady.bottom to ptr addrspace(7)
+    %.bottom51 = load <32 x i16>, ptr addrspace(7) %add.ptr.ascast.i203.i.steady.bottom, align 64, !tbaa !0, !alias.scope !23, !noalias !55
+    %.bottom52 = tail call noundef <32 x i32> @llvm.aie2ps.acc32.v32.I512.ups(<32 x i16> %.bottom51, i32 range(i32 -128, 128) %conv10.i, i32 1)
+    %.bottom53 = bitcast <32 x i32> %.bottom52 to <16 x i64>
+    %shuffle2.i.i205.i.steady.bottom = shufflevector <16 x i64> %.bottom50, <16 x i64> %.bottom53, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
+    %.bottom54 = bitcast <32 x i64> %shuffle2.i.i205.i.steady.bottom to <64 x i32>
+    %.bottom55 = tail call { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, <16 x i32> } @llvm.aie2ps.fifo.ld.popx.p5.p5(ptr addrspace(5) %p_in.0.i.steady.bottom, <32 x i32> %p_in_fifo.sroa.0.1.i.steady, i32 %p_in_fifo.sroa.10.1.i.steady, <16 x i32> %p_in_fifo.sroa.19235.1.i.steady, i32 63), !alias.scope !16, !noalias !56
+    %.bottom56 = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, <16 x i32> } %.bottom55, 0
+    %.bottom57 = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, <16 x i32> } %.bottom55, 1
+    %.bottom58 = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, <16 x i32> } %.bottom55, 2
+    %.bottom59 = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, <16 x i32> } %.bottom55, 3
+    %.bottom60 = trunc nuw i32 %103 to i20
+    %.bottom61 = tail call { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, i20, i20 } @llvm.aie2ps.fifo.ld.pop.3d.unaligned.p5.p5(ptr addrspace(5) %.bottom57, <32 x i32> %.bottom58, i32 %.bottom59, i20 %28, i20 %29, i20 %.bottom60, i20 %30, i20 %31, i20 0, i20 %32), !alias.scope !16, !noalias !56
+    %.bottom62 = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, i20, i20 } %.bottom61, 0
+    %.bottom63 = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, i20, i20 } %.bottom61, 4
+    %.bottom64 = zext i20 %.bottom63 to i32
+    %.bottom65 = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, i20, i20 } %.bottom61, 5
+    %.bottom66 = zext i20 %.bottom65 to i32
+    %.bottom67 = bitcast <64 x i8> %.bottom56 to <16 x i32>
+    %.bottom68 = bitcast <64 x i8> %.bottom62 to <16 x i32>
+    %.bottom69 = tail call <16 x i32> @llvm.aie2ps.vshuffle(<16 x i32> %.bottom67, <16 x i32> %.bottom68, i32 %33)
+    %.bottom70 = load <32 x i16>, ptr addrspace(6) %p_w.0.i.steady.bottom, align 64, !tbaa !0, !alias.scope !19, !noalias !53
+    %add.ptr.i209.i.steady.bottom = getelementptr inbounds nuw i8, ptr %85, i20 64
+    %add.ptr.ascast.i210.i.steady.bottom = addrspacecast ptr %add.ptr.i209.i.steady.bottom to ptr addrspace(6)
+    %.bottom71 = load <32 x i16>, ptr addrspace(6) %add.ptr.ascast.i210.i.steady.bottom, align 64, !tbaa !0, !alias.scope !19, !noalias !53
+    %.bottom72 = bitcast <16 x i32> %.bottom69 to <32 x i16>
+    %p_in_fifo.sroa.0.1248.i.steady.bottom = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, i20, i20 } %.bottom61, 2
+    %p_in_fifo.sroa.10.1249.i.steady.bottom = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, i20, i20 } %.bottom61, 3
+    %p_in_fifo.sroa.19235.1250.i.steady.bottom = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, <16 x i32> } %.bottom55, 4
+    %p_in.1251.i.steady.bottom = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, i20, i20 } %.bottom61, 1
+    %p_w.0.in.pn257.i.shifted.init.chained.steady.bottom = getelementptr i8, ptr %add.ptr.i209.i.steady.bottom, i20 64
+    %add.ptr.i193.i.chained.steady.bottom = getelementptr inbounds i8, ptr %add.ptr.i190.i.steady.bottom, i20 64
+    %add.ptr.i206.i.chained.steady.bottom = getelementptr inbounds i8, ptr %add.ptr.i202.i.steady.bottom, i20 64
+    %outer.ctr.next = call i32 @llvm.loop.decrement.reg.i32(i32 %outer.ctr, i32 1)
+    %outer.loop.cond = icmp ne i32 %outer.ctr.next, 0
+    br i1 %outer.loop.cond, label %steady.stage1.top, label %lastiter.stage1.top, !llvm.loop !58
+  
+  steady.stage1.inner.for.body55.i:                 ; preds = %steady.stage1.inner.for.body55.i, %steady.stage1.top
+    %p_in.1262.i.steady = phi ptr addrspace(5) [ %p_in.1.i.steady, %steady.stage1.inner.for.body55.i ], [ %p_in.1251.i.steady.phi, %steady.stage1.top ]
+    %p_in_fifo.sroa.19235.1261.i.steady = phi <16 x i32> [ %p_in_fifo.sroa.19235.1.i.steady, %steady.stage1.inner.for.body55.i ], [ %p_in_fifo.sroa.19235.1250.i.steady.phi, %steady.stage1.top ]
+    %p_in_fifo.sroa.10.1260.i.steady = phi i32 [ %p_in_fifo.sroa.10.1.i.steady, %steady.stage1.inner.for.body55.i ], [ %p_in_fifo.sroa.10.1249.i.steady.phi, %steady.stage1.top ]
+    %p_in_fifo.sroa.0.1259.i.steady = phi <32 x i32> [ %p_in_fifo.sroa.0.1.i.steady, %steady.stage1.inner.for.body55.i ], [ %p_in_fifo.sroa.0.1248.i.steady.phi, %steady.stage1.top ]
+    %p_w.0.in.pn257.i.steady = phi ptr [ %p_w.0.in.pn257.i.back.steady, %steady.stage1.inner.for.body55.i ], [ %p_w.0.in.pn257.i.shifted.init.chained.steady.phi, %steady.stage1.top ]
+    %acc_1.0255.i.steady = phi <64 x i32> [ %113, %steady.stage1.inner.for.body55.i ], [ %68, %steady.stage1.top ]
+    %acc_0.0254.i.steady = phi <64 x i32> [ %112, %steady.stage1.inner.for.body55.i ], [ %67, %steady.stage1.top ]
+    %iterator_inner_cnt1.1253.i.steady = phi i32 [ %105, %steady.stage1.inner.for.body55.i ], [ %.phi101, %steady.stage1.top ]
+    %iterator_inner_cnt0.1252.i.steady = phi i32 [ %103, %steady.stage1.inner.for.body55.i ], [ %.phi99, %steady.stage1.top ]
+    %p_w.1.i.steady = addrspacecast ptr %p_w.0.in.pn257.i.steady to ptr addrspace(6)
+    %93 = tail call { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, <16 x i32> } @llvm.aie2ps.fifo.ld.popx.p5.p5(ptr addrspace(5) %p_in.1262.i.steady, <32 x i32> %p_in_fifo.sroa.0.1259.i.steady, i32 %p_in_fifo.sroa.10.1260.i.steady, <16 x i32> %p_in_fifo.sroa.19235.1261.i.steady, i32 63), !alias.scope !16, !noalias !56
+    %94 = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, <16 x i32> } %93, 0
+    %95 = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, <16 x i32> } %93, 1
+    %96 = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, <16 x i32> } %93, 2
+    %97 = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, <16 x i32> } %93, 3
+    %98 = trunc nuw i32 %iterator_inner_cnt0.1252.i.steady to i20
+    %99 = trunc nuw i32 %iterator_inner_cnt1.1253.i.steady to i20
+    %100 = tail call { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, i20, i20 } @llvm.aie2ps.fifo.ld.pop.3d.unaligned.p5.p5(ptr addrspace(5) %95, <32 x i32> %96, i32 %97, i20 %28, i20 %29, i20 %98, i20 %30, i20 %31, i20 %99, i20 %32), !alias.scope !16, !noalias !56
+    %101 = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, i20, i20 } %100, 0
+    %102 = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, i20, i20 } %100, 4
+    %103 = zext i20 %102 to i32
+    %104 = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, i20, i20 } %100, 5
+    %105 = zext i20 %104 to i32
+    %106 = bitcast <64 x i8> %94 to <16 x i32>
+    %107 = bitcast <64 x i8> %101 to <16 x i32>
+    %108 = tail call <16 x i32> @llvm.aie2ps.vshuffle(<16 x i32> %106, <16 x i32> %107, i32 %33)
+    %109 = load <32 x i16>, ptr addrspace(6) %p_w.1.i.steady, align 64, !tbaa !0, !alias.scope !19, !noalias !53
+    %add.ptr.i221.i.steady = getelementptr inbounds nuw i8, ptr %p_w.0.in.pn257.i.steady, i20 64
+    %add.ptr.ascast.i222.i.steady = addrspacecast ptr %add.ptr.i221.i.steady to ptr addrspace(6)
+    %110 = load <32 x i16>, ptr addrspace(6) %add.ptr.ascast.i222.i.steady, align 64, !tbaa !0, !alias.scope !19, !noalias !53
+    %111 = bitcast <16 x i32> %108 to <32 x i16>
+    %112 = tail call noundef <64 x i32> @llvm.aie2ps.I512.I512.ACC2048.mac.conf(<32 x i16> %111, <32 x i16> %109, <64 x i32> %acc_0.0254.i.steady, i32 %or22.i.i.i)
+    %113 = tail call noundef <64 x i32> @llvm.aie2ps.I512.I512.ACC2048.mac.conf(<32 x i16> %111, <32 x i16> %110, <64 x i32> %acc_1.0255.i.steady, i32 %or22.i.i.i)
+    %p_in_fifo.sroa.0.1.i.steady = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, i20, i20 } %100, 2
+    %p_in_fifo.sroa.10.1.i.steady = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, i20, i20 } %100, 3
+    %p_in_fifo.sroa.19235.1.i.steady = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, <16 x i32> } %93, 4
+    %p_in.1.i.steady = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, i20, i20 } %100, 1
+    %p_w.0.in.pn257.i.back.steady = getelementptr inbounds i8, ptr %p_w.0.in.pn257.i.steady, i20 128
+    %114 = call i1 @llvm.loop.decrement.i32(i32 1)
+    br i1 %114, label %steady.stage1.inner.for.body55.i, label %steady.stage1.bottom.and.stage0.top, !llvm.loop !62
+  
+  lastiter.stage1.top:                              ; preds = %steady.stage1.bottom.and.stage0.top
+    call void @llvm.set.loop.iterations.i32(i32 %64)
+    %.lastiter = tail call noundef <64 x i32> @llvm.aie2ps.I512.I512.ACC2048.mul.conf(<64 x i8> %22, <64 x i8> %.bottom38, i32 264)
+    %.lastiter108 = tail call noundef <64 x i32> @llvm.aie2ps.I512.I512.ACC2048.mul.conf(<64 x i8> %22, <64 x i8> %.bottom47, i32 264)
+    %.lastiter109 = tail call noundef <64 x i32> @llvm.aie2ps.I512.I512.ACC2048.addmac.conf(<32 x i16> %.bottom72, <32 x i16> %.bottom70, <64 x i32> %.bottom45, <64 x i32> %.lastiter, i32 %or25.i.i.i)
+    %.lastiter110 = tail call noundef <64 x i32> @llvm.aie2ps.I512.I512.ACC2048.addmac.conf(<32 x i16> %.bottom72, <32 x i16> %.bottom71, <64 x i32> %.bottom54, <64 x i32> %.lastiter108, i32 %or25.i.i.i)
+    br label %lastiter.stage1.inner.for.body55.i
+  
+  lastiter.stage1.inner.for.body55.i:               ; preds = %lastiter.stage1.top, %lastiter.stage1.inner.for.body55.i
+    %p_in.1262.i.lastiter = phi ptr addrspace(5) [ %p_in.1.i.lastiter, %lastiter.stage1.inner.for.body55.i ], [ %p_in.1251.i.steady.bottom, %lastiter.stage1.top ]
+    %p_in_fifo.sroa.19235.1261.i.lastiter = phi <16 x i32> [ %p_in_fifo.sroa.19235.1.i.lastiter, %lastiter.stage1.inner.for.body55.i ], [ %p_in_fifo.sroa.19235.1250.i.steady.bottom, %lastiter.stage1.top ]
+    %p_in_fifo.sroa.10.1260.i.lastiter = phi i32 [ %p_in_fifo.sroa.10.1.i.lastiter, %lastiter.stage1.inner.for.body55.i ], [ %p_in_fifo.sroa.10.1249.i.steady.bottom, %lastiter.stage1.top ]
+    %p_in_fifo.sroa.0.1259.i.lastiter = phi <32 x i32> [ %p_in_fifo.sroa.0.1.i.lastiter, %lastiter.stage1.inner.for.body55.i ], [ %p_in_fifo.sroa.0.1248.i.steady.bottom, %lastiter.stage1.top ]
+    %p_w.0.in.pn257.i.lastiter = phi ptr [ %p_w.0.in.pn257.i.back.lastiter, %lastiter.stage1.inner.for.body55.i ], [ %p_w.0.in.pn257.i.shifted.init.chained.steady.bottom, %lastiter.stage1.top ]
+    %acc_1.0255.i.lastiter = phi <64 x i32> [ %.lastiter131, %lastiter.stage1.inner.for.body55.i ], [ %.lastiter110, %lastiter.stage1.top ]
+    %acc_0.0254.i.lastiter = phi <64 x i32> [ %.lastiter130, %lastiter.stage1.inner.for.body55.i ], [ %.lastiter109, %lastiter.stage1.top ]
+    %iterator_inner_cnt1.1253.i.lastiter = phi i32 [ %.lastiter123, %lastiter.stage1.inner.for.body55.i ], [ %.bottom66, %lastiter.stage1.top ]
+    %iterator_inner_cnt0.1252.i.lastiter = phi i32 [ %.lastiter121, %lastiter.stage1.inner.for.body55.i ], [ %.bottom64, %lastiter.stage1.top ]
+    %p_w.1.i.lastiter = addrspacecast ptr %p_w.0.in.pn257.i.lastiter to ptr addrspace(6)
+    %.lastiter111 = tail call { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, <16 x i32> } @llvm.aie2ps.fifo.ld.popx.p5.p5(ptr addrspace(5) %p_in.1262.i.lastiter, <32 x i32> %p_in_fifo.sroa.0.1259.i.lastiter, i32 %p_in_fifo.sroa.10.1260.i.lastiter, <16 x i32> %p_in_fifo.sroa.19235.1261.i.lastiter, i32 63), !alias.scope !16, !noalias !56
+    %.lastiter112 = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, <16 x i32> } %.lastiter111, 0
+    %.lastiter113 = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, <16 x i32> } %.lastiter111, 1
+    %.lastiter114 = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, <16 x i32> } %.lastiter111, 2
+    %.lastiter115 = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, <16 x i32> } %.lastiter111, 3
+    %.lastiter116 = trunc nuw i32 %iterator_inner_cnt0.1252.i.lastiter to i20
+    %.lastiter117 = trunc nuw i32 %iterator_inner_cnt1.1253.i.lastiter to i20
+    %.lastiter118 = tail call { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, i20, i20 } @llvm.aie2ps.fifo.ld.pop.3d.unaligned.p5.p5(ptr addrspace(5) %.lastiter113, <32 x i32> %.lastiter114, i32 %.lastiter115, i20 %28, i20 %29, i20 %.lastiter116, i20 %30, i20 %31, i20 %.lastiter117, i20 %32), !alias.scope !16, !noalias !56
+    %.lastiter119 = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, i20, i20 } %.lastiter118, 0
+    %.lastiter120 = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, i20, i20 } %.lastiter118, 4
+    %.lastiter121 = zext i20 %.lastiter120 to i32
+    %.lastiter122 = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, i20, i20 } %.lastiter118, 5
+    %.lastiter123 = zext i20 %.lastiter122 to i32
+    %.lastiter124 = bitcast <64 x i8> %.lastiter112 to <16 x i32>
+    %.lastiter125 = bitcast <64 x i8> %.lastiter119 to <16 x i32>
+    %.lastiter126 = tail call <16 x i32> @llvm.aie2ps.vshuffle(<16 x i32> %.lastiter124, <16 x i32> %.lastiter125, i32 %33)
+    %.lastiter127 = load <32 x i16>, ptr addrspace(6) %p_w.1.i.lastiter, align 64, !tbaa !0, !alias.scope !19, !noalias !53
+    %add.ptr.i221.i.lastiter = getelementptr inbounds nuw i8, ptr %p_w.0.in.pn257.i.lastiter, i20 64
+    %add.ptr.ascast.i222.i.lastiter = addrspacecast ptr %add.ptr.i221.i.lastiter to ptr addrspace(6)
+    %.lastiter128 = load <32 x i16>, ptr addrspace(6) %add.ptr.ascast.i222.i.lastiter, align 64, !tbaa !0, !alias.scope !19, !noalias !53
+    %.lastiter129 = bitcast <16 x i32> %.lastiter126 to <32 x i16>
+    %.lastiter130 = tail call noundef <64 x i32> @llvm.aie2ps.I512.I512.ACC2048.mac.conf(<32 x i16> %.lastiter129, <32 x i16> %.lastiter127, <64 x i32> %acc_0.0254.i.lastiter, i32 %or22.i.i.i)
+    %.lastiter131 = tail call noundef <64 x i32> @llvm.aie2ps.I512.I512.ACC2048.mac.conf(<32 x i16> %.lastiter129, <32 x i16> %.lastiter128, <64 x i32> %acc_1.0255.i.lastiter, i32 %or22.i.i.i)
+    %p_in_fifo.sroa.0.1.i.lastiter = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, i20, i20 } %.lastiter118, 2
+    %p_in_fifo.sroa.10.1.i.lastiter = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, i20, i20 } %.lastiter118, 3
+    %p_in_fifo.sroa.19235.1.i.lastiter = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, <16 x i32> } %.lastiter111, 4
+    %p_in.1.i.lastiter = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, i20, i20 } %.lastiter118, 1
+    %p_w.0.in.pn257.i.back.lastiter = getelementptr inbounds i8, ptr %p_w.0.in.pn257.i.lastiter, i20 128
+    %.lastiter132 = call i1 @llvm.loop.decrement.i32(i32 1)
+    br i1 %.lastiter132, label %lastiter.stage1.inner.for.body55.i, label %lastiter.stage1.bottom, !llvm.loop !62
+  
+  lastiter.stage1.bottom:                           ; preds = %lastiter.stage1.inner.for.body55.i
+    %scevgep.i.lastiter = getelementptr i8, ptr %85, i20 %63
+    %.lastiter133 = addrspacecast ptr addrspace(5) %p_in.1.i.lastiter to ptr
+    %.lastiter134 = trunc nuw i32 %74 to i20
+    %.lastiter135 = trunc nuw i32 %76 to i20
+    %.lastiter136 = tail call { ptr, i20, i20 } @llvm.aie2ps.add.3d(ptr %.lastiter133, i20 %41, i20 %42, i20 %43, i20 %44, i20 %.lastiter134, i20 %45, i20 %.lastiter135)
+    %.lastiter137 = extractvalue { ptr, i20, i20 } %.lastiter136, 1
+    %.lastiter138 = zext i20 %.lastiter137 to i32
+    %.lastiter139 = extractvalue { ptr, i20, i20 } %.lastiter136, 2
+    %.lastiter140 = zext i20 %.lastiter139 to i32
+    %.lastiter141 = extractvalue { ptr, i20, i20 } %.lastiter136, 0
+    %.lastiter142 = trunc nuw i32 %82 to i20
+    %.lastiter143 = trunc nuw i32 %84 to i20
+    %.lastiter144 = tail call { ptr, i20, i20 } @llvm.aie2ps.add.3d(ptr nonnull %scevgep.i.lastiter, i20 %51, i20 %52, i20 %53, i20 %54, i20 %.lastiter142, i20 %55, i20 %.lastiter143)
+    %.lastiter145 = extractvalue { ptr, i20, i20 } %.lastiter144, 1
+    %.lastiter146 = zext i20 %.lastiter145 to i32
+    %.lastiter147 = extractvalue { ptr, i20, i20 } %.lastiter144, 2
+    %.lastiter148 = zext i20 %.lastiter147 to i32
+    %.lastiter149 = extractvalue { ptr, i20, i20 } %.lastiter144, 0
+    %.lastiter150 = tail call noundef <64 x i8> @llvm.aie2ps.I512.v64.acc32.srs(<64 x i32> %.lastiter130, i32 range(i32 -128, 128) %conv91.i, i32 %56)
+    store <64 x i8> %.lastiter150, ptr %92, align 64, !tbaa !0, !alias.scope !25, !noalias !57
+    %add.ptr.i217.i.lastiter = getelementptr inbounds i8, ptr %92, i20 %idx.ext.i216.i
+    %.lastiter151 = tail call noundef <64 x i8> @llvm.aie2ps.I512.v64.acc32.srs(<64 x i32> %.lastiter131, i32 range(i32 -128, 128) %conv91.i, i32 %56)
+    store <64 x i8> %.lastiter151, ptr %add.ptr.i217.i.lastiter, align 64, !tbaa !0, !alias.scope !25, !noalias !57
+    %.lastiter152 = trunc nuw i32 %91 to i20
+    %.lastiter153 = tail call { ptr, i20 } @llvm.aie2ps.add.2d(ptr nonnull %add.ptr.i217.i.lastiter, i20 %59, i20 %60, i20 %61, i20 %.lastiter152)
+    %.lastiter154 = extractvalue { ptr, i20 } %.lastiter153, 1
+    %.lastiter155 = zext i20 %.lastiter154 to i32
+    %.lastiter156 = extractvalue { ptr, i20 } %.lastiter153, 0
+    br label %sw.epilog
+  
+  sw.epilog:                                        ; preds = %lastiter.stage1.bottom
+    ret void
+  }
+  
+  ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(none)
+  declare <64 x i32> @llvm.aie2ps.I512.I512.ACC2048.mul.conf(<64 x i8>, <64 x i8>, i32) #1
+  
+  ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(inaccessiblemem: read)
+  declare <32 x i32> @llvm.aie2ps.acc32.v32.I512.ups(<32 x i16>, i32, i32) #2
+  
+  ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: read)
+  declare { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, <16 x i32> } @llvm.aie2ps.fifo.ld.popx.p5.p5(ptr addrspace(5), <32 x i32>, i32, <16 x i32>, i32) #3
+  
+  ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: read)
+  declare { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, i20, i20 } @llvm.aie2ps.fifo.ld.pop.3d.unaligned.p5.p5(ptr addrspace(5), <32 x i32>, i32, i20, i20, i20, i20, i20, i20, i20) #3
+  
+  ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(none)
+  declare <16 x i32> @llvm.aie2ps.vshuffle(<16 x i32>, <16 x i32>, i32) #1
+  
+  ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(none)
+  declare <64 x i32> @llvm.aie2ps.I512.I512.ACC2048.addmac.conf(<32 x i16>, <32 x i16>, <64 x i32>, <64 x i32>, i32) #1
+  
+  ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(none)
+  declare <64 x i32> @llvm.aie2ps.I512.I512.ACC2048.mac.conf(<32 x i16>, <32 x i16>, <64 x i32>, i32) #1
+  
+  ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(none)
+  declare { ptr, i20, i20 } @llvm.aie2ps.add.3d(ptr, i20, i20, i20, i20, i20, i20, i20) #1
+  
+  ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(inaccessiblemem: read)
+  declare <64 x i8> @llvm.aie2ps.I512.v64.acc32.srs(<64 x i32>, i32, i32) #2
+  
+  ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(none)
+  declare { ptr, i20 } @llvm.aie2ps.add.2d(ptr, i20, i20, i20, i20) #1
+  
+  ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(inaccessiblemem: readwrite)
+  declare void @llvm.experimental.noalias.scope.decl(metadata) #4
+  
+  ; Function Attrs: nocallback noduplicate nofree nosync nounwind willreturn
+  declare void @llvm.set.loop.iterations.i32(i32) #5
+  
+  ; Function Attrs: nocallback noduplicate nofree nosync nounwind willreturn
+  declare i1 @llvm.loop.decrement.i32(i32) #5
+  
+  ; Function Attrs: nocallback noduplicate nofree nosync nounwind willreturn
+  declare i32 @llvm.start.loop.iterations.i32(i32) #5
+  
+  ; Function Attrs: nocallback noduplicate nofree nosync nounwind willreturn
+  declare i32 @llvm.loop.decrement.reg.i32(i32, i32) #5
+  
+  attributes #0 = { mustprogress }
+  attributes #1 = { nocallback nofree nosync nounwind willreturn memory(none) }
+  attributes #2 = { nocallback nofree nosync nounwind willreturn memory(inaccessiblemem: read) }
+  attributes #3 = { nocallback nofree nosync nounwind willreturn memory(argmem: read) }
+  attributes #4 = { nocallback nofree nosync nounwind willreturn memory(inaccessiblemem: readwrite) }
+  attributes #5 = { nocallback noduplicate nofree nosync nounwind willreturn }
+  
+  !0 = !{!1, !1, i64 0}
+  !1 = !{!"omnipotent char", !2, i64 0}
+  !2 = !{!"Simple C++ TBAA"}
+  !3 = !{!4, !1, i64 18}
+  !4 = !{!"_ZTS13conv2d_params", !1, i64 0, !1, i64 1, !1, i64 2, !1, i64 3, !1, i64 4, !1, i64 5, !1, i64 6, !1, i64 7, !1, i64 8, !1, i64 9, !1, i64 10, !1, i64 11, !5, i64 12, !1, i64 14, !1, i64 15, !1, i64 16, !1, i64 17, !1, i64 18, !1, i64 19, !5, i64 20, !1, i64 22, !1, i64 23, !5, i64 24, !1, i64 26, !1, i64 27, !1, i64 28, !1, i64 29, !1, i64 30, !1, i64 31, !6, i64 32, !1, i64 36, !1, i64 37, !7, i64 64}
+  !5 = !{!"short", !1, i64 0}
+  !6 = !{!"int", !1, i64 0}
+  !7 = !{!"_ZTS22conv2d_internal_params", !6, i64 0, !6, i64 4, !1, i64 8, !6, i64 12, !6, i64 16, !6, i64 20, !1, i64 24, !1, i64 28, !1, i64 32, !6, i64 36, !1, i64 40, !6, i64 44, !6, i64 48, !6, i64 52, !6, i64 56, !6, i64 60, !6, i64 64, !6, i64 68, !6, i64 72, !6, i64 76, !6, i64 80, !6, i64 84, !6, i64 88, !6, i64 92, !6, i64 96, !6, i64 100, !6, i64 104, !6, i64 108, !6, i64 112, !6, i64 116, !6, i64 120, !6, i64 124, !6, i64 128, !6, i64 132, !6, i64 136, !6, i64 140, !6, i64 144, !6, i64 148, !6, i64 152, !6, i64 156, !6, i64 160, !6, i64 164, !6, i64 168, !6, i64 172, !6, i64 176, !6, i64 180, !6, i64 184, !6, i64 188, !6, i64 192, !6, i64 196, !6, i64 200, !6, i64 204, !6, i64 208, !6, i64 212, !6, i64 216, !6, i64 220, !6, i64 224, !6, i64 228, !6, i64 232, !6, i64 236, !6, i64 240, !6, i64 244, !6, i64 248, !6, i64 252, !6, i64 256, !5, i64 260, !5, i64 262, !1, i64 264, !6, i64 268, !6, i64 272, !1, i64 276, !1, i64 277}
+  !8 = !{!4, !1, i64 96}
+  !9 = !{!4, !6, i64 76}
+  !10 = !{!4, !1, i64 7}
+  !11 = !{!4, !1, i64 28}
+  !12 = !{!4, !6, i64 80}
+  !13 = !{!4, !1, i64 104}
+  !14 = !{!4, !6, i64 84}
+  !15 = !{!4, !6, i64 120}
+  !16 = !{!17}
+  !17 = distinct !{!17, !18, !"_Z18conv2d_generic_optILh1EL5act_t0EL10out_mode_t0EaaaEvPiS2_S2_S2_S2_R13conv2d_params: %input"}
+  !18 = distinct !{!18, !"_Z18conv2d_generic_optILh1EL5act_t0EL10out_mode_t0EaaaEvPiS2_S2_S2_S2_R13conv2d_params"}
+  !19 = !{!20}
+  !20 = distinct !{!20, !18, !"_Z18conv2d_generic_optILh1EL5act_t0EL10out_mode_t0EaaaEvPiS2_S2_S2_S2_R13conv2d_params: %weights"}
+  !21 = !{!22}
+  !22 = distinct !{!22, !18, !"_Z18conv2d_generic_optILh1EL5act_t0EL10out_mode_t0EaaaEvPiS2_S2_S2_S2_R13conv2d_params: %psum_0"}
+  !23 = !{!24}
+  !24 = distinct !{!24, !18, !"_Z18conv2d_generic_optILh1EL5act_t0EL10out_mode_t0EaaaEvPiS2_S2_S2_S2_R13conv2d_params: %psum_1"}
+  !25 = !{!26}
+  !26 = distinct !{!26, !18, !"_Z18conv2d_generic_optILh1EL5act_t0EL10out_mode_t0EaaaEvPiS2_S2_S2_S2_R13conv2d_params: %output"}
+  !27 = !{!4, !6, i64 220}
+  !28 = !{!17, !20, !22, !24, !26}
+  !29 = !{!4, !6, i64 336}
+  !30 = !{!4, !6, i64 216}
+  !31 = !{!4, !6, i64 112}
+  !32 = !{!4, !6, i64 140}
+  !33 = !{!4, !6, i64 132}
+  !34 = !{!4, !6, i64 124}
+  !35 = !{!4, !6, i64 136}
+  !36 = !{!4, !6, i64 128}
+  !37 = !{!4, !6, i64 316}
+  !38 = !{!4, !6, i64 32}
+  !39 = !{!4, !6, i64 108}
+  !40 = !{!4, !6, i64 160}
+  !41 = !{!4, !6, i64 152}
+  !42 = !{!4, !6, i64 144}
+  !43 = !{!4, !6, i64 156}
+  !44 = !{!4, !6, i64 148}
+  !45 = !{!4, !6, i64 180}
+  !46 = !{!4, !6, i64 172}
+  !47 = !{!4, !6, i64 164}
+  !48 = !{!4, !6, i64 176}
+  !49 = !{!4, !6, i64 168}
+  !50 = !{!4, !6, i64 64}
+  !51 = !{!4, !1, i64 6}
+  !52 = !{!4, !6, i64 232}
+  !53 = !{!17, !22, !24, !26}
+  !54 = !{!17, !20, !24, !26}
+  !55 = !{!17, !20, !22, !26}
+  !56 = !{!20, !22, !24, !26}
+  !57 = !{!17, !20, !22, !24}
+  !58 = distinct !{!58, !59, !60, !61}
+  !59 = !{!"llvm.loop.mustprogress"}
+  !60 = !{!"llvm.loop.itercount.range", i32 1}
+  !61 = !{!"llvm.loop.hint.aie_outerloop_pipeliner_success", i64 1}
+  !62 = distinct !{!62, !59, !63}
+  !63 = !{!"llvm.loop.itercount.range", i64 7}
+...
+---
+name:            conv2d_opt_outerloop_out_mode_0
+alignment:       16
+exposesReturnsTwice: false
+legalized:       true
+regBankSelected: true
+selected:        true
+failedISel:      false
+tracksRegLiveness: true
+hasWinCFI:       false
+noPhis:          true
+isSSA:           false
+noVRegs:         true
+hasFakeUses:     false
+callsEHReturn:   false
+callsUnwindInit: false
+hasEHContTarget: false
+hasEHScopes:     false
+hasEHFunclets:   false
+isOutlined:      false
+debugInstrRef:   false
+failsVerification: false
+tracksDebugUserValues: true
+registers:       []
+liveins:         []
+calleeSavedRegisters: [ '$lr', '$l4', '$l5', '$l6', '$l7', '$r8', '$r9', 
+                        '$r10', '$r11', '$r12', '$r13', '$r14', '$r15', 
+                        '$p6', '$p7' ]
+frameInfo:
+  isFrameAddressTaken: false
+  isReturnAddressTaken: false
+  hasStackMap:     false
+  hasPatchPoint:   false
+  stackSize:       64
+  offsetAdjustment: 0
+  maxAlignment:    4
+  adjustsStack:    false
+  hasCalls:        false
+  stackProtector:  ''
+  functionContext: ''
+  maxCallFrameSize: 0
+  cvBytesOfCalleeSavedRegisters: 0
+  hasOpaqueSPAdjustment: false
+  hasVAStart:      false
+  hasMustTailInVarArgFunc: false
+  hasTailCall:     false
+  isCalleeSavedInfoValid: true
+  localFrameSize:  0
+fixedStack:      []
+stack:
+  - { id: 0, name: '', type: spill-slot, offset: 0, size: 4, alignment: 4, 
+      stack-id: default, callee-saved-register: '$p6', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 1, name: '', type: spill-slot, offset: 4, size: 4, alignment: 4, 
+      stack-id: default, callee-saved-register: '$p7', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+entry_values:    []
+callSites:       []
+debugValueSubstitutions: []
+constants:       []
+machineFunctionInfo:
+  varArgsFrameIndex: 0
+body:             |
+  bb.0.entry:
+    successors: %bb.2(0x40000000), %bb.1(0x40000000)
+    liveins: $p0, $p1, $p2, $p3, $p4, $p5, $r8, $r10, $r12, $p6, $p7
+  
+    frame-setup PADDXM_pstm_sp_imm 64, implicit-def $sp, implicit $sp
+    $r19 = MOV_OR_pseudo killed $r8
+    $r21 = MOV_OR_pseudo killed $r10
+    $r23 = MOV_OR_pseudo killed $r12
+    ST_dms_sts_scalar_spill killed $p6, -64, implicit $sp :: (store (s32) into %stack.0)
+    ST_dms_sts_scalar_spill killed $p7, -60, implicit $sp :: (store (s32) into %stack.1)
+    renamable $dj0 = MOV_PD_imm11_pseudo 92
+    renamable $r4 = LDA_dms_lda_scalar_ld_idx renamable $p3, renamable $dj0 :: (dereferenceable load (s32) from %ir.0, !tbaa !0)
+    renamable $dj1 = MOV_PD_imm11_pseudo 18
+    renamable $r6 = LDA_u8_idx renamable $p3, killed renamable $dj1 :: (dereferenceable load (s8) from %ir.num_ifm_depth_iter.i, align 2, !tbaa !3)
+    renamable $r0 = MOVXM_lng_cg 16777216
+    renamable $r2 = MOVXM_lng_cg 33554431
+    renamable $r0 = ADD_alu_r_rr renamable $r4, killed renamable $r0, implicit-def dead $srcarry
+    renamable $r16 = MOV_RLC_imm11_pseudo -24
+    renamable $r16 = LSHL renamable $r0, killed renamable $r16
+    renamable $r2 = LTU killed renamable $r2, renamable $r0
+    renamable $r20 = samesign LTU renamable $r16, renamable $r6
+    renamable $r18 = MOV_RLC_imm11_pseudo 3
+    renamable $r27 = AND killed renamable $r2, killed renamable $r20
+    renamable $r24 = MOV_RLC_imm11_pseudo 0
+    renamable $r2 = SEL_NEZ renamable $r18, renamable $r24, killed renamable $r27
+    renamable $r20 = MOV_RLC_imm11_pseudo 1
+    renamable $r22 = EQ renamable $r16, renamable $r20
+    renamable $r26 = EQ renamable $r16, renamable $r6
+    renamable $r28 = LSHL renamable $r26, renamable $r20
+    renamable $r22 = disjoint OR killed renamable $r28, killed renamable $r22
+    renamable $r2 = nuw nsw ADD_alu_r_rr killed renamable $r22, killed renamable $r2, implicit-def dead $srcarry
+    renamable $m0 = MOV_PD_imm11_pseudo 96
+    renamable $r22 = LDA_u8_idx_imm renamable $p3, 7 :: (dereferenceable load (s8) from %ir.out_mode.i)
+    ST_dms_sts_scalar_st_idx killed renamable $r0, renamable $p3, killed renamable $dj0 :: (store (s32) into %ir.0, !tbaa !0)
+    renamable $p3 = nuw nusw inbounds PADD_mod_pseudo killed renamable $p3, killed renamable $m0
+    renamable $m0 = MOV_PD_imm11_pseudo -20
+    renamable $r27 = LTU renamable $r20, renamable $r6
+    renamable $r0 = SEL_NEZ killed renamable $r2, renamable $r24, killed renamable $r27
+    renamable $p3 = ST_s8_pstm_nrm renamable $r0, killed renamable $p3, killed renamable $m0, implicit-def $pe2_ads, implicit $pe2_ads :: (store (s8) into %ir.io_mode.i, align 32, !tbaa !8)
+    renamable $r28 = samesign LTU renamable $r20, renamable $r0
+    renamable $r2 = EQ killed renamable $r22, renamable $r20
+    renamable $r22 = AND killed renamable $r2, killed renamable $r26
+    renamable $r2 = MOV_RLC_imm11_pseudo 5
+    ST_dms_sts_scalar_st_idx_imm killed renamable $r28, renamable $p3, 0 :: (store (s32) into %ir.psum_in.i, !tbaa !9)
+    JNZ killed renamable $r22, %bb.2
+    DelayedSchedBarrier
+  
+  bb.1.if.else.i:
+    successors: %bb.2(0x80000000)
+    liveins: $p0, $p1, $p2, $p3, $p4, $p5, $r0, $r2, $r4, $r6, $r16, $r24, $r19, $r21, $r23
+  
+    renamable $dj0 = MOV_PD_imm11_pseudo -48
+    renamable $r18 = LDA_s8_idx renamable $p3, killed renamable $dj0 :: (dereferenceable load (s8) from %ir.conv_type.i, align 4, !tbaa !11)
+    renamable $r20 = ADD_add_r_ri renamable $r18, -4, implicit-def dead $srcarry
+    renamable $r20 = EXTEND_u8 killed renamable $r20
+    renamable $r22 = MOV_RLC_imm11_pseudo 254
+    renamable $r20 = LTU killed renamable $r20, killed renamable $r22
+    renamable $r22 = MOV_RLC_imm11_pseudo 8
+    renamable $r26 = EXTEND_u8 renamable $r18
+    renamable $r22 = NE renamable $r26, killed renamable $r22
+    renamable $r20 = AND killed renamable $r22, killed renamable $r20
+    renamable $r22 = MOV_RLC_imm11_pseudo 4
+    renamable $r26 = NE killed renamable $r26, renamable $r2
+    renamable $r18 = LSHL killed renamable $r18, killed renamable $r22
+    renamable $r27 = AND killed renamable $r26, killed renamable $r20
+    renamable $r18 = SEL_NEZ killed renamable $r18, renamable $r24, killed renamable $r27
+    renamable $r20 = AND renamable $r0, renamable $r2
+    renamable $r20 = NEZ killed renamable $r20
+    renamable $r18 = disjoint OR killed renamable $r18, renamable $r0
+  
+  bb.2.if.end.i:
+    successors: %bb.3(0x40000000), %bb.4(0x40000000)
+    liveins: $p0, $p1, $p2, $p3, $p4, $p5, $r0, $r2, $r4, $r6, $r16, $r18, $r20, $r24, $r19, $r21, $r23
+  
+    renamable $m0 = MOV_PD_imm11_pseudo 4
+    renamable $p3 = nuw nusw inbounds PADD_mod_pseudo killed renamable $p3, killed renamable $m0
+    renamable $p3 = ST_dms_sts_scalar_st_pstm_nrm_imm killed renamable $r20, killed renamable $p3, 24 :: (store (s32) into %ir.10, align 16, !tbaa !12)
+    ST_s8_idx_imm killed renamable $r18, renamable $p3, 0, implicit-def dead $pe2_ads, implicit $pe2_ads :: (store (s8) into %ir.11, align 8, !tbaa !13)
+    renamable $r20 = NE killed renamable $r16, killed renamable $r6
+    renamable $r6 = MOV_RLC_imm11_pseudo 2
+    renamable $r18 = MOV_RLC_imm11_pseudo 9
+    renamable $r16 = MOV_RLC_imm11_pseudo 256
+    JNZ killed renamable $r20, %bb.4
+    DelayedSchedBarrier
+  
+  bb.3.if.then87.i:
+    successors: %bb.4(0x80000000)
+    liveins: $p0, $p1, $p2, $p3, $p4, $p5, $r0, $r2, $r4, $r6, $r16, $r18, $r24, $r19, $r21, $r23
+  
+    renamable $r20 = MOVXM_lng_cg 16777215
+    renamable $r4 = AND killed renamable $r4, killed renamable $r20
+    ST_dms_sts_scalar_st_idx_imm killed renamable $r4, renamable $p3, -12 :: (store (s32) into %ir.sunkaddr, !tbaa !0)
+  
+  bb.4._Z24setup_conv2d_iter_paramsR13conv2d_params.exit:
+    successors: %bb.5(0x80000000)
+    liveins: $p0, $p1, $p2, $p3, $p4, $p5, $r0, $r2, $r6, $r16, $r18, $r24, $r19, $r21, $r23
+  
+    renamable $m0 = MOV_PD_imm11_pseudo -20
+    renamable $p3 = nuw nusw inbounds PADD_mod_pseudo killed renamable $p3, killed renamable $m0
+    renamable $m0 = MOV_PD_imm11_pseudo 36
+    renamable $r22, renamable $p3 = LDA_dms_lda_scalar_ld_pstm_nrm killed renamable $p3, killed renamable $m0 :: (dereferenceable load (s32) from %ir.hdr_len, !tbaa !14)
+    renamable $m0 = MOV_PD_imm11_pseudo 100
+    $p6 = MOV_scalar_pseudo $p3
+    renamable $p6 = nuw nusw inbounds PADD_mod_pseudo killed renamable $p6, killed renamable $m0
+    renamable $m0 = MOV_PD_imm11_pseudo 116
+    renamable $r17, renamable $p6 = LDA_dms_lda_scalar_ld_pstm_nrm killed renamable $p6, killed renamable $m0 :: (dereferenceable load (s20) from %ir.inc_Xo.i, align 4, !tbaa !27, !noalias !28)
+    renamable $m0 = MOV_PD_imm11_pseudo -120
+    renamable $dn3, renamable $p6 = LDA_dms_lda_scalar_ld_pstm_nrm killed renamable $p6, killed renamable $m0 :: (dereferenceable load (s20) from %ir.num_X.i, align 16, !tbaa !29, !noalias !28)
+    renamable $m0 = MOV_PD_imm11_pseudo -104
+    renamable $m3, renamable $p6 = LDA_dms_lda_scalar_ld_pstm_nrm killed renamable $p6, renamable $m0 :: (dereferenceable load (s20) from %ir.inc_Co.i, align 8, !tbaa !30, !noalias !28)
+    renamable $r20, renamable $p6 = LDA_dms_lda_scalar_ld_pstm_nrm killed renamable $p6, killed renamable $m0 :: (dereferenceable load (s32) from %ir.outer_g.i, align 16, !tbaa !31, !noalias !28)
+    renamable $m0 = MOV_PD_imm11_pseudo 132
+    renamable $r26, renamable $p6 = LDA_s16_pstm_nrm killed renamable $p6, killed renamable $m0 :: (dereferenceable load (s16) from %ir.shift_bias_init.i, align 8, !tbaa !0, !noalias !28)
+    renamable $m0, renamable $p6 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p6, -8 :: (dereferenceable load (s20) from %ir.iterator_inner_incr2.i, align 4, !tbaa !32, !noalias !28)
+    renamable $dn0, renamable $p6 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p6, -8 :: (dereferenceable load (s20) from %ir.iterator_inner_wrap0.i, align 4, !tbaa !33, !noalias !28)
+    renamable $dj0, renamable $p6 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p6, 12 :: (dereferenceable load (s20) from %ir.iterator_inner_incr0.i, align 4, !tbaa !34, !noalias !28)
+    renamable $dn4, renamable $p6 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p6, -8 :: (dereferenceable load (s20) from %ir.iterator_inner_wrap1.i, align 8, !tbaa !35, !noalias !28)
+    renamable $m1 = MOV_PD_imm11_pseudo 188
+    renamable $dj4, renamable $p6 = LDA_dms_lda_scalar_ld_pstm_nrm killed renamable $p6, killed renamable $m1 :: (dereferenceable load (s20) from %ir.iterator_inner_incr1.i, align 64, !tbaa !36, !noalias !28)
+    renamable $r30 = LDA_dms_lda_scalar_ld_idx_imm renamable $p3, 0 :: (dereferenceable load (s32) from %ir.wts_offset, align 8, !tbaa !15)
+    renamable $m1 = MOV_PD_imm11_pseudo -284
+    renamable $r4, renamable $p6 = LDA_dms_lda_scalar_ld_pstm_nrm killed renamable $p6, killed renamable $m1 :: (dereferenceable load (s32) from %ir.shfl_1.i, !tbaa !37, !noalias !28)
+    renamable $m1 = MOV_PD_imm11_pseudo 76
+    renamable $r3, renamable $p6 = LDA_dms_lda_scalar_ld_pstm_nrm killed renamable $p6, killed renamable $m1 :: (dereferenceable load (s32) from %ir.ifm_sign.i, align 32, !tbaa !38, !noalias !28)
+    renamable $m1 = MOV_PD_imm11_pseudo 52
+    renamable $dj1 = MOV_PD_imm11_pseudo -56
+    renamable $r28, renamable $p6 = LDA_dms_lda_scalar_ld_pstm_nrm killed renamable $p6, killed renamable $m1 :: (dereferenceable load (s32) from %ir.inner_g.i, !tbaa !39, !noalias !28)
+    renamable $r1 = LDA_dms_lda_scalar_ld_idx killed renamable $p3, killed renamable $dj1 :: (dereferenceable load (s32) from %ir.internal_param.i, align 64, !tbaa !50, !noalias !28)
+    renamable $m1, renamable $p6 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p6, -8 :: (dereferenceable load (s20) from %ir.iterator_outer_incr2.i, align 32, !tbaa !40, !noalias !28)
+    renamable $r5 = MOV_RLC_imm11_pseudo 2
+    renamable $dn1, renamable $p6 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p6, -8 :: (dereferenceable load (s20) from %ir.iterator_outer_wrap0.i, align 8, !tbaa !41, !noalias !28)
+    renamable $r7 = nsw LSHL renamable $r22, renamable $r5
+    renamable $dj1, renamable $p6 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p6, 12 :: (dereferenceable load (s20) from %ir.iterator_outer_incr0.i, align 16, !tbaa !42, !noalias !28)
+    renamable $r30 = nsw LSHL killed renamable $r30, renamable $r5
+    renamable $m2 = MOV_PD_imm11_pseudo 32
+    renamable $dn5, renamable $p6 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p6, -8 :: (dereferenceable load (s20) from %ir.iterator_outer_wrap1.i, align 4, !tbaa !43, !noalias !28)
+    renamable $r30 = ADD_alu_r_rr killed renamable $r7, killed renamable $r30, implicit-def dead $srcarry
+    renamable $dj5, renamable $p6 = LDA_dms_lda_scalar_ld_pstm_nrm killed renamable $p6, killed renamable $m2 :: (dereferenceable load (s20) from %ir.iterator_outer_incr1.i, align 4, !tbaa !44, !noalias !28)
+    renamable $r7 = samesign LTU killed renamable $r0, killed renamable $r6
+    renamable $m2, renamable $p6 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p6, -8 :: (dereferenceable load (s20) from %ir.iterator_weights_incr2.i, align 4, !tbaa !45, !noalias !28)
+    renamable $r0 = MOV_RLC_imm11_pseudo 0
+    renamable $dn2, renamable $p6 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p6, -8 :: (dereferenceable load (s20) from %ir.iterator_weights_wrap0.i, align 4, !tbaa !46, !noalias !28)
+    renamable $r0 = SUB killed renamable $r0, killed renamable $r22, implicit-def dead $srcarry
+    renamable $dj2, renamable $p6 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p6, 12 :: (dereferenceable load (s20) from %ir.iterator_weights_incr0.i, align 4, !tbaa !47, !noalias !28)
+    renamable $r22 = nsw LSHL killed renamable $r0, killed renamable $r5
+    renamable $m4 = MOV_PD_imm11_pseudo -162
+    renamable $dn6, renamable $p6 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p6, -8 :: (dereferenceable load (s20) from %ir.iterator_weights_wrap1.i, align 16, !tbaa !48, !noalias !28)
+    renamable $r0 = MOV_RLC_imm11_pseudo -8
+    renamable $dj6, renamable $p6 = LDA_dms_lda_scalar_ld_pstm_nrm killed renamable $p6, killed renamable $m4 :: (dereferenceable load (s20) from %ir.iterator_weights_incr1.i, align 8, !tbaa !49, !noalias !28)
+    renamable $r0 = LSHL renamable $r26, killed renamable $r0
+    renamable $r6 = LDA_s8_idx_imm renamable $p6, 0 :: (dereferenceable load (s8) from %ir.shift_out.i, align 2, !tbaa !51, !noalias !28)
+    renamable $r26 = EXTEND_u8 killed renamable $r26
+    renamable $r0 = EXTEND_s8 killed renamable $r0
+    renamable $dj7 = MOV_PD_imm11_pseudo 226
+    renamable $r18 = LSHL killed renamable $r3, killed renamable $r18
+    renamable $r5 = LDA_dms_lda_scalar_ld_idx killed renamable $p6, killed renamable $dj7 :: (dereferenceable load (s20) from %ir.inc_S_0.i, align 8, !tbaa !52, !noalias !28)
+    renamable $r3 = ADD_alu_r_rr renamable $r30, renamable $r22, implicit-def dead $srcarry
+    renamable $r26 = nuw LSHL renamable $r7, killed renamable $r26
+    renamable $r8 = disjoint OR killed renamable $r18, killed renamable $r16
+    renamable $dc7 = MOV_PD_imm11_pseudo 0
+    $m4 = MOV_scalar_pseudo killed $r30
+    renamable $r10 = disjoint OR renamable $r8, killed renamable $r7
+    renamable $r18 = MOV_RLC_imm11_pseudo 7
+    renamable $r16 = MOV_RLC_imm11_pseudo 16
+    $p3 = MOV_scalar_pseudo $p1
+    renamable $p3 = PADD_mod_pseudo killed renamable $p3, killed renamable $m4
+    $m4 = MOV_scalar_pseudo killed $r3
+    renamable $r12 = MOV_RLC_imm11_pseudo 264
+    renamable $r18 = LSHL renamable $r28, killed renamable $r18
+    renamable $p1 = PADD_mod_pseudo killed renamable $p1, killed renamable $m4
+    renamable $x0 = VBCST_32 killed renamable $r26
+    $m4 = MOV_scalar_pseudo killed $r18
+    renamable $r18 = ADD_add_r_ri killed renamable $r28, -1, implicit-def dead $srcarry
+    renamable $r30 = MOV_RLC_imm11_pseudo 63
+    $dj3 = MOV_scalar_pseudo killed $r22
+    $s0 = MOV_alu_mv_mv_mv_scl killed $r0
+    $crupsmode = MOVX_mvx_cr_imm 0
+    renamable $cml1, renamable $p4 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_imm_upsSign1 renamable $s0, killed renamable $p4, 64, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<32 x s16>) from %ir.p_psum_in_0.0.i.steady.top, !tbaa !0, !alias.scope !21, !noalias !54, addrspace 6)
+    renamable $cmh1, renamable $p4 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_imm_upsSign1 renamable $s0, killed renamable $p4, 64, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<32 x s16>) from %ir.add.ptr.ascast.i191.i.steady.top, !tbaa !0, !alias.scope !21, !noalias !54, addrspace 6)
+    $x10, $p0, $lf0, $r24 = VLDB_POPX $r30, $r30, $p0, undef $lf0, $r24, implicit-def $lfe, implicit-def $srfifo_uf, implicit undef $lfe :: (load unknown-size from %ir.p_in.0.i.steady.top, align 1, !alias.scope !16, !noalias !56, addrspace 5)
+    $dc0 = MOV_scalar_pseudo $dc7
+    $dc4 = MOV_scalar_pseudo $dc7
+    $x1, $p0, $lf0, $r24, $dc0, $dc4 = VLD_POP_512_3D_pseudo $p0, $lf0, $r24, $d0_3d, implicit-def $srfifo_uf :: (load unknown-size from %ir..top22, align 1, !alias.scope !16, !noalias !56, addrspace 5)
+    renamable $wl6 = VLD_128_idx_pseudo renamable $p3, killed renamable $dj3 :: (load (<4 x s32>) from %ir.add.ptr.ascast.i.i.steady.top, !tbaa !0, !alias.scope !19, !noalias !53, addrspace 6)
+    renamable $cml0, renamable $p5 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_imm_upsSign1 renamable $s0, killed renamable $p5, 64, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<32 x s16>) from %ir.p_psum_in_1.0.i.steady.top, !tbaa !0, !alias.scope !23, !noalias !55, addrspace 7)
+    renamable $wl8 = VLD_128_idx_imm_pseudo renamable $p1, 16 :: (load (<4 x s32>) from %ir.add.ptr.ascast.i197.i.steady.top, !tbaa !0, !alias.scope !19, !noalias !53, addrspace 6)
+    renamable $cmh0, renamable $p5 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_imm_upsSign1 renamable $s0, killed renamable $p5, 64, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<32 x s16>) from %ir.add.ptr.ascast.i203.i.steady.top, !tbaa !0, !alias.scope !23, !noalias !55, addrspace 7)
+    $p7 = MOV_scalar_pseudo $p3
+    renamable $x2, renamable $p7 = VLD_x_pstm_nrm_imm_pseudo killed renamable $p7, 64 :: (load (<32 x s16>) from %ir.p_w.0.i.steady.top, !tbaa !0, !alias.scope !19, !noalias !53, addrspace 6)
+    renamable $x4, renamable $p7 = VLD_x_pstm_nrm_imm_pseudo killed renamable $p7, 64 :: (load (<32 x s16>) from %ir.add.ptr.ascast.i210.i.steady.top, !tbaa !0, !alias.scope !19, !noalias !53, addrspace 6)
+    renamable $x10 = VSHUFFLE_vec_shuffle_x killed renamable $x10, killed renamable $x1, renamable $r4
+    renamable $r0 = ADD_add_r_ri killed renamable $r20, -1, implicit-def dead $srcarry
+    renamable $r3 = ADDM_NC_mv_add_ri killed renamable $r0, -1
+    $dc3 = MOV_scalar_pseudo $dc7
+    $dc6 = MOV_scalar_pseudo $dc7
+    $dc2 = MOV_scalar_pseudo $dc7
+    $dc5 = MOV_scalar_pseudo $dc7
+    $dc1 = MOV_scalar_pseudo $dc7
+    renamable $p6 = MOVXM_lng_cg %bb.5
+    $s1 = MOV_alu_mv_mv_mv_scl $r6
+    $crsrsmode = MOVX_mvx_cr_imm 0
+    $m5 = MOV_scalar_pseudo $r5
+    $dj3 = MOV_scalar_pseudo $r17
+  
+  bb.5.steady.stage1.top:
+    successors: %bb.6(0x80000000)
+    liveins: $lfe, $dc0, $dc1, $dc2, $dc3, $dc4, $dc5, $dc6, $dc7, $dj0, $dj1, $dj2, $dj4, $dj5, $dj6, $dm0:0x000000030000000C, $dm1:0x000000030000000C, $dn0, $dn1, $dn2, $dn3, $dn4, $dn5, $dn6, $m0, $m1, $m2, $m3, $m4, $p1, $p2, $p3, $p4, $p5, $p6, $p7, $plfr0:0x00000000A2000040, $r1, $r2, $r3, $r4, $r5, $r6, $r8, $r10, $r12, $r16, $r17, $r18, $r30, $s0, $s1, $x0, $x2, $x4, $x6:0x0000000000000002, $x8:0x0000000000000002, $x10, $crsrsmode, $m5, $crupsmode, $dj3, $r19, $r21, $r23
+  
+    renamable $dm3 = VMUL_vmul_vmul_cm_core_X_X renamable $x0, renamable $x6, renamable $r12
+    renamable $dm2 = VMUL_vmul_vmul_cm_core_X_X renamable $x0, renamable $x8, renamable $r12
+    renamable $dm1 = VADDMAC_vaddmac_vmul_cm_core_X_X killed renamable $dm1, killed renamable $dm3, renamable $x10, killed renamable $x2, renamable $r10
+    renamable $dm0 = VADDMAC_vaddmac_vmul_cm_core_X_X killed renamable $dm0, killed renamable $dm2, killed renamable $x10, killed renamable $x4, renamable $r10
+    $lc = ADD_NC_add_lc_ri $r18, 0
+    SET_LS_REL_pseudo %bb.6, implicit-def $ls, implicit $pc
+    SET_LE_REL_pseudo <mcsymbol .L_LEnd1>, implicit-def $le, implicit $pc
+  
+  bb.6.steady.stage1.inner.for.body55.i:
+    successors: %bb.6(0x7c000000), %bb.7(0x04000000)
+    liveins: $lfe, $dc0, $dc1, $dc2, $dc3, $dc4, $dc5, $dc6, $dc7, $dj0, $dj1, $dj2, $dj4, $dj5, $dj6, $dm0:0x000000030000000C, $dm1:0x000000030000000C, $dn0, $dn1, $dn2, $dn3, $dn4, $dn5, $dn6, $m0, $m1, $m2, $m3, $m4, $p1, $p2, $p3, $p4, $p5, $p6, $p7, $plfr0:0x00000000A2000040, $r1, $r2, $r3, $r4, $r5, $r6, $r8, $r10, $r12, $r16, $r17, $r18, $r30, $s0, $s1, $x0, $d0_3d:0x7800000040001C00, $crsrsmode, $m5, $crupsmode, $dj3, $r19, $r21, $r23
+  
+    $x8, $p0, $lf0, $r24 = VLDB_POPX $r30, $r30, $p0, $lf0, $r24, implicit-def $lfe, implicit-def $srfifo_uf, implicit $lfe :: (load unknown-size from %ir.p_in.1262.i.steady, align 1, !alias.scope !16, !noalias !56, addrspace 5)
+    $x6, $p0, $lf0, $r24, $dc0, $dc4 = VLD_POP_512_3D_pseudo $p0, $lf0, $r24, $d0_3d, implicit-def $srfifo_uf :: (load unknown-size from %ir.95, align 1, !alias.scope !16, !noalias !56, addrspace 5)
+    renamable $x4, renamable $p7 = VLD_x_pstm_nrm_imm_pseudo killed renamable $p7, 64 :: (load (<32 x s16>) from %ir.p_w.1.i.steady, !tbaa !0, !alias.scope !19, !noalias !53, addrspace 6)
+    renamable $x2, renamable $p7 = VLD_x_pstm_nrm_imm_pseudo killed renamable $p7, 64 :: (load (<32 x s16>) from %ir.add.ptr.ascast.i222.i.steady, !tbaa !0, !alias.scope !19, !noalias !53, addrspace 6)
+    renamable $x10 = VSHUFFLE_vec_shuffle_x killed renamable $x8, killed renamable $x6, renamable $r4
+    renamable $dm1 = VMAC_vmac_vmul_cm_core_X_X killed renamable $dm1, renamable $x10, killed renamable $x4, renamable $r8
+    renamable $dm0 = VMAC_vmac_vmul_cm_core_X_X killed renamable $dm0, killed renamable $x10, killed renamable $x2, renamable $r8
+    PseudoLoopEnd <mcsymbol .L_LEnd1>, %bb.6
+  
+  bb.7.steady.stage1.bottom.and.stage0.top:
+    successors: %bb.5(0x7c000000), %bb.8(0x04000000)
+    liveins: $lfe, $d3:0x0000000040000C00, $dc0, $dc1, $dc2, $dc3, $dc5, $dc6, $dc7, $dj0, $dj1, $dj2, $dj4, $dj5, $dj6, $dm0:0x000000030000000C, $dm1:0x000000030000000C, $dn0, $dn1, $dn2, $dn3, $dn4, $dn5, $dn6, $m0, $m1, $m2, $m3, $m4, $p1, $p2, $p3, $p4, $p5, $p6, $plfr0:0x00000000A2000040, $r1, $r2, $r3, $r4, $r5, $r6, $r8, $r10, $r12, $r16, $r17, $r18, $r30, $s0, $s1, $x0, $d0_3d:0x7000000040001C00, $d1_3d:0x3800000040001C00, $d2_3d:0x3800000040001C00, $crsrsmode, $m5, $crupsmode, $dj3, $r19, $r21, $r23
+  
+    $srssign0 = MOV_alu_mv_mv_mv_scl $r1
+    renamable $p2 = VST_SRS_4x_dmx_sts_srs_dm_pstm_nrm_srsSign0 killed renamable $dm1, renamable $s1, killed renamable $p2, renamable $m5, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0 :: (store (<64 x s8>) into %ir.p_out.0276.i.steady, !tbaa !0, !alias.scope !25, !noalias !57)
+    renamable $cml1, renamable $p4 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_imm_upsSign1 renamable $s0, killed renamable $p4, 64, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<32 x s16>) from %ir.p_psum_in_0.0.i.steady.bottom, !tbaa !0, !alias.scope !21, !noalias !54, addrspace 6)
+    $p0, $dc1, $dc5 = PADD_3D_pseudo $p0, $d1_3d
+    renamable $p3 = PADD_mod_pseudo killed renamable $p3, renamable $m4
+    renamable $cmh1, renamable $p4 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_imm_upsSign1 renamable $s0, killed renamable $p4, 64, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<32 x s16>) from %ir.add.ptr.ascast.i191.i.steady.bottom, !tbaa !0, !alias.scope !21, !noalias !54, addrspace 6)
+    $x10, $p0, $lf0, $r24 = VLDB_POPX $r30, $r30, $p0, $lf0, $r24, implicit-def $lfe, implicit-def $srfifo_uf, implicit $lfe :: (load unknown-size from %ir.p_in.0.i.steady.bottom, align 1, !alias.scope !16, !noalias !56, addrspace 5)
+    $p2, $dc3 = VST_2D_SRS_4x_dmx_sts_srs_dm_srsSign0 killed $dm0, $s1, killed $p2, $d3, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0 :: (store (<64 x s8>) into %ir.add.ptr.i217.i.steady, !tbaa !0, !alias.scope !25, !noalias !57)
+    renamable $cml0, renamable $p5 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_imm_upsSign1 renamable $s0, killed renamable $p5, 64, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<32 x s16>) from %ir.p_psum_in_1.0.i.steady.bottom, !tbaa !0, !alias.scope !23, !noalias !55, addrspace 7)
+    $p3, $dc2, $dc6 = PADD_3D_pseudo killed $p3, $d2_3d
+    renamable $cmh0, renamable $p5 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_imm_upsSign1 renamable $s0, killed renamable $p5, 64, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<32 x s16>) from %ir.add.ptr.ascast.i203.i.steady.bottom, !tbaa !0, !alias.scope !23, !noalias !55, addrspace 7)
+    $p7 = MOV_scalar_pseudo $p3
+    renamable $x2, renamable $p7 = VLD_x_pstm_nrm_imm_pseudo killed renamable $p7, 64 :: (load (<32 x s16>) from %ir.p_w.0.i.steady.bottom, !tbaa !0, !alias.scope !19, !noalias !53, addrspace 6)
+    $r0 = MOV_alu_mv_mv_mv_scl $dc6
+    renamable $r0 = nuw nsw LSHL killed renamable $r0, renamable $r2
+    $dc4 = MOV_scalar_pseudo $dc7
+    $x1, $p0, $lf0, $r24, $dc0, $dc4 = VLD_POP_512_3D_pseudo $p0, $lf0, $r24, $d0_3d, implicit-def $srfifo_uf :: (load unknown-size from %ir..bottom57, align 1, !alias.scope !16, !noalias !56, addrspace 5)
+    renamable $x4, renamable $p7 = VLD_x_pstm_nrm_imm_pseudo killed renamable $p7, 64 :: (load (<32 x s16>) from %ir.add.ptr.ascast.i210.i.steady.bottom, !tbaa !0, !alias.scope !19, !noalias !53, addrspace 6)
+    renamable $r20 = disjoint OR renamable $r0, renamable $r16
+    $dj7 = MOV_scalar_pseudo killed $r0
+    renamable $wl6 = VLD_128_idx_pseudo renamable $p1, killed renamable $dj7 :: (load (<4 x s32>) from %ir.add.ptr.ascast.i.i.steady.bottom, !tbaa !0, !alias.scope !19, !noalias !53, addrspace 6)
+    $dj7 = MOV_scalar_pseudo killed $r20
+    renamable $wl8 = VLD_128_idx_pseudo renamable $p1, killed renamable $dj7 :: (load (<4 x s32>) from %ir.add.ptr.ascast.i197.i.steady.bottom, !tbaa !0, !alias.scope !19, !noalias !53, addrspace 6)
+    renamable $x10 = VSHUFFLE_vec_shuffle_x killed renamable $x10, killed renamable $x1, renamable $r4
+    $srssign0 = MOVX_mvx_cr_imm 0
+    $r3 = JNZD $r3, $p6, implicit-def $srcarry
+    DelayedSchedBarrier
+  
+  bb.8.lastiter.stage1.top:
+    successors: %bb.9(0x80000000)
+    liveins: $lfe, $dc0, $dc4, $dj0, $dj4, $dm0:0x000000030000000C, $dm1:0x000000030000000C, $dn0, $dn4, $m0, $p2, $p7, $plfr0:0x00000000A2000040, $r1, $r4, $r5, $r6, $r8, $r10, $r12, $r18, $r30, $x0, $x2, $x4, $x6:0x0000000000000002, $x8:0x0000000000000002, $x10, $r19, $r21, $r23
+  
+    renamable $dm3 = VMUL_vmul_vmul_cm_core_X_X renamable $x0, renamable $x6, renamable $r12
+    renamable $dm2 = VMUL_vmul_vmul_cm_core_X_X killed renamable $x0, renamable $x8, killed renamable $r12
+    renamable $dm1 = VADDMAC_vaddmac_vmul_cm_core_X_X killed renamable $dm1, killed renamable $dm3, renamable $x10, killed renamable $x2, renamable $r10
+    renamable $dm0 = VADDMAC_vaddmac_vmul_cm_core_X_X killed renamable $dm0, killed renamable $dm2, killed renamable $x10, killed renamable $x4, killed renamable $r10
+    $lc = ADD_NC_add_lc_ri $r18, 0
+    SET_LS_REL_pseudo %bb.9, implicit-def $ls, implicit $pc
+    SET_LE_REL_pseudo <mcsymbol .L_LEnd0>, implicit-def $le, implicit $pc
+  
+  bb.9.lastiter.stage1.inner.for.body55.i:
+    successors: %bb.9(0x7c000000), %bb.10(0x04000000)
+    liveins: $lfe, $dc0, $dc4, $dj0, $dj4, $dm0:0x000000030000000C, $dm1:0x000000030000000C, $dn0, $dn4, $m0, $p2, $p7, $plfr0:0x00000000A2000040, $r1, $r4, $r5, $r6, $r8, $r30, $d0_3d:0x3800000040001C00, $r19, $r21, $r23
+  
+    $x8, $p0, $lf0, $r24 = VLDB_POPX $r30, $r30, $p0, $lf0, $r24, implicit-def $lfe, implicit-def $srfifo_uf, implicit $lfe :: (load unknown-size from %ir.p_in.1262.i.lastiter, align 1, !alias.scope !16, !noalias !56, addrspace 5)
+    $x6, $p0, $lf0, $r24, $dc0, $dc4 = VLD_POP_512_3D_pseudo $p0, $lf0, $r24, $d0_3d, implicit-def $srfifo_uf :: (load unknown-size from %ir..lastiter113, align 1, !alias.scope !16, !noalias !56, addrspace 5)
+    renamable $x4, renamable $p7 = VLD_x_pstm_nrm_imm_pseudo killed renamable $p7, 64 :: (load (<32 x s16>) from %ir.p_w.1.i.lastiter, !tbaa !0, !alias.scope !19, !noalias !53, addrspace 6)
+    renamable $x2, renamable $p7 = VLD_x_pstm_nrm_imm_pseudo killed renamable $p7, 64 :: (load (<32 x s16>) from %ir.add.ptr.ascast.i222.i.lastiter, !tbaa !0, !alias.scope !19, !noalias !53, addrspace 6)
+    renamable $x10 = VSHUFFLE_vec_shuffle_x killed renamable $x8, killed renamable $x6, renamable $r4
+    renamable $dm1 = VMAC_vmac_vmul_cm_core_X_X killed renamable $dm1, renamable $x10, killed renamable $x4, renamable $r8
+    renamable $dm0 = VMAC_vmac_vmul_cm_core_X_X killed renamable $dm0, killed renamable $x10, killed renamable $x2, renamable $r8
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.9
+  
+  bb.10.lastiter.stage1.bottom:
+    liveins: $dm0:0x000000030000000C, $dm1:0x000000030000000C, $p2, $r1, $r5, $r6, $r19, $r21, $r23
+  
+    $crsrsmode = MOVX_mvx_cr_imm 0
+    $s0 = MOV_alu_mv_mv_mv_scl killed $r6
+    $srssign0 = MOV_alu_mv_mv_mv_scl killed $r1
+    VST_SRS_4x_dmx_sts_srs_dm_idx_imm_srsSign0 killed renamable $dm1, renamable $s0, renamable $p2, 0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0 :: (store (<64 x s8>) into %ir.92, !tbaa !0, !alias.scope !25, !noalias !57)
+    $dj0 = MOV_scalar_pseudo killed $r5
+    VST_SRS_4x_dmx_sts_srs_dm_idx_srsSign0 killed renamable $dm0, killed renamable $s0, killed renamable $p2, killed renamable $dj0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0 :: (store (<64 x s8>) into %ir.add.ptr.i217.i.lastiter, !tbaa !0, !alias.scope !25, !noalias !57)
+    $srssign0 = MOVX_mvx_cr_imm 0
+    $p7 = LDA_dms_lda_scalar_spill -60, implicit $sp :: (load (s32) from %stack.1)
+    $p6 = LDA_dms_lda_scalar_spill -64, implicit $sp :: (load (s32) from %stack.0)
+    $r12 = MOV_OR_pseudo killed $r23
+    $r10 = MOV_OR_pseudo killed $r21
+    $r8 = MOV_OR_pseudo killed $r19
+    frame-destroy PADDXM_pstm_sp_imm -64, implicit-def $sp, implicit $sp
+    RET implicit $lr
+    DelayedSchedBarrier
+...

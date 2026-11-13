@@ -1,0 +1,671 @@
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc -mtriple=aie2p --start-before=postmisched -verify-machineinstrs \
+# RUN:     -debug-only=sched-blocks -o /dev/null %s 2>&1 \
+# RUN:   | FileCheck %s --check-prefix=DBG
+# REQUIRES: asserts
+#
+# Test sibling loop optimization: skip due to inner loops not pipelined
+# with at least 2 stages.
+#
+# Generated from outer-loop-pipelining.ll (nested_loop_basic) with:
+#   llc -mtriple=aie2p -O2 -aie-enable-outer-loop-pipelining
+#       -aie-enable-outer-loop-pointer-opt=false -stop-before=postmisched
+#
+# OLP structure:
+#   The MIR has the full 7-block OLP structure with two sibling inner
+#   loops (steady.stage1.inner.inner.header and lastiter.stage1.inner.inner.header).
+#   However, the inner loops contain only scalar mul + add instructions
+#   which do not have sufficient instruction-level parallelism or latency
+#   for the software pipeliner to achieve >=2 stages.
+#
+# The sibling loop optimizer requires inner loops pipelined with at least
+# 2 stages because:
+# 1. Non-pipelined inner loops may have safety-margin NOPs inserted
+#    directly into the MBB without recording them in Region.Bundles,
+#    which replaceMBBWithBundles would silently lose.
+# 2. With >=2 stages, TopInsert is non-empty, ensuring WAW/WAR edges
+#    from in-flight inner loop results are properly captured in the
+#    inter-block DAG for correct slack computation.
+#
+# Result: The optimizer detects the OLP structure but skips it because
+# the inner loops failed to pipeline with >=2 stages.
+#
+# Verify the optimizer detects the OLP structure but skips it.
+# DBG: optimizeSiblingLoops: Processing outer loop latch
+# DBG: Skipping: inner loops not pipelined with at least 2 stages
+--- |
+  
+  define void @nested_loop_basic(ptr noalias %a, ptr noalias %b, ptr noalias %c, i32 %N, i32 %M) {
+  entry:
+    %cmp.outer = icmp sgt i32 %N, 1
+    br i1 %cmp.outer, label %outer.header.preheader, label %exit
+  
+  outer.header.preheader:                           ; preds = %entry
+    br label %stage0.top
+  
+  stage0.top:                                       ; preds = %outer.header.preheader
+    %v0.steady.top = load i32, ptr %a, align 4
+    %v1.steady.top = load i32, ptr %b, align 4
+    %.top = mul i32 %v0.steady.top, %v1.steady.top
+    %outer.trip.adj = sub i32 %N, 1
+    br label %steady.stage1.top
+  
+  steady.stage1.top:                                ; preds = %stage0.top, %steady.stage1.bottom.and.stage0.top
+    %i.steady = phi i32 [ %i.next.steady, %steady.stage1.bottom.and.stage0.top ], [ 0, %stage0.top ]
+    %a.ptr.steady = phi ptr [ %a.ptr.next.steady, %steady.stage1.bottom.and.stage0.top ], [ %a, %stage0.top ]
+    %b.ptr.steady = phi ptr [ %b.ptr.next.steady, %steady.stage1.bottom.and.stage0.top ], [ %b, %stage0.top ]
+    %c.ptr.steady = phi ptr [ %c.ptr.next.steady, %steady.stage1.bottom.and.stage0.top ], [ %c, %stage0.top ]
+    %.phi = phi i32 [ %.top, %stage0.top ], [ %.bottom, %steady.stage1.bottom.and.stage0.top ]
+    call void @llvm.set.loop.iterations.i32(i32 %M)
+    %a.ptr.next.steady = getelementptr inbounds i32, ptr %a.ptr.steady, i32 1
+    %b.ptr.next.steady = getelementptr inbounds i32, ptr %b.ptr.steady, i32 1
+    %c.ptr.next.steady = getelementptr inbounds i32, ptr %c.ptr.steady, i32 1
+    br label %steady.stage1.inner.inner.header
+  
+  steady.stage1.inner.inner.header:                 ; preds = %steady.stage1.inner.inner.header, %steady.stage1.top
+    %lsr.iv.steady = phi i32 [ %lsr.iv.next.steady, %steady.stage1.inner.inner.header ], [ 0, %steady.stage1.top ]
+    %inner.cond.steady = call i1 @llvm.loop.decrement.i32(i32 1)
+    %lsr.iv.next.steady = add i32 %lsr.iv.steady, %.phi
+    br i1 %inner.cond.steady, label %steady.stage1.inner.inner.header, label %steady.stage1.bottom.and.stage0.top, !llvm.loop !0
+  
+  steady.stage1.bottom.and.stage0.top:              ; preds = %steady.stage1.inner.inner.header
+    store i32 %lsr.iv.next.steady, ptr %c.ptr.steady, align 4
+    %i.next.steady = add i32 %i.steady, 1
+    %outer.cond.steady = icmp slt i32 %i.next.steady, %outer.trip.adj
+    %v0.steady.bottom = load i32, ptr %a.ptr.next.steady, align 4
+    %v1.steady.bottom = load i32, ptr %b.ptr.next.steady, align 4
+    %.bottom = mul i32 %v0.steady.bottom, %v1.steady.bottom
+    br i1 %outer.cond.steady, label %steady.stage1.top, label %lastiter.stage1.top, !llvm.loop !2
+  
+  lastiter.stage1.top:                              ; preds = %steady.stage1.bottom.and.stage0.top
+    call void @llvm.set.loop.iterations.i32(i32 %M)
+    %a.ptr.next.lastiter = getelementptr inbounds i32, ptr %a.ptr.next.steady, i32 1
+    %b.ptr.next.lastiter = getelementptr inbounds i32, ptr %b.ptr.next.steady, i32 1
+    %c.ptr.next.lastiter = getelementptr inbounds i32, ptr %c.ptr.next.steady, i32 1
+    br label %lastiter.stage1.inner.inner.header
+  
+  lastiter.stage1.inner.inner.header:               ; preds = %lastiter.stage1.top, %lastiter.stage1.inner.inner.header
+    %lsr.iv.lastiter = phi i32 [ %lsr.iv.next.lastiter, %lastiter.stage1.inner.inner.header ], [ 0, %lastiter.stage1.top ]
+    %inner.cond.lastiter = call i1 @llvm.loop.decrement.i32(i32 1)
+    %lsr.iv.next.lastiter = add i32 %lsr.iv.lastiter, %.bottom
+    br i1 %inner.cond.lastiter, label %lastiter.stage1.inner.inner.header, label %lastiter.stage1.bottom, !llvm.loop !0
+  
+  lastiter.stage1.bottom:                           ; preds = %lastiter.stage1.inner.inner.header
+    store i32 %lsr.iv.next.lastiter, ptr %c.ptr.next.steady, align 4
+    br label %exit
+  
+  exit:                                             ; preds = %lastiter.stage1.bottom, %entry
+    ret void
+  }
+  
+  ; Function Attrs: nocallback noduplicate nofree nosync nounwind willreturn
+  declare void @llvm.set.loop.iterations.i32(i32) #0
+  
+  ; Function Attrs: nocallback noduplicate nofree nosync nounwind willreturn
+  declare i1 @llvm.loop.decrement.i32(i32) #0
+  
+  define void @outer_to_inner_phi(ptr noalias %a, ptr noalias %b, ptr noalias %c, i32 %N, i32 %M) {
+  entry:
+    %cmp.outer = icmp sgt i32 %N, 1
+    br i1 %cmp.outer, label %outer.header.preheader, label %exit
+  
+  outer.header.preheader:                           ; preds = %entry
+    br label %stage0.top
+  
+  stage0.top:                                       ; preds = %outer.header.preheader
+    %v0.steady.top = load i32, ptr %a, align 4
+    %v1.steady.top = load i32, ptr %b, align 4
+    %init_acc.steady.top = mul i32 %v0.steady.top, %v1.steady.top
+    %outer.trip.adj = sub i32 %N, 1
+    br label %steady.stage1.top
+  
+  steady.stage1.top:                                ; preds = %stage0.top, %steady.stage1.bottom.and.stage0.top
+    %i.steady = phi i32 [ %i.next.steady, %steady.stage1.bottom.and.stage0.top ], [ 0, %stage0.top ]
+    %a.ptr.steady = phi ptr [ %a.ptr.next.steady, %steady.stage1.bottom.and.stage0.top ], [ %a, %stage0.top ]
+    %b.ptr.steady = phi ptr [ %b.ptr.next.steady, %steady.stage1.bottom.and.stage0.top ], [ %b, %stage0.top ]
+    %c.ptr.steady = phi ptr [ %c.ptr.next.steady, %steady.stage1.bottom.and.stage0.top ], [ %c, %stage0.top ]
+    %v1.steady.phi = phi i32 [ %v1.steady.top, %stage0.top ], [ %v1.steady.bottom, %steady.stage1.bottom.and.stage0.top ]
+    %init_acc.steady.phi = phi i32 [ %init_acc.steady.top, %stage0.top ], [ %init_acc.steady.bottom, %steady.stage1.bottom.and.stage0.top ]
+    call void @llvm.set.loop.iterations.i32(i32 %M)
+    %a.ptr.next.steady = getelementptr inbounds i32, ptr %a.ptr.steady, i32 1
+    %b.ptr.next.steady = getelementptr inbounds i32, ptr %b.ptr.steady, i32 1
+    %c.ptr.next.steady = getelementptr inbounds i32, ptr %c.ptr.steady, i32 1
+    br label %steady.stage1.inner.inner.header
+  
+  steady.stage1.inner.inner.header:                 ; preds = %steady.stage1.inner.inner.header, %steady.stage1.top
+    %acc.steady = phi i32 [ %init_acc.steady.phi, %steady.stage1.top ], [ %acc.next.steady, %steady.stage1.inner.inner.header ]
+    %prod.steady = mul i32 %acc.steady, %v1.steady.phi
+    %acc.next.steady = add i32 %acc.steady, %prod.steady
+    %inner.cond.steady = call i1 @llvm.loop.decrement.i32(i32 1)
+    br i1 %inner.cond.steady, label %steady.stage1.inner.inner.header, label %steady.stage1.bottom.and.stage0.top, !llvm.loop !5
+  
+  steady.stage1.bottom.and.stage0.top:              ; preds = %steady.stage1.inner.inner.header
+    store i32 %acc.next.steady, ptr %c.ptr.steady, align 4
+    %i.next.steady = add i32 %i.steady, 1
+    %outer.cond.steady = icmp slt i32 %i.next.steady, %outer.trip.adj
+    %v0.steady.bottom = load i32, ptr %a.ptr.next.steady, align 4
+    %v1.steady.bottom = load i32, ptr %b.ptr.next.steady, align 4
+    %init_acc.steady.bottom = mul i32 %v0.steady.bottom, %v1.steady.bottom
+    br i1 %outer.cond.steady, label %steady.stage1.top, label %lastiter.stage1.top, !llvm.loop !6
+  
+  lastiter.stage1.top:                              ; preds = %steady.stage1.bottom.and.stage0.top
+    call void @llvm.set.loop.iterations.i32(i32 %M)
+    %a.ptr.next.lastiter = getelementptr inbounds i32, ptr %a.ptr.next.steady, i32 1
+    %b.ptr.next.lastiter = getelementptr inbounds i32, ptr %b.ptr.next.steady, i32 1
+    %c.ptr.next.lastiter = getelementptr inbounds i32, ptr %c.ptr.next.steady, i32 1
+    br label %lastiter.stage1.inner.inner.header
+  
+  lastiter.stage1.inner.inner.header:               ; preds = %lastiter.stage1.top, %lastiter.stage1.inner.inner.header
+    %acc.lastiter = phi i32 [ %init_acc.steady.bottom, %lastiter.stage1.top ], [ %acc.next.lastiter, %lastiter.stage1.inner.inner.header ]
+    %prod.lastiter = mul i32 %acc.lastiter, %v1.steady.bottom
+    %acc.next.lastiter = add i32 %acc.lastiter, %prod.lastiter
+    %inner.cond.lastiter = call i1 @llvm.loop.decrement.i32(i32 1)
+    br i1 %inner.cond.lastiter, label %lastiter.stage1.inner.inner.header, label %lastiter.stage1.bottom, !llvm.loop !5
+  
+  lastiter.stage1.bottom:                           ; preds = %lastiter.stage1.inner.inner.header
+    store i32 %acc.next.lastiter, ptr %c.ptr.next.steady, align 4
+    br label %exit
+  
+  exit:                                             ; preds = %lastiter.stage1.bottom, %entry
+    ret void
+  }
+  
+  define void @inner_range_preserved(ptr noalias %a, ptr noalias %b, ptr noalias %c, i32 %N, i32 %M) {
+  entry:
+    %cmp.outer = icmp sgt i32 %N, 1
+    br i1 %cmp.outer, label %outer.header.preheader, label %exit
+  
+  outer.header.preheader:                           ; preds = %entry
+    br label %stage0.top
+  
+  stage0.top:                                       ; preds = %outer.header.preheader
+    %v0.steady.top = load i32, ptr %a, align 4
+    %v1.steady.top = load i32, ptr %b, align 4
+    %.top = mul i32 %v0.steady.top, %v1.steady.top
+    %outer.trip.adj = sub i32 %N, 1
+    br label %steady.stage1.top
+  
+  steady.stage1.top:                                ; preds = %stage0.top, %steady.stage1.bottom.and.stage0.top
+    %i.steady = phi i32 [ %i.next.steady, %steady.stage1.bottom.and.stage0.top ], [ 0, %stage0.top ]
+    %a.ptr.steady = phi ptr [ %a.ptr.next.steady, %steady.stage1.bottom.and.stage0.top ], [ %a, %stage0.top ]
+    %b.ptr.steady = phi ptr [ %b.ptr.next.steady, %steady.stage1.bottom.and.stage0.top ], [ %b, %stage0.top ]
+    %c.ptr.steady = phi ptr [ %c.ptr.next.steady, %steady.stage1.bottom.and.stage0.top ], [ %c, %stage0.top ]
+    %.phi = phi i32 [ %.top, %stage0.top ], [ %.bottom, %steady.stage1.bottom.and.stage0.top ]
+    call void @llvm.set.loop.iterations.i32(i32 %M)
+    %a.ptr.next.steady = getelementptr inbounds i32, ptr %a.ptr.steady, i32 1
+    %b.ptr.next.steady = getelementptr inbounds i32, ptr %b.ptr.steady, i32 1
+    %c.ptr.next.steady = getelementptr inbounds i32, ptr %c.ptr.steady, i32 1
+    br label %steady.stage1.inner.inner.header
+  
+  steady.stage1.inner.inner.header:                 ; preds = %steady.stage1.inner.inner.header, %steady.stage1.top
+    %lsr.iv.steady = phi i32 [ %lsr.iv.next.steady, %steady.stage1.inner.inner.header ], [ 0, %steady.stage1.top ]
+    %inner.cond.steady = call i1 @llvm.loop.decrement.i32(i32 1)
+    %lsr.iv.next.steady = add i32 %lsr.iv.steady, %.phi
+    br i1 %inner.cond.steady, label %steady.stage1.inner.inner.header, label %steady.stage1.bottom.and.stage0.top, !llvm.loop !7
+  
+  steady.stage1.bottom.and.stage0.top:              ; preds = %steady.stage1.inner.inner.header
+    store i32 %lsr.iv.next.steady, ptr %c.ptr.steady, align 4
+    %i.next.steady = add i32 %i.steady, 1
+    %outer.cond.steady = icmp slt i32 %i.next.steady, %outer.trip.adj
+    %v0.steady.bottom = load i32, ptr %a.ptr.next.steady, align 4
+    %v1.steady.bottom = load i32, ptr %b.ptr.next.steady, align 4
+    %.bottom = mul i32 %v0.steady.bottom, %v1.steady.bottom
+    br i1 %outer.cond.steady, label %steady.stage1.top, label %lastiter.stage1.top, !llvm.loop !9
+  
+  lastiter.stage1.top:                              ; preds = %steady.stage1.bottom.and.stage0.top
+    call void @llvm.set.loop.iterations.i32(i32 %M)
+    %a.ptr.next.lastiter = getelementptr inbounds i32, ptr %a.ptr.next.steady, i32 1
+    %b.ptr.next.lastiter = getelementptr inbounds i32, ptr %b.ptr.next.steady, i32 1
+    %c.ptr.next.lastiter = getelementptr inbounds i32, ptr %c.ptr.next.steady, i32 1
+    br label %lastiter.stage1.inner.inner.header
+  
+  lastiter.stage1.inner.inner.header:               ; preds = %lastiter.stage1.top, %lastiter.stage1.inner.inner.header
+    %lsr.iv.lastiter = phi i32 [ %lsr.iv.next.lastiter, %lastiter.stage1.inner.inner.header ], [ 0, %lastiter.stage1.top ]
+    %inner.cond.lastiter = call i1 @llvm.loop.decrement.i32(i32 1)
+    %lsr.iv.next.lastiter = add i32 %lsr.iv.lastiter, %.bottom
+    br i1 %inner.cond.lastiter, label %lastiter.stage1.inner.inner.header, label %lastiter.stage1.bottom, !llvm.loop !7
+  
+  lastiter.stage1.bottom:                           ; preds = %lastiter.stage1.inner.inner.header
+    store i32 %lsr.iv.next.lastiter, ptr %c.ptr.next.steady, align 4
+    br label %exit
+  
+  exit:                                             ; preds = %lastiter.stage1.bottom, %entry
+    ret void
+  }
+  
+  attributes #0 = { nocallback noduplicate nofree nosync nounwind willreturn }
+  
+  !0 = distinct !{!0, !1}
+  !1 = !{!"llvm.loop.mustprogress"}
+  !2 = distinct !{!2, !1, !3, !4}
+  !3 = !{!"llvm.loop.itercount.range", i32 1}
+  !4 = !{!"llvm.loop.hint.aie_outerloop_pipeliner_success", i64 1}
+  !5 = distinct !{!5, !1}
+  !6 = distinct !{!6, !1, !3, !4}
+  !7 = distinct !{!7, !1, !8}
+  !8 = !{!"llvm.loop.itercount.range", i32 8}
+  !9 = distinct !{!9, !1, !3, !4}
+...
+---
+name:            nested_loop_basic
+alignment:       16
+exposesReturnsTwice: false
+legalized:       true
+regBankSelected: true
+selected:        true
+failedISel:      false
+tracksRegLiveness: true
+hasWinCFI:       false
+noPhis:          true
+isSSA:           false
+noVRegs:         true
+hasFakeUses:     false
+callsEHReturn:   false
+callsUnwindInit: false
+hasEHContTarget: false
+hasEHScopes:     false
+hasEHFunclets:   false
+isOutlined:      false
+debugInstrRef:   false
+failsVerification: false
+tracksDebugUserValues: true
+registers:       []
+liveins:         []
+calleeSavedRegisters: [ '$lr', '$r8', '$r9', '$r10', '$r11', '$r12', '$r13', 
+                        '$r14', '$r15', '$p6', '$p7' ]
+frameInfo:
+  isFrameAddressTaken: false
+  isReturnAddressTaken: false
+  hasStackMap:     false
+  hasPatchPoint:   false
+  stackSize:       0
+  offsetAdjustment: 0
+  maxAlignment:    1
+  adjustsStack:    false
+  hasCalls:        false
+  stackProtector:  ''
+  functionContext: ''
+  maxCallFrameSize: 0
+  cvBytesOfCalleeSavedRegisters: 0
+  hasOpaqueSPAdjustment: false
+  hasVAStart:      false
+  hasMustTailInVarArgFunc: false
+  hasTailCall:     false
+  isCalleeSavedInfoValid: true
+  localFrameSize:  0
+fixedStack:      []
+stack:           []
+entry_values:    []
+callSites:       []
+debugValueSubstitutions: []
+constants:       []
+machineFunctionInfo:
+  varArgsFrameIndex: 0
+body:             |
+  bb.0.entry:
+    successors: %bb.1(0x40000000), %bb.8(0x40000000)
+    liveins: $p0, $p1, $p2, $r0, $r1
+  
+    renamable $r2 = MOV_RLC_imm11_pseudo 1
+    renamable $r2 = GE killed renamable $r2, renamable $r0
+    JNZ killed renamable $r2, %bb.8
+    DelayedSchedBarrier
+  
+  bb.1.outer.header.preheader:
+    successors: %bb.2(0x80000000)
+    liveins: $p0, $p1, $p2, $r0, $r1
+  
+    renamable $r2 = MOV_RLC_imm11_pseudo 0
+    renamable $r3 = LDA_dms_lda_idx_imm renamable $p0, 0 :: (load (s32) from %ir.a)
+    renamable $r4 = LDA_dms_lda_idx_imm renamable $p1, 0 :: (load (s32) from %ir.b)
+    renamable $r4 = MUL killed renamable $r3, killed renamable $r4
+    renamable $r0 = ADD_add_r_ri killed renamable $r0, -1, implicit-def dead $srcarry
+    renamable $r3 = MOV_RLC_imm11_pseudo 0
+    $p4 = MOV_scalar_pseudo $p0
+    $p5 = MOV_scalar_pseudo $p1
+    $p3 = MOV_scalar_pseudo $p2
+    renamable $m0 = MOV_PD_imm11_pseudo 4
+  
+  bb.2.steady.stage1.top:
+    successors: %bb.3(0x80000000)
+    liveins: $m0, $p0, $p1, $p2, $p3, $p4, $p5, $r0, $r1, $r2, $r3, $r4
+  
+    renamable $p4 = nuw nusw inbounds PADD_mod_pseudo killed renamable $p4, renamable $m0
+    renamable $p5 = nuw nusw inbounds PADD_mod_pseudo killed renamable $p5, renamable $m0
+    renamable $p3 = nuw nusw inbounds PADD_mod_pseudo killed renamable $p3, renamable $m0
+    $lc = ADD_NC_mv_add_ri $r1, 0
+    $ls = MOVXM %bb.3
+    $le = MOVXM <mcsymbol .L_LEnd1>
+    renamable $r7 = MOV_RLC_imm11_pseudo 0
+  
+  bb.3.steady.stage1.inner.inner.header:
+    successors: %bb.3(0x7c000000), %bb.4(0x04000000)
+    liveins: $m0, $p0, $p1, $p2, $p3, $p4, $p5, $r0, $r1, $r2, $r3, $r4, $r7
+  
+    renamable $r7 = ADD_alu_r_rr killed renamable $r7, renamable $r4, implicit-def dead $srcarry
+    PseudoLoopEnd <mcsymbol .L_LEnd1>, %bb.3
+  
+  bb.4.steady.stage1.bottom.and.stage0.top:
+    successors: %bb.2(0x7c000000), %bb.5(0x04000000)
+    liveins: $m0, $p0, $p1, $p2, $p3, $p4, $p5, $r0, $r1, $r2, $r3, $r7
+  
+    renamable $r5 = LDA_dms_lda_idx_imm killed renamable $p0, 4 :: (load (s32) from %ir.a.ptr.next.steady)
+    renamable $r6 = LDA_dms_lda_idx_imm killed renamable $p1, 4 :: (load (s32) from %ir.b.ptr.next.steady)
+    renamable $r3 = ADD_add_r_ri killed renamable $r3, 1, implicit-def dead $srcarry
+    renamable $r16 = LT renamable $r3, renamable $r0
+    renamable $r4 = MUL renamable $r5, renamable $r6
+    ST_dms_sts_idx_imm killed renamable $r7, killed renamable $p2, 0 :: (store (s32) into %ir.c.ptr.steady)
+    $p0 = MOV_scalar_pseudo $p4
+    $p1 = MOV_scalar_pseudo $p5
+    $p2 = MOV_scalar_pseudo $p3
+    JNZ killed renamable $r16, %bb.2
+    DelayedSchedBarrier
+  
+  bb.5.lastiter.stage1.top:
+    successors: %bb.6(0x80000000)
+    liveins: $p3, $r1, $r2, $r5, $r6
+  
+    $lc = ADD_NC_mv_add_ri $r1, 0
+    $ls = MOVXM %bb.6
+    $le = MOVXM <mcsymbol .L_LEnd0>
+  
+  bb.6.lastiter.stage1.inner.inner.header:
+    successors: %bb.6(0x7c000000), %bb.7(0x04000000)
+    liveins: $p3, $r2, $r5, $r6
+  
+    renamable $r2 = MAC killed renamable $r2, renamable $r5, renamable $r6
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.6
+  
+  bb.7.lastiter.stage1.bottom:
+    successors: %bb.8(0x80000000)
+    liveins: $p3, $r2
+  
+    ST_dms_sts_idx_imm killed renamable $r2, killed renamable $p3, 0 :: (store (s32) into %ir.c.ptr.next.steady)
+  
+  bb.8.exit:
+    RET implicit $lr
+    DelayedSchedBarrier
+...
+---
+name:            outer_to_inner_phi
+alignment:       16
+exposesReturnsTwice: false
+legalized:       true
+regBankSelected: true
+selected:        true
+failedISel:      false
+tracksRegLiveness: true
+hasWinCFI:       false
+noPhis:          true
+isSSA:           false
+noVRegs:         true
+hasFakeUses:     false
+callsEHReturn:   false
+callsUnwindInit: false
+hasEHContTarget: false
+hasEHScopes:     false
+hasEHFunclets:   false
+isOutlined:      false
+debugInstrRef:   false
+failsVerification: false
+tracksDebugUserValues: true
+registers:       []
+liveins:         []
+calleeSavedRegisters: [ '$lr', '$r8', '$r9', '$r10', '$r11', '$r12', '$r13', 
+                        '$r14', '$r15', '$p6', '$p7' ]
+frameInfo:
+  isFrameAddressTaken: false
+  isReturnAddressTaken: false
+  hasStackMap:     false
+  hasPatchPoint:   false
+  stackSize:       0
+  offsetAdjustment: 0
+  maxAlignment:    1
+  adjustsStack:    false
+  hasCalls:        false
+  stackProtector:  ''
+  functionContext: ''
+  maxCallFrameSize: 0
+  cvBytesOfCalleeSavedRegisters: 0
+  hasOpaqueSPAdjustment: false
+  hasVAStart:      false
+  hasMustTailInVarArgFunc: false
+  hasTailCall:     false
+  isCalleeSavedInfoValid: true
+  localFrameSize:  0
+fixedStack:      []
+stack:           []
+entry_values:    []
+callSites:       []
+debugValueSubstitutions: []
+constants:       []
+machineFunctionInfo:
+  varArgsFrameIndex: 0
+body:             |
+  bb.0.entry:
+    successors: %bb.1(0x40000000), %bb.8(0x40000000)
+    liveins: $p0, $p1, $p2, $r0, $r1
+  
+    renamable $r2 = MOV_RLC_imm11_pseudo 1
+    renamable $r2 = GE killed renamable $r2, renamable $r0
+    JNZ killed renamable $r2, %bb.8
+    DelayedSchedBarrier
+  
+  bb.1.outer.header.preheader:
+    successors: %bb.2(0x80000000)
+    liveins: $p0, $p1, $p2, $r0, $r1
+  
+    renamable $r4 = MOV_RLC_imm11_pseudo 0
+    renamable $r2 = LDA_dms_lda_idx_imm renamable $p0, 0 :: (load (s32) from %ir.a)
+    renamable $r3 = LDA_dms_lda_idx_imm renamable $p1, 0 :: (load (s32) from %ir.b)
+    renamable $r2 = MUL killed renamable $r2, renamable $r3
+    renamable $r0 = ADD_add_r_ri killed renamable $r0, -1, implicit-def dead $srcarry
+    $p4 = MOV_scalar_pseudo $p0
+    $p5 = MOV_scalar_pseudo $p1
+    $p3 = MOV_scalar_pseudo $p2
+    renamable $m0 = MOV_PD_imm11_pseudo 4
+  
+  bb.2.steady.stage1.top:
+    successors: %bb.3(0x80000000)
+    liveins: $m0, $p0, $p1, $p2, $p3, $p4, $p5, $r0, $r1, $r2, $r3, $r4
+  
+    renamable $p4 = nuw nusw inbounds PADD_mod_pseudo killed renamable $p4, renamable $m0
+    renamable $p5 = nuw nusw inbounds PADD_mod_pseudo killed renamable $p5, renamable $m0
+    renamable $p3 = nuw nusw inbounds PADD_mod_pseudo killed renamable $p3, renamable $m0
+    $lc = ADD_NC_mv_add_ri $r1, 0
+    $ls = MOVXM %bb.3
+    $le = MOVXM <mcsymbol .L_LEnd3>
+  
+  bb.3.steady.stage1.inner.inner.header:
+    successors: %bb.3(0x7c000000), %bb.4(0x04000000)
+    liveins: $m0, $p0, $p1, $p2, $p3, $p4, $p5, $r0, $r1, $r2, $r3, $r4
+  
+    renamable $r2 = MAC killed renamable $r2, renamable $r2, renamable $r3
+    PseudoLoopEnd <mcsymbol .L_LEnd3>, %bb.3
+  
+  bb.4.steady.stage1.bottom.and.stage0.top:
+    successors: %bb.2(0x7c000000), %bb.5(0x04000000)
+    liveins: $m0, $p0, $p1, $p2, $p3, $p4, $p5, $r0, $r1, $r2, $r4
+  
+    renamable $r5 = LDA_dms_lda_idx_imm killed renamable $p0, 4 :: (load (s32) from %ir.a.ptr.next.steady)
+    renamable $r3 = LDA_dms_lda_idx_imm killed renamable $p1, 4 :: (load (s32) from %ir.b.ptr.next.steady)
+    renamable $r4 = ADD_add_r_ri killed renamable $r4, 1, implicit-def dead $srcarry
+    renamable $r6 = LT renamable $r4, renamable $r0
+    ST_dms_sts_idx_imm killed renamable $r2, killed renamable $p2, 0 :: (store (s32) into %ir.c.ptr.steady)
+    renamable $r2 = MUL killed renamable $r5, renamable $r3
+    $p0 = MOV_scalar_pseudo $p4
+    $p1 = MOV_scalar_pseudo $p5
+    $p2 = MOV_scalar_pseudo $p3
+    JNZ killed renamable $r6, %bb.2
+    DelayedSchedBarrier
+  
+  bb.5.lastiter.stage1.top:
+    successors: %bb.6(0x80000000)
+    liveins: $p3, $r1, $r2, $r3
+  
+    $lc = ADD_NC_mv_add_ri $r1, 0
+    $ls = MOVXM %bb.6
+    $le = MOVXM <mcsymbol .L_LEnd2>
+  
+  bb.6.lastiter.stage1.inner.inner.header:
+    successors: %bb.6(0x7c000000), %bb.7(0x04000000)
+    liveins: $p3, $r2, $r3
+  
+    renamable $r2 = MAC killed renamable $r2, renamable $r2, renamable $r3
+    PseudoLoopEnd <mcsymbol .L_LEnd2>, %bb.6
+  
+  bb.7.lastiter.stage1.bottom:
+    successors: %bb.8(0x80000000)
+    liveins: $p3, $r2
+  
+    ST_dms_sts_idx_imm killed renamable $r2, killed renamable $p3, 0 :: (store (s32) into %ir.c.ptr.next.steady)
+  
+  bb.8.exit:
+    RET implicit $lr
+    DelayedSchedBarrier
+...
+---
+name:            inner_range_preserved
+alignment:       16
+exposesReturnsTwice: false
+legalized:       true
+regBankSelected: true
+selected:        true
+failedISel:      false
+tracksRegLiveness: true
+hasWinCFI:       false
+noPhis:          true
+isSSA:           false
+noVRegs:         true
+hasFakeUses:     false
+callsEHReturn:   false
+callsUnwindInit: false
+hasEHContTarget: false
+hasEHScopes:     false
+hasEHFunclets:   false
+isOutlined:      false
+debugInstrRef:   false
+failsVerification: false
+tracksDebugUserValues: true
+registers:       []
+liveins:         []
+calleeSavedRegisters: [ '$lr', '$r8', '$r9', '$r10', '$r11', '$r12', '$r13', 
+                        '$r14', '$r15', '$p6', '$p7' ]
+frameInfo:
+  isFrameAddressTaken: false
+  isReturnAddressTaken: false
+  hasStackMap:     false
+  hasPatchPoint:   false
+  stackSize:       0
+  offsetAdjustment: 0
+  maxAlignment:    1
+  adjustsStack:    false
+  hasCalls:        false
+  stackProtector:  ''
+  functionContext: ''
+  maxCallFrameSize: 0
+  cvBytesOfCalleeSavedRegisters: 0
+  hasOpaqueSPAdjustment: false
+  hasVAStart:      false
+  hasMustTailInVarArgFunc: false
+  hasTailCall:     false
+  isCalleeSavedInfoValid: true
+  localFrameSize:  0
+fixedStack:      []
+stack:           []
+entry_values:    []
+callSites:       []
+debugValueSubstitutions: []
+constants:       []
+machineFunctionInfo:
+  varArgsFrameIndex: 0
+body:             |
+  bb.0.entry:
+    successors: %bb.1(0x40000000), %bb.8(0x40000000)
+    liveins: $p0, $p1, $p2, $r0, $r1
+  
+    renamable $r2 = MOV_RLC_imm11_pseudo 1
+    renamable $r2 = GE killed renamable $r2, renamable $r0
+    JNZ killed renamable $r2, %bb.8
+    DelayedSchedBarrier
+  
+  bb.1.outer.header.preheader:
+    successors: %bb.2(0x80000000)
+    liveins: $p0, $p1, $p2, $r0, $r1
+  
+    renamable $r2 = MOV_RLC_imm11_pseudo 0
+    renamable $r3 = LDA_dms_lda_idx_imm renamable $p0, 0 :: (load (s32) from %ir.a)
+    renamable $r4 = LDA_dms_lda_idx_imm renamable $p1, 0 :: (load (s32) from %ir.b)
+    renamable $r4 = MUL killed renamable $r3, killed renamable $r4
+    renamable $r0 = ADD_add_r_ri killed renamable $r0, -1, implicit-def dead $srcarry
+    renamable $r3 = MOV_RLC_imm11_pseudo 0
+    $p4 = MOV_scalar_pseudo $p0
+    $p5 = MOV_scalar_pseudo $p1
+    $p3 = MOV_scalar_pseudo $p2
+    renamable $m0 = MOV_PD_imm11_pseudo 4
+  
+  bb.2.steady.stage1.top:
+    successors: %bb.3(0x80000000)
+    liveins: $m0, $p0, $p1, $p2, $p3, $p4, $p5, $r0, $r1, $r2, $r3, $r4
+  
+    renamable $p4 = nuw nusw inbounds PADD_mod_pseudo killed renamable $p4, renamable $m0
+    renamable $p5 = nuw nusw inbounds PADD_mod_pseudo killed renamable $p5, renamable $m0
+    renamable $p3 = nuw nusw inbounds PADD_mod_pseudo killed renamable $p3, renamable $m0
+    $lc = ADD_NC_mv_add_ri $r1, 0
+    $ls = MOVXM %bb.3
+    $le = MOVXM <mcsymbol .L_LEnd5>
+    renamable $r7 = MOV_RLC_imm11_pseudo 0
+  
+  bb.3.steady.stage1.inner.inner.header:
+    successors: %bb.3(0x7c000000), %bb.4(0x04000000)
+    liveins: $m0, $p0, $p1, $p2, $p3, $p4, $p5, $r0, $r1, $r2, $r3, $r4, $r7
+  
+    renamable $r7 = ADD_alu_r_rr killed renamable $r7, renamable $r4, implicit-def dead $srcarry
+    PseudoLoopEnd <mcsymbol .L_LEnd5>, %bb.3
+  
+  bb.4.steady.stage1.bottom.and.stage0.top:
+    successors: %bb.2(0x7c000000), %bb.5(0x04000000)
+    liveins: $m0, $p0, $p1, $p2, $p3, $p4, $p5, $r0, $r1, $r2, $r3, $r7
+  
+    renamable $r5 = LDA_dms_lda_idx_imm killed renamable $p0, 4 :: (load (s32) from %ir.a.ptr.next.steady)
+    renamable $r6 = LDA_dms_lda_idx_imm killed renamable $p1, 4 :: (load (s32) from %ir.b.ptr.next.steady)
+    renamable $r3 = ADD_add_r_ri killed renamable $r3, 1, implicit-def dead $srcarry
+    renamable $r16 = LT renamable $r3, renamable $r0
+    renamable $r4 = MUL renamable $r5, renamable $r6
+    ST_dms_sts_idx_imm killed renamable $r7, killed renamable $p2, 0 :: (store (s32) into %ir.c.ptr.steady)
+    $p0 = MOV_scalar_pseudo $p4
+    $p1 = MOV_scalar_pseudo $p5
+    $p2 = MOV_scalar_pseudo $p3
+    JNZ killed renamable $r16, %bb.2
+    DelayedSchedBarrier
+  
+  bb.5.lastiter.stage1.top:
+    successors: %bb.6(0x80000000)
+    liveins: $p3, $r1, $r2, $r5, $r6
+  
+    $lc = ADD_NC_mv_add_ri $r1, 0
+    $ls = MOVXM %bb.6
+    $le = MOVXM <mcsymbol .L_LEnd4>
+  
+  bb.6.lastiter.stage1.inner.inner.header:
+    successors: %bb.6(0x7c000000), %bb.7(0x04000000)
+    liveins: $p3, $r2, $r5, $r6
+  
+    renamable $r2 = MAC killed renamable $r2, renamable $r5, renamable $r6
+    PseudoLoopEnd <mcsymbol .L_LEnd4>, %bb.6
+  
+  bb.7.lastiter.stage1.bottom:
+    successors: %bb.8(0x80000000)
+    liveins: $p3, $r2
+  
+    ST_dms_sts_idx_imm killed renamable $r2, killed renamable $p3, 0 :: (store (s32) into %ir.c.ptr.next.steady)
+  
+  bb.8.exit:
+    RET implicit $lr
+    DelayedSchedBarrier
+...

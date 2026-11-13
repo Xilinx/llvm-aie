@@ -1,0 +1,939 @@
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc -mtriple=aie2ps --start-before=postmisched -verify-machineinstrs \
+# RUN:     -debug-only=sched-blocks -o /dev/null %s 2>&1 \
+# RUN:   | FileCheck %s --check-prefix=DBG
+# REQUIRES: asserts
+#
+# Test sibling loop optimization: no merge due to zero scheduling slack.
+#
+# Generated from gemm_int8_outerloop_blocks.ll with:
+#   llc -mtriple=aie2ps -O2 --aie-enable-outer-loop-pipelining -stop-before=postmisched
+#
+# OLP structure (bb numbers after OLP transformation):
+#   bb.0 (OuterPreheader) -> bb.1 (SteadyTop/Prologue) -> bb.2 (SteadyInner)
+#   -> bb.3 (SteadyBottom/Epilogue/Latch) -> bb.4 (PeeledIterTop)
+#   -> bb.5 (PeeledIterInner) -> bb.6 (PeeledIterBottom)
+#
+# Slack analysis:
+#   The epilogue (bb.3) has 16 bundles, the prologue (bb.1) has 12 bundles.
+#   Multiple cross-boundary edges have negative slack. The tightest is:
+#     Height=1 Depth=0 Lat=3 Slack=-2
+#   This is a 3-cycle latency dependency between the JNZD branch at the
+#   very end of the epilogue (Height=1, the last bundle of bb.3) and the
+#   first prologue instruction at Depth=0 (the start of bb.1). With only
+#   1 cycle of distance but 3 cycles of required latency, the slack is
+#   1 + 0 - 3 = -2. After clamping to max(0, -2) = 0, no overlap is
+#   possible.
+#
+# Result: No merge possible. The optimizer bails out immediately after
+# computing zero slack for the Epilogue->SteadyPrologue path without
+# even checking the LastIterPrologue or resource mergeability.
+#
+# Verify the optimizer finds 7 matching bundles.
+# DBG: optimizeSiblingLoops: Processing outer loop latch
+# DBG: Found 7 matching bundles
+#
+# Verify the slack computation yields 0 (clamped from -2).
+# DBG: Computed slack: -2
+# DBG: Slack (Epilogue->SteadyPrologue): 0 cycles
+#
+# Verify the optimizer bails out due to zero slack.
+# DBG: No slack to steady prologue, skipping
+--- |
+  
+  ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(none)
+  declare { ptr, i20 } @llvm.aie2ps.add.2d(ptr, i20, i20, i20, i20) #0
+  
+  ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(none)
+  declare <16 x i32> @llvm.aie2ps.vshuffle(<16 x i32>, <16 x i32>, i32) #0
+  
+  ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(none)
+  declare <32 x i64> @llvm.aie2ps.ACC2048.add.conf(<32 x i64>, <32 x i64>, i32) #0
+  
+  ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(none)
+  declare { ptr, i20, i20 } @llvm.aie2ps.add.3d(ptr, i20, i20, i20, i20, i20, i20, i20) #0
+  
+  ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(inaccessiblemem: read)
+  declare <32 x i32> @llvm.aie2ps.acc32.v32.I512.ups(<32 x i16>, i32, i32) #1
+  
+  ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(none)
+  declare <64 x i32> @llvm.aie2ps.I512.I512.ACC2048.mac.conf(<32 x i16>, <32 x i16>, <64 x i32>, i32) #0
+  
+  ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(none)
+  declare <64 x i32> @llvm.aie2ps.I512.I512.ACC2048.mul.conf(<64 x i8>, <64 x i8>, i32) #0
+  
+  ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(inaccessiblemem: read)
+  declare <64 x i8> @llvm.aie2ps.I512.v64.acc32.srs(<64 x i32>, i32, i32) #1
+  
+  ; Function Attrs: nocallback noduplicate nofree nosync nounwind willreturn
+  declare void @llvm.set.loop.iterations.i32(i32) #2
+  
+  ; Function Attrs: nocallback noduplicate nofree nosync nounwind willreturn
+  declare i1 @llvm.loop.decrement.i32(i32) #2
+  
+  ; Function Attrs: mustprogress noinline
+  define dso_local void @gemm(i32 %0, ptr addrspace(5) %1, ptr addrspace(5) %2, ptr %p_psum, ptr %p_c, ptr %p_bias, i20 %3, i20 %4, i20 %5, i20 %6, i20 %7, i20 %idx.ext.i, i20 %8, i20 %9, i20 %10, i20 %11, i20 %12, i32 %13, i32 %14, i32 %15, i32 %16, i32 %or23.i.i.i.i, <64 x i8> %17, i32 %18, i32 %19, i32 %20, i32 %21, i32 %22, i32 %or22.i.i.i.i, i32 %conv166, i32 %conv.i.i.i.i, i20 %idx.ext.i478, i20 %23, i20 %24, i20 %25, i20 %26, i20 %27, i20 %28) #3 {
+  newFuncRoot:
+    br label %stage0.top
+  
+  stage0.top:                                       ; preds = %newFuncRoot
+    %p_psum_in.0768.steady.top = addrspacecast ptr %p_psum to ptr addrspace(7)
+    %p_bias_in.0.steady.top = addrspacecast ptr %p_bias to ptr addrspace(6)
+    %.top = load <4 x i32>, ptr addrspace(6) %p_bias_in.0.steady.top, align 16, !tbaa !4
+    %shuffle.i.i.i.i.i.steady.top = shufflevector <4 x i32> %.top, <4 x i32> poison, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 poison, i32 poison, i32 poison, i32 poison>
+    %shuffle1.i.i.i.i.i.steady.top = shufflevector <8 x i32> %shuffle.i.i.i.i.i.steady.top, <8 x i32> zeroinitializer, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 12, i32 13, i32 14, i32 15>
+    %add.ptr.i.steady.top = getelementptr inbounds nuw i8, ptr %p_bias, i20 16
+    %add.ptr.ascast.i.steady.top = addrspacecast ptr %add.ptr.i.steady.top to ptr addrspace(6)
+    %.top11 = load <4 x i32>, ptr addrspace(6) %add.ptr.ascast.i.steady.top, align 16, !tbaa !4
+    %shuffle.i.i.i.i.i305.steady.top = shufflevector <4 x i32> %.top11, <4 x i32> poison, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 poison, i32 poison, i32 poison, i32 poison>
+    %shuffle1.i.i.i.i.i306.steady.top = shufflevector <8 x i32> %shuffle.i.i.i.i.i305.steady.top, <8 x i32> zeroinitializer, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 12, i32 13, i32 14, i32 15>
+    %.top12 = load <32 x i16>, ptr addrspace(5) %1, align 64, !tbaa !4, !noalias !7
+    %add.ptr.i3091.steady.top = getelementptr inbounds i8, ptr addrspace(5) %1, i20 64
+    %.top13 = load <32 x i16>, ptr addrspace(5) %add.ptr.i3091.steady.top, align 64, !tbaa !4, !noalias !14
+    %.top14 = trunc nuw i32 0 to i20
+    %.top15 = trunc nuw i32 0 to i20
+    %.top16 = addrspacecast ptr addrspace(5) %add.ptr.i3091.steady.top to ptr
+    %.top17 = tail call { ptr, i20, i20 } @llvm.aie2ps.add.3d(ptr nonnull %.top16, i20 %3, i20 %4, i20 %5, i20 %6, i20 %.top14, i20 %7, i20 %.top15)
+    %.top18 = extractvalue { ptr, i20, i20 } %.top17, 1
+    %.top19 = zext i20 %.top18 to i32
+    %.top20 = extractvalue { ptr, i20, i20 } %.top17, 2
+    %.top21 = zext i20 %.top20 to i32
+    %.top22 = load <16 x i32>, ptr addrspace(5) %2, align 64, !tbaa !4, !noalias !21
+    %add.ptr.i3132.steady.top = getelementptr inbounds i8, ptr addrspace(5) %2, i20 %idx.ext.i
+    %.top23 = load <16 x i32>, ptr addrspace(5) %add.ptr.i3132.steady.top, align 64, !tbaa !4, !noalias !28
+    %.top24 = trunc nuw i32 0 to i20
+    %.top25 = trunc nuw i32 0 to i20
+    %.top26 = addrspacecast ptr addrspace(5) %add.ptr.i3132.steady.top to ptr
+    %.top27 = tail call { ptr, i20, i20 } @llvm.aie2ps.add.3d(ptr %.top26, i20 %8, i20 %9, i20 %10, i20 %11, i20 %.top24, i20 %12, i20 %.top25)
+    %.top28 = extractvalue { ptr, i20, i20 } %.top27, 1
+    %.top29 = zext i20 %.top28 to i32
+    %.top30 = extractvalue { ptr, i20, i20 } %.top27, 2
+    %.top31 = zext i20 %.top30 to i32
+    %.top32 = tail call <16 x i32> @llvm.aie2ps.vshuffle(<16 x i32> %.top22, <16 x i32> poison, i32 %13)
+    %.top33 = tail call <16 x i32> @llvm.aie2ps.vshuffle(<16 x i32> %.top32, <16 x i32> poison, i32 %14)
+    %.top34 = tail call <16 x i32> @llvm.aie2ps.vshuffle(<16 x i32> %.top23, <16 x i32> poison, i32 %15)
+    %.top35 = tail call <16 x i32> @llvm.aie2ps.vshuffle(<16 x i32> %.top34, <16 x i32> poison, i32 %16)
+    %.top36 = load <32 x i16>, ptr addrspace(7) %p_psum_in.0768.steady.top, align 64, !tbaa !4, !noalias !35
+    %arrayidx.i.i.i.i.i.i.i.i.i.i3.steady.top = getelementptr inbounds i8, ptr %p_psum, i20 64
+    %.top37 = addrspacecast ptr %arrayidx.i.i.i.i.i.i.i.i.i.i3.steady.top to ptr addrspace(7)
+    %.top38 = load <32 x i16>, ptr addrspace(7) %.top37, align 64, !tbaa !4, !noalias !35
+    %.top39 = tail call noundef <32 x i32> @llvm.aie2ps.acc32.v32.I512.ups(<32 x i16> %.top36, i32 0, i32 range(i32 0, 2) 1)
+    %.top40 = bitcast <32 x i32> %.top39 to <16 x i64>
+    %.top41 = tail call noundef <32 x i32> @llvm.aie2ps.acc32.v32.I512.ups(<32 x i16> %.top38, i32 0, i32 range(i32 0, 2) 1)
+    %.top42 = bitcast <32 x i32> %.top41 to <16 x i64>
+    %shuffle.i.i.i.i.i.i.i.i.steady.top = shufflevector <16 x i64> %.top40, <16 x i64> %.top42, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
+    %add.ptr.i352.chained.steady.top = getelementptr inbounds i8, ptr %arrayidx.i.i.i.i.i.i.i.i.i.i3.steady.top, i20 64
+    %add.ptr.ascast.i353.steady.top = addrspacecast ptr %add.ptr.i352.chained.steady.top to ptr addrspace(7)
+    %.top43 = load <32 x i16>, ptr addrspace(7) %add.ptr.ascast.i353.steady.top, align 64, !tbaa !4, !noalias !42
+    %arrayidx.i.i.i.i.i.i.i.i.i.i354.steady.top = getelementptr inbounds nuw i8, ptr addrspace(7) %add.ptr.ascast.i353.steady.top, i20 64
+    %.top44 = load <32 x i16>, ptr addrspace(7) %arrayidx.i.i.i.i.i.i.i.i.i.i354.steady.top, align 64, !tbaa !4, !noalias !42
+    %.top45 = tail call noundef <32 x i32> @llvm.aie2ps.acc32.v32.I512.ups(<32 x i16> %.top43, i32 0, i32 range(i32 0, 2) 1)
+    %.top46 = bitcast <32 x i32> %.top45 to <16 x i64>
+    %.top47 = tail call noundef <32 x i32> @llvm.aie2ps.acc32.v32.I512.ups(<32 x i16> %.top44, i32 0, i32 range(i32 0, 2) 1)
+    %.top48 = bitcast <32 x i32> %.top47 to <16 x i64>
+    %shuffle.i.i.i.i.i.i.i.i357.steady.top = shufflevector <16 x i64> %.top46, <16 x i64> %.top48, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
+    %add.ptr.i358.chained.steady.top = getelementptr inbounds i8, ptr %add.ptr.i352.chained.steady.top, i20 128
+    %add.ptr.ascast.i359.steady.top = addrspacecast ptr %add.ptr.i358.chained.steady.top to ptr addrspace(7)
+    %.top49 = load <32 x i16>, ptr addrspace(7) %add.ptr.ascast.i359.steady.top, align 64, !tbaa !4, !noalias !49
+    %arrayidx.i.i.i.i.i.i.i.i.i.i360.steady.top = getelementptr inbounds nuw i8, ptr addrspace(7) %add.ptr.ascast.i359.steady.top, i20 64
+    %.top50 = load <32 x i16>, ptr addrspace(7) %arrayidx.i.i.i.i.i.i.i.i.i.i360.steady.top, align 64, !tbaa !4, !noalias !49
+    %.top51 = tail call noundef <32 x i32> @llvm.aie2ps.acc32.v32.I512.ups(<32 x i16> %.top49, i32 0, i32 range(i32 0, 2) 1)
+    %.top52 = bitcast <32 x i32> %.top51 to <16 x i64>
+    %.top53 = tail call noundef <32 x i32> @llvm.aie2ps.acc32.v32.I512.ups(<32 x i16> %.top50, i32 0, i32 range(i32 0, 2) 1)
+    %.top54 = bitcast <32 x i32> %.top53 to <16 x i64>
+    %shuffle.i.i.i.i.i.i.i.i363.steady.top = shufflevector <16 x i64> %.top52, <16 x i64> %.top54, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
+    %add.ptr.i364.chained.steady.top = getelementptr inbounds i8, ptr %add.ptr.i358.chained.steady.top, i20 128
+    %add.ptr.ascast.i365.steady.top = addrspacecast ptr %add.ptr.i364.chained.steady.top to ptr addrspace(7)
+    %.top55 = load <32 x i16>, ptr addrspace(7) %add.ptr.ascast.i365.steady.top, align 64, !tbaa !4, !noalias !56
+    %arrayidx.i.i.i.i.i.i.i.i.i.i366.steady.top = getelementptr inbounds nuw i8, ptr addrspace(7) %add.ptr.ascast.i365.steady.top, i20 64
+    %.top56 = load <32 x i16>, ptr addrspace(7) %arrayidx.i.i.i.i.i.i.i.i.i.i366.steady.top, align 64, !tbaa !4, !noalias !56
+    %.top57 = tail call noundef <32 x i32> @llvm.aie2ps.acc32.v32.I512.ups(<32 x i16> %.top55, i32 0, i32 range(i32 0, 2) 1)
+    %.top58 = bitcast <32 x i32> %.top57 to <16 x i64>
+    %.top59 = tail call noundef <32 x i32> @llvm.aie2ps.acc32.v32.I512.ups(<32 x i16> %.top56, i32 0, i32 range(i32 0, 2) 1)
+    %.top60 = bitcast <32 x i32> %.top59 to <16 x i64>
+    %shuffle.i.i.i.i.i.i.i.i369.steady.top = shufflevector <16 x i64> %.top58, <16 x i64> %.top60, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
+    %.top61 = bitcast <32 x i64> %shuffle.i.i.i.i.i.i.i.i.steady.top to <64 x i32>
+    %.top62 = bitcast <32 x i64> %shuffle.i.i.i.i.i.i.i.i357.steady.top to <64 x i32>
+    %.top63 = bitcast <32 x i64> %shuffle.i.i.i.i.i.i.i.i363.steady.top to <64 x i32>
+    %.top64 = bitcast <32 x i64> %shuffle.i.i.i.i.i.i.i.i369.steady.top to <64 x i32>
+    %.top65 = bitcast <16 x i32> %.top33 to <32 x i16>
+    %.top66 = bitcast <16 x i32> %.top35 to <32 x i16>
+    %shuffle.i.i.i.i.i9.i.i.i.i.steady.top = shufflevector <8 x i32> %shuffle1.i.i.i.i.i.steady.top, <8 x i32> poison, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
+    %.top67 = bitcast <16 x i32> %shuffle.i.i.i.i.i9.i.i.i.i.steady.top to <64 x i8>
+    %shuffle.i.i.i.i.i9.i.i.i.i465.steady.top = shufflevector <8 x i32> %shuffle1.i.i.i.i.i306.steady.top, <8 x i32> poison, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
+    %.top68 = bitcast <16 x i32> %shuffle.i.i.i.i.i9.i.i.i.i465.steady.top to <64 x i8>
+    %p_mat_a.1.in735.steady.top = extractvalue { ptr, i20, i20 } %.top17, 0
+    %p_mat_a.1736.steady.top = addrspacecast ptr %p_mat_a.1.in735.steady.top to ptr addrspace(5)
+    %p_mat_b.1.in737.steady.top = extractvalue { ptr, i20, i20 } %.top27, 0
+    %p_mat_b.1738.steady.top = addrspacecast ptr %p_mat_b.1.in737.steady.top to ptr addrspace(5)
+    %add.ptr.i370.chained.steady.top = getelementptr inbounds i8, ptr %add.ptr.i364.chained.steady.top, i20 128
+    %outer.jnzd.tc = sub i32 %0, 1
+    %outer.ctr.init = call i32 @llvm.start.loop.iterations.i32(i32 %outer.jnzd.tc)
+    br label %steady.stage1.top
+  
+  steady.stage1.top:                                ; preds = %stage0.top, %steady.stage1.bottom.and.stage0.top
+    %p_mat_c.0.in763.steady = phi ptr [ %p_c, %stage0.top ], [ %89, %steady.stage1.bottom.and.stage0.top ]
+    %p_bias_in.0.in762.steady = phi ptr [ %p_bias, %stage0.top ], [ %94, %steady.stage1.bottom.and.stage0.top ]
+    %iterator_mat_c_cnt0.0757.steady = phi i32 [ 0, %stage0.top ], [ %88, %steady.stage1.bottom.and.stage0.top ]
+    %iterator_psum_out_cnt0.0756.steady = phi i32 [ 0, %stage0.top ], [ %93, %steady.stage1.bottom.and.stage0.top ]
+    %shuffle1.i.i.i.i.i.steady.phi = phi <8 x i32> [ %shuffle1.i.i.i.i.i.steady.top, %stage0.top ], [ %shuffle1.i.i.i.i.i.steady.bottom, %steady.stage1.bottom.and.stage0.top ]
+    %shuffle1.i.i.i.i.i306.steady.phi = phi <8 x i32> [ %shuffle1.i.i.i.i.i306.steady.top, %stage0.top ], [ %shuffle1.i.i.i.i.i306.steady.bottom, %steady.stage1.bottom.and.stage0.top ]
+    %.phi128 = phi <32 x i16> [ %.top12, %stage0.top ], [ %.bottom70, %steady.stage1.bottom.and.stage0.top ]
+    %.phi129 = phi <32 x i16> [ %.top13, %stage0.top ], [ %.bottom71, %steady.stage1.bottom.and.stage0.top ]
+    %.phi135 = phi i32 [ %.top19, %stage0.top ], [ %.bottom77, %steady.stage1.bottom.and.stage0.top ]
+    %.phi137 = phi i32 [ %.top21, %stage0.top ], [ %.bottom79, %steady.stage1.bottom.and.stage0.top ]
+    %.phi145 = phi i32 [ %.top29, %stage0.top ], [ %.bottom87, %steady.stage1.bottom.and.stage0.top ]
+    %.phi147 = phi i32 [ %.top31, %stage0.top ], [ %.bottom89, %steady.stage1.bottom.and.stage0.top ]
+    %.phi177 = phi <64 x i32> [ %.top61, %stage0.top ], [ %.bottom119, %steady.stage1.bottom.and.stage0.top ]
+    %.phi178 = phi <64 x i32> [ %.top62, %stage0.top ], [ %.bottom120, %steady.stage1.bottom.and.stage0.top ]
+    %.phi179 = phi <64 x i32> [ %.top63, %stage0.top ], [ %.bottom121, %steady.stage1.bottom.and.stage0.top ]
+    %.phi180 = phi <64 x i32> [ %.top64, %stage0.top ], [ %.bottom122, %steady.stage1.bottom.and.stage0.top ]
+    %.phi181 = phi <32 x i16> [ %.top65, %stage0.top ], [ %.bottom123, %steady.stage1.bottom.and.stage0.top ]
+    %.phi182 = phi <32 x i16> [ %.top66, %stage0.top ], [ %.bottom124, %steady.stage1.bottom.and.stage0.top ]
+    %.phi183 = phi <64 x i8> [ %.top67, %stage0.top ], [ %.bottom125, %steady.stage1.bottom.and.stage0.top ]
+    %.phi184 = phi <64 x i8> [ %.top68, %stage0.top ], [ %.bottom126, %steady.stage1.bottom.and.stage0.top ]
+    %p_mat_a.1.in735.steady.phi = phi ptr [ %p_mat_a.1.in735.steady.top, %stage0.top ], [ %p_mat_a.1.in735.steady.bottom, %steady.stage1.bottom.and.stage0.top ]
+    %p_mat_a.1736.steady.phi = phi ptr addrspace(5) [ %p_mat_a.1736.steady.top, %stage0.top ], [ %p_mat_a.1736.steady.bottom, %steady.stage1.bottom.and.stage0.top ]
+    %p_mat_b.1.in737.steady.phi = phi ptr [ %p_mat_b.1.in737.steady.top, %stage0.top ], [ %p_mat_b.1.in737.steady.bottom, %steady.stage1.bottom.and.stage0.top ]
+    %p_mat_b.1738.steady.phi = phi ptr addrspace(5) [ %p_mat_b.1738.steady.top, %stage0.top ], [ %p_mat_b.1738.steady.bottom, %steady.stage1.bottom.and.stage0.top ]
+    %add.ptr.i370.chained.steady.phi = phi ptr [ %add.ptr.i370.chained.steady.top, %stage0.top ], [ %add.ptr.i370.chained.steady.bottom, %steady.stage1.bottom.and.stage0.top ]
+    %outer.ctr = phi i32 [ %outer.ctr.init, %stage0.top ], [ %outer.ctr.next, %steady.stage1.bottom.and.stage0.top ]
+    %29 = tail call noundef <64 x i32> @llvm.aie2ps.I512.I512.ACC2048.mac.conf(<32 x i16> %.phi128, <32 x i16> %.phi181, <64 x i32> %.phi177, i32 %or23.i.i.i.i)
+    %30 = bitcast <64 x i32> %29 to <32 x i64>
+    %31 = tail call noundef <64 x i32> @llvm.aie2ps.I512.I512.ACC2048.mac.conf(<32 x i16> %.phi129, <32 x i16> %.phi181, <64 x i32> %.phi178, i32 %or23.i.i.i.i)
+    %32 = bitcast <64 x i32> %31 to <32 x i64>
+    %33 = tail call noundef <64 x i32> @llvm.aie2ps.I512.I512.ACC2048.mac.conf(<32 x i16> %.phi128, <32 x i16> %.phi182, <64 x i32> %.phi179, i32 %or23.i.i.i.i)
+    %34 = bitcast <64 x i32> %33 to <32 x i64>
+    %35 = tail call noundef <64 x i32> @llvm.aie2ps.I512.I512.ACC2048.mac.conf(<32 x i16> %.phi129, <32 x i16> %.phi182, <64 x i32> %.phi180, i32 %or23.i.i.i.i)
+    %36 = bitcast <64 x i32> %35 to <32 x i64>
+    %37 = tail call noundef <64 x i32> @llvm.aie2ps.I512.I512.ACC2048.mul.conf(<64 x i8> %17, <64 x i8> %.phi183, i32 776)
+    %38 = bitcast <64 x i32> %37 to <32 x i64>
+    %39 = tail call <32 x i64> @llvm.aie2ps.ACC2048.add.conf(<32 x i64> %30, <32 x i64> %38, i32 0)
+    %40 = tail call <32 x i64> @llvm.aie2ps.ACC2048.add.conf(<32 x i64> %32, <32 x i64> %38, i32 0)
+    %41 = tail call noundef <64 x i32> @llvm.aie2ps.I512.I512.ACC2048.mul.conf(<64 x i8> %17, <64 x i8> %.phi184, i32 776)
+    %42 = bitcast <64 x i32> %41 to <32 x i64>
+    %43 = tail call <32 x i64> @llvm.aie2ps.ACC2048.add.conf(<32 x i64> %34, <32 x i64> %42, i32 0)
+    %44 = tail call <32 x i64> @llvm.aie2ps.ACC2048.add.conf(<32 x i64> %36, <32 x i64> %42, i32 0)
+    %45 = bitcast <32 x i64> %39 to <64 x i32>
+    %46 = bitcast <32 x i64> %40 to <64 x i32>
+    %47 = bitcast <32 x i64> %43 to <64 x i32>
+    %48 = bitcast <32 x i64> %44 to <64 x i32>
+    call void @llvm.set.loop.iterations.i32(i32 %18)
+    br label %steady.stage1.inner.for.body100
+  
+  steady.stage1.inner.for.body100:                  ; preds = %steady.stage1.inner.for.body100, %steady.stage1.top
+    %p_mat_b.1751.steady = phi ptr addrspace(5) [ %p_mat_b.1738.steady.phi, %steady.stage1.top ], [ %p_mat_b.1.steady, %steady.stage1.inner.for.body100 ]
+    %p_mat_b.1.in750.steady = phi ptr [ %p_mat_b.1.in737.steady.phi, %steady.stage1.top ], [ %p_mat_b.1.in.steady, %steady.stage1.inner.for.body100 ]
+    %p_mat_a.1749.steady = phi ptr addrspace(5) [ %p_mat_a.1736.steady.phi, %steady.stage1.top ], [ %p_mat_a.1.steady, %steady.stage1.inner.for.body100 ]
+    %p_mat_a.1.in748.steady = phi ptr [ %p_mat_a.1.in735.steady.phi, %steady.stage1.top ], [ %p_mat_a.1.in.steady, %steady.stage1.inner.for.body100 ]
+    %iterator_mat_a_cnt0.1746.steady = phi i32 [ %.phi135, %steady.stage1.top ], [ %55, %steady.stage1.inner.for.body100 ]
+    %iterator_mat_a_cnt1.1745.steady = phi i32 [ %.phi137, %steady.stage1.top ], [ %57, %steady.stage1.inner.for.body100 ]
+    %iterator_mat_b_cnt0.1744.steady = phi i32 [ %.phi145, %steady.stage1.top ], [ %64, %steady.stage1.inner.for.body100 ]
+    %iterator_mat_b_cnt1.1743.steady = phi i32 [ %.phi147, %steady.stage1.top ], [ %66, %steady.stage1.inner.for.body100 ]
+    %Ci3.sroa.0.0742.steady = phi <64 x i32> [ %48, %steady.stage1.top ], [ %76, %steady.stage1.inner.for.body100 ]
+    %Ci2.sroa.0.0741.steady = phi <64 x i32> [ %47, %steady.stage1.top ], [ %75, %steady.stage1.inner.for.body100 ]
+    %Ci1.sroa.0.0740.steady = phi <64 x i32> [ %46, %steady.stage1.top ], [ %73, %steady.stage1.inner.for.body100 ]
+    %Ci0.sroa.0.0739.steady = phi <64 x i32> [ %45, %steady.stage1.top ], [ %72, %steady.stage1.inner.for.body100 ]
+    %49 = load <32 x i16>, ptr addrspace(5) %p_mat_a.1749.steady, align 64, !tbaa !4, !noalias !63
+    %add.ptr.i485.steady = getelementptr inbounds nuw i8, ptr %p_mat_a.1.in748.steady, i20 64
+    %add.ptr.ascast.i486.steady = addrspacecast ptr %add.ptr.i485.steady to ptr addrspace(5)
+    %50 = load <32 x i16>, ptr addrspace(5) %add.ptr.ascast.i486.steady, align 64, !tbaa !4, !noalias !70
+    %51 = trunc nuw i32 %iterator_mat_a_cnt0.1746.steady to i20
+    %52 = trunc nuw i32 %iterator_mat_a_cnt1.1745.steady to i20
+    %53 = tail call { ptr, i20, i20 } @llvm.aie2ps.add.3d(ptr nonnull %add.ptr.i485.steady, i20 %3, i20 %4, i20 %5, i20 %6, i20 %51, i20 %7, i20 %52)
+    %54 = extractvalue { ptr, i20, i20 } %53, 1
+    %55 = zext i20 %54 to i32
+    %56 = extractvalue { ptr, i20, i20 } %53, 2
+    %57 = zext i20 %56 to i32
+    %58 = load <16 x i32>, ptr addrspace(5) %p_mat_b.1751.steady, align 64, !tbaa !4, !noalias !77
+    %add.ptr.i490.steady = getelementptr inbounds i8, ptr %p_mat_b.1.in750.steady, i20 %idx.ext.i
+    %add.ptr.ascast.i491.steady = addrspacecast ptr %add.ptr.i490.steady to ptr addrspace(5)
+    %59 = load <16 x i32>, ptr addrspace(5) %add.ptr.ascast.i491.steady, align 64, !tbaa !4, !noalias !84
+    %60 = trunc nuw i32 %iterator_mat_b_cnt0.1744.steady to i20
+    %61 = trunc nuw i32 %iterator_mat_b_cnt1.1743.steady to i20
+    %62 = tail call { ptr, i20, i20 } @llvm.aie2ps.add.3d(ptr %add.ptr.i490.steady, i20 %8, i20 %9, i20 %10, i20 %11, i20 %60, i20 %12, i20 %61)
+    %63 = extractvalue { ptr, i20, i20 } %62, 1
+    %64 = zext i20 %63 to i32
+    %65 = extractvalue { ptr, i20, i20 } %62, 2
+    %66 = zext i20 %65 to i32
+    %67 = tail call <16 x i32> @llvm.aie2ps.vshuffle(<16 x i32> %58, <16 x i32> poison, i32 %19)
+    %68 = tail call <16 x i32> @llvm.aie2ps.vshuffle(<16 x i32> %67, <16 x i32> poison, i32 %20)
+    %69 = tail call <16 x i32> @llvm.aie2ps.vshuffle(<16 x i32> %59, <16 x i32> poison, i32 %21)
+    %70 = tail call <16 x i32> @llvm.aie2ps.vshuffle(<16 x i32> %69, <16 x i32> poison, i32 %22)
+    %71 = bitcast <16 x i32> %68 to <32 x i16>
+    %72 = tail call noundef <64 x i32> @llvm.aie2ps.I512.I512.ACC2048.mac.conf(<32 x i16> %49, <32 x i16> %71, <64 x i32> %Ci0.sroa.0.0739.steady, i32 %or22.i.i.i.i)
+    %73 = tail call noundef <64 x i32> @llvm.aie2ps.I512.I512.ACC2048.mac.conf(<32 x i16> %50, <32 x i16> %71, <64 x i32> %Ci1.sroa.0.0740.steady, i32 %or22.i.i.i.i)
+    %74 = bitcast <16 x i32> %70 to <32 x i16>
+    %75 = tail call noundef <64 x i32> @llvm.aie2ps.I512.I512.ACC2048.mac.conf(<32 x i16> %49, <32 x i16> %74, <64 x i32> %Ci2.sroa.0.0741.steady, i32 %or22.i.i.i.i)
+    %76 = tail call noundef <64 x i32> @llvm.aie2ps.I512.I512.ACC2048.mac.conf(<32 x i16> %50, <32 x i16> %74, <64 x i32> %Ci3.sroa.0.0742.steady, i32 %or22.i.i.i.i)
+    %p_mat_a.1.in.steady = extractvalue { ptr, i20, i20 } %53, 0
+    %p_mat_a.1.steady = addrspacecast ptr %p_mat_a.1.in.steady to ptr addrspace(5)
+    %p_mat_b.1.in.steady = extractvalue { ptr, i20, i20 } %62, 0
+    %p_mat_b.1.steady = addrspacecast ptr %p_mat_b.1.in.steady to ptr addrspace(5)
+    %77 = call i1 @llvm.loop.decrement.i32(i32 1)
+    br i1 %77, label %steady.stage1.inner.for.body100, label %steady.stage1.bottom.and.stage0.top, !llvm.loop !91
+  
+  steady.stage1.bottom.and.stage0.top:              ; preds = %steady.stage1.inner.for.body100
+    %78 = addrspacecast ptr %p_mat_b.1.in.steady to ptr addrspace(5)
+    %79 = addrspacecast ptr %p_mat_a.1.in.steady to ptr addrspace(5)
+    %80 = addrspacecast ptr %p_mat_c.0.in763.steady to ptr addrspace(6)
+    %81 = tail call noundef <64 x i8> @llvm.aie2ps.I512.v64.acc32.srs(<64 x i32> %72, i32 %conv166, i32 range(i32 0, 2) %conv.i.i.i.i)
+    store <64 x i8> %81, ptr addrspace(6) %80, align 64, !tbaa !4
+    %add.ptr.i475.steady = getelementptr inbounds nuw i8, ptr %p_mat_c.0.in763.steady, i20 64
+    %add.ptr.ascast.i476.steady = addrspacecast ptr %add.ptr.i475.steady to ptr addrspace(6)
+    %82 = tail call noundef <64 x i8> @llvm.aie2ps.I512.v64.acc32.srs(<64 x i32> %73, i32 %conv166, i32 range(i32 0, 2) %conv.i.i.i.i)
+    store <64 x i8> %82, ptr addrspace(6) %add.ptr.ascast.i476.steady, align 64, !tbaa !4
+    %add.ptr.i479.steady = getelementptr inbounds i8, ptr %add.ptr.i475.steady, i20 %idx.ext.i478
+    %add.ptr.ascast.i480.steady = addrspacecast ptr %add.ptr.i479.steady to ptr addrspace(6)
+    %83 = tail call noundef <64 x i8> @llvm.aie2ps.I512.v64.acc32.srs(<64 x i32> %75, i32 %conv166, i32 range(i32 0, 2) %conv.i.i.i.i)
+    store <64 x i8> %83, ptr addrspace(6) %add.ptr.ascast.i480.steady, align 64, !tbaa !4
+    %add.ptr.i482.steady = getelementptr inbounds nuw i8, ptr %add.ptr.i479.steady, i20 64
+    %add.ptr.ascast.i483.steady = addrspacecast ptr %add.ptr.i482.steady to ptr addrspace(6)
+    %84 = tail call noundef <64 x i8> @llvm.aie2ps.I512.v64.acc32.srs(<64 x i32> %76, i32 %conv166, i32 range(i32 0, 2) %conv.i.i.i.i)
+    store <64 x i8> %84, ptr addrspace(6) %add.ptr.ascast.i483.steady, align 64, !tbaa !4
+    %85 = trunc nuw i32 %iterator_mat_c_cnt0.0757.steady to i20
+    %86 = tail call { ptr, i20 } @llvm.aie2ps.add.2d(ptr nonnull %add.ptr.i482.steady, i20 %23, i20 %24, i20 %25, i20 %85)
+    %87 = extractvalue { ptr, i20 } %86, 1
+    %88 = zext i20 %87 to i32
+    %89 = extractvalue { ptr, i20 } %86, 0
+    %90 = trunc nuw i32 %iterator_psum_out_cnt0.0756.steady to i20
+    %91 = tail call { ptr, i20 } @llvm.aie2ps.add.2d(ptr nonnull %p_bias_in.0.in762.steady, i20 %26, i20 %27, i20 %28, i20 %90)
+    %92 = extractvalue { ptr, i20 } %91, 1
+    %93 = zext i20 %92 to i32
+    %94 = extractvalue { ptr, i20 } %91, 0
+    %p_psum_in.0768.steady.bottom = addrspacecast ptr %add.ptr.i370.chained.steady.phi to ptr addrspace(7)
+    %p_bias_in.0.steady.bottom = addrspacecast ptr %94 to ptr addrspace(6)
+    %.bottom = load <4 x i32>, ptr addrspace(6) %p_bias_in.0.steady.bottom, align 16, !tbaa !4
+    %shuffle.i.i.i.i.i.steady.bottom = shufflevector <4 x i32> %.bottom, <4 x i32> poison, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 poison, i32 poison, i32 poison, i32 poison>
+    %shuffle1.i.i.i.i.i.steady.bottom = shufflevector <8 x i32> %shuffle.i.i.i.i.i.steady.bottom, <8 x i32> %shuffle1.i.i.i.i.i.steady.phi, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 12, i32 13, i32 14, i32 15>
+    %add.ptr.i.steady.bottom = getelementptr inbounds nuw i8, ptr %94, i20 16
+    %add.ptr.ascast.i.steady.bottom = addrspacecast ptr %add.ptr.i.steady.bottom to ptr addrspace(6)
+    %.bottom69 = load <4 x i32>, ptr addrspace(6) %add.ptr.ascast.i.steady.bottom, align 16, !tbaa !4
+    %shuffle.i.i.i.i.i305.steady.bottom = shufflevector <4 x i32> %.bottom69, <4 x i32> poison, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 poison, i32 poison, i32 poison, i32 poison>
+    %shuffle1.i.i.i.i.i306.steady.bottom = shufflevector <8 x i32> %shuffle.i.i.i.i.i305.steady.bottom, <8 x i32> %shuffle1.i.i.i.i.i306.steady.phi, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 12, i32 13, i32 14, i32 15>
+    %.bottom70 = load <32 x i16>, ptr addrspace(5) %79, align 64, !tbaa !4, !noalias !7
+    %add.ptr.i3091.steady.bottom = getelementptr inbounds i8, ptr addrspace(5) %79, i20 64
+    %.bottom71 = load <32 x i16>, ptr addrspace(5) %add.ptr.i3091.steady.bottom, align 64, !tbaa !4, !noalias !14
+    %.bottom72 = trunc nuw i32 %55 to i20
+    %.bottom73 = trunc nuw i32 %57 to i20
+    %.bottom74 = addrspacecast ptr addrspace(5) %add.ptr.i3091.steady.bottom to ptr
+    %.bottom75 = tail call { ptr, i20, i20 } @llvm.aie2ps.add.3d(ptr nonnull %.bottom74, i20 %3, i20 %4, i20 %5, i20 %6, i20 %.bottom72, i20 %7, i20 %.bottom73)
+    %.bottom76 = extractvalue { ptr, i20, i20 } %.bottom75, 1
+    %.bottom77 = zext i20 %.bottom76 to i32
+    %.bottom78 = extractvalue { ptr, i20, i20 } %.bottom75, 2
+    %.bottom79 = zext i20 %.bottom78 to i32
+    %.bottom80 = load <16 x i32>, ptr addrspace(5) %78, align 64, !tbaa !4, !noalias !21
+    %add.ptr.i3132.steady.bottom = getelementptr inbounds i8, ptr addrspace(5) %78, i20 %idx.ext.i
+    %.bottom81 = load <16 x i32>, ptr addrspace(5) %add.ptr.i3132.steady.bottom, align 64, !tbaa !4, !noalias !28
+    %.bottom82 = trunc nuw i32 %64 to i20
+    %.bottom83 = trunc nuw i32 %66 to i20
+    %.bottom84 = addrspacecast ptr addrspace(5) %add.ptr.i3132.steady.bottom to ptr
+    %.bottom85 = tail call { ptr, i20, i20 } @llvm.aie2ps.add.3d(ptr %.bottom84, i20 %8, i20 %9, i20 %10, i20 %11, i20 %.bottom82, i20 %12, i20 %.bottom83)
+    %.bottom86 = extractvalue { ptr, i20, i20 } %.bottom85, 1
+    %.bottom87 = zext i20 %.bottom86 to i32
+    %.bottom88 = extractvalue { ptr, i20, i20 } %.bottom85, 2
+    %.bottom89 = zext i20 %.bottom88 to i32
+    %.bottom90 = tail call <16 x i32> @llvm.aie2ps.vshuffle(<16 x i32> %.bottom80, <16 x i32> poison, i32 %13)
+    %.bottom91 = tail call <16 x i32> @llvm.aie2ps.vshuffle(<16 x i32> %.bottom90, <16 x i32> poison, i32 %14)
+    %.bottom92 = tail call <16 x i32> @llvm.aie2ps.vshuffle(<16 x i32> %.bottom81, <16 x i32> poison, i32 %15)
+    %.bottom93 = tail call <16 x i32> @llvm.aie2ps.vshuffle(<16 x i32> %.bottom92, <16 x i32> poison, i32 %16)
+    %.bottom94 = load <32 x i16>, ptr addrspace(7) %p_psum_in.0768.steady.bottom, align 64, !tbaa !4, !noalias !35
+    %arrayidx.i.i.i.i.i.i.i.i.i.i3.steady.bottom = getelementptr inbounds i8, ptr %add.ptr.i370.chained.steady.phi, i20 64
+    %.bottom95 = addrspacecast ptr %arrayidx.i.i.i.i.i.i.i.i.i.i3.steady.bottom to ptr addrspace(7)
+    %.bottom96 = load <32 x i16>, ptr addrspace(7) %.bottom95, align 64, !tbaa !4, !noalias !35
+    %.bottom97 = tail call noundef <32 x i32> @llvm.aie2ps.acc32.v32.I512.ups(<32 x i16> %.bottom94, i32 0, i32 range(i32 0, 2) 1)
+    %.bottom98 = bitcast <32 x i32> %.bottom97 to <16 x i64>
+    %.bottom99 = tail call noundef <32 x i32> @llvm.aie2ps.acc32.v32.I512.ups(<32 x i16> %.bottom96, i32 0, i32 range(i32 0, 2) 1)
+    %.bottom100 = bitcast <32 x i32> %.bottom99 to <16 x i64>
+    %shuffle.i.i.i.i.i.i.i.i.steady.bottom = shufflevector <16 x i64> %.bottom98, <16 x i64> %.bottom100, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
+    %add.ptr.i352.chained.steady.bottom = getelementptr inbounds i8, ptr %arrayidx.i.i.i.i.i.i.i.i.i.i3.steady.bottom, i20 64
+    %add.ptr.ascast.i353.steady.bottom = addrspacecast ptr %add.ptr.i352.chained.steady.bottom to ptr addrspace(7)
+    %.bottom101 = load <32 x i16>, ptr addrspace(7) %add.ptr.ascast.i353.steady.bottom, align 64, !tbaa !4, !noalias !42
+    %arrayidx.i.i.i.i.i.i.i.i.i.i354.steady.bottom = getelementptr inbounds nuw i8, ptr addrspace(7) %add.ptr.ascast.i353.steady.bottom, i20 64
+    %.bottom102 = load <32 x i16>, ptr addrspace(7) %arrayidx.i.i.i.i.i.i.i.i.i.i354.steady.bottom, align 64, !tbaa !4, !noalias !42
+    %.bottom103 = tail call noundef <32 x i32> @llvm.aie2ps.acc32.v32.I512.ups(<32 x i16> %.bottom101, i32 0, i32 range(i32 0, 2) 1)
+    %.bottom104 = bitcast <32 x i32> %.bottom103 to <16 x i64>
+    %.bottom105 = tail call noundef <32 x i32> @llvm.aie2ps.acc32.v32.I512.ups(<32 x i16> %.bottom102, i32 0, i32 range(i32 0, 2) 1)
+    %.bottom106 = bitcast <32 x i32> %.bottom105 to <16 x i64>
+    %shuffle.i.i.i.i.i.i.i.i357.steady.bottom = shufflevector <16 x i64> %.bottom104, <16 x i64> %.bottom106, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
+    %add.ptr.i358.chained.steady.bottom = getelementptr inbounds i8, ptr %add.ptr.i352.chained.steady.bottom, i20 128
+    %add.ptr.ascast.i359.steady.bottom = addrspacecast ptr %add.ptr.i358.chained.steady.bottom to ptr addrspace(7)
+    %.bottom107 = load <32 x i16>, ptr addrspace(7) %add.ptr.ascast.i359.steady.bottom, align 64, !tbaa !4, !noalias !49
+    %arrayidx.i.i.i.i.i.i.i.i.i.i360.steady.bottom = getelementptr inbounds nuw i8, ptr addrspace(7) %add.ptr.ascast.i359.steady.bottom, i20 64
+    %.bottom108 = load <32 x i16>, ptr addrspace(7) %arrayidx.i.i.i.i.i.i.i.i.i.i360.steady.bottom, align 64, !tbaa !4, !noalias !49
+    %.bottom109 = tail call noundef <32 x i32> @llvm.aie2ps.acc32.v32.I512.ups(<32 x i16> %.bottom107, i32 0, i32 range(i32 0, 2) 1)
+    %.bottom110 = bitcast <32 x i32> %.bottom109 to <16 x i64>
+    %.bottom111 = tail call noundef <32 x i32> @llvm.aie2ps.acc32.v32.I512.ups(<32 x i16> %.bottom108, i32 0, i32 range(i32 0, 2) 1)
+    %.bottom112 = bitcast <32 x i32> %.bottom111 to <16 x i64>
+    %shuffle.i.i.i.i.i.i.i.i363.steady.bottom = shufflevector <16 x i64> %.bottom110, <16 x i64> %.bottom112, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
+    %add.ptr.i364.chained.steady.bottom = getelementptr inbounds i8, ptr %add.ptr.i358.chained.steady.bottom, i20 128
+    %add.ptr.ascast.i365.steady.bottom = addrspacecast ptr %add.ptr.i364.chained.steady.bottom to ptr addrspace(7)
+    %.bottom113 = load <32 x i16>, ptr addrspace(7) %add.ptr.ascast.i365.steady.bottom, align 64, !tbaa !4, !noalias !56
+    %arrayidx.i.i.i.i.i.i.i.i.i.i366.steady.bottom = getelementptr inbounds nuw i8, ptr addrspace(7) %add.ptr.ascast.i365.steady.bottom, i20 64
+    %.bottom114 = load <32 x i16>, ptr addrspace(7) %arrayidx.i.i.i.i.i.i.i.i.i.i366.steady.bottom, align 64, !tbaa !4, !noalias !56
+    %.bottom115 = tail call noundef <32 x i32> @llvm.aie2ps.acc32.v32.I512.ups(<32 x i16> %.bottom113, i32 0, i32 range(i32 0, 2) 1)
+    %.bottom116 = bitcast <32 x i32> %.bottom115 to <16 x i64>
+    %.bottom117 = tail call noundef <32 x i32> @llvm.aie2ps.acc32.v32.I512.ups(<32 x i16> %.bottom114, i32 0, i32 range(i32 0, 2) 1)
+    %.bottom118 = bitcast <32 x i32> %.bottom117 to <16 x i64>
+    %shuffle.i.i.i.i.i.i.i.i369.steady.bottom = shufflevector <16 x i64> %.bottom116, <16 x i64> %.bottom118, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
+    %.bottom119 = bitcast <32 x i64> %shuffle.i.i.i.i.i.i.i.i.steady.bottom to <64 x i32>
+    %.bottom120 = bitcast <32 x i64> %shuffle.i.i.i.i.i.i.i.i357.steady.bottom to <64 x i32>
+    %.bottom121 = bitcast <32 x i64> %shuffle.i.i.i.i.i.i.i.i363.steady.bottom to <64 x i32>
+    %.bottom122 = bitcast <32 x i64> %shuffle.i.i.i.i.i.i.i.i369.steady.bottom to <64 x i32>
+    %.bottom123 = bitcast <16 x i32> %.bottom91 to <32 x i16>
+    %.bottom124 = bitcast <16 x i32> %.bottom93 to <32 x i16>
+    %shuffle.i.i.i.i.i9.i.i.i.i.steady.bottom = shufflevector <8 x i32> %shuffle1.i.i.i.i.i.steady.bottom, <8 x i32> poison, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
+    %.bottom125 = bitcast <16 x i32> %shuffle.i.i.i.i.i9.i.i.i.i.steady.bottom to <64 x i8>
+    %shuffle.i.i.i.i.i9.i.i.i.i465.steady.bottom = shufflevector <8 x i32> %shuffle1.i.i.i.i.i306.steady.bottom, <8 x i32> poison, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
+    %.bottom126 = bitcast <16 x i32> %shuffle.i.i.i.i.i9.i.i.i.i465.steady.bottom to <64 x i8>
+    %p_mat_a.1.in735.steady.bottom = extractvalue { ptr, i20, i20 } %.bottom75, 0
+    %p_mat_a.1736.steady.bottom = addrspacecast ptr %p_mat_a.1.in735.steady.bottom to ptr addrspace(5)
+    %p_mat_b.1.in737.steady.bottom = extractvalue { ptr, i20, i20 } %.bottom85, 0
+    %p_mat_b.1738.steady.bottom = addrspacecast ptr %p_mat_b.1.in737.steady.bottom to ptr addrspace(5)
+    %add.ptr.i370.chained.steady.bottom = getelementptr inbounds i8, ptr %add.ptr.i364.chained.steady.bottom, i20 128
+    %outer.ctr.next = call i32 @llvm.loop.decrement.reg.i32(i32 %outer.ctr, i32 1)
+    %outer.loop.cond = icmp ne i32 %outer.ctr.next, 0
+    br i1 %outer.loop.cond, label %steady.stage1.top, label %lastiter.stage1.top, !llvm.loop !94
+  
+  lastiter.stage1.top:                              ; preds = %steady.stage1.bottom.and.stage0.top
+    call void @llvm.set.loop.iterations.i32(i32 %18)
+    %.lastiter = tail call noundef <64 x i32> @llvm.aie2ps.I512.I512.ACC2048.mac.conf(<32 x i16> %.bottom70, <32 x i16> %.bottom123, <64 x i32> %.bottom119, i32 %or23.i.i.i.i)
+    %.lastiter185 = bitcast <64 x i32> %.lastiter to <32 x i64>
+    %.lastiter186 = tail call noundef <64 x i32> @llvm.aie2ps.I512.I512.ACC2048.mac.conf(<32 x i16> %.bottom71, <32 x i16> %.bottom123, <64 x i32> %.bottom120, i32 %or23.i.i.i.i)
+    %.lastiter187 = bitcast <64 x i32> %.lastiter186 to <32 x i64>
+    %.lastiter188 = tail call noundef <64 x i32> @llvm.aie2ps.I512.I512.ACC2048.mac.conf(<32 x i16> %.bottom70, <32 x i16> %.bottom124, <64 x i32> %.bottom121, i32 %or23.i.i.i.i)
+    %.lastiter189 = bitcast <64 x i32> %.lastiter188 to <32 x i64>
+    %.lastiter190 = tail call noundef <64 x i32> @llvm.aie2ps.I512.I512.ACC2048.mac.conf(<32 x i16> %.bottom71, <32 x i16> %.bottom124, <64 x i32> %.bottom122, i32 %or23.i.i.i.i)
+    %.lastiter191 = bitcast <64 x i32> %.lastiter190 to <32 x i64>
+    %.lastiter192 = tail call noundef <64 x i32> @llvm.aie2ps.I512.I512.ACC2048.mul.conf(<64 x i8> %17, <64 x i8> %.bottom125, i32 776)
+    %.lastiter193 = bitcast <64 x i32> %.lastiter192 to <32 x i64>
+    %.lastiter194 = tail call <32 x i64> @llvm.aie2ps.ACC2048.add.conf(<32 x i64> %.lastiter185, <32 x i64> %.lastiter193, i32 0)
+    %.lastiter195 = tail call <32 x i64> @llvm.aie2ps.ACC2048.add.conf(<32 x i64> %.lastiter187, <32 x i64> %.lastiter193, i32 0)
+    %.lastiter196 = tail call noundef <64 x i32> @llvm.aie2ps.I512.I512.ACC2048.mul.conf(<64 x i8> %17, <64 x i8> %.bottom126, i32 776)
+    %.lastiter197 = bitcast <64 x i32> %.lastiter196 to <32 x i64>
+    %.lastiter198 = tail call <32 x i64> @llvm.aie2ps.ACC2048.add.conf(<32 x i64> %.lastiter189, <32 x i64> %.lastiter197, i32 0)
+    %.lastiter199 = tail call <32 x i64> @llvm.aie2ps.ACC2048.add.conf(<32 x i64> %.lastiter191, <32 x i64> %.lastiter197, i32 0)
+    %.lastiter200 = bitcast <32 x i64> %.lastiter194 to <64 x i32>
+    %.lastiter201 = bitcast <32 x i64> %.lastiter195 to <64 x i32>
+    %.lastiter202 = bitcast <32 x i64> %.lastiter198 to <64 x i32>
+    %.lastiter203 = bitcast <32 x i64> %.lastiter199 to <64 x i32>
+    br label %lastiter.stage1.inner.for.body100
+  
+  lastiter.stage1.inner.for.body100:                ; preds = %lastiter.stage1.top, %lastiter.stage1.inner.for.body100
+    %p_mat_b.1751.lastiter = phi ptr addrspace(5) [ %p_mat_b.1738.steady.bottom, %lastiter.stage1.top ], [ %p_mat_b.1.lastiter, %lastiter.stage1.inner.for.body100 ]
+    %p_mat_b.1.in750.lastiter = phi ptr [ %p_mat_b.1.in737.steady.bottom, %lastiter.stage1.top ], [ %p_mat_b.1.in.lastiter, %lastiter.stage1.inner.for.body100 ]
+    %p_mat_a.1749.lastiter = phi ptr addrspace(5) [ %p_mat_a.1736.steady.bottom, %lastiter.stage1.top ], [ %p_mat_a.1.lastiter, %lastiter.stage1.inner.for.body100 ]
+    %p_mat_a.1.in748.lastiter = phi ptr [ %p_mat_a.1.in735.steady.bottom, %lastiter.stage1.top ], [ %p_mat_a.1.in.lastiter, %lastiter.stage1.inner.for.body100 ]
+    %iterator_mat_a_cnt0.1746.lastiter = phi i32 [ %.bottom77, %lastiter.stage1.top ], [ %.lastiter210, %lastiter.stage1.inner.for.body100 ]
+    %iterator_mat_a_cnt1.1745.lastiter = phi i32 [ %.bottom79, %lastiter.stage1.top ], [ %.lastiter212, %lastiter.stage1.inner.for.body100 ]
+    %iterator_mat_b_cnt0.1744.lastiter = phi i32 [ %.bottom87, %lastiter.stage1.top ], [ %.lastiter219, %lastiter.stage1.inner.for.body100 ]
+    %iterator_mat_b_cnt1.1743.lastiter = phi i32 [ %.bottom89, %lastiter.stage1.top ], [ %.lastiter221, %lastiter.stage1.inner.for.body100 ]
+    %Ci3.sroa.0.0742.lastiter = phi <64 x i32> [ %.lastiter203, %lastiter.stage1.top ], [ %.lastiter231, %lastiter.stage1.inner.for.body100 ]
+    %Ci2.sroa.0.0741.lastiter = phi <64 x i32> [ %.lastiter202, %lastiter.stage1.top ], [ %.lastiter230, %lastiter.stage1.inner.for.body100 ]
+    %Ci1.sroa.0.0740.lastiter = phi <64 x i32> [ %.lastiter201, %lastiter.stage1.top ], [ %.lastiter228, %lastiter.stage1.inner.for.body100 ]
+    %Ci0.sroa.0.0739.lastiter = phi <64 x i32> [ %.lastiter200, %lastiter.stage1.top ], [ %.lastiter227, %lastiter.stage1.inner.for.body100 ]
+    %.lastiter204 = load <32 x i16>, ptr addrspace(5) %p_mat_a.1749.lastiter, align 64, !tbaa !4, !noalias !63
+    %add.ptr.i485.lastiter = getelementptr inbounds nuw i8, ptr %p_mat_a.1.in748.lastiter, i20 64
+    %add.ptr.ascast.i486.lastiter = addrspacecast ptr %add.ptr.i485.lastiter to ptr addrspace(5)
+    %.lastiter205 = load <32 x i16>, ptr addrspace(5) %add.ptr.ascast.i486.lastiter, align 64, !tbaa !4, !noalias !70
+    %.lastiter206 = trunc nuw i32 %iterator_mat_a_cnt0.1746.lastiter to i20
+    %.lastiter207 = trunc nuw i32 %iterator_mat_a_cnt1.1745.lastiter to i20
+    %.lastiter208 = tail call { ptr, i20, i20 } @llvm.aie2ps.add.3d(ptr nonnull %add.ptr.i485.lastiter, i20 %3, i20 %4, i20 %5, i20 %6, i20 %.lastiter206, i20 %7, i20 %.lastiter207)
+    %.lastiter209 = extractvalue { ptr, i20, i20 } %.lastiter208, 1
+    %.lastiter210 = zext i20 %.lastiter209 to i32
+    %.lastiter211 = extractvalue { ptr, i20, i20 } %.lastiter208, 2
+    %.lastiter212 = zext i20 %.lastiter211 to i32
+    %.lastiter213 = load <16 x i32>, ptr addrspace(5) %p_mat_b.1751.lastiter, align 64, !tbaa !4, !noalias !77
+    %add.ptr.i490.lastiter = getelementptr inbounds i8, ptr %p_mat_b.1.in750.lastiter, i20 %idx.ext.i
+    %add.ptr.ascast.i491.lastiter = addrspacecast ptr %add.ptr.i490.lastiter to ptr addrspace(5)
+    %.lastiter214 = load <16 x i32>, ptr addrspace(5) %add.ptr.ascast.i491.lastiter, align 64, !tbaa !4, !noalias !84
+    %.lastiter215 = trunc nuw i32 %iterator_mat_b_cnt0.1744.lastiter to i20
+    %.lastiter216 = trunc nuw i32 %iterator_mat_b_cnt1.1743.lastiter to i20
+    %.lastiter217 = tail call { ptr, i20, i20 } @llvm.aie2ps.add.3d(ptr %add.ptr.i490.lastiter, i20 %8, i20 %9, i20 %10, i20 %11, i20 %.lastiter215, i20 %12, i20 %.lastiter216)
+    %.lastiter218 = extractvalue { ptr, i20, i20 } %.lastiter217, 1
+    %.lastiter219 = zext i20 %.lastiter218 to i32
+    %.lastiter220 = extractvalue { ptr, i20, i20 } %.lastiter217, 2
+    %.lastiter221 = zext i20 %.lastiter220 to i32
+    %.lastiter222 = tail call <16 x i32> @llvm.aie2ps.vshuffle(<16 x i32> %.lastiter213, <16 x i32> poison, i32 %19)
+    %.lastiter223 = tail call <16 x i32> @llvm.aie2ps.vshuffle(<16 x i32> %.lastiter222, <16 x i32> poison, i32 %20)
+    %.lastiter224 = tail call <16 x i32> @llvm.aie2ps.vshuffle(<16 x i32> %.lastiter214, <16 x i32> poison, i32 %21)
+    %.lastiter225 = tail call <16 x i32> @llvm.aie2ps.vshuffle(<16 x i32> %.lastiter224, <16 x i32> poison, i32 %22)
+    %.lastiter226 = bitcast <16 x i32> %.lastiter223 to <32 x i16>
+    %.lastiter227 = tail call noundef <64 x i32> @llvm.aie2ps.I512.I512.ACC2048.mac.conf(<32 x i16> %.lastiter204, <32 x i16> %.lastiter226, <64 x i32> %Ci0.sroa.0.0739.lastiter, i32 %or22.i.i.i.i)
+    %.lastiter228 = tail call noundef <64 x i32> @llvm.aie2ps.I512.I512.ACC2048.mac.conf(<32 x i16> %.lastiter205, <32 x i16> %.lastiter226, <64 x i32> %Ci1.sroa.0.0740.lastiter, i32 %or22.i.i.i.i)
+    %.lastiter229 = bitcast <16 x i32> %.lastiter225 to <32 x i16>
+    %.lastiter230 = tail call noundef <64 x i32> @llvm.aie2ps.I512.I512.ACC2048.mac.conf(<32 x i16> %.lastiter204, <32 x i16> %.lastiter229, <64 x i32> %Ci2.sroa.0.0741.lastiter, i32 %or22.i.i.i.i)
+    %.lastiter231 = tail call noundef <64 x i32> @llvm.aie2ps.I512.I512.ACC2048.mac.conf(<32 x i16> %.lastiter205, <32 x i16> %.lastiter229, <64 x i32> %Ci3.sroa.0.0742.lastiter, i32 %or22.i.i.i.i)
+    %p_mat_a.1.in.lastiter = extractvalue { ptr, i20, i20 } %.lastiter208, 0
+    %p_mat_a.1.lastiter = addrspacecast ptr %p_mat_a.1.in.lastiter to ptr addrspace(5)
+    %p_mat_b.1.in.lastiter = extractvalue { ptr, i20, i20 } %.lastiter217, 0
+    %p_mat_b.1.lastiter = addrspacecast ptr %p_mat_b.1.in.lastiter to ptr addrspace(5)
+    %.lastiter232 = call i1 @llvm.loop.decrement.i32(i32 1)
+    br i1 %.lastiter232, label %lastiter.stage1.inner.for.body100, label %lastiter.stage1.bottom, !llvm.loop !91
+  
+  lastiter.stage1.bottom:                           ; preds = %lastiter.stage1.inner.for.body100
+    %.lastiter233 = addrspacecast ptr %p_mat_b.1.in.lastiter to ptr addrspace(5)
+    %.lastiter234 = addrspacecast ptr %p_mat_a.1.in.lastiter to ptr addrspace(5)
+    %.lastiter235 = addrspacecast ptr %89 to ptr addrspace(6)
+    %.lastiter236 = tail call noundef <64 x i8> @llvm.aie2ps.I512.v64.acc32.srs(<64 x i32> %.lastiter227, i32 %conv166, i32 range(i32 0, 2) %conv.i.i.i.i)
+    store <64 x i8> %.lastiter236, ptr addrspace(6) %.lastiter235, align 64, !tbaa !4
+    %add.ptr.i475.lastiter = getelementptr inbounds nuw i8, ptr %89, i20 64
+    %add.ptr.ascast.i476.lastiter = addrspacecast ptr %add.ptr.i475.lastiter to ptr addrspace(6)
+    %.lastiter237 = tail call noundef <64 x i8> @llvm.aie2ps.I512.v64.acc32.srs(<64 x i32> %.lastiter228, i32 %conv166, i32 range(i32 0, 2) %conv.i.i.i.i)
+    store <64 x i8> %.lastiter237, ptr addrspace(6) %add.ptr.ascast.i476.lastiter, align 64, !tbaa !4
+    %add.ptr.i479.lastiter = getelementptr inbounds i8, ptr %add.ptr.i475.lastiter, i20 %idx.ext.i478
+    %add.ptr.ascast.i480.lastiter = addrspacecast ptr %add.ptr.i479.lastiter to ptr addrspace(6)
+    %.lastiter238 = tail call noundef <64 x i8> @llvm.aie2ps.I512.v64.acc32.srs(<64 x i32> %.lastiter230, i32 %conv166, i32 range(i32 0, 2) %conv.i.i.i.i)
+    store <64 x i8> %.lastiter238, ptr addrspace(6) %add.ptr.ascast.i480.lastiter, align 64, !tbaa !4
+    %add.ptr.i482.lastiter = getelementptr inbounds nuw i8, ptr %add.ptr.i479.lastiter, i20 64
+    %add.ptr.ascast.i483.lastiter = addrspacecast ptr %add.ptr.i482.lastiter to ptr addrspace(6)
+    %.lastiter239 = tail call noundef <64 x i8> @llvm.aie2ps.I512.v64.acc32.srs(<64 x i32> %.lastiter231, i32 %conv166, i32 range(i32 0, 2) %conv.i.i.i.i)
+    store <64 x i8> %.lastiter239, ptr addrspace(6) %add.ptr.ascast.i483.lastiter, align 64, !tbaa !4
+    %.lastiter240 = trunc nuw i32 %88 to i20
+    %.lastiter241 = tail call { ptr, i20 } @llvm.aie2ps.add.2d(ptr nonnull %add.ptr.i482.lastiter, i20 %23, i20 %24, i20 %25, i20 %.lastiter240)
+    %.lastiter242 = extractvalue { ptr, i20 } %.lastiter241, 1
+    %.lastiter243 = zext i20 %.lastiter242 to i32
+    %.lastiter244 = extractvalue { ptr, i20 } %.lastiter241, 0
+    %.lastiter245 = trunc nuw i32 %93 to i20
+    %.lastiter246 = tail call { ptr, i20 } @llvm.aie2ps.add.2d(ptr nonnull %94, i20 %26, i20 %27, i20 %28, i20 %.lastiter245)
+    %.lastiter247 = extractvalue { ptr, i20 } %.lastiter246, 1
+    %.lastiter248 = zext i20 %.lastiter247 to i32
+    %.lastiter249 = extractvalue { ptr, i20 } %.lastiter246, 0
+    br label %for.cond.cleanup
+  
+  for.cond.cleanup:                                 ; preds = %lastiter.stage1.bottom
+    ret void
+  }
+  
+  ; Function Attrs: nocallback noduplicate nofree nosync nounwind willreturn
+  declare i32 @llvm.start.loop.iterations.i32(i32) #2
+  
+  ; Function Attrs: nocallback noduplicate nofree nosync nounwind willreturn
+  declare i32 @llvm.loop.decrement.reg.i32(i32, i32) #2
+  
+  attributes #0 = { nocallback nofree nosync nounwind willreturn memory(none) }
+  attributes #1 = { nocallback nofree nosync nounwind willreturn memory(inaccessiblemem: read) }
+  attributes #2 = { nocallback noduplicate nofree nosync nounwind willreturn }
+  attributes #3 = { mustprogress noinline "no-builtin-memcpy" "no-builtin-memmove" "no-builtin-memset" "no-jump-tables"="true" "no-trapping-math"="true" "stack-protector-buffer-size"="8" }
+  
+  !llvm.linker.options = !{}
+  !llvm.module.flags = !{!0, !1, !2}
+  !llvm.ident = !{!3}
+  
+  !0 = !{i32 7, !"Dwarf Version", i32 4}
+  !1 = !{i32 2, !"Debug Info Version", i32 3}
+  !2 = !{i32 1, !"wchar_size", i32 4}
+  !3 = !{!"clang version 21.0.0git"}
+  !4 = !{!5, !5, i64 0}
+  !5 = !{!"omnipotent char", !6, i64 0}
+  !6 = !{!"Simple C++ TBAA"}
+  !7 = !{!8, !10, !12}
+  !8 = distinct !{!8, !9, !"A: %agg.result"}
+  !9 = distinct !{!9, !"A"}
+  !10 = distinct !{!10, !11, !"B: %agg.result"}
+  !11 = distinct !{!11, !"B"}
+  !12 = distinct !{!12, !13, !"C: %agg.result"}
+  !13 = distinct !{!13, !"C"}
+  !14 = !{!15, !17, !19}
+  !15 = distinct !{!15, !16, !"A: %agg.result"}
+  !16 = distinct !{!16, !"A"}
+  !17 = distinct !{!17, !18, !"B: %agg.result"}
+  !18 = distinct !{!18, !"B"}
+  !19 = distinct !{!19, !20, !"C: %agg.result"}
+  !20 = distinct !{!20, !"C"}
+  !21 = !{!22, !24, !26}
+  !22 = distinct !{!22, !23, !"A: %agg.result"}
+  !23 = distinct !{!23, !"A"}
+  !24 = distinct !{!24, !25, !"B: %agg.result"}
+  !25 = distinct !{!25, !"B"}
+  !26 = distinct !{!26, !27, !"C: %agg.result"}
+  !27 = distinct !{!27, !"C"}
+  !28 = !{!29, !31, !33}
+  !29 = distinct !{!29, !30, !"A: %agg.result"}
+  !30 = distinct !{!30, !"A"}
+  !31 = distinct !{!31, !32, !"B: %agg.result"}
+  !32 = distinct !{!32, !"B"}
+  !33 = distinct !{!33, !34, !"C: %agg.result"}
+  !34 = distinct !{!34, !"C"}
+  !35 = !{!36, !38, !40}
+  !36 = distinct !{!36, !37, !"D: %agg.result"}
+  !37 = distinct !{!37, !"D"}
+  !38 = distinct !{!38, !39, !"E: %agg.result"}
+  !39 = distinct !{!39, !"E"}
+  !40 = distinct !{!40, !41, !"F: %agg.result"}
+  !41 = distinct !{!41, !"F"}
+  !42 = !{!43, !45, !47}
+  !43 = distinct !{!43, !44, !"D: %agg.result"}
+  !44 = distinct !{!44, !"D"}
+  !45 = distinct !{!45, !46, !"E: %agg.result"}
+  !46 = distinct !{!46, !"E"}
+  !47 = distinct !{!47, !48, !"F: %agg.result"}
+  !48 = distinct !{!48, !"F"}
+  !49 = !{!50, !52, !54}
+  !50 = distinct !{!50, !51, !"D: %agg.result"}
+  !51 = distinct !{!51, !"D"}
+  !52 = distinct !{!52, !53, !"E: %agg.result"}
+  !53 = distinct !{!53, !"E"}
+  !54 = distinct !{!54, !55, !"F: %agg.result"}
+  !55 = distinct !{!55, !"F"}
+  !56 = !{!57, !59, !61}
+  !57 = distinct !{!57, !58, !"D: %agg.result"}
+  !58 = distinct !{!58, !"D"}
+  !59 = distinct !{!59, !60, !"E: %agg.result"}
+  !60 = distinct !{!60, !"E"}
+  !61 = distinct !{!61, !62, !"F: %agg.result"}
+  !62 = distinct !{!62, !"F"}
+  !63 = !{!64, !66, !68}
+  !64 = distinct !{!64, !65, !"A: %agg.result"}
+  !65 = distinct !{!65, !"A"}
+  !66 = distinct !{!66, !67, !"B: %agg.result"}
+  !67 = distinct !{!67, !"B"}
+  !68 = distinct !{!68, !69, !"C: %agg.result"}
+  !69 = distinct !{!69, !"C"}
+  !70 = !{!71, !73, !75}
+  !71 = distinct !{!71, !72, !"A: %agg.result"}
+  !72 = distinct !{!72, !"A"}
+  !73 = distinct !{!73, !74, !"B: %agg.result"}
+  !74 = distinct !{!74, !"B"}
+  !75 = distinct !{!75, !76, !"C: %agg.result"}
+  !76 = distinct !{!76, !"C"}
+  !77 = !{!78, !80, !82}
+  !78 = distinct !{!78, !79, !"A: %agg.result"}
+  !79 = distinct !{!79, !"A"}
+  !80 = distinct !{!80, !81, !"B: %agg.result"}
+  !81 = distinct !{!81, !"B"}
+  !82 = distinct !{!82, !83, !"C: %agg.result"}
+  !83 = distinct !{!83, !"C"}
+  !84 = !{!85, !87, !89}
+  !85 = distinct !{!85, !86, !"A: %agg.result"}
+  !86 = distinct !{!86, !"A"}
+  !87 = distinct !{!87, !88, !"B: %agg.result"}
+  !88 = distinct !{!88, !"B"}
+  !89 = distinct !{!89, !90, !"C: %agg.result"}
+  !90 = distinct !{!90, !"C"}
+  !91 = distinct !{!91, !92, !93}
+  !92 = !{!"llvm.loop.mustprogress"}
+  !93 = !{!"llvm.loop.itercount.range", i64 4}
+  !94 = distinct !{!94, !92, !95, !96}
+  !95 = !{!"llvm.loop.itercount.range", i32 1}
+  !96 = !{!"llvm.loop.hint.aie_outerloop_pipeliner_success", i64 1}
+...
+---
+name:            gemm
+alignment:       16
+exposesReturnsTwice: false
+legalized:       true
+regBankSelected: true
+selected:        true
+failedISel:      false
+tracksRegLiveness: true
+hasWinCFI:       false
+noPhis:          true
+isSSA:           false
+noVRegs:         true
+hasFakeUses:     false
+callsEHReturn:   false
+callsUnwindInit: false
+hasEHContTarget: false
+hasEHScopes:     false
+hasEHFunclets:   false
+isOutlined:      false
+debugInstrRef:   false
+failsVerification: false
+tracksDebugUserValues: true
+registers:       []
+liveins:         []
+calleeSavedRegisters: [ '$lr', '$l4', '$l5', '$l6', '$l7', '$r8', '$r9', 
+                        '$r10', '$r11', '$r12', '$r13', '$r14', '$r15', 
+                        '$p6', '$p7' ]
+frameInfo:
+  isFrameAddressTaken: false
+  isReturnAddressTaken: false
+  hasStackMap:     false
+  hasPatchPoint:   false
+  stackSize:       0
+  offsetAdjustment: 0
+  maxAlignment:    4
+  adjustsStack:    false
+  hasCalls:        false
+  stackProtector:  ''
+  functionContext: ''
+  maxCallFrameSize: 0
+  cvBytesOfCalleeSavedRegisters: 0
+  hasOpaqueSPAdjustment: false
+  hasVAStart:      false
+  hasMustTailInVarArgFunc: false
+  hasTailCall:     false
+  isCalleeSavedInfoValid: true
+  localFrameSize:  0
+fixedStack:
+  - { id: 0, type: default, offset: -92, size: 3, alignment: 4, stack-id: default, 
+      isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 1, type: default, offset: -88, size: 3, alignment: 8, stack-id: default, 
+      isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 2, type: default, offset: -84, size: 3, alignment: 4, stack-id: default, 
+      isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 3, type: default, offset: -80, size: 3, alignment: 16, stack-id: default, 
+      isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 4, type: default, offset: -76, size: 3, alignment: 4, stack-id: default, 
+      isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 5, type: default, offset: -72, size: 3, alignment: 8, stack-id: default, 
+      isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 6, type: default, offset: -68, size: 3, alignment: 4, stack-id: default, 
+      isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 7, type: default, offset: -64, size: 4, alignment: 64, stack-id: default, 
+      isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 8, type: default, offset: -60, size: 4, alignment: 4, stack-id: default, 
+      isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 9, type: default, offset: -56, size: 4, alignment: 8, stack-id: default, 
+      isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 10, type: default, offset: -52, size: 4, alignment: 4, stack-id: default, 
+      isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 11, type: default, offset: -48, size: 4, alignment: 16, stack-id: default, 
+      isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 12, type: default, offset: -44, size: 4, alignment: 4, stack-id: default, 
+      isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 13, type: default, offset: -40, size: 3, alignment: 8, stack-id: default, 
+      isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 14, type: default, offset: -36, size: 3, alignment: 4, stack-id: default, 
+      isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 15, type: default, offset: -32, size: 3, alignment: 32, stack-id: default, 
+      isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 16, type: default, offset: -28, size: 3, alignment: 4, stack-id: default, 
+      isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 17, type: default, offset: -24, size: 3, alignment: 8, stack-id: default, 
+      isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 18, type: default, offset: -20, size: 3, alignment: 4, stack-id: default, 
+      isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 19, type: default, offset: -16, size: 3, alignment: 16, stack-id: default, 
+      isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 20, type: default, offset: -12, size: 3, alignment: 4, stack-id: default, 
+      isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 21, type: default, offset: -8, size: 3, alignment: 8, stack-id: default, 
+      isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 22, type: default, offset: -4, size: 3, alignment: 4, stack-id: default, 
+      isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+stack:           []
+entry_values:    []
+callSites:       []
+debugValueSubstitutions: []
+constants:       []
+machineFunctionInfo:
+  varArgsFrameIndex: 0
+body:             |
+  bb.0.newFuncRoot:
+    successors: %bb.1(0x80000000)
+    liveins: $p0, $p1, $p2, $p3, $p4, $p5, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $x0, $r8, $r10, $r12
+  
+    $r21 = MOV_OR_pseudo killed $r8
+    $r23 = MOV_OR_pseudo killed $r10
+    $r24 = MOV_OR_pseudo killed $r12
+    $m0 = MOV_scalar_pseudo killed $p5
+    $p5 = MOV_alu_mv_mv_mv_scl $sp
+    $m1 = MOV_PD_imm11_pseudo -4
+    $p5 = PADD_mod_pseudo $p5, killed $m1
+    renamable $dj0, renamable $p5 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p5, -4 :: (invariant load (s20) from %fixed-stack.22, align 4)
+    renamable $dj4, renamable $p5 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p5, -4 :: (invariant load (s20) from %fixed-stack.21, align 8)
+    renamable $dn0, renamable $p5 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p5, -4 :: (invariant load (s20) from %fixed-stack.20, align 4)
+    renamable $dn4, renamable $p5 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p5, -4 :: (invariant load (s20) from %fixed-stack.19, align 16)
+    renamable $m4, renamable $p5 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p5, -4 :: (invariant load (s20) from %fixed-stack.18, align 4)
+    renamable $m1, renamable $p5 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p5, -4 :: (invariant load (s20) from %fixed-stack.17, align 8)
+    renamable $dj1, renamable $p5 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p5, -4 :: (invariant load (s20) from %fixed-stack.16, align 4)
+    renamable $dj5, renamable $p5 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p5, -4 :: (invariant load (s20) from %fixed-stack.15, align 32)
+    renamable $dn1, renamable $p5 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p5, -4 :: (invariant load (s20) from %fixed-stack.14, align 4)
+    renamable $dn5, renamable $p5 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p5, -4 :: (invariant load (s20) from %fixed-stack.13, align 8)
+    renamable $r16, renamable $p5 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p5, -4 :: (invariant load (s32) from %fixed-stack.12)
+    renamable $r18, renamable $p5 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p5, -4 :: (invariant load (s32) from %fixed-stack.11, align 16)
+    renamable $r20, renamable $p5 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p5, -4 :: (invariant load (s32) from %fixed-stack.10)
+    renamable $r8, renamable $p5 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p5, -4 :: (invariant load (s32) from %fixed-stack.9, align 8)
+    renamable $r17, renamable $p5 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p5, -4 :: (invariant load (s32) from %fixed-stack.8)
+    renamable $r19, renamable $p5 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p5, -4 :: (invariant load (s32) from %fixed-stack.7, align 64)
+    renamable $m5, renamable $p5 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p5, -4 :: (invariant load (s20) from %fixed-stack.6, align 4)
+    renamable $m2, renamable $p5 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p5, -4 :: (invariant load (s20) from %fixed-stack.5, align 8)
+    renamable $dj2, renamable $p5 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p5, -4 :: (invariant load (s20) from %fixed-stack.4, align 4)
+    renamable $dn2, renamable $p5 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p5, -4 :: (invariant load (s20) from %fixed-stack.3, align 16)
+    renamable $m3, renamable $p5 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p5, -4 :: (invariant load (s20) from %fixed-stack.2, align 4)
+    renamable $dj3 = LDA_dms_lda_scalar_ld_idx_imm renamable $p5, 0 :: (invariant load (s20) from %fixed-stack.1, align 8)
+    renamable $dn3 = LDA_dms_lda_scalar_ld_idx_imm killed renamable $p5, -4 :: (invariant load (s20) from %fixed-stack.0, align 4)
+    renamable $r22 = MOV_RLC_imm11_pseudo 0
+    renamable $dc2 = MOV_PD_imm11_pseudo 0
+    renamable $x2 = VBCST_32 renamable $r22
+    renamable $r12 = MOV_RLC_imm11_pseudo 776
+    $r10 = MOV_OR_pseudo $r5
+    $s0 = MOV_alu_mv_mv_mv_scl killed $r22
+    $crupsmode = MOVX_mvx_cr_imm 0
+    renamable $cml3, renamable $p2 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_imm_upsSign1 renamable $s0, killed renamable $p2, 64, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<32 x s16>) from %ir.p_psum_in.0768.steady.top, !tbaa !4, !noalias !35, addrspace 7)
+    renamable $cmh3, renamable $p2 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_imm_upsSign1 renamable $s0, killed renamable $p2, 64, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<32 x s16>) from %ir..top37, !tbaa !4, !noalias !35, addrspace 7)
+    renamable $wl4 = VLD_128_idx_imm_pseudo renamable $p4, 0 :: (load (<4 x s32>) from %ir.p_bias_in.0.steady.top, !tbaa !4, addrspace 6)
+    renamable $cml2, renamable $p2 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_imm_upsSign1 renamable $s0, killed renamable $p2, 64, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<32 x s16>) from %ir.add.ptr.ascast.i353.steady.top, !tbaa !4, !noalias !42, addrspace 7)
+    renamable $wl6 = VLD_128_idx_imm_pseudo renamable $p4, 16 :: (load (<4 x s32>) from %ir.add.ptr.ascast.i.steady.top, !tbaa !4, addrspace 6)
+    renamable $cmh2, renamable $p2 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_imm_upsSign1 renamable $s0, killed renamable $p2, 64, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<32 x s16>) from %ir.arrayidx.i.i.i.i.i.i.i.i.i.i354.steady.top, !tbaa !4, !noalias !42, addrspace 7)
+    renamable $x8, renamable $p1 = VLD_x_pstm_nrm_pseudo killed renamable $p1, renamable $m4 :: (load (<16 x s32>) from %ir.2, !tbaa !4, !noalias !21, addrspace 5)
+    renamable $cml1, renamable $p2 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_imm_upsSign1 renamable $s0, killed renamable $p2, 64, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<32 x s16>) from %ir.add.ptr.ascast.i359.steady.top, !tbaa !4, !noalias !49, addrspace 7)
+    renamable $dc0 = MOV_PD_imm11_pseudo 0
+    $dc4 = MOV_scalar_pseudo $dc0
+    renamable $cmh1, renamable $p2 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_imm_upsSign1 renamable $s0, killed renamable $p2, 64, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<32 x s16>) from %ir.arrayidx.i.i.i.i.i.i.i.i.i.i360.steady.top, !tbaa !4, !noalias !49, addrspace 7)
+    $dc1 = MOV_scalar_pseudo $dc0
+    $dc5 = MOV_scalar_pseudo $dc0
+    $x10, $p1, $dc1, $dc5 = VLD_3D_x_pseudo killed $p1, $d1_3d :: (load (<16 x s32>) from %ir.add.ptr.i3132.steady.top, !tbaa !4, !noalias !28, addrspace 5)
+    renamable $cml0, renamable $p2 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_imm_upsSign1 renamable $s0, killed renamable $p2, 64, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<32 x s16>) from %ir.add.ptr.ascast.i365.steady.top, !tbaa !4, !noalias !56, addrspace 7)
+    renamable $r22 = MOV_RLC_imm11_pseudo 15
+    renamable $cmh0, renamable $p2 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_imm_upsSign1 renamable $s0, killed renamable $p2, 64, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<32 x s16>) from %ir.arrayidx.i.i.i.i.i.i.i.i.i.i366.steady.top, !tbaa !4, !noalias !56, addrspace 7)
+    renamable $x4 = VSEL_32 renamable $x2, renamable $x4, renamable $r22, implicit $crbf8conf, implicit $crfp8conf
+    renamable $x2 = VSEL_32 killed renamable $x2, renamable $x6, renamable $r22, implicit $crbf8conf, implicit $crfp8conf
+    renamable $x6 = VSHUFFLE_vec_shuffle_x killed renamable $x8, undef renamable $x8, renamable $r1
+    renamable $x1 = VSHUFFLE_vec_shuffle_x killed renamable $x6, undef renamable $x6, renamable $r2
+    renamable $x8 = VSHUFFLE_vec_shuffle_x killed renamable $x10, undef renamable $x10, renamable $r3
+    renamable $x6, renamable $p0 = VLD_x_pstm_nrm_imm_pseudo killed renamable $p0, 64 :: (load (<32 x s16>) from %ir.1, !tbaa !4, !noalias !7, addrspace 5)
+    renamable $x10 = VSHUFFLE_vec_shuffle_x killed renamable $x8, undef renamable $x8, renamable $r4
+    renamable $r0 = ADD_add_r_ri killed renamable $r0, -1, implicit-def dead $srcarry
+    renamable $r5 = ADDM_NC_mv_add_ri killed renamable $r0, -1
+    $x8, $p0, $dc0, $dc4 = VLD_3D_x_pseudo killed $p0, $d0_3d :: (load (<32 x s16>) from %ir.add.ptr.i3091.steady.top, !tbaa !4, !noalias !14, addrspace 5)
+    $dc3 = MOV_scalar_pseudo $dc2
+    renamable $p5 = MOVXM_lng_cg %bb.1
+    $s1 = MOV_alu_mv_mv_mv_scl $r17
+    $crsrsmode = MOVX_mvx_cr_imm 0
+  
+  bb.1.steady.stage1.top:
+    successors: %bb.2(0x80000000)
+    liveins: $dc0, $dc1, $dc2, $dc3, $dc4, $dc5, $dj0, $dj1, $dj2, $dj3, $dj4, $dj5, $dm0:0x000000030000000C, $dm1:0x000000030000000C, $dm2:0x000000030000000C, $dm3:0x000000030000000C, $dn0, $dn1, $dn2, $dn3, $dn4, $dn5, $m0, $m1, $m2, $m3, $m4, $m5, $p0, $p1, $p2, $p3, $p4, $p5, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $r8, $r10, $r12, $r16, $r17, $r18, $r19, $r20, $r22, $s0, $s1, $x0, $x1, $x2, $x4, $x6, $x8, $x10, $crsrsmode, $crupsmode, $r21, $r23, $r24
+  
+    renamable $dm4 = VMUL_vmul_vmul_cm_core_X_X renamable $x0, renamable $x4, renamable $r12
+    renamable $dm3 = VADDMAC_vaddmac_vmul_cm_core_X_X killed renamable $dm3, renamable $dm4, renamable $x6, renamable $x1, renamable $r10
+    renamable $dm2 = VADDMAC_vaddmac_vmul_cm_core_X_X killed renamable $dm2, killed renamable $dm4, renamable $x8, killed renamable $x1, renamable $r10
+    renamable $dm4 = VMUL_vmul_vmul_cm_core_X_X renamable $x0, renamable $x2, renamable $r12
+    renamable $dm1 = VADDMAC_vaddmac_vmul_cm_core_X_X killed renamable $dm1, renamable $dm4, killed renamable $x6, renamable $x10, renamable $r10
+    renamable $dm0 = VADDMAC_vaddmac_vmul_cm_core_X_X killed renamable $dm0, killed renamable $dm4, killed renamable $x8, killed renamable $x10, renamable $r10
+    $lc = ADD_NC_add_lc_ri $r6, 0
+    SET_LS_REL_pseudo %bb.2, implicit-def $ls, implicit $pc
+    SET_LE_REL_pseudo <mcsymbol .L_LEnd1>, implicit-def $le, implicit $pc
+  
+  bb.2.steady.stage1.inner.for.body100:
+    successors: %bb.2(0x7c000000), %bb.3(0x04000000)
+    liveins: $dc0, $dc1, $dc2, $dc3, $dc4, $dc5, $dj0, $dj1, $dj2, $dj3, $dj4, $dj5, $dm0:0x000000030000000C, $dm1:0x000000030000000C, $dm2:0x000000030000000C, $dm3:0x000000030000000C, $dn0, $dn1, $dn2, $dn3, $dn4, $dn5, $m0, $m1, $m2, $m3, $m4, $m5, $p0, $p1, $p2, $p3, $p4, $p5, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $r8, $r10, $r12, $r16, $r17, $r18, $r19, $r20, $r22, $s0, $s1, $x0, $x2, $x4, $d0_3d:0x7800000040001C00, $d1_3d:0x7800000040001C00, $crsrsmode, $crupsmode, $r21, $r23, $r24
+  
+    renamable $x1, renamable $p1 = VLD_x_pstm_nrm_pseudo killed renamable $p1, renamable $m4 :: (load (<16 x s32>) from %ir.p_mat_b.1751.steady, !tbaa !4, !noalias !77, addrspace 5)
+    $x10, $p1, $dc1, $dc5 = VLD_3D_x_pseudo killed $p1, $d1_3d :: (load (<16 x s32>) from %ir.add.ptr.ascast.i491.steady, !tbaa !4, !noalias !84, addrspace 5)
+    renamable $x8, renamable $p0 = VLD_x_pstm_nrm_imm_pseudo killed renamable $p0, 64 :: (load (<32 x s16>) from %ir.p_mat_a.1749.steady, !tbaa !4, !noalias !63, addrspace 5)
+    $x6, $p0, $dc0, $dc4 = VLD_3D_x_pseudo killed $p0, $d0_3d :: (load (<32 x s16>) from %ir.add.ptr.ascast.i486.steady, !tbaa !4, !noalias !70, addrspace 5)
+    renamable $x3 = VSHUFFLE_vec_shuffle_x killed renamable $x1, undef renamable $x1, renamable $r7
+    renamable $x5 = VSHUFFLE_vec_shuffle_x killed renamable $x3, undef renamable $x3, renamable $r16
+    renamable $x7 = VSHUFFLE_vec_shuffle_x killed renamable $x10, undef renamable $x10, renamable $r18
+    renamable $x9 = VSHUFFLE_vec_shuffle_x killed renamable $x7, undef renamable $x7, renamable $r20
+    renamable $dm3 = VMAC_vmac_vmul_cm_core_X_X killed renamable $dm3, renamable $x8, renamable $x5, renamable $r8
+    renamable $dm2 = VMAC_vmac_vmul_cm_core_X_X killed renamable $dm2, renamable $x6, killed renamable $x5, renamable $r8
+    renamable $dm1 = VMAC_vmac_vmul_cm_core_X_X killed renamable $dm1, killed renamable $x8, renamable $x9, renamable $r8
+    renamable $dm0 = VMAC_vmac_vmul_cm_core_X_X killed renamable $dm0, killed renamable $x6, killed renamable $x9, renamable $r8
+    PseudoLoopEnd <mcsymbol .L_LEnd1>, %bb.2
+  
+  bb.3.steady.stage1.bottom.and.stage0.top:
+    successors: %bb.1(0x7c000000), %bb.4(0x04000000)
+    liveins: $d2:0x0000000040001C00, $d3:0x0000000040001C00, $dc0, $dc1, $dc2, $dc3, $dc4, $dc5, $dj0, $dj1, $dj2, $dj3, $dj4, $dj5, $dm0:0x000000030000000C, $dm1:0x000000030000000C, $dm2:0x000000030000000C, $dm3:0x000000030000000C, $dn0, $dn1, $dn2, $dn3, $dn4, $dn5, $m0, $m1, $m2, $m3, $m4, $m5, $p0, $p1, $p2, $p3, $p4, $p5, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $r8, $r10, $r12, $r16, $r17, $r18, $r19, $r20, $r22, $s0, $s1, $x0, $x2, $x4, $d0_3d:0x7800000040001C00, $d1_3d:0x7800000040001C00, $crsrsmode, $crupsmode, $r21, $r23, $r24
+  
+    $srssign0 = MOV_alu_mv_mv_mv_scl $r19
+    renamable $p3 = VST_SRS_4x_dmx_sts_srs_dm_pstm_nrm_imm_srsSign0 killed renamable $dm3, renamable $s1, killed renamable $p3, 64, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0 :: (store (<64 x s8>) into %ir.80, !tbaa !4, addrspace 6)
+    renamable $p3 = VST_SRS_4x_dmx_sts_srs_dm_pstm_nrm_srsSign0 killed renamable $dm2, renamable $s1, killed renamable $p3, renamable $m5, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0 :: (store (<64 x s8>) into %ir.add.ptr.ascast.i476.steady, !tbaa !4, addrspace 6)
+    renamable $p3 = VST_SRS_4x_dmx_sts_srs_dm_pstm_nrm_imm_srsSign0 killed renamable $dm1, renamable $s1, killed renamable $p3, 64, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0 :: (store (<64 x s8>) into %ir.add.ptr.ascast.i480.steady, !tbaa !4, addrspace 6)
+    $p3, $dc2 = VST_2D_SRS_4x_dmx_sts_srs_dm_srsSign0 killed $dm0, $s1, killed $p3, $d2, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0 :: (store (<64 x s8>) into %ir.add.ptr.ascast.i483.steady, !tbaa !4, addrspace 6)
+    renamable $cml3, renamable $p2 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_imm_upsSign1 renamable $s0, killed renamable $p2, 64, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<32 x s16>) from %ir.p_psum_in.0768.steady.bottom, !tbaa !4, !noalias !35, addrspace 7)
+    renamable $cmh3, renamable $p2 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_imm_upsSign1 renamable $s0, killed renamable $p2, 64, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<32 x s16>) from %ir..bottom95, !tbaa !4, !noalias !35, addrspace 7)
+    renamable $cml2, renamable $p2 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_imm_upsSign1 renamable $s0, killed renamable $p2, 64, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<32 x s16>) from %ir.add.ptr.ascast.i353.steady.bottom, !tbaa !4, !noalias !42, addrspace 7)
+    $p4, $dc3 = PADD_2D_pseudo killed $p4, $d3
+    renamable $cmh2, renamable $p2 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_imm_upsSign1 renamable $s0, killed renamable $p2, 64, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<32 x s16>) from %ir.arrayidx.i.i.i.i.i.i.i.i.i.i354.steady.bottom, !tbaa !4, !noalias !42, addrspace 7)
+    renamable $wl10 = VLD_128_idx_imm_pseudo renamable $p4, 0 :: (load (<4 x s32>) from %ir.p_bias_in.0.steady.bottom, !tbaa !4, addrspace 6)
+    renamable $cml1, renamable $p2 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_imm_upsSign1 renamable $s0, killed renamable $p2, 64, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<32 x s16>) from %ir.add.ptr.ascast.i359.steady.bottom, !tbaa !4, !noalias !49, addrspace 7)
+    renamable $wl1 = VLD_128_idx_imm_pseudo renamable $p4, 16 :: (load (<4 x s32>) from %ir.add.ptr.ascast.i.steady.bottom, !tbaa !4, addrspace 6)
+    renamable $cmh1, renamable $p2 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_imm_upsSign1 renamable $s0, killed renamable $p2, 64, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<32 x s16>) from %ir.arrayidx.i.i.i.i.i.i.i.i.i.i360.steady.bottom, !tbaa !4, !noalias !49, addrspace 7)
+    renamable $x3, renamable $p1 = VLD_x_pstm_nrm_pseudo killed renamable $p1, renamable $m4 :: (load (<16 x s32>) from %ir.78, !tbaa !4, !noalias !21, addrspace 5)
+    renamable $cml0, renamable $p2 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_imm_upsSign1 renamable $s0, killed renamable $p2, 64, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<32 x s16>) from %ir.add.ptr.ascast.i365.steady.bottom, !tbaa !4, !noalias !56, addrspace 7)
+    renamable $cmh0, renamable $p2 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_imm_upsSign1 renamable $s0, killed renamable $p2, 64, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<32 x s16>) from %ir.arrayidx.i.i.i.i.i.i.i.i.i.i366.steady.bottom, !tbaa !4, !noalias !56, addrspace 7)
+    $x5, $p1, $dc1, $dc5 = VLD_3D_x_pseudo killed $p1, $d1_3d :: (load (<16 x s32>) from %ir.add.ptr.i3132.steady.bottom, !tbaa !4, !noalias !28, addrspace 5)
+    renamable $x6, renamable $p0 = VLD_x_pstm_nrm_imm_pseudo killed renamable $p0, 64 :: (load (<32 x s16>) from %ir.79, !tbaa !4, !noalias !7, addrspace 5)
+    $x8, $p0, $dc0, $dc4 = VLD_3D_x_pseudo killed $p0, $d0_3d :: (load (<32 x s16>) from %ir.add.ptr.i3091.steady.bottom, !tbaa !4, !noalias !14, addrspace 5)
+    renamable $x4 = VSEL_32 killed renamable $x4, renamable $x10, renamable $r22, implicit $crbf8conf, implicit $crfp8conf
+    renamable $x2 = VSEL_32 killed renamable $x2, renamable $x1, renamable $r22, implicit $crbf8conf, implicit $crfp8conf
+    renamable $x10 = VSHUFFLE_vec_shuffle_x killed renamable $x3, undef renamable $x3, renamable $r1
+    renamable $x1 = VSHUFFLE_vec_shuffle_x killed renamable $x10, undef renamable $x10, renamable $r2
+    renamable $x10 = VSHUFFLE_vec_shuffle_x killed renamable $x5, undef renamable $x5, renamable $r3
+    renamable $x10 = VSHUFFLE_vec_shuffle_x killed renamable $x10, undef renamable $x10, renamable $r4
+    $srssign0 = MOVX_mvx_cr_imm 0
+    $r5 = JNZD $r5, $p5, implicit-def $srcarry
+    DelayedSchedBarrier
+  
+  bb.4.lastiter.stage1.top:
+    successors: %bb.5(0x80000000)
+    liveins: $dc0, $dc1, $dc4, $dc5, $dj0, $dj1, $dj4, $dj5, $dm0:0x000000030000000C, $dm1:0x000000030000000C, $dm2:0x000000030000000C, $dm3:0x000000030000000C, $dn0, $dn1, $dn4, $dn5, $m0, $m1, $m4, $m5, $p0, $p1, $p3, $r6, $r7, $r8, $r10, $r12, $r16, $r17, $r18, $r19, $r20, $x0, $x1, $x2, $x4, $x6, $x8, $x10, $r21, $r23, $r24
+  
+    renamable $dm4 = VMUL_vmul_vmul_cm_core_X_X renamable $x0, killed renamable $x4, renamable $r12
+    renamable $dm3 = VADDMAC_vaddmac_vmul_cm_core_X_X killed renamable $dm3, renamable $dm4, renamable $x6, renamable $x1, renamable $r10
+    renamable $dm2 = VADDMAC_vaddmac_vmul_cm_core_X_X killed renamable $dm2, killed renamable $dm4, renamable $x8, killed renamable $x1, renamable $r10
+    renamable $dm4 = VMUL_vmul_vmul_cm_core_X_X killed renamable $x0, killed renamable $x2, killed renamable $r12
+    renamable $dm1 = VADDMAC_vaddmac_vmul_cm_core_X_X killed renamable $dm1, renamable $dm4, killed renamable $x6, renamable $x10, renamable $r10
+    renamable $dm0 = VADDMAC_vaddmac_vmul_cm_core_X_X killed renamable $dm0, killed renamable $dm4, killed renamable $x8, killed renamable $x10, killed renamable $r10
+    $lc = ADD_NC_add_lc_ri $r6, 0
+    SET_LS_REL_pseudo %bb.5, implicit-def $ls, implicit $pc
+    SET_LE_REL_pseudo <mcsymbol .L_LEnd0>, implicit-def $le, implicit $pc
+  
+  bb.5.lastiter.stage1.inner.for.body100:
+    successors: %bb.5(0x7c000000), %bb.6(0x04000000)
+    liveins: $dc0, $dc1, $dc4, $dc5, $dj0, $dj1, $dj4, $dj5, $dm0:0x000000030000000C, $dm1:0x000000030000000C, $dm2:0x000000030000000C, $dm3:0x000000030000000C, $dn0, $dn1, $dn4, $dn5, $m0, $m1, $m4, $m5, $p0, $p1, $p3, $r7, $r8, $r16, $r17, $r18, $r19, $r20, $d0_3d:0x7800000040001C00, $d1_3d:0x7800000040001C00, $r21, $r23, $r24
+  
+    renamable $x1, renamable $p1 = VLD_x_pstm_nrm_pseudo killed renamable $p1, renamable $m4 :: (load (<16 x s32>) from %ir.p_mat_b.1751.lastiter, !tbaa !4, !noalias !77, addrspace 5)
+    $x10, $p1, $dc1, $dc5 = VLD_3D_x_pseudo killed $p1, $d1_3d :: (load (<16 x s32>) from %ir.add.ptr.ascast.i491.lastiter, !tbaa !4, !noalias !84, addrspace 5)
+    renamable $x8, renamable $p0 = VLD_x_pstm_nrm_imm_pseudo killed renamable $p0, 64 :: (load (<32 x s16>) from %ir.p_mat_a.1749.lastiter, !tbaa !4, !noalias !63, addrspace 5)
+    $x6, $p0, $dc0, $dc4 = VLD_3D_x_pseudo killed $p0, $d0_3d :: (load (<32 x s16>) from %ir.add.ptr.ascast.i486.lastiter, !tbaa !4, !noalias !70, addrspace 5)
+    renamable $x3 = VSHUFFLE_vec_shuffle_x killed renamable $x1, undef renamable $x1, renamable $r7
+    renamable $x5 = VSHUFFLE_vec_shuffle_x killed renamable $x3, undef renamable $x3, renamable $r16
+    renamable $x7 = VSHUFFLE_vec_shuffle_x killed renamable $x10, undef renamable $x10, renamable $r18
+    renamable $x9 = VSHUFFLE_vec_shuffle_x killed renamable $x7, undef renamable $x7, renamable $r20
+    renamable $dm3 = VMAC_vmac_vmul_cm_core_X_X killed renamable $dm3, renamable $x8, renamable $x5, renamable $r8
+    renamable $dm2 = VMAC_vmac_vmul_cm_core_X_X killed renamable $dm2, renamable $x6, killed renamable $x5, renamable $r8
+    renamable $dm1 = VMAC_vmac_vmul_cm_core_X_X killed renamable $dm1, killed renamable $x8, renamable $x9, renamable $r8
+    renamable $dm0 = VMAC_vmac_vmul_cm_core_X_X killed renamable $dm0, killed renamable $x6, killed renamable $x9, renamable $r8
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.5
+  
+  bb.6.lastiter.stage1.bottom:
+    liveins: $dm0:0x000000030000000C, $dm1:0x000000030000000C, $dm2:0x000000030000000C, $dm3:0x000000030000000C, $m5, $p3, $r17, $r19, $r21, $r23, $r24
+  
+    $crsrsmode = MOVX_mvx_cr_imm 0
+    $s0 = MOV_alu_mv_mv_mv_scl killed $r17
+    $srssign0 = MOV_alu_mv_mv_mv_scl killed $r19
+    renamable $p3 = VST_SRS_4x_dmx_sts_srs_dm_pstm_nrm_imm_srsSign0 killed renamable $dm3, renamable $s0, killed renamable $p3, 64, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0 :: (store (<64 x s8>) into %ir..lastiter235, !tbaa !4, addrspace 6)
+    renamable $p3 = VST_SRS_4x_dmx_sts_srs_dm_pstm_nrm_srsSign0 killed renamable $dm2, renamable $s0, killed renamable $p3, killed renamable $m5, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0 :: (store (<64 x s8>) into %ir.add.ptr.ascast.i476.lastiter, !tbaa !4, addrspace 6)
+    VST_SRS_4x_dmx_sts_srs_dm_idx_imm_srsSign0 killed renamable $dm1, renamable $s0, renamable $p3, 0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0 :: (store (<64 x s8>) into %ir.add.ptr.ascast.i480.lastiter, !tbaa !4, addrspace 6)
+    VST_SRS_4x_dmx_sts_srs_dm_idx_imm_srsSign0 killed renamable $dm0, killed renamable $s0, killed renamable $p3, 64, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0 :: (store (<64 x s8>) into %ir.add.ptr.ascast.i483.lastiter, !tbaa !4, addrspace 6)
+    $srssign0 = MOVX_mvx_cr_imm 0
+    $r12 = MOV_OR_pseudo killed $r24
+    $r10 = MOV_OR_pseudo killed $r23
+    $r8 = MOV_OR_pseudo killed $r21
+    RET implicit $lr
+    DelayedSchedBarrier
+...
