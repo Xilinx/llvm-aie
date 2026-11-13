@@ -2197,7 +2197,13 @@ const GenericLoopHintAttr *TemplateInstantiator::TransformGenericLoopHintAttr(
   if (!ValueExpr)
     return Hint;
 
-  ExprResult TransformedExpr = getDerived().TransformExpr(ValueExpr);
+  // Instantiate the value as the constant expression it was parsed as.
+  // Otherwise a reference to a constexpr local of an enclosing function is
+  // treated as an odr-use, which a lambda being instantiated cannot capture.
+  EnterExpressionEvaluationContext ConstantEvaluated(
+      getSema(), Sema::ExpressionEvaluationContext::ConstantEvaluated);
+  ExprResult TransformedExpr =
+      getSema().ActOnConstantExpression(getDerived().TransformExpr(ValueExpr));
   // Substitution failed; the error is already diagnosed elsewhere.
   if (!TransformedExpr.isUsable())
     return Hint;
@@ -2218,7 +2224,13 @@ const GenericLoopHintAttr *TemplateInstantiator::TransformGenericLoopHintAttr(
 
 const LoopHintAttr *
 TemplateInstantiator::TransformLoopHintAttr(const LoopHintAttr *LH) {
-  Expr *TransformedExpr = getDerived().TransformExpr(LH->getValue()).get();
+  // See TransformGenericLoopHintAttr.
+  EnterExpressionEvaluationContext ConstantEvaluated(
+      getSema(), Sema::ExpressionEvaluationContext::ConstantEvaluated);
+  Expr *TransformedExpr =
+      getSema()
+          .ActOnConstantExpression(getDerived().TransformExpr(LH->getValue()))
+          .get();
 
   if (TransformedExpr == LH->getValue())
     return LH;
