@@ -199,10 +199,10 @@ private:
 
     /// Initialize occupancy and compute interference graphs.
     /// The RegTracker provides the problem description (LiveRanges,
-    /// AvailableRegs, AdmissibleRegs per LR). LiveLanesByLRIndex provides the
+    /// AvailableRegs, AdmissibleRegs per LR). LivenessByLRIndex provides the
     /// temporal liveness data computed during scheduling.
     void init(const TargetRegisterInfo *TRI,
-              const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex,
+              const DenseMap<unsigned, AIE::LivenessVector> &LivenessByLRIndex,
               const RegLiveRangeTracker *RegTracker);
 
     /// Check if PhysReg can accommodate VRegMasks without conflicts.
@@ -220,7 +220,7 @@ private:
     /// when two fixed ranges conflict. Virtualizable ranges left physical
     /// (RESERVED / reserved-overlap) are skipped: they constrain nothing.
     bool pinFixedRanges(
-        const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex,
+        const DenseMap<unsigned, AIE::LivenessVector> &LivenessByLRIndex,
         const RegLiveRangeTracker &RegTracker);
   };
 
@@ -233,7 +233,7 @@ private:
   /// Live ranges under allocation and the occupancy they share. Used by both
   /// the heuristic and the exact search.
   struct Placement {
-    const DenseMap<unsigned, AIE::LivenessVector> &LiveLanes;
+    const DenseMap<unsigned, AIE::LivenessVector> &Liveness;
     const DenseSet<MCRegister> &AvailableRegs;
     AllocState &State;
     DenseMap<Register, MCRegister> &OutAssign;
@@ -285,7 +285,7 @@ private:
 public:
   /// Allocate physical registers for live ranges.
   ///
-  /// \param LiveLanesByLRIndex Map from live range index to per-cycle lane
+  /// \param LivenessByLRIndex Map from live range index to per-cycle lane
   ///        masks. Keys are RegLiveRange::getIndex() values.
   /// \param II Initiation interval for pipelined loops (>= 1).
   /// \param RegTracker RegLiveRangeTracker providing register information.
@@ -293,7 +293,7 @@ public:
   /// \return PostRegAllocResult holding the assignment and winning strategy
   ///         name on success, or an empty (false) result on failure.
   static PostRegAllocResult
-  allocate(const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex,
+  allocate(const DenseMap<unsigned, AIE::LivenessVector> &LivenessByLRIndex,
            int II, const RegLiveRangeTracker &RegTracker,
            const TargetRegisterInfo &TRI);
 
@@ -306,7 +306,7 @@ private:
   /// Minimum Remaining Values (fewest effective physical-register candidates),
   /// with OrderFn as tie-break.
   static AllocResult
-  tryAllocate(const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex,
+  tryAllocate(const DenseMap<unsigned, AIE::LivenessVector> &LivenessByLRIndex,
               const RegLiveRangeTracker *RegTracker,
               const TargetRegisterInfo &TRI, AllocState &State,
               ComparatorFunction OrderFn,
@@ -325,7 +325,7 @@ private:
   /// the node budget is spent. Used instead of the heuristics when
   /// -aie-postregalloc-exact-budget is non-zero.
   static ExactResult tryAllocateExact(
-      const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex,
+      const DenseMap<unsigned, AIE::LivenessVector> &LivenessByLRIndex,
       const RegLiveRangeTracker &RegTracker, const TargetRegisterInfo &TRI,
       AllocState &State, DenseMap<Register, MCRegister> &OutAssign);
 
@@ -333,7 +333,7 @@ private:
   /// \param LR The live range to compute metrics for.
   /// \param Masks The lane masks for this live range.
   /// \param VRegInterferenceGraph Pre-computed live range interference graph.
-  /// \param LiveLanesByLRIndex All live ranges' liveness data.
+  /// \param LivenessByLRIndex All live ranges' liveness data.
   /// \param RCInterferenceGraph Register class interference graph with
   ///                            weights.
   /// \param AvailableRegs Available physical registers.
@@ -342,7 +342,7 @@ private:
   static VRegMetrics computeMetrics(
       const RegLiveRange &LR, const AIE::LivenessVector &Masks,
       const WeightedSymmetricGraph &VRegInterferenceGraph,
-      const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex,
+      const DenseMap<unsigned, AIE::LivenessVector> &LivenessByLRIndex,
       const WeightedAsymmetricGraph &RCInterferenceGraph,
       const DenseSet<MCRegister> &AvailableRegs,
       const RegLiveRangeTracker &RegTracker, const TargetRegisterInfo &TRI);
@@ -355,11 +355,11 @@ private:
   /// Build live range interference graph (symmetric). Two live ranges
   /// interfere when their admissible RegUnit sets overlap and they are live
   /// at a common cycle.
-  /// \param LiveLanesByLRIndex Per-cycle lane masks keyed by live range index.
+  /// \param LivenessByLRIndex Per-cycle lane masks keyed by live range index.
   /// \param LiveRanges All live ranges of the tracker, indexed by
   ///        RegLiveRange::getIndex().
   static WeightedSymmetricGraph buildVRegInterferenceGraph(
-      const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex,
+      const DenseMap<unsigned, AIE::LivenessVector> &LivenessByLRIndex,
       ArrayRef<RegLiveRange> LiveRanges);
 
   /// Predefined ordering comparators.

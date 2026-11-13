@@ -37,11 +37,11 @@ static cl::opt<unsigned> PostRegAllocExactBudget(
 // Initialize allocation state and compute interference graphs.
 void AIEPostRegAlloc::AllocState::init(
     const TargetRegisterInfo *InTRI,
-    const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex,
+    const DenseMap<unsigned, AIE::LivenessVector> &LivenessByLRIndex,
     const RegLiveRangeTracker *RegTracker) {
   this->TRI = InTRI;
 
-  const unsigned II = LiveLanesByLRIndex.begin()->second.size();
+  const unsigned II = LivenessByLRIndex.begin()->second.size();
   this->CycleOccupancy.assign(II, PartSet());
 
   // Point at the tracker's per-physreg PartSet cache.
@@ -60,7 +60,7 @@ void AIEPostRegAlloc::AllocState::init(
 
   // Build live range interference graph once.
   this->VRegInterferenceGraph = AIEPostRegAlloc::buildVRegInterferenceGraph(
-      LiveLanesByLRIndex, RegTracker->getLiveRanges());
+      LivenessByLRIndex, RegTracker->getLiveRanges());
 
   // Pre-compute metrics for all live ranges that have been virtualized.
   // Non-virtualized ranges (RESERVED or policy-excluded) have no VReg and
@@ -70,12 +70,12 @@ void AIEPostRegAlloc::AllocState::init(
     if (!LR.getVReg().isValid())
       continue;
     const unsigned LRIndex = LR.getIndex();
-    auto It = LiveLanesByLRIndex.find(LRIndex);
-    if (It == LiveLanesByLRIndex.end())
+    auto It = LivenessByLRIndex.find(LRIndex);
+    if (It == LivenessByLRIndex.end())
       continue;
     const AIE::LivenessVector &Masks = It->second;
     AllMetrics[LRIndex] = AIEPostRegAlloc::computeMetrics(
-        LR, Masks, VRegInterferenceGraph, LiveLanesByLRIndex,
+        LR, Masks, VRegInterferenceGraph, LivenessByLRIndex,
         RCInterferenceGraph, AvailableRegs, *RegTracker, *InTRI);
   }
 }
@@ -163,7 +163,7 @@ void AIEPostRegAlloc::AllocState::unplace(
 }
 
 bool AIEPostRegAlloc::AllocState::pinFixedRanges(
-    const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex,
+    const DenseMap<unsigned, AIE::LivenessVector> &LivenessByLRIndex,
     const RegLiveRangeTracker &RegTracker) {
   // A virtualizable range without a VReg was left physical because it is
   // RESERVED or overlaps a RESERVED base. That register is not in the pool,
@@ -172,8 +172,8 @@ bool AIEPostRegAlloc::AllocState::pinFixedRanges(
   for (const RegLiveRange &LR : RegTracker.getLiveRanges()) {
     if (LR.getVReg().isValid() || LR.isVirtualizable())
       continue;
-    auto It = LiveLanesByLRIndex.find(LR.getIndex());
-    if (It == LiveLanesByLRIndex.end())
+    auto It = LivenessByLRIndex.find(LR.getIndex());
+    if (It == LivenessByLRIndex.end())
       continue;
     Register BaseReg = LR.getBaseReg();
     LLVM_DEBUG(dbgs() << "  Fixed: LR#" << LR.getIndex() << " -> "
@@ -245,7 +245,7 @@ AIEPostRegAlloc::buildRCInterferenceGraph(const DenseSet<unsigned> &UsedRCIds,
 // Build live range interference graph (symmetric).
 AIEPostRegAlloc::WeightedSymmetricGraph
 AIEPostRegAlloc::buildVRegInterferenceGraph(
-    const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex,
+    const DenseMap<unsigned, AIE::LivenessVector> &LivenessByLRIndex,
     ArrayRef<RegLiveRange> LiveRanges) {
   WeightedSymmetricGraph Graph;
 
@@ -256,8 +256,8 @@ AIEPostRegAlloc::buildVRegInterferenceGraph(
   for (const RegLiveRange &LR : LiveRanges) {
     if (LR.getAdmissibleRegUnits().empty())
       continue;
-    const auto It = LiveLanesByLRIndex.find(LR.getIndex());
-    if (It == LiveLanesByLRIndex.end())
+    const auto It = LivenessByLRIndex.find(LR.getIndex());
+    if (It == LivenessByLRIndex.end())
       continue;
     Candidates.emplace_back(&LR, &It->second);
   }
@@ -302,7 +302,7 @@ AIEPostRegAlloc::Placement::Placement(
     const DenseMap<unsigned, AIE::LivenessVector> &Lanes,
     const RegLiveRangeTracker &Tracker, AllocState &InState,
     DenseMap<Register, MCRegister> &InAssign)
-    : LiveLanes(Lanes), AvailableRegs(Tracker.getAvailablePhysRegs()),
+    : Liveness(Lanes), AvailableRegs(Tracker.getAvailablePhysRegs()),
       State(InState), OutAssign(InAssign),
       Placed(Tracker.getLiveRanges().size()),
       AllCands(Tracker.getLiveRanges().size()),
@@ -312,7 +312,7 @@ AIEPostRegAlloc::Placement::Placement(
   // Only virtualized ranges take part in assignment. Fixed ranges must already
   // be pinned into State via AllocState::pinFixedRanges.
   for (const RegLiveRange &LR : Tracker.getLiveRanges()) {
-    if (!LR.getVReg().isValid() || !LiveLanes.count(LR.getIndex()))
+    if (!LR.getVReg().isValid() || !Liveness.count(LR.getIndex()))
       continue;
     Ranges.push_back(&LR);
     const unsigned Index = LR.getIndex();
@@ -330,7 +330,7 @@ AIEPostRegAlloc::Placement::Placement(
 
 const AIE::LivenessVector &
 AIEPostRegAlloc::Placement::masks(const RegLiveRange &LR) const {
-  return LiveLanes.find(LR.getIndex())->second;
+  return Liveness.find(LR.getIndex())->second;
 }
 
 unsigned
@@ -413,7 +413,7 @@ void AIEPostRegAlloc::Placement::unplace(const RegLiveRange &LR) {
 AIEPostRegAlloc::VRegMetrics AIEPostRegAlloc::computeMetrics(
     const RegLiveRange &LR, const AIE::LivenessVector &Masks,
     const WeightedSymmetricGraph &VRegInterferenceGraph,
-    const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex,
+    const DenseMap<unsigned, AIE::LivenessVector> &LivenessByLRIndex,
     const WeightedAsymmetricGraph &RCInterferenceGraph,
     const DenseSet<MCRegister> &AvailableRegs,
     const RegLiveRangeTracker &RegTracker, const TargetRegisterInfo &TRI) {
@@ -435,7 +435,7 @@ AIEPostRegAlloc::VRegMetrics AIEPostRegAlloc::computeMetrics(
   const TargetRegisterClass *RC = LR.getRegisterClass();
   const unsigned RCId = RC->getID();
 
-  for (const auto &[OtherLRIndex, _] : LiveLanesByLRIndex) {
+  for (const auto &[OtherLRIndex, _] : LivenessByLRIndex) {
     if (OtherLRIndex == LRIndex)
       continue;
     if (!VRegInterferenceGraph.interferes(LRIndex, OtherLRIndex))
@@ -471,7 +471,7 @@ AIEPostRegAlloc::VRegMetrics AIEPostRegAlloc::computeMetrics(
 // The free (non-forced) pick is the unplaced VReg with the fewest effective
 // candidates (Minimum Remaining Values); OrderFn is only used as a tie-break.
 AIEPostRegAlloc::AllocResult AIEPostRegAlloc::tryAllocate(
-    const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex,
+    const DenseMap<unsigned, AIE::LivenessVector> &LivenessByLRIndex,
     const RegLiveRangeTracker *RegTracker, const TargetRegisterInfo &TRI,
     AllocState &State, ComparatorFunction OrderFn,
     DenseMap<Register, MCRegister> &OutAssign) {
@@ -480,10 +480,10 @@ AIEPostRegAlloc::AllocResult AIEPostRegAlloc::tryAllocate(
   std::fill(State.CycleOccupancy.begin(), State.CycleOccupancy.end(),
             PartSet());
   OutAssign.clear();
-  if (!State.pinFixedRanges(LiveLanesByLRIndex, *RegTracker))
+  if (!State.pinFixedRanges(LivenessByLRIndex, *RegTracker))
     return AllocResult(/*InfeasibleSchedule=*/true);
 
-  Placement Work(LiveLanesByLRIndex, *RegTracker, State, OutAssign);
+  Placement Work(LivenessByLRIndex, *RegTracker, State, OutAssign);
 
   // Place every range that has exactly one legal register, repeating until no
   // new forced choice appears. Returns false when a range has none.
@@ -580,7 +580,7 @@ AIEPostRegAlloc::AllocResult AIEPostRegAlloc::tryAllocate(
 }
 
 AIEPostRegAlloc::ExactResult AIEPostRegAlloc::tryAllocateExact(
-    const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex,
+    const DenseMap<unsigned, AIE::LivenessVector> &LivenessByLRIndex,
     const RegLiveRangeTracker &RegTracker, const TargetRegisterInfo &TRI,
     AllocState &State, DenseMap<Register, MCRegister> &OutAssign) {
 
@@ -590,12 +590,12 @@ AIEPostRegAlloc::ExactResult AIEPostRegAlloc::tryAllocateExact(
   std::fill(State.CycleOccupancy.begin(), State.CycleOccupancy.end(),
             PartSet());
   OutAssign.clear();
-  if (!State.pinFixedRanges(LiveLanesByLRIndex, RegTracker)) {
+  if (!State.pinFixedRanges(LivenessByLRIndex, RegTracker)) {
     LLVM_DEBUG(dbgs() << "Exact: infeasible, fixed-range conflict\n");
     return ExactResult::Infeasible;
   }
 
-  Placement Work(LiveLanesByLRIndex, RegTracker, State, OutAssign);
+  Placement Work(LivenessByLRIndex, RegTracker, State, OutAssign);
 
   SmallVector<unsigned, 32> Order;
   for (const RegLiveRange *LR : Work.Ranges)
@@ -738,16 +738,16 @@ void AIEPostRegAlloc::dumpVRegMetrics(
 
 // Main allocation entry point.
 PostRegAllocResult AIEPostRegAlloc::allocate(
-    const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex, int II,
+    const DenseMap<unsigned, AIE::LivenessVector> &LivenessByLRIndex, int II,
     const RegLiveRangeTracker &RegTracker, const TargetRegisterInfo &TRI) {
 
   LLVM_DEBUG(dbgs() << "AIEPostRegAlloc::allocate for "
-                    << LiveLanesByLRIndex.size() << " live ranges, II=" << II
+                    << LivenessByLRIndex.size() << " live ranges, II=" << II
                     << "\n");
 
   DenseMap<Register, MCRegister> Assignments;
 
-  if (LiveLanesByLRIndex.empty()) {
+  if (LivenessByLRIndex.empty()) {
     LLVM_DEBUG(dbgs() << "No live ranges to allocate\n");
     return PostRegAllocResult("Trivial", std::move(Assignments));
   }
@@ -757,7 +757,7 @@ PostRegAllocResult AIEPostRegAlloc::allocate(
 
   // Initialize allocation state with interference graphs computed once.
   AllocState State;
-  State.init(&TRI, LiveLanesByLRIndex, &RegTracker);
+  State.init(&TRI, LivenessByLRIndex, &RegTracker);
 
   // Dump virtual register metrics when debug output is enabled.
   LLVM_DEBUG(dumpVRegMetrics(State.AllMetrics, RegTracker, TRI));
@@ -765,8 +765,8 @@ PostRegAllocResult AIEPostRegAlloc::allocate(
   // A non-zero budget selects the exact search and skips the heuristics.
   if (PostRegAllocExactBudget > 0) {
     LLVM_DEBUG(dbgs() << "Trying exact search\n");
-    ExactResult ER = tryAllocateExact(LiveLanesByLRIndex, RegTracker, TRI,
-                                      State, Assignments);
+    ExactResult ER = tryAllocateExact(LivenessByLRIndex, RegTracker, TRI, State,
+                                      Assignments);
     if (ER == ExactResult::Feasible) {
       LLVM_DEBUG(dbgs() << "Allocation succeeded with exact search\n");
       return PostRegAllocResult("exact search", std::move(Assignments));
@@ -811,8 +811,8 @@ PostRegAllocResult AIEPostRegAlloc::allocate(
   for (const auto &Strategy : Strategies) {
     LLVM_DEBUG(dbgs() << "Trying allocation with " << Strategy.Name << "\n");
 
-    AllocResult Result = tryAllocate(LiveLanesByLRIndex, &RegTracker, TRI,
-                                     State, Strategy.OrderFn, Assignments);
+    AllocResult Result = tryAllocate(LivenessByLRIndex, &RegTracker, TRI, State,
+                                     Strategy.OrderFn, Assignments);
 
     if (Result) {
       LLVM_DEBUG(dbgs() << "Allocation succeeded with " << Strategy.Name
