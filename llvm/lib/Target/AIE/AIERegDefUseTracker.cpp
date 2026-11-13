@@ -1692,6 +1692,11 @@ void RegLiveRange::fillAdmissibleRegUnits(
     if (RegUnits.empty())
       for (MCRegUnitIterator UI(Reg, TRI); UI.isValid(); ++UI)
         RegUnits.set(*UI);
+    // Admissible registers must not share register units. Lane-derived units
+    // of a live range are only equivalent to the per-register lane-derived
+    // units under this condition.
+    assert(!AdmissibleRegUnits.overlap(RegUnits) &&
+           "Admissible registers of a live range must not overlap");
     AdmissibleRegUnits |= RegUnits;
   }
 }
