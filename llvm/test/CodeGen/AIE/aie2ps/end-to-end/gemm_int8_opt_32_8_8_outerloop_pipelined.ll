@@ -133,7 +133,7 @@ define weak_odr dso_local void @gemm_int8_opt_32_8_8(ptr noalias nonnull align 4
 ; REMARKS-NEXT:   - Prologue:        bb.9.lastiter.stage1.top
 ; REMARKS-NEXT:   - PrologueBundles: '8'
 ; REMARKS-NEXT:   - Epilogue:        bb.11.lastiter.stage1.bottom
-; REMARKS-NEXT:   - EpilogueBundles: '16'
+; REMARKS-NEXT:   - EpilogueBundles: '19'
 ; REMARKS-NEXT:   - VregMode:        Physical
 ; REMARKS-NEXT:   - SchedHeuristic:  Config_16_1_0_NodeNum
 ; REMARKS-NEXT: ...
@@ -167,7 +167,7 @@ define weak_odr dso_local void @gemm_int8_opt_32_8_8(ptr noalias nonnull align 4
 ; REMARKS-NEXT:   - Prologue:        bb.12.lastiter.stage1.top430
 ; REMARKS-NEXT:   - PrologueBundles: '5'
 ; REMARKS-NEXT:   - Epilogue:        bb.14.lastiter.stage1.bottom431
-; REMARKS-NEXT:   - EpilogueBundles: '20'
+; REMARKS-NEXT:   - EpilogueBundles: '23'
 ; REMARKS-NEXT:   - VregMode:        Physical
 ; REMARKS-NEXT:   - SchedHeuristic:  Config_16_1_0_NodeNum
 ; REMARKS-NEXT: ...
@@ -315,22 +315,25 @@ define weak_odr dso_local void @gemm_int8_opt_32_8_8(ptr noalias nonnull align 4
 ; ASM-NEXT:  .L_LEnd0:
 ; ASM-NEXT:    nopa ; vldb x6, [p3], m4; nops ; nopx ; vshuffle x3, x4, x4, r0; vmac dm2, dm2, x10, x5, r10
 ; ASM-NEXT:  // %bb.7: // %lastiter.stage1.bottom
-; ASM-NEXT:    nopa ; nopb ; nops ; movx crsrsmode, #0; vshuffle x5, x3, x3, r2; vmac dm1, dm1, x8, x5, r10
-; ASM-NEXT:    vmac dm0, dm0, x6, x5, r10
-; ASM-NEXT:    nopx ; mov s0, r4; vmac dm3, dm3, x1, x5, r10
-; ASM-NEXT:    vshuffle x3, x4, x4, r0; vmac dm2, dm2, x10, x5, r10
+; ASM-NEXT:    lda p7, [sp, #-60]; nopb ; nops ; nopx ; vshuffle x5, x3, x3, r2; vmac dm1, dm1, x8, x5, r10 // 4-byte Folded Reload
+; ASM-NEXT:    lda p6, [sp, #-64]; movx crsrsmode, #0; mov s0, r4; vmac dm0, dm0, x6, x5, r10 // 4-byte Folded Reload
+; ASM-NEXT:    paddxm [sp], #-64; or r12, r21, r21; mov srssign0, r6; vmac dm3, dm3, x1, x5, r10
+; ASM-NEXT:    or r8, r17, r17; vshuffle x3, x4, x4, r0; vmac dm2, dm2, x10, x5, r10
 ; ASM-NEXT:    vshuffle x5, x3, x3, r2; vmac dm1, dm1, x8, x5, r10
-; ASM-NEXT:    mov srssign0, r6; vmac dm0, dm0, x6, x5, r10
+; ASM-NEXT:    vmac dm0, dm0, x6, x5, r10
 ; ASM-NEXT:    vmac dm3, dm3, x1, x5, r10
 ; ASM-NEXT:    vmac dm2, dm2, x10, x5, r10
 ; ASM-NEXT:    vmac dm1, dm1, x8, x5, r10
-; ASM-NEXT:    vmac dm0, dm0, x6, x5, r10
-; ASM-NEXT:    j #.LBB0_15
-; ASM-NEXT:    nop // Delay Slot 5
-; ASM-NEXT:    vst.srs.4x dm3, s0, srssign0, [p2], #64 // Delay Slot 4
-; ASM-NEXT:    vst.srs.4x dm2, s0, srssign0, [p2], #64 // Delay Slot 3
-; ASM-NEXT:    vst.srs.4x dm1, s0, srssign0, [p2, #0] // Delay Slot 2
-; ASM-NEXT:    vst.srs.4x dm0, s0, srssign0, [p2, #64]; movx srssign0, #0 // Delay Slot 1
+; ASM-NEXT:    mov r10, r19; vmac dm0, dm0, x6, x5, r10
+; ASM-NEXT:    nop
+; ASM-NEXT:    nop
+; ASM-NEXT:    vst.srs.4x dm3, s0, srssign0, [p2], #64
+; ASM-NEXT:    vst.srs.4x dm2, s0, srssign0, [p2], #64; ret lr
+; ASM-NEXT:    vst.srs.4x dm1, s0, srssign0, [p2, #0] // Delay Slot 5
+; ASM-NEXT:    vst.srs.4x dm0, s0, srssign0, [p2, #64]; movx srssign0, #0 // Delay Slot 4
+; ASM-NEXT:    nop // Delay Slot 3
+; ASM-NEXT:    nop // Delay Slot 2
+; ASM-NEXT:    nop // Delay Slot 1
 ; ASM-NEXT:  .LBB0_8: // %if.else
 ; ASM-NEXT:    mova m0, #44; nopb ; nopx ; movs p2, p3
 ; ASM-NEXT:    lda.u8 r30, [p3, #0]; paddb [p2], m0
@@ -423,35 +426,29 @@ define weak_odr dso_local void @gemm_int8_opt_32_8_8(ptr noalias nonnull align 4
 ; ASM-NEXT:  .L_LEnd2:
 ; ASM-NEXT:    nopa ; vldb x6, [p7], m3; nops ; nopx ; vshuffle x3, x4, x4, r0; vmac dm2, dm2, x10, x5, r10
 ; ASM-NEXT:  // %bb.14: // %lastiter.stage1.bottom431
-; ASM-NEXT:    nopa ; movx crsrsmode, #0; vshuffle x5, x3, x3, r2; vmac dm1, dm1, x8, x5, r10
-; ASM-NEXT:    mov s0, r1; vmac dm0, dm0, x6, x5, r10
-; ASM-NEXT:    vmac dm3, dm3, x1, x5, r10
+; ASM-NEXT:    lda p7, [sp, #-60]; nopb ; nops ; nopx ; vshuffle x5, x3, x3, r2; vmac dm1, dm1, x8, x5, r10 // 4-byte Folded Reload
+; ASM-NEXT:    lda p6, [sp, #-64]; nopb ; nops ; movx crsrsmode, #0; mov s0, r1; vmac dm0, dm0, x6, x5, r10 // 4-byte Folded Reload
+; ASM-NEXT:    paddxm [sp], #-64; or r8, r17, r17; mov r12, r21; vmac dm3, dm3, x1, x5, r10
 ; ASM-NEXT:    vshuffle x3, x4, x4, r0; vmac dm2, dm2, x10, x5, r10
 ; ASM-NEXT:    vshuffle x5, x3, x3, r2; vmac dm1, dm1, x8, x5, r10
 ; ASM-NEXT:    vmac dm0, dm0, x6, x5, r10
 ; ASM-NEXT:    vmac dm3, dm3, x1, x5, r10
 ; ASM-NEXT:    vmac dm2, dm2, x10, x5, r10
 ; ASM-NEXT:    vmac dm1, dm1, x8, x5, r10
-; ASM-NEXT:    vmac dm0, dm0, x6, x5, r10
+; ASM-NEXT:    mov r10, r19; vmac dm0, dm0, x6, x5, r10
 ; ASM-NEXT:    nop
 ; ASM-NEXT:    nop
 ; ASM-NEXT:    vst.srs.2x cml3, s0, srssign1, [p4], #64
 ; ASM-NEXT:    vst.srs.2x cmh3, s0, srssign1, [p4], #64
-; ASM-NEXT:    vst.srs.2x cml2, s0, srssign1, [p4, #0]
-; ASM-NEXT:    vst.srs.2x cmh2, s0, srssign1, [p4, #64]
 ; ASM-NEXT:    vst.srs.2x cml1, s0, srssign1, [p5], #64
 ; ASM-NEXT:    vst.srs.2x cmh1, s0, srssign1, [p5], #64
-; ASM-NEXT:    vst.srs.2x cml0, s0, srssign1, [p5, #0]
-; ASM-NEXT:    vst.srs.2x cmh0, s0, srssign1, [p5, #64]
-; ASM-NEXT:  .LBB0_15: // %if.end
-; ASM-NEXT:    lda p7, [sp, #-60] // 4-byte Folded Reload
-; ASM-NEXT:    lda p6, [sp, #-64] // 4-byte Folded Reload
-; ASM-NEXT:    ret lr
-; ASM-NEXT:    nop // Delay Slot 5
-; ASM-NEXT:    nop // Delay Slot 4
+; ASM-NEXT:    vst.srs.2x cml2, s0, srssign1, [p4, #0]
+; ASM-NEXT:    vst.srs.2x cmh2, s0, srssign1, [p4, #64]; ret lr
+; ASM-NEXT:    vst.srs.2x cml0, s0, srssign1, [p5, #0] // Delay Slot 5
+; ASM-NEXT:    vst.srs.2x cmh0, s0, srssign1, [p5, #64] // Delay Slot 4
 ; ASM-NEXT:    nop // Delay Slot 3
-; ASM-NEXT:    mov r12, r21 // Delay Slot 2
-; ASM-NEXT:    paddxm [sp], #-64; or r10, r19, r19; mov r8, r17 // Delay Slot 1
+; ASM-NEXT:    nop // Delay Slot 2
+; ASM-NEXT:    nop // Delay Slot 1
 entry:
   %curr_depth_iter.i = getelementptr inbounds nuw i8, ptr %param, i20 42
   %0 = load i8, ptr %curr_depth_iter.i, align 2, !tbaa !4
