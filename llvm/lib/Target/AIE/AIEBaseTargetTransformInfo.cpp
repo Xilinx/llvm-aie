@@ -367,6 +367,19 @@ bool AIETTICommon::isHardwareLoopProfitable(
                            "unavailable\n");
       return false;
     }
+    if (const std::optional<unsigned> Limit =
+            getMultiBlockJNZDPointerPHILimit()) {
+      const unsigned NumPointerPHIs =
+          count_if(L->getHeader()->phis(), [](const PHINode &PHI) {
+            return PHI.getType()->isPointerTy();
+          });
+      if (NumPointerPHIs >= *Limit) {
+        LLVM_DEBUG(dbgs() << "AIE Loops: Multi-block loop, " << NumPointerPHIs
+                          << " pointer PHIs leave no pointer register for "
+                             "JNZD\n");
+        return false;
+      }
+    }
     // The outer loop pipeliner cannot take a hardware loop as input yet: it
     // needs a latch that still compares an induction variable. Reject here so
     // a loop headed for pipelining reaches it in that form, whether it was

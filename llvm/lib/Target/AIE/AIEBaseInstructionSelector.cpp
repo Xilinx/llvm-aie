@@ -1122,7 +1122,15 @@ bool AIEBaseInstructionSelector::selectStartLoop(MachineInstr &I,
     return constrainSelectedInstRegOperands(*Mov, TII, TRI, RBI);
   }
 
-  // Not a constant trip count, decrement at runtime
+  // Not a constant trip count, decrement at runtime. Decrement next to the
+  // trip count definition, so that an otherwise empty preheader can be
+  // removed instead of executing the decrement on every outer iteration.
+  if (MachineInstr *TCDef = MRI.getVRegDef(I.getOperand(2).getReg());
+      TCDef && TCDef->getParent() != I.getParent()) {
+    MachineBasicBlock *DefMBB = TCDef->getParent();
+    MIB.setInsertPt(*DefMBB, TCDef->isPHI() ? DefMBB->getFirstNonPHI()
+                                            : std::next(TCDef->getIterator()));
+  }
   auto ADDI = MIB.buildInstr(JNZDSupport->DecTripCountOpcode, {I.getOperand(0)},
                              {I.getOperand(2)})
                   .addImm(-1);

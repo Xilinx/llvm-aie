@@ -137,8 +137,8 @@ define void @invariant_guard_nested_loop(ptr noalias %out, ptr noalias %in, i32 
 ;
 ; CHECK-AIE2PS-LABEL: invariant_guard_nested_loop:
 ; CHECK-AIE2PS:       // %bb.0: // %entry
-; CHECK-AIE2PS-NEXT:    mova r2, #0; nopxm
-; CHECK-AIE2PS-NEXT:    mova r6, #3; ge r4, r2, r1
+; CHECK-AIE2PS-NEXT:    mova r2, #0; nopb ; nops ; movxm p2, #.LBB0_1; nopv
+; CHECK-AIE2PS-NEXT:    mova r6, #3; nopb ; nops ; ge r4, r2, r1; addm.nc r0, r0, #-1; nopv
 ; CHECK-AIE2PS-NEXT:  .LBB0_1: // %outer
 ; CHECK-AIE2PS-NEXT:    // =>This Loop Header: Depth=1
 ; CHECK-AIE2PS-NEXT:    // Child Loop BB0_3 Depth 2
@@ -171,8 +171,7 @@ define void @invariant_guard_nested_loop(ptr noalias %out, ptr noalias %in, i32 
 ; CHECK-AIE2PS-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
 ; CHECK-AIE2PS-NEXT:  .LBB0_5: // %outer.latch
 ; CHECK-AIE2PS-NEXT:    // in Loop: Header=BB0_1 Depth=1
-; CHECK-AIE2PS-NEXT:    nopa ; nopb ; nops ; add r0, r0, #-1; nopm ; nopv
-; CHECK-AIE2PS-NEXT:    jnz r0, #.LBB0_1
+; CHECK-AIE2PS-NEXT:    nopa ; jnzd r0, r0, p2
 ; CHECK-AIE2PS-NEXT:    nop // Delay Slot 5
 ; CHECK-AIE2PS-NEXT:    nop // Delay Slot 4
 ; CHECK-AIE2PS-NEXT:    nop // Delay Slot 3
@@ -295,8 +294,8 @@ define void @invariant_guard_single_loop(ptr %out, i32 %n, i32 %k) {
 ;
 ; CHECK-AIE2PS-LABEL: invariant_guard_single_loop:
 ; CHECK-AIE2PS:       // %bb.0: // %entry
-; CHECK-AIE2PS-NEXT:    mova r2, #0; nopxm
-; CHECK-AIE2PS-NEXT:    mova r6, #2; ge r4, r2, r1
+; CHECK-AIE2PS-NEXT:    mova r2, #0; nopb ; nops ; movxm p1, #.LBB1_1; nopv
+; CHECK-AIE2PS-NEXT:    mova r6, #2; nopb ; nops ; ge r4, r2, r1; addm.nc r0, r0, #-1; nopv
 ; CHECK-AIE2PS-NEXT:  .LBB1_1: // %loop
 ; CHECK-AIE2PS-NEXT:    // =>This Inner Loop Header: Depth=1
 ; CHECK-AIE2PS-NEXT:    nopa ; jnz r4, #.LBB1_3
@@ -312,14 +311,12 @@ define void @invariant_guard_single_loop(ptr %out, i32 %n, i32 %k) {
 ; CHECK-AIE2PS-NEXT:    st r2, [p0, dj0]
 ; CHECK-AIE2PS-NEXT:  .LBB1_3: // %latch
 ; CHECK-AIE2PS-NEXT:    // in Loop: Header=BB1_1 Depth=1
-; CHECK-AIE2PS-NEXT:    nopa ; nopb ; add r2, r2, #1; nopm ; nops
-; CHECK-AIE2PS-NEXT:    ne r16, r0, r2
-; CHECK-AIE2PS-NEXT:    jnz r16, #.LBB1_1
+; CHECK-AIE2PS-NEXT:    nopa ; jnzd r0, r0, p1
 ; CHECK-AIE2PS-NEXT:    nop // Delay Slot 5
 ; CHECK-AIE2PS-NEXT:    nop // Delay Slot 4
 ; CHECK-AIE2PS-NEXT:    nop // Delay Slot 3
 ; CHECK-AIE2PS-NEXT:    nop // Delay Slot 2
-; CHECK-AIE2PS-NEXT:    nop // Delay Slot 1
+; CHECK-AIE2PS-NEXT:    add r2, r2, #1 // Delay Slot 1
 ; CHECK-AIE2PS-NEXT:  // %bb.4: // %exit
 ; CHECK-AIE2PS-NEXT:    ret lr
 ; CHECK-AIE2PS-NEXT:    nop // Delay Slot 5
