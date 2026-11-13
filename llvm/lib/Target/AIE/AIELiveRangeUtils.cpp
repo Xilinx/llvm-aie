@@ -9,6 +9,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIELiveRangeUtils.h"
+#include "AIEBaseInstrInfo.h"
 #include "AIEHazardRecognizer.h"
 #include "AIERegDefUseTracker.h"
 #include "AIEScheduleInterpreter.h"
@@ -70,7 +71,9 @@ unsigned computeMinimalSchedule(const RegLiveRange &LR, const ScheduleDAG &DAG,
   // Schedule instructions with multiple scans.
   // Track which instructions have been scheduled.
   DenseMap<const MachineInstr *, int> IssueCycles;
+  DenseMap<const MachineInstr *, unsigned> SchedClasses;
   DenseSet<const MachineInstr *> Scheduled;
+  const auto &TII = static_cast<const AIEBaseInstrInfo &>(*DAG.TII);
 
   // Keep scanning until all instructions are scheduled.
   while (Scheduled.size() < Instructions.size()) {
@@ -122,6 +125,8 @@ unsigned computeMinimalSchedule(const RegLiveRange &LR, const ScheduleDAG &DAG,
 
       // Schedule the instruction.
       IssueCycles[MI] = IssueCycle;
+      SchedClasses[MI] =
+          TII.getSchedClass(MI->getDesc(), MI->operands(), DAG.MRI);
       Scheduled.insert(MI);
       MadeProgress = true;
 
@@ -154,8 +159,9 @@ unsigned computeMinimalSchedule(const RegLiveRange &LR, const ScheduleDAG &DAG,
     auto It = IssueCycles.find(MI);
     if (It == IssueCycles.end())
       continue;
-    const int Cycle = Interp.getOperandAccessCycle(
-        *MI, It->second, DefInfo.getOperand()->getOperandNo());
+    const int Cycle =
+        Interp.getOperandAccessCycle(SchedClasses.lookup(MI), It->second,
+                                     DefInfo.getOperand()->getOperandNo());
     MinDefCycle = std::min(MinDefCycle, Cycle);
   }
   for (const auto &UseInfo : LR.uses()) {
@@ -163,8 +169,9 @@ unsigned computeMinimalSchedule(const RegLiveRange &LR, const ScheduleDAG &DAG,
     auto It = IssueCycles.find(MI);
     if (It == IssueCycles.end())
       continue;
-    const int Cycle = Interp.getOperandAccessCycle(
-        *MI, It->second, UseInfo.getOperand()->getOperandNo());
+    const int Cycle =
+        Interp.getOperandAccessCycle(SchedClasses.lookup(MI), It->second,
+                                     UseInfo.getOperand()->getOperandNo());
     MaxUseCycle = std::max(MaxUseCycle, Cycle);
   }
 

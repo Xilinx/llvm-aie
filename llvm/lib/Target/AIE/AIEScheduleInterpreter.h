@@ -75,9 +75,12 @@ class AIEScheduleInterpreter {
 public:
   explicit AIEScheduleInterpreter(const MachineFunction &MF);
 
-  /// Return the absolute cycle at which operand \p OpIdx of \p MI is
-  /// accessed when the instruction is issued at \p IssueCycle.
-  int getOperandAccessCycle(const MachineInstr &MI, int IssueCycle,
+  /// Return the absolute cycle at which operand \p OpIdx of an instruction
+  /// with scheduling class \p SchedClass is accessed when the instruction is
+  /// issued at \p IssueCycle.  The scheduling class is resolved by the caller
+  /// (see AIEBaseInstrInfo::getSchedClass) so it can be shared across all
+  /// operands of an instruction.
+  int getOperandAccessCycle(unsigned SchedClass, int IssueCycle,
                             unsigned OpIdx) const;
 
   /// Add events for a single instruction to the event schedule.
