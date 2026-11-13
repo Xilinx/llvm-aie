@@ -2005,21 +2005,21 @@ bool PostPipeliner::tryAllocateRegisters() {
 
   // Compute modulo live lanes from the event schedule populated during
   // scheduling, keyed by RegLiveRange::getIndex().
-  auto LiveLanesByLRIndex =
-      Interpreter.buildLiveLanes(EventSched, II, RegTracker);
+  auto LivenessByLRIndex =
+      Interpreter.buildLiveness(EventSched, II, RegTracker);
 
   // Debug dump if requested.
   DEBUG_WITH_TYPE("aie-postregalloc", {
     dbgs() << "\n=== Live Intervals ===\n";
     Interpreter.dumpEventSchedule(EventSched, RegTracker, dbgs());
     dbgs() << "\n";
-    Interpreter.dumpLiveLanes(LiveLanesByLRIndex, II, dbgs());
+    Interpreter.dumpLiveness(LivenessByLRIndex, II, dbgs());
     dbgs() << "=================================\n\n";
   });
 
   // Perform register allocation.
   PostRegAllocResult Result =
-      AIEPostRegAlloc::allocate(LiveLanesByLRIndex, II, RegTracker, *TRI);
+      AIEPostRegAlloc::allocate(LivenessByLRIndex, II, RegTracker, *TRI);
 
   if (!Result) {
     LLVM_DEBUG(dbgs() << "PostPipeliner: Register allocation failed\n");

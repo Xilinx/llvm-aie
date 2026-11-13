@@ -262,19 +262,31 @@ static bool hasSharedRegBypassRead(const EventSchedule &Schedule,
   return false;
 }
 
-DenseMap<unsigned, AIE::LivenessVector> AIEScheduleInterpreter::buildLiveLanes(
+DenseMap<unsigned, AIE::LivenessVector> AIEScheduleInterpreter::buildLiveness(
     const EventSchedule &Schedule, int II,
     const RegLiveRangeTracker &Tracker) const {
 
   assert(II > 0 && "Initiation interval must be positive");
 
-  DenseMap<unsigned, AIE::LivenessVector> LiveLanesByLRIndex;
+  DenseMap<unsigned, AIE::LivenessVector> LivenessByLRIndex;
 
   if (Schedule.empty())
-    return LiveLanesByLRIndex;
+    return LivenessByLRIndex;
 
   // State: tracks which lanes are currently live when scanning backward.
   DenseMap<unsigned, LaneBitmask> ActiveMask;
+
+  // The lane-to-RegUnit mapping depends on the registers admissible for the
+  // live range, so cache it per (live range, mask).
+  DenseMap<std::pair<unsigned, uint64_t>, PartSet> UnitsCache;
+  const auto UnitsFor = [&](unsigned LRIndex,
+                            LaneBitmask M) -> const PartSet & {
+    const auto [It, Inserted] =
+        UnitsCache.try_emplace({LRIndex, M.getAsInteger()});
+    if (Inserted)
+      It->second = Tracker[LRIndex].getLaneUnits(M, &TRI);
+    return It->second;
+  };
 
   // Process cycles backward.
   int MaxCycle = Schedule.size() - 1;
@@ -285,9 +297,10 @@ DenseMap<unsigned, AIE::LivenessVector> AIEScheduleInterpreter::buildLiveLanes(
     // Record what's live ENTERING this cycle (before any events).
     for (const auto &[LRIndex, Mask] : ActiveMask) {
       if (Mask.any()) {
-        if (!LiveLanesByLRIndex.count(LRIndex))
-          LiveLanesByLRIndex[LRIndex] = AIE::LivenessVector(II);
-        LiveLanesByLRIndex[LRIndex][ModuloCycle] |= Mask;
+        if (!LivenessByLRIndex.count(LRIndex))
+          LivenessByLRIndex[LRIndex] = AIE::LivenessVector(II);
+        LivenessByLRIndex[LRIndex][ModuloCycle].addLanes(
+            Mask, UnitsFor(LRIndex, Mask));
 
         LLVM_DEBUG(dbgs() << "    Lanes " << PrintLaneMask(Mask) << " for LR#"
                           << LRIndex << " live entering cycle " << C
@@ -302,11 +315,12 @@ DenseMap<unsigned, AIE::LivenessVector> AIEScheduleInterpreter::buildLiveLanes(
         LaneBitmask M =
             getLaneMaskFor(TRI, Tracker, Event.SubRegIdx, Event.LRIndex);
 
-        if (!LiveLanesByLRIndex.count(Event.LRIndex))
-          LiveLanesByLRIndex[Event.LRIndex] = AIE::LivenessVector(II);
+        if (!LivenessByLRIndex.count(Event.LRIndex))
+          LivenessByLRIndex[Event.LRIndex] = AIE::LivenessVector(II);
 
         // RF write occupies register file at ModuloCycle.
-        LiveLanesByLRIndex[Event.LRIndex][ModuloCycle] |= M;
+        const PartSet &MUnits = UnitsFor(Event.LRIndex, M);
+        LivenessByLRIndex[Event.LRIndex][ModuloCycle].addLanes(M, MUnits);
 
         // Forwarding write: also occupy one cycle earlier. Skip that for a
         // dead def unless a same-class bypass read may share its phys reg
@@ -318,11 +332,12 @@ DenseMap<unsigned, AIE::LivenessVector> AIEScheduleInterpreter::buildLiveLanes(
           const int BypassWriteCycle = C - 1;
           if (BypassWriteCycle >= 0) {
             const int BypassModuloCycle = BypassWriteCycle % II;
-            LiveLanesByLRIndex[Event.LRIndex][BypassModuloCycle].addBypassWrite(
+            LivenessByLRIndex[Event.LRIndex][BypassModuloCycle].addBypassWrite(
                 Event.ForwardingClass);
             // Record the same lane mask as the RF write: bypass and RF share
             // the same def and the same register address.
-            LiveLanesByLRIndex[Event.LRIndex][BypassModuloCycle] |= M;
+            LivenessByLRIndex[Event.LRIndex][BypassModuloCycle].addLanes(
+                M, MUnits);
 
             LLVM_DEBUG(dbgs()
                        << "    Bypass write of class " << Event.ForwardingClass
@@ -365,9 +380,9 @@ DenseMap<unsigned, AIE::LivenessVector> AIEScheduleInterpreter::buildLiveLanes(
 
         // If this read uses a bypass, mark bypass read at same cycle.
         if (Event.ForwardingClass != 0) {
-          if (!LiveLanesByLRIndex.count(Event.LRIndex))
-            LiveLanesByLRIndex[Event.LRIndex] = AIE::LivenessVector(II);
-          LiveLanesByLRIndex[Event.LRIndex][ModuloCycle].addBypassRead(
+          if (!LivenessByLRIndex.count(Event.LRIndex))
+            LivenessByLRIndex[Event.LRIndex] = AIE::LivenessVector(II);
+          LivenessByLRIndex[Event.LRIndex][ModuloCycle].addBypassRead(
               Event.ForwardingClass);
 
           LLVM_DEBUG(dbgs() << "    Bypass read of class "
@@ -387,21 +402,21 @@ DenseMap<unsigned, AIE::LivenessVector> AIEScheduleInterpreter::buildLiveLanes(
     }
   }
 
-  return LiveLanesByLRIndex;
+  return LivenessByLRIndex;
 }
 
-void AIEScheduleInterpreter::dumpLiveLanes(
-    const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex, int II,
+void AIEScheduleInterpreter::dumpLiveness(
+    const DenseMap<unsigned, AIE::LivenessVector> &LivenessByLRIndex, int II,
     raw_ostream &OS) const {
 
-  if (LiveLanesByLRIndex.empty()) {
+  if (LivenessByLRIndex.empty()) {
     OS << "No live lanes data\n";
     return;
   }
 
   // Collect and sort LR indices for consistent output.
   SmallVector<unsigned, 16> LRIndices;
-  for (const auto &[LRIndex, _] : LiveLanesByLRIndex)
+  for (const auto &[LRIndex, _] : LivenessByLRIndex)
     LRIndices.push_back(LRIndex);
   llvm::sort(LRIndices);
 
@@ -419,7 +434,7 @@ void AIEScheduleInterpreter::dumpLiveLanes(
   for (unsigned LRIndex : LRIndices) {
     OS << format("%-6u | ", LRIndex);
 
-    const auto &LanesByOffset = LiveLanesByLRIndex.lookup(LRIndex);
+    const auto &LanesByOffset = LivenessByLRIndex.lookup(LRIndex);
     for (int T = 0; T < II; ++T) {
       const AIE::Liveness &L = LanesByOffset[T];
       if (L.any()) {

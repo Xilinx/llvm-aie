@@ -1692,8 +1692,27 @@ void RegLiveRange::fillAdmissibleRegUnits(
     if (RegUnits.empty())
       for (MCRegUnitIterator UI(Reg, TRI); UI.isValid(); ++UI)
         RegUnits.set(*UI);
+    // Admissible registers must not share register units. Lane-derived units
+    // of a live range are only equivalent to the per-register lane-derived
+    // units under this condition.
+    assert(!AdmissibleRegUnits.overlap(RegUnits) &&
+           "Admissible registers of a live range must not overlap");
     AdmissibleRegUnits |= RegUnits;
   }
+}
+
+PartSet RegLiveRange::getLaneUnits(LaneBitmask Mask,
+                                   const TargetRegisterInfo *TRI) const {
+  PartSet Units;
+  if (Mask.none())
+    return Units;
+  for (MCRegister Reg : AdmissibleRegs)
+    for (MCRegUnitMaskIterator MUI(Reg, TRI); MUI.isValid(); ++MUI) {
+      const auto [Unit, UnitMask] = *MUI;
+      if ((UnitMask & Mask).any())
+        Units.set(Unit);
+    }
+  return Units;
 }
 
 void RegLiveRange::setRegisterClass(const TargetRegisterClass *RC) {
