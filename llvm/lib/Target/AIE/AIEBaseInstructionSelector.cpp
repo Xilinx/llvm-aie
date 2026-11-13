@@ -19,11 +19,131 @@
 #include "llvm/CodeGen/TargetOpcodes.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/MC/MCContext.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/MathExtras.h"
 
 using namespace llvm;
 
 #define DEBUG_TYPE "aiebase-isel"
+
+static cl::opt<bool> AbsorbAddrTruncatingMask(
+    "aie-isel-absorb-addr-truncating-mask", cl::init(true), cl::Hidden,
+    cl::desc("While selecting memory accesses, use the unmasked pointer when "
+             "the mask only clears address bits that the selected instruction "
+             "ignores"));
+
+namespace {
+
+// A pointer of the form Base & ~(MaskAlign - 1).
+class MaskedPointer {
+public:
+  Register Base;
+  Align MaskAlign;
+};
+
+// The pointer and the constant mask that a masking idiom applies to it.
+class BaseAndMask {
+public:
+  Register Base;
+  std::optional<APInt> Mask;
+};
+
+// Look through instructions that preserve the low NumBits bits of the scalar
+// Reg and return the first register that is not defined by one.
+Register lookThroughLowBitsPreserving(Register Reg, unsigned NumBits,
+                                      const MachineRegisterInfo &MRI) {
+  while (Reg.isVirtual()) {
+    const MachineInstr *Def = MRI.getVRegDef(Reg);
+    if (!Def)
+      break;
+    switch (Def->getOpcode()) {
+    case TargetOpcode::COPY:
+    case TargetOpcode::G_ANYEXT:
+    case TargetOpcode::G_ZEXT:
+    case TargetOpcode::G_SEXT:
+    case TargetOpcode::G_TRUNC: {
+      const Register Src = Def->getOperand(1).getReg();
+      if (!Src.isVirtual())
+        return Reg;
+      const LLT SrcTy = MRI.getType(Src);
+      const LLT DstTy = MRI.getType(Reg);
+      if (!SrcTy.isScalar() || !DstTy.isScalar() ||
+          SrcTy.getSizeInBits() < NumBits || DstTy.getSizeInBits() < NumBits)
+        return Reg;
+      Reg = Src;
+      continue;
+    }
+    default:
+      return Reg;
+    }
+  }
+  return Reg;
+}
+
+// Match G_PTRMASK P, C.
+BaseAndMask matchPtrMask(const MachineInstr &MI,
+                         const MachineRegisterInfo &MRI) {
+  BaseAndMask Result;
+  Result.Base = MI.getOperand(1).getReg();
+  if (auto C =
+          getIConstantVRegValWithLookThrough(MI.getOperand(2).getReg(), MRI))
+    Result.Mask = C->Value;
+  return Result;
+}
+
+// Match G_INTTOPTR (G_AND (G_PTRTOINT P), C), possibly with copies, extensions
+// and truncations in between that keep the pointer-width low bits intact (as
+// introduced by legalization).
+BaseAndMask matchIntToPtrAnd(const MachineInstr &MI,
+                             const MachineRegisterInfo &MRI, unsigned PtrBits) {
+  const Register IntReg =
+      lookThroughLowBitsPreserving(MI.getOperand(1).getReg(), PtrBits, MRI);
+  const MachineInstr *And = MRI.getVRegDef(IntReg);
+  if (!And || And->getOpcode() != TargetOpcode::G_AND)
+    return {};
+  for (unsigned ConstIdx : {1u, 2u}) {
+    auto C = getIConstantVRegValWithLookThrough(
+        And->getOperand(ConstIdx).getReg(), MRI);
+    if (!C)
+      continue;
+    const Register Other = lookThroughLowBitsPreserving(
+        And->getOperand(3 - ConstIdx).getReg(), PtrBits, MRI);
+    const MachineInstr *PtrToInt = MRI.getVRegDef(Other);
+    if (!PtrToInt || PtrToInt->getOpcode() != TargetOpcode::G_PTRTOINT)
+      continue;
+    return {PtrToInt->getOperand(1).getReg(), C->Value};
+  }
+  return {};
+}
+
+// Match MI as Q = P & ~(M - 1), either as G_PTRMASK or as the integer idiom
+// handled by matchIntToPtrAnd. MI must be a G_PTRMASK or G_INTTOPTR.
+std::optional<MaskedPointer>
+matchMaskedPointer(const MachineInstr &MI, const MachineRegisterInfo &MRI) {
+  assert((MI.getOpcode() == TargetOpcode::G_PTRMASK ||
+          MI.getOpcode() == TargetOpcode::G_INTTOPTR) &&
+         "Expected G_PTRMASK or G_INTTOPTR");
+  const LLT PtrTy = MRI.getType(MI.getOperand(0).getReg());
+  if (!PtrTy.isPointer())
+    return std::nullopt;
+  const unsigned PtrBits = PtrTy.getSizeInBits();
+
+  const BaseAndMask BM = MI.getOpcode() == TargetOpcode::G_PTRMASK
+                             ? matchPtrMask(MI, MRI)
+                             : matchIntToPtrAnd(MI, MRI, PtrBits);
+  if (!BM.Mask || !BM.Base.isVirtual() || MRI.getType(BM.Base) != PtrTy ||
+      BM.Mask->getBitWidth() < PtrBits)
+    return std::nullopt;
+
+  // Only the pointer-width low bits of the mask matter. They must clear
+  // exactly the low log2(M) bits, i.e. equal ~(M - 1), with M >= 2.
+  const APInt LowMask = BM.Mask->trunc(PtrBits);
+  if (!LowMask.isNegatedPowerOf2() || LowMask.countr_zero() == 0)
+    return std::nullopt;
+  return MaskedPointer{BM.Base, Align(uint64_t(1) << LowMask.countr_zero())};
+}
+
+} // namespace
 
 AIEBaseInstructionSelector::AIEBaseInstructionSelector(
     const AIEBaseSubtarget &STI, const AIEBaseRegisterBankInfo &RBI)
@@ -421,31 +541,140 @@ AddressingModeInfo AIEBaseInstructionSelector::createAddressModeInfo(
   return {MemI, SrcDstOp, PtrOp, OffsetReg, ImmediateOffset};
 }
 
+Register AIEBaseInstructionSelector::getUnmaskedBase(Register PtrReg,
+                                                     unsigned Opcode,
+                                                     int64_t Offset,
+                                                     unsigned NumAccessBytes) {
+  const MachineRegisterInfo &MRI = MF->getRegInfo();
+  const MachineInstr *Def = MRI.getVRegDef(PtrReg);
+  if (!Def || (Def->getOpcode() != TargetOpcode::G_PTRMASK &&
+               Def->getOpcode() != TargetOpcode::G_INTTOPTR))
+    return PtrReg;
+
+  // An access at Offset from Q = P & ~(M - 1) touches the same bytes when made
+  // at Offset from P if the instruction ignores the bits that the mask clears
+  // anyway, and Offset is a multiple of M. That keeps P + Offset in the same
+  // M-block as Q + Offset.
+  const std::optional<MaskedPointer> Masked = matchMaskedPointer(*Def, MRI);
+  if (!Masked)
+    return PtrReg;
+  const std::optional<Align> Granule =
+      TII.getSelectedMemAccessAddrTruncation(Opcode, NumAccessBytes);
+  if (!Granule || Masked->MaskAlign > *Granule)
+    return PtrReg;
+  if ((static_cast<uint64_t>(Offset) & (Masked->MaskAlign.value() - 1)) != 0)
+    return PtrReg;
+  // Earlier selected users may have constrained either register to a register
+  // class, so compare the banks the registers map to.
+  if (RBI.getRegBank(Masked->Base, MRI, TRI) !=
+      RBI.getRegBank(PtrReg, MRI, TRI))
+    return PtrReg;
+  return Masked->Base;
+}
+
+Register
+AIEBaseInstructionSelector::getUnmaskedPtrAdd(Register PtrReg, unsigned Opcode,
+                                              int64_t ByteOffset,
+                                              unsigned NumAccessBytes) {
+  MachineRegisterInfo &MRI = MF->getRegInfo();
+  MachineInstr *Def = MRI.getVRegDef(PtrReg);
+  if (!Def || Def->getOpcode() != TargetOpcode::G_PTR_ADD)
+    return PtrReg;
+  const Register OffsetReg = Def->getOperand(2).getReg();
+  const auto Cst = getIConstantVRegValWithLookThrough(OffsetReg, MRI);
+  if (!Cst)
+    return PtrReg;
+
+  // An access at ByteOffset from Q + C is an access at C + ByteOffset from Q.
+  const Register Q = Def->getOperand(1).getReg();
+  const Register Base = getUnmaskedBase(
+      Q, Opcode, Cst->Value.getSExtValue() + ByteOffset, NumAccessBytes);
+  if (Base == Q)
+    return PtrReg;
+
+  // Rebase the addition on the unmasked pointer. The original addition is left
+  // to dead code elimination if this was its last use.
+  const Register NewPtr = MRI.cloneVirtualRegister(PtrReg);
+  MachineIRBuilder B(*Def);
+  MachineInstr &NewAdd = *B.buildPtrAdd(NewPtr, Base, OffsetReg);
+  if (!selectImpl(NewAdd, *CoverageInfo)) {
+    NewAdd.eraseFromParent();
+    return PtrReg;
+  }
+  return NewPtr;
+}
+
+Register AIEBaseInstructionSelector::getAccessPointer(
+    Register PtrReg, unsigned Opcode, std::optional<int64_t> ByteOffset,
+    std::optional<unsigned> NumAccessBytes) {
+  // Only absorb if the offset and size of this access are known.
+  if (!AbsorbAddrTruncatingMask || !ByteOffset || !NumAccessBytes ||
+      !PtrReg.isVirtual())
+    return PtrReg;
+
+  // The mask is left to dead code elimination if this was its last use.
+  const Register Unmasked =
+      getUnmaskedBase(PtrReg, Opcode, *ByteOffset, *NumAccessBytes);
+  if (Unmasked != PtrReg)
+    return Unmasked;
+  return getUnmaskedPtrAdd(PtrReg, Opcode, *ByteOffset, *NumAccessBytes);
+}
+
+// The number of bytes that the memory access of MemI touches, if known.
+static std::optional<unsigned> getMemAccessBytes(const MachineInstr &MemI) {
+  if (!MemI.hasOneMemOperand())
+    return std::nullopt;
+  const LocationSize Size = (*MemI.memoperands_begin())->getSize();
+  if (!Size.hasValue() || Size.isScalable())
+    return std::nullopt;
+  return Size.getValue();
+}
+
 void AIEBaseInstructionSelector::addAddressingMode(MachineInstrBuilder &MIB,
-                                                   AddressingModeInfo &AMI,
+                                                   AddressingModeInfo &AMInfo,
                                                    bool FitsImmediateRange,
                                                    bool RenderFrameIndex,
                                                    MachineRegisterInfo &MRI) {
+  addAddressingMode(MIB, AMInfo, FitsImmediateRange, RenderFrameIndex, MRI,
+                    getMemAccessBytes(AMInfo.MemI));
+}
+
+void AIEBaseInstructionSelector::addAddressingMode(
+    MachineInstrBuilder &MIB, AddressingModeInfo &AMInfo,
+    bool FitsImmediateRange, bool RenderFrameIndex, MachineRegisterInfo &MRI,
+    std::optional<unsigned> NumAccessBytes) {
   using namespace TargetOpcode;
 
-  MachineInstr *PtrDef = MRI.getVRegDef(AMI.PtrOp.getReg());
+  MachineInstr *PtrDef = MRI.getVRegDef(AMInfo.PtrOp.getReg());
+  // Determine the constant byte offset at which the access happens relative to
+  // the pointer operand, if it is known. Only offset-indexed forms apply their
+  // immediate before the access, for the others it is a post-increment.
+  std::optional<int64_t> ByteOffset;
+  if (!AMInfo.OffsetReg)
+    ByteOffset = 0;
+  else if (AMInfo.ImmediateOffset &&
+           TII.isGenericOffsetMemOpcode(AMInfo.MemI.getOpcode()))
+    ByteOffset = AMInfo.ImmediateOffset->getSExtValue();
+  const Register PtrReg = getAccessPointer(
+      AMInfo.PtrOp.getReg(), MIB->getOpcode(), ByteOffset, NumAccessBytes);
   // Only render frame index if we are dealing with an instruction that supports
   // it (we get that information in RenderFrameIndex from the callee) and if the
-  // AMI does not have an offset or modifier register, which indicates that the
-  // instruction is neither pre-increment nor post-increment
-  if (RenderFrameIndex && !AMI.OffsetReg &&
+  // AMInfo does not have an offset or modifier register, which indicates that
+  // the instruction is neither pre-increment nor post-increment
+  if (RenderFrameIndex && !AMInfo.OffsetReg &&
       PtrDef->getOpcode() == G_FRAME_INDEX) {
     renderFrameIndex(MIB, *PtrDef, 1);
-  } else if (FitsImmediateRange && AMI.ImmediateOffset) {
-    MIB.addUse(AMI.PtrOp.getReg());
-    MIB.addImm(AMI.ImmediateOffset->getSExtValue());
-  } else if (AMI.OffsetReg) {
-    MIB.addUse(AMI.PtrOp.getReg());
-    MIB.addUse(*AMI.OffsetReg);
+  } else if (FitsImmediateRange && AMInfo.ImmediateOffset) {
+    MIB.addUse(PtrReg);
+    MIB.addImm(AMInfo.ImmediateOffset->getSExtValue());
+  } else if (AMInfo.OffsetReg) {
+    MIB.addUse(PtrReg);
+    MIB.addUse(*AMInfo.OffsetReg);
   } else {
-    MIB.addUse(AMI.PtrOp.getReg());
+    MIB.addUse(PtrReg);
   }
 }
+
 /// Create a REG_SEQUENCE instruction using the registers in \p Regs.
 static MachineInstr &createTuple(Register DstReg, ArrayRef<Register> SrcRegs,
                                  ArrayRef<unsigned> SubRegs,
@@ -839,17 +1068,17 @@ bool AIEBaseInstructionSelector::selectG_AIE_LOAD_CONV(
 
   MIB.setInstr(*InsertionPoint);
 
-  std::optional<AddressingModeInfo> AMI =
+  std::optional<AddressingModeInfo> AMInfo =
       getOrDefineAddressingRegister(*LoadOp, MRI);
 
-  if (!AMI) {
+  if (!AMInfo) {
     if (InsertionPoint != &CONVI)
       MIB.setInstr(CONVI);
     return false;
   }
 
   std::optional<LoadStoreOpcodes> LSO =
-      getCombinedOpcodeCONVLoad(AMI->MemI, CONVI, AMI->ImmediateOffset);
+      getCombinedOpcodeCONVLoad(AMInfo->MemI, CONVI, AMInfo->ImmediateOffset);
 
   Register DstReg = CONVI.getOperand(0).getReg();
 
@@ -857,13 +1086,13 @@ bool AIEBaseInstructionSelector::selectG_AIE_LOAD_CONV(
 
   NewInstr.addDef(DstReg);
 
-  for (auto *Def = std::next(AMI->MemI.defs().begin());
-       Def != AMI->MemI.defs().end(); ++Def)
+  for (auto *Def = std::next(AMInfo->MemI.defs().begin());
+       Def != AMInfo->MemI.defs().end(); ++Def)
     NewInstr.addDef(Def->getReg());
 
-  addAddressingMode(NewInstr, *AMI, LSO->FitsImmediateRange, false, MRI);
+  addAddressingMode(NewInstr, *AMInfo, LSO->FitsImmediateRange, false, MRI);
 
-  NewInstr.cloneMemRefs(AMI->MemI);
+  NewInstr.cloneMemRefs(AMInfo->MemI);
 
   CONVI.eraseFromParent();
 
