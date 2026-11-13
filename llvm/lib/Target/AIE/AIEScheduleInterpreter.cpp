@@ -58,11 +58,9 @@ int AIEScheduleInterpreter::getOperandCycle(unsigned SchedClass,
   return static_cast<int>(Itin->getOperandCycle(SchedClass, OpIdx).value_or(0));
 }
 
-int AIEScheduleInterpreter::getOperandAccessCycle(const MachineInstr &MI,
+int AIEScheduleInterpreter::getOperandAccessCycle(unsigned SchedClass,
                                                   int IssueCycle,
                                                   unsigned OpIdx) const {
-  const MCInstrDesc &Desc = MI.getDesc();
-  const unsigned SchedClass = TII.getSchedClass(Desc, MI.operands(), MRI);
   return IssueCycle + getOperandCycle(SchedClass, OpIdx);
 }
 
@@ -112,8 +110,7 @@ void AIEScheduleInterpreter::addInstructionEvents(
     // Defs produce Write events; uses produce Read events.
     // ForwardingClass != 0 indicates this operand also accesses a bypass.
     const EventType EType = MO.isDef() ? EventType::Write : EventType::Read;
-    const int CycleOffset = getOperandCycle(SchedClass, OpIdx);
-    const int Cycle = IssueCycle + CycleOffset;
+    const int Cycle = getOperandAccessCycle(SchedClass, IssueCycle, OpIdx);
 
     addEvent(Schedule, Cycle, EType, LRIndex, SubRegIdx, ForwardingClass, &MI,
              OpIdx);
@@ -262,6 +259,24 @@ static bool hasSharedRegBypassRead(const EventSchedule &Schedule,
   return false;
 }
 
+// Return the subset of the admissible register units of LR covered by the
+// lanes in Mask, taken over all admissible registers. The mapping from lanes
+// to register units depends on the register, so it is only defined relative to
+// the admissible registers of the live range.
+static PartSet getLaneUnits(const RegLiveRange &LR, LaneBitmask Mask,
+                            const TargetRegisterInfo &TRI) {
+  PartSet Units;
+  if (Mask.none())
+    return Units;
+  for (const MCRegister Reg : LR.getAdmissibleRegs())
+    for (MCRegUnitMaskIterator MUI(Reg, &TRI); MUI.isValid(); ++MUI) {
+      const auto [Unit, UnitMask] = *MUI;
+      if ((UnitMask & Mask).any())
+        Units.set(static_cast<unsigned>(Unit));
+    }
+  return Units;
+}
+
 DenseMap<unsigned, AIE::LivenessVector> AIEScheduleInterpreter::buildLiveness(
     const EventSchedule &Schedule, int II,
     const RegLiveRangeTracker &Tracker) const {
@@ -284,7 +299,7 @@ DenseMap<unsigned, AIE::LivenessVector> AIEScheduleInterpreter::buildLiveness(
     const auto [It, Inserted] =
         UnitsCache.try_emplace({LRIndex, M.getAsInteger()});
     if (Inserted)
-      It->second = Tracker[LRIndex].getLaneUnits(M, &TRI);
+      It->second = getLaneUnits(Tracker[LRIndex], M, TRI);
     return It->second;
   };
 
