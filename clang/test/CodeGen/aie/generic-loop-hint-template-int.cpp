@@ -28,8 +28,23 @@ template <int N> struct Outer {
   }
 };
 
+// A value naming a constexpr local of the enclosing function, from a template
+// lambda. The hint is instantiated after its loop, so the reference must not be
+// left pending an odr-use check or turned into a capture of the local.
+template <int N> void local_in_lambda(int *p) {
+  constexpr int kII = N + 1;
+  auto body = [&]<bool B>() {
+#pragma clang loop hint(swp_ii, (kII))
+    for (int i = 0; i != 4; ++i)
+      p[i] += i;
+  };
+  body.template operator()<true>();
+}
+
 template void scaled<4>(int *);
 template void Outer<3>::inner<6>(int *);
+template void local_in_lambda<4>(int *);
 
 // CHECK-DAG: !{!"llvm.loop.hint.swp_ii", i64 8}
 // CHECK-DAG: !{!"llvm.loop.hint.swp_ii", i64 9}
+// CHECK-DAG: !{!"llvm.loop.hint.swp_ii", i64 5}
