@@ -26,6 +26,21 @@
 
 using namespace llvm;
 
+/// Check if a MachineBasicBlock contains any non-delayed scheduling barriers
+/// among its non-terminator instructions. Such barriers (e.g.
+/// MOV_alu_mv_mv_mv_cntr2l for cycle-counter reads) sit outside the scheduled
+/// region and are not tracked in the Region's Bundles.  The bundle
+/// manipulation functions (clearNonTerminatorInstrs + emitBundlesToMBB) would
+/// silently drop them.
+static bool hasNonDelayedSchedBarrier(const MachineBasicBlock &MBB,
+                                      const AIEBaseInstrInfo &TII) {
+  for (auto I = MBB.begin(), E = MBB.getFirstTerminator(); I != E; ++I) {
+    if (TII.isSchedBarrier(*I) && !TII.isDelayedSchedBarrier(*I))
+      return true;
+  }
+  return false;
+}
+
 static llvm::cl::opt<bool> TryMergePrologueIntoPreheader(
     "aie-sibling-try-merge-prologue-preheader", cl::Hidden, cl::init(false),
     cl::desc("Try to merge instead of appending (experimental)"));
@@ -657,6 +672,20 @@ void SiblingLoopOptimizer::run() {
     if (SteadyTopBS.getTop().Bundles.empty() ||
         LastIterTopBS.getTop().Bundles.empty()) {
       DEBUG_BLOCKS(dbgs() << "  Skipping: empty prologue bundles\n");
+      continue;
+    }
+
+    // Bail out if any of the blocks that will be modified contain
+    // non-delayed scheduling barriers (e.g. cycle-counter reads like
+    // MOV_alu_mv_mv_mv_cntr2l). We cannot interleave instructions in the
+    // presence of such barriers: they sit outside the scheduled region
+    // and are not tracked in the Region's Bundles, so the bundle
+    // manipulation functions would silently drop them.
+    if (hasNonDelayedSchedBarrier(*SteadyTopBS.TheBlock, TII) ||
+        hasNonDelayedSchedBarrier(*LastIterTopBS.TheBlock, TII) ||
+        hasNonDelayedSchedBarrier(*BS.TheBlock, TII)) {
+      DEBUG_BLOCKS(dbgs() << "  Skipping: block contains "
+                             "non-delayed scheduling barrier\n");
       continue;
     }
 

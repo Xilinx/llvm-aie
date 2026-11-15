@@ -8,8 +8,11 @@
 # RUN: llc -mtriple=aie2ps --start-before=postmisched --stop-after=postmisched \
 # RUN:     -verify-machineinstrs %s -o - | FileCheck %s
 
-# FIXME: the sibling loop optimizer deletes the cycle-counter read at the start
-# of the prologue block (MOV_alu_mv_mv_mv_cntr2l is missing from bb.1 / bb.4).
+# The sibling loop optimizer cannot interleave prologue instructions into the
+# epilogue when blocks contain non-delayed scheduling barriers (e.g.
+# cycle-counter reads like MOV_alu_mv_mv_mv_cntr2l). These barriers sit
+# outside the scheduled region and are not tracked in the Region's Bundles,
+# so the bundle manipulation would silently drop them.
 
 --- |
   define void @cntr_read_at_steady_top() {
@@ -68,16 +71,16 @@ body:             |
   ; CHECK: bb.0.entry:
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
   ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1.for.body:
+  ; CHECK-NEXT:   successors: %bb.2(0x80000000)
+  ; CHECK-NEXT:   liveins: $dm0:0x000000030000000C, $dm1:0x000000030000000C, $dm2:0x000000030000000C, $dm3:0x000000030000000C, $r10, $r12, $r28, $x0, $x1, $x2, $x4, $x6, $x8, $x10
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   $l7 = MOV_alu_mv_mv_mv_cntr2l
   ; CHECK-NEXT:   BUNDLE implicit-def $x1, implicit-def $p1, implicit-def $dm4, implicit killed $p1, implicit $m3, implicit $x4, implicit killed $x2, implicit $r12 {
   ; CHECK-NEXT:     renamable $x1, renamable $p1 = VLDB_dmx_ldb_x_pstm_nrm killed renamable $p1, renamable $m3
   ; CHECK-NEXT:     renamable $dm4 = VMUL_vmul_vmul_cm_core_X_X renamable $x4, killed renamable $x2, renamable $r12
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   $x10, $p1, $dc1, $dc5 = VLDA_3D_dmx_lda_x killed $p1, $d1_3d
-  ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.1.for.body:
-  ; CHECK-NEXT:   successors: %bb.2(0x80000000)
-  ; CHECK-NEXT:   liveins: $dm0:0x000000030000000C, $dm1:0x000000030000000C, $dm2:0x000000030000000C, $dm3:0x000000030000000C, $r10, $r12, $r28, $x0, $x1, $x2, $x4, $x6, $x8, $x10
-  ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   renamable $dm3 = VADDMAC_vaddmac_vmul_cm_core_X_X killed renamable $dm3, killed renamable $dm4, renamable $x6, killed renamable $x10, renamable $r10
   ; CHECK-NEXT:   BUNDLE implicit-def $x1, implicit-def $p1, implicit-def $dm4, implicit killed $p1, implicit $m3, implicit killed $x4, implicit killed $x0, implicit killed $r12 {
   ; CHECK-NEXT:     renamable $x1, renamable $p1 = VLDB_dmx_ldb_x_pstm_nrm killed renamable $p1, renamable $m3
@@ -126,21 +129,19 @@ body:             |
   ; CHECK-NEXT:   renamable $x5 = VSHUFFLE_vec_shuffle_x killed renamable $x3, undef renamable $x3, renamable $r4
   ; CHECK-NEXT:   renamable $x7 = VSHUFFLE_vec_shuffle_x renamable $x10, undef renamable $x10, renamable $r6
   ; CHECK-NEXT:   renamable $x3 = VSHUFFLE_vec_shuffle_x renamable $x1, undef renamable $x1, killed renamable $r2
-  ; CHECK-NEXT:   BUNDLE implicit-def $x1, implicit-def $p1, implicit-def $x5, implicit-def $dm4, implicit killed $p1, implicit $m3, implicit killed $x3, implicit killed $r4, implicit $x4, implicit killed $x2, implicit $r12 {
-  ; CHECK-NEXT:     renamable $x1, renamable $p1 = VLDB_dmx_ldb_x_pstm_nrm killed renamable $p1, renamable $m3
-  ; CHECK-NEXT:     renamable $x5 = VSHUFFLE_vec_shuffle_x killed renamable $x3, undef renamable $x3, killed renamable $r4
-  ; CHECK-NEXT:     renamable $dm4 = VMUL_vmul_vmul_cm_core_X_X renamable $x4, killed renamable $x2, renamable $r12
-  ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   BUNDLE implicit-def $x10, implicit-def $p1, implicit-def $dc1, implicit-def $dc5, implicit-def $x7, implicit killed $p1, implicit $d1_3d, implicit killed $r6 {
-  ; CHECK-NEXT:     $x10, $p1, $dc1, $dc5 = VLDA_3D_dmx_lda_x killed $p1, $d1_3d
-  ; CHECK-NEXT:     renamable $x7 = VSHUFFLE_vec_shuffle_x internal renamable $x10, internal undef renamable $x10, killed renamable $r6
-  ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   renamable $x5 = VSHUFFLE_vec_shuffle_x killed renamable $x3, undef renamable $x3, killed renamable $r4
+  ; CHECK-NEXT:   renamable $x7 = VSHUFFLE_vec_shuffle_x renamable $x10, undef renamable $x10, killed renamable $r6
   ; CHECK-NEXT:   DelayedSchedBarrier
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.4.cooldown.entry:
   ; CHECK-NEXT:   successors: %bb.5(0x80000000)
   ; CHECK-NEXT:   liveins: $dm0:0x000000030000000C, $dm1:0x000000030000000C, $dm2:0x000000030000000C, $dm3:0x000000030000000C, $r10, $r12, $r28, $x0, $x1, $x2, $x4, $x6, $x8, $x10
   ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   BUNDLE implicit-def $x1, implicit-def $p1, implicit-def $dm4, implicit killed $p1, implicit $m3, implicit $x4, implicit killed $x2, implicit $r12 {
+  ; CHECK-NEXT:     $x1, renamable $p1 = VLDB_dmx_ldb_x_pstm_nrm killed renamable $p1, renamable $m3
+  ; CHECK-NEXT:     renamable $dm4 = VMUL_vmul_vmul_cm_core_X_X renamable $x4, killed renamable $x2, renamable $r12
+  ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   $x10, $p1, $dc1, $dc5 = VLDA_3D_dmx_lda_x killed $p1, $d1_3d
   ; CHECK-NEXT:   BUNDLE implicit-def $x8, implicit-def $p0, implicit-def $dm3, implicit killed $p0, implicit killed $dm3, implicit killed $dm4, implicit killed $x6, implicit $x10, implicit $r10 {
   ; CHECK-NEXT:     $x8, renamable $p0 = VLDB_dmx_ldb_x_pstm_nrm_imm killed renamable $p0, 64
   ; CHECK-NEXT:     renamable $dm3 = VADDMAC_vaddmac_vmul_cm_core_X_X killed renamable $dm3, killed renamable $dm4, killed renamable $x6, renamable $x10, renamable $r10
@@ -269,16 +270,15 @@ body:             |
   ; CHECK: bb.0.entry:
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
   ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1.for.body:
+  ; CHECK-NEXT:   successors: %bb.2(0x80000000)
+  ; CHECK-NEXT:   liveins: $dm0:0x000000030000000C, $dm1:0x000000030000000C, $dm2:0x000000030000000C, $dm3:0x000000030000000C, $r10, $r12, $r28, $x0, $x1, $x2, $x4, $x6, $x8, $x10
+  ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   BUNDLE implicit-def $x1, implicit-def $p1, implicit-def $dm4, implicit killed $p1, implicit $m3, implicit $x4, implicit killed $x2, implicit $r12 {
   ; CHECK-NEXT:     renamable $x1, renamable $p1 = VLDB_dmx_ldb_x_pstm_nrm killed renamable $p1, renamable $m3
   ; CHECK-NEXT:     renamable $dm4 = VMUL_vmul_vmul_cm_core_X_X renamable $x4, killed renamable $x2, renamable $r12
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   $x10, $p1, $dc1, $dc5 = VLDA_3D_dmx_lda_x killed $p1, $d1_3d
-  ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.1.for.body:
-  ; CHECK-NEXT:   successors: %bb.2(0x80000000)
-  ; CHECK-NEXT:   liveins: $dm0:0x000000030000000C, $dm1:0x000000030000000C, $dm2:0x000000030000000C, $dm3:0x000000030000000C, $r10, $r12, $r28, $x0, $x1, $x2, $x4, $x6, $x8, $x10
-  ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   renamable $dm3 = VADDMAC_vaddmac_vmul_cm_core_X_X killed renamable $dm3, killed renamable $dm4, renamable $x6, killed renamable $x10, renamable $r10
   ; CHECK-NEXT:   BUNDLE implicit-def $x1, implicit-def $p1, implicit-def $dm4, implicit killed $p1, implicit $m3, implicit killed $x4, implicit killed $x0, implicit killed $r12 {
   ; CHECK-NEXT:     renamable $x1, renamable $p1 = VLDB_dmx_ldb_x_pstm_nrm killed renamable $p1, renamable $m3
@@ -327,21 +327,20 @@ body:             |
   ; CHECK-NEXT:   renamable $x5 = VSHUFFLE_vec_shuffle_x killed renamable $x3, undef renamable $x3, renamable $r4
   ; CHECK-NEXT:   renamable $x7 = VSHUFFLE_vec_shuffle_x renamable $x10, undef renamable $x10, renamable $r6
   ; CHECK-NEXT:   renamable $x3 = VSHUFFLE_vec_shuffle_x renamable $x1, undef renamable $x1, killed renamable $r2
-  ; CHECK-NEXT:   BUNDLE implicit-def $x1, implicit-def $p1, implicit-def $x5, implicit-def $dm4, implicit killed $p1, implicit $m3, implicit killed $x3, implicit killed $r4, implicit $x4, implicit killed $x2, implicit $r12 {
-  ; CHECK-NEXT:     renamable $x1, renamable $p1 = VLDB_dmx_ldb_x_pstm_nrm killed renamable $p1, renamable $m3
-  ; CHECK-NEXT:     renamable $x5 = VSHUFFLE_vec_shuffle_x killed renamable $x3, undef renamable $x3, killed renamable $r4
-  ; CHECK-NEXT:     renamable $dm4 = VMUL_vmul_vmul_cm_core_X_X renamable $x4, killed renamable $x2, renamable $r12
-  ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   BUNDLE implicit-def $x10, implicit-def $p1, implicit-def $dc1, implicit-def $dc5, implicit-def $x7, implicit killed $p1, implicit $d1_3d, implicit killed $r6 {
-  ; CHECK-NEXT:     $x10, $p1, $dc1, $dc5 = VLDA_3D_dmx_lda_x killed $p1, $d1_3d
-  ; CHECK-NEXT:     renamable $x7 = VSHUFFLE_vec_shuffle_x internal renamable $x10, internal undef renamable $x10, killed renamable $r6
-  ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   renamable $x5 = VSHUFFLE_vec_shuffle_x killed renamable $x3, undef renamable $x3, killed renamable $r4
+  ; CHECK-NEXT:   renamable $x7 = VSHUFFLE_vec_shuffle_x renamable $x10, undef renamable $x10, killed renamable $r6
   ; CHECK-NEXT:   DelayedSchedBarrier
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.4.cooldown.entry:
   ; CHECK-NEXT:   successors: %bb.5(0x80000000)
   ; CHECK-NEXT:   liveins: $dm0:0x000000030000000C, $dm1:0x000000030000000C, $dm2:0x000000030000000C, $dm3:0x000000030000000C, $r10, $r12, $r28, $x0, $x1, $x2, $x4, $x6, $x8, $x10
   ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   $l7 = MOV_alu_mv_mv_mv_cntr2l
+  ; CHECK-NEXT:   BUNDLE implicit-def $x1, implicit-def $p1, implicit-def $dm4, implicit killed $p1, implicit $m3, implicit $x4, implicit killed $x2, implicit $r12 {
+  ; CHECK-NEXT:     $x1, renamable $p1 = VLDB_dmx_ldb_x_pstm_nrm killed renamable $p1, renamable $m3
+  ; CHECK-NEXT:     renamable $dm4 = VMUL_vmul_vmul_cm_core_X_X renamable $x4, killed renamable $x2, renamable $r12
+  ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   $x10, $p1, $dc1, $dc5 = VLDA_3D_dmx_lda_x killed $p1, $d1_3d
   ; CHECK-NEXT:   BUNDLE implicit-def $x8, implicit-def $p0, implicit-def $dm3, implicit killed $p0, implicit killed $dm3, implicit killed $dm4, implicit killed $x6, implicit $x10, implicit $r10 {
   ; CHECK-NEXT:     $x8, renamable $p0 = VLDB_dmx_ldb_x_pstm_nrm_imm killed renamable $p0, 64
   ; CHECK-NEXT:     renamable $dm3 = VADDMAC_vaddmac_vmul_cm_core_X_X killed renamable $dm3, killed renamable $dm4, killed renamable $x6, renamable $x10, renamable $r10
