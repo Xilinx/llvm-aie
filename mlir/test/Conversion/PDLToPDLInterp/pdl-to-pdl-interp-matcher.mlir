@@ -1,3 +1,10 @@
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+
 // RUN: mlir-opt -split-input-file -convert-pdl-to-pdl-interp %s | FileCheck %s
 
 // CHECK-LABEL: module @empty_module
@@ -721,7 +728,9 @@ module @common_connector {
   // CHECK: func @matcher(%[[ROOTC:.*]]: !pdl.operation)
   // CHECK-DAG: %[[VAL2:.*]] = pdl_interp.get_operand 0 of %[[ROOTC]]
   // CHECK-DAG: %[[INTER:.*]] = pdl_interp.get_defining_op of %[[VAL2]] : !pdl.value
-  // CHECK-DAG: pdl_interp.is_not_null %[[INTER]] : !pdl.operation -> ^bb2, ^bb1
+  // CHECK: pdl_interp.is_not_null %[[INTER]] : !pdl.operation -> ^[[INTER_NON_NULL:bb[0-9]+]], ^[[FAIL:bb[0-9]+]]
+  // CHECK: ^[[INTER_NON_NULL]]:
+  // CHECK-NEXT: pdl_interp.check_operand_count of %[[INTER]] is 1 -> ^{{bb[0-9]+}}, ^[[FAIL]]
   // CHECK-DAG: %[[VAL1:.*]] = pdl_interp.get_operand 0 of %[[INTER]]
   // CHECK-DAG: %[[OP:.*]] = pdl_interp.get_defining_op of %[[VAL1]] : !pdl.value
   // CHECK-DAG: pdl_interp.is_not_null %[[OP]]

@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 
 #include "PredicateTree.h"
@@ -925,13 +928,22 @@ static void stableTopologicalSort(Iterator begin, Iterator end, Compare cmp) {
   }
 }
 
-/// Returns true if 'b' depends on a result of 'a'.
+/// Returns true if 'b' requires the successful evaluation of 'a'.
 static bool dependsOn(OrderedPredicate *a, OrderedPredicate *b) {
   auto *cqa = dyn_cast<ConstraintQuestion>(a->question);
-  if (!cqa)
+  bool isNotNull = isa<IsNotNullQuestion>(a->question);
+  if ((!cqa && !isNotNull) || a == b)
     return false;
 
   auto positionDependsOnA = [&](Position *p) {
+    // Materializing a descendant position can dereference this position.
+    // Predicate frequency must not move such a query before its null guard.
+    if (isNotNull) {
+      for (; p; p = p->getParent())
+        if (p == a->position)
+          return true;
+      return false;
+    }
     auto *cp = dyn_cast<ConstraintPosition>(p);
     return cp && cp->getQuestion() == cqa;
   };
@@ -1027,8 +1039,8 @@ MatcherNode::generateMatcherTree(ModuleOp module, PredicateBuilder &builder,
     return *lhs < *rhs;
   });
 
-  // Mostly keep the now established order, but also ensure that
-  // ConstraintQuestions come after the results they use.
+  // Preserve the cost order where possible, while respecting null guards and
+  // dependencies on native constraint results.
   stableTopologicalSort(ordered.begin(), ordered.end(), dependsOn);
 
   // Build the matchers for each of the pattern predicate lists.
