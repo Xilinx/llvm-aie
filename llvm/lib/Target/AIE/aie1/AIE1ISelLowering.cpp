@@ -212,7 +212,7 @@ AIE1TargetLowering::AIE1TargetLowering(const TargetMachine &TM,
   setOperationAction(ISD::BUILD_VECTOR, MVT::v2i32, Legal);
   // Floating point division needs a library.
   setOperationAction(ISD::FDIV, MVT::f32, Expand);
-  setOperationAction(ISD::FREM, MVT::f32, Expand);
+  setOperationAction(ISD::FREM, MVT::f32, LibCall);
   setOperationAction(ISD::FSQRT, MVT::f32, Legal);
   setOperationAction(ISD::FMA, MVT::f32, Expand);
 

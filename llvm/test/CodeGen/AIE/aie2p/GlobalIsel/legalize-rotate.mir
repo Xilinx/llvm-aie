@@ -31,7 +31,7 @@ body:             |
     ; CHECK-NEXT: [[SHL:%[0-9]+]]:_(s32) = G_SHL [[COPY]], [[AND]](s32)
     ; CHECK-NEXT: [[AND1:%[0-9]+]]:_(s32) = G_AND [[SUB]], [[C1]]
     ; CHECK-NEXT: [[LSHR:%[0-9]+]]:_(s32) = G_LSHR [[COPY]], [[AND1]](s32)
-    ; CHECK-NEXT: [[OR:%[0-9]+]]:_(s32) = G_OR [[SHL]], [[LSHR]]
+    ; CHECK-NEXT: [[OR:%[0-9]+]]:_(s32) = disjoint G_OR [[SHL]], [[LSHR]]
     ; CHECK-NEXT: $r0 = COPY [[OR]](s32)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0
     %0:_(s32) = COPY $r0
@@ -58,7 +58,7 @@ body:             |
     ; CHECK-NEXT: [[LSHR:%[0-9]+]]:_(s32) = G_LSHR [[COPY]], [[AND]](s32)
     ; CHECK-NEXT: [[AND1:%[0-9]+]]:_(s32) = G_AND [[SUB]], [[C1]]
     ; CHECK-NEXT: [[SHL:%[0-9]+]]:_(s32) = G_SHL [[COPY]], [[AND1]](s32)
-    ; CHECK-NEXT: [[OR:%[0-9]+]]:_(s32) = G_OR [[LSHR]], [[SHL]]
+    ; CHECK-NEXT: [[OR:%[0-9]+]]:_(s32) = disjoint G_OR [[LSHR]], [[SHL]]
     ; CHECK-NEXT: $r0 = COPY [[OR]](s32)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0
     %0:_(s32) = COPY $r0

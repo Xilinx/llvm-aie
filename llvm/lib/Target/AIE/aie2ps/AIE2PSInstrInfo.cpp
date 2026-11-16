@@ -803,7 +803,7 @@ void AIE2PSInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                            MachineBasicBlock::iterator I,
                                            Register DstReg, int FI,
                                            const TargetRegisterClass *RC,
-                                           Register VReg,
+                                           Register VReg, unsigned SubReg,
                                            MachineInstr::MIFlag Flags) const {
   DebugLoc DL;
   if (I != MBB.end())
@@ -825,7 +825,7 @@ void AIE2PSInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
   auto bounceViaRegClass = [&](const TargetRegisterClass *BounceRC) {
     MachineRegisterInfo &MRI = MBB.getParent()->getRegInfo();
     Register TmpReg = MRI.createVirtualRegister(BounceRC);
-    loadRegFromStackSlot(MBB, I, TmpReg, FI, BounceRC, VReg, Flags);
+    loadRegFromStackSlot(MBB, I, TmpReg, FI, BounceRC, VReg, SubReg, Flags);
     BuildMI(MBB, I, DL, get(AIE2PS::COPY), DstReg)
         .addReg(TmpReg, getKillRegState(true));
     return;
