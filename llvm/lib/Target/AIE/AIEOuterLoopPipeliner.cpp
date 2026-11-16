@@ -132,27 +132,6 @@ static cl::opt<bool> LeanStage0Mode(
              "intrinsics selected for lean stage 0"),
     cl::init(false), cl::Hidden);
 
-/// Outer loop type selection after pipelining.
-enum class OuterLoopType { Soft, HW, Auto };
-
-static cl::opt<OuterLoopType> OuterLoopTypeOpt(
-    "aie-outer-loop-type",
-    cl::desc("Outer loop type selection after pipelining"),
-    cl::values(clEnumValN(OuterLoopType::Soft, "soft",
-                          "Use software loop (no JNZD conversion)"),
-               clEnumValN(OuterLoopType::HW, "hw",
-                          "Use hardware loop (JNZD conversion)"),
-               clEnumValN(OuterLoopType::Auto, "auto",
-                          "Auto-select based on pointer pressure")),
-    cl::init(OuterLoopType::Auto), cl::Hidden);
-
-static cl::opt<unsigned> OuterLoopPointerThreshold(
-    "aie-outer-loop-pointer-threshold",
-    cl::desc("Pointer pressure threshold for auto mode: if the estimated "
-             "pointer pressure "
-             ">= threshold, use soft loop; otherwise use hw loop"),
-    cl::init(6), cl::Hidden);
-
 /// Effective outer-loop-pipelining configuration for one loop. Command-line
 /// options and !llvm.loop.hint metadata are resolved once when this is built.
 struct OLPOpts {
@@ -161,7 +140,6 @@ struct OLPOpts {
   bool SplitStagesEnabled;
   bool UseLeanStage0;
   bool EnableSpeculativeLastIteration;
-  OuterLoopType LoopType;
 
   explicit OLPOpts(const AIE::LoopOptionOverrides &Overrides)
       : Enabled(Overrides.get(EnableOuterLoopPipelining)),
@@ -171,22 +149,7 @@ struct OLPOpts {
         EnableSpeculativeLastIteration(
             Overrides.hasOverride(SpeculativeLastIteration)
                 ? Overrides.get(SpeculativeLastIteration)
-                : UseLeanStage0),
-        LoopType(Overrides.get(OuterLoopTypeOpt)) {}
-
-  /// Determine whether to use hardware loop based on loop type and pointer
-  /// pressure. In auto mode, use hw loop if pointers < threshold.
-  bool shouldUseHardwareLoop(unsigned NumPointerPHIs) const {
-    switch (LoopType) {
-    case OuterLoopType::Soft:
-      return false;
-    case OuterLoopType::HW:
-      return true;
-    case OuterLoopType::Auto:
-      return NumPointerPHIs < OuterLoopPointerThreshold;
-    }
-    llvm_unreachable("Unknown OuterLoopType");
-  }
+                : UseLeanStage0) {}
 };
 
 using SplitStrategy = bool (*)(const Instruction *);
@@ -287,10 +250,6 @@ struct LatchConditionInfo {
   IntrinsicInst *LoopDecInReg = nullptr;
   PHINode *JNZDCounterPhiNode = nullptr;
 
-  // A unit-downcounting latch (step -1), convertible to
-  // @llvm.loop.decrement.reg.
-  bool isDowncounting() const { return Step == -1; }
-
   bool isHardwareLoop() const { return LoopDecInReg != nullptr; }
 
   // The instructions that compute the latch condition.
@@ -357,7 +316,6 @@ public:
     assert(OuterLoopCondition && "loop structure has no latch condition");
     return *OuterLoopCondition;
   }
-  void clearLatchCondition() { OuterLoopCondition.reset(); }
 
   // Returns true if I is in the bottom region.
   bool isInBottom(const Instruction *I) const {
@@ -480,10 +438,6 @@ public:
   // True if rotating pays off: hardware inner loop, outer trip count (from SE)
   // meets MinTripCount, and the bottom has stores.
   bool isProfitableToRotate(ScalarEvolution &SE, unsigned MinTripCount) const;
-
-  // Count the number of base pointer PHI nodes in the outer loop header.
-  // These represent distinct pointer streams that evolve across iterations.
-  unsigned countBasePointerPHIs() const;
 
   // Returns true if it is safe to reorder the top-block loads before the
   // bottom-block stores (rejects volatile/atomic memory ops).
@@ -700,11 +654,6 @@ private:
   // the top-block end so top-block cloning naturally covers them. True if
   // moved.
   bool liftBottomPointerUpdatesToTop(const OrigLoopStructure &OrigLS);
-
-  // Convert the steady loop to a JNZD hardware loop: start.loop.iterations in
-  // the preheader, a counter PHI in the header, loop.decrement.reg in the
-  // latch. Requires latchCondition().isDowncounting().
-  void convertOuterLoopToHardwareLoop(CloneLoopStructure &SteadyLS);
 };
 
 } // end anonymous namespace
@@ -927,15 +876,6 @@ void AIEOuterLoopPipeliner::seedHeaderPhiEdge(RemapTable &Map,
     if (Idx >= 0)
       Map[&PHI] = PHI.getIncomingValue(Idx);
   }
-}
-
-unsigned OrigLoopStructure::countBasePointerPHIs() const {
-  unsigned Count = 0;
-  for (const PHINode &PHI : getTop()->phis()) {
-    if (PHI.getType()->isPointerTy())
-      ++Count;
-  }
-  return Count;
 }
 
 bool OrigLoopStructure::isProfitableToRotate(ScalarEvolution &SE,
@@ -1583,9 +1523,6 @@ void AIEOuterLoopPipeliner::seedLastIterInputs(
       Map[I] = SteadyLS.lastIterInputFor(I);
 
   // Each loop-carried header PHI enters as its steady next-iteration value.
-  // The JNZD conversion erases the steady IV when it and its counter only feed
-  // each other (eraseOldCounterCycle), leaving a null clone; nothing in the
-  // last iteration reads that IV.
   for (PHINode &PHI : OrigLS.getTop()->phis())
     if (SteadyLS.cloneOf(&PHI))
       Map[&PHI] = SteadyLS.lastIterInputFor(&PHI);
@@ -1630,8 +1567,7 @@ void AIEOuterLoopPipeliner::populateLastIterBottom(
 
   // The outer back-edge control (counter add or loop.decrement.reg, plus the
   // exit icmp) is dead in the non-looping last iteration; correct behavior is
-  // to always elide it. (For a JNZD hardware loop the steady counter/limit are
-  // also already erased, so it MUST be elided.)
+  // to always elide it.
 
   BasicBlock *OrigBottom = OrigLS.getBottom();
   const auto IsInLoop = [&OrigLS](const Instruction *I) {
@@ -1919,7 +1855,7 @@ LatchConditionInfo::tryCreateFromSoftwareLoop(const Loop *L, ICmpInst *Cmp,
   }
 
   // A plain-PHI counter has no add to identify IV from, so its step is
-  // unverifiable and JNZD conversion is impossible; reject it.
+  // unverifiable; reject it.
   if (!CounterAdd) {
     LLVM_DEBUG(dbgs() << "    Cannot adjust loop bound: counter is not an add "
                          "instruction\n");
@@ -2187,34 +2123,13 @@ bool AIEOuterLoopPipeliner::performTransformation(OrigLoopStructure &OrigLS,
   // Merge the preheader and bottom copies into the steady header via PHIs.
   createPipelinedPHIs(OrigLS, SteadyLS, PreheaderVMap, BottomVMap);
 
-  // Determine whether to use hardware loop based on pointer pressure.
-  // A loop that arrives as a hardware loop stays one: it no longer has the
-  // induction variable a soft latch would be rebuilt from.
-  const bool IsInputHardwareLoop = SteadyLS.latchCondition().isHardwareLoop();
-  const unsigned NumPointerPHIs = OrigLS.countBasePointerPHIs();
-  const bool OuterIsHardwareLoopCandidate =
-      Opts.shouldUseHardwareLoop(NumPointerPHIs) &&
-      SteadyLS.latchCondition().isDowncounting();
-  LLVM_DEBUG(
-      dbgs() << "    Pointer PHIs: " << NumPointerPHIs
-             << ", threshold: " << OuterLoopPointerThreshold << ", using "
-             << (IsInputHardwareLoop || OuterIsHardwareLoopCandidate ? "hw"
-                                                                     : "soft")
-             << " loop" << (IsInputHardwareLoop ? " (input)" : "") << "\n");
-
-  // Preparation: set up the latch condition for JNZD and/or peeling.
+  // Preparation for the last iteration.
   // - Non-speculative: adjust the loop bound from N to N-1 (peel one iteration)
-  // - Speculative: remap exit live-outs to SteadyLS before JNZD erases the IV
+  // - Speculative: remap exit live-outs to SteadyLS
   if (!UseSpeculativeLastIteration)
     SteadyLS.adjustLoopBound();
   else
     remapExitForReplacement(OrigLS, SteadyLS);
-
-  // Convert to a JNZD hardware loop if applicable. Must run after bound
-  // adjustment (non-speculative) or exit remapping (speculative), and before
-  // peeling so the counting add/icmp are erased before the peel clones them.
-  if (OuterIsHardwareLoopCandidate)
-    convertOuterLoopToHardwareLoop(SteadyLS);
 
   // Finalization: complete the transformation and update metadata.
   if (!UseSpeculativeLastIteration) {
@@ -2232,101 +2147,4 @@ bool AIEOuterLoopPipeliner::performTransformation(OrigLoopStructure &OrigLS,
   OrigLS.removeFromCFG();
 
   return true;
-}
-
-// The i32 JNZD trip count is the distance from the preheader IV value to the
-// live latch limit. The non-speculative path updates that limit to peel one
-// iteration, producing N-1; speculative mode leaves the original limit,
-// producing N.
-static Value *computeJNZDTripCount(const CloneLoopStructure &SteadyLS,
-                                   Type *I32Ty) {
-  const LatchConditionInfo &Info = SteadyLS.latchCondition();
-  BasicBlock *Preheader = SteadyLS.getPreheader();
-  IRBuilder<> PreBuilder(Preheader->getTerminator());
-  Value *InitN = Info.IV->getIncomingValueForBlock(Preheader);
-  Value *Limit = Info.Cmp->getOperand(Info.LimitIdx);
-  Value *TripCount = PreBuilder.CreateSub(InitN, Limit, "outer.jnzd.tc");
-  if (TripCount->getType() != I32Ty)
-    TripCount =
-        PreBuilder.CreateZExtOrTrunc(TripCount, I32Ty, "outer.jnzd.tc.i32");
-  return TripCount;
-}
-
-// Create the outer-header counter PHI seeded from start_loop_iterations in the
-// preheader; its back-edge incoming is filled by rewriteLatchToDecrement.
-static PHINode *createOuterCounterPHI(const CloneLoopStructure &SteadyLS,
-                                      Value *TripCount, Type *I32Ty) {
-  BasicBlock *Preheader = SteadyLS.getPreheader();
-  IRBuilder<> PreBuilder(Preheader->getTerminator());
-  Value *CtrInit = PreBuilder.CreateIntrinsic(
-      Intrinsic::start_loop_iterations, {I32Ty}, {TripCount},
-      /*FMFSource=*/nullptr, "outer.ctr.init");
-  Instruction *InsertPt = &*SteadyLS.getTop()->getFirstInsertionPt();
-  PHINode *CtrPHI =
-      PHINode::Create(I32Ty, 2, "outer.ctr", InsertPt->getIterator());
-  CtrPHI->addIncoming(CtrInit, Preheader);
-  return CtrPHI;
-}
-
-// Replace the latch condition with loop.decrement.reg(CtrPHI) != 0, keep the
-// loop-continue edge as the true successor, close CtrPHI, and DCE the old icmp.
-static void rewriteLatchToDecrement(const CloneLoopStructure &SteadyLS,
-                                    PHINode *CtrPHI, Type *I32Ty) {
-  BranchInst *LatchBr = SteadyLS.getLatchBranch();
-  IRBuilder<> LatchBuilder(LatchBr);
-  Value *CtrNext =
-      LatchBuilder.CreateIntrinsic(Intrinsic::loop_decrement_reg, {I32Ty},
-                                   {CtrPHI, ConstantInt::get(I32Ty, 1)},
-                                   /*FMFSource=*/nullptr, "outer.ctr.next");
-  Value *NewCond = LatchBuilder.CreateICmpNE(
-      CtrNext, ConstantInt::get(I32Ty, 0), "outer.loop.cond");
-
-  Value *OldCond = LatchBr->getCondition();
-  LatchBr->setCondition(NewCond);
-  const bool TopIsTakenSuccessor =
-      LatchBr->getSuccessor(0) == SteadyLS.getTop();
-  if (!TopIsTakenSuccessor)
-    LatchBr->swapSuccessors();
-  CtrPHI->addIncoming(CtrNext, SteadyLS.getBottom());
-  RecursivelyDeleteTriviallyDeadInstructions(OldCond);
-}
-
-// Break the dead counter/IV use cycle that trivial-DCE cannot: poison the IV's
-// latch slot when the IV and the counter only feed each other, then DCE the
-// add. The counter can outlive the IV's other users: the bottom stage-0 clones
-// read the next-iteration IV through it.
-static void eraseOldCounterCycle(const CloneLoopStructure &SteadyLS,
-                                 const LatchConditionInfo &Info) {
-  PHINode *IV = Info.IV;
-  WeakVH PoisonedIV;
-  if (IV->hasOneUse() && Info.Counter->hasOneUse()) {
-    int LatchIdx = IV->getBasicBlockIndex(SteadyLS.getBottom());
-    const bool HasLatchIncoming = LatchIdx >= 0;
-    if (HasLatchIncoming) {
-      IV->setIncomingValue(LatchIdx, PoisonValue::get(IV->getType()));
-      PoisonedIV = IV;
-    }
-  }
-  RecursivelyDeleteTriviallyDeadInstructions(Info.Counter);
-  // The poison is only sound if nothing can read it. Check in every build,
-  // since a surviving IV would feed poison into the loop silently.
-  if (PoisonedIV)
-    reportFatalInternalError("AIE outer loop pipeliner: the old outer IV was "
-                             "poisoned but survived the counter cleanup");
-}
-
-void AIEOuterLoopPipeliner::convertOuterLoopToHardwareLoop(
-    CloneLoopStructure &SteadyLS) {
-  const LatchConditionInfo &Info = SteadyLS.latchCondition();
-  assert(Info.isDowncounting() &&
-         "JNZD conversion needs a fully validated downcounting latch");
-  Type *I32Ty = Type::getInt32Ty(SteadyLS.getTop()->getContext());
-
-  Value *TripCount = computeJNZDTripCount(SteadyLS, I32Ty);
-  PHINode *CtrPHI = createOuterCounterPHI(SteadyLS, TripCount, I32Ty);
-  rewriteLatchToDecrement(SteadyLS, CtrPHI, I32Ty);
-  eraseOldCounterCycle(SteadyLS, Info);
-  SteadyLS.clearLatchCondition();
-
-  LLVM_DEBUG(dbgs() << "    Converted outer loop to JNZD hardware loop\n");
 }

@@ -5,13 +5,13 @@
 ; (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
 ;
 ; RUN: llc -mtriple=aie2p -O2 -aie-enable-outer-loop-pointer-opt=false -aie-enable-outer-loop-pipelining \
-; RUN:     -aie-outer-loop-type=hw -stop-after=aie-outer-loop-pipeliner \
+; RUN:     -stop-after=aie-outer-loop-pipeliner \
 ; RUN:     -o - %s | FileCheck %s
 
 ; The peeled last iteration must read the outer IV as the value the steady loop
 ; carries out on its back edge, like every other outer header PHI.
 
-; Up-counting, so the outer loop stays a software loop.
+; Up-counting IV, read by the bottom block.
 ; CHECK-LABEL: define void @soft_iv_in_bottom
 ; CHECK:       steady.stage1.bottom.and.stage0.top:
 ; CHECK:         %iv.next.steady = add i32 %iv.steady, 1
@@ -49,19 +49,17 @@ exit:
   ret void
 }
 
-; JNZD keeps the old IV counting because the bottom block reads it.
-; CHECK-LABEL: define void @jnzd_iv_in_bottom
+; Down-counting IV, read by the bottom block.
+; CHECK-LABEL: define void @down_iv_in_bottom
 ; CHECK:       steady.stage1.top:
 ; CHECK-NEXT:    %iv.steady = phi i32 [ %iv.next.steady, %steady.stage1.bottom.and.stage0.top ], [ %N, %stage0.top ]
-; CHECK:         %outer.ctr = phi i32
 ; CHECK:       steady.stage1.bottom.and.stage0.top:
 ; CHECK:         %iv.next.steady = add i32 %iv.steady, -1
-; CHECK:         %outer.ctr.next = call i32 @llvm.loop.decrement.reg.i32(i32 %outer.ctr, i32 1)
 ; CHECK:       lastiter.stage1.bottom:
 ; CHECK-NEXT:    %c.elt.lastiter = getelementptr inbounds i32, ptr %c, i32 %iv.next.steady
 ; CHECK-NEXT:    store i32 %acc.next.lastiter, ptr %c.elt.lastiter, align 4
 ; CHECK-NEXT:    br label %exit
-define void @jnzd_iv_in_bottom(ptr noalias %a, ptr noalias %c, i32 %N, i32 %M) {
+define void @down_iv_in_bottom(ptr noalias %a, ptr noalias %c, i32 %N, i32 %M) {
 entry:
   %cmp.outer = icmp sgt i32 %N, 1
   br i1 %cmp.outer, label %outer.header, label %exit
@@ -91,17 +89,17 @@ exit:
   ret void
 }
 
-; The inner loop reads the IV, so its last-iteration clone needs it too.
-; CHECK-LABEL: define void @jnzd_iv_in_inner
+; Down-counting IV, read by the inner loop, so its last-iteration clone needs it
+; too.
+; CHECK-LABEL: define void @down_iv_in_inner
 ; CHECK:       steady.stage1.top:
 ; CHECK-NEXT:    %iv.steady = phi i32 [ %iv.next.steady, %steady.stage1.bottom.and.stage0.top ], [ %N, %stage0.top ]
-; CHECK:         %outer.ctr = phi i32
 ; CHECK:       lastiter.stage1.inner.inner.header:
 ; CHECK:         %acc.next.lastiter = add i32 %acc.v.lastiter, %iv.next.steady
 ; CHECK:       lastiter.stage1.bottom:
 ; CHECK-NEXT:    store i32 %acc.next.lastiter, ptr %c.ptr.next.steady, align 4
 ; CHECK-NEXT:    br label %exit
-define void @jnzd_iv_in_inner(ptr noalias %a, ptr noalias %c, i32 %N, i32 %M) {
+define void @down_iv_in_inner(ptr noalias %a, ptr noalias %c, i32 %N, i32 %M) {
 entry:
   %cmp.outer = icmp sgt i32 %N, 1
   br i1 %cmp.outer, label %outer.header, label %exit
