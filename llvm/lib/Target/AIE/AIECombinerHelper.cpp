@@ -2121,7 +2121,8 @@ static void buildBroadcastVector(MachineIRBuilder &B, MachineRegisterInfo &MRI,
     // Build the G_AIE_BROADCAST_VECTOR instruction for the 512-bit vector.
     B.buildInstr(AIETII.getGenericBroadcastVectorOpcode(), {DstVec512BitReg},
                  {SrcReg});
-    if (DstVecSize == 128 || DstVecSize == 256) {
+    if (DstVecSize == 32 || DstVecSize == 64 || DstVecSize == 128 ||
+        DstVecSize == 256) {
       const unsigned NumSubVectors = 512 / DstVecSize;
       // Unmerge the 512-bit vector into the 128/256-bit destination vector.
       buildUnmergeVector(B, MRI, DstVecReg, DstVec512BitReg, NumSubVectors, 0);
@@ -2133,6 +2134,8 @@ static void buildBroadcastVector(MachineIRBuilder &B, MachineRegisterInfo &MRI,
       // Concatenate 4 512-bit vectors to form a 2048-bit destination vector.
       B.buildConcatVectors({DstVecReg}, {DstVec512BitReg, DstVec512BitReg,
                                          DstVec512BitReg, DstVec512BitReg});
+    } else {
+      llvm_unreachable("Unsupported vector size.");
     }
   }
 }
