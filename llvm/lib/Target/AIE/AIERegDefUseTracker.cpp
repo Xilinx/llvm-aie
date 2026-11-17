@@ -1717,6 +1717,25 @@ void RegLiveRangeTracker::computeRegisterClass(RegLiveRange &LR) const {
   LLVM_DEBUG(dbgs() << "  computeRegisterClass for LR#" << LR.getID()
                     << " (base=" << TRI->getName(LR.getBaseReg()) << "):\n");
 
+  // createVirtualRegister requires an allocatable class. Operand constraints
+  // such as AIE2 mMvBMXDst are intentionally non-allocatable unions used only
+  // for encoding. Project them to the largest allocatable subclass that still
+  // contains the physical base before intersecting, so CommonRC is always
+  // allocatable (or null) by construction.
+  auto getAllocatableContainingBase =
+      [&](const TargetRegisterClass *RC) -> const TargetRegisterClass * {
+    const TargetRegisterClass *Best = nullptr;
+    for (BitMaskClassIterator It(RC->getSubClassMask(), *TRI); It.isValid();
+         ++It) {
+      const TargetRegisterClass *SubRC = TRI->getRegClass(It.getID());
+      if (!SubRC->isAllocatable() || !SubRC->contains(LR.getBaseReg()))
+        continue;
+      if (!Best || SubRC->getNumRegs() > Best->getNumRegs())
+        Best = SubRC;
+    }
+    return Best;
+  };
+
   // Start with nullptr, representing the universe of all register classes.
   // Intersection with nullptr is identity: intersect(nullptr, X) = X
   const TargetRegisterClass *CommonRC = nullptr;
@@ -1773,26 +1792,37 @@ void RegLiveRangeTracker::computeRegisterClass(RegLiveRange &LR) const {
         }
       }
 
-      if (OpRC) {
-        // Intersect: nullptr is identity, otherwise find common subclass
+      if (OpRC && !OpRC->isAllocatable()) {
+        const TargetRegisterClass *OrigOpRC = OpRC;
+        OpRC = getAllocatableContainingBase(OpRC);
+        LLVM_DEBUG(dbgs() << "      Narrow non-allocatable "
+                          << TRI->getRegClassName(OrigOpRC) << " -> "
+                          << (OpRC ? TRI->getRegClassName(OpRC) : "(null)")
+                          << "\n");
+        if (!OpRC) {
+          LR.setRegisterClass(nullptr);
+          return;
+        }
+      }
+
+      // Intersect: nullptr is identity, otherwise find common subclass
+      if (!CommonRC) {
+        CommonRC = OpRC;
+        LLVM_DEBUG(dbgs() << "      Initial RC = "
+                          << TRI->getRegClassName(CommonRC) << "\n");
+      } else {
+        const TargetRegisterClass *PrevRC = CommonRC;
+        CommonRC = TRI->getCommonSubClass(CommonRC, OpRC);
+        LLVM_DEBUG({
+          dbgs() << "      Intersect(" << TRI->getRegClassName(PrevRC) << ", "
+                 << TRI->getRegClassName(OpRC) << ") -> "
+                 << (CommonRC ? TRI->getRegClassName(CommonRC) : "(null)")
+                 << "\n";
+        });
         if (!CommonRC) {
-          CommonRC = OpRC;
-          LLVM_DEBUG(dbgs() << "      Initial RC = "
-                            << TRI->getRegClassName(CommonRC) << "\n");
-        } else {
-          const TargetRegisterClass *PrevRC = CommonRC;
-          CommonRC = TRI->getCommonSubClass(CommonRC, OpRC);
-          LLVM_DEBUG({
-            dbgs() << "      Intersect(" << TRI->getRegClassName(PrevRC) << ", "
-                   << TRI->getRegClassName(OpRC) << ") -> "
-                   << (CommonRC ? TRI->getRegClassName(CommonRC) : "(null)")
-                   << "\n";
-          });
-          if (!CommonRC) {
-            // No common class possible - this live range is illegal.
-            LR.setRegisterClass(nullptr);
-            return;
-          }
+          // No common class possible - this live range is illegal.
+          LR.setRegisterClass(nullptr);
+          return;
         }
       }
     }
