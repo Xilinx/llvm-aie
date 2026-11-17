@@ -798,6 +798,12 @@ void AIEBaseHardwareLoops::expandLoopEnd(LowOverheadLoop &LoLoop) {
     JNZD.addMBB(Target.getMBB());
   else
     JNZD.addReg(Target.getReg());
+  // Block placement has run, so a jump to the layout successor is redundant.
+  auto Next = std::next(End->getIterator());
+  if (Next != MBB->end() && Next->isUnconditionalBranch() &&
+      Next->getOperand(0).isMBB() &&
+      MBB->isLayoutSuccessor(Next->getOperand(0).getMBB()))
+    Next->eraseFromParent();
   LoLoop.remove(End);
   LoLoop.remove(LoLoop.Dec);
 }

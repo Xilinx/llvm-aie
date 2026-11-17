@@ -10,9 +10,6 @@
 ; Three nested loops; the middle and outer ones become multi-block JNZD loops.
 ; The outer latch must leave the loop nest through %exit when its JNZD is not
 ; taken. Reduced from gemm_mx9_utility::init_acc_zero.
-;
-; FIXME: both latches keep a jump to their layout successor once block
-; placement is done.
 
 define void @nested_exit(ptr %dst, i32 %outer, i32 %inner) {
 ; CHECK-LABEL: nested_exit:
@@ -71,21 +68,9 @@ define void @nested_exit(ptr %dst, i32 %outer, i32 %inner) {
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
-; CHECK-NEXT:    j #.LBB0_8
-; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    nop // Delay Slot 1
-; CHECK-NEXT:  .LBB0_8: // %outer.latch
+; CHECK-NEXT:  // %bb.8: // %outer.latch
 ; CHECK-NEXT:    // in Loop: Header=BB0_2 Depth=1
 ; CHECK-NEXT:    jnzd r0, r0, p2
-; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    nop // Delay Slot 1
-; CHECK-NEXT:    j #.LBB0_9
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
