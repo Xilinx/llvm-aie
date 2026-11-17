@@ -87,7 +87,7 @@ define dso_local void @gemm(i32 %0, ptr addrspace(5) %1, ptr addrspace(5) %2, pt
 ; REMARKS-NEXT:   - Prologue:        bb.1.steady.stage1.top
 ; REMARKS-NEXT:   - PrologueBundles: '12'
 ; REMARKS-NEXT:   - Epilogue:        bb.3.steady.stage1.bottom.and.stage0.top
-; REMARKS-NEXT:   - EpilogueBundles: '16'
+; REMARKS-NEXT:   - EpilogueBundles: '26'
 ; REMARKS-NEXT:   - VregMode:        Physical
 ; REMARKS-NEXT:   - SchedHeuristic:  Config_16_1_0_NodeNum
 ; REMARKS-NEXT: ...
@@ -172,7 +172,7 @@ define dso_local void @gemm(i32 %0, ptr addrspace(5) %1, ptr addrspace(5) %2, pt
 ; ASM-NEXT:    // in Loop: Header=BB0_1 Depth=1
 ; ASM-NEXT:    vlda x3, [p1], m4; paddb.2d [p4], d3; nops ; nopx ; vshuffle x5, x3, x3, r16; vmac dm1, dm1, x8, x9, r8
 ; ASM-NEXT:    vlda.3d x5, [p1], d1; vldb.128 wl10, [p4, #0]; nops ; nopx ; vshuffle x7, x10, x10, r18; vmac dm0, dm0, x6, x9, r8
-; ASM-NEXT:    nopa ; vldb.128 wl1, [p4, #16]; nops ; nopx ; vshuffle x9, x7, x7, r20; vmac dm3, dm3, x8, x5, r8
+; ASM-NEXT:    vldb.128 wl1, [p4, #16]; vshuffle x9, x7, x7, r20; vmac dm3, dm3, x8, x5, r8
 ; ASM-NEXT:    vldb x6, [p0], #64; vshuffle x3, x1, x1, r7; vmac dm2, dm2, x6, x5, r8
 ; ASM-NEXT:    vlda.ups.2x cml3, s0, upssign1, [p2], #64; vldb.3d x8, [p0], d0; vshuffle x5, x3, x3, r16; vmac dm1, dm1, x8, x9, r8
 ; ASM-NEXT:    vlda.ups.2x cmh3, s0, upssign1, [p2], #64; vshuffle x7, x10, x10, r18; vmac dm0, dm0, x6, x9, r8
@@ -180,13 +180,23 @@ define dso_local void @gemm(i32 %0, ptr addrspace(5) %1, ptr addrspace(5) %2, pt
 ; ASM-NEXT:    vlda.ups.2x cmh2, s0, upssign1, [p2], #64; mov srssign0, r19; vmac dm2, dm2, x6, x5, r8
 ; ASM-NEXT:    vlda.ups.2x cml1, s0, upssign1, [p2], #64; vsel.32 x4, x4, x10, r22; vmac dm1, dm1, x8, x9, r8
 ; ASM-NEXT:    vlda.ups.2x cmh1, s0, upssign1, [p2], #64; vshuffle x10, x3, x3, r1; vmac dm0, dm0, x6, x9, r8
-; ASM-NEXT:    vlda.ups.2x cml0, s0, upssign1, [p2], #64; jnzd r0, r0, p5; vsel.32 x2, x2, x1, r22
-; ASM-NEXT:    vlda.ups.2x cmh0, s0, upssign1, [p2], #64; vshuffle x1, x10, x10, r2 // Delay Slot 5
-; ASM-NEXT:    vst.srs.4x dm3, s1, srssign0, [p3], #64; vshuffle x10, x5, x5, r3 // Delay Slot 4
-; ASM-NEXT:    vst.srs.4x dm2, s1, srssign0, [p3], m5; vshuffle x10, x10, x10, r4 // Delay Slot 3
-; ASM-NEXT:    vst.srs.4x dm1, s1, srssign0, [p3], #64 // Delay Slot 2
-; ASM-NEXT:    vst.2d.srs.4x dm0, s1, srssign0, [p3], d2; movx srssign0, #0 // Delay Slot 1
-; ASM-NEXT:  // %bb.4: // %lastiter.stage1.top
+; ASM-NEXT:    vlda.ups.2x cml0, s0, upssign1, [p2], #64; vsel.32 x2, x2, x1, r22
+; ASM-NEXT:    vlda.ups.2x cmh0, s0, upssign1, [p2], #64; vshuffle x1, x10, x10, r2
+; ASM-NEXT:    vst.srs.4x dm3, s1, srssign0, [p3], #64; vshuffle x10, x5, x5, r3
+; ASM-NEXT:    vst.srs.4x dm2, s1, srssign0, [p3], m5; vshuffle x10, x10, x10, r4
+; ASM-NEXT:    vst.srs.4x dm1, s1, srssign0, [p3], #64; jnzd r0, r0, p5
+; ASM-NEXT:    vst.2d.srs.4x dm0, s1, srssign0, [p3], d2; movx srssign0, #0 // Delay Slot 5
+; ASM-NEXT:    nop // Delay Slot 4
+; ASM-NEXT:    nop // Delay Slot 3
+; ASM-NEXT:    nop // Delay Slot 2
+; ASM-NEXT:    nop // Delay Slot 1
+; ASM-NEXT:    j #.LBB0_4
+; ASM-NEXT:    nop // Delay Slot 5
+; ASM-NEXT:    nop // Delay Slot 4
+; ASM-NEXT:    nop // Delay Slot 3
+; ASM-NEXT:    nop // Delay Slot 2
+; ASM-NEXT:    nop // Delay Slot 1
+; ASM-NEXT:  .LBB0_4: // %lastiter.stage1.top
 ; ASM-NEXT:    vldb x1, [p1], m4
 ; ASM-NEXT:    vlda.3d x10, [p1], d1; vmul dm4, x0, x4, r12
 ; ASM-NEXT:    vldb x8, [p0], #64
@@ -229,7 +239,7 @@ define dso_local void @gemm(i32 %0, ptr addrspace(5) %1, ptr addrspace(5) %2, pt
 ;
 ; NO-PROLOGUE-SPLIT-LABEL: gemm:
 ; NO-PROLOGUE-SPLIT:       // %bb.0: // %newFuncRoot
-; NO-PROLOGUE-SPLIT-NEXT:    movs m0, p5; nopx
+; NO-PROLOGUE-SPLIT-NEXT:    nopa ; nopb ; nopxm ; movs m0, p5
 ; NO-PROLOGUE-SPLIT-NEXT:    mova m1, #-4; mov p5, sp
 ; NO-PROLOGUE-SPLIT-NEXT:    paddb [p5], m1
 ; NO-PROLOGUE-SPLIT-NEXT:    lda dj0, [p5], #-4
@@ -267,11 +277,11 @@ define dso_local void @gemm(i32 %0, ptr addrspace(5) %1, ptr addrspace(5) %2, pt
 ; NO-PROLOGUE-SPLIT-NEXT:    lda dj7, [p5, #0]; movs dc7, dc3; addm.nc r0, r0, #-1; vaddmac dm2, dm2, dm4, x1, x10, r10
 ; NO-PROLOGUE-SPLIT-NEXT:    lda dn7, [p5, #-4]; nopb ; movs dc0, dc2; movxm p5, #.LBB0_1; vaddmac dm1, dm1, dm4, x6, x8, r10
 ; NO-PROLOGUE-SPLIT-NEXT:    movs dc4, dc6; movx crsrsmode, #0; mov s1, r17; vaddmac dm0, dm0, dm4, x1, x8, r10
-; NO-PROLOGUE-SPLIT-NEXT:    vldb x1, [p1], m4
-; NO-PROLOGUE-SPLIT-NEXT:    vlda.3d x10, [p1], d1
 ; NO-PROLOGUE-SPLIT-NEXT:  .LBB0_1: // %steady.stage1.top
 ; NO-PROLOGUE-SPLIT-NEXT:    // =>This Loop Header: Depth=1
 ; NO-PROLOGUE-SPLIT-NEXT:    // Child Loop BB0_2 Depth 2
+; NO-PROLOGUE-SPLIT-NEXT:    nopa ; vldb x1, [p1], m4; nopxm
+; NO-PROLOGUE-SPLIT-NEXT:    vlda.3d x10, [p1], d1
 ; NO-PROLOGUE-SPLIT-NEXT:    vldb x8, [p0], #64
 ; NO-PROLOGUE-SPLIT-NEXT:    vlda.3d x6, [p0], d0
 ; NO-PROLOGUE-SPLIT-NEXT:    vldb x1, [p1], m4
@@ -292,9 +302,9 @@ define dso_local void @gemm(i32 %0, ptr addrspace(5) %1, ptr addrspace(5) %2, pt
 ; NO-PROLOGUE-SPLIT-NEXT:    vlda.3d x6, [p0], d0; nopb ; nops ; nopx ; vshuffle x3, x1, x1, r7; vmac dm2, dm2, x6, x5, r8
 ; NO-PROLOGUE-SPLIT-NEXT:  // %bb.3: // %steady.stage1.bottom.and.stage0.top
 ; NO-PROLOGUE-SPLIT-NEXT:    // in Loop: Header=BB0_1 Depth=1
-; NO-PROLOGUE-SPLIT-NEXT:    vlda x1, [p1], m4; paddb.2d [p4], d7; nops ; nopx ; vshuffle x5, x3, x3, r16; vmac dm1, dm1, x8, x9, r8
-; NO-PROLOGUE-SPLIT-NEXT:    vlda.3d x5, [p1], d1; vldb.128 wl3, [p4, #16]; nops ; nopx ; vshuffle x7, x10, x10, r18; vmac dm0, dm0, x6, x9, r8
-; NO-PROLOGUE-SPLIT-NEXT:    nopa ; vldb x8, [p0], #64; nops ; nopx ; vshuffle x9, x7, x7, r20; vmac dm3, dm3, x8, x5, r8
+; NO-PROLOGUE-SPLIT-NEXT:    vlda x1, [p1], m4; paddb.2d [p4], d7; nopx ; vshuffle x5, x3, x3, r16; vmac dm1, dm1, x8, x9, r8
+; NO-PROLOGUE-SPLIT-NEXT:    vlda.3d x5, [p1], d1; vldb.128 wl3, [p4, #16]; vshuffle x7, x10, x10, r18; vmac dm0, dm0, x6, x9, r8
+; NO-PROLOGUE-SPLIT-NEXT:    vldb x8, [p0], #64; vshuffle x9, x7, x7, r20; vmac dm3, dm3, x8, x5, r8
 ; NO-PROLOGUE-SPLIT-NEXT:    vlda.3d x10, [p0], d0; vldb.128 wl6, [p4, #0]; vshuffle x3, x1, x1, r7; vmac dm2, dm2, x6, x5, r8
 ; NO-PROLOGUE-SPLIT-NEXT:    vlda.ups.2x cml3, s0, upssign1, [p2], #64; vshuffle x5, x3, x3, r16; vmac dm1, dm1, x8, x9, r8
 ; NO-PROLOGUE-SPLIT-NEXT:    vlda.ups.2x cmh3, s0, upssign1, [p2], #64; vshuffle x7, x10, x10, r18; vmac dm0, dm0, x6, x9, r8
@@ -306,13 +316,26 @@ define dso_local void @gemm(i32 %0, ptr addrspace(5) %1, ptr addrspace(5) %2, pt
 ; NO-PROLOGUE-SPLIT-NEXT:    vlda.ups.2x cmh0, s0, upssign1, [p2], #64; vshuffle x6, x1, x1, r1
 ; NO-PROLOGUE-SPLIT-NEXT:    vst.srs.4x dm3, s1, srssign0, [p3], #64; vshuffle x6, x6, x6, r2; vmul dm4, x0, x2, r12
 ; NO-PROLOGUE-SPLIT-NEXT:    vst.srs.4x dm2, s1, srssign0, [p3], m5; vshuffle x1, x5, x5, r3
-; NO-PROLOGUE-SPLIT-NEXT:    vst.srs.4x dm1, s1, srssign0, [p3], #64; jnzd r0, r0, p5; vshuffle x6, x1, x1, r4; vaddmac dm3, dm3, dm4, x8, x6, r10
-; NO-PROLOGUE-SPLIT-NEXT:    vst.2d.srs.4x dm0, s1, srssign0, [p3], d3; movx srssign0, #0; vaddmac dm2, dm2, dm4, x10, x6, r10 // Delay Slot 5
-; NO-PROLOGUE-SPLIT-NEXT:    vmul dm4, x0, x4, r12 // Delay Slot 4
+; NO-PROLOGUE-SPLIT-NEXT:    vst.srs.4x dm1, s1, srssign0, [p3], #64; vshuffle x6, x1, x1, r4; vaddmac dm3, dm3, dm4, x8, x6, r10
+; NO-PROLOGUE-SPLIT-NEXT:    vst.2d.srs.4x dm0, s1, srssign0, [p3], d3; movx srssign0, #0; vaddmac dm2, dm2, dm4, x10, x6, r10
+; NO-PROLOGUE-SPLIT-NEXT:    vmul dm4, x0, x4, r12
+; NO-PROLOGUE-SPLIT-NEXT:    nop
+; NO-PROLOGUE-SPLIT-NEXT:    vaddmac dm1, dm1, dm4, x8, x6, r10
+; NO-PROLOGUE-SPLIT-NEXT:    jnzd r0, r0, p5; vaddmac dm0, dm0, dm4, x10, x6, r10
+; NO-PROLOGUE-SPLIT-NEXT:    nop // Delay Slot 5
+; NO-PROLOGUE-SPLIT-NEXT:    nop // Delay Slot 4
 ; NO-PROLOGUE-SPLIT-NEXT:    nop // Delay Slot 3
-; NO-PROLOGUE-SPLIT-NEXT:    vldb x1, [p1], m4; vaddmac dm1, dm1, dm4, x8, x6, r10 // Delay Slot 2
-; NO-PROLOGUE-SPLIT-NEXT:    vlda.3d x10, [p1], d1; vaddmac dm0, dm0, dm4, x10, x6, r10 // Delay Slot 1
-; NO-PROLOGUE-SPLIT-NEXT:  // %bb.4: // %lastiter.stage1.top
+; NO-PROLOGUE-SPLIT-NEXT:    nop // Delay Slot 2
+; NO-PROLOGUE-SPLIT-NEXT:    nop // Delay Slot 1
+; NO-PROLOGUE-SPLIT-NEXT:    j #.LBB0_4
+; NO-PROLOGUE-SPLIT-NEXT:    nop // Delay Slot 5
+; NO-PROLOGUE-SPLIT-NEXT:    nop // Delay Slot 4
+; NO-PROLOGUE-SPLIT-NEXT:    nop // Delay Slot 3
+; NO-PROLOGUE-SPLIT-NEXT:    nop // Delay Slot 2
+; NO-PROLOGUE-SPLIT-NEXT:    nop // Delay Slot 1
+; NO-PROLOGUE-SPLIT-NEXT:  .LBB0_4: // %lastiter.stage1.top
+; NO-PROLOGUE-SPLIT-NEXT:    vldb x1, [p1], m4
+; NO-PROLOGUE-SPLIT-NEXT:    vlda.3d x10, [p1], d1
 ; NO-PROLOGUE-SPLIT-NEXT:    vldb x8, [p0], #64
 ; NO-PROLOGUE-SPLIT-NEXT:    vlda.3d x6, [p0], d0
 ; NO-PROLOGUE-SPLIT-NEXT:    vldb x1, [p1], m4

@@ -11,39 +11,31 @@
 ; The outer latch must leave the loop nest through %exit when its JNZD is not
 ; taken. Reduced from gemm_mx9_utility::init_acc_zero.
 ;
-; FIXME: the checks show the current, wrong layout. The latch's LoopJNZ takes
-; its target from a pointer register, so analyzeBranch cannot read it and the
-; branch to %exit is folded into a fallthrough. Block placement then rotates the
-; outer loop and puts %outer.header after the latch, so a not-taken JNZD runs
-; the loop nest again instead of returning.
+; FIXME: both latches keep a jump to their layout successor once block
+; placement is done.
 
 define void @nested_exit(ptr %dst, i32 %outer, i32 %inner) {
 ; CHECK-LABEL: nested_exit:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    mova r2, #0; nopb ; nops ; nopxm ; nopv
+; CHECK-NEXT:    mova r2, #0; nopxm
 ; CHECK-NEXT:    ge r4, r2, r0
-; CHECK-NEXT:    jnz r4, #.LBB0_2
+; CHECK-NEXT:    jnz r4, #.LBB0_9
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:  // %bb.1: // %outer.ph
-; CHECK-NEXT:    j #.LBB0_9
-; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    ge r4, r2, r1; addm.nc r0, r0, #-1 // Delay Slot 3
-; CHECK-NEXT:    movxm p1, #.LBB0_3 // Delay Slot 2
-; CHECK-NEXT:    movxm p2, #.LBB0_9 // Delay Slot 1
-; CHECK-NEXT:  .LBB0_2: // %exit
-; CHECK-NEXT:    nopa ; ret lr
-; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    nop // Delay Slot 1
+; CHECK-NEXT:    ge r4, r2, r1; addm.nc r0, r0, #-1
+; CHECK-NEXT:    movxm p1, #.LBB0_3
+; CHECK-NEXT:    movxm p2, #.LBB0_2
+; CHECK-NEXT:  .LBB0_2: // %outer.header
+; CHECK-NEXT:    // =>This Loop Header: Depth=1
+; CHECK-NEXT:    // Child Loop BB0_3 Depth 2
+; CHECK-NEXT:    // Child Loop BB0_5 Depth 3
+; CHECK-NEXT:    mova r6, #3; nopb ; nops ; nopxm ; nopv
 ; CHECK-NEXT:  .LBB0_3: // %mid.header
-; CHECK-NEXT:    // Parent Loop BB0_9 Depth=1
+; CHECK-NEXT:    // Parent Loop BB0_2 Depth=1
 ; CHECK-NEXT:    // => This Loop Header: Depth=2
 ; CHECK-NEXT:    // Child Loop BB0_5 Depth 3
 ; CHECK-NEXT:    nopa ; nopb ; nops ; jnz r4, #.LBB0_7; nopv
@@ -63,7 +55,7 @@ define void @nested_exit(ptr %dst, i32 %outer, i32 %inner) {
 ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
 ; CHECK-NEXT:  .LBB0_5: // %inner.body
-; CHECK-NEXT:    // Parent Loop BB0_9 Depth=1
+; CHECK-NEXT:    // Parent Loop BB0_2 Depth=1
 ; CHECK-NEXT:    // Parent Loop BB0_3 Depth=2
 ; CHECK-NEXT:    // => This Inner Loop Header: Depth=3
 ; CHECK-NEXT:  .L_LEnd0:
@@ -79,24 +71,33 @@ define void @nested_exit(ptr %dst, i32 %outer, i32 %inner) {
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
-; CHECK-NEXT:  // %bb.8: // %outer.latch
-; CHECK-NEXT:    // in Loop: Header=BB0_9 Depth=1
+; CHECK-NEXT:    j #.LBB0_8
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    nop // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
+; CHECK-NEXT:  .LBB0_8: // %outer.latch
+; CHECK-NEXT:    // in Loop: Header=BB0_2 Depth=1
 ; CHECK-NEXT:    jnzd r0, r0, p2
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
-; CHECK-NEXT:  .LBB0_9: // %outer.header
-; CHECK-NEXT:    // =>This Loop Header: Depth=1
-; CHECK-NEXT:    // Child Loop BB0_3 Depth 2
-; CHECK-NEXT:    // Child Loop BB0_5 Depth 3
-; CHECK-NEXT:    nopa ; nopb ; nops ; j #.LBB0_3; nopv
-; CHECK-NEXT:    nopa ; nopx // Delay Slot 5
+; CHECK-NEXT:    j #.LBB0_9
+; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mova r6, #3 // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 1
+; CHECK-NEXT:  .LBB0_9: // %exit
+; CHECK-NEXT:    nopa ; ret lr
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    nop // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %has.outer = icmp sgt i32 %outer, 0
   br i1 %has.outer, label %outer.ph, label %exit
