@@ -132,10 +132,8 @@ static cl::opt<bool> LeanStage0Mode(
              "intrinsics selected for lean stage 0"),
     cl::init(false), cl::Hidden);
 
-/// Outer loop type selection after pipelining.
-enum class OuterLoopType { Soft, HW, Auto };
-
-static cl::opt<OuterLoopType> OuterLoopTypeOpt(
+namespace llvm {
+cl::opt<OuterLoopType> OuterLoopTypeOpt(
     "aie-outer-loop-type",
     cl::desc("Outer loop type selection after pipelining"),
     cl::values(clEnumValN(OuterLoopType::Soft, "soft",
@@ -145,6 +143,7 @@ static cl::opt<OuterLoopType> OuterLoopTypeOpt(
                clEnumValN(OuterLoopType::Auto, "auto",
                           "Auto-select based on pointer pressure")),
     cl::init(OuterLoopType::Auto), cl::Hidden);
+} // namespace llvm
 
 static cl::opt<unsigned> OuterLoopPointerThreshold(
     "aie-outer-loop-pointer-threshold",

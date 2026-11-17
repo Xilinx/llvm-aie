@@ -23,10 +23,12 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "AIE.h"
 #include "AIEBaseInstrInfo.h"
 #include "AIEBaseSubtarget.h"
 #include "MCTargetDesc/AIE2MCTargetDesc.h"
 #include "Utils/AIELoopOptionOverrides.h"
+#include "Utils/AIELoopUtils.h"
 #include "llvm/Analysis/OptimizationRemarkEmitter.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -639,6 +641,12 @@ bool AIEBaseHardwareLoops::canFallBackToJNZ(
   MachineBasicBlock *Latch = End->getParent();
   MachineBasicBlock *Header = LoLoop.ML.getHeader();
   MachineBasicBlock *Preheader = LoLoop.ML.getLoopPreheader();
+  // The user asked the outer loop pipeliner for a JNZD, through
+  // -aie-outer-loop-type=hw or its loop hint.
+  if (AIELoopUtils::isOuterLoopPipelined(*Latch) &&
+      AIE::LoopOptionOverrides(*Latch).get(OuterLoopTypeOpt) ==
+          OuterLoopType::HW)
+    return false;
   const Register Counter = Dec->getOperand(0).getReg();
   // On every exit, early ones included, JNZD leaves the counter one lower than
   // JNZ does, so nothing may read the counter after the loop.
