@@ -122,6 +122,7 @@ class DataDependenceHelper : public ScheduleDAGInstrs {
   void addChainDependencies(SUnit *SU, Value2SUsMap &Val2SUsMap);
   // Add chain dependencies from all SUs mapped to V in Val2SUsMap to SU.
   void addChainDependencies(SUnit *SU, Value2SUsMap &Val2SUsMap, ValueType V);
+  void addBarrierDeps(Value2SUsMap &Map);
 
 protected:
   // Memory disambiguation that applies the configuration of this helper on

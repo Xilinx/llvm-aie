@@ -524,6 +524,17 @@ void DataDependenceHelper::buildEdges(ScheduleDAGInstrs &Target,
                  << "Global memory object and new barrier chain: SU("
                  << BarrierChain->NodeNum << ").\n");
 
+      // A barrier that does not access memory, e.g. a lock, adds no memory
+      // latency: keep the maps so that aliasing accesses get their own edge.
+      if (!MI.mayLoadOrStore()) {
+        addBarrierDeps(Stores);
+        addBarrierDeps(Loads);
+        addBarrierDeps(NonAliasStores);
+        addBarrierDeps(NonAliasLoads);
+        addBarrierChain(FPExceptions);
+        continue;
+      }
+
       addBarrierChain(Stores);
       addBarrierChain(Loads);
       addBarrierChain(NonAliasStores);
@@ -624,6 +635,12 @@ void DataDependenceHelper::addChainDependency(SUnit *SUa, SUnit *SUb,
   SDep Dep(SUa, SDep::MayAliasMem);
   Dep.setLatency(Latency);
   SUb->addPred(Dep);
+}
+
+void DataDependenceHelper::addBarrierDeps(Value2SUsMap &Map) {
+  for (auto &[_, SUs] : Map)
+    for (SUnit *SU : SUs)
+      SU->addPredBarrier(BarrierChain);
 }
 
 void DataDependenceHelper::addChainDependencies(SUnit *SU, SUList &SUs,
