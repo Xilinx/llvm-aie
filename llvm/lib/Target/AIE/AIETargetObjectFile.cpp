@@ -65,3 +65,4 @@ MCSection *AIEELFTargetObjectFile::SelectSectionForGlobal(
   }
   return TargetLoweringObjectFileELF::SelectSectionForGlobal(GO, Kind, TM);
 }
+// Throwaway change to exercise the code_formatter workflow.
