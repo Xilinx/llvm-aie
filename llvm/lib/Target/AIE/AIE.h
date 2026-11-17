@@ -135,6 +135,9 @@ void initializeAIEOuterLoopPipelinerPass(PassRegistry &);
 // Passing nullptr selects the default policy.
 llvm::FunctionPass *createAIEOuterLoopPipelinerPass(
     std::unique_ptr<const AIEOLPTargetConfig> Config = nullptr);
+/// Outer loop type selection after pipelining.
+enum class OuterLoopType { Soft, HW, Auto };
+extern llvm::cl::opt<OuterLoopType> OuterLoopTypeOpt;
 
 // Inner Loop Versioning (IR-level). Emits a runtime trip-count guard around a
 // pipelined copy of a single-block inner loop whose minimum trip count is too
