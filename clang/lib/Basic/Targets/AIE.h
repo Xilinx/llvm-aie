@@ -23,29 +23,8 @@
 namespace clang {
 namespace targets {
 
-static const char *const DataLayoutStringAIE =
-    "e-m:e-p:20:32-i1:8:32-i8:8:32-i16:16:32-"
-    "i32:32:32-f32:32:32-i64:32-f64:32-a:0:32-n32";
-
-static const char *const DataLayoutStringAIE2 =
-    "e-m:e-p:20:32-i1:8:32-i8:8:32-i16:16:32-"
-    "i32:32:32-f32:32:32-i64:32-f64:32-a:0:32-n32";
-
-static const char *const DataLayoutStringAIE2P =
-    "e-m:e-p:20:32-i1:8:32-i8:8:32-i16:16:32-"
-    "i32:32:32-f32:32:32-i64:32-f64:32-a:0:32-n32";
-
-static const char *const DataLayoutStringAIE2PS =
-    "e-m:e-p:20:32-i1:8:32-i8:8:32-i16:16:32-"
-    "i32:32:32-f32:32:32-i64:32-f64:32-a:0:32-n32";
-
 class LLVM_LIBRARY_VISIBILITY AIETargetInfo : public TargetInfo {
 
-  // TODO aie1 is currently named as aie, perhaps we should change the
-  // triple name to aie1?
-  static bool isAIE1(const llvm::Triple &TT) {
-    return TT.getArch() == llvm::Triple::aie;
-  }
   static bool isAIE2(const llvm::Triple &TT) {
     return TT.getArch() == llvm::Triple::aie2;
   }
@@ -76,17 +55,7 @@ public:
     else
       MaxVectorAlign = 256;
 
-    std::string DataLayout;
-
-    if (isAIE1(getTriple()))
-      DataLayout = DataLayoutStringAIE;
-    else if (isAIE2(getTriple()))
-      DataLayout = DataLayoutStringAIE2;
-    else if (isAIE2P(getTriple()))
-      DataLayout = DataLayoutStringAIE2P;
-    else if (isAIE2PS(getTriple()))
-      DataLayout = DataLayoutStringAIE2PS;
-    resetDataLayout(DataLayout);
+    resetDataLayout();
 
     if (hasBFloat16Type()) {
       BFloat16Width = BFloat16Align = 16;
