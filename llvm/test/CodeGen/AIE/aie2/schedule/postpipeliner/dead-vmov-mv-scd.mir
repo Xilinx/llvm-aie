@@ -7,27 +7,24 @@
 
 # A side-effecting VMOV_mv_scd whose destination has no uses must stay in the
 # loop (cascade FIFO pop). Its only register-class constraint is mMvBMXDst,
-# which is non-allocatable. Physical-only post-pipelining works; the
-# virtualization path asserts.
+# which is non-allocatable. The post-pipeliner must narrow that class before
+# createVirtualRegister instead of asserting.
 
-# REQUIRES: asserts
 # RUN: llc -verify-machineinstrs --mtriple=aie2 -O2 \
 # RUN:     --start-before=postmisched %s \
 # RUN:     --aie-postpipeliner-vreg-mode=false \
 # RUN:     --aie-postpipeliner-phys-mode=true \
 # RUN:     -o - | FileCheck %s --check-prefix=PHYS
-# RUN: not --crash llc -verify-machineinstrs --mtriple=aie2 -O2 \
+# RUN: llc -verify-machineinstrs --mtriple=aie2 -O2 \
 # RUN:     --start-before=postmisched %s \
 # RUN:     --aie-postpipeliner-vreg-mode=true \
 # RUN:     --aie-postpipeliner-phys-mode=false \
-# RUN:     -o /dev/null 2>&1 | FileCheck %s --check-prefix=VREG
+# RUN:     -o - | FileCheck %s --check-prefix=VREG
 
 --- |
   target triple = "aie2"
 
   define void @dead_vmov_mv_scd(ptr addrspace(5) %d, i32 %n) {
-  ; VREG: Virtual register RegClass must be allocatable
-  ;
   ; PHYS-LABEL: dead_vmov_mv_scd:
   ; PHYS:       // %bb.0: // %preheader
   ; PHYS-NEXT:    nopa ; nopx ; add.nc lc, r0, #-1
@@ -51,6 +48,30 @@
   ; PHYS-NEXT:    nop // Delay Slot 3
   ; PHYS-NEXT:    nop // Delay Slot 2
   ; PHYS-NEXT:    nop // Delay Slot 1
+  ;
+  ; VREG-LABEL: dead_vmov_mv_scd:
+  ; VREG:       // %bb.0: // %preheader
+  ; VREG-NEXT:    nopa ; nopx ; add.nc lc, r0, #-1
+  ; VREG-NEXT:    movxm ls, #.LBB0_1
+  ; VREG-NEXT:    nopb ; nopa ; nops ; movxm le, #.L_LEnd0; nopv
+  ; VREG-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
+  ; VREG-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
+  ; VREG-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
+  ; VREG-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
+  ; VREG-NEXT:    nopb ; nopa ; nops ; movxm crSCDEn, #1; nopv
+  ; VREG-NEXT:    nopb ; vmov x0, SCD; nops ; add r1, r1, #1; nopm ; nopv
+  ; VREG-NEXT:    .p2align 4
+  ; VREG-NEXT:  .LBB0_1: // %loop_body
+  ; VREG-NEXT:    // =>This Inner Loop Header: Depth=1
+  ; VREG-NEXT:  .L_LEnd0:
+  ; VREG-NEXT:    nopb ; vmov x0, SCD; st r1, [p0], #4; add r1, r1, #1; nopm ; nopv
+  ; VREG-NEXT:  // %bb.2: // %exit
+  ; VREG-NEXT:    st r1, [p0], #4; ret lr
+  ; VREG-NEXT:    nop // Delay Slot 5
+  ; VREG-NEXT:    nop // Delay Slot 4
+  ; VREG-NEXT:    nop // Delay Slot 3
+  ; VREG-NEXT:    nop // Delay Slot 2
+  ; VREG-NEXT:    nop // Delay Slot 1
   preheader:
     call void @llvm.set.loop.iterations.i32(i32 %n)
     br label %loop_body
