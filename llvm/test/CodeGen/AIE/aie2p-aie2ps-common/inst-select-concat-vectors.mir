@@ -30,6 +30,25 @@ body:             |
     PseudoRET implicit $lr, implicit %2
 ...
 
+# A 1024-bit <16 x s64> concat on the vector bank.
+---
+name:            vconcat_v16s64_v8s64
+legalized:       true
+regBankSelected: true
+tracksRegLiveness: true
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: vconcat_v16s64_v8s64
+    ; CHECK: [[DEF:%[0-9]+]]:exe = IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:exo = IMPLICIT_DEF
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec1024 = REG_SEQUENCE [[DEF]], %subreg.sub_512_lo, [[DEF1]], %subreg.sub_512_hi
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[REG_SEQUENCE]]
+    %0:vregbank(<8 x s64>) = G_IMPLICIT_DEF
+    %1:vregbank(<8 x s64>) = G_IMPLICIT_DEF
+    %2:vregbank(<16 x s64>) = G_CONCAT_VECTORS %0(<8 x s64>), %1(<8 x s64>)
+    PseudoRET implicit $lr, implicit %2
+...
+
 ---
 name:            vconcat_1024_acc32
 legalized:       true
