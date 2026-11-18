@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -32,6 +32,13 @@ public:
   // This stops CodeGenPrepare from sinking compares next to their users, which
   // would otherwise pull LICM-hoisted loop-invariant compares back into loops.
   bool hasMultipleConditionRegisters(EVT VT) const override { return true; }
+
+  // No AIE target selects G_FMAD. The default implementation looks up the
+  // GlobalISel opcode in the SelectionDAG action table, where it aliases an
+  // unrelated ISD opcode.
+  bool isFMADLegal(const MachineInstr &MI, LLT Ty) const override {
+    return false;
+  }
 
   // Set the preferred type for memset intrinsics.
   EVT getOptimalMemOpType(LLVMContext &, const MemOp &Op,
