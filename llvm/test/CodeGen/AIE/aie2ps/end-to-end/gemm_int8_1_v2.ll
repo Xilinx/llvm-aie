@@ -64,7 +64,7 @@ define dso_local void @gemm_int8_1_v2(ptr noalias %p_a, ptr noalias %p_b, ptr no
 ; REMARKS-NEXT:   - Epilogue:        bb.3.steady.stage1.bottom.and.stage0.top
 ; REMARKS-NEXT:   - EpilogueBundles: '21'
 ; REMARKS-NEXT:   - VregMode:        Physical
-; REMARKS-NEXT:   - SchedHeuristic:  Config_16_1_0_NodeNum
+; REMARKS-NEXT:   - SchedHeuristic:  AvoidBankConflicts_Config_16_1_0_NodeNum
 ; REMARKS-NEXT: ...
 ; REMARKS: --- !Passed
 ; REMARKS-NEXT: Pass:            pipeliner
@@ -81,7 +81,7 @@ define dso_local void @gemm_int8_1_v2(ptr noalias %p_a, ptr noalias %p_b, ptr no
 ; REMARKS-NEXT:   - Epilogue:        bb.6.lastiter.stage1.bottom
 ; REMARKS-NEXT:   - EpilogueBundles: '23'
 ; REMARKS-NEXT:   - VregMode:        Physical
-; REMARKS-NEXT:   - SchedHeuristic:  Config_16_1_0_NodeNum
+; REMARKS-NEXT:   - SchedHeuristic:  AvoidBankConflicts_Config_16_1_0_NodeNum
 ; REMARKS-NEXT: ...
 ; CHECK-LABEL: gemm_int8_1_v2:
 ; CHECK:       // %bb.0: // %entry

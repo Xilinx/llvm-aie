@@ -89,7 +89,7 @@ define dso_local void @gemm(i32 %0, ptr addrspace(5) %1, ptr addrspace(5) %2, pt
 ; REMARKS-NEXT:   - Epilogue:        bb.3.steady.stage1.bottom.and.stage0.top
 ; REMARKS-NEXT:   - EpilogueBundles: '16'
 ; REMARKS-NEXT:   - VregMode:        Physical
-; REMARKS-NEXT:   - SchedHeuristic:  Config_16_1_0_NodeNum
+; REMARKS-NEXT:   - SchedHeuristic:  AvoidBankConflicts_Config_16_1_0_NodeNum
 ; REMARKS-NEXT: ...
 ; REMARKS: --- !Passed
 ; REMARKS-NEXT: Pass:            pipeliner
@@ -106,7 +106,7 @@ define dso_local void @gemm(i32 %0, ptr addrspace(5) %1, ptr addrspace(5) %2, pt
 ; REMARKS-NEXT:   - Epilogue:        bb.6.lastiter.stage1.bottom
 ; REMARKS-NEXT:   - EpilogueBundles: '19'
 ; REMARKS-NEXT:   - VregMode:        Physical
-; REMARKS-NEXT:   - SchedHeuristic:  Config_16_1_0_NodeNum
+; REMARKS-NEXT:   - SchedHeuristic:  AvoidBankConflicts_Config_16_1_0_NodeNum
 ; REMARKS-NEXT: ...
 ; ASM-LABEL: gemm:
 ; ASM:       // %bb.0: // %newFuncRoot

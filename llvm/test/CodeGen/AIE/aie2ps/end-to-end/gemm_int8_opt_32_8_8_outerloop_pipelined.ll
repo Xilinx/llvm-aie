@@ -118,7 +118,7 @@ define weak_odr dso_local void @gemm_int8_opt_32_8_8(ptr noalias nonnull align 4
 ; REMARKS-NEXT:   - Epilogue:        bb.4.steady.stage1.bottom.and.stage0.top
 ; REMARKS-NEXT:   - EpilogueBundles: '16'
 ; REMARKS-NEXT:   - VregMode:        Physical
-; REMARKS-NEXT:   - SchedHeuristic:  Config_16_1_0_NodeNum
+; REMARKS-NEXT:   - SchedHeuristic:  AvoidBankConflicts_Config_16_1_0_NodeNum
 ; REMARKS-NEXT: ...
 ; REMARKS: --- !Passed
 ; REMARKS-NEXT: Pass:            pipeliner
@@ -135,7 +135,7 @@ define weak_odr dso_local void @gemm_int8_opt_32_8_8(ptr noalias nonnull align 4
 ; REMARKS-NEXT:   - Epilogue:        bb.11.lastiter.stage1.bottom
 ; REMARKS-NEXT:   - EpilogueBundles: '16'
 ; REMARKS-NEXT:   - VregMode:        Physical
-; REMARKS-NEXT:   - SchedHeuristic:  Config_16_1_0_NodeNum
+; REMARKS-NEXT:   - SchedHeuristic:  AvoidBankConflicts_Config_16_1_0_NodeNum
 ; REMARKS-NEXT: ...
 ; REMARKS: --- !Passed
 ; REMARKS-NEXT: Pass:            pipeliner
@@ -152,7 +152,7 @@ define weak_odr dso_local void @gemm_int8_opt_32_8_8(ptr noalias nonnull align 4
 ; REMARKS-NEXT:   - Epilogue:        bb.8.steady.stage1.bottom.and.stage0.top258
 ; REMARKS-NEXT:   - EpilogueBundles: '20'
 ; REMARKS-NEXT:   - VregMode:        Physical
-; REMARKS-NEXT:   - SchedHeuristic:  Config_16_1_0_NodeNum
+; REMARKS-NEXT:   - SchedHeuristic:  AvoidBankConflicts_Config_16_1_0_NodeNum
 ; REMARKS-NEXT: ...
 ; REMARKS: --- !Passed
 ; REMARKS-NEXT: Pass:            pipeliner
@@ -169,7 +169,7 @@ define weak_odr dso_local void @gemm_int8_opt_32_8_8(ptr noalias nonnull align 4
 ; REMARKS-NEXT:   - Epilogue:        bb.14.lastiter.stage1.bottom431
 ; REMARKS-NEXT:   - EpilogueBundles: '20'
 ; REMARKS-NEXT:   - VregMode:        Physical
-; REMARKS-NEXT:   - SchedHeuristic:  Config_16_1_0_NodeNum
+; REMARKS-NEXT:   - SchedHeuristic:  AvoidBankConflicts_Config_16_1_0_NodeNum
 ; REMARKS-NEXT: ...
 ; ASM-LABEL: gemm_int8_opt_32_8_8:
 ; ASM:       // %bb.0: // %entry

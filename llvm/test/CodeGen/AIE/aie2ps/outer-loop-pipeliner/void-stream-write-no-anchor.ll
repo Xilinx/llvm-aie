@@ -66,7 +66,7 @@ define void @void_stream_write_no_anchor(ptr %a, ptr %c, i32 %n, i32 %m) {
 ; REMARKS-NEXT:   - Epilogue:        bb.4.outer.latch
 ; REMARKS-NEXT:   - EpilogueBundles: '8'
 ; REMARKS-NEXT:   - VregMode:        Physical
-; REMARKS-NEXT:   - SchedHeuristic:  Config_2_1_0_NodeNum
+; REMARKS-NEXT:   - SchedHeuristic:  AvoidBankConflicts_Config_2_1_0_NodeNum
 ; REMARKS-NEXT: ...
 ; CHECK-LABEL: define void @void_stream_write_no_anchor(
 ; CHECK:       outer.header:

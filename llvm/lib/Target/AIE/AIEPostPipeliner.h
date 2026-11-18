@@ -160,6 +160,8 @@ public:
 };
 
 class PostPipelinerStrategy {
+  MemoryBankPolicy BankPolicy;
+
 protected:
   ScheduleDAGInstrs &DAG;
   ScheduleInfo &Info;
@@ -185,12 +187,14 @@ public:
   }
 
 public:
-  PostPipelinerStrategy(ScheduleDAGInstrs &DAG, ScheduleInfo &Info,
-                        int LatestBias)
-      : DAG(DAG), Info(Info), LatestBias(LatestBias) {};
+  PostPipelinerStrategy(
+      ScheduleDAGInstrs &DAG, ScheduleInfo &Info, int LatestBias,
+      MemoryBankPolicy BankPolicy = MemoryBankPolicy::LoadOnly)
+      : BankPolicy(BankPolicy), DAG(DAG), Info(Info), LatestBias(LatestBias) {}
   virtual ~PostPipelinerStrategy() {};
   // Provide a name for logging purposes
   virtual std::string name() { return "PostPipelinerStrategy"; }
+  MemoryBankPolicy getBankPolicy() const { return BankPolicy; }
   // Returns false if the strategy is disabled by a command line option.
   bool isEnabled();
   // Choose among available alternatives
@@ -261,7 +265,7 @@ public:
 class PostPipeliner {
   friend class MultiRunPostPipelinerStrategy;
 
-  const AIEHazardRecognizer &HR;
+  AIEHazardRecognizer &HR;
   RegLiveRangeTracker &RegTracker;
   ScheduleDAGMI *DAG = nullptr;
   const AIEBaseInstrInfo *TII = nullptr;
@@ -407,7 +411,7 @@ class PostPipeliner {
   bool tryAllocateRegisters();
 
 public:
-  PostPipeliner(const AIEHazardRecognizer &HR, int NInstr,
+  PostPipeliner(AIEHazardRecognizer &HR, int NInstr,
                 RegLiveRangeTracker &RegTracker, const MachineFunction &MF);
 
   /// Check whether this is a suitable loop for the PostPipeliner. It also
