@@ -34,6 +34,7 @@
 #include "llvm/CodeGen/ScheduleDAGInstrs.h"
 #include "llvm/MC/MCInstrItineraries.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/SaveAndRestore.h"
 #include "llvm/Transforms/Utils/LoopUtils.h"
 #include <limits>
 #include <string>
@@ -58,6 +59,11 @@ static cl::opt<std::string>
                            cl::desc("Disable all post-pipeliner strategies"
                                     " whose name starts with this prefix"),
                            cl::init(""), cl::Hidden);
+
+static cl::opt<bool> TryAvoidBankConflicts(
+    "aie-postpipeliner-avoid-bank-conflicts",
+    cl::desc("Try avoiding load and store bank conflicts at the current II"),
+    cl::init(true), cl::Hidden);
 
 static cl::opt<int> PresetII("aie-postpipeliner-target-ii",
                              cl::desc("II for which to allow the solver"),
@@ -141,7 +147,7 @@ public:
 // The latency state is maintained in an 'Earliest' entry for each SUnit,
 // which is updated whenvever we schedule a predecessor of that SUnit.
 
-PostPipeliner::PostPipeliner(const AIEHazardRecognizer &HR, int NInstr,
+PostPipeliner::PostPipeliner(AIEHazardRecognizer &HR, int NInstr,
                              RegLiveRangeTracker &RegTracker,
                              const MachineFunction &MF)
     : HR(HR), RegTracker(RegTracker), Interpreter(MF), NInstr(NInstr) {}
@@ -938,6 +944,8 @@ void PostPipeliner::resetSchedule(bool FullReset) {
 }
 
 bool PostPipeliner::scheduleFirstIteration(PostPipelinerStrategy &Strategy) {
+  SaveAndRestore<MemoryBankPolicy> BankPolicyScope =
+      HR.setMemoryBankPolicy(Strategy.getBankPolicy());
   for (int K = 0; K < NInstr; K++) {
     const int N = mostUrgent(Strategy);
     SUnit &SU = DAG->SUnits[N];
@@ -964,14 +972,11 @@ bool PostPipeliner::scheduleFirstIteration(PostPipelinerStrategy &Strategy) {
     }
     const int Actual = *OptCycle;
     const int ModCycle = Actual % II;
-    const MemoryBankBits MemoryBanks = HR.getMemoryBanks(MI);
-    const MemoryObjectPair ObjectBits = HR.getMemoryObjectsBits(MI);
     if (HR.checkConflict(Scoreboard, *MI, ModCycle)) {
       LLVM_DEBUG(dbgs() << "Conflict at modulo cycle " << ModCycle << "\n");
       return false;
     }
-    HR.emitInScoreboard(Scoreboard, MI->getDesc(), MemoryBanks, ObjectBits,
-                        MI->operands(), MI->getMF()->getRegInfo(), ModCycle);
+    HR.emitInScoreboard(Scoreboard, *MI, MI->getDesc(), ModCycle);
 
     scheduleNode(SU, Actual, Strategy);
     Info.commitCycle(N);
@@ -1482,8 +1487,9 @@ public:
   ConfigStrategy(ScheduleDAGInstrs &DAG, ScheduleInfo &Info, int Length,
                  bool TopDown, bool Alternate,
                  ArrayRef<PriorityComponent> Components,
-                 ArrayRef<PlacementModifier> Modifiers = {})
-      : PostPipelinerStrategy(DAG, Info, Length), TopDown(TopDown),
+                 ArrayRef<PlacementModifier> Modifiers = {},
+                 MemoryBankPolicy BankPolicy = MemoryBankPolicy::LoadOnly)
+      : PostPipelinerStrategy(DAG, Info, Length, BankPolicy), TopDown(TopDown),
         Alternate(Alternate), Modifiers(Modifiers.begin(), Modifiers.end()) {
     Name = "Config_" + std::to_string(Length) + "_" + std::to_string(TopDown) +
            "_" + std::to_string(Alternate);
@@ -1493,6 +1499,8 @@ public:
     }
     for (auto Mod : this->Modifiers)
       Name += "_" + getPlacementName(Mod);
+    if (BankPolicy == MemoryBankPolicy::LoadAndStore)
+      Name = "AvoidBankConflicts_" + Name;
   }
 
   // Apply placement modifiers to adjust the cycle chosen for SU.
@@ -1670,8 +1678,8 @@ public:
     if (!HasPlacedSucc && !HasPlacedPred && Earliest < Latest) {
       const int Mid = (Earliest + Latest) / 2;
       // ASAP in the upper half, then ALAP in the lower half.
-      auto Result =
-          scanInterval(SU, Mid, Latest, II, HR, Scoreboard, /*FromTop=*/true);
+      auto Result = scanInterval(SU, Mid, Latest, II, HR, Scoreboard,
+                                 /*FromTop=*/true);
       if (!Result && Mid > Earliest)
         Result = scanInterval(SU, Earliest, Mid - 1, II, HR, Scoreboard,
                               /*FromTop=*/false);
@@ -1777,6 +1785,19 @@ bool PostPipeliner::tryApproaches() {
     if (tryScarceRangePacking()) {
       DEBUG_SUMMARY(dbgs() << "    Scarce range packing succeeded\n");
       return true;
+    }
+  }
+
+  if (TryAvoidBankConflicts && Heuristic <= 0) {
+    ConfigStrategy S(*DAG, Info, MinLength + II, /*TopDown=*/true,
+                     /*Alternate=*/false, {Prio::NodeNum}, {},
+                     MemoryBankPolicy::LoadAndStore);
+    if (S.isEnabled()) {
+      resetSchedule(/*FullReset=*/true);
+      if (scheduleWithStrategy(S))
+        return true;
+      // Restoring the policy does not remove the store masks already recorded.
+      resetSchedule(/*FullReset=*/true);
     }
   }
 

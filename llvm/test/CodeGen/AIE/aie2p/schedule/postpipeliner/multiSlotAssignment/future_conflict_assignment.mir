@@ -49,7 +49,7 @@ body:             |
   ; CHECK-NEXT:   - Epilogue:        bb.4
   ; CHECK-NEXT:   - EpilogueBundles: '6'
   ; CHECK-NEXT:   - VregMode:        Physical
-  ; CHECK-NEXT:   - SchedHeuristic:  Config_4_1_0_NodeNum
+  ; CHECK-NEXT:   - SchedHeuristic:  AvoidBankConflicts_Config_4_1_0_NodeNum
   ; CHECK-NEXT: ...
   bb.0 (align 16):
     successors: %bb.1(0x50000000), %bb.3(0x30000000)

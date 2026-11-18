@@ -64,7 +64,7 @@ define dso_local void @gemm_int8_1(ptr noalias %p_a, ptr noalias %p_b, ptr noali
 ; REMARKS-NEXT:   - Epilogue:        bb.3.for.cond.cleanup99
 ; REMARKS-NEXT:   - EpilogueBundles: '20'
 ; REMARKS-NEXT:   - VregMode:        Physical
-; REMARKS-NEXT:   - SchedHeuristic:  Config_16_1_0_NodeNum
+; REMARKS-NEXT:   - SchedHeuristic:  AvoidBankConflicts_Config_16_1_0_NodeNum
 ; REMARKS-NEXT: ...
 ; REMARKS: --- !Passed
 ; REMARKS-NEXT: Pass:            pipeliner
@@ -81,7 +81,7 @@ define dso_local void @gemm_int8_1(ptr noalias %p_a, ptr noalias %p_b, ptr noali
 ; REMARKS-NEXT:   - Epilogue:        bb.6.cooldown.exit
 ; REMARKS-NEXT:   - EpilogueBundles: '23'
 ; REMARKS-NEXT:   - VregMode:        Physical
-; REMARKS-NEXT:   - SchedHeuristic:  Config_16_1_0_NodeNum
+; REMARKS-NEXT:   - SchedHeuristic:  AvoidBankConflicts_Config_16_1_0_NodeNum
 ; REMARKS-NEXT: ...
 ; ASM-LABEL: gemm_int8_1:
 ; ASM:       // %bb.0: // %entry

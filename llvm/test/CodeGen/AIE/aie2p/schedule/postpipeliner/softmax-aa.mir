@@ -282,7 +282,7 @@ body:             |
   ; CHECK-NEXT:   - Epilogue:        bb.4.for.cond.cleanup4
   ; CHECK-NEXT:   - EpilogueBundles: '10'
   ; CHECK-NEXT:   - VregMode:        Physical
-  ; CHECK-NEXT:   - SchedHeuristic:  Config_20_1_0_NodeNum
+  ; CHECK-NEXT:   - SchedHeuristic:  AvoidBankConflicts_Config_20_1_0_NodeNum
   ; CHECK-NEXT: ...
   bb.0.entry (align 16):
     successors: %bb.1(0x50000000), %bb.5(0x30000000)
@@ -402,7 +402,7 @@ body:             |
   ; CHECK-NEXT:   - Epilogue:        bb.4.for.cond.cleanup4
   ; CHECK-NEXT:   - EpilogueBundles: '10'
   ; CHECK-NEXT:   - VregMode:        Physical
-  ; CHECK-NEXT:   - SchedHeuristic:  Config_20_1_0_NodeNum
+  ; CHECK-NEXT:   - SchedHeuristic:  AvoidBankConflicts_Config_20_1_0_NodeNum
   ; CHECK-NEXT: ...
   bb.0.entry (align 16):
     successors: %bb.1(0x50000000), %bb.5(0x30000000)
@@ -525,7 +525,7 @@ body:             |
   ; CHECK-NEXT:   - Epilogue:        bb.4.for.cond.cleanup4
   ; CHECK-NEXT:   - EpilogueBundles: '7'
   ; CHECK-NEXT:   - VregMode:        Physical
-  ; CHECK-NEXT:   - SchedHeuristic:  Config_28_1_0_NodeNum
+  ; CHECK-NEXT:   - SchedHeuristic:  AvoidBankConflicts_Config_28_1_0_NodeNum
   ; CHECK-NEXT: ...
   bb.0.entry (align 16):
     successors: %bb.1(0x50000000), %bb.5(0x30000000)
@@ -645,7 +645,7 @@ body:             |
   ; CHECK-NEXT:   - Epilogue:        bb.4.for.cond.cleanup4
   ; CHECK-NEXT:   - EpilogueBundles: '7'
   ; CHECK-NEXT:   - VregMode:        Physical
-  ; CHECK-NEXT:   - SchedHeuristic:  Config_28_1_0_NodeNum
+  ; CHECK-NEXT:   - SchedHeuristic:  AvoidBankConflicts_Config_28_1_0_NodeNum
   ; CHECK-NEXT: ...
   bb.0.entry (align 16):
     successors: %bb.1(0x50000000), %bb.5(0x30000000)

@@ -2159,7 +2159,7 @@ static void materializePipelineCandidate(MachineBasicBlock &Loop,
 }
 
 void BlockState::initInterBlock(const MachineSchedContext &Context,
-                                const AIEHazardRecognizer &HR) {
+                                AIEHazardRecognizer &HR) {
   assert(Kind == BlockType::Loop);
   assert(all_of(Regions,
                 [](const Region &R) {

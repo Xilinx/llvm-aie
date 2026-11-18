@@ -26,19 +26,20 @@ define void @xor_same_bank(ptr noalias %src, ptr noalias %dst, i32 %trip) {
 ; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; vband x6, x4, x0; nopv
 ; CHECK-NEXT:  .LBB0_1: // %loop
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
-; CHECK-NEXT:    nopa ; vldb x4, [p0], #64; vst x1, [p1], #64; nopx ; vbor x8, x4, x0; nopv
-; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; vsub.32 x10, x8, x6; nopv
+; CHECK-NEXT:    nopa ; vldb x4, [p0], #64; nops ; nopx ; vbor x8, x4, x0; nopv
+; CHECK-NEXT:    nopa ; nopb ; vst x1, [p1], #64; nopx ; vsub.32 x10, x8, x6; nopv
 ; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; vadd.32 x1, x10, x2; nopv
 ; CHECK-NEXT:  .L_LEnd0:
 ; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; vband x6, x4, x0; nopv
 ; CHECK-NEXT:  // %bb.2: // %exit
-; CHECK-NEXT:    vst x1, [p1], #64; nopx ; vbor x8, x4, x0
-; CHECK-NEXT:    vsub.32 x10, x8, x6
+; CHECK-NEXT:    vbor x8, x4, x0
+; CHECK-NEXT:    vst x1, [p1], #64; vsub.32 x10, x8, x6
 ; CHECK-NEXT:    vadd.32 x1, x10, x2
 ; CHECK-NEXT:    vband x6, x4, x0
-; CHECK-NEXT:    vst x1, [p1], #64; ret lr; vbor x8, x4, x0
-; CHECK-NEXT:    vsub.32 x10, x8, x6 // Delay Slot 5
-; CHECK-NEXT:    vadd.32 x1, x10, x2 // Delay Slot 4
+; CHECK-NEXT:    vbor x8, x4, x0
+; CHECK-NEXT:    vst x1, [p1], #64; ret lr; vsub.32 x10, x8, x6
+; CHECK-NEXT:    vadd.32 x1, x10, x2 // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    vst x1, [p1], #64 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1

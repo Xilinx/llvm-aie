@@ -27,6 +27,7 @@
 #include "llvm/CodeGen/TargetSubtargetInfo.h"
 #include "llvm/MC/MCInstrDesc.h"
 #include "llvm/MC/MCInstrItineraries.h"
+#include "llvm/Support/SaveAndRestore.h"
 
 namespace llvm {
 
@@ -41,6 +42,8 @@ struct MemoryObjectPair {
   MemoryObjectsBits Load = 0;
   MemoryObjectsBits Store = 0;
 };
+
+enum class MemoryBankPolicy { LoadOnly, LoadAndStore };
 
 void applyFormatOrdering(AIE::MachineBundle &Bundle, const VLIWFormat &Format,
                          MachineInstr *BundleRoot,
@@ -85,11 +88,7 @@ class FuncUnitWrapper {
   /// in cycles to be merged, but they will not be merged into the scoreboard.
   SlotBits Conflicts = 0;
 
-  /// The occupied memory banks. Tracking is done only for loads:
-  /// AIE has multiple load ports, so two loads in the same cycle can
-  /// collide on the same bank. Stores cannot collide because the slot
-  /// structure permits only one store per cycle. If Stores overlap, Resource
-  /// conflicts already captures the conflict.
+  /// The logical banks occupied by the memory accesses being tracked.
   MemoryBankBits MemoryBanks = 0;
 
   /// The occupied pointer objects for loads.
@@ -164,6 +163,7 @@ public:
 class AIEHazardRecognizer : public ScheduleHazardRecognizer {
   int PipelineDepth = -1;
   int MaxLatency = -1;
+  MemoryBankPolicy BankPolicy = MemoryBankPolicy::LoadOnly;
 
   mutable MemoryObjectEnumerator ObjectEnumerator;
 
@@ -207,6 +207,12 @@ public:
   /// issued again.
   void setReservedCycles(unsigned Cycles);
 
+  /// Use one policy for all checks and emissions into a scoreboard attempt.
+  [[nodiscard]] SaveAndRestore<MemoryBankPolicy>
+  setMemoryBankPolicy(MemoryBankPolicy Policy) {
+    return SaveAndRestore(BankPolicy, Policy);
+  }
+
   /// Multi-slot instructions try their alternatives in the order that the
   /// tracker prefers. nullptr keeps the TableGen order.
   void setSlotDemandTracker(const AIE::SlotDemandTracker *Tracker) {
@@ -244,7 +250,6 @@ public:
   // Dump the scoreboard
   void dumpScoreboard() const;
 
-  /// Return the memory banks accessed by \p MI, or 0 for non-loads.
   MemoryBankBits getMemoryBanks(const MachineInstr *MI) const;
 
   /// For instructions using memory operands, return

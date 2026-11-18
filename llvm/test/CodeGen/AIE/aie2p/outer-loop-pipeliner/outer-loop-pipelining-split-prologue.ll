@@ -106,7 +106,7 @@ define void @split_prologue_basic(ptr noalias %a_ptr_init,
 ; CHECK-NEXT:   - Epilogue:        bb.4.steady.stage1.bottom.and.stage0.top
 ; CHECK-NEXT:   - EpilogueBundles: '8'
 ; CHECK-NEXT:   - VregMode:        Physical
-; CHECK-NEXT:   - SchedHeuristic:  Config_2_1_0_NodeNum
+; CHECK-NEXT:   - SchedHeuristic:  AvoidBankConflicts_Config_2_1_0_NodeNum
 ; CHECK-NEXT: ...
 ; CHECK: --- !Passed
 ; CHECK-NEXT: Pass:            pipeliner
@@ -123,7 +123,7 @@ define void @split_prologue_basic(ptr noalias %a_ptr_init,
 ; CHECK-NEXT:   - Epilogue:        bb.7.lastiter.stage1.bottom
 ; CHECK-NEXT:   - EpilogueBundles: '1'
 ; CHECK-NEXT:   - VregMode:        Physical
-; CHECK-NEXT:   - SchedHeuristic:  Config_2_1_0_NodeNum
+; CHECK-NEXT:   - SchedHeuristic:  AvoidBankConflicts_Config_2_1_0_NodeNum
 ; CHECK-NEXT: ...
 ; ASM-LABEL: split_prologue_basic:
 ; ASM:       // %bb.0: // %entry
