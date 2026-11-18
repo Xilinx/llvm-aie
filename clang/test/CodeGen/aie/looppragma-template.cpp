@@ -128,7 +128,7 @@ template void upb_zero<0>(int *, int); // expected-note {{in instantiation of fu
 // CHECK-NEXT:    store i32 [[ADD]], ptr [[ARRAYIDX]], align 4, !tbaa [[TBAA2]]
 // CHECK-NEXT:    [[INC]] = add nuw nsw i32 [[I_05]], 1
 // CHECK-NEXT:    [[EXITCOND_NOT:%.*]] = icmp eq i32 [[INC]], [[N]]
-// CHECK-NEXT:    br i1 [[EXITCOND_NOT]], label %[[FOR_COND_CLEANUP]], label %[[FOR_BODY]], !llvm.loop [[LOOP12:![0-9]+]]
+// CHECK-NEXT:    br i1 [[EXITCOND_NOT]], label %[[FOR_COND_CLEANUP]], label %[[FOR_BODY]], !llvm.loop [[LOOP13:![0-9]+]]
 //
 //.
 // CHECK: attributes #[[ATTR0]] = { mustprogress nounwind "no-trapping-math"="true" "stack-protector-buffer-size"="8" }
@@ -141,10 +141,11 @@ template void upb_zero<0>(int *, int); // expected-note {{in instantiation of fu
 // CHECK: [[META5]] = !{!"Simple C++ TBAA"}
 // CHECK: [[LOOP6]] = distinct !{[[LOOP6]], [[META7:![0-9]+]], [[META8:![0-9]+]]}
 // CHECK: [[META7]] = !{!"llvm.loop.mustprogress"}
-// CHECK: [[META8]] = !{!"llvm.loop.unroll.disable"}
+// CHECK: [[META8]] = !{!"llvm.loop.itercount.range", i64 1}
 // CHECK: [[LOOP9]] = distinct !{[[LOOP9]], [[META7]], [[META10:![0-9]+]]}
 // CHECK: [[META10]] = !{!"llvm.loop.itercount.range", i64 4}
-// CHECK: [[LOOP11]] = distinct !{[[LOOP11]], [[META7]], [[META8]]}
-// CHECK: [[LOOP12]] = distinct !{[[LOOP12]], [[META7]], [[META13:![0-9]+]]}
-// CHECK: [[META13]] = !{!"llvm.loop.itercount.range", i64 4, i64 16}
+// CHECK: [[LOOP11]] = distinct !{[[LOOP11]], [[META7]], [[META12:![0-9]+]]}
+// CHECK: [[META12]] = !{!"llvm.loop.itercount.range", i64 1, i64 1}
+// CHECK: [[LOOP13]] = distinct !{[[LOOP13]], [[META7]], [[META14:![0-9]+]]}
+// CHECK: [[META14]] = !{!"llvm.loop.itercount.range", i64 4, i64 16}
 //.
