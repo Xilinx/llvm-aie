@@ -2037,7 +2037,6 @@ void PeelingModuloScheduleExpander::validateAgainstModuloScheduleExpander() {
   std::string ScheduleDump;
   raw_string_ostream OS(ScheduleDump);
   Schedule.print(OS);
-  OS.flush();
 
   // First, run the normal ModuleScheduleExpander. We don't support any
   // InstrChanges.

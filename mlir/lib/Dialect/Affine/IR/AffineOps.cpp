@@ -2752,7 +2752,7 @@ void AffineForOp::getSuccessorRegions(
       // From the loop body, if the trip count is one, we can only branch back
       // to the parent.
       if (tripCount == 1) {
-        regions.push_back(RegionSuccessor(getOperation(), getResults()));
+        regions.push_back(RegionSuccessor::parent(getResults()));
         return;
       }
       if (tripCount == 0)
@@ -2763,7 +2763,7 @@ void AffineForOp::getSuccessorRegions(
         return;
       }
       if (tripCount.value() == 0) {
-        regions.push_back(RegionSuccessor(getOperation(), getResults()));
+        regions.push_back(RegionSuccessor::parent(getResults()));
         return;
       }
     }
@@ -2772,7 +2772,7 @@ void AffineForOp::getSuccessorRegions(
   // In all other cases, the loop may branch back to itself or the parent
   // operation.
   regions.push_back(RegionSuccessor(&getRegion(), getRegionIterArgs()));
-  regions.push_back(RegionSuccessor(getOperation(), getResults()));
+  regions.push_back(RegionSuccessor::parent(getResults()));
 }
 
 AffineBound AffineForOp::getLowerBound() {
@@ -3168,7 +3168,7 @@ void AffineIfOp::getSuccessorRegions(
         RegionSuccessor(&getThenRegion(), getThenRegion().getArguments()));
     // If the "else" region is empty, branch bach into parent.
     if (getElseRegion().empty()) {
-      regions.push_back(RegionSuccessor(getOperation(), getResults()));
+      regions.push_back(RegionSuccessor::parent(getResults()));
     } else {
       regions.push_back(
           RegionSuccessor(&getElseRegion(), getElseRegion().getArguments()));
@@ -3178,7 +3178,7 @@ void AffineIfOp::getSuccessorRegions(
 
   // If the predecessor is the `else`/`then` region, then branching into parent
   // op is valid.
-  regions.push_back(RegionSuccessor(getOperation(), getResults()));
+  regions.push_back(RegionSuccessor::parent(getResults()));
 }
 
 LogicalResult AffineIfOp::verify() {

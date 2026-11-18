@@ -75,6 +75,7 @@ add_lld_library(lldELF
   Core
   DebugInfoDWARF
   Demangle
+  DTLTO
   LTO
   MC
   Object

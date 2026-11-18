@@ -125,7 +125,7 @@ else:
 ; CHECK-NEXT:    br i1 %[[CO]], label %then, label %[[N:.*]]
 ; The duplicate %sw entries collapse into one; the %pre.bb entry is preserved.
 ; CHECK:       then:
-; CHECK:         %p1 = phi i32 [ 10, %sw ], [ %pre, %pre.bb ]
+; CHECK:         %p1 = phi i32 {{\[ 10, %sw \], \[ %pre, %pre.bb \]|\[ %pre, %pre.bb \], \[ 10, %sw \]}}
 ; CHECK:       other:
 ; CHECK:         %p2 = phi i32 [ 20, %[[N]] ]
 ; CHECK:       [[N]]:
