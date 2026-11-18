@@ -248,6 +248,12 @@ private:
   /// needs LoopDec and LoopJNZ to be the only instructions using the counter.
   /// The adds and the other readers also use it, so the loop keeps its JNZD.
   bool splitLoopDecFromOtherUses(LowOverheadLoop &LoLoop);
+  /// Fold a copy of the decremented counter back into the loop-carried
+  /// register, given \p Uses, the readers of the LoopDec result:
+  ///   $r28 = LoopDec $r13; $r13 = COPY $r28; LoopJNZ $r28
+  ///   ->  $r13 = LoopDec $r13; LoopJNZ $r13
+  bool tryFoldCounterCopy(LowOverheadLoop &LoLoop,
+                          const SmallPtrSetImpl<MachineInstr *> &Uses);
   /// Rewrite the latch of \p LoLoop so that LoopJNZ is the only reader of the
   /// LoopDec result, given \p Uses, the readers of that result.
   bool makeLoopDecSingleUse(LowOverheadLoop &LoLoop,
@@ -665,6 +671,89 @@ static bool isImplicitDefReadBefore(const MachineInstr &Dec,
   return false;
 }
 
+/// Whether decrementing \p Counter at \p End instead of at \p Dec keeps the
+/// value every instruction in between reads. Before the fold, \p Counter holds
+/// the old count until \p Copy and the decremented one after it. After the
+/// fold, it holds the old count until \p End.
+static bool isCounterSafeToDecrementAtBranch(const MachineInstr &Dec,
+                                             const MachineInstr &End,
+                                             const MachineInstr &Copy,
+                                             Register Counter,
+                                             const TargetRegisterInfo &TRI) {
+  bool PastCopy = false;
+  for (const MachineInstr &MI :
+       make_range(std::next(MachineBasicBlock::const_iterator(Dec)),
+                  MachineBasicBlock::const_iterator(End))) {
+    if (MI.isDebugInstr())
+      continue;
+    if (&MI == &Copy) {
+      PastCopy = true;
+      continue;
+    }
+    if (MI.modifiesRegister(Counter, &TRI) ||
+        (PastCopy && MI.readsRegister(Counter, &TRI)))
+      return false;
+  }
+  return true;
+}
+
+/// Register allocation can leave the decremented counter in another register
+/// than the loop-carried one, and copy it back before the loop branch:
+///   $r28 = LoopDec $r13
+///   $r13 = COPY $r28
+///   LoopJNZ killed $r28, ...
+/// Return that copy if decrementing $r13 at the loop branch instead keeps every
+/// value the latch and its successors read.
+static MachineInstr *
+findCounterCopy(MachineInstr &Dec, MachineInstr &End,
+                const SmallPtrSetImpl<MachineInstr *> &Uses,
+                const AIEBaseInstrInfo &TII, const TargetRegisterInfo &TRI) {
+  // The only readers are the copy and the loop branch.
+  if (Uses.size() != 2 || !Uses.count(&End))
+    return nullptr;
+  const Register Result = Dec.getOperand(0).getReg();
+  const Register Counter = Dec.getOperand(1).getReg();
+  if (TRI.regsOverlap(Result, Counter))
+    return nullptr;
+
+  // The copy writes the result back into the register LoopDec read.
+  MachineInstr *Copy =
+      *find_if(Uses, [&](MachineInstr *U) { return U != &End; });
+  const std::optional<DestSourcePair> DestSrc = TII.isCopyInstr(*Copy);
+  if (!DestSrc || DestSrc->Source->getReg() != Result ||
+      DestSrc->Destination->getReg() != Counter)
+    return nullptr;
+
+  // The latch still sees the right counter values.
+  if (!isCounterSafeToDecrementAtBranch(Dec, End, *Copy, Counter, TRI))
+    return nullptr;
+
+  // Nothing after the latch reads the result, which the fold no longer writes.
+  if (any_of(End.getParent()->successors(), [&](MachineBasicBlock *Succ) {
+        return isLiveInAnyAlias(*Succ, Result, TRI);
+      }))
+    return nullptr;
+  return Copy;
+}
+
+bool AIEBaseHardwareLoops::tryFoldCounterCopy(
+    LowOverheadLoop &LoLoop, const SmallPtrSetImpl<MachineInstr *> &Uses) {
+  MachineInstr *Dec = LoLoop.Dec;
+  MachineInstr *End = LoLoop.End;
+  MachineInstr *Copy = findCounterCopy(*Dec, *End, Uses, *TII, *TRI);
+  if (!Copy)
+    return false;
+  LLVM_DEBUG(dbgs() << "AIE Loops: Folding counter copy " << *Copy);
+  const Register Counter = Dec->getOperand(1).getReg();
+  MachineBasicBlock &MBB = *End->getParent();
+  Copy->eraseFromParent();
+  MBB.splice(End, &MBB, Dec);
+  Dec->getOperand(0).setReg(Counter);
+  End->getOperand(0).setReg(Counter);
+  End->getOperand(0).setIsKill(false);
+  return true;
+}
+
 bool AIEBaseHardwareLoops::splitLoopDecFromOtherUses(LowOverheadLoop &LoLoop) {
   MachineInstr *Dec = LoLoop.Dec;
   MachineInstr *End = LoLoop.End;
@@ -697,7 +786,8 @@ bool AIEBaseHardwareLoops::makeLoopDecSingleUse(
   // Both rewrites move LoopDec down to the loop branch.
   if (isImplicitDefReadBefore(*Dec, *End, *TRI))
     return false;
-  return splitLoopDecFromOtherUses(LoLoop);
+  // Prefer the fold: it is cheaper and keeps the JNZ fallback.
+  return tryFoldCounterCopy(LoLoop, Uses) || splitLoopDecFromOtherUses(LoLoop);
 }
 
 bool AIEBaseHardwareLoops::isJNZDExpensive(
