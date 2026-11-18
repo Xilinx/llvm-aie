@@ -78,6 +78,12 @@ bool isPrePipelinerForced(const MachineBasicBlock &LoopBlock) {
   return Marker && *Marker != 0;
 }
 
+bool isPreSchedulerDisabled(const MachineBasicBlock &LoopBlock) {
+  std::optional<int64_t> Marker =
+      getLoopHintInt(LoopBlock, DisablePreSchedulerHintKey);
+  return Marker && *Marker != 0;
+}
+
 std::optional<bool> getPipelinerDisabled(const MachineBasicBlock &LoopBlock) {
   if (getLoopMetadata(getLoopID(LoopBlock), "llvm.loop.pipeline.disable"))
     return true;
