@@ -5,16 +5,17 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -mtriple aie2 -run-pass=aie-postlegalizer-generic-combiner %s -verify-machineinstrs -o - | FileCheck %s
-# RUN: llc -mtriple aie2p -run-pass=aie-postlegalizer-generic-combiner %s -verify-machineinstrs -o - | FileCheck %s
-# RUN: llc -mtriple aie2ps -run-pass=aie-postlegalizer-generic-combiner %s -verify-machineinstrs -o - | FileCheck %s
+# RUN: llc -mtriple aie2 -run-pass=aie-prelegalizer-combiner %s -verify-machineinstrs -o - | FileCheck %s
+# RUN: llc -mtriple aie2p -run-pass=aie-prelegalizer-combiner %s -verify-machineinstrs -o - | FileCheck %s
+# RUN: llc -mtriple aie2ps -run-pass=aie-prelegalizer-combiner %s -verify-machineinstrs -o - | FileCheck %s
 
-# No AIE target can select G_FMAD, so the post-legalizer combiner must not fuse
-# a contractable fmul + fadd into one.
+# No AIE target can select G_FMAD, so no AIE combiner may fuse a contractable
+# fmul + fadd into one. Scalar s32 G_FMUL and G_FADD are libcalls or custom
+# legalization on AIE2/AIE2P/AIE2PS, so this input is only valid before
+# legalization; it is not legalized MIR.
 
 ---
 name:            fmul_fadd_contract
-legalized:       true
 tracksRegLiveness: true
 body:             |
   bb.0:
@@ -39,7 +40,6 @@ body:             |
 ...
 ---
 name:            fmul_fsub_contract
-legalized:       true
 tracksRegLiveness: true
 body:             |
   bb.0:
