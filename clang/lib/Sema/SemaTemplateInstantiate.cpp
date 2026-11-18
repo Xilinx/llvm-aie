@@ -3,6 +3,10 @@
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===/
 //
 //  This file implements C++ template instantiation.
@@ -2247,7 +2251,8 @@ TemplateInstantiator::TransformLoopHintAttr(const LoopHintAttr *LH) {
   llvm::APSInt ValueAPS =
       TransformedExpr->EvaluateKnownConstInt(getSema().getASTContext());
   // The values of 0 and 1 block any unrolling of the loop.
-  if (ValueAPS.isZero() || ValueAPS.isOne()) {
+  if (Option == LoopHintAttr::UnrollCount &&
+      (ValueAPS.isZero() || ValueAPS.isOne())) {
     Option = LoopHintAttr::Unroll;
     State = LoopHintAttr::Disable;
   }
