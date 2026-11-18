@@ -1,0 +1,39 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+# RUN: not --crash llc -O2 -mtriple=aie2ps -run-pass=aie-hardware-loops %s \
+# RUN:   -o - 2>&1 | FileCheck %s
+# REQUIRES: asserts
+
+# The ADC reads the carry LoopDec defines. Moving LoopDec down to the loop
+# branch would change that value, so the other use of the counter is not
+# rewritten.
+
+# CHECK: Assertion `SingleUse && "AIE Loops: Wrong/multiple use of LoopDec result!.\n"' failed.
+---
+name:            carry_read
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  bb.0 (align 16):
+    successors: %bb.1(0x80000000)
+    liveins: $p0, $r5, $r6, $r13
+
+    renamable $p4 = MOVXM_lng_cg %bb.1
+
+  bb.1 (align 16):
+    successors: %bb.1(0x7c000000), %bb.2(0x04000000)
+    liveins: $p0, $p4, $r5, $r6, $r13
+
+    renamable $r13 = LoopDec killed renamable $r13, implicit-def $srcarry
+    renamable $r5 = ADC killed renamable $r5, renamable $r6, implicit-def dead $srcarry, implicit $srcarry
+    ST_dms_sts_scalar_st_idx_imm renamable $r13, renamable $p0, 0 :: (store (s32))
+    LoopJNZ renamable $r13, renamable $p4
+    PseudoJ_jump_imm %bb.2
+
+  bb.2 (align 16):
+    PseudoRET implicit $lr
+...
