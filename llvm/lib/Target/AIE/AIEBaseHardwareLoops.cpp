@@ -232,6 +232,27 @@ public:
 private:
   bool processLoop(MachineLoop *ML);
 
+  /// Whether the implicit definitions of \p Opcode are dead before \p Before.
+  bool areImplicitDefsDead(unsigned Opcode, MachineBasicBlock &MBB,
+                           MachineBasicBlock::iterator Before) const;
+  /// Other instructions of \p LoLoop read the decremented counter before the
+  /// loop branch. JNZD only decrements at the branch, so give those readers
+  /// their own decrement, undo it before the branch, and let JNZD do the real
+  /// one:
+  ///   $r0 = ADD_NC $r0, -1    ; replaces LoopDec, the readers see count - 1
+  ///   ... readers of $r0 ...
+  ///   $r0 = ADD_NC $r0, 1     ; back to count
+  ///   $r0 = LoopDec $r0       ; together with LoopJNZ, becomes the JNZD
+  ///   LoopJNZ $r0, ...
+  /// The JNZ fallback shifts the counter by one through the whole loop, so it
+  /// needs LoopDec and LoopJNZ to be the only instructions using the counter.
+  /// The adds and the other readers also use it, so the loop keeps its JNZD.
+  bool splitLoopDecFromOtherUses(LowOverheadLoop &LoLoop);
+  /// Rewrite the latch of \p LoLoop so that LoopJNZ is the only reader of the
+  /// LoopDec result, given \p Uses, the readers of that result.
+  bool makeLoopDecSingleUse(LowOverheadLoop &LoLoop,
+                            const SmallPtrSetImpl<MachineInstr *> &Uses);
+
   void expandLoopStart(LowOverheadLoop &LoLoop);
   void expandLoopEnd(LowOverheadLoop &LoLoop);
   /// Whether keeping the JNZD of \p LoLoop costs more than falling back to an
@@ -411,7 +432,10 @@ bool AIEBaseHardwareLoops::processLoop(MachineLoop *ML) {
     RDA->getReachingLocalUses(LoLoop.Dec, LoLoop.Dec->getOperand(0).getReg(),
                               Uses);
     if (Uses.size() > 1 || !Uses.count(LoLoop.End)) {
-      assert(0 && "AIE Loops: Wrong/multiple use of LoopDec result!.\n");
+      [[maybe_unused]] const bool SingleUse =
+          makeLoopDecSingleUse(LoLoop, Uses);
+      assert(SingleUse &&
+             "AIE Loops: Wrong/multiple use of LoopDec result!.\n");
     }
   }
 
@@ -614,6 +638,68 @@ static MachineInstr *findCounterAdjust(MachineBasicBlock &MBB,
   return nullptr;
 }
 
+bool AIEBaseHardwareLoops::areImplicitDefsDead(
+    unsigned Opcode, MachineBasicBlock &MBB,
+    MachineBasicBlock::iterator Before) const {
+  return all_of(TII->get(Opcode).implicit_defs(), [&](MCPhysReg Reg) {
+    return MBB.computeRegisterLiveness(TRI, Reg, Before) ==
+           MachineBasicBlock::LQR_Dead;
+  });
+}
+
+/// Whether an instruction between \p Dec and \p End reads a register that
+/// \p Dec implicitly defines, such as the carry. Moving \p Dec down to \p End
+/// would change the value it reads.
+static bool isImplicitDefReadBefore(const MachineInstr &Dec,
+                                    const MachineInstr &End,
+                                    const TargetRegisterInfo &TRI) {
+  for (const MachineInstr &MI :
+       make_range(std::next(MachineBasicBlock::const_iterator(Dec)),
+                  MachineBasicBlock::const_iterator(End))) {
+    if (MI.isDebugInstr())
+      continue;
+    for (const MachineOperand &MO : Dec.implicit_operands())
+      if (MO.isReg() && MO.isDef() && MI.readsRegister(MO.getReg(), &TRI))
+        return true;
+  }
+  return false;
+}
+
+bool AIEBaseHardwareLoops::splitLoopDecFromOtherUses(LowOverheadLoop &LoLoop) {
+  MachineInstr *Dec = LoLoop.Dec;
+  MachineInstr *End = LoLoop.End;
+  MachineBasicBlock &MBB = *End->getParent();
+  const Register Result = Dec->getOperand(0).getReg();
+  const unsigned AddOpcode = TII->getJNZDSupport()->DecTripCountOpcode;
+  if (!areImplicitDefsDead(AddOpcode, MBB, Dec) ||
+      !areImplicitDefsDead(AddOpcode, MBB, End))
+    return false;
+  LLVM_DEBUG(dbgs() << "AIE Loops: Splitting off the other uses of " << *Dec);
+  const DebugLoc &DL = Dec->getDebugLoc();
+  BuildMI(MBB, Dec, DL, TII->get(AddOpcode), Result)
+      .add(Dec->getOperand(1))
+      .addImm(-1);
+  BuildMI(MBB, End, DL, TII->get(AddOpcode), Result).addReg(Result).addImm(1);
+  MBB.splice(End, &MBB, Dec);
+  Dec->getOperand(1).setReg(Result);
+  Dec->getOperand(1).setIsKill(false);
+  return true;
+}
+
+bool AIEBaseHardwareLoops::makeLoopDecSingleUse(
+    LowOverheadLoop &LoLoop, const SmallPtrSetImpl<MachineInstr *> &Uses) {
+  MachineInstr *Dec = LoLoop.Dec;
+  MachineInstr *End = LoLoop.End;
+  // Without LoopJNZ among the readers, the counter it tests is not the LoopDec
+  // result.
+  if (Dec->getParent() != End->getParent() || !Uses.count(End))
+    return false;
+  // Both rewrites move LoopDec down to the loop branch.
+  if (isImplicitDefReadBefore(*Dec, *End, *TRI))
+    return false;
+  return splitLoopDecFromOtherUses(LoLoop);
+}
+
 bool AIEBaseHardwareLoops::isJNZDExpensive(
     const LowOverheadLoop &LoLoop) const {
   MachineInstr *End = LoLoop.End;
@@ -683,14 +769,9 @@ bool AIEBaseHardwareLoops::canFallBackToJNZ(
   // are dead at both insertion points: before the preheader terminator, and at
   // the latch decrement.
   const unsigned AddOpcode = LoweringData->DecTripCountOpcode;
-  auto PreheaderInsertPt = Preheader->getFirstTerminator();
-  for (MCPhysReg Reg : TII->get(AddOpcode).implicit_defs())
-    if (Preheader->computeRegisterLiveness(TRI, Reg, PreheaderInsertPt) !=
-            MachineBasicBlock::LQR_Dead ||
-        Latch->computeRegisterLiveness(TRI, Reg, Dec) !=
-            MachineBasicBlock::LQR_Dead)
-      return false;
-  return true;
+  return areImplicitDefsDead(AddOpcode, *Preheader,
+                             Preheader->getFirstTerminator()) &&
+         areImplicitDefsDead(AddOpcode, *Latch, Dec);
 }
 
 void AIEBaseHardwareLoops::dropDeadTargetPointer(LowOverheadLoop &LoLoop) {
