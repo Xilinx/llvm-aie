@@ -72,6 +72,16 @@ static cl::opt<bool> AccurateMemEdges(
     cl::desc("Model memory ordering edges with an exact latency"),
     cl::init(true), cl::Hidden);
 
+/// When false, only loops with llvm.loop.hint.aie-force-prepipeliner are
+/// considered by the pre-RA MachinePipeliner. Default true preserves today's
+/// schedules. Does not override -enable-pipeliner=false or
+/// -aie-force-postpipeliner.
+static cl::opt<bool> EnableAIEPrePipeliner(
+    "aie-enable-prepipeliner", cl::Hidden, cl::init(true),
+    cl::desc("Enable the pre-RA MachinePipeliner for AIE loops; when false, "
+             "only loops with llvm.loop.hint.aie-force-prepipeliner are "
+             "pipelined"));
+
 namespace {
 // Note we might want to make NumDelaySlots a property somewhere in .td
 const constexpr unsigned NumDelaySlots = 5;
@@ -1767,6 +1777,10 @@ AIEBaseInstrInfo::isCopyInstrImpl(const MachineInstr &MI) const {
 
 std::unique_ptr<TargetInstrInfo::PipelinerLoopInfo>
 AIEBaseInstrInfo::analyzeLoopForPipelining(MachineBasicBlock *LoopBB) const {
+  // With -aie-enable-prepipeliner=false, only forced loops are pipelined.
+  // pipeline(disable) is already honored before this hook is called.
+  if (!EnableAIEPrePipeliner && !AIELoopUtils::isPrePipelinerForced(*LoopBB))
+    return nullptr;
   // Lock instructions require special scheduling constraints (core stall/resume
   // cycles) that are not implemented for software pipelined loops.
   if (hasLockInstruction(*LoopBB))
