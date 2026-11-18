@@ -8,6 +8,35 @@
 // RUN: %clang_cc1 -O2 -triple aie2 -std=c++20 -emit-llvm -o - %s | FileCheck %s
 // RUN: %clang_cc1 -O2 -triple aie2p -std=c++20 -emit-llvm -o - %s | FileCheck %s
 // RUN: %clang_cc1 -O2 -triple aie2ps -std=c++20 -emit-llvm -o - %s | FileCheck %s
+// RUN: %if asserts %{ not --crash %clang_cc1 -O2 -triple aie2p -std=c++20 -emit-llvm -o /dev/null -DDEPENDENT %s 2>&1 | FileCheck %s --check-prefix=DEPENDENT %}
+
+#ifdef DEPENDENT
+// Loop hints whose values are template parameters of a template lambda inside
+// a function template. Instantiating the function template transforms the
+// lambda body while the lambda's own parameters are still unknown.
+
+template <unsigned N> void rescale(int *p, int n) {
+  auto rows = [&]<unsigned kMinRows>() {
+#pragma clang loop min_iteration_count(kMinRows)
+    for (int m = 0; m < n; m++)
+      p[m] += m;
+  };
+  rows.template operator()<N>();
+}
+template void rescale<16>(int *, int);
+
+template <unsigned N> void unrolled(int *p, int n) {
+  auto body = [&]<unsigned kUnroll>() {
+#pragma clang loop unroll_count(kUnroll)
+    for (int m = 0; m < n; m++)
+      p[m] += m;
+  };
+  body.template operator()<N>();
+}
+template void unrolled<4>(int *, int);
+
+// DEPENDENT: Expression evaluator can't be called on a dependent expression.
+#endif
 
 // A hint value naming a constexpr local of the enclosing function template. The
 // hint is instantiated after its loop, so the reference must not be left
