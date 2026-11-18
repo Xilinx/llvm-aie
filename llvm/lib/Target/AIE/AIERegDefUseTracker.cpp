@@ -1135,6 +1135,20 @@ unsigned RegLiveRangeTracker::getOrCreateLiveRangeForOperand(
         if (OldIt != State.LiveRegs.end()) {
           const int StoredLRIdx = OldIt->second.first;
           State.LiveRegs.erase(OldIt);
+          // Reg may already key another range, e.g. a sibling sub-register
+          // range that an earlier super-register use expanded to Reg.
+          // Overwriting that entry would orphan the range without its def,
+          // so fold it into this one instead.
+          auto ExistingIt = State.LiveRegs.find(Reg);
+          if (ExistingIt != State.LiveRegs.end() &&
+              ExistingIt->second.first != StoredLRIdx) {
+            const int ExistingLRIdx = ExistingIt->second.first;
+            if (ExistingLRIdx == RegLiveRange::NoLiveRange) {
+              LiveRanges[LRIdx].setIsReserved(true);
+            } else {
+              absorbLiveRange(LRIdx, ExistingLRIdx, State);
+            }
+          }
           State.LiveRegs[Reg] = {StoredLRIdx, LaneBitmask::getAll()};
         }
       }

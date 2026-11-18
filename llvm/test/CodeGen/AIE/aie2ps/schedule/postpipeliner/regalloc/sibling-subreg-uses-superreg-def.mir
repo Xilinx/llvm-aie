@@ -19,13 +19,13 @@
 #   x3   = VSRS cmh1            ; read of the high half of dm1
 #   dm1  = VADD dm3, dm4        ; (B) full redef of dm1, kills all lanes
 #
-# The cmh1 read stays with (A). The cml1 and dm1 reads are tracked in a
-# separate dm1 range with no definition. (B) is a third dm1 range with no
-# uses. The other final ranges are crSRSMode, which is only an implicit use,
-# and dm5, x2, and x3, which are the values those reads produce.
+# The reads of cmh1, cml1, and dm1 all belong to (A)'s live range. (B) is a
+# separate dm1 range with no uses. Every other final range is listed below:
+# crSRSMode is only an implicit use, and dm5, x2, and x3 are the values those
+# reads produce.
 # CHECK-LABEL: FINAL LIVE RANGES
 # CHECK-NEXT:  ================================
-# CHECK-NEXT:  Total live ranges: 7
+# CHECK-NEXT:  Total live ranges: 6
 # CHECK-EMPTY:
 # CHECK-NEXT:  Live Range #{{[0-9]+}} for crSRSMode:
 # CHECK-NEXT:    Definitions (0):
@@ -33,12 +33,14 @@
 # CHECK-NEXT:      [0] Register: crSRSMode $x3 = VSRS_2x_mv_x_srs_cm_srsSign1 $cmh1, $s1, implicit-def dead $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
 # CHECK-NEXT:      [1] Register: crSRSMode $x2 = VSRS_2x_mv_x_srs_cm_srsSign1 $cml1, $s1, implicit-def dead $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
 # CHECK-EMPTY:
-# (A) keeps only the cmh1 read.
+# (A) full def of dm1, read as cmh1, cml1, and dm1.
 # CHECK-NEXT:  Live Range #{{[0-9]+}} for dm1:
 # CHECK-NEXT:    Definitions (1):
 # CHECK-NEXT:      [0] Register: dm1 renamable $dm1 = VADD_f_vacc_fp renamable $dm3, renamable $dm4, renamable $r8, implicit-def dead $srfpflags, implicit $crfpmask
-# CHECK-NEXT:    Uses (1):
+# CHECK-NEXT:    Uses (3):
 # CHECK-NEXT:      [0] Register: cmh1 (SubRegIdx: 9) $x3 = VSRS_2x_mv_x_srs_cm_srsSign1 $cmh1, $s1, implicit-def dead $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+# CHECK-NEXT:      [1] Register: cml1 (SubRegIdx: 10) $x2 = VSRS_2x_mv_x_srs_cm_srsSign1 $cml1, $s1, implicit-def dead $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+# CHECK-NEXT:      [2] Register: dm1 renamable $dm5 = VADD_f_vacc_fp renamable $dm1, renamable $dm4, renamable $r8, implicit-def dead $srfpflags, implicit $crfpmask
 # CHECK-EMPTY:
 # (B) is not merged into (A) because it kills every lane. It has no uses
 # because nothing uses it afterwards.
@@ -46,13 +48,6 @@
 # CHECK-NEXT:    Definitions (1):
 # CHECK-NEXT:      [0] Register: dm1 renamable $dm1 = VADD_f_vacc_fp renamable $dm3, renamable $dm4, renamable $r8, implicit-def dead $srfpflags, implicit $crfpmask
 # CHECK-NEXT:    Uses (0):
-# CHECK-EMPTY:
-# The cml1 and dm1 reads, with no definition.
-# CHECK-NEXT:  Live Range #{{[0-9]+}} for dm1:
-# CHECK-NEXT:    Definitions (0):
-# CHECK-NEXT:    Uses (2):
-# CHECK-NEXT:      [0] Register: cml1 (SubRegIdx: 10) $x2 = VSRS_2x_mv_x_srs_cm_srsSign1 $cml1, $s1, implicit-def dead $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
-# CHECK-NEXT:      [1] Register: dm1 renamable $dm5 = VADD_f_vacc_fp renamable $dm1, renamable $dm4, renamable $r8, implicit-def dead $srfpflags, implicit $crfpmask
 # CHECK-EMPTY:
 # CHECK-NEXT:  Live Range #{{[0-9]+}} for dm5:
 # CHECK-NEXT:    Definitions (1):
