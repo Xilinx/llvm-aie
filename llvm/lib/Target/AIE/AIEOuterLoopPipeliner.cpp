@@ -1363,8 +1363,9 @@ void OrigLoopStructure::collectFirstIterStages() {
         I && isInBottom(I))
       Stage0Roots.push_back(I);
   for (Instruction *I :
-       {cast<Instruction>(Bound.Counter), cast<Instruction>(Bound.Cmp)})
-    if (isInBottom(I))
+       {cast_or_null<Instruction>(Bound.Counter), cast<Instruction>(Bound.Cmp),
+        cast_or_null<Instruction>(Bound.LoopDecInReg)})
+    if (I && isInBottom(I))
       Stage0Roots.push_back(I);
   const SmallPtrSet<Instruction *, 32> Stage0Pinned = collectClosure(
       Stage0Roots, /*TraverseUsers=*/false, /*IncludeBottom=*/true);
@@ -2384,10 +2385,12 @@ bool AIEOuterLoopPipeliner::liftBottomPointerUpdatesToTop(
 bool AIEOuterLoopPipeliner::performPeelFirst(OrigLoopStructure &OrigLS,
                                              const OLPOpts &Opts) {
   // A JNZD hardware-loop input keeps its trip count in start.loop.iterations,
-  // which the peel-first path does not adjust.
-  if (OrigLS.latchCondition().isHardwareLoop()) {
-    LLVM_DEBUG(dbgs() << "    Peel-first: hardware-loop input is not "
-                         "supported; skipping\n");
+  // which peeling lowers by one. Any other reader of the counter would see the
+  // lowered count.
+  const LatchConditionInfo &Bound = OrigLS.latchCondition();
+  if (Bound.isHardwareLoop() && !Bound.JNZDCounterPhiNode->hasOneUse()) {
+    LLVM_DEBUG(dbgs() << "    Peel-first: the hardware-loop counter has other "
+                         "users; skipping\n");
     return false;
   }
   OrigLS.collectFirstIterStages();
@@ -2400,8 +2403,11 @@ bool AIEOuterLoopPipeliner::performPeelFirst(OrigLoopStructure &OrigLS,
   // Stage-1 of each iteration now runs after that iteration's stage-0.
   // Without alias information, that is only safe when one of them neither
   // accesses memory nor has other side effects.
-  const auto HasMemoryOrSideEffects = [](const Instruction *I) {
-    return I->mayReadOrWriteMemory() || I->mayHaveSideEffects();
+  // The latch control is exempt: a hardware-loop decrement is modeled as
+  // touching memory but only counts the loop.
+  const auto HasMemoryOrSideEffects = [&Bound](const Instruction *I) {
+    return !Bound.isLatchControl(I) &&
+           (I->mayReadOrWriteMemory() || I->mayHaveSideEffects());
   };
   if (any_of(OrigLS.stage1Insts(), HasMemoryOrSideEffects) &&
       any_of(OrigLS.stage0Insts(), HasMemoryOrSideEffects)) {
@@ -2438,21 +2444,34 @@ bool AIEOuterLoopPipeliner::performPeelFirst(OrigLoopStructure &OrigLS,
   createStage1Epilogue(OrigLS, SteadyLS);
 
   // The first iteration falls through into the steady loop, so its latch
-  // compare is dead unless stage-1 reads it.
-  RecursivelyDeleteTriviallyDeadInstructions(
-      FirstIterLS.cloneOf(OrigLS.latchCondition().Cmp));
+  // control is dead unless stage-1 reads it. A hardware-loop decrement is not
+  // trivially dead, so erase it explicitly; the steady counter does not read
+  // it.
+  RecursivelyDeleteTriviallyDeadInstructions(FirstIterLS.cloneOf(Bound.Cmp));
+  if (Bound.isHardwareLoop())
+    if (auto *Dec = dyn_cast_or_null<Instruction>(
+            FirstIterLS.cloneOf(Bound.LoopDecInReg));
+        Dec && Dec->use_empty())
+      Dec->eraseFromParent();
 
-  // The steady IV starts at the first iteration's next value, so the trip
-  // count is already N-1 without adjusting the loop bound.
+  // The steady IV starts at the first iteration's next value, so a counting
+  // latch already runs N-1 times. A hardware-loop counter starts from
+  // start.loop.iterations, whose trip count is lowered to N-1 instead.
+  const bool IsInputHardwareLoop = SteadyLS.latchCondition().isHardwareLoop();
+  if (IsInputHardwareLoop)
+    SteadyLS.adjustLoopBound();
   SteadyLS.updateLoopMetadata(AIELoopUtils::OLPPeelMode::PeelFirst);
 
-  // Determine whether to use hardware loop based on pointer pressure.
+  // Determine whether to use hardware loop based on pointer pressure. A loop
+  // that arrives as a hardware loop stays one.
   const unsigned NumPointerPHIs = OrigLS.countBasePointerPHIs();
   const bool OuterIsHardwareLoop = Opts.shouldUseHardwareLoop(NumPointerPHIs) &&
                                    SteadyLS.latchCondition().isDowncounting();
-  LLVM_DEBUG(dbgs() << "    Pointer PHIs: " << NumPointerPHIs << ", threshold: "
-                    << OuterLoopPointerThreshold << ", using "
-                    << (OuterIsHardwareLoop ? "hw" : "soft") << " loop\n");
+  LLVM_DEBUG(
+      dbgs() << "    Pointer PHIs: " << NumPointerPHIs
+             << ", threshold: " << OuterLoopPointerThreshold << ", using "
+             << (IsInputHardwareLoop || OuterIsHardwareLoop ? "hw" : "soft")
+             << " loop" << (IsInputHardwareLoop ? " (input)" : "") << "\n");
 
   if (OuterIsHardwareLoop)
     convertOuterLoopToHardwareLoop(SteadyLS);
@@ -2760,14 +2779,19 @@ void AIEOuterLoopPipeliner::peelFirstIteration(
   // Update steady header PHIs: replace the preheader incoming edge with
   // firstiter.bottom, carrying the value the first iteration produced for the
   // next one. This includes the IV, so the steady loop runs iterations 1..N-1
-  // against the unchanged loop bound.
+  // against the unchanged loop bound. A hardware-loop counter instead keeps its
+  // start.loop.iterations value, which performPeelFirst lowers to N-1.
+  const PHINode *JNZDCounter = OrigLS.latchCondition().JNZDCounterPhiNode;
   for (PHINode &OrigPHI : OrigLS.getTop()->phis()) {
     auto *SteadyPHI = cast<PHINode>(SteadyLS.cloneOf(&OrigPHI));
     int PreIdx = SteadyPHI->getBasicBlockIndex(Preheader);
     if (PreIdx < 0)
       continue;
-    Value *OrigBackEdge = OrigPHI.getIncomingValueForBlock(OrigLS.getBottom());
-    SteadyPHI->setIncomingValue(PreIdx, FirstIterLS.cloneOf(OrigBackEdge));
+    if (&OrigPHI != JNZDCounter) {
+      Value *OrigBackEdge =
+          OrigPHI.getIncomingValueForBlock(OrigLS.getBottom());
+      SteadyPHI->setIncomingValue(PreIdx, FirstIterLS.cloneOf(OrigBackEdge));
+    }
     SteadyPHI->setIncomingBlock(PreIdx, FirstIterBottom);
   }
 
