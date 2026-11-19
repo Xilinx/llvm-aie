@@ -529,6 +529,30 @@ TEST_F(AIELoopUtilsTest, OuterLoopStructure_BuildFromPeelFirst) {
   EXPECT_TRUE(OLS->hasMatchingInnerLoops());
 }
 
+TEST_F(AIELoopUtilsTest, OuterLoopStructure_PeelFirstAmbiguousPreheader) {
+  // The peel-first CFG where the entry block also branches straight to the
+  // first-iteration top: PeeledIterTop has two predecessors, so there is no
+  // single block before the prologue.
+  std::string MIR = PeelFirstMIR;
+  const std::string Entry = "  bb.0.entry:\n    successors: %bb.1\n";
+  MIR.replace(MIR.find(Entry), Entry.size(),
+              "  bb.0.entry:\n    successors: %bb.1, %bb.2\n"
+              "    liveins: $r0\n    PseudoJNZ $r0, %bb.2\n");
+  parseMIR(MIR.c_str());
+  MachineFunction *MF = getMachineFunction("olp_peel_first");
+
+  MachineBasicBlock *OuterLatch = getMBB(MF, 7);
+  ASSERT_NE(OuterLatch, nullptr);
+  ASSERT_EQ(getMBB(MF, 2)->pred_size(), 2u);
+
+  auto OLS = OuterLoopStructure::tryBuildFrom(*OuterLatch);
+  ASSERT_TRUE(OLS.has_value());
+  EXPECT_EQ(OLS->OuterPreheader, nullptr);
+  EXPECT_EQ(OLS->PeeledIterTop, getMBB(MF, 2));
+  EXPECT_EQ(OLS->SteadyTop, getMBB(MF, 5));
+  EXPECT_TRUE(OLS->isFirstIterationPeeled());
+}
+
 TEST_F(AIELoopUtilsTest, OuterLoopStructure_UnknownPeelModeReturnsNullopt) {
   // The peel-first CFG with a peel mode this code does not know: it must not
   // be read as peel-last.

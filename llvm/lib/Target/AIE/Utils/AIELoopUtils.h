@@ -231,8 +231,10 @@ getOuterLoopPeelMode(const MachineBasicBlock &LoopLatch);
 struct OuterLoopStructure {
   /// Block before the first peeled iteration.
   /// In peel-last mode this is the predecessor of SteadyTop (the stage-0
-  /// preheader block). In peel-first mode this is the predecessor of
-  /// PeeledIterTop (the true entry before the first-iteration prologue).
+  /// preheader block). In peel-first mode this is the single predecessor of
+  /// PeeledIterTop (the true entry before the first-iteration prologue), or
+  /// null if PeeledIterTop has several; it is then not a predecessor of
+  /// SteadyTop (see isFirstIterationPeeled()).
   MachineBasicBlock *OuterPreheader = nullptr;
 
   /// First block inside the steady-state loop.

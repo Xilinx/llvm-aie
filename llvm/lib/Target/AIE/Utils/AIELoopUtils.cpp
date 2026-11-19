@@ -487,10 +487,10 @@ OuterLoopStructure::tryBuildFrom(MachineBasicBlock &OuterLatch) {
     if (!PeeledBottom || !DiscoverPeeledRegionBackward(PeeledBottom))
       return std::nullopt;
 
-    // OuterPreheader: predecessor of PeeledIterTop (not PeeledIterBottom,
-    // which is the firstiter's own back-edge / fall-through).
-    OLS.OuterPreheader =
-        FindOther(OLS.PeeledIterTop->predecessors(), OLS.PeeledIterBottom);
+    // OuterPreheader: the block before the first-iteration prologue. Left
+    // null rather than guessed when PeeledIterTop has several predecessors.
+    if (OLS.PeeledIterTop->pred_size() == 1)
+      OLS.OuterPreheader = *OLS.PeeledIterTop->pred_begin();
 
     // ExitBlock: the epilogue after the steady latch exit.
     OLS.ExitBlock = FindOther(OuterLatch.successors(), OLS.SteadyTop);
