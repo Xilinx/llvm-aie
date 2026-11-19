@@ -168,7 +168,9 @@ static cl::opt<PipeliningMode> PipeliningModeOpt(
     cl::values(clEnumValN(PipeliningMode::PeelLast, "last",
                           "Peel the last iteration (default)"),
                clEnumValN(PipeliningMode::PeelFirst, "first",
-                          "Peel the first iteration")),
+                          "Peel the first iteration; ignores the "
+                          "split-prologue, speculative and lean-stage0 "
+                          "options")),
     cl::init(PipeliningMode::PeelLast), cl::Hidden);
 
 namespace llvm {
@@ -201,6 +203,8 @@ struct OLPOpts {
   bool EnableSpeculativeLastIteration;
   PipeliningMode Mode;
   OuterLoopType LoopType;
+  // Explicitly set options that only apply to peel-last mode.
+  SmallVector<StringRef, 3> PeelLastOnlyOverrides;
 
   explicit OLPOpts(const AIE::LoopOptionOverrides &Overrides)
       : Enabled(Overrides.get(EnableOuterLoopPipelining)),
@@ -209,7 +213,12 @@ struct OLPOpts {
         UseLeanStage0(Overrides.get(LeanStage0Mode)),
         EnableSpeculativeLastIteration(Overrides.get(SpeculativeLastIteration)),
         Mode(Overrides.get(PipeliningModeOpt)),
-        LoopType(Overrides.get(OuterLoopTypeOpt)) {}
+        LoopType(Overrides.get(OuterLoopTypeOpt)) {
+    for (const cl::opt<bool> *Opt :
+         {&SplitStages, &SpeculativeLastIteration, &LeanStage0Mode})
+      if (Overrides.hasOverride(*Opt))
+        PeelLastOnlyOverrides.push_back(Opt->ArgStr);
+  }
 
   /// Determine whether to use hardware loop based on loop type and pointer
   /// pressure. In auto mode, use hw loop if pointers < threshold.
@@ -2352,6 +2361,11 @@ bool AIEOuterLoopPipeliner::performTransformation(OrigLoopStructure &OrigLS,
                            "supported; skipping\n");
       return false;
     }
+    LLVM_DEBUG({
+      for (StringRef Opt : Opts.PeelLastOnlyOverrides)
+        dbgs() << "    Peel-first: ignoring -" << Opt
+               << ", which only applies to peel-last mode\n";
+    });
     OrigLS.collectFirstIterStages();
     if (OrigLS.stage0Insts().empty()) {
       LLVM_DEBUG(dbgs() << "    Peel-first: no stage-0 instructions found; "
