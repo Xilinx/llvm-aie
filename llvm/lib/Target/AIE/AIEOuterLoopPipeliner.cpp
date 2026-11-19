@@ -2572,11 +2572,21 @@ void AIEOuterLoopPipeliner::cloneStage0IntoTop(
     LLVM_DEBUG(dbgs() << "    Created inner_result_phi: " << *MergePHI << "\n");
   }
 
-  // Step 3: Seed TopVMap with outer-loop header PHI mappings so that stage-0
-  // clones' references to header PHIs (e.g. store pointer PHIs) resolve to the
-  // steady header PHIs.
-  for (PHINode &OrigPHI : OrigLS.getTop()->phis())
-    TopVMap[&OrigPHI] = SteadyLS.cloneOf(&OrigPHI);
+  // Step 3: Stage-0 reads the outer-loop header PHIs one iteration late as
+  // well, so map each one it uses to a PHI carrying the previous iteration's
+  // value: the first iteration's on entry, the steady PHI on the back edge.
+  for (PHINode &OrigPHI : OrigLS.getTop()->phis()) {
+    if (none_of(OrigPHI.users(), [&](User *U) {
+          return OrigLS.isInStage0(cast<Instruction>(U));
+        }))
+      continue;
+    PHINode *PrevPHI =
+        PHINode::Create(OrigPHI.getType(), 2, OrigPHI.getName() + ".prev");
+    PrevPHI->insertBefore(FirstNonPHI);
+    PrevPHI->addIncoming(FirstIterLS.cloneOf(&OrigPHI), FirstIterBottom);
+    PrevPHI->addIncoming(SteadyLS.cloneOf(&OrigPHI), SteadyBottom);
+    TopVMap[&OrigPHI] = PrevPHI;
+  }
 
   // Step 4: Clone stage-0 instructions into the beginning of the steady top,
   // after the PHI nodes (including the new inner_result_phi nodes) and before
@@ -2620,8 +2630,7 @@ void AIEOuterLoopPipeliner::createStage1Epilogue(
   // Step 2: Build the epilogue remap table. For each inner_result_phi created
   // in cloneStage0IntoTop(), the epilogue uses its back-edge incoming value
   // (from steady.stage1.bottom) — the inner-loop live-out of the last steady
-  // iteration. Also map outer-loop header PHIs to their steady back-edge
-  // values.
+  // iteration. Also map outer-loop header PHIs to the steady PHIs.
   RemapTable EpilogueVMap;
 
   // Map LCSSA PHIs feeding stage-0: for each original LCSSA PHI P that was
@@ -2636,14 +2645,10 @@ void AIEOuterLoopPipeliner::createStage1Epilogue(
     EpilogueVMap[&P] = BackEdgeVal;
   }
 
-  // Map outer-loop header PHIs to their steady back-edge values (the pointer
-  // values computed on the last steady iteration's latch).
-  for (PHINode &OrigPHI : OrigLS.getTop()->phis()) {
-    auto *SteadyPHI = cast<PHINode>(SteadyLS.cloneOf(&OrigPHI));
-    int BackIdx = SteadyPHI->getBasicBlockIndex(SteadyBottom);
-    if (BackIdx >= 0)
-      EpilogueVMap[&OrigPHI] = SteadyPHI->getIncomingValue(BackIdx);
-  }
+  // Map outer-loop header PHIs to the steady PHIs, which hold the last
+  // iteration's values when the loop exits.
+  for (PHINode &OrigPHI : OrigLS.getTop()->phis())
+    EpilogueVMap[&OrigPHI] = SteadyLS.cloneOf(&OrigPHI);
 
   // Also seed with any stage-0 instruction mappings from TopVMap so that
   // intra-stage-0 dependencies resolve correctly when cloning.

@@ -31,7 +31,8 @@ define void @iv_indexed(ptr noalias %src, ptr noalias %dst, i32 %N, i32 %M) {
 ; CHECK:       [[STEADY_STAGE0_BOTTOM_AND_STAGE1_TOP:.*]]:
 ; CHECK-NEXT:    [[I_STEADY:%.*]] = phi i32 [ [[I_NEXT_FIRSTITER:%.*]], %[[FIRSTITER_STAGE0_BOTTOM:.*]] ], [ [[I_NEXT_STEADY:%.*]], %[[STEADY_STAGE1_BOTTOM:.*]] ]
 ; CHECK-NEXT:    [[RESULT_INNER_RESULT_PHI:%.*]] = phi i32 [ [[ACC_NEXT_FIRSTITER:%.*]], %[[FIRSTITER_STAGE0_BOTTOM]] ], [ [[ACC_NEXT_STEADY:%.*]], %[[STEADY_STAGE1_BOTTOM]] ]
-; CHECK-NEXT:    [[DST_PTR_TOP:%.*]] = getelementptr inbounds i32, ptr [[DST]], i32 [[I_STEADY]]
+; CHECK-NEXT:    [[I_PREV:%.*]] = phi i32 [ 0, %[[FIRSTITER_STAGE0_BOTTOM]] ], [ [[I_STEADY]], %[[STEADY_STAGE1_BOTTOM]] ]
+; CHECK-NEXT:    [[DST_PTR_TOP:%.*]] = getelementptr inbounds i32, ptr [[DST]], i32 [[I_PREV]]
 ; CHECK-NEXT:    store i32 [[RESULT_INNER_RESULT_PHI]], ptr [[DST_PTR_TOP]], align 4
 ; CHECK-NEXT:    [[SRC_PTR_STEADY:%.*]] = getelementptr inbounds i32, ptr [[SRC]], i32 [[I_STEADY]]
 ; CHECK-NEXT:    [[VAL_STEADY:%.*]] = load i32, ptr [[SRC_PTR_STEADY]], align 4
@@ -60,7 +61,7 @@ define void @iv_indexed(ptr noalias %src, ptr noalias %dst, i32 %N, i32 %M) {
 ; CHECK-NEXT:    [[I_NEXT_FIRSTITER]] = add nuw i32 0, 1
 ; CHECK-NEXT:    br label %[[STEADY_STAGE0_BOTTOM_AND_STAGE1_TOP]]
 ; CHECK:       [[LASTITER_STAGE1_BOTTOM]]:
-; CHECK-NEXT:    [[DST_PTR_EPILOGUE:%.*]] = getelementptr inbounds i32, ptr [[DST]], i32 [[I_NEXT_STEADY]]
+; CHECK-NEXT:    [[DST_PTR_EPILOGUE:%.*]] = getelementptr inbounds i32, ptr [[DST]], i32 [[I_STEADY]]
 ; CHECK-NEXT:    store i32 [[ACC_NEXT_STEADY]], ptr [[DST_PTR_EPILOGUE]], align 4
 ; CHECK-NEXT:    br label %[[EXIT]]
 ; CHECK:       [[EXIT]]:
@@ -110,8 +111,9 @@ define void @iv_indexed_jnzd(ptr noalias %src, ptr noalias %dst, i32 %N, i32 %M)
 ; CHECK:       [[STEADY_STAGE0_BOTTOM_AND_STAGE1_TOP:.*]]:
 ; CHECK-NEXT:    [[IV_STEADY:%.*]] = phi i32 [ [[IV_NEXT_FIRSTITER:%.*]], %[[FIRSTITER_STAGE0_BOTTOM:.*]] ], [ [[IV_NEXT_STEADY:%.*]], %[[STEADY_STAGE1_BOTTOM:.*]] ]
 ; CHECK-NEXT:    [[RESULT_INNER_RESULT_PHI:%.*]] = phi i32 [ [[ACC_NEXT_FIRSTITER:%.*]], %[[FIRSTITER_STAGE0_BOTTOM]] ], [ [[ACC_NEXT_STEADY:%.*]], %[[STEADY_STAGE1_BOTTOM]] ]
+; CHECK-NEXT:    [[IV_PREV:%.*]] = phi i32 [ [[N]], %[[FIRSTITER_STAGE0_BOTTOM]] ], [ [[IV_STEADY]], %[[STEADY_STAGE1_BOTTOM]] ]
 ; CHECK-NEXT:    [[OUTER_CTR:%.*]] = phi i32 [ [[OUTER_CTR_INIT:%.*]], %[[FIRSTITER_STAGE0_BOTTOM]] ], [ [[OUTER_CTR_NEXT:%.*]], %[[STEADY_STAGE1_BOTTOM]] ]
-; CHECK-NEXT:    [[DST_PTR_TOP:%.*]] = getelementptr inbounds i32, ptr [[DST]], i32 [[IV_STEADY]]
+; CHECK-NEXT:    [[DST_PTR_TOP:%.*]] = getelementptr inbounds i32, ptr [[DST]], i32 [[IV_PREV]]
 ; CHECK-NEXT:    store i32 [[RESULT_INNER_RESULT_PHI]], ptr [[DST_PTR_TOP]], align 4
 ; CHECK-NEXT:    [[SRC_PTR_STEADY:%.*]] = getelementptr inbounds i32, ptr [[SRC]], i32 [[IV_STEADY]]
 ; CHECK-NEXT:    [[VAL_STEADY:%.*]] = load i32, ptr [[SRC_PTR_STEADY]], align 4
@@ -143,7 +145,7 @@ define void @iv_indexed_jnzd(ptr noalias %src, ptr noalias %dst, i32 %N, i32 %M)
 ; CHECK-NEXT:    [[OUTER_CTR_INIT]] = call i32 @llvm.start.loop.iterations.i32(i32 [[OUTER_JNZD_TC]])
 ; CHECK-NEXT:    br label %[[STEADY_STAGE0_BOTTOM_AND_STAGE1_TOP]]
 ; CHECK:       [[LASTITER_STAGE1_BOTTOM]]:
-; CHECK-NEXT:    [[DST_PTR_EPILOGUE:%.*]] = getelementptr inbounds i32, ptr [[DST]], i32 [[IV_NEXT_STEADY]]
+; CHECK-NEXT:    [[DST_PTR_EPILOGUE:%.*]] = getelementptr inbounds i32, ptr [[DST]], i32 [[IV_STEADY]]
 ; CHECK-NEXT:    store i32 [[ACC_NEXT_STEADY]], ptr [[DST_PTR_EPILOGUE]], align 4
 ; CHECK-NEXT:    br label %[[EXIT]]
 ; CHECK:       [[EXIT]]:
