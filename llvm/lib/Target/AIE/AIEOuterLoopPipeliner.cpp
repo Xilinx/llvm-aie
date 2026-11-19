@@ -301,7 +301,6 @@ public:
   void assign(ArrayRef<BasicBlock *> BBs);
 
   size_t size() const { return Blocks.size(); }
-  bool empty() const { return Blocks.empty(); }
 
   BasicBlock *entry() const {
     return Blocks.empty() ? nullptr : Blocks.front();
