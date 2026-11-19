@@ -144,7 +144,8 @@ define dso_local void @conv2d(i32 %0, ptr %add.ptr3, ptr %cond, ptr %cond.i, ptr
 ; ASM-NEXT:    vlda.ups.2x cml0, s0, upssign1, [p1, #0]; paddb [p1], m7; movx crsrsmode, #0; mov r1, m6; movs p6, p0
 ; ASM-NEXT:    vlda.ups.2x cmh0, s0, upssign1, [p1, #0]; movs p0, p3; movxm p3, #.LBB0_1
 ; ASM-NEXT:    vldb.popx x4, [p0, lf0, r24]
-; ASM-NEXT:  .LBB0_1: // %for.body.i
+; ASM-NEXT:  .LBB0_1: // Block address taken
+; ASM-NEXT:    // %for.body.i
 ; ASM-NEXT:    // =>This Loop Header: Depth=1
 ; ASM-NEXT:    // Child Loop BB0_2 Depth 2
 ; ASM-NEXT:    nopa ; nopb ; padds.3d [p0], d0; nopx ; mov p4, p6; nopv

@@ -138,7 +138,8 @@ define dso_local void @gemm_int8_psum_0_v2(ptr noalias %p_a, ptr noalias %p_b, p
 ; CHECK-NEXT:    lda r6, [p6, #4]; movs dc3, dc2; or r10, r8, r7; vshuffle x1, x8, x8, r28
 ; CHECK-NEXT:    vldb x1, [p1], m4; vmul dm4, x0, x4, r12
 ; CHECK-NEXT:    vlda.3d x10, [p1], d1
-; CHECK-NEXT:  .LBB0_1: // %steady.stage1.top
+; CHECK-NEXT:  .LBB0_1: // Block address taken
+; CHECK-NEXT:    // %steady.stage1.top
 ; CHECK-NEXT:    // =>This Loop Header: Depth=1
 ; CHECK-NEXT:    // Child Loop BB0_2 Depth 2
 ; CHECK-NEXT:    nopa ; vldb x8, [p0], #64; nops ; nopxm ; vaddmac dm5, dm5, dm4, x6, x10, r10

@@ -198,7 +198,8 @@ define void @conv2d_opt_outerloop_out_mode_0(
 ; ASM-NEXT:    vldb.popx x8, [p0, lf0, r24]
 ; ASM-NEXT:    vlda x4, [p7], #64; vldb.pop.3d x6, [p0, lf0, r24, d0]
 ; ASM-NEXT:    vlda x2, [p7], #64; vldb.popx x8, [p0, lf0, r24]
-; ASM-NEXT:  .LBB0_5: // %steady.stage1.top
+; ASM-NEXT:  .LBB0_5: // Block address taken
+; ASM-NEXT:    // %steady.stage1.top
 ; ASM-NEXT:    // =>This Loop Header: Depth=1
 ; ASM-NEXT:    // Child Loop BB0_6 Depth 2
 ; ASM-NEXT:    vlda x4, [p7], #64; vldb.pop.3d x6, [p0, lf0, r24, d0]; nops ; add.nc lc, r18, #-6; nopm ; vmul dm3, x0, x6, r12

@@ -133,7 +133,8 @@ define dso_local void @gemm_int8_1(ptr noalias %p_a, ptr noalias %p_b, ptr noali
 ; ASM-NEXT:    vldb x1, [p1], m3; vaddmac dm2, dm2, dm4, x8, x10, r10
 ; ASM-NEXT:    vlda.3d x10, [p1], d1; vaddmac dm1, dm1, dm4, x6, x1, r10
 ; ASM-NEXT:    nopa ; vldb x8, [p0], #64; nops ; add.nc lc, r28, #-3; nopm ; vaddmac dm0, dm0, dm4, x8, x1, r10
-; ASM-NEXT:  .LBB0_1: // %for.body
+; ASM-NEXT:  .LBB0_1: // Block address taken
+; ASM-NEXT:    // %for.body
 ; ASM-NEXT:    // =>This Loop Header: Depth=1
 ; ASM-NEXT:    // Child Loop BB0_2 Depth 2
 ; ASM-NEXT:    vlda.3d x6, [p0], d0; nopb ; nops ; add.nc ls, pc, #.LBB0_2; vshuffle x3, x1, x1, r2; nopv

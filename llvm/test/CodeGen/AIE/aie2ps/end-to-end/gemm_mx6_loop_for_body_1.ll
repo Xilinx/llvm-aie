@@ -132,7 +132,8 @@ define dso_local void @gemm.if.then5(ptr %add.ptr, ptr %tdm1, i32 %cond3) #5 {
 ; ASM-NEXT:    vlda.pop fex1, [p0, lf0, r24, m4]; vldb.pop fex2, [p1, lf1, r25, m3]
 ; ASM-NEXT:    vlda.fill [p0, lf0, r24]; vldb.fill [p1, lf1, r25]; vmov.d dm1, dm0
 ; ASM-NEXT:    vlda.pop fex6, [p0, lf0, r24]; vldb.pop fex10, [p1, lf1, r25]; vmov.d dm2, dm0
-; ASM-NEXT:  .LBB0_1: // %steady.stage1.top
+; ASM-NEXT:  .LBB0_1: // Block address taken
+; ASM-NEXT:    // %steady.stage1.top
 ; ASM-NEXT:    // =>This Loop Header: Depth=1
 ; ASM-NEXT:    // Child Loop BB0_2 Depth 2
 ; ASM-NEXT:    vlda.pop.3d fex7, [p0, lf0, r24, d1]; vldb.pop.3d fex8, [p1, lf1, r25, d0]; nopx ; vmov.d dm3, dm0

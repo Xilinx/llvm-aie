@@ -47,7 +47,8 @@ define void @drain_after_olp(ptr noalias %a, ptr noalias %c, ptr %out, i32 %n, i
 ; OLP-NEXT:    vmov x4, lfl0
 ; OLP-NEXT:    vmov x5, lfh0
 ; OLP-NEXT:    mova m0, #4; movs p3, p1; vadd.8 x2, x2, x2
-; OLP-NEXT:  .LBB0_2: // %steady.stage1.top
+; OLP-NEXT:  .LBB0_2: // Block address taken
+; OLP-NEXT:    // %steady.stage1.top
 ; OLP-NEXT:    // =>This Loop Header: Depth=1
 ; OLP-NEXT:    // Child Loop BB0_3 Depth 2
 ; OLP-NEXT:    nopa ; nopb ; nops ; add.nc lc, r1, #0; nopm ; nopv
@@ -138,7 +139,8 @@ define void @drain_after_olp(ptr noalias %a, ptr noalias %c, ptr %out, i32 %n, i
 ; NOOLP-NEXT:    vmov x1, x0
 ; NOOLP-NEXT:    vmov lfl0, x0
 ; NOOLP-NEXT:    vmov lfh0, x1
-; NOOLP-NEXT:  .LBB0_2: // %outer.header
+; NOOLP-NEXT:  .LBB0_2: // Block address taken
+; NOOLP-NEXT:    // %outer.header
 ; NOOLP-NEXT:    // =>This Loop Header: Depth=1
 ; NOOLP-NEXT:    // Child Loop BB0_3 Depth 2
 ; NOOLP-NEXT:    vldb.pop x2, [p0, lf0, r24]; movs p3, p0

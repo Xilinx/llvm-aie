@@ -21,7 +21,8 @@ define void @simple(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef 
 ; AIE2-NEXT:    mova r3, #2
 ; AIE2-NEXT:    movxm p2, #.LBB0_1
 ; AIE2-NEXT:    lda r1, [p0, #0]
-; AIE2-NEXT:  .LBB0_1: // %for.body
+; AIE2-NEXT:  .LBB0_1: // Block address taken
+; AIE2-NEXT:    // %for.body
 ; AIE2-NEXT:    // =>This Inner Loop Header: Depth=1
 ; AIE2-NEXT:    nopb ; nopa ; nops ; lshl r4, r2, r3; nopm ; nopv
 ; AIE2-NEXT:    nopa ; mov dj0, r4
@@ -49,7 +50,8 @@ define void @simple(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef 
 ; AIE2P-NEXT:    mova r3, #2
 ; AIE2P-NEXT:    movxm p2, #.LBB0_1
 ; AIE2P-NEXT:    lda r1, [p0, #0]
-; AIE2P-NEXT:  .LBB0_1: // %for.body
+; AIE2P-NEXT:  .LBB0_1: // Block address taken
+; AIE2P-NEXT:    // %for.body
 ; AIE2P-NEXT:    // =>This Inner Loop Header: Depth=1
 ; AIE2P-NEXT:    nopa ; nopb ; nops ; lshl r4, r2, r3; nopm ; nopv
 ; AIE2P-NEXT:    nopx ; mov dj0, r4
@@ -77,7 +79,8 @@ define void @simple(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef 
 ; AIE2PS-NEXT:    mova r6, #2
 ; AIE2PS-NEXT:    movxm p2, #.LBB0_1
 ; AIE2PS-NEXT:    lda r2, [p0, #0]
-; AIE2PS-NEXT:  .LBB0_1: // %for.body
+; AIE2PS-NEXT:  .LBB0_1: // Block address taken
+; AIE2PS-NEXT:    // %for.body
 ; AIE2PS-NEXT:    // =>This Inner Loop Header: Depth=1
 ; AIE2PS-NEXT:    nopa ; nopb ; nops ; lshl r16, r4, r6; nopm ; nopv
 ; AIE2PS-NEXT:    nopx ; mov dj0, r16
