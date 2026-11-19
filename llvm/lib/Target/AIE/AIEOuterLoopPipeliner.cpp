@@ -1362,13 +1362,26 @@ void OrigLoopStructure::collectFirstIterStages() {
   const SmallPtrSet<Instruction *, 32> ConsumerSet =
       collectClosure(BwdSeeds, /*TraverseUsers=*/false, /*IncludeBottom=*/true);
 
+  // The latch counter and compare decide whether the steady loop iterates
+  // again, so they and everything they are computed from stay in stage-1.
+  // Stage-0 reads them through its input PHIs.
+  const LatchConditionInfo &Bound = latchCondition();
+  SmallVector<Instruction *, 2> LatchControl;
+  for (Instruction *I :
+       {cast<Instruction>(Bound.Counter), cast<Instruction>(Bound.Cmp)})
+    if (isInBottom(I))
+      LatchControl.push_back(I);
+  const SmallPtrSet<Instruction *, 32> Stage1Pinned = collectClosure(
+      LatchControl, /*TraverseUsers=*/false, /*IncludeBottom=*/true);
+
   // Emit stage-0 (consumers, displaced forward) and stage-1 (ptr-updates,
   // stationary) candidates from the bottom region in program order.
   // Symmetric with peel-last: stage-0 = the displaced set, stage-1 = the rest.
   bottomRegion().forEachInstruction([&](Instruction *I) {
     if (!isPipelineCandidate(I, /*IncludeBottom=*/true))
       return;
-    (ConsumerSet.count(I) ? Stage0Insts : Stage1Insts).push_back(I);
+    const bool IsStage0 = ConsumerSet.count(I) && !Stage1Pinned.count(I);
+    (IsStage0 ? Stage0Insts : Stage1Insts).push_back(I);
   });
 
   LLVM_DEBUG({
@@ -2350,6 +2363,11 @@ bool AIEOuterLoopPipeliner::performTransformation(OrigLoopStructure &OrigLS,
     // steady iteration's deferred stage-0 instructions.
     createStage1Epilogue(OrigLS, SteadyLS);
 
+    // The first iteration falls through into the steady loop, so its latch
+    // compare is dead unless stage-0 reads it.
+    RecursivelyDeleteTriviallyDeadInstructions(
+        FirstIterLS->cloneOf(OrigLS.latchCondition().Cmp));
+
     // The steady IV starts at the first iteration's next value, so the trip
     // count is already N-1 without adjusting the loop bound.
     SteadyLS.updateLoopMetadata(AIELoopUtils::OLPPeelMode::PeelFirst);
@@ -2618,18 +2636,17 @@ AIEOuterLoopPipeliner::peelFirstIteration(const OrigLoopStructure &OrigLS,
     }
   }
 
-  // Strip stage-0 instructions and the latch compare from firstiter.bottom.
-  // Stage-0 (stores + inner-result consumers) are deferred to the steady top
-  // by cloneStage0IntoTop(). The compare is dead in a non-looping peeled
-  // block. Stage-1 (ptr-updates and the IV step) survive: the steady header
-  // PHIs start from their results. LCSSA PHIs are preserved --
+  // Strip stage-0 instructions from firstiter.bottom; they are deferred to the
+  // steady top by cloneStage0IntoTop(). Stage-1 (ptr-updates and the latch
+  // control) survive: the steady header PHIs start from their results, and
+  // stage-0 may read them. The latch compare is left for performTransformation
+  // to delete once it is known to be dead. LCSSA PHIs are preserved --
   // cloneStage0IntoTop() needs them to build the inner_result_phi merge nodes.
-  const LatchConditionInfo &Bound = OrigLS.latchCondition();
   SmallVector<Instruction *, 16> ToErase;
   for (Instruction &OrigI : *OrigLS.getBottom()) {
     if (OrigI.isTerminator() || isa<PHINode>(&OrigI))
       continue;
-    if (&OrigI == Bound.Cmp || OrigLS.isInStage0(&OrigI))
+    if (OrigLS.isInStage0(&OrigI))
       ToErase.push_back(cast<Instruction>(FirstIterLS->cloneOf(&OrigI)));
   }
   // Erase in reverse program order so that uses are removed before defs.
