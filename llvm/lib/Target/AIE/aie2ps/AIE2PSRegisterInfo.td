@@ -1219,6 +1219,11 @@ let SubRegIndices = [sub_fifo, sub_avail, sub_ptr], CoveredBySubRegs = 1 in {
   def plfr0 : AIE2PS1BitReg<0b0, "plfr0", [lf0, r24, p0]>;
   def plfr1 : AIE2PS1BitReg<0b1, "plfr1", [lf1, r25, p1]>;
 }
-def ePSRFLdF : AIE2PVector1076FifoRegisterClass<(add plfr0, plfr1)>;
+
+// Raise FIFO composite priority so the greedy RA does not evict plfr0/plfr1
+// in favour of a general pointer on their p0/p1 sub-registers.
+let AllocationPriority = 1 in {
+  def ePSRFLdF : AIE2PVector1076FifoRegisterClass<(add plfr0, plfr1)>;
+}
 
 } // End AIE2PS Namespace
