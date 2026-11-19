@@ -163,7 +163,9 @@ static cl::opt<PipeliningMode> PipeliningModeOpt(
     cl::values(clEnumValN(PipeliningMode::PeelLast, "last",
                           "Peel the last iteration (default)"),
                clEnumValN(PipeliningMode::PeelFirst, "first",
-                          "Peel the first iteration")),
+                          "Peel the first iteration; ignores the "
+                          "split-prologue, speculative and lean-stage0 "
+                          "options")),
     cl::init(PipeliningMode::PeelLast), cl::Hidden);
 
 /// Outer loop type selection after pipelining.
@@ -197,6 +199,8 @@ struct OLPOpts {
   bool EnableSpeculativeLastIteration;
   PipeliningMode Mode;
   OuterLoopType LoopType;
+  // Explicitly set options that only apply to peel-last mode.
+  SmallVector<StringRef, 3> PeelLastOnlyOverrides;
 
   explicit OLPOpts(const AIE::LoopOptionOverrides &Overrides)
       : Enabled(Overrides.get(EnableOuterLoopPipelining)),
@@ -208,7 +212,12 @@ struct OLPOpts {
                 ? Overrides.get(SpeculativeLastIteration)
                 : UseLeanStage0),
         Mode(Overrides.get(PipeliningModeOpt)),
-        LoopType(Overrides.get(OuterLoopTypeOpt)) {}
+        LoopType(Overrides.get(OuterLoopTypeOpt)) {
+    for (const cl::opt<bool> *Opt :
+         {&SplitStages, &SpeculativeLastIteration, &LeanStage0Mode})
+      if (Overrides.hasOverride(*Opt))
+        PeelLastOnlyOverrides.push_back(Opt->ArgStr);
+  }
 
   /// Determine whether to use hardware loop based on loop type and pointer
   /// pressure. In auto mode, use hw loop if pointers < threshold.
@@ -2239,6 +2248,11 @@ bool AIEOuterLoopPipeliner::performTransformation(OrigLoopStructure &OrigLS,
   // loads. Peel the first iteration as prologue and add a single-block
   // epilogue for the last steady iteration's deferred stores.
   if (Opts.Mode == PipeliningMode::PeelFirst) {
+    LLVM_DEBUG({
+      for (StringRef Opt : Opts.PeelLastOnlyOverrides)
+        dbgs() << "    Peel-first: ignoring -" << Opt
+               << ", which only applies to peel-last mode\n";
+    });
     OrigLS.collectFirstIterStages();
     if (OrigLS.stage0Insts().empty()) {
       LLVM_DEBUG(dbgs() << "    Peel-first: no stage-0 instructions found; "
