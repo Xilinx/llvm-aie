@@ -200,7 +200,7 @@ declare i1 @llvm.loop.decrement.i32(i32)
 ; CHECK: [[META3]] = !{!"llvm.loop.itercount.range", i32 1}
 ; CHECK: [[META4]] = !{!"llvm.loop.hint.aie_outerloop_pipeliner_success", i64 1}
 ; CHECK: [[META5]] = !{!"llvm.loop.hint.aie_outerloop_pipeliner_peel_mode", !"last"}
-; CHECK: [[LOOP6]] = distinct !{[[LOOP6]], [[META1]], [[META7:![0-9]+]], [[META8:![0-9]+]], [[META4]], [[META9:![0-9]+]], [[META5]]}
+; CHECK: [[LOOP6]] = distinct !{[[LOOP6]], [[META1]], [[META7:![0-9]+]], [[META8:![0-9]+]], [[META4]], [[META9:![0-9]+]]}
 ; CHECK: [[META7]] = !{!"llvm.loop.itercount.range", i32 2}
 ; CHECK: [[META8]] = !{!"llvm.loop.hint.aie-outer-loop-pipelining-speculative", i64 1}
 ; CHECK: [[META9]] = !{!"llvm.loop.hint.aie_outerloop_pipeliner_speculative", i64 1}

@@ -2177,8 +2177,8 @@ void CloneLoopStructure::adjustLoopBound() const {
 }
 
 // Copy Source's hint entries dropping the consumed enable hint, append the
-// pipeliner success marker and, optionally, the speculative marker, and
-// self-reference operand 0 as a loop ID requires.
+// pipeliner success marker and either the speculative or the peel-mode marker,
+// and self-reference operand 0 as a loop ID requires.
 static MDNode *rebuildPipelinedLoopID(
     LLVMContext &Ctx, MDNode *Source, bool IsSpeculative = false,
     AIELoopUtils::OLPPeelMode Mode = AIELoopUtils::OLPPeelMode::PeelLast) {
@@ -2211,11 +2211,14 @@ static MDNode *rebuildPipelinedLoopID(
     MDs.push_back(SpeculativeEntry);
   }
 
-  // Append the peel-mode marker: !{!"<PeelModeKey>", !"first"} or !"last"
-  MDNode *ModeEntry = MDNode::get(
-      Ctx, {MDString::get(Ctx, AIELoopUtils::OuterLoopPeelModeKey),
-            MDString::get(Ctx, AIELoopUtils::peelModeString(Mode))});
-  MDs.push_back(ModeEntry);
+  // Append the peel-mode marker: !{!"<PeelModeKey>", !"first"} or !"last".
+  // A speculative loop peels no iteration, so it gets none.
+  if (!IsSpeculative) {
+    MDNode *ModeEntry = MDNode::get(
+        Ctx, {MDString::get(Ctx, AIELoopUtils::OuterLoopPeelModeKey),
+              MDString::get(Ctx, AIELoopUtils::peelModeString(Mode))});
+    MDs.push_back(ModeEntry);
+  }
 
   // Loop IDs require operand 0 to refer to the node itself; reserve that slot
   // before uniquing so replaceOperandWith does not clobber the first hint
