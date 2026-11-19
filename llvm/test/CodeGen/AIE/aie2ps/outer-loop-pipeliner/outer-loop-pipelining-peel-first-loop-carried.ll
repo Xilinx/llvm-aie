@@ -28,7 +28,7 @@ define i32 @outer_reduction(ptr noalias %src, ptr noalias %dst, i32 %N, i32 %M) 
 ; CHECK:       [[PH]]:
 ; CHECK-NEXT:    br label %[[FIRSTITER_STAGE0_TOP:.*]]
 ; CHECK:       [[STEADY_STAGE0_BOTTOM_AND_STAGE1_TOP:.*]]:
-; CHECK-NEXT:    [[I_STEADY:%.*]] = phi i32 [ 0, %[[FIRSTITER_STAGE0_BOTTOM:.*]] ], [ [[I_NEXT_STEADY:%.*]], %[[STEADY_STAGE1_BOTTOM:.*]] ]
+; CHECK-NEXT:    [[I_STEADY:%.*]] = phi i32 [ [[I_NEXT_FIRSTITER:%.*]], %[[FIRSTITER_STAGE0_BOTTOM:.*]] ], [ [[I_NEXT_STEADY:%.*]], %[[STEADY_STAGE1_BOTTOM:.*]] ]
 ; CHECK-NEXT:    [[SRC_PTR_STEADY:%.*]] = phi ptr [ [[SRC_NEXT_FIRSTITER:%.*]], %[[FIRSTITER_STAGE0_BOTTOM]] ], [ [[SRC_NEXT_STEADY:%.*]], %[[STEADY_STAGE1_BOTTOM]] ]
 ; CHECK-NEXT:    [[DST_PTR_STEADY:%.*]] = phi ptr [ [[DST_NEXT_FIRSTITER:%.*]], %[[FIRSTITER_STAGE0_BOTTOM]] ], [ [[DST_NEXT_STEADY:%.*]], %[[STEADY_STAGE1_BOTTOM]] ]
 ; CHECK-NEXT:    [[RESULT_INNER_RESULT_PHI:%.*]] = phi i32 [ [[ACC_NEXT_FIRSTITER:%.*]], %[[FIRSTITER_STAGE0_BOTTOM]] ], [ [[ACC_NEXT_STEADY:%.*]], %[[STEADY_STAGE1_BOTTOM]] ]
@@ -56,12 +56,12 @@ define i32 @outer_reduction(ptr noalias %src, ptr noalias %dst, i32 %N, i32 %M) 
 ; CHECK-NEXT:    [[SRC_NEXT_STEADY]] = getelementptr inbounds i32, ptr [[SRC_PTR_STEADY]], i32 1
 ; CHECK-NEXT:    [[DST_NEXT_STEADY]] = getelementptr inbounds i32, ptr [[DST_PTR_STEADY]], i32 1
 ; CHECK-NEXT:    [[I_NEXT_STEADY]] = add nuw i32 [[I_STEADY]], 1
-; CHECK-NEXT:    [[OUTER_COND_STEADY:%.*]] = icmp eq i32 [[I_NEXT_STEADY]], [[OUTER_TRIP_ADJ:%.*]]
+; CHECK-NEXT:    [[OUTER_COND_STEADY:%.*]] = icmp eq i32 [[I_NEXT_STEADY]], [[N]]
 ; CHECK-NEXT:    br i1 [[OUTER_COND_STEADY]], label %[[LASTITER_STAGE1_BOTTOM:.*]], label %[[STEADY_STAGE0_BOTTOM_AND_STAGE1_TOP]], !llvm.loop [[LOOP2:![0-9]+]]
 ; CHECK:       [[FIRSTITER_STAGE0_BOTTOM]]:
 ; CHECK-NEXT:    [[SRC_NEXT_FIRSTITER]] = getelementptr inbounds i32, ptr [[SRC]], i32 1
 ; CHECK-NEXT:    [[DST_NEXT_FIRSTITER]] = getelementptr inbounds i32, ptr [[DST]], i32 1
-; CHECK-NEXT:    [[OUTER_TRIP_ADJ]] = sub i32 [[N]], 1
+; CHECK-NEXT:    [[I_NEXT_FIRSTITER]] = add nuw i32 0, 1
 ; CHECK-NEXT:    br label %[[STEADY_STAGE0_BOTTOM_AND_STAGE1_TOP]]
 ; CHECK:       [[LASTITER_STAGE1_BOTTOM]]:
 ; CHECK-NEXT:    [[V_EPILOGUE:%.*]] = add i32 [[ACC_NEXT_STEADY]], 1
@@ -127,7 +127,7 @@ define void @two_step_pointer_chain(ptr noalias %src, ptr noalias %dst, i32 %N, 
 ; CHECK:       [[PH]]:
 ; CHECK-NEXT:    br label %[[FIRSTITER_STAGE0_TOP:.*]]
 ; CHECK:       [[STEADY_STAGE0_BOTTOM_AND_STAGE1_TOP:.*]]:
-; CHECK-NEXT:    [[I_STEADY:%.*]] = phi i32 [ 0, %[[FIRSTITER_STAGE0_BOTTOM:.*]] ], [ [[I_NEXT_STEADY:%.*]], %[[STEADY_STAGE1_BOTTOM:.*]] ]
+; CHECK-NEXT:    [[I_STEADY:%.*]] = phi i32 [ [[I_NEXT_FIRSTITER:%.*]], %[[FIRSTITER_STAGE0_BOTTOM:.*]] ], [ [[I_NEXT_STEADY:%.*]], %[[STEADY_STAGE1_BOTTOM:.*]] ]
 ; CHECK-NEXT:    [[DST_PTR_STEADY:%.*]] = phi ptr [ [[DST_NEXT_FIRSTITER:%.*]], %[[FIRSTITER_STAGE0_BOTTOM]] ], [ [[DST_NEXT_STEADY:%.*]], %[[STEADY_STAGE1_BOTTOM]] ]
 ; CHECK-NEXT:    [[RESULT_INNER_RESULT_PHI:%.*]] = phi i32 [ [[ACC_NEXT_FIRSTITER:%.*]], %[[FIRSTITER_STAGE0_BOTTOM]] ], [ [[ACC_NEXT_STEADY:%.*]], %[[STEADY_STAGE1_BOTTOM]] ]
 ; CHECK-NEXT:    [[Q_END_INNER_RESULT_PHI:%.*]] = phi ptr [ [[Q_NEXT_FIRSTITER:%.*]], %[[FIRSTITER_STAGE0_BOTTOM]] ], [ [[Q_NEXT_STEADY:%.*]], %[[STEADY_STAGE1_BOTTOM]] ]
@@ -158,11 +158,11 @@ define void @two_step_pointer_chain(ptr noalias %src, ptr noalias %dst, i32 %N, 
 ; CHECK:       [[STEADY_STAGE1_BOTTOM]]:
 ; CHECK-NEXT:    [[DST_NEXT_STEADY]] = getelementptr inbounds i32, ptr [[DST_PTR_STEADY]], i32 1
 ; CHECK-NEXT:    [[I_NEXT_STEADY]] = add nuw i32 [[I_STEADY]], 1
-; CHECK-NEXT:    [[OUTER_COND_STEADY:%.*]] = icmp eq i32 [[I_NEXT_STEADY]], [[OUTER_TRIP_ADJ:%.*]]
+; CHECK-NEXT:    [[OUTER_COND_STEADY:%.*]] = icmp eq i32 [[I_NEXT_STEADY]], [[N]]
 ; CHECK-NEXT:    br i1 [[OUTER_COND_STEADY]], label %[[LASTITER_STAGE1_BOTTOM:.*]], label %[[STEADY_STAGE0_BOTTOM_AND_STAGE1_TOP]], !llvm.loop [[LOOP6:![0-9]+]]
 ; CHECK:       [[FIRSTITER_STAGE0_BOTTOM]]:
 ; CHECK-NEXT:    [[DST_NEXT_FIRSTITER]] = getelementptr inbounds i32, ptr [[DST]], i32 1
-; CHECK-NEXT:    [[OUTER_TRIP_ADJ]] = sub i32 [[N]], 1
+; CHECK-NEXT:    [[I_NEXT_FIRSTITER]] = add nuw i32 0, 1
 ; CHECK-NEXT:    br label %[[STEADY_STAGE0_BOTTOM_AND_STAGE1_TOP]]
 ; CHECK:       [[LASTITER_STAGE1_BOTTOM]]:
 ; CHECK-NEXT:    store i32 [[ACC_NEXT_STEADY]], ptr [[DST_NEXT_STEADY]], align 4
