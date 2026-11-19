@@ -569,6 +569,49 @@ TEST_F(AIELoopUtilsTest, OuterLoopStructure_UnknownPeelModeReturnsNullopt) {
   EXPECT_FALSE(OuterLoopStructure::tryBuildFrom(*OuterLatch).has_value());
 }
 
+TEST_F(AIELoopUtilsTest, OuterLoopStructure_PeelFirstMarkerOnPeelLastCFG) {
+  // The peel-last CFG with a peel-first marker: there is no peeled iteration
+  // before the steady loop, so the structure is not recognized.
+  std::string MIR = NonSpeculativeMIR;
+  const std::string LoopID = "  !1 = distinct !{!1, !3}\n";
+  MIR.replace(MIR.find(LoopID), LoopID.size(),
+              "  !1 = distinct !{!1, !3, !4}\n"
+              "  !4 = !{!\"llvm.loop.hint.aie_outerloop_pipeliner_peel_mode\", "
+              "!\"first\"}\n");
+  parseMIR(MIR.c_str());
+  MachineFunction *MF = getMachineFunction("olp_non_speculative");
+
+  MachineBasicBlock *OuterLatch = getMBB(MF, 4);
+  ASSERT_NE(OuterLatch, nullptr);
+
+  EXPECT_EQ(getOuterLoopPeelMode(*OuterLatch), OLPPeelMode::PeelFirst);
+  EXPECT_FALSE(OuterLoopStructure::tryBuildFrom(*OuterLatch).has_value());
+}
+
+TEST_F(AIELoopUtilsTest, OuterLoopStructure_SpeculativeIgnoresPeelMode) {
+  // A speculative loop peels no iteration; a peel-mode marker on it does not
+  // change the structure.
+  std::string MIR = SpeculativeMIR;
+  const std::string LoopID = "  !1 = distinct !{!1, !2, !3}\n";
+  MIR.replace(MIR.find(LoopID), LoopID.size(),
+              "  !1 = distinct !{!1, !2, !3, !4}\n"
+              "  !4 = !{!\"llvm.loop.hint.aie_outerloop_pipeliner_peel_mode\", "
+              "!\"first\"}\n");
+  parseMIR(MIR.c_str());
+  MachineFunction *MF = getMachineFunction("olp_speculative");
+
+  MachineBasicBlock *OuterLatch = getMBB(MF, 4);
+  ASSERT_NE(OuterLatch, nullptr);
+
+  auto OLS = OuterLoopStructure::tryBuildFrom(*OuterLatch);
+  ASSERT_TRUE(OLS.has_value());
+  EXPECT_TRUE(OLS->Speculative);
+  EXPECT_FALSE(OLS->hasPeeledIterRegion());
+  EXPECT_FALSE(OLS->isFirstIterationPeeled());
+  EXPECT_EQ(OLS->SteadyTop, getMBB(MF, 2));
+  EXPECT_EQ(OLS->PeeledIterTop, nullptr);
+}
+
 TEST_F(AIELoopUtilsTest, OuterLoopStructure_NonOLPReturnsNullopt) {
   parseMIR(NonOLPMIR);
   MachineFunction *MF = getMachineFunction("non_olp");
