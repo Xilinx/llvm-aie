@@ -465,12 +465,6 @@ class OrigLoopStructure : public LoopStructure {
   void seedFromLoads(SmallVectorImpl<Instruction *> &Seeds,
                      const AIEOLPTargetConfig &Config);
 
-  // Peel-first: collect the bottom-block stage-0 (consumer) seed set from the
-  // forward closure of LCSSA PHI users in the bottom block. After
-  // formLCSSARecursively every PHI in the bottom block is an LCSSA PHI.
-  // Only users that have no use outside the bottom block are seeded.
-  SmallPtrSet<Instruction *, 32> seedFromLCSSAPHIs() const;
-
   // Unified stage-0 collection via backward closure from seeds.
   // PopulateStage1 controls whether remaining candidates go to Stage1Insts.
   void collectStage0(
@@ -488,9 +482,11 @@ class OrigLoopStructure : public LoopStructure {
                              SmallPtrSetImpl<Instruction *> &ToPromote) const;
 
 public:
-  // Peel-first: partition the bottom-block pipeline candidates into stage-1
-  // (forward+backward closure seeded from LCSSA PHI users) and stage-0
-  // (everything else), populating Stage1Insts and Stage0Insts in program order.
+  // Peel-first: partition the bottom-block pipeline candidates into stage-0
+  // (the consumers of the inner-loop results, deferred to the next iteration)
+  // and stage-1 (everything else, including all values the next iteration
+  // needs), populating Stage0Insts and Stage1Insts in program order. Leaves
+  // both empty if stage-0 cannot be separated from the rest.
   void collectFirstIterStages();
 
   // Build and validate the LS for L; nullptr if L is not a supported candidate.
@@ -1135,29 +1131,6 @@ void OrigLoopStructure::seedFromLoads(SmallVectorImpl<Instruction *> &Seeds,
   });
 }
 
-SmallPtrSet<Instruction *, 32> OrigLoopStructure::seedFromLCSSAPHIs() const {
-  // An instruction qualifies as a seed only if all of its uses are in the
-  // bottom block (i.e., it has no use outside the bottom block).
-  auto HasUseOutsideBottom = [this](const Instruction *I) -> bool {
-    return llvm::any_of(I->users(), [this](const User *U) {
-      const auto *UI = dyn_cast<Instruction>(U);
-      return UI && !isInBottom(UI);
-    });
-  };
-
-  SmallVector<Instruction *, 16> Seeds;
-  for (PHINode &PHI : getBottom()->phis()) {
-    for (User *U : PHI.users()) {
-      auto *UI = dyn_cast<Instruction>(U);
-      if (UI && isInBottom(UI) && !HasUseOutsideBottom(UI))
-        Seeds.push_back(UI);
-    }
-  }
-  // Forward closure: stores and any other bottom-block consumers of the
-  // inner-loop live-outs. The LCSSA PHIs themselves are not stage-1.
-  return collectClosure(Seeds, /*TraverseUsers=*/true, /*IncludeBottom=*/true);
-}
-
 void OrigLoopStructure::collectStage0(
     function_ref<void(SmallVectorImpl<Instruction *> &)> SeedCollector,
     bool PopulateStage1) {
@@ -1328,27 +1301,71 @@ void OrigLoopStructure::collectLeanStage0(const AIEOLPTargetConfig &Config) {
 }
 
 void OrigLoopStructure::collectFirstIterStages() {
-  // Forward closure: bottom-block consumers of LCSSA PHIs (stores etc.).
-  const SmallPtrSet<Instruction *, 32> FwdSet = seedFromLCSSAPHIs();
-
-  // Backward closure: pulls in address computations (GEPs etc.) that feed
-  // the stores but are not reachable forward from the LCSSA PHIs.
-  SmallVector<Instruction *, 32> BwdSeeds(FwdSet.begin(), FwdSet.end());
-  // ConsumerSet: instructions displaced one iteration forward (stage-0).
-  const SmallPtrSet<Instruction *, 32> ConsumerSet =
-      collectClosure(BwdSeeds, /*TraverseUsers=*/false, /*IncludeBottom=*/true);
-
-  // The latch counter and compare decide whether the steady loop iterates
-  // again, so they and everything they are computed from stay in stage-1.
-  // Stage-0 reads them through its input PHIs.
+  // Values the next iteration needs from this bottom block stay in stage-1
+  // with everything they are computed from: the header PHIs' back-edge values
+  // and the latch counter and compare. Stage-0 reads them through its input
+  // PHIs.
   const LatchConditionInfo &Bound = latchCondition();
-  SmallVector<Instruction *, 2> LatchControl;
+  SmallVector<Instruction *, 8> Stage1Roots;
+  for (PHINode &PHI : getTop()->phis())
+    if (auto *I =
+            dyn_cast<Instruction>(PHI.getIncomingValueForBlock(getBottom()));
+        I && isInBottom(I))
+      Stage1Roots.push_back(I);
   for (Instruction *I :
        {cast<Instruction>(Bound.Counter), cast<Instruction>(Bound.Cmp)})
     if (isInBottom(I))
-      LatchControl.push_back(I);
+      Stage1Roots.push_back(I);
   const SmallPtrSet<Instruction *, 32> Stage1Pinned = collectClosure(
-      LatchControl, /*TraverseUsers=*/false, /*IncludeBottom=*/true);
+      Stage1Roots, /*TraverseUsers=*/false, /*IncludeBottom=*/true);
+
+  // Stage-0 starts from the bottom-block instructions computed from the
+  // inner-loop results (LCSSA PHIs), possibly through stage-1 values, and is
+  // closed under bottom-block users and operands outside stage-1: the stores,
+  // their address computations, and anything else computed from what they
+  // store. Being closed under users means that no instruction left in the
+  // bottom block reads a stage-0 value.
+  SmallVector<Instruction *, 32> Worklist;
+  SmallPtrSet<Instruction *, 32> FromInnerResults;
+  for (PHINode &PHI : getBottom()->phis())
+    Worklist.push_back(&PHI);
+  while (!Worklist.empty()) {
+    Instruction *I = Worklist.pop_back_val();
+    for (User *U : I->users()) {
+      auto *UI = cast<Instruction>(U);
+      if (isInBottom(UI) && !isa<PHINode>(UI) &&
+          FromInnerResults.insert(UI).second)
+        Worklist.push_back(UI);
+    }
+  }
+
+  SmallPtrSet<Instruction *, 32> Stage0Set;
+  bool IsClosed = true;
+  auto Enqueue = [&](Value *V) {
+    auto *I = dyn_cast<Instruction>(V);
+    if (!I || !isInBottom(I) || isa<PHINode>(I) || Stage1Pinned.contains(I))
+      return;
+    if (!isPipelineCandidate(I, /*IncludeBottom=*/true)) {
+      IsClosed = false;
+      return;
+    }
+    if (Stage0Set.insert(I).second)
+      Worklist.push_back(I);
+  };
+  for (Instruction *I : FromInnerResults)
+    Enqueue(I);
+  while (!Worklist.empty()) {
+    Instruction *I = Worklist.pop_back_val();
+    for (User *U : I->users())
+      Enqueue(U);
+    for (Value *Op : I->operands())
+      Enqueue(Op);
+  }
+  if (!IsClosed) {
+    LLVM_DEBUG(dbgs() << "    Peel-first: stage-0 reaches a bottom-block "
+                         "instruction that cannot move\n");
+    return;
+  }
 
   // Emit stage-0 (consumers, displaced forward) and stage-1 (ptr-updates,
   // stationary) candidates from the bottom region in program order.
@@ -1356,8 +1373,7 @@ void OrigLoopStructure::collectFirstIterStages() {
   bottomRegion().forEachInstruction([&](Instruction *I) {
     if (!isPipelineCandidate(I, /*IncludeBottom=*/true))
       return;
-    const bool IsStage0 = ConsumerSet.count(I) && !Stage1Pinned.count(I);
-    (IsStage0 ? Stage0Insts : Stage1Insts).push_back(I);
+    (Stage0Set.contains(I) ? Stage0Insts : Stage1Insts).push_back(I);
   });
 
   LLVM_DEBUG({
@@ -2464,6 +2480,20 @@ void AIEOuterLoopPipeliner::convertOuterLoopToHardwareLoop(
 
 // --- Peel-first step helpers ------------------------------------------------
 
+// Erase the clones of stage-0 in one bottom block, in reverse program order.
+// Stage-0 is closed under its bottom-block users, so the clones may only use
+// each other; any other user would read a deleted value.
+static void eraseStage0Clones(ArrayRef<Instruction *> Clones) {
+  SmallPtrSet<Instruction *, 16> Erased(Clones.begin(), Clones.end());
+  for (Instruction *I : Clones)
+    for (User *U : I->users())
+      if (!Erased.contains(cast<Instruction>(U)))
+        reportFatalInternalError("AIE outer loop pipeliner: an erased stage-0 "
+                                 "instruction still has a user");
+  for (Instruction *I : reverse(Clones))
+    I->eraseFromParent();
+}
+
 // The values stage-0 reads from the rest of the outer loop, in a stable order:
 // inner-loop results (bottom LCSSA PHIs), then top-region values (header PHIs
 // first), then bottom values outside stage-0.
@@ -2530,12 +2560,7 @@ AIEOuterLoopPipeliner::peelFirstIteration(const OrigLoopStructure &OrigLS,
     if (OrigLS.isInStage0(&OrigI))
       ToErase.push_back(cast<Instruction>(FirstIterLS->cloneOf(&OrigI)));
   }
-  // Erase in reverse program order so that uses are removed before defs.
-  for (Instruction *I : reverse(ToErase)) {
-    if (!I->getType()->isVoidTy())
-      I->replaceAllUsesWith(PoisonValue::get(I->getType()));
-    I->eraseFromParent();
-  }
+  eraseStage0Clones(ToErase);
 
   // Replace the conditional latch branch with an unconditional branch to the
   // steady loop header. The firstiter always falls through.
@@ -2610,18 +2635,12 @@ void AIEOuterLoopPipeliner::cloneStage0IntoTop(
   LLVM_DEBUG(dbgs() << "    Cloned " << Clones.size()
                     << " stage-0 instructions into steady top\n");
 
-  // Step 5: Erase stage-0 clones from steady.stage1.bottom in reverse program
-  // order (uses removed before defs). These are now dead — their role is taken
-  // by the clones in the steady top.
+  // Step 5: Erase stage-0 clones from steady.stage1.bottom. These are now
+  // dead — their role is taken by the clones in the steady top.
   SmallVector<Instruction *, 16> SteadyBottomStage0;
   for (Instruction *OrigI : OrigLS.stage0Insts())
     SteadyBottomStage0.push_back(cast<Instruction>(SteadyLS.cloneOf(OrigI)));
-
-  for (Instruction *I : reverse(SteadyBottomStage0)) {
-    if (!I->getType()->isVoidTy())
-      I->replaceAllUsesWith(PoisonValue::get(I->getType()));
-    I->eraseFromParent();
-  }
+  eraseStage0Clones(SteadyBottomStage0);
 
   LLVM_DEBUG(dbgs() << "    Erased stage-0 clones from steady bottom\n");
 }
