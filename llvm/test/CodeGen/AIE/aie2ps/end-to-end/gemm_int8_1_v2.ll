@@ -132,7 +132,8 @@ define dso_local void @gemm_int8_1_v2(ptr noalias %p_a, ptr noalias %p_b, ptr no
 ; CHECK-NEXT:    vlda.3d x10, [p1], d1; vmul dm4, x0, x4, r12
 ; CHECK-NEXT:    vldb x8, [p0], #64
 ; CHECK-NEXT:    vlda.3d x6, [p0], d0; vaddmac dm3, dm3, dm4, x6, x1, r10
-; CHECK-NEXT:  .LBB0_1: // %steady.stage1.top
+; CHECK-NEXT:  .LBB0_1: // Block address taken
+; CHECK-NEXT:    // %steady.stage1.top
 ; CHECK-NEXT:    // =>This Loop Header: Depth=1
 ; CHECK-NEXT:    // Child Loop BB0_2 Depth 2
 ; CHECK-NEXT:    nopa ; vldb x1, [p1], m3; nops ; nopxm ; vmul dm4, x0, x2, r12

@@ -36,7 +36,8 @@ define void @nested(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef 
 ; AIE2-NEXT:    nop
 ; AIE2-NEXT:    mova r6, #0
 ; AIE2-NEXT:    add.nc r5, r1, #-1
-; AIE2-NEXT:  .LBB0_2: // %for.body6
+; AIE2-NEXT:  .LBB0_2: // Block address taken
+; AIE2-NEXT:    // %for.body6
 ; AIE2-NEXT:    // Parent Loop BB0_1 Depth=1
 ; AIE2-NEXT:    // => This Inner Loop Header: Depth=2
 ; AIE2-NEXT:    nopa ; lshl r7, r6, r4; nopm
@@ -85,7 +86,8 @@ define void @nested(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef 
 ; AIE2P-NEXT:    nop
 ; AIE2P-NEXT:    mov r6, r1
 ; AIE2P-NEXT:    mova r5, #0
-; AIE2P-NEXT:  .LBB0_2: // %for.body6
+; AIE2P-NEXT:  .LBB0_2: // Block address taken
+; AIE2P-NEXT:    // %for.body6
 ; AIE2P-NEXT:    // Parent Loop BB0_1 Depth=1
 ; AIE2P-NEXT:    // => This Inner Loop Header: Depth=2
 ; AIE2P-NEXT:    nopa ; lshl r7, r5, r4; nopm
@@ -126,7 +128,8 @@ define void @nested(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef 
 ; AIE2PS-NEXT:    movxm p2, #.LBB0_2
 ; AIE2PS-NEXT:    movxm p3, #.LBB0_1
 ; AIE2PS-NEXT:    lda r2, [p0, #0]
-; AIE2PS-NEXT:  .LBB0_1: // %for.cond3.preheader
+; AIE2PS-NEXT:  .LBB0_1: // Block address taken
+; AIE2PS-NEXT:    // %for.cond3.preheader
 ; AIE2PS-NEXT:    // =>This Loop Header: Depth=1
 ; AIE2PS-NEXT:    // Child Loop BB0_2 Depth 2
 ; AIE2PS-NEXT:    nopa ; nopb ; lshl r16, r4, r6; nopm
@@ -136,7 +139,8 @@ define void @nested(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef 
 ; AIE2PS-NEXT:    nop
 ; AIE2PS-NEXT:    mov r18, r1
 ; AIE2PS-NEXT:    mova r16, #0
-; AIE2PS-NEXT:  .LBB0_2: // %for.body6
+; AIE2PS-NEXT:  .LBB0_2: // Block address taken
+; AIE2PS-NEXT:    // %for.body6
 ; AIE2PS-NEXT:    // Parent Loop BB0_1 Depth=1
 ; AIE2PS-NEXT:    // => This Inner Loop Header: Depth=2
 ; AIE2PS-NEXT:    nopa ; nopb ; nops ; lshl r20, r16, r6; nopm ; nopv

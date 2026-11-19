@@ -22,7 +22,8 @@ define void @sibling(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef
 ; AIE2-NEXT:    movxm p2, #.LBB0_1
 ; AIE2-NEXT:    mova r5, #0
 ; AIE2-NEXT:    lda r3, [p0, #0]
-; AIE2-NEXT:  .LBB0_1: // %for.body
+; AIE2-NEXT:  .LBB0_1: // Block address taken
+; AIE2-NEXT:    // %for.body
 ; AIE2-NEXT:    // =>This Inner Loop Header: Depth=1
 ; AIE2-NEXT:    nopa ; nopb ; lshl r6, r5, r4; nopm ; nops
 ; AIE2-NEXT:    mov dj0, r6
@@ -40,7 +41,8 @@ define void @sibling(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef
 ; AIE2-NEXT:    mova r3, #2
 ; AIE2-NEXT:    movxm p2, #.LBB0_3
 ; AIE2-NEXT:    lda r0, [p0, #0]
-; AIE2-NEXT:  .LBB0_3: // %for.body6
+; AIE2-NEXT:  .LBB0_3: // Block address taken
+; AIE2-NEXT:    // %for.body6
 ; AIE2-NEXT:    // =>This Inner Loop Header: Depth=1
 ; AIE2-NEXT:    nopb ; nopa ; nops ; lshl r4, r2, r3; nopm ; nopv
 ; AIE2-NEXT:    nopa ; mov dj0, r4
@@ -70,7 +72,8 @@ define void @sibling(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef
 ; AIE2P-NEXT:    movxm p2, #.LBB0_1
 ; AIE2P-NEXT:    mova r5, #0
 ; AIE2P-NEXT:    lda r3, [p0, #0]
-; AIE2P-NEXT:  .LBB0_1: // %for.body
+; AIE2P-NEXT:  .LBB0_1: // Block address taken
+; AIE2P-NEXT:    // %for.body
 ; AIE2P-NEXT:    // =>This Inner Loop Header: Depth=1
 ; AIE2P-NEXT:    nopa ; nopb ; nops ; lshl r6, r5, r4; nopm ; nopv
 ; AIE2P-NEXT:    nopx ; mov dj0, r6
@@ -87,7 +90,8 @@ define void @sibling(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef
 ; AIE2P-NEXT:    mova r3, #2
 ; AIE2P-NEXT:    movxm p2, #.LBB0_3
 ; AIE2P-NEXT:    lda r0, [p0, #0]
-; AIE2P-NEXT:  .LBB0_3: // %for.body6
+; AIE2P-NEXT:  .LBB0_3: // Block address taken
+; AIE2P-NEXT:    // %for.body6
 ; AIE2P-NEXT:    // =>This Inner Loop Header: Depth=1
 ; AIE2P-NEXT:    nopa ; nopb ; nops ; lshl r4, r2, r3; nopm ; nopv
 ; AIE2P-NEXT:    nopx ; mov dj0, r4
@@ -117,7 +121,8 @@ define void @sibling(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef
 ; AIE2PS-NEXT:    movxm p2, #.LBB0_1
 ; AIE2PS-NEXT:    mova r18, #0
 ; AIE2PS-NEXT:    lda r6, [p0, #0]
-; AIE2PS-NEXT:  .LBB0_1: // %for.body
+; AIE2PS-NEXT:  .LBB0_1: // Block address taken
+; AIE2PS-NEXT:    // %for.body
 ; AIE2PS-NEXT:    // =>This Inner Loop Header: Depth=1
 ; AIE2PS-NEXT:    nopa ; nopb ; nops ; lshl r20, r18, r16; nopm ; nopv
 ; AIE2PS-NEXT:    nopx ; mov dj0, r20
@@ -134,7 +139,8 @@ define void @sibling(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef
 ; AIE2PS-NEXT:    mova r6, #2
 ; AIE2PS-NEXT:    movxm p2, #.LBB0_3
 ; AIE2PS-NEXT:    lda r0, [p0, #0]
-; AIE2PS-NEXT:  .LBB0_3: // %for.body6
+; AIE2PS-NEXT:  .LBB0_3: // Block address taken
+; AIE2PS-NEXT:    // %for.body6
 ; AIE2PS-NEXT:    // =>This Inner Loop Header: Depth=1
 ; AIE2PS-NEXT:    nopa ; nopb ; nops ; lshl r16, r4, r6; nopm ; nopv
 ; AIE2PS-NEXT:    nopx ; mov dj0, r16

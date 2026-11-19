@@ -29,7 +29,8 @@ define void @latch_multi_pred(ptr %p0, ptr %p1, ptr %p2) {
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    st r4, [p2, #0] // Delay Slot 1
-; CHECK-NEXT:  .LBB0_2: // %header
+; CHECK-NEXT:  .LBB0_2: // Block address taken
+; CHECK-NEXT:    // %header
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
 ; CHECK-NEXT:    lda r4, [p0, #0]; nopb ; nopxm
 ; CHECK-NEXT:    nop
@@ -110,7 +111,8 @@ define void @guarded_inner_loop(ptr %p0, ptr %p1, ptr %p2, i32 %n) {
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    mova r16, #0; st r2, [p2, #0] // Delay Slot 1
-; CHECK-NEXT:  .LBB1_2: // %outer
+; CHECK-NEXT:  .LBB1_2: // Block address taken
+; CHECK-NEXT:    // %outer
 ; CHECK-NEXT:    // =>This Loop Header: Depth=1
 ; CHECK-NEXT:    // Child Loop BB1_4 Depth 2
 ; CHECK-NEXT:    nopa ; nopb ; nops ; jz r0, #.LBB1_1; nopv
@@ -207,7 +209,8 @@ define void @guarded_inner_loop_with_tail(ptr %p0, ptr %p1, ptr %p2, i32 %n) {
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    mova r18, #0; st r4, [p2, #0] // Delay Slot 1
-; CHECK-NEXT:  .LBB2_2: // %outer
+; CHECK-NEXT:  .LBB2_2: // Block address taken
+; CHECK-NEXT:    // %outer
 ; CHECK-NEXT:    // =>This Loop Header: Depth=1
 ; CHECK-NEXT:    // Child Loop BB2_4 Depth 2
 ; CHECK-NEXT:    nopa ; nopb ; nops ; jz r0, #.LBB2_1; nopv
@@ -323,7 +326,8 @@ define void @colder_above(ptr %out, i32 %n, i32 %k) {
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r2, #0; nopb ; nops ; movxm p1, #.LBB3_1; nopv
 ; CHECK-NEXT:    mova r6, #2; nopb ; nops ; ge r4, r2, r1; addm.nc r0, r0, #-1; nopv
-; CHECK-NEXT:  .LBB3_1: // %loop
+; CHECK-NEXT:  .LBB3_1: // Block address taken
+; CHECK-NEXT:    // %loop
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
 ; CHECK-NEXT:    nopa ; jnz r4, #.LBB3_3
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -381,7 +385,8 @@ define void @entry_fall_through(ptr %p0, ptr %p1, ptr %p2, i32 %n) {
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r2, #0; addm.nc r0, r0, #-1
 ; CHECK-NEXT:    mova m0, #4; movxm p3, #.LBB4_1
-; CHECK-NEXT:  .LBB4_1: // %header
+; CHECK-NEXT:  .LBB4_1: // Block address taken
+; CHECK-NEXT:    // %header
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
 ; CHECK-NEXT:    lda r4, [p0, #0]; nopb ; nopxm ; nops
 ; CHECK-NEXT:    nop
