@@ -106,6 +106,95 @@ exit:
   ret ptr %dst.final
 }
 
+; Live-out of a stage-1 value: the value stored by the last iteration, which
+; the epilogue computes.
+define i32 @peel_first_stage1_liveout(ptr noalias %src, ptr noalias %dst, i32 %N, i32 %M) {
+; CHECK-LABEL: define i32 @peel_first_stage1_liveout(
+; CHECK-SAME: ptr noalias [[SRC:%.*]], ptr noalias [[DST:%.*]], i32 [[N:%.*]], i32 [[M:%.*]]) {
+; CHECK-NEXT:  [[ENTRY:.*]]:
+; CHECK-NEXT:    [[CMP:%.*]] = icmp sgt i32 [[N]], 1
+; CHECK-NEXT:    br i1 [[CMP]], label %[[OUTER_HEADER_PREHEADER:.*]], label %[[EXIT:.*]]
+; CHECK:       [[OUTER_HEADER_PREHEADER]]:
+; CHECK-NEXT:    br label %[[FIRSTITER_STAGE0_TOP:.*]]
+; CHECK:       [[STEADY_STAGE1_BOTTOM_AND_STAGE0_TOP:.*]]:
+; CHECK-NEXT:    [[SRC_PTR_STEADY:%.*]] = phi ptr [ [[SRC_NEXT1_STEADY:%.*]], %[[STEADY_STAGE0_BOTTOM:.*]] ], [ [[SRC_NEXT1_FIRSTITER:%.*]], %[[FIRSTITER_STAGE0_BOTTOM:.*]] ]
+; CHECK-NEXT:    [[DST_PTR_STEADY:%.*]] = phi ptr [ [[DST_NEXT2_STEADY:%.*]], %[[STEADY_STAGE0_BOTTOM]] ], [ [[DST_NEXT2_FIRSTITER:%.*]], %[[FIRSTITER_STAGE0_BOTTOM]] ]
+; CHECK-NEXT:    [[ACC_NEXT_LCSSA_INNER_RESULT_PHI:%.*]] = phi i32 [ [[ACC_NEXT_FIRSTITER:%.*]], %[[FIRSTITER_STAGE0_BOTTOM]] ], [ [[ACC_NEXT_STEADY:%.*]], %[[STEADY_STAGE0_BOTTOM]] ]
+; CHECK-NEXT:    [[DST_PTR_PREV:%.*]] = phi ptr [ [[DST]], %[[FIRSTITER_STAGE0_BOTTOM]] ], [ [[DST_PTR_STEADY]], %[[STEADY_STAGE0_BOTTOM]] ]
+; CHECK-NEXT:    [[OUTER_CTR:%.*]] = phi i32 [ [[OUTER_CTR_INIT:%.*]], %[[FIRSTITER_STAGE0_BOTTOM]] ], [ [[OUTER_CTR_NEXT:%.*]], %[[STEADY_STAGE0_BOTTOM]] ]
+; CHECK-NEXT:    [[SCALED_TOP:%.*]] = mul i32 [[ACC_NEXT_LCSSA_INNER_RESULT_PHI]], 3
+; CHECK-NEXT:    store i32 [[SCALED_TOP]], ptr [[DST_PTR_PREV]], align 4
+; CHECK-NEXT:    [[VAL_STEADY:%.*]] = load i32, ptr [[SRC_PTR_STEADY]], align 4
+; CHECK-NEXT:    call void @llvm.set.loop.iterations.i32(i32 [[M]])
+; CHECK-NEXT:    br label %[[STEADY_STAGE0_INNER_INNER_HEADER:.*]]
+; CHECK:       [[FIRSTITER_STAGE0_TOP]]:
+; CHECK-NEXT:    [[VAL_FIRSTITER:%.*]] = load i32, ptr [[SRC]], align 4
+; CHECK-NEXT:    call void @llvm.set.loop.iterations.i32(i32 [[M]])
+; CHECK-NEXT:    br label %[[FIRSTITER_STAGE0_INNER_INNER_HEADER:.*]]
+; CHECK:       [[STEADY_STAGE0_INNER_INNER_HEADER]]:
+; CHECK-NEXT:    [[ACC_STEADY:%.*]] = phi i32 [ 0, %[[STEADY_STAGE1_BOTTOM_AND_STAGE0_TOP]] ], [ [[ACC_NEXT_STEADY]], %[[STEADY_STAGE0_INNER_INNER_HEADER]] ]
+; CHECK-NEXT:    [[ACC_NEXT_STEADY]] = add i32 [[ACC_STEADY]], [[VAL_STEADY]]
+; CHECK-NEXT:    [[INNER_COND_STEADY:%.*]] = call i1 @llvm.loop.decrement.i32(i32 1)
+; CHECK-NEXT:    br i1 [[INNER_COND_STEADY]], label %[[STEADY_STAGE0_INNER_INNER_HEADER]], label %[[STEADY_STAGE0_BOTTOM]], !llvm.loop [[LOOP0]]
+; CHECK:       [[FIRSTITER_STAGE0_INNER_INNER_HEADER]]:
+; CHECK-NEXT:    [[ACC_FIRSTITER:%.*]] = phi i32 [ 0, %[[FIRSTITER_STAGE0_TOP]] ], [ [[ACC_NEXT_FIRSTITER]], %[[FIRSTITER_STAGE0_INNER_INNER_HEADER]] ]
+; CHECK-NEXT:    [[ACC_NEXT_FIRSTITER]] = add i32 [[ACC_FIRSTITER]], [[VAL_FIRSTITER]]
+; CHECK-NEXT:    [[INNER_COND_FIRSTITER:%.*]] = call i1 @llvm.loop.decrement.i32(i32 1)
+; CHECK-NEXT:    br i1 [[INNER_COND_FIRSTITER]], label %[[FIRSTITER_STAGE0_INNER_INNER_HEADER]], label %[[FIRSTITER_STAGE0_BOTTOM]], !llvm.loop [[LOOP0]]
+; CHECK:       [[STEADY_STAGE0_BOTTOM]]:
+; CHECK-NEXT:    [[SRC_NEXT1_STEADY]] = getelementptr inbounds i8, ptr [[SRC_PTR_STEADY]], i32 4
+; CHECK-NEXT:    [[DST_NEXT2_STEADY]] = getelementptr inbounds i8, ptr [[DST_PTR_STEADY]], i32 4
+; CHECK-NEXT:    [[OUTER_CTR_NEXT]] = call i32 @llvm.loop.decrement.reg.i32(i32 [[OUTER_CTR]], i32 1)
+; CHECK-NEXT:    [[OUTER_LOOP_COND:%.*]] = icmp ne i32 [[OUTER_CTR_NEXT]], 0
+; CHECK-NEXT:    br i1 [[OUTER_LOOP_COND]], label %[[STEADY_STAGE1_BOTTOM_AND_STAGE0_TOP]], label %[[LASTITER_STAGE1_BOTTOM:.*]], !llvm.loop [[LOOP6:![0-9]+]]
+; CHECK:       [[FIRSTITER_STAGE0_BOTTOM]]:
+; CHECK-NEXT:    [[SRC_NEXT1_FIRSTITER]] = getelementptr inbounds i8, ptr [[SRC]], i32 4
+; CHECK-NEXT:    [[DST_NEXT2_FIRSTITER]] = getelementptr inbounds i8, ptr [[DST]], i32 4
+; CHECK-NEXT:    [[LSR_IV_NEXT_FIRSTITER:%.*]] = add i32 [[N]], -1
+; CHECK-NEXT:    [[OUTER_JNZD_TC:%.*]] = sub i32 [[LSR_IV_NEXT_FIRSTITER]], 0
+; CHECK-NEXT:    [[OUTER_CTR_INIT]] = call i32 @llvm.start.loop.iterations.i32(i32 [[OUTER_JNZD_TC]])
+; CHECK-NEXT:    br label %[[STEADY_STAGE1_BOTTOM_AND_STAGE0_TOP]]
+; CHECK:       [[LASTITER_STAGE1_BOTTOM]]:
+; CHECK-NEXT:    [[SCALED_EPILOGUE:%.*]] = mul i32 [[ACC_NEXT_STEADY]], 3
+; CHECK-NEXT:    store i32 [[SCALED_EPILOGUE]], ptr [[DST_PTR_STEADY]], align 4
+; CHECK-NEXT:    br label %[[EXIT]]
+; CHECK:       [[EXIT]]:
+; CHECK-NEXT:    [[LAST:%.*]] = phi i32 [ 0, %[[ENTRY]] ], [ [[SCALED_EPILOGUE]], %[[LASTITER_STAGE1_BOTTOM]] ]
+; CHECK-NEXT:    ret i32 [[LAST]]
+;
+entry:
+  %cmp = icmp sgt i32 %N, 1
+  br i1 %cmp, label %outer.header, label %exit
+
+outer.header:
+  %i = phi i32 [ 0, %entry ], [ %i.next, %outer.latch ]
+  %src.ptr = phi ptr [ %src, %entry ], [ %src.next, %outer.latch ]
+  %dst.ptr = phi ptr [ %dst, %entry ], [ %dst.next, %outer.latch ]
+  %val = load i32, ptr %src.ptr, align 4
+  call void @llvm.set.loop.iterations.i32(i32 %M)
+  br label %inner.header
+
+inner.header:
+  %acc = phi i32 [ 0, %outer.header ], [ %acc.next, %inner.header ]
+  %acc.next = add i32 %acc, %val
+  %inner.cond = call i1 @llvm.loop.decrement.i32(i32 1)
+  br i1 %inner.cond, label %inner.header, label %outer.latch, !llvm.loop !1
+
+outer.latch:
+  %result = phi i32 [ %acc.next, %inner.header ]
+  %scaled = mul i32 %result, 3
+  store i32 %scaled, ptr %dst.ptr, align 4
+  %src.next = getelementptr inbounds i32, ptr %src.ptr, i32 1
+  %dst.next = getelementptr inbounds i32, ptr %dst.ptr, i32 1
+  %i.next = add nuw i32 %i, 1
+  %outer.cond = icmp eq i32 %i.next, %N
+  br i1 %outer.cond, label %exit, label %outer.header, !llvm.loop !0
+
+exit:
+  %last = phi i32 [ 0, %entry ], [ %scaled, %outer.latch ]
+  ret i32 %last
+}
+
 !0 = distinct !{!0, !2, !3}
 !1 = distinct !{!1, !2}
 !2 = !{!"llvm.loop.mustprogress"}
@@ -117,4 +206,5 @@ exit:
 ; CHECK: [[META3]] = !{!"llvm.loop.itercount.range", i32 1}
 ; CHECK: [[META4]] = !{!"llvm.loop.hint.aie_outerloop_pipeliner_success", i64 1}
 ; CHECK: [[META5]] = !{!"llvm.loop.hint.aie_outerloop_pipeliner_peel_mode", !"first"}
+; CHECK: [[LOOP6]] = distinct !{[[LOOP6]], [[META1]], [[META3]], [[META4]], [[META5]]}
 ;.
