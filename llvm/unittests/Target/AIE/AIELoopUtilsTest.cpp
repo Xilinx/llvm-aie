@@ -529,6 +529,22 @@ TEST_F(AIELoopUtilsTest, OuterLoopStructure_BuildFromPeelFirst) {
   EXPECT_TRUE(OLS->hasMatchingInnerLoops());
 }
 
+TEST_F(AIELoopUtilsTest, OuterLoopStructure_UnknownPeelModeReturnsNullopt) {
+  // The peel-first CFG with a peel mode this code does not know: it must not
+  // be read as peel-last.
+  std::string MIR = PeelFirstMIR;
+  const std::string Mode = "!\"first\"";
+  MIR.replace(MIR.find(Mode), Mode.size(), "!\"middle\"");
+  parseMIR(MIR.c_str());
+  MachineFunction *MF = getMachineFunction("olp_peel_first");
+
+  MachineBasicBlock *OuterLatch = getMBB(MF, 7);
+  ASSERT_NE(OuterLatch, nullptr);
+
+  EXPECT_EQ(getOuterLoopPeelMode(*OuterLatch), std::nullopt);
+  EXPECT_FALSE(OuterLoopStructure::tryBuildFrom(*OuterLatch).has_value());
+}
+
 TEST_F(AIELoopUtilsTest, OuterLoopStructure_NonOLPReturnsNullopt) {
   parseMIR(NonOLPMIR);
   MachineFunction *MF = getMachineFunction("non_olp");

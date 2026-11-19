@@ -192,7 +192,8 @@ std::optional<unsigned> getSWPStageCount(const MachineBasicBlock &LoopBB,
 /// In speculative mode, there's no separate peeled-iteration region.
 bool isOuterLoopSpeculative(const MachineBasicBlock &LoopLatch);
 
-/// Returns the peel mode from the loop metadata, if the loop was pipelined.
+/// Returns the peel mode recorded in the loop metadata, or nullopt if there is
+/// none or it names no known mode.
 std::optional<OLPPeelMode>
 getOuterLoopPeelMode(const MachineBasicBlock &LoopLatch);
 

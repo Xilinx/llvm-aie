@@ -375,9 +375,10 @@ getOuterLoopPeelMode(const MachineBasicBlock &LoopLatch) {
   auto Val = getLoopHintString(LoopLatch, OuterLoopPeelModeKey);
   if (!Val)
     return std::nullopt;
-  if (*Val == "first")
-    return OLPPeelMode::PeelFirst;
-  return OLPPeelMode::PeelLast;
+  for (OLPPeelMode Mode : {OLPPeelMode::PeelLast, OLPPeelMode::PeelFirst})
+    if (*Val == peelModeString(Mode))
+      return Mode;
+  return std::nullopt;
 }
 
 std::optional<OuterLoopStructure>
@@ -425,9 +426,13 @@ OuterLoopStructure::tryBuildFrom(MachineBasicBlock &OuterLatch) {
     return OLS;
   }
 
-  // Read the peel mode from the latch metadata.
-  OLS.PeelMode =
-      getOuterLoopPeelMode(OuterLatch).value_or(OLPPeelMode::PeelLast);
+  // Read the peel mode from the latch metadata. Loops pipelined before the
+  // mode was recorded are peel-last; a mode this code does not know is not a
+  // structure it can describe.
+  const std::optional<OLPPeelMode> PeelMode = getOuterLoopPeelMode(OuterLatch);
+  if (!PeelMode && getLoopHintString(OuterLatch, OuterLoopPeelModeKey))
+    return std::nullopt;
+  OLS.PeelMode = PeelMode.value_or(OLPPeelMode::PeelLast);
 
   // -- Discover peeled-iteration region and preheader per peel mode --
 
