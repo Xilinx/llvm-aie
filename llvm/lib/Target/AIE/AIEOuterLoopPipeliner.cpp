@@ -2246,6 +2246,19 @@ bool AIEOuterLoopPipeliner::performTransformation(OrigLoopStructure &OrigLS,
       return false;
     }
 
+    // Stage-0 of each iteration now runs after that iteration's stage-1.
+    // Without alias information, that is only safe when one of them neither
+    // accesses memory nor has other side effects.
+    const auto HasMemoryOrSideEffects = [](const Instruction *I) {
+      return I->mayReadOrWriteMemory() || I->mayHaveSideEffects();
+    };
+    if (any_of(OrigLS.stage0Insts(), HasMemoryOrSideEffects) &&
+        any_of(OrigLS.stage1Insts(), HasMemoryOrSideEffects)) {
+      LLVM_DEBUG(dbgs() << "    Peel-first: stage-1 accesses memory or has "
+                           "side effects; skipping\n");
+      return false;
+    }
+
     // Clone the LS into a steady-state copy and swap it into the original's
     // CFG slot; transform steps run on the clone, leaving OrigLS pristine.
     CloneLoopStructure SteadyLS(OrigLS, "steady", /*PeelFirst=*/true);
