@@ -11,8 +11,9 @@
 ; RUN:     -o - %s | sed 's/^  //' | FileCheck %s
 ;
 ; Select the pipelining mode per loop through loop-hint metadata, by the
-; option's value name. -aie-outer-loop-pipelining-mode is not passed, so each
-; loop's hint decides: the first loop is peeled first, the second last.
+; option's value name or by its integer value. -aie-outer-loop-pipelining-mode
+; is not passed, so each loop's hint decides: the first and third loops are
+; peeled first, the second last.
 
 declare void @llvm.set.loop.iterations.i32(i32)
 declare i1 @llvm.loop.decrement.i32(i32)
@@ -182,6 +183,89 @@ exit:
   ret void
 }
 
+define void @mode_first_by_value(ptr noalias %src, ptr noalias %dst, i32 %N, i32 %M) {
+; CHECK-LABEL: define void @mode_first_by_value(
+; CHECK-SAME: ptr noalias [[SRC:%.*]], ptr noalias [[DST:%.*]], i32 [[N:%.*]], i32 [[M:%.*]]) {
+; CHECK-NEXT:  [[ENTRY:.*:]]
+; CHECK-NEXT:    [[CMP:%.*]] = icmp sgt i32 [[N]], 1
+; CHECK-NEXT:    br i1 [[CMP]], label %[[PH:.*]], label %[[EXIT:.*]]
+; CHECK:       [[PH]]:
+; CHECK-NEXT:    br label %[[FIRSTITER_STAGE0_TOP:.*]]
+; CHECK:       [[STEADY_STAGE1_BOTTOM_AND_STAGE0_TOP:.*]]:
+; CHECK-NEXT:    [[I_STEADY:%.*]] = phi i32 [ [[I_NEXT_FIRSTITER:%.*]], %[[FIRSTITER_STAGE0_BOTTOM:.*]] ], [ [[I_NEXT_STEADY:%.*]], %[[STEADY_STAGE0_BOTTOM:.*]] ]
+; CHECK-NEXT:    [[SRC_PTR_STEADY:%.*]] = phi ptr [ [[SRC_NEXT_FIRSTITER:%.*]], %[[FIRSTITER_STAGE0_BOTTOM]] ], [ [[SRC_NEXT_STEADY:%.*]], %[[STEADY_STAGE0_BOTTOM]] ]
+; CHECK-NEXT:    [[DST_PTR_STEADY:%.*]] = phi ptr [ [[DST_NEXT_FIRSTITER:%.*]], %[[FIRSTITER_STAGE0_BOTTOM]] ], [ [[DST_NEXT_STEADY:%.*]], %[[STEADY_STAGE0_BOTTOM]] ]
+; CHECK-NEXT:    [[RESULT_INNER_RESULT_PHI:%.*]] = phi i32 [ [[ACC_NEXT_FIRSTITER:%.*]], %[[FIRSTITER_STAGE0_BOTTOM]] ], [ [[ACC_NEXT_STEADY:%.*]], %[[STEADY_STAGE0_BOTTOM]] ]
+; CHECK-NEXT:    [[DST_PTR_PREV:%.*]] = phi ptr [ [[DST]], %[[FIRSTITER_STAGE0_BOTTOM]] ], [ [[DST_PTR_STEADY]], %[[STEADY_STAGE0_BOTTOM]] ]
+; CHECK-NEXT:    store i32 [[RESULT_INNER_RESULT_PHI]], ptr [[DST_PTR_PREV]], align 4
+; CHECK-NEXT:    [[VAL_STEADY:%.*]] = load i32, ptr [[SRC_PTR_STEADY]], align 4
+; CHECK-NEXT:    call void @llvm.set.loop.iterations.i32(i32 [[M]])
+; CHECK-NEXT:    br label %[[STEADY_STAGE0_INNER_INNER_HEADER:.*]]
+; CHECK:       [[FIRSTITER_STAGE0_TOP]]:
+; CHECK-NEXT:    [[VAL_FIRSTITER:%.*]] = load i32, ptr [[SRC]], align 4
+; CHECK-NEXT:    call void @llvm.set.loop.iterations.i32(i32 [[M]])
+; CHECK-NEXT:    br label %[[FIRSTITER_STAGE0_INNER_INNER_HEADER:.*]]
+; CHECK:       [[STEADY_STAGE0_INNER_INNER_HEADER]]:
+; CHECK-NEXT:    [[ACC_STEADY:%.*]] = phi i32 [ 0, %[[STEADY_STAGE1_BOTTOM_AND_STAGE0_TOP]] ], [ [[ACC_NEXT_STEADY]], %[[STEADY_STAGE0_INNER_INNER_HEADER]] ]
+; CHECK-NEXT:    [[ACC_NEXT_STEADY]] = add i32 [[ACC_STEADY]], [[VAL_STEADY]]
+; CHECK-NEXT:    [[INNER_COND_STEADY:%.*]] = call i1 @llvm.loop.decrement.i32(i32 1)
+; CHECK-NEXT:    br i1 [[INNER_COND_STEADY]], label %[[STEADY_STAGE0_INNER_INNER_HEADER]], label %[[STEADY_STAGE0_BOTTOM]], !llvm.loop [[LOOP0]]
+; CHECK:       [[FIRSTITER_STAGE0_INNER_INNER_HEADER]]:
+; CHECK-NEXT:    [[ACC_FIRSTITER:%.*]] = phi i32 [ 0, %[[FIRSTITER_STAGE0_TOP]] ], [ [[ACC_NEXT_FIRSTITER]], %[[FIRSTITER_STAGE0_INNER_INNER_HEADER]] ]
+; CHECK-NEXT:    [[ACC_NEXT_FIRSTITER]] = add i32 [[ACC_FIRSTITER]], [[VAL_FIRSTITER]]
+; CHECK-NEXT:    [[INNER_COND_FIRSTITER:%.*]] = call i1 @llvm.loop.decrement.i32(i32 1)
+; CHECK-NEXT:    br i1 [[INNER_COND_FIRSTITER]], label %[[FIRSTITER_STAGE0_INNER_INNER_HEADER]], label %[[FIRSTITER_STAGE0_BOTTOM]], !llvm.loop [[LOOP0]]
+; CHECK:       [[STEADY_STAGE0_BOTTOM]]:
+; CHECK-NEXT:    [[SRC_NEXT_STEADY]] = getelementptr inbounds i32, ptr [[SRC_PTR_STEADY]], i32 1
+; CHECK-NEXT:    [[DST_NEXT_STEADY]] = getelementptr inbounds i32, ptr [[DST_PTR_STEADY]], i32 1
+; CHECK-NEXT:    [[I_NEXT_STEADY]] = add nuw i32 [[I_STEADY]], 1
+; CHECK-NEXT:    [[OUTER_COND_STEADY:%.*]] = icmp eq i32 [[I_NEXT_STEADY]], [[N]]
+; CHECK-NEXT:    br i1 [[OUTER_COND_STEADY]], label %[[LASTITER_STAGE1_BOTTOM:.*]], label %[[STEADY_STAGE1_BOTTOM_AND_STAGE0_TOP]], !llvm.loop [[LOOP10:![0-9]+]]
+; CHECK:       [[FIRSTITER_STAGE0_BOTTOM]]:
+; CHECK-NEXT:    [[SRC_NEXT_FIRSTITER]] = getelementptr inbounds i32, ptr [[SRC]], i32 1
+; CHECK-NEXT:    [[DST_NEXT_FIRSTITER]] = getelementptr inbounds i32, ptr [[DST]], i32 1
+; CHECK-NEXT:    [[I_NEXT_FIRSTITER]] = add nuw i32 0, 1
+; CHECK-NEXT:    br label %[[STEADY_STAGE1_BOTTOM_AND_STAGE0_TOP]]
+; CHECK:       [[LASTITER_STAGE1_BOTTOM]]:
+; CHECK-NEXT:    store i32 [[ACC_NEXT_STEADY]], ptr [[DST_PTR_STEADY]], align 4
+; CHECK-NEXT:    br label %[[EXIT]]
+; CHECK:       [[EXIT]]:
+; CHECK-NEXT:    ret void
+;
+entry:
+  %cmp = icmp sgt i32 %N, 1
+  br i1 %cmp, label %ph, label %exit
+
+ph:
+  br label %outer.header
+
+outer.header:
+  %i = phi i32 [ 0, %ph ], [ %i.next, %outer.latch ]
+  %src.ptr = phi ptr [ %src, %ph ], [ %src.next, %outer.latch ]
+  %dst.ptr = phi ptr [ %dst, %ph ], [ %dst.next, %outer.latch ]
+  %val = load i32, ptr %src.ptr, align 4
+  call void @llvm.set.loop.iterations.i32(i32 %M)
+  br label %inner.header
+
+inner.header:
+  %acc = phi i32 [ 0, %outer.header ], [ %acc.next, %inner.header ]
+  %acc.next = add i32 %acc, %val
+  %inner.cond = call i1 @llvm.loop.decrement.i32(i32 1)
+  br i1 %inner.cond, label %inner.header, label %outer.latch, !llvm.loop !1
+
+outer.latch:
+  %result = phi i32 [ %acc.next, %inner.header ]
+  store i32 %result, ptr %dst.ptr, align 4
+  %src.next = getelementptr inbounds i32, ptr %src.ptr, i32 1
+  %dst.next = getelementptr inbounds i32, ptr %dst.ptr, i32 1
+  %i.next = add nuw i32 %i, 1
+  %outer.cond = icmp eq i32 %i.next, %N
+  br i1 %outer.cond, label %exit, label %outer.header, !llvm.loop !7
+
+exit:
+  ret void
+}
+
 !0 = distinct !{!0, !2, !3, !5}
 !1 = distinct !{!1, !2}
 !2 = !{!"llvm.loop.mustprogress"}
@@ -189,6 +273,8 @@ exit:
 !4 = distinct !{!4, !2, !3, !6}
 !5 = !{!"llvm.loop.hint.aie-outer-loop-pipelining-mode", !"first"}
 !6 = !{!"llvm.loop.hint.aie-outer-loop-pipelining-mode", !"last"}
+!7 = distinct !{!7, !2, !3, !8}
+!8 = !{!"llvm.loop.hint.aie-outer-loop-pipelining-mode", i64 1}
 ;.
 ; CHECK: [[LOOP0]] = distinct !{[[LOOP0]], [[META1:![0-9]+]]}
 ; CHECK: [[META1]] = !{!"llvm.loop.mustprogress"}
@@ -200,4 +286,6 @@ exit:
 ; CHECK: [[LOOP7]] = distinct !{[[LOOP7]], [[META1]], [[META8:![0-9]+]], [[META4]], [[META5]], [[META9:![0-9]+]]}
 ; CHECK: [[META8]] = !{!"llvm.loop.hint.aie-outer-loop-pipelining-mode", !"last"}
 ; CHECK: [[META9]] = !{!"llvm.loop.hint.aie_outerloop_pipeliner_peel_mode", !"last"}
+; CHECK: [[LOOP10]] = distinct !{[[LOOP10]], [[META1]], [[META11:![0-9]+]], [[META4]], [[META5]], [[META6]]}
+; CHECK: [[META11]] = !{!"llvm.loop.hint.aie-outer-loop-pipelining-mode", i64 1}
 ;.
