@@ -17,6 +17,9 @@
 //   !{!"llvm.loop.hint.<cl-opt-argstr>", i64 <value>}
 //   !{!"llvm.loop.hint.<cl-opt-argstr>", !"<string-value>"}
 //
+// Enum options accept either form; the string names one of the option's
+// values, as on the command line.
+//
 // The cl::opt globals are never mutated.
 //
 //===----------------------------------------------------------------------===//
@@ -27,6 +30,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/CommandLine.h"
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <type_traits>
 
@@ -52,6 +56,22 @@ class LoopOptionOverrides {
   /// String-valued overrides.
   StringMap<std::string> StrVals;
 
+  /// The value of enum option Opt named by its string-valued override, if
+  /// there is one and it names a value.
+  template <typename T>
+  std::optional<T> getEnumByName(const cl::opt<T> &Opt) const {
+    auto It = StrVals.find(Opt.ArgStr);
+    if (It == StrVals.end())
+      return std::nullopt;
+    // cl::opt has no const getParser(); the parser queries below are const.
+    const auto &Parser = const_cast<cl::opt<T> &>(Opt).getParser();
+    for (unsigned I = 0, E = Parser.getNumOptions(); I != E; ++I)
+      if (Parser.getOption(I) == It->second)
+        return static_cast<const cl::OptionValue<T> &>(Parser.getOptionValue(I))
+            .getValue();
+    return std::nullopt;
+  }
+
 public:
   /// Prefix joining a cl::opt ArgStr to its llvm.loop.hint metadata key; the
   /// single source for both reading overrides and writing hint keys.
@@ -73,7 +93,8 @@ public:
   ///   2. Per-loop metadata override (llvm.loop.hint.<argstr>)
   ///   3. cl::opt default value
   ///
-  /// Works for bool, integral, enum, and std::string types.
+  /// Works for bool, integral, enum, and std::string types. Enum options take
+  /// either the integer value or the name of a value (as on the command line).
   template <typename T> T get(const cl::opt<T> &Opt) const {
     // Explicit command-line setting takes precedence over loop metadata.
     const bool IsUserSpecified = Opt.getNumOccurrences() > 0;
@@ -88,6 +109,9 @@ public:
       auto It = IntVals.find(Opt.ArgStr);
       if (It != IntVals.end())
         return static_cast<T>(It->second);
+      if constexpr (std::is_enum_v<T>)
+        if (std::optional<T> Val = getEnumByName(Opt))
+          return *Val;
     }
     return Opt;
   }
@@ -100,6 +124,8 @@ public:
 
     if constexpr (std::is_same_v<T, std::string>)
       return StrVals.contains(Opt.ArgStr);
+    else if constexpr (std::is_enum_v<T>)
+      return IntVals.contains(Opt.ArgStr) || getEnumByName(Opt).has_value();
     else
       return IntVals.contains(Opt.ArgStr);
   }
