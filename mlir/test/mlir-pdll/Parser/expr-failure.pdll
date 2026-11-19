@@ -156,7 +156,7 @@ Pattern ConstraintArrayAttrWithAttrAndValue {
 
 Pattern {
   // CHECK: unable to convert expression of type `Tuple<>` to the expected type of `ValueRange`
-  // CHECK: Tuple to Range conversion is currently only allowed within a rewrite context
+  // CHECK: Tuple to Range conversion is currently only allowed within a rewrite or constraint context
   erase op<>(());
 }
 
