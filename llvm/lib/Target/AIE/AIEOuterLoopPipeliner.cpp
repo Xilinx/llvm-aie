@@ -434,6 +434,10 @@ class OrigLoopStructure : public LoopStructure {
   std::vector<Instruction *> Stage0Insts;
   std::vector<Instruction *> Stage1Insts;
 
+  // Stage0Insts as a set, for the membership queries of peel-first; filled
+  // by collectFirstIterStages().
+  SmallPtrSet<const Instruction *, 32> Stage0Lookup;
+
   explicit OrigLoopStructure(Loop *L) : OuterLoop(L) {}
 
   // Populate the inner-loop fields and top/bottom regions from
@@ -539,6 +543,7 @@ public:
   void clearStages() {
     Stage0Insts.clear();
     Stage1Insts.clear();
+    Stage0Lookup.clear();
   }
 
   // True if rotating pays off: hardware inner loop, outer trip count (from SE)
@@ -568,8 +573,8 @@ public:
   // they enable.
   void collectDerivedPointerUpdates(const AIEOLPTargetConfig &Config);
 
-  // Returns true if I is in the stage-0 (displaced) set. Used by peel-first
-  // to filter stage-0 instructions from the firstiter bottom block.
+  // Returns true if I is in the stage-0 (displaced) set. Peel-first only:
+  // valid after collectFirstIterStages().
   bool isInStage0(const Instruction *I) const;
 
   // Delete this (now unreachable) LS's blocks.
@@ -1415,6 +1420,7 @@ void OrigLoopStructure::collectFirstIterStages() {
       return;
     (Stage0Set.contains(I) ? Stage0Insts : Stage1Insts).push_back(I);
   });
+  Stage0Lookup.insert(Stage0Insts.begin(), Stage0Insts.end());
 
   LLVM_DEBUG({
     dbgs() << "    Peel-first: " << stage0Insts().size()
@@ -1632,7 +1638,9 @@ void CloneLoopStructure::remapBoundThroughCloneMap() {
 }
 
 bool OrigLoopStructure::isInStage0(const Instruction *I) const {
-  return llvm::is_contained(Stage0Insts, I);
+  assert(Stage0Lookup.size() == Stage0Insts.size() &&
+         "stage-0 lookup set is out of date");
+  return Stage0Lookup.contains(I);
 }
 
 void OrigLoopStructure::removeFromCFG() const {
