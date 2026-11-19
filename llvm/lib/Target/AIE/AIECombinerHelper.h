@@ -231,6 +231,10 @@ void applyPadVector(MachineInstr &MI, MachineRegisterInfo &MRI,
                     GISelChangeObserver &Observer);
 bool tryToCombineVectorShiftsByZero(MachineInstr &MI, MachineRegisterInfo &MRI,
                                     GISelChangeObserver &Observer);
+bool tryToCombineVShiftsToShuffles(MachineInstr &MI, MachineRegisterInfo &MRI,
+                                   MachineIRBuilder &B,
+                                   const AIEBaseInstrInfo &TII,
+                                   GISelChangeObserver &Observer);
 
 bool matchExtractConcat(MachineInstr &MI, MachineRegisterInfo &MRI,
                         const AIEBaseInstrInfo &TII, Register &MatchInfo);

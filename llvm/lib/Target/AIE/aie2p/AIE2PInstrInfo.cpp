@@ -1703,6 +1703,9 @@ unsigned AIE2PInstrInfo::getGenericShuffleVectorOpcode() const {
   return AIE2P::G_AIE_SHUFFLE_VECTOR;
 }
 
+// T128_2x4_lo
+unsigned AIE2PInstrInfo::getShuffleModeInterleave128() const { return 12; }
+
 bool AIE2PInstrInfo::isVShuffle(unsigned Opcode) const {
   switch (Opcode) {
   case AIE2P::VSHUFFLE_vec_shuffle_x:

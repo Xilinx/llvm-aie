@@ -392,6 +392,11 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   virtual unsigned getGenericShuffleVectorOpcode() const {
     llvm_unreachable("Target didn't implement getGenericShuffleVectorOpcode!");
   }
+  /// Return the VSHUFFLE mode whose result interleaves the 128-bit blocks of
+  /// its operands a and b: [a0 b0 a1 b1] (T128_2x4_lo).
+  virtual unsigned getShuffleModeInterleave128() const {
+    llvm_unreachable("Target didn't implement getShuffleModeInterleave128!");
+  }
   /// Return true if Opcode is a VSHUFFLE with layout (dst, s1, s2, mode).
   virtual bool isVShuffle(unsigned Opcode) const { return false; }
   /// Return the opcode to be used for post-increment load operations.
