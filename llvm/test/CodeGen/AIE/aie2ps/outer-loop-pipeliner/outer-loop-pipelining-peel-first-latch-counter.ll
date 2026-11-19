@@ -29,7 +29,8 @@ define void @store_uses_counter(ptr noalias %src, ptr noalias %dst, i32 %N, i32 
 ; CHECK:       [[STEADY_STAGE0_BOTTOM_AND_STAGE1_TOP:.*]]:
 ; CHECK-NEXT:    [[SRC_PTR_STEADY:%.*]] = phi ptr [ [[SRC_NEXT_FIRSTITER:%.*]], %[[FIRSTITER_STAGE0_BOTTOM:.*]] ], [ [[SRC_NEXT_STEADY:%.*]], %[[STEADY_STAGE1_BOTTOM:.*]] ]
 ; CHECK-NEXT:    [[RESULT_INNER_RESULT_PHI:%.*]] = phi i32 [ [[ACC_NEXT_FIRSTITER:%.*]], %[[FIRSTITER_STAGE0_BOTTOM]] ], [ [[ACC_NEXT_STEADY:%.*]], %[[STEADY_STAGE1_BOTTOM]] ]
-; CHECK-NEXT:    [[I_NEXT_TOP:%.*]] = add nuw i32 poison, 1
+; CHECK-NEXT:    [[I_PREV:%.*]] = phi i32 [ 0, %[[FIRSTITER_STAGE0_BOTTOM]] ], [ poison, %[[STEADY_STAGE1_BOTTOM]] ]
+; CHECK-NEXT:    [[I_NEXT_TOP:%.*]] = add nuw i32 [[I_PREV]], 1
 ; CHECK-NEXT:    [[DST_PTR_TOP:%.*]] = getelementptr inbounds i32, ptr [[DST]], i32 [[I_NEXT_TOP]]
 ; CHECK-NEXT:    store i32 [[RESULT_INNER_RESULT_PHI]], ptr [[DST_PTR_TOP]], align 4
 ; CHECK-NEXT:    [[VAL_STEADY:%.*]] = load i32, ptr [[SRC_PTR_STEADY]], align 4

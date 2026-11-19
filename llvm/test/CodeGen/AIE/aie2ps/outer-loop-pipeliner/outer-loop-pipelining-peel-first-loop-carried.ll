@@ -32,9 +32,11 @@ define i32 @outer_reduction(ptr noalias %src, ptr noalias %dst, i32 %N, i32 %M) 
 ; CHECK-NEXT:    [[SRC_PTR_STEADY:%.*]] = phi ptr [ [[SRC_NEXT_FIRSTITER:%.*]], %[[FIRSTITER_STAGE0_BOTTOM]] ], [ [[SRC_NEXT_STEADY:%.*]], %[[STEADY_STAGE1_BOTTOM]] ]
 ; CHECK-NEXT:    [[DST_PTR_STEADY:%.*]] = phi ptr [ [[DST_NEXT_FIRSTITER:%.*]], %[[FIRSTITER_STAGE0_BOTTOM]] ], [ [[DST_NEXT_STEADY:%.*]], %[[STEADY_STAGE1_BOTTOM]] ]
 ; CHECK-NEXT:    [[RESULT_INNER_RESULT_PHI:%.*]] = phi i32 [ [[ACC_NEXT_FIRSTITER:%.*]], %[[FIRSTITER_STAGE0_BOTTOM]] ], [ [[ACC_NEXT_STEADY:%.*]], %[[STEADY_STAGE1_BOTTOM]] ]
+; CHECK-NEXT:    [[SUM_PREV:%.*]] = phi i32 [ 0, %[[FIRSTITER_STAGE0_BOTTOM]] ], [ poison, %[[STEADY_STAGE1_BOTTOM]] ]
+; CHECK-NEXT:    [[DST_PTR_PREV:%.*]] = phi ptr [ [[DST]], %[[FIRSTITER_STAGE0_BOTTOM]] ], [ [[DST_PTR_STEADY]], %[[STEADY_STAGE1_BOTTOM]] ]
 ; CHECK-NEXT:    [[V_TOP:%.*]] = add i32 [[RESULT_INNER_RESULT_PHI]], 1
-; CHECK-NEXT:    store i32 [[V_TOP]], ptr [[DST_PTR_STEADY]], align 4
-; CHECK-NEXT:    [[SUM_NEXT_TOP:%.*]] = add i32 poison, [[V_TOP]]
+; CHECK-NEXT:    store i32 [[V_TOP]], ptr [[DST_PTR_PREV]], align 4
+; CHECK-NEXT:    [[SUM_NEXT_TOP:%.*]] = add i32 [[SUM_PREV]], [[V_TOP]]
 ; CHECK-NEXT:    [[VAL_STEADY:%.*]] = load i32, ptr [[SRC_PTR_STEADY]], align 4
 ; CHECK-NEXT:    call void @llvm.set.loop.iterations.i32(i32 [[M]])
 ; CHECK-NEXT:    br label %[[STEADY_STAGE1_INNER_INNER_HEADER:.*]]
@@ -65,7 +67,7 @@ define i32 @outer_reduction(ptr noalias %src, ptr noalias %dst, i32 %N, i32 %M) 
 ; CHECK-NEXT:    br label %[[STEADY_STAGE0_BOTTOM_AND_STAGE1_TOP]]
 ; CHECK:       [[LASTITER_STAGE1_BOTTOM]]:
 ; CHECK-NEXT:    [[V_EPILOGUE:%.*]] = add i32 [[ACC_NEXT_STEADY]], 1
-; CHECK-NEXT:    store i32 [[V_EPILOGUE]], ptr [[DST_NEXT_STEADY]], align 4
+; CHECK-NEXT:    store i32 [[V_EPILOGUE]], ptr [[DST_PTR_STEADY]], align 4
 ; CHECK-NEXT:    [[SUM_NEXT_EPILOGUE:%.*]] = add i32 poison, [[V_EPILOGUE]]
 ; CHECK-NEXT:    br label %[[EXIT_LOOPEXIT:.*]]
 ; CHECK:       [[EXIT_LOOPEXIT]]:
@@ -131,7 +133,8 @@ define void @two_step_pointer_chain(ptr noalias %src, ptr noalias %dst, i32 %N, 
 ; CHECK-NEXT:    [[DST_PTR_STEADY:%.*]] = phi ptr [ [[DST_NEXT_FIRSTITER:%.*]], %[[FIRSTITER_STAGE0_BOTTOM]] ], [ [[DST_NEXT_STEADY:%.*]], %[[STEADY_STAGE1_BOTTOM]] ]
 ; CHECK-NEXT:    [[RESULT_INNER_RESULT_PHI:%.*]] = phi i32 [ [[ACC_NEXT_FIRSTITER:%.*]], %[[FIRSTITER_STAGE0_BOTTOM]] ], [ [[ACC_NEXT_STEADY:%.*]], %[[STEADY_STAGE1_BOTTOM]] ]
 ; CHECK-NEXT:    [[Q_END_INNER_RESULT_PHI:%.*]] = phi ptr [ [[Q_NEXT_FIRSTITER:%.*]], %[[FIRSTITER_STAGE0_BOTTOM]] ], [ [[Q_NEXT_STEADY:%.*]], %[[STEADY_STAGE1_BOTTOM]] ]
-; CHECK-NEXT:    store i32 [[RESULT_INNER_RESULT_PHI]], ptr [[DST_PTR_STEADY]], align 4
+; CHECK-NEXT:    [[DST_PTR_PREV:%.*]] = phi ptr [ [[DST]], %[[FIRSTITER_STAGE0_BOTTOM]] ], [ [[DST_PTR_STEADY]], %[[STEADY_STAGE1_BOTTOM]] ]
+; CHECK-NEXT:    store i32 [[RESULT_INNER_RESULT_PHI]], ptr [[DST_PTR_PREV]], align 4
 ; CHECK-NEXT:    [[Q_SKIP_TOP:%.*]] = getelementptr inbounds i8, ptr [[Q_END_INNER_RESULT_PHI]], i32 64
 ; CHECK-NEXT:    [[SRC_NEXT_TOP:%.*]] = getelementptr inbounds i8, ptr [[Q_SKIP_TOP]], i32 16
 ; CHECK-NEXT:    call void @llvm.set.loop.iterations.i32(i32 [[M]])
@@ -165,7 +168,7 @@ define void @two_step_pointer_chain(ptr noalias %src, ptr noalias %dst, i32 %N, 
 ; CHECK-NEXT:    [[I_NEXT_FIRSTITER]] = add nuw i32 0, 1
 ; CHECK-NEXT:    br label %[[STEADY_STAGE0_BOTTOM_AND_STAGE1_TOP]]
 ; CHECK:       [[LASTITER_STAGE1_BOTTOM]]:
-; CHECK-NEXT:    store i32 [[ACC_NEXT_STEADY]], ptr [[DST_NEXT_STEADY]], align 4
+; CHECK-NEXT:    store i32 [[ACC_NEXT_STEADY]], ptr [[DST_PTR_STEADY]], align 4
 ; CHECK-NEXT:    [[Q_SKIP_EPILOGUE:%.*]] = getelementptr inbounds i8, ptr [[Q_NEXT_STEADY]], i32 64
 ; CHECK-NEXT:    [[SRC_NEXT_EPILOGUE:%.*]] = getelementptr inbounds i8, ptr [[Q_SKIP_EPILOGUE]], i32 16
 ; CHECK-NEXT:    br label %[[EXIT]]
