@@ -78,10 +78,10 @@ define weak_odr dso_local void @gemm_int8_psum_1(ptr noalias %p_a, ptr noalias %
 ; REMARKS-NEXT:   - Pipeliner:       postpipeliner
 ; REMARKS-NEXT:   - II:              '4'
 ; REMARKS-NEXT:   - NS:              '4'
-; REMARKS-NEXT:   - Loop:            bb.4.steady.stage1.inner.for.body144
-; REMARKS-NEXT:   - Prologue:        bb.3.steady.stage0.bottom.and.stage1.top
+; REMARKS-NEXT:   - Loop:            bb.4.steady.stage0.inner.for.body144
+; REMARKS-NEXT:   - Prologue:        bb.3.steady.stage1.bottom.and.stage0.top
 ; REMARKS-NEXT:   - PrologueBundles: '43'
-; REMARKS-NEXT:   - Epilogue:        bb.5.steady.stage1.bottom
+; REMARKS-NEXT:   - Epilogue:        bb.5.steady.stage0.bottom
 ; REMARKS-NEXT:   - EpilogueBundles: '30'
 ; REMARKS-NEXT:   - VregMode:        Physical
 ; REMARKS-NEXT:   - SchedHeuristic:  AvoidBankConflicts_Config_16_1_0_NodeNum
@@ -185,7 +185,7 @@ define weak_odr dso_local void @gemm_int8_psum_1(ptr noalias %p_a, ptr noalias %
 ; CHECK-NEXT:    mova m7, #960; paddb [p6], m4; movs p2, p4; mov r9, p2
 ; CHECK-NEXT:    padda [p5], m6; paddb [p2], m7; mov r5, p6
 ; CHECK-NEXT:  .LBB0_3: // Block address taken
-; CHECK-NEXT:    // %steady.stage0.bottom.and.stage1.top
+; CHECK-NEXT:    // %steady.stage1.bottom.and.stage0.top
 ; CHECK-NEXT:    // =>This Loop Header: Depth=1
 ; CHECK-NEXT:    // Child Loop BB0_4 Depth 2
 ; CHECK-NEXT:    nopa ; nopb ; nopx ; vst bmll3, [p4, #0]
@@ -231,7 +231,7 @@ define weak_odr dso_local void @gemm_int8_psum_1(ptr noalias %p_a, ptr noalias %
 ; CHECK-NEXT:    vlda.3d x10, [p1], d1; nopb ; nops ; nopx ; vshuffle x7, x10, x10, r20; nopv
 ; CHECK-NEXT:    nopa ; vldb x8, [p0], #64; movs p4, r5; nopx ; vshuffle x9, x7, x7, r22; vmac dm3, dm3, x8, x5, r8
 ; CHECK-NEXT:    vlda.3d x6, [p0], d0; nopb ; movs p2, r3; nopx ; vshuffle x3, x1, x1, r16; vmac dm2, dm2, x6, x5, r8
-; CHECK-NEXT:  .LBB0_4: // %steady.stage1.inner.for.body144
+; CHECK-NEXT:  .LBB0_4: // %steady.stage0.inner.for.body144
 ; CHECK-NEXT:    // Parent Loop BB0_3 Depth=1
 ; CHECK-NEXT:    // => This Inner Loop Header: Depth=2
 ; CHECK-NEXT:    nopa ; vldb x1, [p1], m3; nops ; nopx ; vshuffle x5, x3, x3, r18; vmac dm1, dm1, x8, x9, r8
@@ -239,7 +239,7 @@ define weak_odr dso_local void @gemm_int8_psum_1(ptr noalias %p_a, ptr noalias %
 ; CHECK-NEXT:    nopa ; vldb x8, [p0], #64; nops ; nopx ; vshuffle x9, x7, x7, r22; vmac dm3, dm3, x8, x5, r8
 ; CHECK-NEXT:  .L_LEnd0:
 ; CHECK-NEXT:    vlda.3d x6, [p0], d0; nopb ; nops ; nopx ; vshuffle x3, x1, x1, r16; vmac dm2, dm2, x6, x5, r8
-; CHECK-NEXT:  // %bb.5: // %steady.stage1.bottom
+; CHECK-NEXT:  // %bb.5: // %steady.stage0.bottom
 ; CHECK-NEXT:    // in Loop: Header=BB0_3 Depth=1
 ; CHECK-NEXT:    mova m5, #512; paddb.2d [p2], d2; movs p3, p4; nopx ; vshuffle x5, x3, x3, r18; vmac dm1, dm1, x8, x9, r8
 ; CHECK-NEXT:    nopa ; paddb [p3], #64; movs p6, p4; nopx ; vshuffle x7, x10, x10, r20; vmac dm0, dm0, x6, x9, r8

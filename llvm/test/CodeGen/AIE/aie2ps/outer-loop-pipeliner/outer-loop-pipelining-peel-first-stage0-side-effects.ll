@@ -11,8 +11,8 @@
 ; RUN:     -stop-after=aie-outer-loop-pipeliner \
 ; RUN:     -o - %s | sed 's/^  //' | FileCheck %s
 ;
-; Peel-first moves stage 0 of iteration j after stage 1 of iteration j. When
-; stage 1 accesses memory or has other side effects, that reorders it against
+; Peel-first moves stage 1 of iteration j after stage 0 of iteration j. When
+; stage 0 accesses memory or has other side effects, that reorders it against
 ; the deferred stores, so the loop must not be peeled first. The pass falls
 ; back to peel-last instead.
 
@@ -20,9 +20,9 @@ declare void @llvm.set.loop.iterations.i32(i32)
 declare i1 @llvm.loop.decrement.i32(i32)
 declare void @opaque()
 
-; Stage 1 stores a top-block value to memory that may alias %dst.
-define void @stage1_store(ptr noalias %src, ptr %dst, ptr %aux, i32 %N, i32 %M) {
-; CHECK-LABEL: define void @stage1_store(
+; Stage 0 stores a top-block value to memory that may alias %dst.
+define void @stage0_store(ptr noalias %src, ptr %dst, ptr %aux, i32 %N, i32 %M) {
+; CHECK-LABEL: define void @stage0_store(
 ; CHECK-SAME: ptr noalias [[SRC:%.*]], ptr [[DST:%.*]], ptr [[AUX:%.*]], i32 [[N:%.*]], i32 [[M:%.*]]) {
 ; CHECK-NEXT:  [[ENTRY:.*:]]
 ; CHECK-NEXT:    [[CMP:%.*]] = icmp sgt i32 [[N]], 1
@@ -106,9 +106,9 @@ exit:
   ret void
 }
 
-; Stage 1 calls a function with unknown side effects.
-define void @stage1_call(ptr noalias %src, ptr noalias %dst, i32 %N, i32 %M) {
-; CHECK-LABEL: define void @stage1_call(
+; Stage 0 calls a function with unknown side effects.
+define void @stage0_call(ptr noalias %src, ptr noalias %dst, i32 %N, i32 %M) {
+; CHECK-LABEL: define void @stage0_call(
 ; CHECK-SAME: ptr noalias [[SRC:%.*]], ptr noalias [[DST:%.*]], i32 [[N:%.*]], i32 [[M:%.*]]) {
 ; CHECK-NEXT:  [[ENTRY:.*:]]
 ; CHECK-NEXT:    [[CMP:%.*]] = icmp sgt i32 [[N]], 1

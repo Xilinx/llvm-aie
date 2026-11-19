@@ -11,17 +11,17 @@
 ; RUN:     -o - %s | sed 's/^  //' | FileCheck %s
 ;
 ;   llvm/utils/update_test_checks.py --tool=sed \
-;     llvm/test/CodeGen/AIE/aie2ps/outer-loop-pipeliner/outer-loop-pipelining-peel-first-no-stage0.ll
+;     llvm/test/CodeGen/AIE/aie2ps/outer-loop-pipeliner/outer-loop-pipelining-peel-first-no-stage1.ll
 ;
-; No stage-0 found: the bottom block has no stores or inner-loop result
+; No stage-1 found: the bottom block has no stores or inner-loop result
 ; consumers — only pointer updates. The pass bails out gracefully, leaving
 ; the original loop unchanged.
 
 declare void @llvm.set.loop.iterations.i32(i32)
 declare i1 @llvm.loop.decrement.i32(i32)
 
-define void @peel_first_no_stage0(ptr noalias %src, ptr noalias %dst, i32 %N, i32 %M) {
-; CHECK-LABEL: define void @peel_first_no_stage0(
+define void @peel_first_no_stage1(ptr noalias %src, ptr noalias %dst, i32 %N, i32 %M) {
+; CHECK-LABEL: define void @peel_first_no_stage1(
 ; CHECK-SAME: ptr noalias [[SRC:%.*]], ptr noalias [[DST:%.*]], i32 [[N:%.*]], i32 [[M:%.*]]) {
 ; CHECK-NEXT:  [[ENTRY:.*:]]
 ; CHECK-NEXT:    [[CMP:%.*]] = icmp sgt i32 [[N]], 1
@@ -60,7 +60,7 @@ inner.header:
   br i1 %inner.cond, label %inner.header, label %outer.latch, !llvm.loop !1
 
 outer.latch:
-  ; No stores here — only a pointer update. Stage-0 is empty.
+  ; No stores here — only a pointer update. Stage-1 is empty.
   %src.next = getelementptr inbounds i32, ptr %src.ptr, i32 1
   %i.next = add nuw i32 %i, 1
   %outer.cond = icmp eq i32 %i.next, %N
