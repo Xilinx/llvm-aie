@@ -581,6 +581,15 @@ public:
   void removeFromCFG() const;
 };
 
+// Which copy of the loop a CloneLoopStructure is; selects its block names.
+enum class CloneRole {
+  PeelLastSteady,  // <name>.stage1.top / stage1.inner.* /
+                   // stage1.bottom.and.stage0.top
+  PeelFirstSteady, // <name>.stage1.bottom.and.stage0.top / stage0.inner.* /
+                   // stage0.bottom
+  FirstIteration,  // <name>.stage0.top / stage0.inner.* / stage0.bottom
+};
+
 // A steady-state or last-iteration clone. Owns its source->clone CloneMap and a
 // stored outer preheader.
 class CloneLoopStructure : public LoopStructure {
@@ -592,12 +601,9 @@ class CloneLoopStructure : public LoopStructure {
 public:
   // Deep-clone Src into "<name>.<Suffix>" IR; internal references are remapped,
   // edges leaving the LS stay at Src's externals for the caller to rewire.
-  // When PeelFirst is true, block names reflect the peel-first layout:
-  //   "firstiter" -> firstiter.stage0.{top,inner,bottom}
-  //   "steady"    -> steady.stage1.bottom.and.stage0.top / stage0.inner /
-  //   stage0.bottom
+  // Role selects the block names.
   CloneLoopStructure(const LoopStructure &Src, const Twine &Suffix,
-                     bool PeelFirst = false);
+                     CloneRole Role = CloneRole::PeelLastSteady);
 
   // Create the empty last-iteration blocks spliced before Src's exit and record
   // the Src->lastiter block mappings; the caller fills the bodies. Src is the
@@ -790,13 +796,12 @@ private:
 
   // --- Peel-first step helpers ---
 
-  // Create the first-iteration prologue region (full top + inner + stage-0-only
-  // bottom) and wire it before the steady loop. Returns the firstiter LS (heap-
-  // allocated; CloneLoopStructure is non-movable) whose VMap maps original
-  // inner-loop instructions to their firstiter clones.
-  std::unique_ptr<CloneLoopStructure>
-  peelFirstIteration(const OrigLoopStructure &OrigLS,
-                     CloneLoopStructure &SteadyLS);
+  // Turn FirstIterLS, a clone of OrigLS, into the first-iteration prologue
+  // (full top + inner + stage-0-only bottom) and wire it before the steady
+  // loop.
+  void peelFirstIteration(const OrigLoopStructure &OrigLS,
+                          CloneLoopStructure &SteadyLS,
+                          CloneLoopStructure &FirstIterLS);
 
   // Clone the bottom-block stage-1 instructions (stores + inner-result users)
   // into the beginning of the steady top, reading the previous iteration's
@@ -1506,7 +1511,7 @@ SmallVector<Instruction *, 16> AIEOuterLoopPipeliner::cloneAndRemapInsts(
 }
 
 CloneLoopStructure::CloneLoopStructure(const LoopStructure &Src,
-                                       const Twine &Suffix, bool PeelFirst) {
+                                       const Twine &Suffix, CloneRole Role) {
   Function *F = Src.getTop()->getParent();
 
   // Blocks in program order; CloneBasicBlock seeds CloneMap (src->clone).
@@ -1546,25 +1551,32 @@ CloneLoopStructure::CloneLoopStructure(const LoopStructure &Src,
 
   // Compute block names based on pipelining mode. Peel-last and peel-first
   // use different naming to reflect which stage occupies each position.
-  // In peel-first mode the steady top also runs the previous iteration's
-  // deferred stage-1, as the peel-last steady bottom runs the next iteration's
-  // prefetched stage-0.
-  const bool IsFirstIter = PeelFirst && SuffixStr == "firstiter";
-  const std::string TopName =
-      PeelFirst
-          ? (IsFirstIter ? (SuffixStr + ".stage0.top").str()
-                         : (SuffixStr + ".stage1.bottom.and.stage0.top").str())
-          : (SuffixStr + ".stage1.top").str();
-  const std::string BottomName =
-      PeelFirst ? (SuffixStr + ".stage0.bottom").str()
-                : (SuffixStr + ".stage1.bottom.and.stage0.top").str();
-  const std::string InnerTag =
-      (SuffixStr + "." + (PeelFirst ? "stage0" : "stage1") + ".inner.").str();
+  // The block of each stage that a position holds. A peel-last steady bottom
+  // also prefetches the next iteration's stage-0; a peel-first steady top also
+  // runs the previous iteration's deferred stage-1.
+  StringRef TopName, InnerName, BottomName;
+  switch (Role) {
+  case CloneRole::PeelLastSteady:
+    TopName = "stage1.top";
+    InnerName = "stage1.inner.";
+    BottomName = "stage1.bottom.and.stage0.top";
+    break;
+  case CloneRole::PeelFirstSteady:
+    TopName = "stage1.bottom.and.stage0.top";
+    InnerName = "stage0.inner.";
+    BottomName = "stage0.bottom";
+    break;
+  case CloneRole::FirstIteration:
+    TopName = "stage0.top";
+    InnerName = "stage0.inner.";
+    BottomName = "stage0.bottom";
+    break;
+  }
 
-  getTop()->setName(TopName);
-  getBottom()->setName(BottomName);
+  getTop()->setName(SuffixStr + "." + TopName);
+  getBottom()->setName(SuffixStr + "." + BottomName);
   for (auto [Orig, Clone] : zip(Src.getInnerBlocks(), getInnerBlocks()))
-    Clone->setName(InnerTag + Orig->getName());
+    Clone->setName(SuffixStr + "." + InnerName + Orig->getName());
 }
 
 CloneLoopStructure::CloneLoopStructure(const LoopStructure &Src) {
@@ -2406,19 +2418,20 @@ bool AIEOuterLoopPipeliner::performPeelFirst(OrigLoopStructure &OrigLS,
 
   // Clone the LS into a steady-state copy and swap it into the original's
   // CFG slot; transform steps run on the clone, leaving OrigLS pristine.
-  CloneLoopStructure SteadyLS(OrigLS, "steady", /*PeelFirst=*/true);
+  CloneLoopStructure SteadyLS(OrigLS, "steady", CloneRole::PeelFirstSteady);
   swapInClonedLS(OrigLS, SteadyLS);
   SteadyLS.remapBoundThroughCloneMap();
 
   // Create the first-iteration prologue (full top + inner + stage-0-only
   // bottom) and wire it before the steady loop.
-  std::unique_ptr<CloneLoopStructure> FirstIterLS =
-      peelFirstIteration(OrigLS, SteadyLS);
+  CloneLoopStructure FirstIterLS(OrigLS, "firstiter",
+                                 CloneRole::FirstIteration);
+  peelFirstIteration(OrigLS, SteadyLS, FirstIterLS);
 
   // Clone stage-1 instructions into the beginning of the steady top,
   // creating merge PHIs for their inputs and erasing stage-1 from the
   // steady bottom.
-  cloneStage1IntoTop(OrigLS, SteadyLS, *FirstIterLS);
+  cloneStage1IntoTop(OrigLS, SteadyLS, FirstIterLS);
 
   // Create the single-block epilogue after the steady exit for the last
   // steady iteration's deferred stage-1 instructions.
@@ -2427,7 +2440,7 @@ bool AIEOuterLoopPipeliner::performPeelFirst(OrigLoopStructure &OrigLS,
   // The first iteration falls through into the steady loop, so its latch
   // compare is dead unless stage-1 reads it.
   RecursivelyDeleteTriviallyDeadInstructions(
-      FirstIterLS->cloneOf(OrigLS.latchCondition().Cmp));
+      FirstIterLS.cloneOf(OrigLS.latchCondition().Cmp));
 
   // The steady IV starts at the first iteration's next value, so the trip
   // count is already N-1 without adjusting the loop bound.
@@ -2698,30 +2711,25 @@ collectStage1Inputs(const OrigLoopStructure &OrigLS) {
   return Ordered;
 }
 
-std::unique_ptr<CloneLoopStructure>
-AIEOuterLoopPipeliner::peelFirstIteration(const OrigLoopStructure &OrigLS,
-                                          CloneLoopStructure &SteadyLS) {
-  // Full structural clone of the original loop body into firstiter blocks.
-  // The suffix constructor deep-clones all instructions including the inner
-  // loop, producing: firstiter.stage0.top, firstiter.stage0.inner.*, and
-  // firstiter.stage0.bottom. Heap-allocated because CloneLoopStructure is
-  // non-movable (ValueMap deletes its move constructor).
-  auto FirstIterLS = std::unique_ptr<CloneLoopStructure>(
-      new CloneLoopStructure(OrigLS, "firstiter", /*PeelFirst=*/true));
-  BasicBlock *FirstIterTop = FirstIterLS->getTop();
-  BasicBlock *FirstIterBottom = FirstIterLS->getBottom();
+void AIEOuterLoopPipeliner::peelFirstIteration(
+    const OrigLoopStructure &OrigLS, CloneLoopStructure &SteadyLS,
+    CloneLoopStructure &FirstIterLS) {
+  // FirstIterLS is a full structural clone of the original loop body
+  // (firstiter.stage0.top, firstiter.stage0.inner.*, firstiter.stage0.bottom).
+  BasicBlock *FirstIterTop = FirstIterLS.getTop();
+  BasicBlock *FirstIterBottom = FirstIterLS.getBottom();
 
   // The firstiter runs exactly once (no looping). Remove the back-edge
-  // incoming from every header PHI in firstiter.top, then simplify any PHI
-  // that collapses to a single incoming value.
+  // incoming from every header PHI in firstiter.top and replace the PHI with
+  // its remaining, preheader, value.
   for (PHINode &PHI : make_early_inc_range(FirstIterTop->phis())) {
     int BackEdgeIdx = PHI.getBasicBlockIndex(FirstIterBottom);
     if (BackEdgeIdx >= 0)
       PHI.removeIncomingValue(BackEdgeIdx, /*DeletePHIIfEmpty=*/false);
-    if (Value *V = PHI.hasConstantValue()) {
-      PHI.replaceAllUsesWith(V);
-      PHI.eraseFromParent();
-    }
+    assert(PHI.getNumIncomingValues() == 1 &&
+           "the first iteration is entered only from the preheader");
+    PHI.replaceAllUsesWith(PHI.getIncomingValue(0));
+    PHI.eraseFromParent();
   }
 
   // Strip stage-1 instructions from firstiter.bottom; they are deferred to the
@@ -2735,7 +2743,7 @@ AIEOuterLoopPipeliner::peelFirstIteration(const OrigLoopStructure &OrigLS,
     if (OrigI.isTerminator() || isa<PHINode>(&OrigI))
       continue;
     if (OrigLS.isInStage1(&OrigI))
-      ToErase.push_back(cast<Instruction>(FirstIterLS->cloneOf(&OrigI)));
+      ToErase.push_back(cast<Instruction>(FirstIterLS.cloneOf(&OrigI)));
   }
   eraseStage1Clones(ToErase);
 
@@ -2759,7 +2767,7 @@ AIEOuterLoopPipeliner::peelFirstIteration(const OrigLoopStructure &OrigLS,
     if (PreIdx < 0)
       continue;
     Value *OrigBackEdge = OrigPHI.getIncomingValueForBlock(OrigLS.getBottom());
-    SteadyPHI->setIncomingValue(PreIdx, FirstIterLS->cloneOf(OrigBackEdge));
+    SteadyPHI->setIncomingValue(PreIdx, FirstIterLS.cloneOf(OrigBackEdge));
     SteadyPHI->setIncomingBlock(PreIdx, FirstIterBottom);
   }
 
@@ -2770,8 +2778,6 @@ AIEOuterLoopPipeliner::peelFirstIteration(const OrigLoopStructure &OrigLS,
   LLVM_DEBUG(dbgs() << "    Created first-iteration prologue: "
                     << FirstIterTop->getName() << " -> "
                     << FirstIterBottom->getName() << "\n");
-
-  return FirstIterLS;
 }
 
 void AIEOuterLoopPipeliner::cloneStage1IntoTop(
