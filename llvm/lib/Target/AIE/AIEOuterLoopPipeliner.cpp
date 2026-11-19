@@ -168,7 +168,8 @@ static cl::opt<PipeliningMode> PipeliningModeOpt(
     cl::values(clEnumValN(PipeliningMode::PeelLast, "last",
                           "Peel the last iteration (default)"),
                clEnumValN(PipeliningMode::PeelFirst, "first",
-                          "Peel the first iteration; ignores the "
+                          "Peel the first iteration, falling back to peel-last "
+                          "where that does not apply; peel-first ignores the "
                           "split-prologue, speculative and lean-stage0 "
                           "options")),
     cl::init(PipeliningMode::PeelLast), cl::Hidden);
@@ -535,6 +536,10 @@ public:
 
   const std::vector<Instruction *> &stage0Insts() const { return Stage0Insts; }
   const std::vector<Instruction *> &stage1Insts() const { return Stage1Insts; }
+  void clearStages() {
+    Stage0Insts.clear();
+    Stage1Insts.clear();
+  }
 
   // True if rotating pays off: hardware inner loop, outer trip count (from SE)
   // meets MinTripCount, and the bottom has stores.
@@ -672,6 +677,9 @@ private:
   void seedHeaderPhiEdge(RemapTable &Map, const LoopStructure &LS,
                          BasicBlock *FromEdge) const;
   bool performTransformation(OrigLoopStructure &OrigLS, const OLPOpts &Opts);
+  // Pipeline OrigLS in peel-first mode. Returns false, with the IR unchanged
+  // apart from LCSSA formation, if peel-first does not apply.
+  bool performPeelFirst(OrigLoopStructure &OrigLS, const OLPOpts &Opts);
 
   // Swap a freshly cloned steady-state LS in for the original by rewiring its
   // preheader, leaving the original unreachable and ready for deletion.
@@ -2343,92 +2351,102 @@ bool AIEOuterLoopPipeliner::liftBottomPointerUpdatesToTop(
   return true;
 }
 
+// Peel-first mode: displace bottom-block stage-0 (stores + inner-result users)
+// into the steady top, interleaving them with the next iteration's loads. Peel
+// the first iteration as prologue and add a single-block epilogue for the last
+// steady iteration's deferred stores.
+bool AIEOuterLoopPipeliner::performPeelFirst(OrigLoopStructure &OrigLS,
+                                             const OLPOpts &Opts) {
+  // A JNZD hardware-loop input keeps its trip count in start.loop.iterations,
+  // which the peel-first path does not adjust.
+  if (OrigLS.latchCondition().isHardwareLoop()) {
+    LLVM_DEBUG(dbgs() << "    Peel-first: hardware-loop input is not "
+                         "supported; skipping\n");
+    return false;
+  }
+  OrigLS.collectFirstIterStages();
+  if (OrigLS.stage0Insts().empty()) {
+    LLVM_DEBUG(dbgs() << "    Peel-first: no stage-0 instructions found; "
+                         "skipping\n");
+    return false;
+  }
+
+  // Stage-0 of each iteration now runs after that iteration's stage-1.
+  // Without alias information, that is only safe when one of them neither
+  // accesses memory nor has other side effects.
+  const auto HasMemoryOrSideEffects = [](const Instruction *I) {
+    return I->mayReadOrWriteMemory() || I->mayHaveSideEffects();
+  };
+  if (any_of(OrigLS.stage0Insts(), HasMemoryOrSideEffects) &&
+      any_of(OrigLS.stage1Insts(), HasMemoryOrSideEffects)) {
+    LLVM_DEBUG(dbgs() << "    Peel-first: stage-1 accesses memory or has "
+                         "side effects; skipping\n");
+    return false;
+  }
+
+  LLVM_DEBUG({
+    for (StringRef Opt : Opts.PeelLastOnlyOverrides)
+      dbgs() << "    Peel-first: ignoring -" << Opt
+             << ", which only applies to peel-last mode\n";
+  });
+
+  // Clone the LS into a steady-state copy and swap it into the original's
+  // CFG slot; transform steps run on the clone, leaving OrigLS pristine.
+  CloneLoopStructure SteadyLS(OrigLS, "steady", /*PeelFirst=*/true);
+  swapInClonedLS(OrigLS, SteadyLS);
+  SteadyLS.remapBoundThroughCloneMap();
+
+  // Create the first-iteration prologue (full top + inner + stage-1-only
+  // bottom) and wire it before the steady loop.
+  std::unique_ptr<CloneLoopStructure> FirstIterLS =
+      peelFirstIteration(OrigLS, SteadyLS);
+
+  // Clone stage-0 instructions into the beginning of the steady top,
+  // creating merge PHIs for their inputs and erasing stage-0 from the
+  // steady bottom.
+  cloneStage0IntoTop(OrigLS, SteadyLS, *FirstIterLS);
+
+  // Create the single-block epilogue after the steady exit for the last
+  // steady iteration's deferred stage-0 instructions.
+  createStage1Epilogue(OrigLS, SteadyLS);
+
+  // The first iteration falls through into the steady loop, so its latch
+  // compare is dead unless stage-0 reads it.
+  RecursivelyDeleteTriviallyDeadInstructions(
+      FirstIterLS->cloneOf(OrigLS.latchCondition().Cmp));
+
+  // The steady IV starts at the first iteration's next value, so the trip
+  // count is already N-1 without adjusting the loop bound.
+  SteadyLS.updateLoopMetadata(AIELoopUtils::OLPPeelMode::PeelFirst);
+
+  // Determine whether to use hardware loop based on pointer pressure.
+  const unsigned NumPointerPHIs = OrigLS.countBasePointerPHIs();
+  const bool OuterIsHardwareLoop = Opts.shouldUseHardwareLoop(NumPointerPHIs) &&
+                                   SteadyLS.latchCondition().isDowncounting();
+  LLVM_DEBUG(dbgs() << "    Pointer PHIs: " << NumPointerPHIs << ", threshold: "
+                    << OuterLoopPointerThreshold << ", using "
+                    << (OuterIsHardwareLoop ? "hw" : "soft") << " loop\n");
+
+  if (OuterIsHardwareLoop)
+    convertOuterLoopToHardwareLoop(SteadyLS);
+
+  OrigLS.removeFromCFG();
+  return true;
+}
+
 bool AIEOuterLoopPipeliner::performTransformation(OrigLoopStructure &OrigLS,
                                                   const OLPOpts &Opts) {
   /// Restore LCSSA if this property was invalidated.
   formLCSSARecursively(*OrigLS.getOuterLoop(), *DT, LI, SE);
 
-  // Peel-first mode: displace bottom-block stage-0 (stores + inner-result
-  // users) into the steady top, interleaving them with the next iteration's
-  // loads. Peel the first iteration as prologue and add a single-block
-  // epilogue for the last steady iteration's deferred stores.
   if (Opts.Mode == PipeliningMode::PeelFirst) {
-    // A JNZD hardware-loop input keeps its trip count in start.loop.iterations,
-    // which the peel-first path does not adjust.
-    if (OrigLS.latchCondition().isHardwareLoop()) {
-      LLVM_DEBUG(dbgs() << "    Peel-first: hardware-loop input is not "
-                           "supported; skipping\n");
-      return false;
-    }
-    LLVM_DEBUG({
-      for (StringRef Opt : Opts.PeelLastOnlyOverrides)
-        dbgs() << "    Peel-first: ignoring -" << Opt
-               << ", which only applies to peel-last mode\n";
-    });
-    OrigLS.collectFirstIterStages();
-    if (OrigLS.stage0Insts().empty()) {
-      LLVM_DEBUG(dbgs() << "    Peel-first: no stage-0 instructions found; "
-                           "skipping\n");
-      return false;
-    }
-
-    // Stage-0 of each iteration now runs after that iteration's stage-1.
-    // Without alias information, that is only safe when one of them neither
-    // accesses memory nor has other side effects.
-    const auto HasMemoryOrSideEffects = [](const Instruction *I) {
-      return I->mayReadOrWriteMemory() || I->mayHaveSideEffects();
-    };
-    if (any_of(OrigLS.stage0Insts(), HasMemoryOrSideEffects) &&
-        any_of(OrigLS.stage1Insts(), HasMemoryOrSideEffects)) {
-      LLVM_DEBUG(dbgs() << "    Peel-first: stage-1 accesses memory or has "
-                           "side effects; skipping\n");
-      return false;
-    }
-
-    // Clone the LS into a steady-state copy and swap it into the original's
-    // CFG slot; transform steps run on the clone, leaving OrigLS pristine.
-    CloneLoopStructure SteadyLS(OrigLS, "steady", /*PeelFirst=*/true);
-    swapInClonedLS(OrigLS, SteadyLS);
-    SteadyLS.remapBoundThroughCloneMap();
-
-    // Create the first-iteration prologue (full top + inner + stage-1-only
-    // bottom) and wire it before the steady loop.
-    std::unique_ptr<CloneLoopStructure> FirstIterLS =
-        peelFirstIteration(OrigLS, SteadyLS);
-
-    // Clone stage-0 instructions into the beginning of the steady top,
-    // creating merge PHIs for their inputs and erasing stage-0 from the
-    // steady bottom.
-    cloneStage0IntoTop(OrigLS, SteadyLS, *FirstIterLS);
-
-    // Create the single-block epilogue after the steady exit for the last
-    // steady iteration's deferred stage-0 instructions.
-    createStage1Epilogue(OrigLS, SteadyLS);
-
-    // The first iteration falls through into the steady loop, so its latch
-    // compare is dead unless stage-0 reads it.
-    RecursivelyDeleteTriviallyDeadInstructions(
-        FirstIterLS->cloneOf(OrigLS.latchCondition().Cmp));
-
-    // The steady IV starts at the first iteration's next value, so the trip
-    // count is already N-1 without adjusting the loop bound.
-    SteadyLS.updateLoopMetadata(AIELoopUtils::OLPPeelMode::PeelFirst);
-
-    // Determine whether to use hardware loop based on pointer pressure.
-    const unsigned NumPointerPHIs = OrigLS.countBasePointerPHIs();
-    const bool OuterIsHardwareLoop =
-        Opts.shouldUseHardwareLoop(NumPointerPHIs) &&
-        SteadyLS.latchCondition().isDowncounting();
-    LLVM_DEBUG(dbgs() << "    Pointer PHIs: " << NumPointerPHIs
-                      << ", threshold: " << OuterLoopPointerThreshold
-                      << ", using " << (OuterIsHardwareLoop ? "hw" : "soft")
-                      << " loop\n");
-
-    if (OuterIsHardwareLoop)
-      convertOuterLoopToHardwareLoop(SteadyLS);
-
-    OrigLS.removeFromCFG();
-    return true;
+    if (performPeelFirst(OrigLS, Opts))
+      return true;
+    // Peel-first declined the loop; prefetching the next iteration's loads
+    // may still pay off.
+    LLVM_DEBUG(dbgs() << "    Peel-first does not apply; falling back to "
+                         "peel-last\n");
+    OrigLS.clearStages();
   }
 
   liftBottomPointerUpdatesToTop(OrigLS);
