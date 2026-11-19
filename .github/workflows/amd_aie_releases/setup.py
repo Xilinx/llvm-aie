@@ -185,6 +185,15 @@ class CMakeBuild(build_ext):
                 )
             shutil.rmtree(install_dir / "python_packages", ignore_errors=True)
 
+        # Record the source commit inside the wheel. PEP 440 forbids local
+        # version segments (`+sha`) on PyPI, so the SHA can no longer ride
+        # along in the version string; pin it here instead.
+        (install_dir / "commit.txt").write_text(
+            f"commit={commit_hash}\n"
+            f"datetime={llvm_datetime}\n"
+            f"version={version}\n"
+        )
+
         subprocess.run(
             [
                 "find",
@@ -223,10 +232,10 @@ if not commit_hash:
 
 now = datetime.now()
 llvm_datetime = os.getenv(
-    "DATETIME", f"{now.year}{now.month:02}{now.day:02}{now.hour:02}"
+    "DATETIME", f"{now.year}{now.month:02}{now.day:02}{now.hour:02}{now.minute:02}"
 )
 
-version = f"{llvm_version[0]}.{llvm_version[1]}.{llvm_version[2]}.{llvm_datetime}+{commit_hash}"
+version = f"{llvm_version[0]}.{llvm_version[1]}.{llvm_version[2]}.{llvm_datetime}"
 llvm_url = f"https://github.com/Xilinx/llvm-aie/commit/{commit_hash}"
 
 build_temp = Path.cwd() / "build" / "temp"
