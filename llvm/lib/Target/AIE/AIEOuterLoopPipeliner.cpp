@@ -2242,8 +2242,8 @@ bool AIEOuterLoopPipeliner::performTransformation(OrigLoopStructure &OrigLS,
     // steady iteration's deferred stage-0 instructions.
     createStage1Epilogue(OrigLS, SteadyLS, TopVMap);
 
-    // Adjust the outer loop trip count: N -> N-1.
-    SteadyLS.adjustLoopBound();
+    // The steady IV starts at the first iteration's next value, so the trip
+    // count is already N-1 without adjusting the loop bound.
     SteadyLS.updateLoopMetadata(AIELoopUtils::OLPPeelMode::PeelFirst);
 
     // Determine whether to use hardware loop based on pointer pressure.
@@ -2354,7 +2354,8 @@ bool AIEOuterLoopPipeliner::performTransformation(OrigLoopStructure &OrigLS,
 // The i32 JNZD trip count is the distance from the preheader IV value to the
 // live latch limit. The non-speculative path updates that limit to peel one
 // iteration, producing N-1; speculative mode leaves the original limit,
-// producing N.
+// producing N. Peel-first keeps the limit and starts the IV one iteration
+// later, producing N-1.
 static Value *computeJNZDTripCount(const CloneLoopStructure &SteadyLS,
                                    Type *I32Ty) {
   const LatchConditionInfo &Info = SteadyLS.latchCondition();
@@ -2476,20 +2477,18 @@ AIEOuterLoopPipeliner::peelFirstIteration(const OrigLoopStructure &OrigLS,
     }
   }
 
-  // Strip stage-0 instructions and latch control from firstiter.bottom.
+  // Strip stage-0 instructions and the latch compare from firstiter.bottom.
   // Stage-0 (stores + inner-result consumers) are deferred to the steady top
-  // by cloneStage0IntoTop(). CounterAdd and Cmp are dead in a non-looping
-  // peeled block (same filter as populateLastIterBottom). Only stage-1
-  // (ptr-updates) survive. LCSSA PHIs are preserved -- cloneStage0IntoTop()
-  // needs them to build the inner_result_phi merge nodes.
+  // by cloneStage0IntoTop(). The compare is dead in a non-looping peeled
+  // block. Stage-1 (ptr-updates and the IV step) survive: the steady header
+  // PHIs start from their results. LCSSA PHIs are preserved --
+  // cloneStage0IntoTop() needs them to build the inner_result_phi merge nodes.
   const LatchConditionInfo &Bound = OrigLS.latchCondition();
   SmallVector<Instruction *, 16> ToErase;
   for (Instruction &OrigI : *OrigLS.getBottom()) {
     if (OrigI.isTerminator() || isa<PHINode>(&OrigI))
       continue;
-    const bool IsLatchControl =
-        (&OrigI == Bound.Counter || &OrigI == Bound.Cmp);
-    if (IsLatchControl || OrigLS.isInStage0(&OrigI))
+    if (&OrigI == Bound.Cmp || OrigLS.isInStage0(&OrigI))
       ToErase.push_back(cast<Instruction>(FirstIterLS->cloneOf(&OrigI)));
   }
   // Erase in reverse program order so that uses are removed before defs.
@@ -2510,22 +2509,16 @@ AIEOuterLoopPipeliner::peelFirstIteration(const OrigLoopStructure &OrigLS,
                                                    FirstIterTop);
 
   // Update steady header PHIs: replace the preheader incoming edge with
-  // firstiter.bottom. Non-IV PHIs receive the firstiter's back-edge values
-  // (the results of the first iteration's ptr-updates); the IV PHI keeps its
-  // original init value so that adjustLoopBound() alone accounts for the
-  // peeled iteration.
-  const PHINode *IV = Bound.IV;
+  // firstiter.bottom, carrying the value the first iteration produced for the
+  // next one. This includes the IV, so the steady loop runs iterations 1..N-1
+  // against the unchanged loop bound.
   for (PHINode &OrigPHI : OrigLS.getTop()->phis()) {
     auto *SteadyPHI = cast<PHINode>(SteadyLS.cloneOf(&OrigPHI));
     int PreIdx = SteadyPHI->getBasicBlockIndex(Preheader);
     if (PreIdx < 0)
       continue;
-    if (&OrigPHI != IV) {
-      // Advance to the value the firstiter produced for the next iteration.
-      Value *OrigBackEdge =
-          OrigPHI.getIncomingValueForBlock(OrigLS.getBottom());
-      SteadyPHI->setIncomingValue(PreIdx, FirstIterLS->cloneOf(OrigBackEdge));
-    }
+    Value *OrigBackEdge = OrigPHI.getIncomingValueForBlock(OrigLS.getBottom());
+    SteadyPHI->setIncomingValue(PreIdx, FirstIterLS->cloneOf(OrigBackEdge));
     SteadyPHI->setIncomingBlock(PreIdx, FirstIterBottom);
   }
 

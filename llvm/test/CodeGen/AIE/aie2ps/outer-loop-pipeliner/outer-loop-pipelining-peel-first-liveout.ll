@@ -61,7 +61,8 @@ define ptr @peel_first_liveout(ptr noalias %src, ptr noalias %dst, i32 %N, i32 %
 ; CHECK:       [[FIRSTITER_STAGE0_BOTTOM]]:
 ; CHECK-NEXT:    [[SRC_NEXT1_FIRSTITER]] = getelementptr inbounds i8, ptr [[SRC]], i32 4
 ; CHECK-NEXT:    [[DST_NEXT2_FIRSTITER]] = getelementptr inbounds i8, ptr [[DST]], i32 4
-; CHECK-NEXT:    [[OUTER_JNZD_TC:%.*]] = sub i32 [[N]], 1
+; CHECK-NEXT:    [[LSR_IV_NEXT_FIRSTITER:%.*]] = add i32 [[N]], -1
+; CHECK-NEXT:    [[OUTER_JNZD_TC:%.*]] = sub i32 [[LSR_IV_NEXT_FIRSTITER]], 0
 ; CHECK-NEXT:    [[OUTER_CTR_INIT]] = call i32 @llvm.start.loop.iterations.i32(i32 [[OUTER_JNZD_TC]])
 ; CHECK-NEXT:    br label %[[STEADY_STAGE0_BOTTOM_AND_STAGE1_TOP]]
 ; CHECK:       [[LASTITER_STAGE1_BOTTOM]]:
