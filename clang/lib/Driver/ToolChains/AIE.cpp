@@ -197,6 +197,15 @@ void AIEToolChain::addClangTargetOptions(
                           options::OPT_fno_threadsafe_statics, false))
     CC1Args.push_back("-fno-threadsafe-statics");
 
+  // Emit .stack_sizes by default. A core's stack is a fixed reservation that
+  // the buffers follow directly, and the tools that size or check it (aiecc)
+  // can only add up the frames this section reports. The section is not
+  // allocated, so the code that gets loaded is unchanged. -fstack-size-section
+  // itself is forwarded by the generic driver.
+  if (!DriverArgs.hasArg(options::OPT_fstack_size_section,
+                         options::OPT_fno_stack_size_section))
+    CC1Args.push_back("-fstack-size-section");
+
   // Make sure to perform most optimizations before mandatory inlinings,
   // otherwise noalias attributes can get lost and hurt AA results.
   CC1Args.append({"-mllvm", "-mandatory-inlining-before-opt=false"});

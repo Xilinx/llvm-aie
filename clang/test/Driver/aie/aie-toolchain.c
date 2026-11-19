@@ -153,3 +153,31 @@
 // RUN: %clang %s -### --target=aie2p-none-unknown-elf -fthreadsafe-statics 2>&1 \
 // RUN:   | FileCheck -check-prefix=CC1-STATICS-OVERRIDE %s
 // CC1-STATICS-OVERRIDE-NOT: -fno-threadsafe-statics
+
+// By default we emit .stack_sizes, which aiecc reads to size and check a core's stack
+// RUN: %clang %s -### --target=aie-none-unknown-elf 2>&1 \
+// RUN:   | FileCheck -check-prefix=CC1-STACK-SIZES %s
+// RUN: %clang %s -### --target=aie2-none-unknown-elf 2>&1 \
+// RUN:   | FileCheck -check-prefix=CC1-STACK-SIZES %s
+// RUN: %clang %s -### --target=aie2p-none-unknown-elf 2>&1 \
+// RUN:   | FileCheck -check-prefix=CC1-STACK-SIZES %s
+// CC1-STACK-SIZES: "-cc1"{{.*}}"-fstack-size-section"
+
+// Only once if we explicitly ask for it, also after opting out.
+// RUN: %clang %s -### --target=aie-none-unknown-elf -fstack-size-section 2>&1 \
+// RUN:   | FileCheck -check-prefix=CC1-STACK-SIZES-EXPL %s
+// RUN: %clang %s -### --target=aie2-none-unknown-elf -fno-stack-size-section -fstack-size-section 2>&1 \
+// RUN:   | FileCheck -check-prefix=CC1-STACK-SIZES-EXPL %s
+// RUN: %clang %s -### --target=aie2p-none-unknown-elf -fstack-size-section 2>&1 \
+// RUN:   | FileCheck -check-prefix=CC1-STACK-SIZES-EXPL %s
+// CC1-STACK-SIZES-EXPL: "-cc1"{{.*}}"-fstack-size-section"
+// CC1-STACK-SIZES-EXPL-NOT: "-fstack-size-section"
+
+// But not if we override it
+// RUN: %clang %s -### --target=aie-none-unknown-elf -fno-stack-size-section 2>&1 \
+// RUN:   | FileCheck -check-prefix=CC1-STACK-SIZES-OVERRIDE %s
+// RUN: %clang %s -### --target=aie2-none-unknown-elf -fno-stack-size-section 2>&1 \
+// RUN:   | FileCheck -check-prefix=CC1-STACK-SIZES-OVERRIDE %s
+// RUN: %clang %s -### --target=aie2p-none-unknown-elf -fstack-size-section -fno-stack-size-section 2>&1 \
+// RUN:   | FileCheck -check-prefix=CC1-STACK-SIZES-OVERRIDE %s
+// CC1-STACK-SIZES-OVERRIDE-NOT: "-fstack-size-section"
