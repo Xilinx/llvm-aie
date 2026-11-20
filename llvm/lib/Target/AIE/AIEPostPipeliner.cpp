@@ -52,7 +52,7 @@ static cl::opt<int>
 static cl::opt<int>
     HeuristicRuns("aie-postpipeliner-heuristic-runs",
                   cl::desc("Number of runs for heuristics that converge"),
-                  cl::init(20), cl::Hidden);
+                  cl::init(11), cl::Hidden);
 static cl::opt<std::string>
     DisabledStrategyPrefix("aie-postpipeliner-disable-strategy",
                            cl::desc("Disable all post-pipeliner strategies"
@@ -282,6 +282,11 @@ void PostPipeliner::scheduleNode(SUnit &SU, int Cycle,
                     << ": " << NoDebug(*SU.getInstr()) << "\n");
   Info[SU.NodeNum].Cycle = Cycle;
 
+  // The pusher counters are only consulted for the representative
+  // instructions, so pushes by copies in other iterations are not a change
+  // that matters for later runs.
+  const bool IsRepresentative = int(SU.NodeNum) < NInstr;
+
   LLVM_DEBUG(dbgs() << "  Pushed succs Earliest: ");
   for (auto &Dep : SU.Succs) {
     int Latency = Dep.getSignedLatency();
@@ -298,7 +303,9 @@ void PostPipeliner::scheduleNode(SUnit &SU, int Cycle,
       Info[SNum].LastEarliestPusher = SU.NodeNum;
       Info[SU.NodeNum].NumPushedEarliest++;
       Strategy.setEarliest(SNum, NewEarliest);
-      Strategy.setChanged();
+      if (IsRepresentative) {
+        Strategy.setChanged(PostPipelinerStrategy::EarliestPushers);
+      }
     }
   }
   LLVM_DEBUG(dbgs() << "\n  Pushed preds Latest: ");
@@ -317,7 +324,9 @@ void PostPipeliner::scheduleNode(SUnit &SU, int Cycle,
       Info[PNum].LastLatestPusher = SU.NodeNum;
       Info[SU.NodeNum].NumPushedLatest++;
       Strategy.setLatest(PNum, NewLatest);
-      Strategy.setChanged();
+      if (IsRepresentative) {
+        Strategy.setChanged(PostPipelinerStrategy::LatestPushers);
+      }
     }
   }
   LLVM_DEBUG(dbgs() << "\n");
@@ -958,8 +967,9 @@ bool PostPipeliner::scheduleFirstIteration(PostPipelinerStrategy &Strategy) {
 
       // The node might have been given too tight Earliest/Latest attributes.
       // Relax those to give another chance for scheduling this II.
-      Info[N].TweakedEarliest = {};
-      Info[N].TweakedLatest = {};
+      if (Info[N].clearTweaks()) {
+        Strategy.setChanged(PostPipelinerStrategy::TweakedBounds);
+      }
       return false;
     }
     const int Actual = *OptCycle;
@@ -1100,8 +1110,9 @@ bool PostPipeliner::scheduleOtherIterations(PostPipelinerStrategy &Strategy) {
           HasScheduleSlack ||
           (CanPlaceLaterInOriginalInterval && DelayReducesGap);
       if (CanDelayModuloNode) {
-        ModuloNode.TweakedEarliest = ModuloNode.Cycle + 1;
-        Strategy.setChanged();
+        if (ModuloNode.setTweakedEarliest(ModuloNode.Cycle + 1)) {
+          Strategy.setChanged(PostPipelinerStrategy::TweakedBounds);
+        }
         LLVM_DEBUG(dbgs() << "  Try to delay SU" << N - NInstr
                           << " with TweakedEarliest= "
                           << ModuloNode.TweakedEarliest << "\n");
@@ -1112,9 +1123,11 @@ bool PostPipeliner::scheduleOtherIterations(PostPipelinerStrategy &Strategy) {
         // Instead, prioritise whatever pushed us.
         NodeInfo &Pusher = Info[*Node.LastEarliestPusher];
         if (Strategy.mobility(DAG->SUnits[*Node.LastEarliestPusher]) > 0) {
-          ModuloNode.TweakedEarliest = {};
-          Pusher.TweakedLatest = Pusher.Latest - 1;
-          Strategy.setChanged();
+          bool Modified = ModuloNode.setTweakedEarliest({});
+          Modified |= Pusher.setTweakedLatest(Pusher.Latest - 1);
+          if (Modified) {
+            Strategy.setChanged(PostPipelinerStrategy::TweakedBounds);
+          }
           LLVM_DEBUG(dbgs()
                      << "  Try to prioritise SU" << *Node.LastEarliestPusher
                      << " with TweakedLatest= " << Pusher.TweakedLatest
@@ -1317,6 +1330,9 @@ public:
 class ConfigStrategy : public PostPipelinerStrategy {
   bool TopDown = true;
   bool Alternate = false;
+  // The direction to start each run with. TopDown itself flips during a run
+  // when Alternate is set.
+  const bool InitialTopDown;
 
 public:
   enum PriorityComponent {
@@ -1441,12 +1457,14 @@ private:
   }
 
   void selected(const SUnit &N) override {
-    // Promote the critical path
-    NodeInfo *Pushed = &Info[N.NodeNum];
-    while (Pushed->LastEarliestPusher) {
-      Pushed = &Info[*Pushed->LastEarliestPusher];
-      Pushed->NumPushedEarliest++;
-      setChanged();
+    // Promote the critical path. Only Critical reads NumPushedEarliest.
+    if (llvm::is_contained(Priority, PriorityComponent::Critical)) {
+      NodeInfo *Pushed = &Info[N.NodeNum];
+      while (Pushed->LastEarliestPusher) {
+        Pushed = &Info[*Pushed->LastEarliestPusher];
+        Pushed->NumPushedEarliest++;
+        setChanged(EarliestPushers);
+      }
     }
 
     // Promote my siblings
@@ -1479,12 +1497,36 @@ private:
 
 public:
   std::string name() override { return Name; }
+
+  // The tweaked bounds feed every configuration. Beyond that, only the
+  // Critical component reads the pusher counters, in the direction in which
+  // the strategy schedules.
+  unsigned changeDependencies() const override {
+    unsigned Deps = TweakedBounds;
+    if (llvm::is_contained(Priority, PriorityComponent::Critical)) {
+      Deps |= Alternate ? EarliestPushers | LatestPushers
+                        : (InitialTopDown ? EarliestPushers : LatestPushers);
+    }
+    return Deps;
+  }
+
+  // Sibling tracking and the scheduling direction are per-run state. Reset
+  // them so that every run only depends on the cross-run data covered by
+  // changeDependencies().
+  bool checkAndResetChanged() override {
+    SuccSiblingScheduled.clear();
+    PredSiblingScheduled.clear();
+    TopDown = InitialTopDown;
+    return PostPipelinerStrategy::checkAndResetChanged();
+  }
+
   ConfigStrategy(ScheduleDAGInstrs &DAG, ScheduleInfo &Info, int Length,
                  bool TopDown, bool Alternate,
                  ArrayRef<PriorityComponent> Components,
                  ArrayRef<PlacementModifier> Modifiers = {})
       : PostPipelinerStrategy(DAG, Info, Length), TopDown(TopDown),
-        Alternate(Alternate), Modifiers(Modifiers.begin(), Modifiers.end()) {
+        Alternate(Alternate), InitialTopDown(TopDown),
+        Modifiers(Modifiers.begin(), Modifiers.end()) {
     Name = "Config_" + std::to_string(Length) + "_" + std::to_string(TopDown) +
            "_" + std::to_string(Alternate);
     for (auto Comp : Components) {
@@ -1522,44 +1564,49 @@ public:
 
 using Prio = ConfigStrategy::PriorityComponent;
 using Plc = ConfigStrategy::PlacementModifier;
-static const ConfigStrategy::Configuration Heuristics[] = {
-    // Loosely speaking, a lower value of the first parameter targets
-    // a lower stage count, which benefits code size.
-    // Runs>1 is only useful for heuristics that use it, e.g. Critical
-    // {ExtraStages, TopDown, Alternate, Runs, PriorityComponents, Modifiers}
-    {1, true, false, 1, {Prio::NodeNum}, {}},
-    // Tight schedule window: ExtraStages=0 keeps NS low, which is needed
-    // when MinTripCount barely exceeds RecMII.
-    {0, true, false, HeuristicRuns, {Prio::NodeNum}, {}},
-    {1, true, false, HeuristicRuns, {Prio::Latest}, {}},
-    {1, true, false, HeuristicRuns, {Prio::Critical}, {}},
-    {1, true, false, HeuristicRuns, {Prio::Latest, Prio::Sibling}, {}},
-    {1, true, false, HeuristicRuns, {Prio::DepLength, Prio::Latest}, {}},
-    {1, true, false, HeuristicRuns, {Prio::Critical, Prio::LCDLatest}, {}},
-    {1, true, false, HeuristicRuns, {Prio::Liveness, Prio::Latest}, {}},
-    {1, true, false, HeuristicRuns, {Prio::Latest, Prio::Liveness}, {}},
-    // EffectiveHeight: prefer nodes with more critical path below them.
-    // DeferNonCritical defers non-critical nodes (EH=0) to leave early
-    // modulo cycles free for the critical path.
-    {1,
-     true,
-     false,
-     HeuristicRuns,
-     {Prio::EffHeight, Prio::Latest},
-     {Plc::DeferNonCritical}},
-    {1,
-     true,
-     false,
-     HeuristicRuns,
-     {Prio::EffHeight, Prio::Critical},
-     {Plc::DeferNonCritical}},
-    {1, true, false, HeuristicRuns, {Prio::EffHeight, Prio::Latest}, {}},
-    {1, true, false, HeuristicRuns, {Prio::EffHeight, Prio::Critical}, {}},
-    // Bottom-up strategies
-    {0, false, false, 2, {Prio::Critical, Prio::LCDLatest}, {}},
-    {1, false, false, 2, {Prio::Critical, Prio::LCDLatest}, {}},
-    {1, false, false, 1, {Prio::NodeNum}, {}}, // pure bottom up
-};
+
+// Built on first use, after command-line parsing, so HeuristicRuns is live.
+static ArrayRef<ConfigStrategy::Configuration> getHeuristics() {
+  static const ConfigStrategy::Configuration Heuristics[] = {
+      // Loosely speaking, a lower value of the first parameter targets
+      // a lower stage count, which benefits code size.
+      // Runs>1 is only useful for heuristics that use it, e.g. Critical
+      // {ExtraStages, TopDown, Alternate, Runs, PriorityComponents, Modifiers}
+      {1, true, false, 1, {Prio::NodeNum}, {}},
+      // Tight schedule window: ExtraStages=0 keeps NS low, which is needed
+      // when MinTripCount barely exceeds RecMII.
+      {0, true, false, HeuristicRuns, {Prio::NodeNum}, {}},
+      {1, true, false, HeuristicRuns, {Prio::Latest}, {}},
+      {1, true, false, HeuristicRuns, {Prio::Critical}, {}},
+      {1, true, false, HeuristicRuns, {Prio::Latest, Prio::Sibling}, {}},
+      {1, true, false, HeuristicRuns, {Prio::DepLength, Prio::Latest}, {}},
+      {1, true, false, HeuristicRuns, {Prio::Critical, Prio::LCDLatest}, {}},
+      {1, true, false, HeuristicRuns, {Prio::Liveness, Prio::Latest}, {}},
+      {1, true, false, HeuristicRuns, {Prio::Latest, Prio::Liveness}, {}},
+      // EffectiveHeight: prefer nodes with more critical path below them.
+      // DeferNonCritical defers non-critical nodes (EH=0) to leave early
+      // modulo cycles free for the critical path.
+      {1,
+       true,
+       false,
+       HeuristicRuns,
+       {Prio::EffHeight, Prio::Latest},
+       {Plc::DeferNonCritical}},
+      {1,
+       true,
+       false,
+       HeuristicRuns,
+       {Prio::EffHeight, Prio::Critical},
+       {Plc::DeferNonCritical}},
+      {1, true, false, HeuristicRuns, {Prio::EffHeight, Prio::Latest}, {}},
+      {1, true, false, HeuristicRuns, {Prio::EffHeight, Prio::Critical}, {}},
+      // Bottom-up strategies
+      {0, false, false, 2, {Prio::Critical, Prio::LCDLatest}, {}},
+      {1, false, false, 2, {Prio::Critical, Prio::LCDLatest}, {}},
+      {1, false, false, 1, {Prio::NodeNum}, {}}, // pure bottom up
+  };
+  return Heuristics;
+}
 
 // Place data sinks first, then pull producers ALAP toward them to shorten
 // live ranges under modulo pressure.
@@ -1781,7 +1828,7 @@ bool PostPipeliner::tryApproaches() {
   }
 
   int HeuristicIndex = 0;
-  for (const auto &Config : Heuristics) {
+  for (const auto &Config : getHeuristics()) {
     if (Heuristic >= 0 && Heuristic != HeuristicIndex++) {
       continue;
     }
@@ -1792,7 +1839,7 @@ bool PostPipeliner::tryApproaches() {
       continue;
     }
     resetSchedule(/*FullReset=*/true);
-    for (int Run = 0; Run < Config.Runs && Run < HeuristicRuns; Run++) {
+    for (int Run = 0; Run < Config.Runs; Run++) {
       DEBUG_SUMMARY(dbgs() << "--- Strategy " << S.name() << " run=" << Run
                            << " trying II=" << II << "\n");
       if (scheduleWithStrategy(S)) {
@@ -1838,7 +1885,7 @@ bool PostPipeliner::tryApproaches() {
   // IterCountSlackStrategy to avoid short-circuiting them.
   {
     DeferNthNodeStrategy S(*DAG, Info, MinLength + II, NInstr);
-    if (S.isEnabled() && S.scheduleAllRuns(*this, HeuristicRuns))
+    if (S.isEnabled() && S.scheduleAllRuns(*this, 60))
       return true;
   }
 
@@ -2291,6 +2338,30 @@ void NodeInfo::reset(bool FullReset) {
 void NodeInfo::update(int II) {
   ModuloCycle = Cycle % II;
   Stage = Cycle / II;
+}
+
+bool NodeInfo::setTweakedEarliest(std::optional<int> Value) {
+  const bool Modified = TweakedEarliest != Value;
+  TweakedEarliest = Value;
+  return Modified;
+}
+
+bool NodeInfo::setTweakedLatest(std::optional<int> Value) {
+  const bool Modified = TweakedLatest != Value;
+  TweakedLatest = Value;
+  return Modified;
+}
+
+bool NodeInfo::clearTweaks() {
+  bool Modified = setTweakedEarliest({});
+  Modified |= setTweakedLatest({});
+  return Modified;
+}
+
+bool PostPipelinerStrategy::checkAndResetChanged() {
+  const bool Relevant = (PendingChanges & changeDependencies()) != NoChange;
+  PendingChanges = NoChange;
+  return Relevant;
 }
 
 void ScheduleInfo::applyRotation(int II) {
