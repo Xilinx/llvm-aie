@@ -3504,6 +3504,134 @@ bool llvm::tryToCombineVectorShiftsByZero(MachineInstr &MI,
   return true;
 }
 
+namespace {
+/// A 128-bit quarter of a 512-bit vector: undefined, the data of a 128-bit
+/// vector padded to 512 bits, or unknown.
+struct Quarter128 {
+  enum { Unknown, Undef, Piece } Kind = Unknown;
+  /// For a Piece: the G_AIE_PAD_VECTOR_UNDEF whose low 128 bits it is.
+  Register Padded;
+};
+using Quarters128 = std::array<Quarter128, 4>;
+} // namespace
+
+static bool isVShiftIntrinsic(const MachineInstr &MI) {
+  const auto *Intr = dyn_cast<GIntrinsic>(&MI);
+  if (!Intr)
+    return false;
+  switch (Intr->getIntrinsicID()) {
+  case Intrinsic::aie2p_vshift_I512_I512:
+  case Intrinsic::aie2p_vshift_bf512_bf512:
+  case Intrinsic::aie2ps_vshift_I512_I512:
+  case Intrinsic::aie2ps_vshift_bf512_bf512:
+    return true;
+  default:
+    return false;
+  }
+}
+
+static Quarters128 getVShiftQuarters128(const MachineInstr &Shift,
+                                        const MachineRegisterInfo &MRI,
+                                        const AIEBaseInstrInfo &TII,
+                                        unsigned Depth);
+
+/// The 128-bit quarters of the 512-bit vector \p Reg, looking through
+/// bitcasts and through single-use vshifts.
+static Quarters128 getQuarters128(Register Reg, const MachineRegisterInfo &MRI,
+                                  const AIEBaseInstrInfo &TII, unsigned Depth) {
+  Quarters128 Result;
+  bool SingleUse = true;
+  const MachineInstr *Def = MRI.getVRegDef(Reg);
+  while (Def && Def->getOpcode() == TargetOpcode::G_BITCAST) {
+    SingleUse &= MRI.hasOneNonDBGUse(Reg);
+    Reg = Def->getOperand(1).getReg();
+    Def = MRI.getVRegDef(Reg);
+  }
+  if (!Def)
+    return Result;
+  SingleUse &= MRI.hasOneNonDBGUse(Reg);
+
+  if (Def->getOpcode() == TargetOpcode::G_IMPLICIT_DEF) {
+    for (Quarter128 &Q : Result)
+      Q.Kind = Quarter128::Undef;
+  } else if (Def->getOpcode() == TII.getGenericPadVectorOpcode()) {
+    if (MRI.getType(Def->getOperand(1).getReg()).getSizeInBits() == 128 &&
+        MRI.getType(Reg).getSizeInBits() == 512) {
+      Result[0] = {Quarter128::Piece, Reg};
+      for (Quarter128 &Q : drop_begin(Result))
+        Q.Kind = Quarter128::Undef;
+    }
+  } else if (SingleUse && Depth < 8 && isVShiftIntrinsic(*Def)) {
+    // Only single-use vshifts: they all die when the root is rewritten.
+    Result = getVShiftQuarters128(*Def, MRI, TII, Depth + 1);
+  }
+  return Result;
+}
+
+/// The 128-bit quarters of a vshift's result. vshift(A, B, 0, Shift) is the
+/// bytes [Shift, Shift + 64) of A:B.
+static Quarters128 getVShiftQuarters128(const MachineInstr &Shift,
+                                        const MachineRegisterInfo &MRI,
+                                        const AIEBaseInstrInfo &TII,
+                                        unsigned Depth) {
+  Quarters128 Result;
+  const auto Step = getIConstantVRegVal(Shift.getOperand(4).getReg(), MRI);
+  const auto Bytes = getIConstantVRegVal(Shift.getOperand(5).getReg(), MRI);
+  if (!Step || !Bytes || !Step->isZero() || Bytes->getZExtValue() >= 64 ||
+      Bytes->getZExtValue() % 16)
+    return Result;
+  const Quarters128 A =
+      getQuarters128(Shift.getOperand(2).getReg(), MRI, TII, Depth);
+  const Quarters128 B =
+      getQuarters128(Shift.getOperand(3).getReg(), MRI, TII, Depth);
+  const unsigned First = Bytes->getZExtValue() / 16;
+  for (unsigned I = 0; I < 4; ++I)
+    Result[I] = I + First < 4 ? A[I + First] : B[I + First - 4];
+  return Result;
+}
+
+/// Combine a chain of vshifts that concatenates two 128-bit vectors (aie_api's
+/// concat of two 128-bit vectors: shift_bytes by 16, then by 48) into one
+/// VSHUFFLE.
+///   %a1 = G_AIE_PAD_VECTOR_UNDEF %a(<4 x s32>)
+///   %b1 = G_AIE_PAD_VECTOR_UNDEF %b(<4 x s32>)
+///   %s1 = G_INTRINSIC intrinsic(@llvm.aie2p.vshift.I512.I512), %x, %a1, 0, 16
+///   %s2 = G_INTRINSIC intrinsic(@llvm.aie2p.vshift.I512.I512), %s1, %b1, 0, 48
+/// into
+///   %s2 = G_AIE_SHUFFLE_VECTOR %a1, %b1, T128_2x4_lo
+/// Four vectors (shift_bytes by 16, four times) stay vshifts: three VSHUFFLEs
+/// would be one instruction less, but the last vector would pass through two
+/// instructions instead of one, which lengthens recurrences through it.
+bool llvm::tryToCombineVShiftsToShuffles(MachineInstr &MI,
+                                         MachineRegisterInfo &MRI,
+                                         MachineIRBuilder &B,
+                                         const AIEBaseInstrInfo &TII,
+                                         GISelChangeObserver &Observer) {
+  assert(isVShiftIntrinsic(MI) && "Expected a vshift intrinsic");
+  const Quarters128 Q = getVShiftQuarters128(MI, MRI, TII, 0);
+  // Each vector entered through a vshift of its own: at least two vshifts die.
+  if (Q[0].Kind != Quarter128::Piece || Q[1].Kind != Quarter128::Piece ||
+      Q[2].Kind != Quarter128::Undef || Q[3].Kind != Quarter128::Undef)
+    return false;
+
+  const Register DstReg = MI.getOperand(0).getReg();
+  const LLT DstTy = MRI.getType(DstReg);
+  B.setInstrAndDebugLoc(MI);
+  auto Padded = [&](unsigned I) {
+    const Register Reg = Q[I].Padded;
+    return MRI.getType(Reg) == DstTy ? Reg
+                                     : B.buildBitcast(DstTy, Reg).getReg(0);
+  };
+  const Register Mode =
+      B.buildConstant(LLT::scalar(32), TII.getShuffleModeInterleave128())
+          .getReg(0);
+  B.buildInstr(TII.getGenericShuffleVectorOpcode(), {DstReg},
+               {Padded(0), Padded(1), Mode});
+  Observer.erasingInstr(MI);
+  MI.eraseFromParent();
+  return true;
+}
+
 /// Match a G_SHUFFLE_VECTOR that splats a single element from a source.
 /// The source can be either a G_BUILD_VECTOR or a scalar (e.g., s32/s64 from
 /// <1 x i32>/<1 x i64> lowered to scalar type).

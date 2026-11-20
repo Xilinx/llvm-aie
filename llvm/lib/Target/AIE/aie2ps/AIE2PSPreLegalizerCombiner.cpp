@@ -90,10 +90,14 @@ bool AIE2PSPreLegalizerCombinerImpl::tryToCombineIntrinsic(
     MachineInstr &MI) const {
 
   switch (cast<GIntrinsic>(MI).getIntrinsicID()) {
-  case Intrinsic::aie2ps_vshift_I512_I512: {
-    return CombineVecShiftByZero &&
-           llvm::tryToCombineVectorShiftsByZero(MI, MRI, Observer);
-  }
+  case Intrinsic::aie2ps_vshift_I512_I512:
+    if (CombineVecShiftByZero &&
+        llvm::tryToCombineVectorShiftsByZero(MI, MRI, Observer))
+      return true;
+    [[fallthrough]];
+  case Intrinsic::aie2ps_vshift_bf512_bf512:
+    return llvm::tryToCombineVShiftsToShuffles(MI, MRI, B, *STI.getInstrInfo(),
+                                               Observer);
   default:
     break;
   }

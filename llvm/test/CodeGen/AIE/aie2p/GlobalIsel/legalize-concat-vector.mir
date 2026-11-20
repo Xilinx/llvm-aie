@@ -6,8 +6,8 @@
 #
 # (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 #
-# RUN: llc -mtriple aie2p -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck %s
-# RUN: llc -mtriple aie2ps -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck %s
+# RUN: llc -mtriple aie2p -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck %s --check-prefixes=CHECK,AIE2P
+# RUN: llc -mtriple aie2ps -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck %s --check-prefixes=CHECK,AIE2PS
 
 # 256-bit vectors
 ---
@@ -15,21 +15,25 @@ name:            test_v32s8_v16s8
 legalized:       false
 body:             |
   bb.0.entry:
-    ; CHECK-LABEL: name: test_v32s8_v16s8
-    ; CHECK: [[DEF:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF]](<16 x s8>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF1:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF1]](<16 x s8>)
-    ; CHECK-NEXT: [[BITCAST:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF]](<64 x s8>)
-    ; CHECK-NEXT: [[BITCAST1:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF1]](<64 x s8>)
-    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 48
-    ; CHECK-NEXT: [[DEF2:%[0-9]+]]:_(<16 x s32>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[AIE_VSHIFT_RIGHT:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSHIFT_RIGHT [[DEF2]], [[BITCAST1]], [[C]](s32)
-    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 15
-    ; CHECK-NEXT: [[AIE_VSEL:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSEL [[AIE_VSHIFT_RIGHT]], [[BITCAST]], [[C1]](s32)
-    ; CHECK-NEXT: [[BITCAST2:%[0-9]+]]:_(<64 x s8>) = G_BITCAST [[AIE_VSEL]](<16 x s32>)
-    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<32 x s8>) = G_AIE_UNPAD_VECTOR [[BITCAST2]](<64 x s8>)
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[AIE_UNPAD_VECTOR]](<32 x s8>)
+    ; AIE2P-LABEL: name: test_v32s8_v16s8
+    ; AIE2P: [[DEF:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF1:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF]](<16 x s8>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF1:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF1]](<16 x s8>)
+    ; AIE2P-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 12
+    ; AIE2P-NEXT: [[AIE_SHUFFLE_VECTOR:%[0-9]+]]:_(<64 x s8>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF]], [[AIE_PAD_VECTOR_UNDEF1]], [[C]](s32)
+    ; AIE2P-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<32 x s8>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR]](<64 x s8>)
+    ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[AIE_UNPAD_VECTOR]](<32 x s8>)
+    ;
+    ; AIE2PS-LABEL: name: test_v32s8_v16s8
+    ; AIE2PS: [[DEF:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF1:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF]](<16 x s8>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF1:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF1]](<16 x s8>)
+    ; AIE2PS-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 34
+    ; AIE2PS-NEXT: [[AIE_SHUFFLE_VECTOR:%[0-9]+]]:_(<64 x s8>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF]], [[AIE_PAD_VECTOR_UNDEF1]], [[C]](s32)
+    ; AIE2PS-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<32 x s8>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR]](<64 x s8>)
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit [[AIE_UNPAD_VECTOR]](<32 x s8>)
     %0:_(<16 x s8>) = G_IMPLICIT_DEF
     %1:_(<16 x s8>) = G_IMPLICIT_DEF
     %2:_(<32 x s8>) = G_CONCAT_VECTORS %0(<16 x s8>), %1(<16 x s8>)
@@ -41,21 +45,25 @@ name:            test_v16s16_v8s16
 legalized:       false
 body:             |
   bb.0.entry:
-    ; CHECK-LABEL: name: test_v16s16_v8s16
-    ; CHECK: [[DEF:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF]](<8 x s16>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF1:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF1]](<8 x s16>)
-    ; CHECK-NEXT: [[BITCAST:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF]](<32 x s16>)
-    ; CHECK-NEXT: [[BITCAST1:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF1]](<32 x s16>)
-    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 48
-    ; CHECK-NEXT: [[DEF2:%[0-9]+]]:_(<16 x s32>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[AIE_VSHIFT_RIGHT:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSHIFT_RIGHT [[DEF2]], [[BITCAST1]], [[C]](s32)
-    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 15
-    ; CHECK-NEXT: [[AIE_VSEL:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSEL [[AIE_VSHIFT_RIGHT]], [[BITCAST]], [[C1]](s32)
-    ; CHECK-NEXT: [[BITCAST2:%[0-9]+]]:_(<32 x s16>) = G_BITCAST [[AIE_VSEL]](<16 x s32>)
-    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<16 x s16>) = G_AIE_UNPAD_VECTOR [[BITCAST2]](<32 x s16>)
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[AIE_UNPAD_VECTOR]](<16 x s16>)
+    ; AIE2P-LABEL: name: test_v16s16_v8s16
+    ; AIE2P: [[DEF:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF1:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF]](<8 x s16>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF1:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF1]](<8 x s16>)
+    ; AIE2P-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 12
+    ; AIE2P-NEXT: [[AIE_SHUFFLE_VECTOR:%[0-9]+]]:_(<32 x s16>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF]], [[AIE_PAD_VECTOR_UNDEF1]], [[C]](s32)
+    ; AIE2P-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<16 x s16>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR]](<32 x s16>)
+    ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[AIE_UNPAD_VECTOR]](<16 x s16>)
+    ;
+    ; AIE2PS-LABEL: name: test_v16s16_v8s16
+    ; AIE2PS: [[DEF:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF1:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF]](<8 x s16>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF1:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF1]](<8 x s16>)
+    ; AIE2PS-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 34
+    ; AIE2PS-NEXT: [[AIE_SHUFFLE_VECTOR:%[0-9]+]]:_(<32 x s16>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF]], [[AIE_PAD_VECTOR_UNDEF1]], [[C]](s32)
+    ; AIE2PS-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<16 x s16>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR]](<32 x s16>)
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit [[AIE_UNPAD_VECTOR]](<16 x s16>)
     %0:_(<8 x s16>) = G_IMPLICIT_DEF
     %1:_(<8 x s16>) = G_IMPLICIT_DEF
     %2:_(<16 x s16>) = G_CONCAT_VECTORS %0(<8 x s16>), %1(<8 x s16>)
@@ -67,22 +75,111 @@ name:            test_v8s32_v4s32
 legalized:       false
 body:             |
   bb.0.entry:
-    ; CHECK-LABEL: name: test_v8s32_v4s32
-    ; CHECK: [[DEF:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF]](<4 x s32>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF1:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF1]](<4 x s32>)
-    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 48
-    ; CHECK-NEXT: [[DEF2:%[0-9]+]]:_(<16 x s32>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[AIE_VSHIFT_RIGHT:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSHIFT_RIGHT [[DEF2]], [[AIE_PAD_VECTOR_UNDEF1]], [[C]](s32)
-    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 15
-    ; CHECK-NEXT: [[AIE_VSEL:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSEL [[AIE_VSHIFT_RIGHT]], [[AIE_PAD_VECTOR_UNDEF]], [[C1]](s32)
-    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_VSEL]](<16 x s32>)
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[AIE_UNPAD_VECTOR]](<8 x s32>)
+    ; AIE2P-LABEL: name: test_v8s32_v4s32
+    ; AIE2P: [[DEF:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF1:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF]](<4 x s32>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF1:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF1]](<4 x s32>)
+    ; AIE2P-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 12
+    ; AIE2P-NEXT: [[AIE_SHUFFLE_VECTOR:%[0-9]+]]:_(<16 x s32>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF]], [[AIE_PAD_VECTOR_UNDEF1]], [[C]](s32)
+    ; AIE2P-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR]](<16 x s32>)
+    ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[AIE_UNPAD_VECTOR]](<8 x s32>)
+    ;
+    ; AIE2PS-LABEL: name: test_v8s32_v4s32
+    ; AIE2PS: [[DEF:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF1:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF]](<4 x s32>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF1:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF1]](<4 x s32>)
+    ; AIE2PS-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 34
+    ; AIE2PS-NEXT: [[AIE_SHUFFLE_VECTOR:%[0-9]+]]:_(<16 x s32>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF]], [[AIE_PAD_VECTOR_UNDEF1]], [[C]](s32)
+    ; AIE2PS-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR]](<16 x s32>)
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit [[AIE_UNPAD_VECTOR]](<8 x s32>)
     %0:_(<4 x s32>) = G_IMPLICIT_DEF
     %1:_(<4 x s32>) = G_IMPLICIT_DEF
     %2:_(<8 x s32>) = G_CONCAT_VECTORS %0(<4 x s32>), %1(<4 x s32>)
     PseudoRET implicit $lr, implicit %2
+...
+
+# The second input is the upper half of a 256-bit vector: one vsel, no shift.
+---
+name:            test_v8s32_v4s32_upper_half
+legalized:       false
+body:             |
+  bb.0.entry:
+    liveins: $wl2
+    ; CHECK-LABEL: name: test_v8s32_v4s32_upper_half
+    ; CHECK: liveins: $wl2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[DEF:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<8 x s32>) = COPY $wl2
+    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<4 x s32>) = G_AIE_UNPAD_VECTOR [[COPY]](<8 x s32>)
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 16
+    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<8 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[COPY]](<8 x s32>), [[DEF1]](<8 x s32>)
+    ; CHECK-NEXT: [[DEF2:%[0-9]+]]:_(<16 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[AIE_VSHIFT_RIGHT:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSHIFT_RIGHT [[CONCAT_VECTORS]], [[DEF2]], [[C]](s32)
+    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR1:%[0-9]+]]:_(<4 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_VSHIFT_RIGHT]](<16 x s32>)
+    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF]](<4 x s32>)
+    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 15
+    ; CHECK-NEXT: [[AIE_VSEL:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSEL [[CONCAT_VECTORS]], [[AIE_PAD_VECTOR_UNDEF]], [[C1]](s32)
+    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR2:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_VSEL]](<16 x s32>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[AIE_UNPAD_VECTOR2]](<8 x s32>)
+    %0:_(<4 x s32>) = G_IMPLICIT_DEF
+    %1:_(<8 x s32>) = COPY $wl2
+    %2:_(<4 x s32>), %3:_(<4 x s32>) = G_UNMERGE_VALUES %1(<8 x s32>)
+    %4:_(<8 x s32>) = G_CONCAT_VECTORS %0(<4 x s32>), %3(<4 x s32>)
+    PseudoRET implicit $lr, implicit %4
+...
+
+# The second input is the lower half of a 256-bit vector: one vshuffle.
+---
+name:            test_v8s32_v4s32_lower_half
+legalized:       false
+body:             |
+  bb.0.entry:
+    liveins: $wl2
+    ; AIE2P-LABEL: name: test_v8s32_v4s32_lower_half
+    ; AIE2P: liveins: $wl2
+    ; AIE2P-NEXT: {{  $}}
+    ; AIE2P-NEXT: [[DEF:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:_(<8 x s32>) = COPY $wl2
+    ; AIE2P-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<4 x s32>) = G_AIE_UNPAD_VECTOR [[COPY]](<8 x s32>)
+    ; AIE2P-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 16
+    ; AIE2P-NEXT: [[DEF1:%[0-9]+]]:_(<8 x s32>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[COPY]](<8 x s32>), [[DEF1]](<8 x s32>)
+    ; AIE2P-NEXT: [[DEF2:%[0-9]+]]:_(<16 x s32>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[AIE_VSHIFT_RIGHT:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSHIFT_RIGHT [[CONCAT_VECTORS]], [[DEF2]], [[C]](s32)
+    ; AIE2P-NEXT: [[AIE_UNPAD_VECTOR1:%[0-9]+]]:_(<4 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_VSHIFT_RIGHT]](<16 x s32>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF]](<4 x s32>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF1:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[AIE_UNPAD_VECTOR]](<4 x s32>)
+    ; AIE2P-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 12
+    ; AIE2P-NEXT: [[AIE_SHUFFLE_VECTOR:%[0-9]+]]:_(<16 x s32>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF]], [[AIE_PAD_VECTOR_UNDEF1]], [[C1]](s32)
+    ; AIE2P-NEXT: [[AIE_UNPAD_VECTOR2:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR]](<16 x s32>)
+    ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[AIE_UNPAD_VECTOR2]](<8 x s32>)
+    ;
+    ; AIE2PS-LABEL: name: test_v8s32_v4s32_lower_half
+    ; AIE2PS: liveins: $wl2
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[DEF:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:_(<8 x s32>) = COPY $wl2
+    ; AIE2PS-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<4 x s32>) = G_AIE_UNPAD_VECTOR [[COPY]](<8 x s32>)
+    ; AIE2PS-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 16
+    ; AIE2PS-NEXT: [[DEF1:%[0-9]+]]:_(<8 x s32>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[COPY]](<8 x s32>), [[DEF1]](<8 x s32>)
+    ; AIE2PS-NEXT: [[DEF2:%[0-9]+]]:_(<16 x s32>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[AIE_VSHIFT_RIGHT:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSHIFT_RIGHT [[CONCAT_VECTORS]], [[DEF2]], [[C]](s32)
+    ; AIE2PS-NEXT: [[AIE_UNPAD_VECTOR1:%[0-9]+]]:_(<4 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_VSHIFT_RIGHT]](<16 x s32>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF]](<4 x s32>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF1:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[AIE_UNPAD_VECTOR]](<4 x s32>)
+    ; AIE2PS-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 34
+    ; AIE2PS-NEXT: [[AIE_SHUFFLE_VECTOR:%[0-9]+]]:_(<16 x s32>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF]], [[AIE_PAD_VECTOR_UNDEF1]], [[C1]](s32)
+    ; AIE2PS-NEXT: [[AIE_UNPAD_VECTOR2:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR]](<16 x s32>)
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit [[AIE_UNPAD_VECTOR2]](<8 x s32>)
+    %0:_(<4 x s32>) = G_IMPLICIT_DEF
+    %1:_(<8 x s32>) = COPY $wl2
+    %2:_(<4 x s32>), %3:_(<4 x s32>) = G_UNMERGE_VALUES %1(<8 x s32>)
+    %4:_(<8 x s32>) = G_CONCAT_VECTORS %0(<4 x s32>), %2(<4 x s32>)
+    PseudoRET implicit $lr, implicit %4
 ...
 
 # 512-bit vectors
@@ -107,32 +204,39 @@ name:            test_v64s8_v16s8
 legalized:       false
 body:             |
   bb.0.entry:
-    ; CHECK-LABEL: name: test_v64s8_v16s8
-    ; CHECK: [[DEF:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF2:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF3:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF]](<16 x s8>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF1:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF1]](<16 x s8>)
-    ; CHECK-NEXT: [[BITCAST:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF]](<64 x s8>)
-    ; CHECK-NEXT: [[BITCAST1:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF1]](<64 x s8>)
-    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 48
-    ; CHECK-NEXT: [[DEF4:%[0-9]+]]:_(<16 x s32>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[AIE_VSHIFT_RIGHT:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSHIFT_RIGHT [[DEF4]], [[BITCAST1]], [[C]](s32)
-    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 15
-    ; CHECK-NEXT: [[AIE_VSEL:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSEL [[AIE_VSHIFT_RIGHT]], [[BITCAST]], [[C1]](s32)
-    ; CHECK-NEXT: [[BITCAST2:%[0-9]+]]:_(<64 x s8>) = G_BITCAST [[AIE_VSEL]](<16 x s32>)
-    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<32 x s8>) = G_AIE_UNPAD_VECTOR [[BITCAST2]](<64 x s8>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF2:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF2]](<16 x s8>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF3:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF3]](<16 x s8>)
-    ; CHECK-NEXT: [[BITCAST3:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF2]](<64 x s8>)
-    ; CHECK-NEXT: [[BITCAST4:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF3]](<64 x s8>)
-    ; CHECK-NEXT: [[AIE_VSHIFT_RIGHT1:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSHIFT_RIGHT [[DEF4]], [[BITCAST4]], [[C]](s32)
-    ; CHECK-NEXT: [[AIE_VSEL1:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSEL [[AIE_VSHIFT_RIGHT1]], [[BITCAST3]], [[C1]](s32)
-    ; CHECK-NEXT: [[BITCAST5:%[0-9]+]]:_(<64 x s8>) = G_BITCAST [[AIE_VSEL1]](<16 x s32>)
-    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR1:%[0-9]+]]:_(<32 x s8>) = G_AIE_UNPAD_VECTOR [[BITCAST5]](<64 x s8>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<64 x s8>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR]](<32 x s8>), [[AIE_UNPAD_VECTOR1]](<32 x s8>)
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS]](<64 x s8>)
+    ; AIE2P-LABEL: name: test_v64s8_v16s8
+    ; AIE2P: [[DEF:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF1:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF2:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF3:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF]](<16 x s8>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF1:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF1]](<16 x s8>)
+    ; AIE2P-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 12
+    ; AIE2P-NEXT: [[AIE_SHUFFLE_VECTOR:%[0-9]+]]:_(<64 x s8>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF]], [[AIE_PAD_VECTOR_UNDEF1]], [[C]](s32)
+    ; AIE2P-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<32 x s8>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR]](<64 x s8>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF2:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF2]](<16 x s8>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF3:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF3]](<16 x s8>)
+    ; AIE2P-NEXT: [[AIE_SHUFFLE_VECTOR1:%[0-9]+]]:_(<64 x s8>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF2]], [[AIE_PAD_VECTOR_UNDEF3]], [[C]](s32)
+    ; AIE2P-NEXT: [[AIE_UNPAD_VECTOR1:%[0-9]+]]:_(<32 x s8>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR1]](<64 x s8>)
+    ; AIE2P-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<64 x s8>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR]](<32 x s8>), [[AIE_UNPAD_VECTOR1]](<32 x s8>)
+    ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS]](<64 x s8>)
+    ;
+    ; AIE2PS-LABEL: name: test_v64s8_v16s8
+    ; AIE2PS: [[DEF:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF1:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF2:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF3:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF]](<16 x s8>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF1:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF1]](<16 x s8>)
+    ; AIE2PS-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 34
+    ; AIE2PS-NEXT: [[AIE_SHUFFLE_VECTOR:%[0-9]+]]:_(<64 x s8>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF]], [[AIE_PAD_VECTOR_UNDEF1]], [[C]](s32)
+    ; AIE2PS-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<32 x s8>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR]](<64 x s8>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF2:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF2]](<16 x s8>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF3:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF3]](<16 x s8>)
+    ; AIE2PS-NEXT: [[AIE_SHUFFLE_VECTOR1:%[0-9]+]]:_(<64 x s8>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF2]], [[AIE_PAD_VECTOR_UNDEF3]], [[C]](s32)
+    ; AIE2PS-NEXT: [[AIE_UNPAD_VECTOR1:%[0-9]+]]:_(<32 x s8>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR1]](<64 x s8>)
+    ; AIE2PS-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<64 x s8>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR]](<32 x s8>), [[AIE_UNPAD_VECTOR1]](<32 x s8>)
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS]](<64 x s8>)
     %0:_(<16 x s8>) = G_IMPLICIT_DEF
     %1:_(<16 x s8>) = G_IMPLICIT_DEF
     %2:_(<16 x s8>) = G_IMPLICIT_DEF
@@ -162,32 +266,39 @@ name:            test_v32s16_v8s16
 legalized:       false
 body:             |
   bb.0.entry:
-    ; CHECK-LABEL: name: test_v32s16_v8s16
-    ; CHECK: [[DEF:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF2:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF3:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF]](<8 x s16>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF1:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF1]](<8 x s16>)
-    ; CHECK-NEXT: [[BITCAST:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF]](<32 x s16>)
-    ; CHECK-NEXT: [[BITCAST1:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF1]](<32 x s16>)
-    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 48
-    ; CHECK-NEXT: [[DEF4:%[0-9]+]]:_(<16 x s32>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[AIE_VSHIFT_RIGHT:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSHIFT_RIGHT [[DEF4]], [[BITCAST1]], [[C]](s32)
-    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 15
-    ; CHECK-NEXT: [[AIE_VSEL:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSEL [[AIE_VSHIFT_RIGHT]], [[BITCAST]], [[C1]](s32)
-    ; CHECK-NEXT: [[BITCAST2:%[0-9]+]]:_(<32 x s16>) = G_BITCAST [[AIE_VSEL]](<16 x s32>)
-    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<16 x s16>) = G_AIE_UNPAD_VECTOR [[BITCAST2]](<32 x s16>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF2:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF2]](<8 x s16>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF3:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF3]](<8 x s16>)
-    ; CHECK-NEXT: [[BITCAST3:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF2]](<32 x s16>)
-    ; CHECK-NEXT: [[BITCAST4:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF3]](<32 x s16>)
-    ; CHECK-NEXT: [[AIE_VSHIFT_RIGHT1:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSHIFT_RIGHT [[DEF4]], [[BITCAST4]], [[C]](s32)
-    ; CHECK-NEXT: [[AIE_VSEL1:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSEL [[AIE_VSHIFT_RIGHT1]], [[BITCAST3]], [[C1]](s32)
-    ; CHECK-NEXT: [[BITCAST5:%[0-9]+]]:_(<32 x s16>) = G_BITCAST [[AIE_VSEL1]](<16 x s32>)
-    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR1:%[0-9]+]]:_(<16 x s16>) = G_AIE_UNPAD_VECTOR [[BITCAST5]](<32 x s16>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s16>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR]](<16 x s16>), [[AIE_UNPAD_VECTOR1]](<16 x s16>)
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS]](<32 x s16>)
+    ; AIE2P-LABEL: name: test_v32s16_v8s16
+    ; AIE2P: [[DEF:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF1:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF2:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF3:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF]](<8 x s16>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF1:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF1]](<8 x s16>)
+    ; AIE2P-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 12
+    ; AIE2P-NEXT: [[AIE_SHUFFLE_VECTOR:%[0-9]+]]:_(<32 x s16>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF]], [[AIE_PAD_VECTOR_UNDEF1]], [[C]](s32)
+    ; AIE2P-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<16 x s16>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR]](<32 x s16>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF2:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF2]](<8 x s16>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF3:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF3]](<8 x s16>)
+    ; AIE2P-NEXT: [[AIE_SHUFFLE_VECTOR1:%[0-9]+]]:_(<32 x s16>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF2]], [[AIE_PAD_VECTOR_UNDEF3]], [[C]](s32)
+    ; AIE2P-NEXT: [[AIE_UNPAD_VECTOR1:%[0-9]+]]:_(<16 x s16>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR1]](<32 x s16>)
+    ; AIE2P-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s16>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR]](<16 x s16>), [[AIE_UNPAD_VECTOR1]](<16 x s16>)
+    ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS]](<32 x s16>)
+    ;
+    ; AIE2PS-LABEL: name: test_v32s16_v8s16
+    ; AIE2PS: [[DEF:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF1:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF2:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF3:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF]](<8 x s16>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF1:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF1]](<8 x s16>)
+    ; AIE2PS-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 34
+    ; AIE2PS-NEXT: [[AIE_SHUFFLE_VECTOR:%[0-9]+]]:_(<32 x s16>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF]], [[AIE_PAD_VECTOR_UNDEF1]], [[C]](s32)
+    ; AIE2PS-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<16 x s16>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR]](<32 x s16>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF2:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF2]](<8 x s16>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF3:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF3]](<8 x s16>)
+    ; AIE2PS-NEXT: [[AIE_SHUFFLE_VECTOR1:%[0-9]+]]:_(<32 x s16>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF2]], [[AIE_PAD_VECTOR_UNDEF3]], [[C]](s32)
+    ; AIE2PS-NEXT: [[AIE_UNPAD_VECTOR1:%[0-9]+]]:_(<16 x s16>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR1]](<32 x s16>)
+    ; AIE2PS-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s16>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR]](<16 x s16>), [[AIE_UNPAD_VECTOR1]](<16 x s16>)
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS]](<32 x s16>)
     %0:_(<8 x s16>) = G_IMPLICIT_DEF
     %1:_(<8 x s16>) = G_IMPLICIT_DEF
     %2:_(<8 x s16>) = G_IMPLICIT_DEF
@@ -217,26 +328,39 @@ name:            test_v16s32_v4s32
 legalized:       false
 body:             |
   bb.0.entry:
-    ; CHECK-LABEL: name: test_v16s32_v4s32
-    ; CHECK: [[DEF:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF2:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF3:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF]](<4 x s32>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF1:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF1]](<4 x s32>)
-    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 48
-    ; CHECK-NEXT: [[DEF4:%[0-9]+]]:_(<16 x s32>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[AIE_VSHIFT_RIGHT:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSHIFT_RIGHT [[DEF4]], [[AIE_PAD_VECTOR_UNDEF1]], [[C]](s32)
-    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 15
-    ; CHECK-NEXT: [[AIE_VSEL:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSEL [[AIE_VSHIFT_RIGHT]], [[AIE_PAD_VECTOR_UNDEF]], [[C1]](s32)
-    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_VSEL]](<16 x s32>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF2:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF2]](<4 x s32>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF3:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF3]](<4 x s32>)
-    ; CHECK-NEXT: [[AIE_VSHIFT_RIGHT1:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSHIFT_RIGHT [[DEF4]], [[AIE_PAD_VECTOR_UNDEF3]], [[C]](s32)
-    ; CHECK-NEXT: [[AIE_VSEL1:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSEL [[AIE_VSHIFT_RIGHT1]], [[AIE_PAD_VECTOR_UNDEF2]], [[C1]](s32)
-    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR1:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_VSEL1]](<16 x s32>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR]](<8 x s32>), [[AIE_UNPAD_VECTOR1]](<8 x s32>)
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS]](<16 x s32>)
+    ; AIE2P-LABEL: name: test_v16s32_v4s32
+    ; AIE2P: [[DEF:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF1:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF2:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF3:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF]](<4 x s32>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF1:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF1]](<4 x s32>)
+    ; AIE2P-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 12
+    ; AIE2P-NEXT: [[AIE_SHUFFLE_VECTOR:%[0-9]+]]:_(<16 x s32>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF]], [[AIE_PAD_VECTOR_UNDEF1]], [[C]](s32)
+    ; AIE2P-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR]](<16 x s32>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF2:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF2]](<4 x s32>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF3:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF3]](<4 x s32>)
+    ; AIE2P-NEXT: [[AIE_SHUFFLE_VECTOR1:%[0-9]+]]:_(<16 x s32>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF2]], [[AIE_PAD_VECTOR_UNDEF3]], [[C]](s32)
+    ; AIE2P-NEXT: [[AIE_UNPAD_VECTOR1:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR1]](<16 x s32>)
+    ; AIE2P-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR]](<8 x s32>), [[AIE_UNPAD_VECTOR1]](<8 x s32>)
+    ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS]](<16 x s32>)
+    ;
+    ; AIE2PS-LABEL: name: test_v16s32_v4s32
+    ; AIE2PS: [[DEF:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF1:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF2:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF3:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF]](<4 x s32>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF1:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF1]](<4 x s32>)
+    ; AIE2PS-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 34
+    ; AIE2PS-NEXT: [[AIE_SHUFFLE_VECTOR:%[0-9]+]]:_(<16 x s32>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF]], [[AIE_PAD_VECTOR_UNDEF1]], [[C]](s32)
+    ; AIE2PS-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR]](<16 x s32>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF2:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF2]](<4 x s32>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF3:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF3]](<4 x s32>)
+    ; AIE2PS-NEXT: [[AIE_SHUFFLE_VECTOR1:%[0-9]+]]:_(<16 x s32>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF2]], [[AIE_PAD_VECTOR_UNDEF3]], [[C]](s32)
+    ; AIE2PS-NEXT: [[AIE_UNPAD_VECTOR1:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR1]](<16 x s32>)
+    ; AIE2PS-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR]](<8 x s32>), [[AIE_UNPAD_VECTOR1]](<8 x s32>)
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS]](<16 x s32>)
     %0:_(<4 x s32>) = G_IMPLICIT_DEF
     %1:_(<4 x s32>) = G_IMPLICIT_DEF
     %2:_(<4 x s32>) = G_IMPLICIT_DEF
@@ -305,54 +429,67 @@ name:            test_v128s8_v16s8
 legalized:       false
 body:             |
   bb.0.entry:
-    ; CHECK-LABEL: name: test_v128s8_v16s8
-    ; CHECK: [[DEF:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF2:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF3:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF4:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF5:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF6:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF7:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF]](<16 x s8>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF1:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF1]](<16 x s8>)
-    ; CHECK-NEXT: [[BITCAST:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF]](<64 x s8>)
-    ; CHECK-NEXT: [[BITCAST1:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF1]](<64 x s8>)
-    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 48
-    ; CHECK-NEXT: [[DEF8:%[0-9]+]]:_(<16 x s32>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[AIE_VSHIFT_RIGHT:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSHIFT_RIGHT [[DEF8]], [[BITCAST1]], [[C]](s32)
-    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 15
-    ; CHECK-NEXT: [[AIE_VSEL:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSEL [[AIE_VSHIFT_RIGHT]], [[BITCAST]], [[C1]](s32)
-    ; CHECK-NEXT: [[BITCAST2:%[0-9]+]]:_(<64 x s8>) = G_BITCAST [[AIE_VSEL]](<16 x s32>)
-    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<32 x s8>) = G_AIE_UNPAD_VECTOR [[BITCAST2]](<64 x s8>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF2:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF2]](<16 x s8>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF3:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF3]](<16 x s8>)
-    ; CHECK-NEXT: [[BITCAST3:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF2]](<64 x s8>)
-    ; CHECK-NEXT: [[BITCAST4:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF3]](<64 x s8>)
-    ; CHECK-NEXT: [[AIE_VSHIFT_RIGHT1:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSHIFT_RIGHT [[DEF8]], [[BITCAST4]], [[C]](s32)
-    ; CHECK-NEXT: [[AIE_VSEL1:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSEL [[AIE_VSHIFT_RIGHT1]], [[BITCAST3]], [[C1]](s32)
-    ; CHECK-NEXT: [[BITCAST5:%[0-9]+]]:_(<64 x s8>) = G_BITCAST [[AIE_VSEL1]](<16 x s32>)
-    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR1:%[0-9]+]]:_(<32 x s8>) = G_AIE_UNPAD_VECTOR [[BITCAST5]](<64 x s8>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF4:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF4]](<16 x s8>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF5:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF5]](<16 x s8>)
-    ; CHECK-NEXT: [[BITCAST6:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF4]](<64 x s8>)
-    ; CHECK-NEXT: [[BITCAST7:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF5]](<64 x s8>)
-    ; CHECK-NEXT: [[AIE_VSHIFT_RIGHT2:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSHIFT_RIGHT [[DEF8]], [[BITCAST7]], [[C]](s32)
-    ; CHECK-NEXT: [[AIE_VSEL2:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSEL [[AIE_VSHIFT_RIGHT2]], [[BITCAST6]], [[C1]](s32)
-    ; CHECK-NEXT: [[BITCAST8:%[0-9]+]]:_(<64 x s8>) = G_BITCAST [[AIE_VSEL2]](<16 x s32>)
-    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR2:%[0-9]+]]:_(<32 x s8>) = G_AIE_UNPAD_VECTOR [[BITCAST8]](<64 x s8>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF6:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF6]](<16 x s8>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF7:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF7]](<16 x s8>)
-    ; CHECK-NEXT: [[BITCAST9:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF6]](<64 x s8>)
-    ; CHECK-NEXT: [[BITCAST10:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF7]](<64 x s8>)
-    ; CHECK-NEXT: [[AIE_VSHIFT_RIGHT3:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSHIFT_RIGHT [[DEF8]], [[BITCAST10]], [[C]](s32)
-    ; CHECK-NEXT: [[AIE_VSEL3:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSEL [[AIE_VSHIFT_RIGHT3]], [[BITCAST9]], [[C1]](s32)
-    ; CHECK-NEXT: [[BITCAST11:%[0-9]+]]:_(<64 x s8>) = G_BITCAST [[AIE_VSEL3]](<16 x s32>)
-    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR3:%[0-9]+]]:_(<32 x s8>) = G_AIE_UNPAD_VECTOR [[BITCAST11]](<64 x s8>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<64 x s8>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR]](<32 x s8>), [[AIE_UNPAD_VECTOR1]](<32 x s8>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<64 x s8>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR2]](<32 x s8>), [[AIE_UNPAD_VECTOR3]](<32 x s8>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS2:%[0-9]+]]:_(<128 x s8>) = G_CONCAT_VECTORS [[CONCAT_VECTORS]](<64 x s8>), [[CONCAT_VECTORS1]](<64 x s8>)
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS2]](<128 x s8>)
+    ; AIE2P-LABEL: name: test_v128s8_v16s8
+    ; AIE2P: [[DEF:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF1:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF2:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF3:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF4:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF5:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF6:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF7:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF]](<16 x s8>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF1:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF1]](<16 x s8>)
+    ; AIE2P-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 12
+    ; AIE2P-NEXT: [[AIE_SHUFFLE_VECTOR:%[0-9]+]]:_(<64 x s8>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF]], [[AIE_PAD_VECTOR_UNDEF1]], [[C]](s32)
+    ; AIE2P-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<32 x s8>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR]](<64 x s8>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF2:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF2]](<16 x s8>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF3:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF3]](<16 x s8>)
+    ; AIE2P-NEXT: [[AIE_SHUFFLE_VECTOR1:%[0-9]+]]:_(<64 x s8>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF2]], [[AIE_PAD_VECTOR_UNDEF3]], [[C]](s32)
+    ; AIE2P-NEXT: [[AIE_UNPAD_VECTOR1:%[0-9]+]]:_(<32 x s8>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR1]](<64 x s8>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF4:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF4]](<16 x s8>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF5:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF5]](<16 x s8>)
+    ; AIE2P-NEXT: [[AIE_SHUFFLE_VECTOR2:%[0-9]+]]:_(<64 x s8>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF4]], [[AIE_PAD_VECTOR_UNDEF5]], [[C]](s32)
+    ; AIE2P-NEXT: [[AIE_UNPAD_VECTOR2:%[0-9]+]]:_(<32 x s8>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR2]](<64 x s8>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF6:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF6]](<16 x s8>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF7:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF7]](<16 x s8>)
+    ; AIE2P-NEXT: [[AIE_SHUFFLE_VECTOR3:%[0-9]+]]:_(<64 x s8>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF6]], [[AIE_PAD_VECTOR_UNDEF7]], [[C]](s32)
+    ; AIE2P-NEXT: [[AIE_UNPAD_VECTOR3:%[0-9]+]]:_(<32 x s8>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR3]](<64 x s8>)
+    ; AIE2P-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<64 x s8>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR]](<32 x s8>), [[AIE_UNPAD_VECTOR1]](<32 x s8>)
+    ; AIE2P-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<64 x s8>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR2]](<32 x s8>), [[AIE_UNPAD_VECTOR3]](<32 x s8>)
+    ; AIE2P-NEXT: [[CONCAT_VECTORS2:%[0-9]+]]:_(<128 x s8>) = G_CONCAT_VECTORS [[CONCAT_VECTORS]](<64 x s8>), [[CONCAT_VECTORS1]](<64 x s8>)
+    ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS2]](<128 x s8>)
+    ;
+    ; AIE2PS-LABEL: name: test_v128s8_v16s8
+    ; AIE2PS: [[DEF:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF1:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF2:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF3:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF4:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF5:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF6:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF7:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF]](<16 x s8>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF1:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF1]](<16 x s8>)
+    ; AIE2PS-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 34
+    ; AIE2PS-NEXT: [[AIE_SHUFFLE_VECTOR:%[0-9]+]]:_(<64 x s8>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF]], [[AIE_PAD_VECTOR_UNDEF1]], [[C]](s32)
+    ; AIE2PS-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<32 x s8>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR]](<64 x s8>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF2:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF2]](<16 x s8>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF3:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF3]](<16 x s8>)
+    ; AIE2PS-NEXT: [[AIE_SHUFFLE_VECTOR1:%[0-9]+]]:_(<64 x s8>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF2]], [[AIE_PAD_VECTOR_UNDEF3]], [[C]](s32)
+    ; AIE2PS-NEXT: [[AIE_UNPAD_VECTOR1:%[0-9]+]]:_(<32 x s8>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR1]](<64 x s8>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF4:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF4]](<16 x s8>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF5:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF5]](<16 x s8>)
+    ; AIE2PS-NEXT: [[AIE_SHUFFLE_VECTOR2:%[0-9]+]]:_(<64 x s8>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF4]], [[AIE_PAD_VECTOR_UNDEF5]], [[C]](s32)
+    ; AIE2PS-NEXT: [[AIE_UNPAD_VECTOR2:%[0-9]+]]:_(<32 x s8>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR2]](<64 x s8>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF6:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF6]](<16 x s8>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF7:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF7]](<16 x s8>)
+    ; AIE2PS-NEXT: [[AIE_SHUFFLE_VECTOR3:%[0-9]+]]:_(<64 x s8>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF6]], [[AIE_PAD_VECTOR_UNDEF7]], [[C]](s32)
+    ; AIE2PS-NEXT: [[AIE_UNPAD_VECTOR3:%[0-9]+]]:_(<32 x s8>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR3]](<64 x s8>)
+    ; AIE2PS-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<64 x s8>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR]](<32 x s8>), [[AIE_UNPAD_VECTOR1]](<32 x s8>)
+    ; AIE2PS-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<64 x s8>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR2]](<32 x s8>), [[AIE_UNPAD_VECTOR3]](<32 x s8>)
+    ; AIE2PS-NEXT: [[CONCAT_VECTORS2:%[0-9]+]]:_(<128 x s8>) = G_CONCAT_VECTORS [[CONCAT_VECTORS]](<64 x s8>), [[CONCAT_VECTORS1]](<64 x s8>)
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS2]](<128 x s8>)
     %0:_(<16 x s8>) = G_IMPLICIT_DEF
     %1:_(<16 x s8>) = G_IMPLICIT_DEF
     %2:_(<16 x s8>) = G_IMPLICIT_DEF
@@ -408,54 +545,67 @@ name:            test_v64s16_v8s16
 legalized:       false
 body:             |
   bb.0.entry:
-    ; CHECK-LABEL: name: test_v64s16_v8s16
-    ; CHECK: [[DEF:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF2:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF3:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF4:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF5:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF6:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF7:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF]](<8 x s16>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF1:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF1]](<8 x s16>)
-    ; CHECK-NEXT: [[BITCAST:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF]](<32 x s16>)
-    ; CHECK-NEXT: [[BITCAST1:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF1]](<32 x s16>)
-    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 48
-    ; CHECK-NEXT: [[DEF8:%[0-9]+]]:_(<16 x s32>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[AIE_VSHIFT_RIGHT:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSHIFT_RIGHT [[DEF8]], [[BITCAST1]], [[C]](s32)
-    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 15
-    ; CHECK-NEXT: [[AIE_VSEL:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSEL [[AIE_VSHIFT_RIGHT]], [[BITCAST]], [[C1]](s32)
-    ; CHECK-NEXT: [[BITCAST2:%[0-9]+]]:_(<32 x s16>) = G_BITCAST [[AIE_VSEL]](<16 x s32>)
-    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<16 x s16>) = G_AIE_UNPAD_VECTOR [[BITCAST2]](<32 x s16>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF2:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF2]](<8 x s16>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF3:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF3]](<8 x s16>)
-    ; CHECK-NEXT: [[BITCAST3:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF2]](<32 x s16>)
-    ; CHECK-NEXT: [[BITCAST4:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF3]](<32 x s16>)
-    ; CHECK-NEXT: [[AIE_VSHIFT_RIGHT1:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSHIFT_RIGHT [[DEF8]], [[BITCAST4]], [[C]](s32)
-    ; CHECK-NEXT: [[AIE_VSEL1:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSEL [[AIE_VSHIFT_RIGHT1]], [[BITCAST3]], [[C1]](s32)
-    ; CHECK-NEXT: [[BITCAST5:%[0-9]+]]:_(<32 x s16>) = G_BITCAST [[AIE_VSEL1]](<16 x s32>)
-    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR1:%[0-9]+]]:_(<16 x s16>) = G_AIE_UNPAD_VECTOR [[BITCAST5]](<32 x s16>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF4:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF4]](<8 x s16>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF5:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF5]](<8 x s16>)
-    ; CHECK-NEXT: [[BITCAST6:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF4]](<32 x s16>)
-    ; CHECK-NEXT: [[BITCAST7:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF5]](<32 x s16>)
-    ; CHECK-NEXT: [[AIE_VSHIFT_RIGHT2:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSHIFT_RIGHT [[DEF8]], [[BITCAST7]], [[C]](s32)
-    ; CHECK-NEXT: [[AIE_VSEL2:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSEL [[AIE_VSHIFT_RIGHT2]], [[BITCAST6]], [[C1]](s32)
-    ; CHECK-NEXT: [[BITCAST8:%[0-9]+]]:_(<32 x s16>) = G_BITCAST [[AIE_VSEL2]](<16 x s32>)
-    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR2:%[0-9]+]]:_(<16 x s16>) = G_AIE_UNPAD_VECTOR [[BITCAST8]](<32 x s16>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF6:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF6]](<8 x s16>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF7:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF7]](<8 x s16>)
-    ; CHECK-NEXT: [[BITCAST9:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF6]](<32 x s16>)
-    ; CHECK-NEXT: [[BITCAST10:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF7]](<32 x s16>)
-    ; CHECK-NEXT: [[AIE_VSHIFT_RIGHT3:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSHIFT_RIGHT [[DEF8]], [[BITCAST10]], [[C]](s32)
-    ; CHECK-NEXT: [[AIE_VSEL3:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSEL [[AIE_VSHIFT_RIGHT3]], [[BITCAST9]], [[C1]](s32)
-    ; CHECK-NEXT: [[BITCAST11:%[0-9]+]]:_(<32 x s16>) = G_BITCAST [[AIE_VSEL3]](<16 x s32>)
-    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR3:%[0-9]+]]:_(<16 x s16>) = G_AIE_UNPAD_VECTOR [[BITCAST11]](<32 x s16>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s16>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR]](<16 x s16>), [[AIE_UNPAD_VECTOR1]](<16 x s16>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<32 x s16>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR2]](<16 x s16>), [[AIE_UNPAD_VECTOR3]](<16 x s16>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS2:%[0-9]+]]:_(<64 x s16>) = G_CONCAT_VECTORS [[CONCAT_VECTORS]](<32 x s16>), [[CONCAT_VECTORS1]](<32 x s16>)
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS2]](<64 x s16>)
+    ; AIE2P-LABEL: name: test_v64s16_v8s16
+    ; AIE2P: [[DEF:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF1:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF2:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF3:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF4:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF5:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF6:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF7:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF]](<8 x s16>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF1:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF1]](<8 x s16>)
+    ; AIE2P-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 12
+    ; AIE2P-NEXT: [[AIE_SHUFFLE_VECTOR:%[0-9]+]]:_(<32 x s16>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF]], [[AIE_PAD_VECTOR_UNDEF1]], [[C]](s32)
+    ; AIE2P-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<16 x s16>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR]](<32 x s16>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF2:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF2]](<8 x s16>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF3:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF3]](<8 x s16>)
+    ; AIE2P-NEXT: [[AIE_SHUFFLE_VECTOR1:%[0-9]+]]:_(<32 x s16>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF2]], [[AIE_PAD_VECTOR_UNDEF3]], [[C]](s32)
+    ; AIE2P-NEXT: [[AIE_UNPAD_VECTOR1:%[0-9]+]]:_(<16 x s16>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR1]](<32 x s16>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF4:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF4]](<8 x s16>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF5:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF5]](<8 x s16>)
+    ; AIE2P-NEXT: [[AIE_SHUFFLE_VECTOR2:%[0-9]+]]:_(<32 x s16>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF4]], [[AIE_PAD_VECTOR_UNDEF5]], [[C]](s32)
+    ; AIE2P-NEXT: [[AIE_UNPAD_VECTOR2:%[0-9]+]]:_(<16 x s16>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR2]](<32 x s16>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF6:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF6]](<8 x s16>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF7:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF7]](<8 x s16>)
+    ; AIE2P-NEXT: [[AIE_SHUFFLE_VECTOR3:%[0-9]+]]:_(<32 x s16>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF6]], [[AIE_PAD_VECTOR_UNDEF7]], [[C]](s32)
+    ; AIE2P-NEXT: [[AIE_UNPAD_VECTOR3:%[0-9]+]]:_(<16 x s16>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR3]](<32 x s16>)
+    ; AIE2P-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s16>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR]](<16 x s16>), [[AIE_UNPAD_VECTOR1]](<16 x s16>)
+    ; AIE2P-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<32 x s16>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR2]](<16 x s16>), [[AIE_UNPAD_VECTOR3]](<16 x s16>)
+    ; AIE2P-NEXT: [[CONCAT_VECTORS2:%[0-9]+]]:_(<64 x s16>) = G_CONCAT_VECTORS [[CONCAT_VECTORS]](<32 x s16>), [[CONCAT_VECTORS1]](<32 x s16>)
+    ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS2]](<64 x s16>)
+    ;
+    ; AIE2PS-LABEL: name: test_v64s16_v8s16
+    ; AIE2PS: [[DEF:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF1:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF2:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF3:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF4:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF5:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF6:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF7:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF]](<8 x s16>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF1:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF1]](<8 x s16>)
+    ; AIE2PS-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 34
+    ; AIE2PS-NEXT: [[AIE_SHUFFLE_VECTOR:%[0-9]+]]:_(<32 x s16>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF]], [[AIE_PAD_VECTOR_UNDEF1]], [[C]](s32)
+    ; AIE2PS-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<16 x s16>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR]](<32 x s16>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF2:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF2]](<8 x s16>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF3:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF3]](<8 x s16>)
+    ; AIE2PS-NEXT: [[AIE_SHUFFLE_VECTOR1:%[0-9]+]]:_(<32 x s16>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF2]], [[AIE_PAD_VECTOR_UNDEF3]], [[C]](s32)
+    ; AIE2PS-NEXT: [[AIE_UNPAD_VECTOR1:%[0-9]+]]:_(<16 x s16>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR1]](<32 x s16>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF4:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF4]](<8 x s16>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF5:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF5]](<8 x s16>)
+    ; AIE2PS-NEXT: [[AIE_SHUFFLE_VECTOR2:%[0-9]+]]:_(<32 x s16>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF4]], [[AIE_PAD_VECTOR_UNDEF5]], [[C]](s32)
+    ; AIE2PS-NEXT: [[AIE_UNPAD_VECTOR2:%[0-9]+]]:_(<16 x s16>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR2]](<32 x s16>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF6:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF6]](<8 x s16>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF7:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF7]](<8 x s16>)
+    ; AIE2PS-NEXT: [[AIE_SHUFFLE_VECTOR3:%[0-9]+]]:_(<32 x s16>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF6]], [[AIE_PAD_VECTOR_UNDEF7]], [[C]](s32)
+    ; AIE2PS-NEXT: [[AIE_UNPAD_VECTOR3:%[0-9]+]]:_(<16 x s16>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR3]](<32 x s16>)
+    ; AIE2PS-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s16>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR]](<16 x s16>), [[AIE_UNPAD_VECTOR1]](<16 x s16>)
+    ; AIE2PS-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<32 x s16>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR2]](<16 x s16>), [[AIE_UNPAD_VECTOR3]](<16 x s16>)
+    ; AIE2PS-NEXT: [[CONCAT_VECTORS2:%[0-9]+]]:_(<64 x s16>) = G_CONCAT_VECTORS [[CONCAT_VECTORS]](<32 x s16>), [[CONCAT_VECTORS1]](<32 x s16>)
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS2]](<64 x s16>)
     %0:_(<8 x s16>) = G_IMPLICIT_DEF
     %1:_(<8 x s16>) = G_IMPLICIT_DEF
     %2:_(<8 x s16>) = G_IMPLICIT_DEF
@@ -511,42 +661,67 @@ name:            test_v32s32_v4s32
 legalized:       false
 body:             |
   bb.0.entry:
-    ; CHECK-LABEL: name: test_v32s32_v4s32
-    ; CHECK: [[DEF:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF2:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF3:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF4:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF5:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF6:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF7:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF]](<4 x s32>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF1:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF1]](<4 x s32>)
-    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 48
-    ; CHECK-NEXT: [[DEF8:%[0-9]+]]:_(<16 x s32>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[AIE_VSHIFT_RIGHT:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSHIFT_RIGHT [[DEF8]], [[AIE_PAD_VECTOR_UNDEF1]], [[C]](s32)
-    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 15
-    ; CHECK-NEXT: [[AIE_VSEL:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSEL [[AIE_VSHIFT_RIGHT]], [[AIE_PAD_VECTOR_UNDEF]], [[C1]](s32)
-    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_VSEL]](<16 x s32>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF2:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF2]](<4 x s32>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF3:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF3]](<4 x s32>)
-    ; CHECK-NEXT: [[AIE_VSHIFT_RIGHT1:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSHIFT_RIGHT [[DEF8]], [[AIE_PAD_VECTOR_UNDEF3]], [[C]](s32)
-    ; CHECK-NEXT: [[AIE_VSEL1:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSEL [[AIE_VSHIFT_RIGHT1]], [[AIE_PAD_VECTOR_UNDEF2]], [[C1]](s32)
-    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR1:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_VSEL1]](<16 x s32>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF4:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF4]](<4 x s32>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF5:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF5]](<4 x s32>)
-    ; CHECK-NEXT: [[AIE_VSHIFT_RIGHT2:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSHIFT_RIGHT [[DEF8]], [[AIE_PAD_VECTOR_UNDEF5]], [[C]](s32)
-    ; CHECK-NEXT: [[AIE_VSEL2:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSEL [[AIE_VSHIFT_RIGHT2]], [[AIE_PAD_VECTOR_UNDEF4]], [[C1]](s32)
-    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR2:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_VSEL2]](<16 x s32>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF6:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF6]](<4 x s32>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF7:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF7]](<4 x s32>)
-    ; CHECK-NEXT: [[AIE_VSHIFT_RIGHT3:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSHIFT_RIGHT [[DEF8]], [[AIE_PAD_VECTOR_UNDEF7]], [[C]](s32)
-    ; CHECK-NEXT: [[AIE_VSEL3:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSEL [[AIE_VSHIFT_RIGHT3]], [[AIE_PAD_VECTOR_UNDEF6]], [[C1]](s32)
-    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR3:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_VSEL3]](<16 x s32>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR]](<8 x s32>), [[AIE_UNPAD_VECTOR1]](<8 x s32>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR2]](<8 x s32>), [[AIE_UNPAD_VECTOR3]](<8 x s32>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS2:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[CONCAT_VECTORS]](<16 x s32>), [[CONCAT_VECTORS1]](<16 x s32>)
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS2]](<32 x s32>)
+    ; AIE2P-LABEL: name: test_v32s32_v4s32
+    ; AIE2P: [[DEF:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF1:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF2:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF3:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF4:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF5:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF6:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF7:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF]](<4 x s32>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF1:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF1]](<4 x s32>)
+    ; AIE2P-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 12
+    ; AIE2P-NEXT: [[AIE_SHUFFLE_VECTOR:%[0-9]+]]:_(<16 x s32>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF]], [[AIE_PAD_VECTOR_UNDEF1]], [[C]](s32)
+    ; AIE2P-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR]](<16 x s32>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF2:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF2]](<4 x s32>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF3:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF3]](<4 x s32>)
+    ; AIE2P-NEXT: [[AIE_SHUFFLE_VECTOR1:%[0-9]+]]:_(<16 x s32>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF2]], [[AIE_PAD_VECTOR_UNDEF3]], [[C]](s32)
+    ; AIE2P-NEXT: [[AIE_UNPAD_VECTOR1:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR1]](<16 x s32>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF4:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF4]](<4 x s32>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF5:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF5]](<4 x s32>)
+    ; AIE2P-NEXT: [[AIE_SHUFFLE_VECTOR2:%[0-9]+]]:_(<16 x s32>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF4]], [[AIE_PAD_VECTOR_UNDEF5]], [[C]](s32)
+    ; AIE2P-NEXT: [[AIE_UNPAD_VECTOR2:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR2]](<16 x s32>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF6:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF6]](<4 x s32>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF7:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF7]](<4 x s32>)
+    ; AIE2P-NEXT: [[AIE_SHUFFLE_VECTOR3:%[0-9]+]]:_(<16 x s32>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF6]], [[AIE_PAD_VECTOR_UNDEF7]], [[C]](s32)
+    ; AIE2P-NEXT: [[AIE_UNPAD_VECTOR3:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR3]](<16 x s32>)
+    ; AIE2P-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR]](<8 x s32>), [[AIE_UNPAD_VECTOR1]](<8 x s32>)
+    ; AIE2P-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR2]](<8 x s32>), [[AIE_UNPAD_VECTOR3]](<8 x s32>)
+    ; AIE2P-NEXT: [[CONCAT_VECTORS2:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[CONCAT_VECTORS]](<16 x s32>), [[CONCAT_VECTORS1]](<16 x s32>)
+    ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS2]](<32 x s32>)
+    ;
+    ; AIE2PS-LABEL: name: test_v32s32_v4s32
+    ; AIE2PS: [[DEF:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF1:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF2:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF3:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF4:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF5:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF6:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF7:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF]](<4 x s32>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF1:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF1]](<4 x s32>)
+    ; AIE2PS-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 34
+    ; AIE2PS-NEXT: [[AIE_SHUFFLE_VECTOR:%[0-9]+]]:_(<16 x s32>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF]], [[AIE_PAD_VECTOR_UNDEF1]], [[C]](s32)
+    ; AIE2PS-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR]](<16 x s32>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF2:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF2]](<4 x s32>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF3:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF3]](<4 x s32>)
+    ; AIE2PS-NEXT: [[AIE_SHUFFLE_VECTOR1:%[0-9]+]]:_(<16 x s32>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF2]], [[AIE_PAD_VECTOR_UNDEF3]], [[C]](s32)
+    ; AIE2PS-NEXT: [[AIE_UNPAD_VECTOR1:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR1]](<16 x s32>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF4:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF4]](<4 x s32>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF5:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF5]](<4 x s32>)
+    ; AIE2PS-NEXT: [[AIE_SHUFFLE_VECTOR2:%[0-9]+]]:_(<16 x s32>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF4]], [[AIE_PAD_VECTOR_UNDEF5]], [[C]](s32)
+    ; AIE2PS-NEXT: [[AIE_UNPAD_VECTOR2:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR2]](<16 x s32>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF6:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF6]](<4 x s32>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF7:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF7]](<4 x s32>)
+    ; AIE2PS-NEXT: [[AIE_SHUFFLE_VECTOR3:%[0-9]+]]:_(<16 x s32>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF6]], [[AIE_PAD_VECTOR_UNDEF7]], [[C]](s32)
+    ; AIE2PS-NEXT: [[AIE_UNPAD_VECTOR3:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR3]](<16 x s32>)
+    ; AIE2PS-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR]](<8 x s32>), [[AIE_UNPAD_VECTOR1]](<8 x s32>)
+    ; AIE2PS-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR2]](<8 x s32>), [[AIE_UNPAD_VECTOR3]](<8 x s32>)
+    ; AIE2PS-NEXT: [[CONCAT_VECTORS2:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[CONCAT_VECTORS]](<16 x s32>), [[CONCAT_VECTORS1]](<16 x s32>)
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS2]](<32 x s32>)
     %0:_(<4 x s32>) = G_IMPLICIT_DEF
     %1:_(<4 x s32>) = G_IMPLICIT_DEF
     %2:_(<4 x s32>) = G_IMPLICIT_DEF
@@ -637,98 +812,123 @@ name:            test_v256s8_v16s8
 legalized:       false
 body:             |
   bb.0.entry:
-    ; CHECK-LABEL: name: test_v256s8_v16s8
-    ; CHECK: [[DEF:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF2:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF3:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF4:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF5:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF6:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF7:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF8:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF9:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF10:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF11:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF12:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF13:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF14:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF15:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF]](<16 x s8>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF1:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF1]](<16 x s8>)
-    ; CHECK-NEXT: [[BITCAST:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF]](<64 x s8>)
-    ; CHECK-NEXT: [[BITCAST1:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF1]](<64 x s8>)
-    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 48
-    ; CHECK-NEXT: [[DEF16:%[0-9]+]]:_(<16 x s32>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[AIE_VSHIFT_RIGHT:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSHIFT_RIGHT [[DEF16]], [[BITCAST1]], [[C]](s32)
-    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 15
-    ; CHECK-NEXT: [[AIE_VSEL:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSEL [[AIE_VSHIFT_RIGHT]], [[BITCAST]], [[C1]](s32)
-    ; CHECK-NEXT: [[BITCAST2:%[0-9]+]]:_(<64 x s8>) = G_BITCAST [[AIE_VSEL]](<16 x s32>)
-    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<32 x s8>) = G_AIE_UNPAD_VECTOR [[BITCAST2]](<64 x s8>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF2:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF2]](<16 x s8>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF3:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF3]](<16 x s8>)
-    ; CHECK-NEXT: [[BITCAST3:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF2]](<64 x s8>)
-    ; CHECK-NEXT: [[BITCAST4:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF3]](<64 x s8>)
-    ; CHECK-NEXT: [[AIE_VSHIFT_RIGHT1:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSHIFT_RIGHT [[DEF16]], [[BITCAST4]], [[C]](s32)
-    ; CHECK-NEXT: [[AIE_VSEL1:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSEL [[AIE_VSHIFT_RIGHT1]], [[BITCAST3]], [[C1]](s32)
-    ; CHECK-NEXT: [[BITCAST5:%[0-9]+]]:_(<64 x s8>) = G_BITCAST [[AIE_VSEL1]](<16 x s32>)
-    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR1:%[0-9]+]]:_(<32 x s8>) = G_AIE_UNPAD_VECTOR [[BITCAST5]](<64 x s8>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF4:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF4]](<16 x s8>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF5:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF5]](<16 x s8>)
-    ; CHECK-NEXT: [[BITCAST6:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF4]](<64 x s8>)
-    ; CHECK-NEXT: [[BITCAST7:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF5]](<64 x s8>)
-    ; CHECK-NEXT: [[AIE_VSHIFT_RIGHT2:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSHIFT_RIGHT [[DEF16]], [[BITCAST7]], [[C]](s32)
-    ; CHECK-NEXT: [[AIE_VSEL2:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSEL [[AIE_VSHIFT_RIGHT2]], [[BITCAST6]], [[C1]](s32)
-    ; CHECK-NEXT: [[BITCAST8:%[0-9]+]]:_(<64 x s8>) = G_BITCAST [[AIE_VSEL2]](<16 x s32>)
-    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR2:%[0-9]+]]:_(<32 x s8>) = G_AIE_UNPAD_VECTOR [[BITCAST8]](<64 x s8>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF6:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF6]](<16 x s8>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF7:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF7]](<16 x s8>)
-    ; CHECK-NEXT: [[BITCAST9:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF6]](<64 x s8>)
-    ; CHECK-NEXT: [[BITCAST10:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF7]](<64 x s8>)
-    ; CHECK-NEXT: [[AIE_VSHIFT_RIGHT3:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSHIFT_RIGHT [[DEF16]], [[BITCAST10]], [[C]](s32)
-    ; CHECK-NEXT: [[AIE_VSEL3:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSEL [[AIE_VSHIFT_RIGHT3]], [[BITCAST9]], [[C1]](s32)
-    ; CHECK-NEXT: [[BITCAST11:%[0-9]+]]:_(<64 x s8>) = G_BITCAST [[AIE_VSEL3]](<16 x s32>)
-    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR3:%[0-9]+]]:_(<32 x s8>) = G_AIE_UNPAD_VECTOR [[BITCAST11]](<64 x s8>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF8:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF8]](<16 x s8>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF9:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF9]](<16 x s8>)
-    ; CHECK-NEXT: [[BITCAST12:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF8]](<64 x s8>)
-    ; CHECK-NEXT: [[BITCAST13:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF9]](<64 x s8>)
-    ; CHECK-NEXT: [[AIE_VSHIFT_RIGHT4:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSHIFT_RIGHT [[DEF16]], [[BITCAST13]], [[C]](s32)
-    ; CHECK-NEXT: [[AIE_VSEL4:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSEL [[AIE_VSHIFT_RIGHT4]], [[BITCAST12]], [[C1]](s32)
-    ; CHECK-NEXT: [[BITCAST14:%[0-9]+]]:_(<64 x s8>) = G_BITCAST [[AIE_VSEL4]](<16 x s32>)
-    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR4:%[0-9]+]]:_(<32 x s8>) = G_AIE_UNPAD_VECTOR [[BITCAST14]](<64 x s8>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF10:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF10]](<16 x s8>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF11:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF11]](<16 x s8>)
-    ; CHECK-NEXT: [[BITCAST15:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF10]](<64 x s8>)
-    ; CHECK-NEXT: [[BITCAST16:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF11]](<64 x s8>)
-    ; CHECK-NEXT: [[AIE_VSHIFT_RIGHT5:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSHIFT_RIGHT [[DEF16]], [[BITCAST16]], [[C]](s32)
-    ; CHECK-NEXT: [[AIE_VSEL5:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSEL [[AIE_VSHIFT_RIGHT5]], [[BITCAST15]], [[C1]](s32)
-    ; CHECK-NEXT: [[BITCAST17:%[0-9]+]]:_(<64 x s8>) = G_BITCAST [[AIE_VSEL5]](<16 x s32>)
-    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR5:%[0-9]+]]:_(<32 x s8>) = G_AIE_UNPAD_VECTOR [[BITCAST17]](<64 x s8>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF12:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF12]](<16 x s8>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF13:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF13]](<16 x s8>)
-    ; CHECK-NEXT: [[BITCAST18:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF12]](<64 x s8>)
-    ; CHECK-NEXT: [[BITCAST19:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF13]](<64 x s8>)
-    ; CHECK-NEXT: [[AIE_VSHIFT_RIGHT6:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSHIFT_RIGHT [[DEF16]], [[BITCAST19]], [[C]](s32)
-    ; CHECK-NEXT: [[AIE_VSEL6:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSEL [[AIE_VSHIFT_RIGHT6]], [[BITCAST18]], [[C1]](s32)
-    ; CHECK-NEXT: [[BITCAST20:%[0-9]+]]:_(<64 x s8>) = G_BITCAST [[AIE_VSEL6]](<16 x s32>)
-    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR6:%[0-9]+]]:_(<32 x s8>) = G_AIE_UNPAD_VECTOR [[BITCAST20]](<64 x s8>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF14:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF14]](<16 x s8>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF15:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF15]](<16 x s8>)
-    ; CHECK-NEXT: [[BITCAST21:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF14]](<64 x s8>)
-    ; CHECK-NEXT: [[BITCAST22:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF15]](<64 x s8>)
-    ; CHECK-NEXT: [[AIE_VSHIFT_RIGHT7:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSHIFT_RIGHT [[DEF16]], [[BITCAST22]], [[C]](s32)
-    ; CHECK-NEXT: [[AIE_VSEL7:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSEL [[AIE_VSHIFT_RIGHT7]], [[BITCAST21]], [[C1]](s32)
-    ; CHECK-NEXT: [[BITCAST23:%[0-9]+]]:_(<64 x s8>) = G_BITCAST [[AIE_VSEL7]](<16 x s32>)
-    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR7:%[0-9]+]]:_(<32 x s8>) = G_AIE_UNPAD_VECTOR [[BITCAST23]](<64 x s8>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<64 x s8>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR]](<32 x s8>), [[AIE_UNPAD_VECTOR1]](<32 x s8>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<64 x s8>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR2]](<32 x s8>), [[AIE_UNPAD_VECTOR3]](<32 x s8>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS2:%[0-9]+]]:_(<64 x s8>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR4]](<32 x s8>), [[AIE_UNPAD_VECTOR5]](<32 x s8>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS3:%[0-9]+]]:_(<64 x s8>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR6]](<32 x s8>), [[AIE_UNPAD_VECTOR7]](<32 x s8>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS4:%[0-9]+]]:_(<128 x s8>) = G_CONCAT_VECTORS [[CONCAT_VECTORS]](<64 x s8>), [[CONCAT_VECTORS1]](<64 x s8>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS5:%[0-9]+]]:_(<128 x s8>) = G_CONCAT_VECTORS [[CONCAT_VECTORS2]](<64 x s8>), [[CONCAT_VECTORS3]](<64 x s8>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS6:%[0-9]+]]:_(<256 x s8>) = G_CONCAT_VECTORS [[CONCAT_VECTORS4]](<128 x s8>), [[CONCAT_VECTORS5]](<128 x s8>)
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS6]](<256 x s8>)
+    ; AIE2P-LABEL: name: test_v256s8_v16s8
+    ; AIE2P: [[DEF:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF1:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF2:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF3:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF4:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF5:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF6:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF7:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF8:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF9:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF10:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF11:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF12:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF13:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF14:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF15:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF]](<16 x s8>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF1:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF1]](<16 x s8>)
+    ; AIE2P-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 12
+    ; AIE2P-NEXT: [[AIE_SHUFFLE_VECTOR:%[0-9]+]]:_(<64 x s8>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF]], [[AIE_PAD_VECTOR_UNDEF1]], [[C]](s32)
+    ; AIE2P-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<32 x s8>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR]](<64 x s8>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF2:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF2]](<16 x s8>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF3:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF3]](<16 x s8>)
+    ; AIE2P-NEXT: [[AIE_SHUFFLE_VECTOR1:%[0-9]+]]:_(<64 x s8>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF2]], [[AIE_PAD_VECTOR_UNDEF3]], [[C]](s32)
+    ; AIE2P-NEXT: [[AIE_UNPAD_VECTOR1:%[0-9]+]]:_(<32 x s8>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR1]](<64 x s8>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF4:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF4]](<16 x s8>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF5:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF5]](<16 x s8>)
+    ; AIE2P-NEXT: [[AIE_SHUFFLE_VECTOR2:%[0-9]+]]:_(<64 x s8>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF4]], [[AIE_PAD_VECTOR_UNDEF5]], [[C]](s32)
+    ; AIE2P-NEXT: [[AIE_UNPAD_VECTOR2:%[0-9]+]]:_(<32 x s8>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR2]](<64 x s8>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF6:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF6]](<16 x s8>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF7:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF7]](<16 x s8>)
+    ; AIE2P-NEXT: [[AIE_SHUFFLE_VECTOR3:%[0-9]+]]:_(<64 x s8>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF6]], [[AIE_PAD_VECTOR_UNDEF7]], [[C]](s32)
+    ; AIE2P-NEXT: [[AIE_UNPAD_VECTOR3:%[0-9]+]]:_(<32 x s8>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR3]](<64 x s8>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF8:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF8]](<16 x s8>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF9:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF9]](<16 x s8>)
+    ; AIE2P-NEXT: [[AIE_SHUFFLE_VECTOR4:%[0-9]+]]:_(<64 x s8>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF8]], [[AIE_PAD_VECTOR_UNDEF9]], [[C]](s32)
+    ; AIE2P-NEXT: [[AIE_UNPAD_VECTOR4:%[0-9]+]]:_(<32 x s8>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR4]](<64 x s8>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF10:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF10]](<16 x s8>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF11:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF11]](<16 x s8>)
+    ; AIE2P-NEXT: [[AIE_SHUFFLE_VECTOR5:%[0-9]+]]:_(<64 x s8>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF10]], [[AIE_PAD_VECTOR_UNDEF11]], [[C]](s32)
+    ; AIE2P-NEXT: [[AIE_UNPAD_VECTOR5:%[0-9]+]]:_(<32 x s8>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR5]](<64 x s8>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF12:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF12]](<16 x s8>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF13:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF13]](<16 x s8>)
+    ; AIE2P-NEXT: [[AIE_SHUFFLE_VECTOR6:%[0-9]+]]:_(<64 x s8>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF12]], [[AIE_PAD_VECTOR_UNDEF13]], [[C]](s32)
+    ; AIE2P-NEXT: [[AIE_UNPAD_VECTOR6:%[0-9]+]]:_(<32 x s8>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR6]](<64 x s8>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF14:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF14]](<16 x s8>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF15:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF15]](<16 x s8>)
+    ; AIE2P-NEXT: [[AIE_SHUFFLE_VECTOR7:%[0-9]+]]:_(<64 x s8>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF14]], [[AIE_PAD_VECTOR_UNDEF15]], [[C]](s32)
+    ; AIE2P-NEXT: [[AIE_UNPAD_VECTOR7:%[0-9]+]]:_(<32 x s8>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR7]](<64 x s8>)
+    ; AIE2P-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<64 x s8>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR]](<32 x s8>), [[AIE_UNPAD_VECTOR1]](<32 x s8>)
+    ; AIE2P-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<64 x s8>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR2]](<32 x s8>), [[AIE_UNPAD_VECTOR3]](<32 x s8>)
+    ; AIE2P-NEXT: [[CONCAT_VECTORS2:%[0-9]+]]:_(<64 x s8>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR4]](<32 x s8>), [[AIE_UNPAD_VECTOR5]](<32 x s8>)
+    ; AIE2P-NEXT: [[CONCAT_VECTORS3:%[0-9]+]]:_(<64 x s8>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR6]](<32 x s8>), [[AIE_UNPAD_VECTOR7]](<32 x s8>)
+    ; AIE2P-NEXT: [[CONCAT_VECTORS4:%[0-9]+]]:_(<128 x s8>) = G_CONCAT_VECTORS [[CONCAT_VECTORS]](<64 x s8>), [[CONCAT_VECTORS1]](<64 x s8>)
+    ; AIE2P-NEXT: [[CONCAT_VECTORS5:%[0-9]+]]:_(<128 x s8>) = G_CONCAT_VECTORS [[CONCAT_VECTORS2]](<64 x s8>), [[CONCAT_VECTORS3]](<64 x s8>)
+    ; AIE2P-NEXT: [[CONCAT_VECTORS6:%[0-9]+]]:_(<256 x s8>) = G_CONCAT_VECTORS [[CONCAT_VECTORS4]](<128 x s8>), [[CONCAT_VECTORS5]](<128 x s8>)
+    ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS6]](<256 x s8>)
+    ;
+    ; AIE2PS-LABEL: name: test_v256s8_v16s8
+    ; AIE2PS: [[DEF:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF1:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF2:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF3:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF4:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF5:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF6:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF7:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF8:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF9:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF10:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF11:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF12:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF13:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF14:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF15:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF]](<16 x s8>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF1:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF1]](<16 x s8>)
+    ; AIE2PS-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 34
+    ; AIE2PS-NEXT: [[AIE_SHUFFLE_VECTOR:%[0-9]+]]:_(<64 x s8>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF]], [[AIE_PAD_VECTOR_UNDEF1]], [[C]](s32)
+    ; AIE2PS-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<32 x s8>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR]](<64 x s8>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF2:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF2]](<16 x s8>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF3:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF3]](<16 x s8>)
+    ; AIE2PS-NEXT: [[AIE_SHUFFLE_VECTOR1:%[0-9]+]]:_(<64 x s8>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF2]], [[AIE_PAD_VECTOR_UNDEF3]], [[C]](s32)
+    ; AIE2PS-NEXT: [[AIE_UNPAD_VECTOR1:%[0-9]+]]:_(<32 x s8>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR1]](<64 x s8>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF4:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF4]](<16 x s8>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF5:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF5]](<16 x s8>)
+    ; AIE2PS-NEXT: [[AIE_SHUFFLE_VECTOR2:%[0-9]+]]:_(<64 x s8>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF4]], [[AIE_PAD_VECTOR_UNDEF5]], [[C]](s32)
+    ; AIE2PS-NEXT: [[AIE_UNPAD_VECTOR2:%[0-9]+]]:_(<32 x s8>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR2]](<64 x s8>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF6:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF6]](<16 x s8>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF7:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF7]](<16 x s8>)
+    ; AIE2PS-NEXT: [[AIE_SHUFFLE_VECTOR3:%[0-9]+]]:_(<64 x s8>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF6]], [[AIE_PAD_VECTOR_UNDEF7]], [[C]](s32)
+    ; AIE2PS-NEXT: [[AIE_UNPAD_VECTOR3:%[0-9]+]]:_(<32 x s8>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR3]](<64 x s8>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF8:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF8]](<16 x s8>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF9:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF9]](<16 x s8>)
+    ; AIE2PS-NEXT: [[AIE_SHUFFLE_VECTOR4:%[0-9]+]]:_(<64 x s8>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF8]], [[AIE_PAD_VECTOR_UNDEF9]], [[C]](s32)
+    ; AIE2PS-NEXT: [[AIE_UNPAD_VECTOR4:%[0-9]+]]:_(<32 x s8>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR4]](<64 x s8>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF10:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF10]](<16 x s8>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF11:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF11]](<16 x s8>)
+    ; AIE2PS-NEXT: [[AIE_SHUFFLE_VECTOR5:%[0-9]+]]:_(<64 x s8>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF10]], [[AIE_PAD_VECTOR_UNDEF11]], [[C]](s32)
+    ; AIE2PS-NEXT: [[AIE_UNPAD_VECTOR5:%[0-9]+]]:_(<32 x s8>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR5]](<64 x s8>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF12:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF12]](<16 x s8>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF13:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF13]](<16 x s8>)
+    ; AIE2PS-NEXT: [[AIE_SHUFFLE_VECTOR6:%[0-9]+]]:_(<64 x s8>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF12]], [[AIE_PAD_VECTOR_UNDEF13]], [[C]](s32)
+    ; AIE2PS-NEXT: [[AIE_UNPAD_VECTOR6:%[0-9]+]]:_(<32 x s8>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR6]](<64 x s8>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF14:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF14]](<16 x s8>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF15:%[0-9]+]]:_(<64 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[DEF15]](<16 x s8>)
+    ; AIE2PS-NEXT: [[AIE_SHUFFLE_VECTOR7:%[0-9]+]]:_(<64 x s8>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF14]], [[AIE_PAD_VECTOR_UNDEF15]], [[C]](s32)
+    ; AIE2PS-NEXT: [[AIE_UNPAD_VECTOR7:%[0-9]+]]:_(<32 x s8>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR7]](<64 x s8>)
+    ; AIE2PS-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<64 x s8>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR]](<32 x s8>), [[AIE_UNPAD_VECTOR1]](<32 x s8>)
+    ; AIE2PS-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<64 x s8>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR2]](<32 x s8>), [[AIE_UNPAD_VECTOR3]](<32 x s8>)
+    ; AIE2PS-NEXT: [[CONCAT_VECTORS2:%[0-9]+]]:_(<64 x s8>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR4]](<32 x s8>), [[AIE_UNPAD_VECTOR5]](<32 x s8>)
+    ; AIE2PS-NEXT: [[CONCAT_VECTORS3:%[0-9]+]]:_(<64 x s8>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR6]](<32 x s8>), [[AIE_UNPAD_VECTOR7]](<32 x s8>)
+    ; AIE2PS-NEXT: [[CONCAT_VECTORS4:%[0-9]+]]:_(<128 x s8>) = G_CONCAT_VECTORS [[CONCAT_VECTORS]](<64 x s8>), [[CONCAT_VECTORS1]](<64 x s8>)
+    ; AIE2PS-NEXT: [[CONCAT_VECTORS5:%[0-9]+]]:_(<128 x s8>) = G_CONCAT_VECTORS [[CONCAT_VECTORS2]](<64 x s8>), [[CONCAT_VECTORS3]](<64 x s8>)
+    ; AIE2PS-NEXT: [[CONCAT_VECTORS6:%[0-9]+]]:_(<256 x s8>) = G_CONCAT_VECTORS [[CONCAT_VECTORS4]](<128 x s8>), [[CONCAT_VECTORS5]](<128 x s8>)
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS6]](<256 x s8>)
     %0:_(<16 x s8>) = G_IMPLICIT_DEF
     %1:_(<16 x s8>) = G_IMPLICIT_DEF
     %2:_(<16 x s8>) = G_IMPLICIT_DEF
@@ -826,98 +1026,123 @@ name:            test_v128s16_v8s16
 legalized:       false
 body:             |
   bb.0.entry:
-    ; CHECK-LABEL: name: test_v128s16_v8s16
-    ; CHECK: [[DEF:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF2:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF3:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF4:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF5:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF6:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF7:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF8:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF9:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF10:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF11:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF12:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF13:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF14:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF15:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF]](<8 x s16>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF1:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF1]](<8 x s16>)
-    ; CHECK-NEXT: [[BITCAST:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF]](<32 x s16>)
-    ; CHECK-NEXT: [[BITCAST1:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF1]](<32 x s16>)
-    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 48
-    ; CHECK-NEXT: [[DEF16:%[0-9]+]]:_(<16 x s32>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[AIE_VSHIFT_RIGHT:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSHIFT_RIGHT [[DEF16]], [[BITCAST1]], [[C]](s32)
-    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 15
-    ; CHECK-NEXT: [[AIE_VSEL:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSEL [[AIE_VSHIFT_RIGHT]], [[BITCAST]], [[C1]](s32)
-    ; CHECK-NEXT: [[BITCAST2:%[0-9]+]]:_(<32 x s16>) = G_BITCAST [[AIE_VSEL]](<16 x s32>)
-    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<16 x s16>) = G_AIE_UNPAD_VECTOR [[BITCAST2]](<32 x s16>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF2:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF2]](<8 x s16>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF3:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF3]](<8 x s16>)
-    ; CHECK-NEXT: [[BITCAST3:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF2]](<32 x s16>)
-    ; CHECK-NEXT: [[BITCAST4:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF3]](<32 x s16>)
-    ; CHECK-NEXT: [[AIE_VSHIFT_RIGHT1:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSHIFT_RIGHT [[DEF16]], [[BITCAST4]], [[C]](s32)
-    ; CHECK-NEXT: [[AIE_VSEL1:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSEL [[AIE_VSHIFT_RIGHT1]], [[BITCAST3]], [[C1]](s32)
-    ; CHECK-NEXT: [[BITCAST5:%[0-9]+]]:_(<32 x s16>) = G_BITCAST [[AIE_VSEL1]](<16 x s32>)
-    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR1:%[0-9]+]]:_(<16 x s16>) = G_AIE_UNPAD_VECTOR [[BITCAST5]](<32 x s16>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF4:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF4]](<8 x s16>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF5:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF5]](<8 x s16>)
-    ; CHECK-NEXT: [[BITCAST6:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF4]](<32 x s16>)
-    ; CHECK-NEXT: [[BITCAST7:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF5]](<32 x s16>)
-    ; CHECK-NEXT: [[AIE_VSHIFT_RIGHT2:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSHIFT_RIGHT [[DEF16]], [[BITCAST7]], [[C]](s32)
-    ; CHECK-NEXT: [[AIE_VSEL2:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSEL [[AIE_VSHIFT_RIGHT2]], [[BITCAST6]], [[C1]](s32)
-    ; CHECK-NEXT: [[BITCAST8:%[0-9]+]]:_(<32 x s16>) = G_BITCAST [[AIE_VSEL2]](<16 x s32>)
-    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR2:%[0-9]+]]:_(<16 x s16>) = G_AIE_UNPAD_VECTOR [[BITCAST8]](<32 x s16>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF6:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF6]](<8 x s16>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF7:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF7]](<8 x s16>)
-    ; CHECK-NEXT: [[BITCAST9:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF6]](<32 x s16>)
-    ; CHECK-NEXT: [[BITCAST10:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF7]](<32 x s16>)
-    ; CHECK-NEXT: [[AIE_VSHIFT_RIGHT3:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSHIFT_RIGHT [[DEF16]], [[BITCAST10]], [[C]](s32)
-    ; CHECK-NEXT: [[AIE_VSEL3:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSEL [[AIE_VSHIFT_RIGHT3]], [[BITCAST9]], [[C1]](s32)
-    ; CHECK-NEXT: [[BITCAST11:%[0-9]+]]:_(<32 x s16>) = G_BITCAST [[AIE_VSEL3]](<16 x s32>)
-    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR3:%[0-9]+]]:_(<16 x s16>) = G_AIE_UNPAD_VECTOR [[BITCAST11]](<32 x s16>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF8:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF8]](<8 x s16>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF9:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF9]](<8 x s16>)
-    ; CHECK-NEXT: [[BITCAST12:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF8]](<32 x s16>)
-    ; CHECK-NEXT: [[BITCAST13:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF9]](<32 x s16>)
-    ; CHECK-NEXT: [[AIE_VSHIFT_RIGHT4:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSHIFT_RIGHT [[DEF16]], [[BITCAST13]], [[C]](s32)
-    ; CHECK-NEXT: [[AIE_VSEL4:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSEL [[AIE_VSHIFT_RIGHT4]], [[BITCAST12]], [[C1]](s32)
-    ; CHECK-NEXT: [[BITCAST14:%[0-9]+]]:_(<32 x s16>) = G_BITCAST [[AIE_VSEL4]](<16 x s32>)
-    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR4:%[0-9]+]]:_(<16 x s16>) = G_AIE_UNPAD_VECTOR [[BITCAST14]](<32 x s16>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF10:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF10]](<8 x s16>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF11:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF11]](<8 x s16>)
-    ; CHECK-NEXT: [[BITCAST15:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF10]](<32 x s16>)
-    ; CHECK-NEXT: [[BITCAST16:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF11]](<32 x s16>)
-    ; CHECK-NEXT: [[AIE_VSHIFT_RIGHT5:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSHIFT_RIGHT [[DEF16]], [[BITCAST16]], [[C]](s32)
-    ; CHECK-NEXT: [[AIE_VSEL5:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSEL [[AIE_VSHIFT_RIGHT5]], [[BITCAST15]], [[C1]](s32)
-    ; CHECK-NEXT: [[BITCAST17:%[0-9]+]]:_(<32 x s16>) = G_BITCAST [[AIE_VSEL5]](<16 x s32>)
-    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR5:%[0-9]+]]:_(<16 x s16>) = G_AIE_UNPAD_VECTOR [[BITCAST17]](<32 x s16>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF12:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF12]](<8 x s16>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF13:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF13]](<8 x s16>)
-    ; CHECK-NEXT: [[BITCAST18:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF12]](<32 x s16>)
-    ; CHECK-NEXT: [[BITCAST19:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF13]](<32 x s16>)
-    ; CHECK-NEXT: [[AIE_VSHIFT_RIGHT6:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSHIFT_RIGHT [[DEF16]], [[BITCAST19]], [[C]](s32)
-    ; CHECK-NEXT: [[AIE_VSEL6:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSEL [[AIE_VSHIFT_RIGHT6]], [[BITCAST18]], [[C1]](s32)
-    ; CHECK-NEXT: [[BITCAST20:%[0-9]+]]:_(<32 x s16>) = G_BITCAST [[AIE_VSEL6]](<16 x s32>)
-    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR6:%[0-9]+]]:_(<16 x s16>) = G_AIE_UNPAD_VECTOR [[BITCAST20]](<32 x s16>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF14:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF14]](<8 x s16>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF15:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF15]](<8 x s16>)
-    ; CHECK-NEXT: [[BITCAST21:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF14]](<32 x s16>)
-    ; CHECK-NEXT: [[BITCAST22:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF15]](<32 x s16>)
-    ; CHECK-NEXT: [[AIE_VSHIFT_RIGHT7:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSHIFT_RIGHT [[DEF16]], [[BITCAST22]], [[C]](s32)
-    ; CHECK-NEXT: [[AIE_VSEL7:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSEL [[AIE_VSHIFT_RIGHT7]], [[BITCAST21]], [[C1]](s32)
-    ; CHECK-NEXT: [[BITCAST23:%[0-9]+]]:_(<32 x s16>) = G_BITCAST [[AIE_VSEL7]](<16 x s32>)
-    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR7:%[0-9]+]]:_(<16 x s16>) = G_AIE_UNPAD_VECTOR [[BITCAST23]](<32 x s16>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s16>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR]](<16 x s16>), [[AIE_UNPAD_VECTOR1]](<16 x s16>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<32 x s16>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR2]](<16 x s16>), [[AIE_UNPAD_VECTOR3]](<16 x s16>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS2:%[0-9]+]]:_(<32 x s16>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR4]](<16 x s16>), [[AIE_UNPAD_VECTOR5]](<16 x s16>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS3:%[0-9]+]]:_(<32 x s16>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR6]](<16 x s16>), [[AIE_UNPAD_VECTOR7]](<16 x s16>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS4:%[0-9]+]]:_(<64 x s16>) = G_CONCAT_VECTORS [[CONCAT_VECTORS]](<32 x s16>), [[CONCAT_VECTORS1]](<32 x s16>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS5:%[0-9]+]]:_(<64 x s16>) = G_CONCAT_VECTORS [[CONCAT_VECTORS2]](<32 x s16>), [[CONCAT_VECTORS3]](<32 x s16>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS6:%[0-9]+]]:_(<128 x s16>) = G_CONCAT_VECTORS [[CONCAT_VECTORS4]](<64 x s16>), [[CONCAT_VECTORS5]](<64 x s16>)
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS6]](<128 x s16>)
+    ; AIE2P-LABEL: name: test_v128s16_v8s16
+    ; AIE2P: [[DEF:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF1:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF2:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF3:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF4:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF5:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF6:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF7:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF8:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF9:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF10:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF11:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF12:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF13:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF14:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF15:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF]](<8 x s16>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF1:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF1]](<8 x s16>)
+    ; AIE2P-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 12
+    ; AIE2P-NEXT: [[AIE_SHUFFLE_VECTOR:%[0-9]+]]:_(<32 x s16>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF]], [[AIE_PAD_VECTOR_UNDEF1]], [[C]](s32)
+    ; AIE2P-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<16 x s16>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR]](<32 x s16>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF2:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF2]](<8 x s16>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF3:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF3]](<8 x s16>)
+    ; AIE2P-NEXT: [[AIE_SHUFFLE_VECTOR1:%[0-9]+]]:_(<32 x s16>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF2]], [[AIE_PAD_VECTOR_UNDEF3]], [[C]](s32)
+    ; AIE2P-NEXT: [[AIE_UNPAD_VECTOR1:%[0-9]+]]:_(<16 x s16>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR1]](<32 x s16>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF4:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF4]](<8 x s16>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF5:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF5]](<8 x s16>)
+    ; AIE2P-NEXT: [[AIE_SHUFFLE_VECTOR2:%[0-9]+]]:_(<32 x s16>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF4]], [[AIE_PAD_VECTOR_UNDEF5]], [[C]](s32)
+    ; AIE2P-NEXT: [[AIE_UNPAD_VECTOR2:%[0-9]+]]:_(<16 x s16>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR2]](<32 x s16>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF6:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF6]](<8 x s16>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF7:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF7]](<8 x s16>)
+    ; AIE2P-NEXT: [[AIE_SHUFFLE_VECTOR3:%[0-9]+]]:_(<32 x s16>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF6]], [[AIE_PAD_VECTOR_UNDEF7]], [[C]](s32)
+    ; AIE2P-NEXT: [[AIE_UNPAD_VECTOR3:%[0-9]+]]:_(<16 x s16>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR3]](<32 x s16>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF8:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF8]](<8 x s16>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF9:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF9]](<8 x s16>)
+    ; AIE2P-NEXT: [[AIE_SHUFFLE_VECTOR4:%[0-9]+]]:_(<32 x s16>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF8]], [[AIE_PAD_VECTOR_UNDEF9]], [[C]](s32)
+    ; AIE2P-NEXT: [[AIE_UNPAD_VECTOR4:%[0-9]+]]:_(<16 x s16>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR4]](<32 x s16>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF10:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF10]](<8 x s16>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF11:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF11]](<8 x s16>)
+    ; AIE2P-NEXT: [[AIE_SHUFFLE_VECTOR5:%[0-9]+]]:_(<32 x s16>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF10]], [[AIE_PAD_VECTOR_UNDEF11]], [[C]](s32)
+    ; AIE2P-NEXT: [[AIE_UNPAD_VECTOR5:%[0-9]+]]:_(<16 x s16>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR5]](<32 x s16>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF12:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF12]](<8 x s16>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF13:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF13]](<8 x s16>)
+    ; AIE2P-NEXT: [[AIE_SHUFFLE_VECTOR6:%[0-9]+]]:_(<32 x s16>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF12]], [[AIE_PAD_VECTOR_UNDEF13]], [[C]](s32)
+    ; AIE2P-NEXT: [[AIE_UNPAD_VECTOR6:%[0-9]+]]:_(<16 x s16>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR6]](<32 x s16>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF14:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF14]](<8 x s16>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF15:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF15]](<8 x s16>)
+    ; AIE2P-NEXT: [[AIE_SHUFFLE_VECTOR7:%[0-9]+]]:_(<32 x s16>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF14]], [[AIE_PAD_VECTOR_UNDEF15]], [[C]](s32)
+    ; AIE2P-NEXT: [[AIE_UNPAD_VECTOR7:%[0-9]+]]:_(<16 x s16>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR7]](<32 x s16>)
+    ; AIE2P-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s16>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR]](<16 x s16>), [[AIE_UNPAD_VECTOR1]](<16 x s16>)
+    ; AIE2P-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<32 x s16>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR2]](<16 x s16>), [[AIE_UNPAD_VECTOR3]](<16 x s16>)
+    ; AIE2P-NEXT: [[CONCAT_VECTORS2:%[0-9]+]]:_(<32 x s16>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR4]](<16 x s16>), [[AIE_UNPAD_VECTOR5]](<16 x s16>)
+    ; AIE2P-NEXT: [[CONCAT_VECTORS3:%[0-9]+]]:_(<32 x s16>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR6]](<16 x s16>), [[AIE_UNPAD_VECTOR7]](<16 x s16>)
+    ; AIE2P-NEXT: [[CONCAT_VECTORS4:%[0-9]+]]:_(<64 x s16>) = G_CONCAT_VECTORS [[CONCAT_VECTORS]](<32 x s16>), [[CONCAT_VECTORS1]](<32 x s16>)
+    ; AIE2P-NEXT: [[CONCAT_VECTORS5:%[0-9]+]]:_(<64 x s16>) = G_CONCAT_VECTORS [[CONCAT_VECTORS2]](<32 x s16>), [[CONCAT_VECTORS3]](<32 x s16>)
+    ; AIE2P-NEXT: [[CONCAT_VECTORS6:%[0-9]+]]:_(<128 x s16>) = G_CONCAT_VECTORS [[CONCAT_VECTORS4]](<64 x s16>), [[CONCAT_VECTORS5]](<64 x s16>)
+    ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS6]](<128 x s16>)
+    ;
+    ; AIE2PS-LABEL: name: test_v128s16_v8s16
+    ; AIE2PS: [[DEF:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF1:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF2:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF3:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF4:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF5:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF6:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF7:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF8:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF9:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF10:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF11:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF12:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF13:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF14:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF15:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF]](<8 x s16>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF1:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF1]](<8 x s16>)
+    ; AIE2PS-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 34
+    ; AIE2PS-NEXT: [[AIE_SHUFFLE_VECTOR:%[0-9]+]]:_(<32 x s16>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF]], [[AIE_PAD_VECTOR_UNDEF1]], [[C]](s32)
+    ; AIE2PS-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<16 x s16>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR]](<32 x s16>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF2:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF2]](<8 x s16>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF3:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF3]](<8 x s16>)
+    ; AIE2PS-NEXT: [[AIE_SHUFFLE_VECTOR1:%[0-9]+]]:_(<32 x s16>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF2]], [[AIE_PAD_VECTOR_UNDEF3]], [[C]](s32)
+    ; AIE2PS-NEXT: [[AIE_UNPAD_VECTOR1:%[0-9]+]]:_(<16 x s16>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR1]](<32 x s16>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF4:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF4]](<8 x s16>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF5:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF5]](<8 x s16>)
+    ; AIE2PS-NEXT: [[AIE_SHUFFLE_VECTOR2:%[0-9]+]]:_(<32 x s16>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF4]], [[AIE_PAD_VECTOR_UNDEF5]], [[C]](s32)
+    ; AIE2PS-NEXT: [[AIE_UNPAD_VECTOR2:%[0-9]+]]:_(<16 x s16>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR2]](<32 x s16>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF6:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF6]](<8 x s16>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF7:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF7]](<8 x s16>)
+    ; AIE2PS-NEXT: [[AIE_SHUFFLE_VECTOR3:%[0-9]+]]:_(<32 x s16>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF6]], [[AIE_PAD_VECTOR_UNDEF7]], [[C]](s32)
+    ; AIE2PS-NEXT: [[AIE_UNPAD_VECTOR3:%[0-9]+]]:_(<16 x s16>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR3]](<32 x s16>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF8:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF8]](<8 x s16>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF9:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF9]](<8 x s16>)
+    ; AIE2PS-NEXT: [[AIE_SHUFFLE_VECTOR4:%[0-9]+]]:_(<32 x s16>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF8]], [[AIE_PAD_VECTOR_UNDEF9]], [[C]](s32)
+    ; AIE2PS-NEXT: [[AIE_UNPAD_VECTOR4:%[0-9]+]]:_(<16 x s16>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR4]](<32 x s16>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF10:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF10]](<8 x s16>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF11:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF11]](<8 x s16>)
+    ; AIE2PS-NEXT: [[AIE_SHUFFLE_VECTOR5:%[0-9]+]]:_(<32 x s16>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF10]], [[AIE_PAD_VECTOR_UNDEF11]], [[C]](s32)
+    ; AIE2PS-NEXT: [[AIE_UNPAD_VECTOR5:%[0-9]+]]:_(<16 x s16>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR5]](<32 x s16>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF12:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF12]](<8 x s16>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF13:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF13]](<8 x s16>)
+    ; AIE2PS-NEXT: [[AIE_SHUFFLE_VECTOR6:%[0-9]+]]:_(<32 x s16>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF12]], [[AIE_PAD_VECTOR_UNDEF13]], [[C]](s32)
+    ; AIE2PS-NEXT: [[AIE_UNPAD_VECTOR6:%[0-9]+]]:_(<16 x s16>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR6]](<32 x s16>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF14:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF14]](<8 x s16>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF15:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[DEF15]](<8 x s16>)
+    ; AIE2PS-NEXT: [[AIE_SHUFFLE_VECTOR7:%[0-9]+]]:_(<32 x s16>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF14]], [[AIE_PAD_VECTOR_UNDEF15]], [[C]](s32)
+    ; AIE2PS-NEXT: [[AIE_UNPAD_VECTOR7:%[0-9]+]]:_(<16 x s16>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR7]](<32 x s16>)
+    ; AIE2PS-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s16>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR]](<16 x s16>), [[AIE_UNPAD_VECTOR1]](<16 x s16>)
+    ; AIE2PS-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<32 x s16>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR2]](<16 x s16>), [[AIE_UNPAD_VECTOR3]](<16 x s16>)
+    ; AIE2PS-NEXT: [[CONCAT_VECTORS2:%[0-9]+]]:_(<32 x s16>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR4]](<16 x s16>), [[AIE_UNPAD_VECTOR5]](<16 x s16>)
+    ; AIE2PS-NEXT: [[CONCAT_VECTORS3:%[0-9]+]]:_(<32 x s16>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR6]](<16 x s16>), [[AIE_UNPAD_VECTOR7]](<16 x s16>)
+    ; AIE2PS-NEXT: [[CONCAT_VECTORS4:%[0-9]+]]:_(<64 x s16>) = G_CONCAT_VECTORS [[CONCAT_VECTORS]](<32 x s16>), [[CONCAT_VECTORS1]](<32 x s16>)
+    ; AIE2PS-NEXT: [[CONCAT_VECTORS5:%[0-9]+]]:_(<64 x s16>) = G_CONCAT_VECTORS [[CONCAT_VECTORS2]](<32 x s16>), [[CONCAT_VECTORS3]](<32 x s16>)
+    ; AIE2PS-NEXT: [[CONCAT_VECTORS6:%[0-9]+]]:_(<128 x s16>) = G_CONCAT_VECTORS [[CONCAT_VECTORS4]](<64 x s16>), [[CONCAT_VECTORS5]](<64 x s16>)
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS6]](<128 x s16>)
     %0:_(<8 x s16>) = G_IMPLICIT_DEF
     %1:_(<8 x s16>) = G_IMPLICIT_DEF
     %2:_(<8 x s16>) = G_IMPLICIT_DEF
@@ -1015,74 +1240,123 @@ name:            test_v64s32_v4s32
 legalized:       false
 body:             |
   bb.0.entry:
-    ; CHECK-LABEL: name: test_v64s32_v4s32
-    ; CHECK: [[DEF:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF2:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF3:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF4:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF5:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF6:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF7:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF8:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF9:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF10:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF11:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF12:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF13:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF14:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF15:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF]](<4 x s32>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF1:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF1]](<4 x s32>)
-    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 48
-    ; CHECK-NEXT: [[DEF16:%[0-9]+]]:_(<16 x s32>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[AIE_VSHIFT_RIGHT:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSHIFT_RIGHT [[DEF16]], [[AIE_PAD_VECTOR_UNDEF1]], [[C]](s32)
-    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 15
-    ; CHECK-NEXT: [[AIE_VSEL:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSEL [[AIE_VSHIFT_RIGHT]], [[AIE_PAD_VECTOR_UNDEF]], [[C1]](s32)
-    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_VSEL]](<16 x s32>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF2:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF2]](<4 x s32>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF3:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF3]](<4 x s32>)
-    ; CHECK-NEXT: [[AIE_VSHIFT_RIGHT1:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSHIFT_RIGHT [[DEF16]], [[AIE_PAD_VECTOR_UNDEF3]], [[C]](s32)
-    ; CHECK-NEXT: [[AIE_VSEL1:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSEL [[AIE_VSHIFT_RIGHT1]], [[AIE_PAD_VECTOR_UNDEF2]], [[C1]](s32)
-    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR1:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_VSEL1]](<16 x s32>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF4:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF4]](<4 x s32>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF5:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF5]](<4 x s32>)
-    ; CHECK-NEXT: [[AIE_VSHIFT_RIGHT2:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSHIFT_RIGHT [[DEF16]], [[AIE_PAD_VECTOR_UNDEF5]], [[C]](s32)
-    ; CHECK-NEXT: [[AIE_VSEL2:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSEL [[AIE_VSHIFT_RIGHT2]], [[AIE_PAD_VECTOR_UNDEF4]], [[C1]](s32)
-    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR2:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_VSEL2]](<16 x s32>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF6:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF6]](<4 x s32>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF7:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF7]](<4 x s32>)
-    ; CHECK-NEXT: [[AIE_VSHIFT_RIGHT3:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSHIFT_RIGHT [[DEF16]], [[AIE_PAD_VECTOR_UNDEF7]], [[C]](s32)
-    ; CHECK-NEXT: [[AIE_VSEL3:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSEL [[AIE_VSHIFT_RIGHT3]], [[AIE_PAD_VECTOR_UNDEF6]], [[C1]](s32)
-    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR3:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_VSEL3]](<16 x s32>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF8:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF8]](<4 x s32>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF9:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF9]](<4 x s32>)
-    ; CHECK-NEXT: [[AIE_VSHIFT_RIGHT4:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSHIFT_RIGHT [[DEF16]], [[AIE_PAD_VECTOR_UNDEF9]], [[C]](s32)
-    ; CHECK-NEXT: [[AIE_VSEL4:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSEL [[AIE_VSHIFT_RIGHT4]], [[AIE_PAD_VECTOR_UNDEF8]], [[C1]](s32)
-    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR4:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_VSEL4]](<16 x s32>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF10:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF10]](<4 x s32>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF11:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF11]](<4 x s32>)
-    ; CHECK-NEXT: [[AIE_VSHIFT_RIGHT5:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSHIFT_RIGHT [[DEF16]], [[AIE_PAD_VECTOR_UNDEF11]], [[C]](s32)
-    ; CHECK-NEXT: [[AIE_VSEL5:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSEL [[AIE_VSHIFT_RIGHT5]], [[AIE_PAD_VECTOR_UNDEF10]], [[C1]](s32)
-    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR5:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_VSEL5]](<16 x s32>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF12:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF12]](<4 x s32>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF13:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF13]](<4 x s32>)
-    ; CHECK-NEXT: [[AIE_VSHIFT_RIGHT6:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSHIFT_RIGHT [[DEF16]], [[AIE_PAD_VECTOR_UNDEF13]], [[C]](s32)
-    ; CHECK-NEXT: [[AIE_VSEL6:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSEL [[AIE_VSHIFT_RIGHT6]], [[AIE_PAD_VECTOR_UNDEF12]], [[C1]](s32)
-    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR6:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_VSEL6]](<16 x s32>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF14:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF14]](<4 x s32>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF15:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF15]](<4 x s32>)
-    ; CHECK-NEXT: [[AIE_VSHIFT_RIGHT7:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSHIFT_RIGHT [[DEF16]], [[AIE_PAD_VECTOR_UNDEF15]], [[C]](s32)
-    ; CHECK-NEXT: [[AIE_VSEL7:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSEL [[AIE_VSHIFT_RIGHT7]], [[AIE_PAD_VECTOR_UNDEF14]], [[C1]](s32)
-    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR7:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_VSEL7]](<16 x s32>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR]](<8 x s32>), [[AIE_UNPAD_VECTOR1]](<8 x s32>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR2]](<8 x s32>), [[AIE_UNPAD_VECTOR3]](<8 x s32>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS2:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR4]](<8 x s32>), [[AIE_UNPAD_VECTOR5]](<8 x s32>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS3:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR6]](<8 x s32>), [[AIE_UNPAD_VECTOR7]](<8 x s32>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS4:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[CONCAT_VECTORS]](<16 x s32>), [[CONCAT_VECTORS1]](<16 x s32>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS5:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[CONCAT_VECTORS2]](<16 x s32>), [[CONCAT_VECTORS3]](<16 x s32>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS6:%[0-9]+]]:_(<64 x s32>) = G_CONCAT_VECTORS [[CONCAT_VECTORS4]](<32 x s32>), [[CONCAT_VECTORS5]](<32 x s32>)
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS6]](<64 x s32>)
+    ; AIE2P-LABEL: name: test_v64s32_v4s32
+    ; AIE2P: [[DEF:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF1:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF2:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF3:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF4:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF5:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF6:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF7:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF8:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF9:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF10:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF11:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF12:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF13:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF14:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF15:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF]](<4 x s32>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF1:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF1]](<4 x s32>)
+    ; AIE2P-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 12
+    ; AIE2P-NEXT: [[AIE_SHUFFLE_VECTOR:%[0-9]+]]:_(<16 x s32>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF]], [[AIE_PAD_VECTOR_UNDEF1]], [[C]](s32)
+    ; AIE2P-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR]](<16 x s32>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF2:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF2]](<4 x s32>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF3:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF3]](<4 x s32>)
+    ; AIE2P-NEXT: [[AIE_SHUFFLE_VECTOR1:%[0-9]+]]:_(<16 x s32>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF2]], [[AIE_PAD_VECTOR_UNDEF3]], [[C]](s32)
+    ; AIE2P-NEXT: [[AIE_UNPAD_VECTOR1:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR1]](<16 x s32>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF4:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF4]](<4 x s32>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF5:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF5]](<4 x s32>)
+    ; AIE2P-NEXT: [[AIE_SHUFFLE_VECTOR2:%[0-9]+]]:_(<16 x s32>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF4]], [[AIE_PAD_VECTOR_UNDEF5]], [[C]](s32)
+    ; AIE2P-NEXT: [[AIE_UNPAD_VECTOR2:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR2]](<16 x s32>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF6:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF6]](<4 x s32>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF7:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF7]](<4 x s32>)
+    ; AIE2P-NEXT: [[AIE_SHUFFLE_VECTOR3:%[0-9]+]]:_(<16 x s32>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF6]], [[AIE_PAD_VECTOR_UNDEF7]], [[C]](s32)
+    ; AIE2P-NEXT: [[AIE_UNPAD_VECTOR3:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR3]](<16 x s32>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF8:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF8]](<4 x s32>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF9:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF9]](<4 x s32>)
+    ; AIE2P-NEXT: [[AIE_SHUFFLE_VECTOR4:%[0-9]+]]:_(<16 x s32>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF8]], [[AIE_PAD_VECTOR_UNDEF9]], [[C]](s32)
+    ; AIE2P-NEXT: [[AIE_UNPAD_VECTOR4:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR4]](<16 x s32>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF10:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF10]](<4 x s32>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF11:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF11]](<4 x s32>)
+    ; AIE2P-NEXT: [[AIE_SHUFFLE_VECTOR5:%[0-9]+]]:_(<16 x s32>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF10]], [[AIE_PAD_VECTOR_UNDEF11]], [[C]](s32)
+    ; AIE2P-NEXT: [[AIE_UNPAD_VECTOR5:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR5]](<16 x s32>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF12:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF12]](<4 x s32>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF13:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF13]](<4 x s32>)
+    ; AIE2P-NEXT: [[AIE_SHUFFLE_VECTOR6:%[0-9]+]]:_(<16 x s32>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF12]], [[AIE_PAD_VECTOR_UNDEF13]], [[C]](s32)
+    ; AIE2P-NEXT: [[AIE_UNPAD_VECTOR6:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR6]](<16 x s32>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF14:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF14]](<4 x s32>)
+    ; AIE2P-NEXT: [[AIE_PAD_VECTOR_UNDEF15:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF15]](<4 x s32>)
+    ; AIE2P-NEXT: [[AIE_SHUFFLE_VECTOR7:%[0-9]+]]:_(<16 x s32>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF14]], [[AIE_PAD_VECTOR_UNDEF15]], [[C]](s32)
+    ; AIE2P-NEXT: [[AIE_UNPAD_VECTOR7:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR7]](<16 x s32>)
+    ; AIE2P-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR]](<8 x s32>), [[AIE_UNPAD_VECTOR1]](<8 x s32>)
+    ; AIE2P-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR2]](<8 x s32>), [[AIE_UNPAD_VECTOR3]](<8 x s32>)
+    ; AIE2P-NEXT: [[CONCAT_VECTORS2:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR4]](<8 x s32>), [[AIE_UNPAD_VECTOR5]](<8 x s32>)
+    ; AIE2P-NEXT: [[CONCAT_VECTORS3:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR6]](<8 x s32>), [[AIE_UNPAD_VECTOR7]](<8 x s32>)
+    ; AIE2P-NEXT: [[CONCAT_VECTORS4:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[CONCAT_VECTORS]](<16 x s32>), [[CONCAT_VECTORS1]](<16 x s32>)
+    ; AIE2P-NEXT: [[CONCAT_VECTORS5:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[CONCAT_VECTORS2]](<16 x s32>), [[CONCAT_VECTORS3]](<16 x s32>)
+    ; AIE2P-NEXT: [[CONCAT_VECTORS6:%[0-9]+]]:_(<64 x s32>) = G_CONCAT_VECTORS [[CONCAT_VECTORS4]](<32 x s32>), [[CONCAT_VECTORS5]](<32 x s32>)
+    ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS6]](<64 x s32>)
+    ;
+    ; AIE2PS-LABEL: name: test_v64s32_v4s32
+    ; AIE2PS: [[DEF:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF1:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF2:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF3:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF4:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF5:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF6:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF7:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF8:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF9:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF10:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF11:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF12:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF13:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF14:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF15:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF]](<4 x s32>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF1:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF1]](<4 x s32>)
+    ; AIE2PS-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 34
+    ; AIE2PS-NEXT: [[AIE_SHUFFLE_VECTOR:%[0-9]+]]:_(<16 x s32>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF]], [[AIE_PAD_VECTOR_UNDEF1]], [[C]](s32)
+    ; AIE2PS-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR]](<16 x s32>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF2:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF2]](<4 x s32>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF3:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF3]](<4 x s32>)
+    ; AIE2PS-NEXT: [[AIE_SHUFFLE_VECTOR1:%[0-9]+]]:_(<16 x s32>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF2]], [[AIE_PAD_VECTOR_UNDEF3]], [[C]](s32)
+    ; AIE2PS-NEXT: [[AIE_UNPAD_VECTOR1:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR1]](<16 x s32>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF4:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF4]](<4 x s32>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF5:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF5]](<4 x s32>)
+    ; AIE2PS-NEXT: [[AIE_SHUFFLE_VECTOR2:%[0-9]+]]:_(<16 x s32>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF4]], [[AIE_PAD_VECTOR_UNDEF5]], [[C]](s32)
+    ; AIE2PS-NEXT: [[AIE_UNPAD_VECTOR2:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR2]](<16 x s32>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF6:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF6]](<4 x s32>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF7:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF7]](<4 x s32>)
+    ; AIE2PS-NEXT: [[AIE_SHUFFLE_VECTOR3:%[0-9]+]]:_(<16 x s32>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF6]], [[AIE_PAD_VECTOR_UNDEF7]], [[C]](s32)
+    ; AIE2PS-NEXT: [[AIE_UNPAD_VECTOR3:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR3]](<16 x s32>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF8:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF8]](<4 x s32>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF9:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF9]](<4 x s32>)
+    ; AIE2PS-NEXT: [[AIE_SHUFFLE_VECTOR4:%[0-9]+]]:_(<16 x s32>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF8]], [[AIE_PAD_VECTOR_UNDEF9]], [[C]](s32)
+    ; AIE2PS-NEXT: [[AIE_UNPAD_VECTOR4:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR4]](<16 x s32>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF10:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF10]](<4 x s32>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF11:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF11]](<4 x s32>)
+    ; AIE2PS-NEXT: [[AIE_SHUFFLE_VECTOR5:%[0-9]+]]:_(<16 x s32>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF10]], [[AIE_PAD_VECTOR_UNDEF11]], [[C]](s32)
+    ; AIE2PS-NEXT: [[AIE_UNPAD_VECTOR5:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR5]](<16 x s32>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF12:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF12]](<4 x s32>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF13:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF13]](<4 x s32>)
+    ; AIE2PS-NEXT: [[AIE_SHUFFLE_VECTOR6:%[0-9]+]]:_(<16 x s32>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF12]], [[AIE_PAD_VECTOR_UNDEF13]], [[C]](s32)
+    ; AIE2PS-NEXT: [[AIE_UNPAD_VECTOR6:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR6]](<16 x s32>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF14:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF14]](<4 x s32>)
+    ; AIE2PS-NEXT: [[AIE_PAD_VECTOR_UNDEF15:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[DEF15]](<4 x s32>)
+    ; AIE2PS-NEXT: [[AIE_SHUFFLE_VECTOR7:%[0-9]+]]:_(<16 x s32>) = G_AIE_SHUFFLE_VECTOR [[AIE_PAD_VECTOR_UNDEF14]], [[AIE_PAD_VECTOR_UNDEF15]], [[C]](s32)
+    ; AIE2PS-NEXT: [[AIE_UNPAD_VECTOR7:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_SHUFFLE_VECTOR7]](<16 x s32>)
+    ; AIE2PS-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR]](<8 x s32>), [[AIE_UNPAD_VECTOR1]](<8 x s32>)
+    ; AIE2PS-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR2]](<8 x s32>), [[AIE_UNPAD_VECTOR3]](<8 x s32>)
+    ; AIE2PS-NEXT: [[CONCAT_VECTORS2:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR4]](<8 x s32>), [[AIE_UNPAD_VECTOR5]](<8 x s32>)
+    ; AIE2PS-NEXT: [[CONCAT_VECTORS3:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[AIE_UNPAD_VECTOR6]](<8 x s32>), [[AIE_UNPAD_VECTOR7]](<8 x s32>)
+    ; AIE2PS-NEXT: [[CONCAT_VECTORS4:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[CONCAT_VECTORS]](<16 x s32>), [[CONCAT_VECTORS1]](<16 x s32>)
+    ; AIE2PS-NEXT: [[CONCAT_VECTORS5:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[CONCAT_VECTORS2]](<16 x s32>), [[CONCAT_VECTORS3]](<16 x s32>)
+    ; AIE2PS-NEXT: [[CONCAT_VECTORS6:%[0-9]+]]:_(<64 x s32>) = G_CONCAT_VECTORS [[CONCAT_VECTORS4]](<32 x s32>), [[CONCAT_VECTORS5]](<32 x s32>)
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS6]](<64 x s32>)
     %0:_(<4 x s32>) = G_IMPLICIT_DEF
     %1:_(<4 x s32>) = G_IMPLICIT_DEF
     %2:_(<4 x s32>) = G_IMPLICIT_DEF
