@@ -132,8 +132,6 @@ FuncUnitWrapper &FuncUnitWrapper::operator|=(const FuncUnitWrapper &Other) {
 }
 
 bool FuncUnitWrapper::conflict(const FuncUnitWrapper &Other) const {
-  // Load-Load and Store-Store conflicts are checked independently.
-  // Loads and stores don't conflict with each other on AIE (separate HW ports).
   if ((Slots & Other.Slots) != 0 || (MemoryBanks & Other.MemoryBanks) != 0 ||
       (LoadMemObjectsBits & Other.LoadMemObjectsBits) != 0 ||
       (StoreMemObjectsBits & Other.StoreMemObjectsBits) != 0 ||
@@ -801,10 +799,8 @@ unsigned AIEHazardRecognizer::computeScoreboardDepth() const {
 
 MemoryBankBits
 AIEHazardRecognizer::getMemoryBanks(const MachineInstr *MI) const {
-  // Bank tracking is load-only: stores cannot collide on banks because
-  // AIE has only one store slot per VLIW cycle, and load-vs-store uses separate
-  // HW ports.
-  if (!MI->mayLoad())
+  if (!MI->mayLoad() &&
+      !(BankPolicy == MemoryBankPolicy::LoadAndStore && MI->mayStore()))
     return 0;
 
   if (MI->memoperands_empty())

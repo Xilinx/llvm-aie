@@ -328,7 +328,7 @@ public:
   SmallVector<MachineInstr *, 8> BotFixedInstrs;
 
   void initInterBlock(const MachineSchedContext &Context,
-                      const AIEHazardRecognizer &HR);
+                      AIEHazardRecognizer &HR);
 
   // Concatenate Bundles to the current region
   void addBundles(const std::vector<MachineBundle> &Bundles) {

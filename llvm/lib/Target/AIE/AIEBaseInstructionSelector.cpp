@@ -265,6 +265,15 @@ bool AIEBaseInstructionSelector::selectBrCondLoopDecrementReg(
       MIB.buildInstr(JNZDSupport->MovBlockAddrOpcode, {BlockAddrReg}, {})
           .addMBB(DestMBB);
     }
+    // Stop branch folding from deleting DestMBB when it is empty. Deleting it
+    // would leave the address in BlockAddrReg pointing to a deleted block. It
+    // would also move the back edge to the header of an inner loop, merging
+    // both loops into one without a unique latch, which the hardware loop
+    // lowering rejects.
+    // TODO: The PC-relative form has no block address to keep valid. Its
+    // merged loops could instead be supported by the hardware loop lowering,
+    // which would then not need DestMBB to be kept.
+    DestMBB->setMachineBlockAddressTaken();
     auto LoopDec = MIB.buildInstr(JNZDSupport->LoopDecOpcode, {Args->NewLC},
                                   {Args->PrevLC});
     const unsigned JNZOpcode = UsePCRelTarget ? *JNZDSupport->LoopJNZPCRelOpcode

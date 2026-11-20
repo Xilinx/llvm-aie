@@ -89,7 +89,7 @@ define dso_local void @gemm(i32 %0, ptr addrspace(5) %1, ptr addrspace(5) %2, pt
 ; REMARKS-NEXT:   - Epilogue:        bb.3.steady.stage1.bottom.and.stage0.top
 ; REMARKS-NEXT:   - EpilogueBundles: '16'
 ; REMARKS-NEXT:   - VregMode:        Physical
-; REMARKS-NEXT:   - SchedHeuristic:  Config_16_1_0_NodeNum
+; REMARKS-NEXT:   - SchedHeuristic:  AvoidBankConflicts_Config_16_1_0_NodeNum
 ; REMARKS-NEXT: ...
 ; REMARKS: --- !Passed
 ; REMARKS-NEXT: Pass:            pipeliner
@@ -106,7 +106,7 @@ define dso_local void @gemm(i32 %0, ptr addrspace(5) %1, ptr addrspace(5) %2, pt
 ; REMARKS-NEXT:   - Epilogue:        bb.6.lastiter.stage1.bottom
 ; REMARKS-NEXT:   - EpilogueBundles: '19'
 ; REMARKS-NEXT:   - VregMode:        Physical
-; REMARKS-NEXT:   - SchedHeuristic:  Config_16_1_0_NodeNum
+; REMARKS-NEXT:   - SchedHeuristic:  AvoidBankConflicts_Config_16_1_0_NodeNum
 ; REMARKS-NEXT: ...
 ; ASM-LABEL: gemm:
 ; ASM:       // %bb.0: // %newFuncRoot
@@ -145,7 +145,8 @@ define dso_local void @gemm(i32 %0, ptr addrspace(5) %1, ptr addrspace(5) %2, pt
 ; ASM-NEXT:    vlda.ups.2x cmh1, s0, upssign1, [p2], #64; movs dc4, dc0; movx r12, #776; mov s1, r17
 ; ASM-NEXT:    vlda.ups.2x cml0, s0, upssign1, [p2], #64; vldb.3d x8, [p0], d0; or r10, r5, r5; vshuffle x8, x10, x10, r3
 ; ASM-NEXT:    vlda.ups.2x cmh0, s0, upssign1, [p2], #64; movs dc3, dc2; movx crsrsmode, #0; vshuffle x10, x8, x8, r4
-; ASM-NEXT:  .LBB0_1: // %steady.stage1.top
+; ASM-NEXT:  .LBB0_1: // Block address taken
+; ASM-NEXT:    // %steady.stage1.top
 ; ASM-NEXT:    // =>This Loop Header: Depth=1
 ; ASM-NEXT:    // Child Loop BB0_2 Depth 2
 ; ASM-NEXT:    vldb x1, [p1], m4; nopx
@@ -269,7 +270,8 @@ define dso_local void @gemm(i32 %0, ptr addrspace(5) %1, ptr addrspace(5) %2, pt
 ; NO-PROLOGUE-SPLIT-NEXT:    movs dc4, dc6; movx crsrsmode, #0; mov s1, r17; vaddmac dm0, dm0, dm4, x1, x8, r10
 ; NO-PROLOGUE-SPLIT-NEXT:    vldb x1, [p1], m4
 ; NO-PROLOGUE-SPLIT-NEXT:    vlda.3d x10, [p1], d1
-; NO-PROLOGUE-SPLIT-NEXT:  .LBB0_1: // %steady.stage1.top
+; NO-PROLOGUE-SPLIT-NEXT:  .LBB0_1: // Block address taken
+; NO-PROLOGUE-SPLIT-NEXT:    // %steady.stage1.top
 ; NO-PROLOGUE-SPLIT-NEXT:    // =>This Loop Header: Depth=1
 ; NO-PROLOGUE-SPLIT-NEXT:    // Child Loop BB0_2 Depth 2
 ; NO-PROLOGUE-SPLIT-NEXT:    vldb x8, [p0], #64

@@ -118,7 +118,7 @@ define weak_odr dso_local void @gemm_int8_opt_32_8_8(ptr noalias nonnull align 4
 ; REMARKS-NEXT:   - Epilogue:        bb.4.steady.stage1.bottom.and.stage0.top
 ; REMARKS-NEXT:   - EpilogueBundles: '16'
 ; REMARKS-NEXT:   - VregMode:        Physical
-; REMARKS-NEXT:   - SchedHeuristic:  Config_16_1_0_NodeNum
+; REMARKS-NEXT:   - SchedHeuristic:  AvoidBankConflicts_Config_16_1_0_NodeNum
 ; REMARKS-NEXT: ...
 ; REMARKS: --- !Passed
 ; REMARKS-NEXT: Pass:            pipeliner
@@ -135,7 +135,7 @@ define weak_odr dso_local void @gemm_int8_opt_32_8_8(ptr noalias nonnull align 4
 ; REMARKS-NEXT:   - Epilogue:        bb.11.lastiter.stage1.bottom
 ; REMARKS-NEXT:   - EpilogueBundles: '16'
 ; REMARKS-NEXT:   - VregMode:        Physical
-; REMARKS-NEXT:   - SchedHeuristic:  Config_16_1_0_NodeNum
+; REMARKS-NEXT:   - SchedHeuristic:  AvoidBankConflicts_Config_16_1_0_NodeNum
 ; REMARKS-NEXT: ...
 ; REMARKS: --- !Passed
 ; REMARKS-NEXT: Pass:            pipeliner
@@ -152,7 +152,7 @@ define weak_odr dso_local void @gemm_int8_opt_32_8_8(ptr noalias nonnull align 4
 ; REMARKS-NEXT:   - Epilogue:        bb.8.steady.stage1.bottom.and.stage0.top258
 ; REMARKS-NEXT:   - EpilogueBundles: '20'
 ; REMARKS-NEXT:   - VregMode:        Physical
-; REMARKS-NEXT:   - SchedHeuristic:  Config_16_1_0_NodeNum
+; REMARKS-NEXT:   - SchedHeuristic:  AvoidBankConflicts_Config_16_1_0_NodeNum
 ; REMARKS-NEXT: ...
 ; REMARKS: --- !Passed
 ; REMARKS-NEXT: Pass:            pipeliner
@@ -169,7 +169,7 @@ define weak_odr dso_local void @gemm_int8_opt_32_8_8(ptr noalias nonnull align 4
 ; REMARKS-NEXT:   - Epilogue:        bb.14.lastiter.stage1.bottom431
 ; REMARKS-NEXT:   - EpilogueBundles: '20'
 ; REMARKS-NEXT:   - VregMode:        Physical
-; REMARKS-NEXT:   - SchedHeuristic:  Config_16_1_0_NodeNum
+; REMARKS-NEXT:   - SchedHeuristic:  AvoidBankConflicts_Config_16_1_0_NodeNum
 ; REMARKS-NEXT: ...
 ; ASM-LABEL: gemm_int8_opt_32_8_8:
 ; ASM:       // %bb.0: // %entry
@@ -261,7 +261,8 @@ define weak_odr dso_local void @gemm_int8_opt_32_8_8(ptr noalias nonnull align 4
 ; ASM-NEXT:    vldb x10, [p0], #64; vmul dm4, x0, x3, r8
 ; ASM-NEXT:    vldb.3d x8, [p0], d0
 ; ASM-NEXT:    vldb x6, [p3], m4; vaddmac dm3, dm3, dm4, x8, x1, r12
-; ASM-NEXT:  .LBB0_2: // %steady.stage1.top
+; ASM-NEXT:  .LBB0_2: // Block address taken
+; ASM-NEXT:    // %steady.stage1.top
 ; ASM-NEXT:    // =>This Loop Header: Depth=1
 ; ASM-NEXT:    // Child Loop BB0_3 Depth 2
 ; ASM-NEXT:    vlda.3d x4, [p1], d1; vldb x1, [p0], #64; nops ; nopxm ; vaddmac dm2, dm2, dm4, x6, x1, r12
@@ -370,7 +371,8 @@ define weak_odr dso_local void @gemm_int8_opt_32_8_8(ptr noalias nonnull align 4
 ; ASM-NEXT:    vlda.3d x4, [p1], d1; vldb x1, [p0], #64; vaddmac dm2, dm2, dm4, x6, x1, r12
 ; ASM-NEXT:    vldb x10, [p0], #64; vaddmac dm1, dm1, dm4, x10, x1, r12
 ; ASM-NEXT:    nopa ; vldb.3d x8, [p0], d0; nops ; add.nc lc, r4, #-3; nopm ; vaddmac dm0, dm0, dm4, x4, x1, r12
-; ASM-NEXT:  .LBB0_9: // %steady.stage1.top257
+; ASM-NEXT:  .LBB0_9: // Block address taken
+; ASM-NEXT:    // %steady.stage1.top257
 ; ASM-NEXT:    // =>This Loop Header: Depth=1
 ; ASM-NEXT:    // Child Loop BB0_10 Depth 2
 ; ASM-NEXT:    nopa ; vldb x6, [p7], m3; nops ; add.nc ls, pc, #.LBB0_10; vshuffle x3, x4, x4, r0; nopv

@@ -16,36 +16,36 @@
 
 --- |
   define void @cntr_read_at_steady_top() {
-  entry:
-    br label %for.body
-  for.body:
-    br label %for.body100
-  for.body100:
-    br i1 true, label %for.body100, label %for.cond.cleanup99, !llvm.loop !0
-  for.cond.cleanup99:
-    br i1 true, label %for.body, label %cooldown.entry, !llvm.loop !3
-  cooldown.entry:
-    br label %for.body100.cd
-  for.body100.cd:
-    br i1 true, label %for.body100.cd, label %cooldown.exit, !llvm.loop !0
-  cooldown.exit:
+  outer_preheader:
+    br label %steady_top
+  steady_top:
+    br label %steady_inner
+  steady_inner:
+    br i1 true, label %steady_inner, label %steady_bottom, !llvm.loop !0
+  steady_bottom:
+    br i1 true, label %steady_top, label %last_iter_top, !llvm.loop !3
+  last_iter_top:
+    br label %last_iter_inner
+  last_iter_inner:
+    br i1 true, label %last_iter_inner, label %last_iter_bottom, !llvm.loop !0
+  last_iter_bottom:
     ret void
   }
 
   define void @cntr_read_at_peeled_top() {
-  entry:
-    br label %for.body
-  for.body:
-    br label %for.body100
-  for.body100:
-    br i1 true, label %for.body100, label %for.cond.cleanup99, !llvm.loop !0
-  for.cond.cleanup99:
-    br i1 true, label %for.body, label %cooldown.entry, !llvm.loop !3
-  cooldown.entry:
-    br label %for.body100.cd
-  for.body100.cd:
-    br i1 true, label %for.body100.cd, label %cooldown.exit, !llvm.loop !0
-  cooldown.exit:
+  outer_preheader:
+    br label %steady_top
+  steady_top:
+    br label %steady_inner
+  steady_inner:
+    br i1 true, label %steady_inner, label %steady_bottom, !llvm.loop !0
+  steady_bottom:
+    br i1 true, label %steady_top, label %last_iter_top, !llvm.loop !3
+  last_iter_top:
+    br label %last_iter_inner
+  last_iter_inner:
+    br i1 true, label %last_iter_inner, label %last_iter_bottom, !llvm.loop !0
+  last_iter_bottom:
     ret void
   }
 
@@ -68,10 +68,10 @@ isSSA:           false
 noVRegs:         true
 body:             |
   ; CHECK-LABEL: name: cntr_read_at_steady_top
-  ; CHECK: bb.0.entry:
+  ; CHECK: bb.0.outer_preheader:
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.1.for.body:
+  ; CHECK-NEXT: bb.1.steady_top:
   ; CHECK-NEXT:   successors: %bb.2(0x80000000)
   ; CHECK-NEXT:   liveins: $dm0:0x000000030000000C, $dm1:0x000000030000000C, $dm2:0x000000030000000C, $dm3:0x000000030000000C, $r10, $r12, $r28, $x0, $x1, $x2, $x4, $x6, $x8, $x10
   ; CHECK-NEXT: {{  $}}
@@ -102,7 +102,7 @@ body:             |
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   renamable $x5 = VSHUFFLE_vec_shuffle_x killed renamable $x3, undef renamable $x3, renamable $r4
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.2.for.body100:
+  ; CHECK-NEXT: bb.2.steady_inner:
   ; CHECK-NEXT:   successors: %bb.2(0x7c000000), %bb.3(0x04000000)
   ; CHECK-NEXT:   liveins: $m3, $p1, $r2, $r4, $r6, $d1_3d:0x3800000040001C00
   ; CHECK-NEXT: {{  $}}
@@ -117,7 +117,7 @@ body:             |
   ; CHECK-NEXT:   renamable $x5 = VSHUFFLE_vec_shuffle_x killed renamable $x3, undef renamable $x3, renamable $r4
   ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd1>, %bb.2
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.3.for.cond.cleanup99:
+  ; CHECK-NEXT: bb.3.steady_bottom:
   ; CHECK-NEXT:   successors: %bb.1(0x7c000000), %bb.4(0x04000000)
   ; CHECK-NEXT:   liveins: $p5, $r30
   ; CHECK-NEXT: {{  $}}
@@ -133,7 +133,7 @@ body:             |
   ; CHECK-NEXT:   renamable $x7 = VSHUFFLE_vec_shuffle_x renamable $x10, undef renamable $x10, killed renamable $r6
   ; CHECK-NEXT:   DelayedSchedBarrier
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.4.cooldown.entry:
+  ; CHECK-NEXT: bb.4.last_iter_top:
   ; CHECK-NEXT:   successors: %bb.5(0x80000000)
   ; CHECK-NEXT:   liveins: $dm0:0x000000030000000C, $dm1:0x000000030000000C, $dm2:0x000000030000000C, $dm3:0x000000030000000C, $r10, $r12, $r28, $x0, $x1, $x2, $x4, $x6, $x8, $x10
   ; CHECK-NEXT: {{  $}}
@@ -168,7 +168,7 @@ body:             |
   ; CHECK-NEXT:     $x3 = VSHUFFLE_vec_shuffle_x killed $x1, undef $x1, renamable $r2
   ; CHECK-NEXT:   }
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.5.for.body100.cd:
+  ; CHECK-NEXT: bb.5.last_iter_inner:
   ; CHECK-NEXT:   successors: %bb.5(0x7c000000), %bb.6(0x04000000)
   ; CHECK-NEXT:   liveins: $m3, $p0, $p1, $r2, $r4, $d0_3d:0x3800000040001C00, $d1_3d:0x3800000040001C00
   ; CHECK-NEXT: {{  $}}
@@ -184,7 +184,7 @@ body:             |
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.5
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.6.cooldown.exit:
+  ; CHECK-NEXT: bb.6.last_iter_bottom:
   ; CHECK-NEXT:   $x5 = VSHUFFLE_vec_shuffle_x killed $x3, undef $x3, renamable $r4
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
@@ -192,11 +192,11 @@ body:             |
   ; CHECK-NEXT:   $x5 = VSHUFFLE_vec_shuffle_x killed $x3, undef $x3, killed renamable $r4
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   DelayedSchedBarrier
-  bb.0.entry:
+  bb.0.outer_preheader:
     successors: %bb.1(0x80000000)
 
 
-  bb.1.for.body:
+  bb.1.steady_top:
     successors: %bb.2(0x80000000)
     liveins: $dm0:0x000000030000000C, $dm1:0x000000030000000C, $dm2:0x000000030000000C, $dm3:0x000000030000000C, $r10, $r12, $r28, $x0, $x1, $x2, $x4, $x6, $x8, $x10
 
@@ -209,7 +209,7 @@ body:             |
     renamable $dm0 = VADDMAC_vaddmac_vmul_cm_core_X_X killed renamable $dm0, killed renamable $dm4, killed renamable $x8, killed renamable $x1, renamable $r10
     $lc = ADD_NC_add_lc_ri $r28, 0
 
-  bb.2.for.body100:
+  bb.2.steady_inner:
     successors: %bb.2(0x7c000000), %bb.3(0x04000000)
     liveins: $m3, $p1, $r2, $r4, $r6, $d1_3d:0x3800000040001C00
 
@@ -220,14 +220,14 @@ body:             |
     renamable $x7 = VSHUFFLE_vec_shuffle_x killed renamable $x10, undef renamable $x10, renamable $r6
     PseudoLoopEnd <mcsymbol .L_LEnd1>, %bb.2
 
-  bb.3.for.cond.cleanup99:
+  bb.3.steady_bottom:
     successors: %bb.1(0x7c000000), %bb.4(0x04000000)
     liveins: $p5, $r30
 
     $r3 = JNZD $r30, $p5, implicit-def $srcarry
     DelayedSchedBarrier
 
-  bb.4.cooldown.entry:
+  bb.4.last_iter_top:
     successors: %bb.5(0x80000000)
     liveins: $dm0:0x000000030000000C, $dm1:0x000000030000000C, $dm2:0x000000030000000C, $dm3:0x000000030000000C, $r10, $r12, $r28, $x0, $x1, $x2, $x4, $x6, $x8, $x10
 
@@ -239,7 +239,7 @@ body:             |
     renamable $dm0 = VADDMAC_vaddmac_vmul_cm_core_X_X killed renamable $dm0, killed renamable $dm4, killed renamable $x8, killed renamable $x1, killed renamable $r10
     $lc = ADD_NC_add_lc_ri $r28, 0
 
-  bb.5.for.body100.cd:
+  bb.5.last_iter_inner:
     successors: %bb.5(0x7c000000), %bb.6(0x04000000)
     liveins: $m3, $p0, $p1, $r2, $r4, $d0_3d:0x3800000040001C00, $d1_3d:0x3800000040001C00
 
@@ -251,7 +251,7 @@ body:             |
     renamable $x5 = VSHUFFLE_vec_shuffle_x killed renamable $x3, undef renamable $x3, renamable $r4
     PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.5
 
-  bb.6.cooldown.exit:
+  bb.6.last_iter_bottom:
 
     DelayedSchedBarrier
 ...
@@ -267,10 +267,10 @@ isSSA:           false
 noVRegs:         true
 body:             |
   ; CHECK-LABEL: name: cntr_read_at_peeled_top
-  ; CHECK: bb.0.entry:
+  ; CHECK: bb.0.outer_preheader:
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.1.for.body:
+  ; CHECK-NEXT: bb.1.steady_top:
   ; CHECK-NEXT:   successors: %bb.2(0x80000000)
   ; CHECK-NEXT:   liveins: $dm0:0x000000030000000C, $dm1:0x000000030000000C, $dm2:0x000000030000000C, $dm3:0x000000030000000C, $r10, $r12, $r28, $x0, $x1, $x2, $x4, $x6, $x8, $x10
   ; CHECK-NEXT: {{  $}}
@@ -300,7 +300,7 @@ body:             |
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   renamable $x5 = VSHUFFLE_vec_shuffle_x killed renamable $x3, undef renamable $x3, renamable $r4
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.2.for.body100:
+  ; CHECK-NEXT: bb.2.steady_inner:
   ; CHECK-NEXT:   successors: %bb.2(0x7c000000), %bb.3(0x04000000)
   ; CHECK-NEXT:   liveins: $m3, $p1, $r2, $r4, $r6, $d1_3d:0x3800000040001C00
   ; CHECK-NEXT: {{  $}}
@@ -315,7 +315,7 @@ body:             |
   ; CHECK-NEXT:   renamable $x5 = VSHUFFLE_vec_shuffle_x killed renamable $x3, undef renamable $x3, renamable $r4
   ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd1>, %bb.2
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.3.for.cond.cleanup99:
+  ; CHECK-NEXT: bb.3.steady_bottom:
   ; CHECK-NEXT:   successors: %bb.1(0x7c000000), %bb.4(0x04000000)
   ; CHECK-NEXT:   liveins: $p5, $r30
   ; CHECK-NEXT: {{  $}}
@@ -331,7 +331,7 @@ body:             |
   ; CHECK-NEXT:   renamable $x7 = VSHUFFLE_vec_shuffle_x renamable $x10, undef renamable $x10, killed renamable $r6
   ; CHECK-NEXT:   DelayedSchedBarrier
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.4.cooldown.entry:
+  ; CHECK-NEXT: bb.4.last_iter_top:
   ; CHECK-NEXT:   successors: %bb.5(0x80000000)
   ; CHECK-NEXT:   liveins: $dm0:0x000000030000000C, $dm1:0x000000030000000C, $dm2:0x000000030000000C, $dm3:0x000000030000000C, $r10, $r12, $r28, $x0, $x1, $x2, $x4, $x6, $x8, $x10
   ; CHECK-NEXT: {{  $}}
@@ -367,7 +367,7 @@ body:             |
   ; CHECK-NEXT:     $x3 = VSHUFFLE_vec_shuffle_x killed $x1, undef $x1, renamable $r2
   ; CHECK-NEXT:   }
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.5.for.body100.cd:
+  ; CHECK-NEXT: bb.5.last_iter_inner:
   ; CHECK-NEXT:   successors: %bb.5(0x7c000000), %bb.6(0x04000000)
   ; CHECK-NEXT:   liveins: $m3, $p0, $p1, $r2, $r4, $d0_3d:0x3800000040001C00, $d1_3d:0x3800000040001C00
   ; CHECK-NEXT: {{  $}}
@@ -383,7 +383,7 @@ body:             |
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.5
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.6.cooldown.exit:
+  ; CHECK-NEXT: bb.6.last_iter_bottom:
   ; CHECK-NEXT:   $x5 = VSHUFFLE_vec_shuffle_x killed $x3, undef $x3, renamable $r4
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
@@ -391,11 +391,11 @@ body:             |
   ; CHECK-NEXT:   $x5 = VSHUFFLE_vec_shuffle_x killed $x3, undef $x3, killed renamable $r4
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   DelayedSchedBarrier
-  bb.0.entry:
+  bb.0.outer_preheader:
     successors: %bb.1(0x80000000)
 
 
-  bb.1.for.body:
+  bb.1.steady_top:
     successors: %bb.2(0x80000000)
     liveins: $dm0:0x000000030000000C, $dm1:0x000000030000000C, $dm2:0x000000030000000C, $dm3:0x000000030000000C, $r10, $r12, $r28, $x0, $x1, $x2, $x4, $x6, $x8, $x10
 
@@ -407,7 +407,7 @@ body:             |
     renamable $dm0 = VADDMAC_vaddmac_vmul_cm_core_X_X killed renamable $dm0, killed renamable $dm4, killed renamable $x8, killed renamable $x1, renamable $r10
     $lc = ADD_NC_add_lc_ri $r28, 0
 
-  bb.2.for.body100:
+  bb.2.steady_inner:
     successors: %bb.2(0x7c000000), %bb.3(0x04000000)
     liveins: $m3, $p1, $r2, $r4, $r6, $d1_3d:0x3800000040001C00
 
@@ -418,14 +418,14 @@ body:             |
     renamable $x7 = VSHUFFLE_vec_shuffle_x killed renamable $x10, undef renamable $x10, renamable $r6
     PseudoLoopEnd <mcsymbol .L_LEnd1>, %bb.2
 
-  bb.3.for.cond.cleanup99:
+  bb.3.steady_bottom:
     successors: %bb.1(0x7c000000), %bb.4(0x04000000)
     liveins: $p5, $r30
 
     $r3 = JNZD $r30, $p5, implicit-def $srcarry
     DelayedSchedBarrier
 
-  bb.4.cooldown.entry:
+  bb.4.last_iter_top:
     successors: %bb.5(0x80000000)
     liveins: $dm0:0x000000030000000C, $dm1:0x000000030000000C, $dm2:0x000000030000000C, $dm3:0x000000030000000C, $r10, $r12, $r28, $x0, $x1, $x2, $x4, $x6, $x8, $x10
 
@@ -438,7 +438,7 @@ body:             |
     renamable $dm0 = VADDMAC_vaddmac_vmul_cm_core_X_X killed renamable $dm0, killed renamable $dm4, killed renamable $x8, killed renamable $x1, killed renamable $r10
     $lc = ADD_NC_add_lc_ri $r28, 0
 
-  bb.5.for.body100.cd:
+  bb.5.last_iter_inner:
     successors: %bb.5(0x7c000000), %bb.6(0x04000000)
     liveins: $m3, $p0, $p1, $r2, $r4, $d0_3d:0x3800000040001C00, $d1_3d:0x3800000040001C00
 
@@ -450,7 +450,7 @@ body:             |
     renamable $x5 = VSHUFFLE_vec_shuffle_x killed renamable $x3, undef renamable $x3, renamable $r4
     PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.5
 
-  bb.6.cooldown.exit:
+  bb.6.last_iter_bottom:
 
     DelayedSchedBarrier
 ...

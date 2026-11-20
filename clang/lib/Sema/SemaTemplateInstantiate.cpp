@@ -3,6 +3,10 @@
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===/
 //
 //  This file implements C++ template instantiation.
@@ -2197,7 +2201,13 @@ const GenericLoopHintAttr *TemplateInstantiator::TransformGenericLoopHintAttr(
   if (!ValueExpr)
     return Hint;
 
-  ExprResult TransformedExpr = getDerived().TransformExpr(ValueExpr);
+  // Instantiate the value as the constant expression it was parsed as.
+  // Otherwise a reference to a constexpr local of an enclosing function is
+  // treated as an odr-use, which a lambda being instantiated cannot capture.
+  EnterExpressionEvaluationContext ConstantEvaluated(
+      getSema(), Sema::ExpressionEvaluationContext::ConstantEvaluated);
+  ExprResult TransformedExpr =
+      getSema().ActOnConstantExpression(getDerived().TransformExpr(ValueExpr));
   // Substitution failed; the error is already diagnosed elsewhere.
   if (!TransformedExpr.isUsable())
     return Hint;
@@ -2218,35 +2228,41 @@ const GenericLoopHintAttr *TemplateInstantiator::TransformGenericLoopHintAttr(
 
 const LoopHintAttr *
 TemplateInstantiator::TransformLoopHintAttr(const LoopHintAttr *LH) {
-  Expr *TransformedExpr = getDerived().TransformExpr(LH->getValue()).get();
+  // See TransformGenericLoopHintAttr.
+  EnterExpressionEvaluationContext ConstantEvaluated(
+      getSema(), Sema::ExpressionEvaluationContext::ConstantEvaluated);
+  Expr *TransformedExpr =
+      getSema()
+          .ActOnConstantExpression(getDerived().TransformExpr(LH->getValue()))
+          .get();
 
   if (TransformedExpr == LH->getValue())
-    return LH;
-
-  // Generate error if there is a problem with the value.
-  if (getSema().CheckLoopHintExpr(TransformedExpr, LH->getLocation(),
-                                  /*AllowZero=*/LH->getSemanticSpelling() ==
-                                      LoopHintAttr::Pragma_unroll))
     return LH;
 
   LoopHintAttr::OptionType Option = LH->getOption();
   LoopHintAttr::LoopHintState State = LH->getState();
 
-  // Since C++ does not have partial instantiation, we would expect a
-  // transformed loop hint expression to not be value dependent.  However, at
-  // the time of writing, the use of a generic lambda inside a template
-  // triggers a double instantiation, so we must protect against this event.
-  // This provision may become unneeded in the future.
+  // Generate error if there is a problem with the value.
+  if (getSema().CheckLoopHintExpr(
+          TransformedExpr, LH->getLocation(),
+          LH->getSemanticSpelling() == LoopHintAttr::Pragma_unroll ||
+              Option == LoopHintAttr::MinIterationCount ||
+              Option == LoopHintAttr::MaxIterationCount))
+    return LH;
+
+  // A template lambda inside a template is transformed once per enclosing
+  // instantiation, while its own parameters are still unknown.
+  if (TransformedExpr->isValueDependent())
+    return LoopHintAttr::CreateImplicit(getSema().Context, Option, State,
+                                        TransformedExpr, *LH);
+
+  llvm::APSInt ValueAPS =
+      TransformedExpr->EvaluateKnownConstInt(getSema().getASTContext());
+  // The values of 0 and 1 block any unrolling of the loop.
   if (Option == LoopHintAttr::UnrollCount &&
-      !TransformedExpr->isValueDependent()) {
-    llvm::APSInt ValueAPS =
-        TransformedExpr->EvaluateKnownConstInt(getSema().getASTContext());
-    // The values of 0 and 1 block any unrolling of the loop (also see
-    // handleLoopHintAttr in SemaStmtAttr).
-    if (ValueAPS.isZero() || ValueAPS.isOne()) {
-      Option = LoopHintAttr::Unroll;
-      State = LoopHintAttr::Disable;
-    }
+      (ValueAPS.isZero() || ValueAPS.isOne())) {
+    Option = LoopHintAttr::Unroll;
+    State = LoopHintAttr::Disable;
   }
 
   // Create new LoopHintValueAttr with integral expression in place of the

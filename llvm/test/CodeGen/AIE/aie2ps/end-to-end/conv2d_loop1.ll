@@ -82,7 +82,7 @@ define dso_local void @conv2d.for.body.i(i32 %0, ptr %add.ptr.i.i, ptr %add.ptr4
 ; REMARKS-NEXT:   - Epilogue:        bb.3.steady.stage1.bottom.and.stage0.top
 ; REMARKS-NEXT:   - EpilogueBundles: '19'
 ; REMARKS-NEXT:   - VregMode:        Physical
-; REMARKS-NEXT:   - SchedHeuristic:  Config_20_1_0_NodeNum
+; REMARKS-NEXT:   - SchedHeuristic:  AvoidBankConflicts_Config_20_1_0_NodeNum
 ; REMARKS-NEXT: ...
 ; REMARKS: --- !Passed
 ; REMARKS-NEXT: Pass:            pipeliner
@@ -99,7 +99,7 @@ define dso_local void @conv2d.for.body.i(i32 %0, ptr %add.ptr.i.i, ptr %add.ptr4
 ; REMARKS-NEXT:   - Epilogue:        bb.6.lastiter.stage1.bottom
 ; REMARKS-NEXT:   - EpilogueBundles: '17'
 ; REMARKS-NEXT:   - VregMode:        Physical
-; REMARKS-NEXT:   - SchedHeuristic:  Config_20_1_0_NodeNum
+; REMARKS-NEXT:   - SchedHeuristic:  AvoidBankConflicts_Config_20_1_0_NodeNum
 ; REMARKS-NEXT: ...
 ; ASM-LABEL: conv2d.for.body.i:
 ; ASM:       // %bb.0: // %newFuncRoot
@@ -144,7 +144,8 @@ define dso_local void @conv2d.for.body.i(i32 %0, ptr %add.ptr.i.i, ptr %add.ptr4
 ; ASM-NEXT:    vlda.3d x6, [p0], d0; and r0, r0, r2
 ; ASM-NEXT:    vldb x4, [p7], #64; vmul dm4, x0, x8, r12
 ; ASM-NEXT:    vlda x2, [p7], #64; add r30, r0, #1
-; ASM-NEXT:  .LBB0_1: // %steady.stage1.top
+; ASM-NEXT:  .LBB0_1: // Block address taken
+; ASM-NEXT:    // %steady.stage1.top
 ; ASM-NEXT:    // =>This Loop Header: Depth=1
 ; ASM-NEXT:    // Child Loop BB0_2 Depth 2
 ; ASM-NEXT:    nopx ; vaddmac dm3, dm3, dm4, x7, x1, r10

@@ -69,5 +69,6 @@ exit:
 
 declare <32 x float> @llvm.aie2p.I512.I512.ACC1024.bf.mac.conf(<32 x bfloat>, <32 x bfloat>, <32 x float>, i32)
 
-!0 = distinct !{!0, !1}
+!0 = distinct !{!0, !1, !2}
 !1 = !{!"llvm.loop.itercount.range", i64 1}
+!2 = !{!"llvm.loop.hint.enable-aie-hardware-loops", i64 0}

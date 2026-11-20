@@ -54,15 +54,11 @@ static cl::opt<bool> AllowAIEJNZD(
              "JNZD when ZOL is disabled, whatever this option says"),
     cl::init(true), cl::Hidden);
 
-/// We currently override MinIterCountHLReject == 1 to
-/// a) remove loop guards and
-/// b) disable HW loop generation
-/// todo: separate loop guard removal from disabling HW Loops.
-/// Note: Any Itercount provided by the user > 0 removes the loop guard in the
-/// middle-end.
-static cl::opt<int> MinIterCountHLReject(
-    "aie-hardware-loops-minitercount", cl::Hidden, cl::init(1),
-    cl::desc("Minimum trip count threshold for HL rejection"));
+static cl::opt<int>
+    MinIterCountHL("aie-hardware-loops-minitercount", cl::Hidden, cl::init(1),
+                   cl::desc("Smallest declared minimum trip count of a "
+                            "hardware loop. A loop opts out on its own with "
+                            "AIE_LOOP_HINT(enable-aie-hardware-loops, 0)"));
 
 static cl::opt<bool>
     ForceHLGeneration("aie-force-hl-gen", cl::Hidden, cl::init(false),
@@ -335,7 +331,9 @@ bool AIETTICommon::isHardwareLoopProfitable(
     Loop *L, ScalarEvolution &SE, AssumptionCache &AC,
     TargetLibraryInfo *LibInfo, HardwareLoopInfo &HWLoopInfo) const {
 
-  if (!EnableAIEHardwareLoops) {
+  // Per loop: AIE_LOOP_HINT(enable-aie-hardware-loops, 0).
+  const AIE::LoopOptionOverrides Overrides(L->getLoopID());
+  if (!Overrides.get(EnableAIEHardwareLoops)) {
     LLVM_DEBUG(dbgs() << "AIE Loops: Disabled\n");
     return false;
   }
@@ -361,7 +359,6 @@ bool AIETTICommon::isHardwareLoopProfitable(
   // and carries no such restriction, which is what lets a multi-block loop
   // become a hardware loop at all.
   if (L->getNumBlocks() > 1) {
-    const AIE::LoopOptionOverrides Overrides(L->getLoopID());
     if (!Overrides.get(AllowAIEJNZD) || !allowMultiBlockHardwareLoops()) {
       LLVM_DEBUG(dbgs() << "AIE Loops: Multi-block loop, JNZD loops "
                            "unavailable\n");
@@ -395,9 +392,10 @@ bool AIETTICommon::isHardwareLoopProfitable(
 
   if (!ForceHLGeneration) {
     std::optional<int64_t> MinTripCount = getMinTripCount(L, &SE);
-    if (MinTripCount) {
+    // A minimum of 0 promises nothing: the loop keeps its zero-trip guard.
+    if (MinTripCount && *MinTripCount > 0) {
       // Reject HL for this case.
-      if (*MinTripCount <= MinIterCountHLReject) {
+      if (*MinTripCount < MinIterCountHL) {
         return false;
       }
     } else if (!EnableZOLForLoopsWithoutMinIterCount) {

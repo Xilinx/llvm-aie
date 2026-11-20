@@ -1,0 +1,108 @@
+# NOTE: Test for AIERegDefUseTracker - sibling sub-register uses of a super-register def
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+
+# RUN: llc -verify-machineinstrs --mtriple=aie2ps -O2 \
+# RUN:   --start-before=postmisched %s \
+# RUN:   --debug-only=aie-reg-liverange \
+# RUN:   --aie-test-regdefuse-tracker \
+# RUN:   -o /dev/null 2>&1 | FileCheck %s
+# REQUIRES: asserts
+
+# Pattern (forward program order):
+#   dm1  = VADD dm3, dm4        ; (A) full def of dm1
+#   dm5  = VADD dm1, dm4        ; full read of dm1
+#   x2   = VSRS cml1            ; read of the low half of dm1
+#   x3   = VSRS cmh1            ; read of the high half of dm1
+#   dm1  = VADD dm3, dm4        ; (B) full redef of dm1, kills all lanes
+#
+# The reads of cmh1, cml1, and dm1 all belong to (A)'s live range. (B) is a
+# separate dm1 range with no uses. Every other final range is listed below:
+# crSRSMode is only an implicit use, and dm5, x2, and x3 are the values those
+# reads produce.
+# CHECK-LABEL: FINAL LIVE RANGES
+# CHECK-NEXT:  ================================
+# CHECK-NEXT:  Total live ranges: 6
+# CHECK-EMPTY:
+# CHECK-NEXT:  Live Range #{{[0-9]+}} for crSRSMode:
+# CHECK-NEXT:    Definitions (0):
+# CHECK-NEXT:    Uses (2):
+# CHECK-NEXT:      [0] Register: crSRSMode $x3 = VSRS_2x_mv_x_srs_cm_srsSign1 $cmh1, $s1, implicit-def dead $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+# CHECK-NEXT:      [1] Register: crSRSMode $x2 = VSRS_2x_mv_x_srs_cm_srsSign1 $cml1, $s1, implicit-def dead $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+# CHECK-EMPTY:
+# (A) full def of dm1, read as cmh1, cml1, and dm1.
+# CHECK-NEXT:  Live Range #{{[0-9]+}} for dm1:
+# CHECK-NEXT:    Definitions (1):
+# CHECK-NEXT:      [0] Register: dm1 renamable $dm1 = VADD_f_vacc_fp renamable $dm3, renamable $dm4, renamable $r8, implicit-def dead $srfpflags, implicit $crfpmask
+# CHECK-NEXT:    Uses (3):
+# CHECK-NEXT:      [0] Register: cmh1 (SubRegIdx: 9) $x3 = VSRS_2x_mv_x_srs_cm_srsSign1 $cmh1, $s1, implicit-def dead $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+# CHECK-NEXT:      [1] Register: cml1 (SubRegIdx: 10) $x2 = VSRS_2x_mv_x_srs_cm_srsSign1 $cml1, $s1, implicit-def dead $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+# CHECK-NEXT:      [2] Register: dm1 renamable $dm5 = VADD_f_vacc_fp renamable $dm1, renamable $dm4, renamable $r8, implicit-def dead $srfpflags, implicit $crfpmask
+# CHECK-EMPTY:
+# (B) is not merged into (A) because it kills every lane. It has no uses
+# because nothing uses it afterwards.
+# CHECK-NEXT:  Live Range #{{[0-9]+}} for dm1:
+# CHECK-NEXT:    Definitions (1):
+# CHECK-NEXT:      [0] Register: dm1 renamable $dm1 = VADD_f_vacc_fp renamable $dm3, renamable $dm4, renamable $r8, implicit-def dead $srfpflags, implicit $crfpmask
+# CHECK-NEXT:    Uses (0):
+# CHECK-EMPTY:
+# CHECK-NEXT:  Live Range #{{[0-9]+}} for dm5:
+# CHECK-NEXT:    Definitions (1):
+# CHECK-NEXT:      [0] Register: dm5 renamable $dm5 = VADD_f_vacc_fp renamable $dm1, renamable $dm4, renamable $r8, implicit-def dead $srfpflags, implicit $crfpmask
+# CHECK-NEXT:    Uses (0):
+# CHECK-EMPTY:
+# CHECK-NEXT:  Live Range #{{[0-9]+}} for x2:
+# CHECK-NEXT:    Definitions (1):
+# CHECK-NEXT:      [0] Register: x2 $x2 = VSRS_2x_mv_x_srs_cm_srsSign1 $cml1, $s1, implicit-def dead $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+# CHECK-NEXT:    Uses (0):
+# CHECK-EMPTY:
+# CHECK-NEXT:  Live Range #{{[0-9]+}} for x3:
+# CHECK-NEXT:    Definitions (1):
+# CHECK-NEXT:      [0] Register: x3 $x3 = VSRS_2x_mv_x_srs_cm_srsSign1 $cmh1, $s1, implicit-def dead $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+# CHECK-NEXT:    Uses (0):
+# CHECK-EMPTY:
+# CHECK-NEXT:  Available Physical Registers for Reallocation:
+# CHECK:       === END FINAL LIVE RANGES
+
+--- |
+  define void @sibling_subreg_uses_superreg_def() {
+  entry:
+    br label %loop
+  loop:
+    br label %exit
+  exit:
+    ret void
+  }
+...
+---
+name:            sibling_subreg_uses_superreg_def
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  bb.0.entry:
+    successors: %bb.1
+    liveins: $dm3, $dm4, $r0, $r8, $s1
+
+    $lc = ADD_NC_add_lc_ri $r0, 0
+    MOVXM_lng_cg_ls_abs %bb.1, implicit-def $ls
+    MOVXM_lng_cg_le_abs <mcsymbol .L_LEnd0>, implicit-def $le
+
+  bb.1.loop (align 16):
+    successors: %bb.1, %bb.2
+    liveins: $dm3, $dm4, $r8, $s1
+
+    renamable $dm1 = VADD_f_vacc_fp renamable $dm3, renamable $dm4, renamable $r8, implicit-def dead $srfpflags, implicit $crfpmask
+    renamable $dm5 = VADD_f_vacc_fp renamable $dm1, renamable $dm4, renamable $r8, implicit-def dead $srfpflags, implicit $crfpmask
+    $x2 = VSRS_2x_mv_x_srs_cm_srsSign1 $cml1, $s1, implicit-def dead $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $x3 = VSRS_2x_mv_x_srs_cm_srsSign1 $cmh1, $s1, implicit-def dead $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    renamable $dm1 = VADD_f_vacc_fp renamable $dm3, renamable $dm4, renamable $r8, implicit-def dead $srfpflags, implicit $crfpmask
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+
+  bb.2.exit (align 16):
+    RET implicit $lr
+    DelayedSchedBarrier
+
+...

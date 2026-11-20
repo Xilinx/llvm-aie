@@ -119,6 +119,13 @@ bool AIEBaseInstrInfo::reverseBranchCondition(
   return false;
 }
 
+bool AIEBaseInstrInfo::isLoopLatchBranchFixed(
+    const MachineBasicBlock &MBB) const {
+  return any_of(MBB.terminators(), [this](const MachineInstr &MI) {
+    return isHardwareLoopJNZ(MI.getOpcode());
+  });
+}
+
 // The contents of values added to Cond are not examined outside of
 // AIEInstrInfo, giving us flexibility in what to push to it. For AIE, we
 // push BranchOpcode and the register that contains the branching condition.

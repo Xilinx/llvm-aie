@@ -557,8 +557,7 @@ void AIELoopVersioner::updateLoopsMetadata(Loop &LowLoop, Loop &HighLoop) {
     // A deferred threshold leaves a placeholder in the guard. The versioned
     // marker is what tells a pipeliner to go find it, and it also lifts
     // the minimum trip-count gate, which only the guard makes safe. No
-    // iteration-count range goes with it: a minimum of 1 would make the
-    // hardware-loop profitability gate reject the ZOL the pipeliners need.
+    // iteration-count range goes with it, as the threshold is not known yet.
     addStringMetadataToLoop(
         &HighLoop, AIELoopUtils::LoopVersionedHintKey.data(), HintValue);
     return;

@@ -1,0 +1,481 @@
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc -mtriple=aie2ps --start-before=postmisched -verify-machineinstrs \
+# RUN:     -debug-only=sched-blocks -o /dev/null %s 2>&1 \
+# RUN:   | FileCheck %s --check-prefix=DBG
+# REQUIRES: asserts
+#
+# Test sibling loop optimization: no merge due to zero scheduling slack.
+#
+# Generated from gemm_int8_outerloop_blocks.ll with:
+#   llc -mtriple=aie2ps -O2 --aie-enable-outer-loop-pipelining -stop-before=postmisched
+#
+# OLP structure (bb numbers after OLP transformation):
+#   bb.0 (OuterPreheader) -> bb.1 (SteadyTop/Prologue) -> bb.2 (SteadyInner)
+#   -> bb.3 (SteadyBottom/Epilogue/Latch) -> bb.4 (PeeledIterTop)
+#   -> bb.5 (PeeledIterInner) -> bb.6 (PeeledIterBottom)
+#
+# Slack analysis:
+#   The epilogue (bb.3) has 16 bundles, the prologue (bb.1) has 12 bundles.
+#   Multiple cross-boundary edges have negative slack. The tightest is:
+#     Height=1 Depth=0 Lat=3 Slack=-2
+#   This is a 3-cycle latency dependency between the JNZD branch at the
+#   very end of the epilogue (Height=1, the last bundle of bb.3) and the
+#   first prologue instruction at Depth=0 (the start of bb.1). With only
+#   1 cycle of distance but 3 cycles of required latency, the slack is
+#   1 + 0 - 3 = -2. After clamping to max(0, -2) = 0, no overlap is
+#   possible.
+#
+# Result: No merge possible. The optimizer bails out immediately after
+# computing zero slack for the Epilogue->SteadyPrologue path without
+# even checking the LastIterPrologue or resource mergeability.
+#
+# Verify the optimizer finds 7 matching bundles.
+# DBG: optimizeSiblingLoops: Processing outer loop latch
+# DBG: Found 7 matching bundles
+#
+# Verify the slack computation yields 0 (clamped from -2).
+# DBG: Computed slack: -2
+# DBG: Slack (Epilogue->SteadyPrologue): 0 cycles
+#
+# Verify the optimizer bails out due to zero slack.
+# DBG: No slack to steady prologue, skipping
+--- |
+
+  define dso_local void @gemm(i32 %0, ptr addrspace(5) %1, ptr addrspace(5) %2, ptr %p_psum, ptr %p_c, ptr %p_bias, i20 %3, i20 %4, i20 %5, i20 %6, i20 %7, i20 %idx.ext.i, i20 %8, i20 %9, i20 %10, i20 %11, i20 %12, i32 %13, i32 %14, i32 %15, i32 %16, i32 %or23.i.i.i.i, <64 x i8> %17, i32 %18, i32 %19, i32 %20, i32 %21, i32 %22, i32 %or22.i.i.i.i, i32 %conv166, i32 %conv.i.i.i.i, i20 %idx.ext.i478, i20 %23, i20 %24, i20 %25, i20 %26, i20 %27, i20 %28) #3 {
+  outer_preheader:
+    br label %steady_top
+  steady_top:
+    br label %steady_inner
+  steady_inner:
+    br i1 true, label %steady_inner, label %steady_bottom, !llvm.loop !91
+  steady_bottom:
+    br i1 true, label %steady_top, label %last_iter_top, !llvm.loop !94
+  last_iter_top:
+    br label %last_iter_inner
+  last_iter_inner:
+    br i1 true, label %last_iter_inner, label %last_iter_bottom, !llvm.loop !91
+  last_iter_bottom:
+    ret void
+  }
+
+  !llvm.linker.options = !{}
+  !llvm.module.flags = !{!0, !1, !2}
+  !llvm.ident = !{!3}
+  
+  !0 = !{i32 7, !"Dwarf Version", i32 4}
+  !1 = !{i32 2, !"Debug Info Version", i32 3}
+  !2 = !{i32 1, !"wchar_size", i32 4}
+  !3 = !{!"clang version 21.0.0git"}
+  !4 = !{!5, !5, i64 0}
+  !5 = !{!"omnipotent char", !6, i64 0}
+  !6 = !{!"Simple C++ TBAA"}
+  !7 = !{!8, !10, !12}
+  !8 = distinct !{!8, !9, !"A: %agg.result"}
+  !9 = distinct !{!9, !"A"}
+  !10 = distinct !{!10, !11, !"B: %agg.result"}
+  !11 = distinct !{!11, !"B"}
+  !12 = distinct !{!12, !13, !"C: %agg.result"}
+  !13 = distinct !{!13, !"C"}
+  !14 = !{!15, !17, !19}
+  !15 = distinct !{!15, !16, !"A: %agg.result"}
+  !16 = distinct !{!16, !"A"}
+  !17 = distinct !{!17, !18, !"B: %agg.result"}
+  !18 = distinct !{!18, !"B"}
+  !19 = distinct !{!19, !20, !"C: %agg.result"}
+  !20 = distinct !{!20, !"C"}
+  !21 = !{!22, !24, !26}
+  !22 = distinct !{!22, !23, !"A: %agg.result"}
+  !23 = distinct !{!23, !"A"}
+  !24 = distinct !{!24, !25, !"B: %agg.result"}
+  !25 = distinct !{!25, !"B"}
+  !26 = distinct !{!26, !27, !"C: %agg.result"}
+  !27 = distinct !{!27, !"C"}
+  !28 = !{!29, !31, !33}
+  !29 = distinct !{!29, !30, !"A: %agg.result"}
+  !30 = distinct !{!30, !"A"}
+  !31 = distinct !{!31, !32, !"B: %agg.result"}
+  !32 = distinct !{!32, !"B"}
+  !33 = distinct !{!33, !34, !"C: %agg.result"}
+  !34 = distinct !{!34, !"C"}
+  !35 = !{!36, !38, !40}
+  !36 = distinct !{!36, !37, !"D: %agg.result"}
+  !37 = distinct !{!37, !"D"}
+  !38 = distinct !{!38, !39, !"E: %agg.result"}
+  !39 = distinct !{!39, !"E"}
+  !40 = distinct !{!40, !41, !"F: %agg.result"}
+  !41 = distinct !{!41, !"F"}
+  !42 = !{!43, !45, !47}
+  !43 = distinct !{!43, !44, !"D: %agg.result"}
+  !44 = distinct !{!44, !"D"}
+  !45 = distinct !{!45, !46, !"E: %agg.result"}
+  !46 = distinct !{!46, !"E"}
+  !47 = distinct !{!47, !48, !"F: %agg.result"}
+  !48 = distinct !{!48, !"F"}
+  !49 = !{!50, !52, !54}
+  !50 = distinct !{!50, !51, !"D: %agg.result"}
+  !51 = distinct !{!51, !"D"}
+  !52 = distinct !{!52, !53, !"E: %agg.result"}
+  !53 = distinct !{!53, !"E"}
+  !54 = distinct !{!54, !55, !"F: %agg.result"}
+  !55 = distinct !{!55, !"F"}
+  !56 = !{!57, !59, !61}
+  !57 = distinct !{!57, !58, !"D: %agg.result"}
+  !58 = distinct !{!58, !"D"}
+  !59 = distinct !{!59, !60, !"E: %agg.result"}
+  !60 = distinct !{!60, !"E"}
+  !61 = distinct !{!61, !62, !"F: %agg.result"}
+  !62 = distinct !{!62, !"F"}
+  !63 = !{!64, !66, !68}
+  !64 = distinct !{!64, !65, !"A: %agg.result"}
+  !65 = distinct !{!65, !"A"}
+  !66 = distinct !{!66, !67, !"B: %agg.result"}
+  !67 = distinct !{!67, !"B"}
+  !68 = distinct !{!68, !69, !"C: %agg.result"}
+  !69 = distinct !{!69, !"C"}
+  !70 = !{!71, !73, !75}
+  !71 = distinct !{!71, !72, !"A: %agg.result"}
+  !72 = distinct !{!72, !"A"}
+  !73 = distinct !{!73, !74, !"B: %agg.result"}
+  !74 = distinct !{!74, !"B"}
+  !75 = distinct !{!75, !76, !"C: %agg.result"}
+  !76 = distinct !{!76, !"C"}
+  !77 = !{!78, !80, !82}
+  !78 = distinct !{!78, !79, !"A: %agg.result"}
+  !79 = distinct !{!79, !"A"}
+  !80 = distinct !{!80, !81, !"B: %agg.result"}
+  !81 = distinct !{!81, !"B"}
+  !82 = distinct !{!82, !83, !"C: %agg.result"}
+  !83 = distinct !{!83, !"C"}
+  !84 = !{!85, !87, !89}
+  !85 = distinct !{!85, !86, !"A: %agg.result"}
+  !86 = distinct !{!86, !"A"}
+  !87 = distinct !{!87, !88, !"B: %agg.result"}
+  !88 = distinct !{!88, !"B"}
+  !89 = distinct !{!89, !90, !"C: %agg.result"}
+  !90 = distinct !{!90, !"C"}
+  !91 = distinct !{!91, !92, !93}
+  !92 = !{!"llvm.loop.mustprogress"}
+  !93 = !{!"llvm.loop.itercount.range", i64 4}
+  !94 = distinct !{!94, !92, !95, !96}
+  !95 = !{!"llvm.loop.itercount.range", i32 1}
+  !96 = !{!"llvm.loop.hint.aie_outerloop_pipeliner_success", i64 1}
+...
+---
+name:            gemm
+alignment:       16
+exposesReturnsTwice: false
+legalized:       true
+regBankSelected: true
+selected:        true
+failedISel:      false
+tracksRegLiveness: true
+hasWinCFI:       false
+noPhis:          true
+isSSA:           false
+noVRegs:         true
+hasFakeUses:     false
+callsEHReturn:   false
+callsUnwindInit: false
+hasEHContTarget: false
+hasEHScopes:     false
+hasEHFunclets:   false
+isOutlined:      false
+debugInstrRef:   false
+failsVerification: false
+tracksDebugUserValues: true
+registers:       []
+liveins:         []
+calleeSavedRegisters: [ '$lr', '$l4', '$l5', '$l6', '$l7', '$r8', '$r9', 
+                        '$r10', '$r11', '$r12', '$r13', '$r14', '$r15', 
+                        '$p6', '$p7' ]
+frameInfo:
+  isFrameAddressTaken: false
+  isReturnAddressTaken: false
+  hasStackMap:     false
+  hasPatchPoint:   false
+  stackSize:       0
+  offsetAdjustment: 0
+  maxAlignment:    4
+  adjustsStack:    false
+  hasCalls:        false
+  stackProtector:  ''
+  functionContext: ''
+  maxCallFrameSize: 0
+  cvBytesOfCalleeSavedRegisters: 0
+  hasOpaqueSPAdjustment: false
+  hasVAStart:      false
+  hasMustTailInVarArgFunc: false
+  hasTailCall:     false
+  isCalleeSavedInfoValid: true
+  localFrameSize:  0
+fixedStack:
+  - { id: 0, type: default, offset: -92, size: 3, alignment: 4, stack-id: default, 
+      isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 1, type: default, offset: -88, size: 3, alignment: 8, stack-id: default, 
+      isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 2, type: default, offset: -84, size: 3, alignment: 4, stack-id: default, 
+      isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 3, type: default, offset: -80, size: 3, alignment: 16, stack-id: default, 
+      isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 4, type: default, offset: -76, size: 3, alignment: 4, stack-id: default, 
+      isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 5, type: default, offset: -72, size: 3, alignment: 8, stack-id: default, 
+      isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 6, type: default, offset: -68, size: 3, alignment: 4, stack-id: default, 
+      isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 7, type: default, offset: -64, size: 4, alignment: 64, stack-id: default, 
+      isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 8, type: default, offset: -60, size: 4, alignment: 4, stack-id: default, 
+      isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 9, type: default, offset: -56, size: 4, alignment: 8, stack-id: default, 
+      isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 10, type: default, offset: -52, size: 4, alignment: 4, stack-id: default, 
+      isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 11, type: default, offset: -48, size: 4, alignment: 16, stack-id: default, 
+      isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 12, type: default, offset: -44, size: 4, alignment: 4, stack-id: default, 
+      isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 13, type: default, offset: -40, size: 3, alignment: 8, stack-id: default, 
+      isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 14, type: default, offset: -36, size: 3, alignment: 4, stack-id: default, 
+      isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 15, type: default, offset: -32, size: 3, alignment: 32, stack-id: default, 
+      isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 16, type: default, offset: -28, size: 3, alignment: 4, stack-id: default, 
+      isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 17, type: default, offset: -24, size: 3, alignment: 8, stack-id: default, 
+      isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 18, type: default, offset: -20, size: 3, alignment: 4, stack-id: default, 
+      isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 19, type: default, offset: -16, size: 3, alignment: 16, stack-id: default, 
+      isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 20, type: default, offset: -12, size: 3, alignment: 4, stack-id: default, 
+      isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 21, type: default, offset: -8, size: 3, alignment: 8, stack-id: default, 
+      isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 22, type: default, offset: -4, size: 3, alignment: 4, stack-id: default, 
+      isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+stack:           []
+entry_values:    []
+callSites:       []
+debugValueSubstitutions: []
+constants:       []
+machineFunctionInfo:
+  varArgsFrameIndex: 0
+body:             |
+  bb.0.outer_preheader:
+    successors: %bb.1(0x80000000)
+    liveins: $p0, $p1, $p2, $p3, $p4, $p5, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $x0, $r8, $r10, $r12
+  
+    $r21 = MOV_OR_pseudo killed $r8
+    $r23 = MOV_OR_pseudo killed $r10
+    $r24 = MOV_OR_pseudo killed $r12
+    $m0 = MOV_scalar_pseudo killed $p5
+    $p5 = MOV_alu_mv_mv_mv_scl $sp
+    $m1 = MOV_PD_imm11_pseudo -4
+    $p5 = PADD_mod_pseudo $p5, killed $m1
+    renamable $dj0, renamable $p5 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p5, -4 :: (invariant load (s20) from %fixed-stack.22, align 4)
+    renamable $dj4, renamable $p5 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p5, -4 :: (invariant load (s20) from %fixed-stack.21, align 8)
+    renamable $dn0, renamable $p5 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p5, -4 :: (invariant load (s20) from %fixed-stack.20, align 4)
+    renamable $dn4, renamable $p5 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p5, -4 :: (invariant load (s20) from %fixed-stack.19, align 16)
+    renamable $m4, renamable $p5 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p5, -4 :: (invariant load (s20) from %fixed-stack.18, align 4)
+    renamable $m1, renamable $p5 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p5, -4 :: (invariant load (s20) from %fixed-stack.17, align 8)
+    renamable $dj1, renamable $p5 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p5, -4 :: (invariant load (s20) from %fixed-stack.16, align 4)
+    renamable $dj5, renamable $p5 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p5, -4 :: (invariant load (s20) from %fixed-stack.15, align 32)
+    renamable $dn1, renamable $p5 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p5, -4 :: (invariant load (s20) from %fixed-stack.14, align 4)
+    renamable $dn5, renamable $p5 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p5, -4 :: (invariant load (s20) from %fixed-stack.13, align 8)
+    renamable $r16, renamable $p5 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p5, -4 :: (invariant load (s32) from %fixed-stack.12)
+    renamable $r18, renamable $p5 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p5, -4 :: (invariant load (s32) from %fixed-stack.11, align 16)
+    renamable $r20, renamable $p5 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p5, -4 :: (invariant load (s32) from %fixed-stack.10)
+    renamable $r8, renamable $p5 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p5, -4 :: (invariant load (s32) from %fixed-stack.9, align 8)
+    renamable $r17, renamable $p5 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p5, -4 :: (invariant load (s32) from %fixed-stack.8)
+    renamable $r19, renamable $p5 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p5, -4 :: (invariant load (s32) from %fixed-stack.7, align 64)
+    renamable $m5, renamable $p5 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p5, -4 :: (invariant load (s20) from %fixed-stack.6, align 4)
+    renamable $m2, renamable $p5 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p5, -4 :: (invariant load (s20) from %fixed-stack.5, align 8)
+    renamable $dj2, renamable $p5 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p5, -4 :: (invariant load (s20) from %fixed-stack.4, align 4)
+    renamable $dn2, renamable $p5 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p5, -4 :: (invariant load (s20) from %fixed-stack.3, align 16)
+    renamable $m3, renamable $p5 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p5, -4 :: (invariant load (s20) from %fixed-stack.2, align 4)
+    renamable $dj3 = LDA_dms_lda_scalar_ld_idx_imm renamable $p5, 0 :: (invariant load (s20) from %fixed-stack.1, align 8)
+    renamable $dn3 = LDA_dms_lda_scalar_ld_idx_imm killed renamable $p5, -4 :: (invariant load (s20) from %fixed-stack.0, align 4)
+    renamable $r22 = MOV_RLC_imm11_pseudo 0
+    renamable $dc2 = MOV_PD_imm11_pseudo 0
+    renamable $x2 = VBCST_32 renamable $r22
+    renamable $r12 = MOV_RLC_imm11_pseudo 776
+    $r10 = MOV_OR_pseudo $r5
+    $s0 = MOV_alu_mv_mv_mv_scl killed $r22
+    $crupsmode = MOVX_mvx_cr_imm 0
+    renamable $cml3, renamable $p2 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_imm_upsSign1 renamable $s0, killed renamable $p2, 64, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<32 x s16>), !tbaa !4, !noalias !35, addrspace 7)
+    renamable $cmh3, renamable $p2 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_imm_upsSign1 renamable $s0, killed renamable $p2, 64, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<32 x s16>), !tbaa !4, !noalias !35, addrspace 7)
+    renamable $wl4 = VLD_128_idx_imm_pseudo renamable $p4, 0 :: (load (<4 x s32>), !tbaa !4, addrspace 6)
+    renamable $cml2, renamable $p2 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_imm_upsSign1 renamable $s0, killed renamable $p2, 64, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<32 x s16>), !tbaa !4, !noalias !42, addrspace 7)
+    renamable $wl6 = VLD_128_idx_imm_pseudo renamable $p4, 16 :: (load (<4 x s32>), !tbaa !4, addrspace 6)
+    renamable $cmh2, renamable $p2 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_imm_upsSign1 renamable $s0, killed renamable $p2, 64, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<32 x s16>), !tbaa !4, !noalias !42, addrspace 7)
+    renamable $x8, renamable $p1 = VLD_x_pstm_nrm_pseudo killed renamable $p1, renamable $m4 :: (load (<16 x s32>), !tbaa !4, !noalias !21, addrspace 5)
+    renamable $cml1, renamable $p2 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_imm_upsSign1 renamable $s0, killed renamable $p2, 64, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<32 x s16>), !tbaa !4, !noalias !49, addrspace 7)
+    renamable $dc0 = MOV_PD_imm11_pseudo 0
+    $dc4 = MOV_scalar_pseudo $dc0
+    renamable $cmh1, renamable $p2 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_imm_upsSign1 renamable $s0, killed renamable $p2, 64, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<32 x s16>), !tbaa !4, !noalias !49, addrspace 7)
+    $dc1 = MOV_scalar_pseudo $dc0
+    $dc5 = MOV_scalar_pseudo $dc0
+    $x10, $p1, $dc1, $dc5 = VLD_3D_x_pseudo killed $p1, $d1_3d :: (load (<16 x s32>), !tbaa !4, !noalias !28, addrspace 5)
+    renamable $cml0, renamable $p2 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_imm_upsSign1 renamable $s0, killed renamable $p2, 64, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<32 x s16>), !tbaa !4, !noalias !56, addrspace 7)
+    renamable $r22 = MOV_RLC_imm11_pseudo 15
+    renamable $cmh0, renamable $p2 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_imm_upsSign1 renamable $s0, killed renamable $p2, 64, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<32 x s16>), !tbaa !4, !noalias !56, addrspace 7)
+    renamable $x4 = VSEL_32 renamable $x2, renamable $x4, renamable $r22, implicit $crbf8conf, implicit $crfp8conf
+    renamable $x2 = VSEL_32 killed renamable $x2, renamable $x6, renamable $r22, implicit $crbf8conf, implicit $crfp8conf
+    renamable $x6 = VSHUFFLE_vec_shuffle_x killed renamable $x8, undef renamable $x8, renamable $r1
+    renamable $x1 = VSHUFFLE_vec_shuffle_x killed renamable $x6, undef renamable $x6, renamable $r2
+    renamable $x8 = VSHUFFLE_vec_shuffle_x killed renamable $x10, undef renamable $x10, renamable $r3
+    renamable $x6, renamable $p0 = VLD_x_pstm_nrm_imm_pseudo killed renamable $p0, 64 :: (load (<32 x s16>), !tbaa !4, !noalias !7, addrspace 5)
+    renamable $x10 = VSHUFFLE_vec_shuffle_x killed renamable $x8, undef renamable $x8, renamable $r4
+    renamable $r0 = ADD_add_r_ri killed renamable $r0, -1, implicit-def dead $srcarry
+    renamable $r5 = ADDM_NC_mv_add_ri killed renamable $r0, -1
+    $x8, $p0, $dc0, $dc4 = VLD_3D_x_pseudo killed $p0, $d0_3d :: (load (<32 x s16>), !tbaa !4, !noalias !14, addrspace 5)
+    $dc3 = MOV_scalar_pseudo $dc2
+    renamable $p5 = MOVXM_lng_cg %bb.1
+    $s1 = MOV_alu_mv_mv_mv_scl $r17
+    $crsrsmode = MOVX_mvx_cr_imm 0
+  
+  bb.1.steady_top:
+    successors: %bb.2(0x80000000)
+    liveins: $dc0, $dc1, $dc2, $dc3, $dc4, $dc5, $dj0, $dj1, $dj2, $dj3, $dj4, $dj5, $dm0:0x000000030000000C, $dm1:0x000000030000000C, $dm2:0x000000030000000C, $dm3:0x000000030000000C, $dn0, $dn1, $dn2, $dn3, $dn4, $dn5, $m0, $m1, $m2, $m3, $m4, $m5, $p0, $p1, $p2, $p3, $p4, $p5, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $r8, $r10, $r12, $r16, $r17, $r18, $r19, $r20, $r22, $s0, $s1, $x0, $x1, $x2, $x4, $x6, $x8, $x10, $crsrsmode, $crupsmode, $r21, $r23, $r24
+  
+    renamable $dm4 = VMUL_vmul_vmul_cm_core_X_X renamable $x0, renamable $x4, renamable $r12
+    renamable $dm3 = VADDMAC_vaddmac_vmul_cm_core_X_X killed renamable $dm3, renamable $dm4, renamable $x6, renamable $x1, renamable $r10
+    renamable $dm2 = VADDMAC_vaddmac_vmul_cm_core_X_X killed renamable $dm2, killed renamable $dm4, renamable $x8, killed renamable $x1, renamable $r10
+    renamable $dm4 = VMUL_vmul_vmul_cm_core_X_X renamable $x0, renamable $x2, renamable $r12
+    renamable $dm1 = VADDMAC_vaddmac_vmul_cm_core_X_X killed renamable $dm1, renamable $dm4, killed renamable $x6, renamable $x10, renamable $r10
+    renamable $dm0 = VADDMAC_vaddmac_vmul_cm_core_X_X killed renamable $dm0, killed renamable $dm4, killed renamable $x8, killed renamable $x10, renamable $r10
+    $lc = ADD_NC_add_lc_ri $r6, 0
+    SET_LS_REL_pseudo %bb.2, implicit-def $ls, implicit $pc
+    SET_LE_REL_pseudo <mcsymbol .L_LEnd1>, implicit-def $le, implicit $pc
+  
+  bb.2.steady_inner:
+    successors: %bb.2(0x7c000000), %bb.3(0x04000000)
+    liveins: $dc0, $dc1, $dc2, $dc3, $dc4, $dc5, $dj0, $dj1, $dj2, $dj3, $dj4, $dj5, $dm0:0x000000030000000C, $dm1:0x000000030000000C, $dm2:0x000000030000000C, $dm3:0x000000030000000C, $dn0, $dn1, $dn2, $dn3, $dn4, $dn5, $m0, $m1, $m2, $m3, $m4, $m5, $p0, $p1, $p2, $p3, $p4, $p5, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $r8, $r10, $r12, $r16, $r17, $r18, $r19, $r20, $r22, $s0, $s1, $x0, $x2, $x4, $d0_3d:0x7800000040001C00, $d1_3d:0x7800000040001C00, $crsrsmode, $crupsmode, $r21, $r23, $r24
+  
+    renamable $x1, renamable $p1 = VLD_x_pstm_nrm_pseudo killed renamable $p1, renamable $m4 :: (load (<16 x s32>), !tbaa !4, !noalias !77, addrspace 5)
+    $x10, $p1, $dc1, $dc5 = VLD_3D_x_pseudo killed $p1, $d1_3d :: (load (<16 x s32>), !tbaa !4, !noalias !84, addrspace 5)
+    renamable $x8, renamable $p0 = VLD_x_pstm_nrm_imm_pseudo killed renamable $p0, 64 :: (load (<32 x s16>), !tbaa !4, !noalias !63, addrspace 5)
+    $x6, $p0, $dc0, $dc4 = VLD_3D_x_pseudo killed $p0, $d0_3d :: (load (<32 x s16>), !tbaa !4, !noalias !70, addrspace 5)
+    renamable $x3 = VSHUFFLE_vec_shuffle_x killed renamable $x1, undef renamable $x1, renamable $r7
+    renamable $x5 = VSHUFFLE_vec_shuffle_x killed renamable $x3, undef renamable $x3, renamable $r16
+    renamable $x7 = VSHUFFLE_vec_shuffle_x killed renamable $x10, undef renamable $x10, renamable $r18
+    renamable $x9 = VSHUFFLE_vec_shuffle_x killed renamable $x7, undef renamable $x7, renamable $r20
+    renamable $dm3 = VMAC_vmac_vmul_cm_core_X_X killed renamable $dm3, renamable $x8, renamable $x5, renamable $r8
+    renamable $dm2 = VMAC_vmac_vmul_cm_core_X_X killed renamable $dm2, renamable $x6, killed renamable $x5, renamable $r8
+    renamable $dm1 = VMAC_vmac_vmul_cm_core_X_X killed renamable $dm1, killed renamable $x8, renamable $x9, renamable $r8
+    renamable $dm0 = VMAC_vmac_vmul_cm_core_X_X killed renamable $dm0, killed renamable $x6, killed renamable $x9, renamable $r8
+    PseudoLoopEnd <mcsymbol .L_LEnd1>, %bb.2
+  
+  bb.3.steady_bottom:
+    successors: %bb.1(0x7c000000), %bb.4(0x04000000)
+    liveins: $d2:0x0000000040001C00, $d3:0x0000000040001C00, $dc0, $dc1, $dc2, $dc3, $dc4, $dc5, $dj0, $dj1, $dj2, $dj3, $dj4, $dj5, $dm0:0x000000030000000C, $dm1:0x000000030000000C, $dm2:0x000000030000000C, $dm3:0x000000030000000C, $dn0, $dn1, $dn2, $dn3, $dn4, $dn5, $m0, $m1, $m2, $m3, $m4, $m5, $p0, $p1, $p2, $p3, $p4, $p5, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $r8, $r10, $r12, $r16, $r17, $r18, $r19, $r20, $r22, $s0, $s1, $x0, $x2, $x4, $d0_3d:0x7800000040001C00, $d1_3d:0x7800000040001C00, $crsrsmode, $crupsmode, $r21, $r23, $r24
+  
+    $srssign0 = MOV_alu_mv_mv_mv_scl $r19
+    renamable $p3 = VST_SRS_4x_dmx_sts_srs_dm_pstm_nrm_imm_srsSign0 killed renamable $dm3, renamable $s1, killed renamable $p3, 64, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0 :: (store (<64 x s8>), !tbaa !4, addrspace 6)
+    renamable $p3 = VST_SRS_4x_dmx_sts_srs_dm_pstm_nrm_srsSign0 killed renamable $dm2, renamable $s1, killed renamable $p3, renamable $m5, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0 :: (store (<64 x s8>), !tbaa !4, addrspace 6)
+    renamable $p3 = VST_SRS_4x_dmx_sts_srs_dm_pstm_nrm_imm_srsSign0 killed renamable $dm1, renamable $s1, killed renamable $p3, 64, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0 :: (store (<64 x s8>), !tbaa !4, addrspace 6)
+    $p3, $dc2 = VST_2D_SRS_4x_dmx_sts_srs_dm_srsSign0 killed $dm0, $s1, killed $p3, $d2, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0 :: (store (<64 x s8>), !tbaa !4, addrspace 6)
+    renamable $cml3, renamable $p2 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_imm_upsSign1 renamable $s0, killed renamable $p2, 64, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<32 x s16>), !tbaa !4, !noalias !35, addrspace 7)
+    renamable $cmh3, renamable $p2 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_imm_upsSign1 renamable $s0, killed renamable $p2, 64, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<32 x s16>), !tbaa !4, !noalias !35, addrspace 7)
+    renamable $cml2, renamable $p2 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_imm_upsSign1 renamable $s0, killed renamable $p2, 64, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<32 x s16>), !tbaa !4, !noalias !42, addrspace 7)
+    $p4, $dc3 = PADD_2D_pseudo killed $p4, $d3
+    renamable $cmh2, renamable $p2 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_imm_upsSign1 renamable $s0, killed renamable $p2, 64, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<32 x s16>), !tbaa !4, !noalias !42, addrspace 7)
+    renamable $wl10 = VLD_128_idx_imm_pseudo renamable $p4, 0 :: (load (<4 x s32>), !tbaa !4, addrspace 6)
+    renamable $cml1, renamable $p2 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_imm_upsSign1 renamable $s0, killed renamable $p2, 64, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<32 x s16>), !tbaa !4, !noalias !49, addrspace 7)
+    renamable $wl1 = VLD_128_idx_imm_pseudo renamable $p4, 16 :: (load (<4 x s32>), !tbaa !4, addrspace 6)
+    renamable $cmh1, renamable $p2 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_imm_upsSign1 renamable $s0, killed renamable $p2, 64, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<32 x s16>), !tbaa !4, !noalias !49, addrspace 7)
+    renamable $x3, renamable $p1 = VLD_x_pstm_nrm_pseudo killed renamable $p1, renamable $m4 :: (load (<16 x s32>), !tbaa !4, !noalias !21, addrspace 5)
+    renamable $cml0, renamable $p2 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_imm_upsSign1 renamable $s0, killed renamable $p2, 64, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<32 x s16>), !tbaa !4, !noalias !56, addrspace 7)
+    renamable $cmh0, renamable $p2 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_imm_upsSign1 renamable $s0, killed renamable $p2, 64, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<32 x s16>), !tbaa !4, !noalias !56, addrspace 7)
+    $x5, $p1, $dc1, $dc5 = VLD_3D_x_pseudo killed $p1, $d1_3d :: (load (<16 x s32>), !tbaa !4, !noalias !28, addrspace 5)
+    renamable $x6, renamable $p0 = VLD_x_pstm_nrm_imm_pseudo killed renamable $p0, 64 :: (load (<32 x s16>), !tbaa !4, !noalias !7, addrspace 5)
+    $x8, $p0, $dc0, $dc4 = VLD_3D_x_pseudo killed $p0, $d0_3d :: (load (<32 x s16>), !tbaa !4, !noalias !14, addrspace 5)
+    renamable $x4 = VSEL_32 killed renamable $x4, renamable $x10, renamable $r22, implicit $crbf8conf, implicit $crfp8conf
+    renamable $x2 = VSEL_32 killed renamable $x2, renamable $x1, renamable $r22, implicit $crbf8conf, implicit $crfp8conf
+    renamable $x10 = VSHUFFLE_vec_shuffle_x killed renamable $x3, undef renamable $x3, renamable $r1
+    renamable $x1 = VSHUFFLE_vec_shuffle_x killed renamable $x10, undef renamable $x10, renamable $r2
+    renamable $x10 = VSHUFFLE_vec_shuffle_x killed renamable $x5, undef renamable $x5, renamable $r3
+    renamable $x10 = VSHUFFLE_vec_shuffle_x killed renamable $x10, undef renamable $x10, renamable $r4
+    $srssign0 = MOVX_mvx_cr_imm 0
+    $r5 = JNZD $r5, $p5, implicit-def $srcarry
+    DelayedSchedBarrier
+  
+  bb.4.last_iter_top:
+    successors: %bb.5(0x80000000)
+    liveins: $dc0, $dc1, $dc4, $dc5, $dj0, $dj1, $dj4, $dj5, $dm0:0x000000030000000C, $dm1:0x000000030000000C, $dm2:0x000000030000000C, $dm3:0x000000030000000C, $dn0, $dn1, $dn4, $dn5, $m0, $m1, $m4, $m5, $p0, $p1, $p3, $r6, $r7, $r8, $r10, $r12, $r16, $r17, $r18, $r19, $r20, $x0, $x1, $x2, $x4, $x6, $x8, $x10, $r21, $r23, $r24
+  
+    renamable $dm4 = VMUL_vmul_vmul_cm_core_X_X renamable $x0, killed renamable $x4, renamable $r12
+    renamable $dm3 = VADDMAC_vaddmac_vmul_cm_core_X_X killed renamable $dm3, renamable $dm4, renamable $x6, renamable $x1, renamable $r10
+    renamable $dm2 = VADDMAC_vaddmac_vmul_cm_core_X_X killed renamable $dm2, killed renamable $dm4, renamable $x8, killed renamable $x1, renamable $r10
+    renamable $dm4 = VMUL_vmul_vmul_cm_core_X_X killed renamable $x0, killed renamable $x2, killed renamable $r12
+    renamable $dm1 = VADDMAC_vaddmac_vmul_cm_core_X_X killed renamable $dm1, renamable $dm4, killed renamable $x6, renamable $x10, renamable $r10
+    renamable $dm0 = VADDMAC_vaddmac_vmul_cm_core_X_X killed renamable $dm0, killed renamable $dm4, killed renamable $x8, killed renamable $x10, killed renamable $r10
+    $lc = ADD_NC_add_lc_ri $r6, 0
+    SET_LS_REL_pseudo %bb.5, implicit-def $ls, implicit $pc
+    SET_LE_REL_pseudo <mcsymbol .L_LEnd0>, implicit-def $le, implicit $pc
+  
+  bb.5.last_iter_inner:
+    successors: %bb.5(0x7c000000), %bb.6(0x04000000)
+    liveins: $dc0, $dc1, $dc4, $dc5, $dj0, $dj1, $dj4, $dj5, $dm0:0x000000030000000C, $dm1:0x000000030000000C, $dm2:0x000000030000000C, $dm3:0x000000030000000C, $dn0, $dn1, $dn4, $dn5, $m0, $m1, $m4, $m5, $p0, $p1, $p3, $r7, $r8, $r16, $r17, $r18, $r19, $r20, $d0_3d:0x7800000040001C00, $d1_3d:0x7800000040001C00, $r21, $r23, $r24
+  
+    renamable $x1, renamable $p1 = VLD_x_pstm_nrm_pseudo killed renamable $p1, renamable $m4 :: (load (<16 x s32>), !tbaa !4, !noalias !77, addrspace 5)
+    $x10, $p1, $dc1, $dc5 = VLD_3D_x_pseudo killed $p1, $d1_3d :: (load (<16 x s32>), !tbaa !4, !noalias !84, addrspace 5)
+    renamable $x8, renamable $p0 = VLD_x_pstm_nrm_imm_pseudo killed renamable $p0, 64 :: (load (<32 x s16>), !tbaa !4, !noalias !63, addrspace 5)
+    $x6, $p0, $dc0, $dc4 = VLD_3D_x_pseudo killed $p0, $d0_3d :: (load (<32 x s16>), !tbaa !4, !noalias !70, addrspace 5)
+    renamable $x3 = VSHUFFLE_vec_shuffle_x killed renamable $x1, undef renamable $x1, renamable $r7
+    renamable $x5 = VSHUFFLE_vec_shuffle_x killed renamable $x3, undef renamable $x3, renamable $r16
+    renamable $x7 = VSHUFFLE_vec_shuffle_x killed renamable $x10, undef renamable $x10, renamable $r18
+    renamable $x9 = VSHUFFLE_vec_shuffle_x killed renamable $x7, undef renamable $x7, renamable $r20
+    renamable $dm3 = VMAC_vmac_vmul_cm_core_X_X killed renamable $dm3, renamable $x8, renamable $x5, renamable $r8
+    renamable $dm2 = VMAC_vmac_vmul_cm_core_X_X killed renamable $dm2, renamable $x6, killed renamable $x5, renamable $r8
+    renamable $dm1 = VMAC_vmac_vmul_cm_core_X_X killed renamable $dm1, killed renamable $x8, renamable $x9, renamable $r8
+    renamable $dm0 = VMAC_vmac_vmul_cm_core_X_X killed renamable $dm0, killed renamable $x6, killed renamable $x9, renamable $r8
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.5
+  
+  bb.6.last_iter_bottom:
+    liveins: $dm0:0x000000030000000C, $dm1:0x000000030000000C, $dm2:0x000000030000000C, $dm3:0x000000030000000C, $m5, $p3, $r17, $r19, $r21, $r23, $r24
+  
+    $crsrsmode = MOVX_mvx_cr_imm 0
+    $s0 = MOV_alu_mv_mv_mv_scl killed $r17
+    $srssign0 = MOV_alu_mv_mv_mv_scl killed $r19
+    renamable $p3 = VST_SRS_4x_dmx_sts_srs_dm_pstm_nrm_imm_srsSign0 killed renamable $dm3, renamable $s0, killed renamable $p3, 64, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0 :: (store (<64 x s8>), !tbaa !4, addrspace 6)
+    renamable $p3 = VST_SRS_4x_dmx_sts_srs_dm_pstm_nrm_srsSign0 killed renamable $dm2, renamable $s0, killed renamable $p3, killed renamable $m5, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0 :: (store (<64 x s8>), !tbaa !4, addrspace 6)
+    VST_SRS_4x_dmx_sts_srs_dm_idx_imm_srsSign0 killed renamable $dm1, renamable $s0, renamable $p3, 0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0 :: (store (<64 x s8>), !tbaa !4, addrspace 6)
+    VST_SRS_4x_dmx_sts_srs_dm_idx_imm_srsSign0 killed renamable $dm0, killed renamable $s0, killed renamable $p3, 64, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0 :: (store (<64 x s8>), !tbaa !4, addrspace 6)
+    $srssign0 = MOVX_mvx_cr_imm 0
+    $r12 = MOV_OR_pseudo killed $r24
+    $r10 = MOV_OR_pseudo killed $r23
+    $r8 = MOV_OR_pseudo killed $r21
+    RET implicit $lr
+    DelayedSchedBarrier
+...

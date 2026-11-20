@@ -139,7 +139,8 @@ define void @invariant_guard_nested_loop(ptr noalias %out, ptr noalias %in, i32 
 ; CHECK-AIE2PS:       // %bb.0: // %entry
 ; CHECK-AIE2PS-NEXT:    mova r2, #0; nopb ; nops ; movxm p2, #.LBB0_1; nopv
 ; CHECK-AIE2PS-NEXT:    mova r6, #3; nopb ; nops ; ge r4, r2, r1; addm.nc r0, r0, #-1; nopv
-; CHECK-AIE2PS-NEXT:  .LBB0_1: // %outer
+; CHECK-AIE2PS-NEXT:  .LBB0_1: // Block address taken
+; CHECK-AIE2PS-NEXT:    // %outer
 ; CHECK-AIE2PS-NEXT:    // =>This Loop Header: Depth=1
 ; CHECK-AIE2PS-NEXT:    // Child Loop BB0_3 Depth 2
 ; CHECK-AIE2PS-NEXT:    nopa ; nopb ; nops ; jnz r4, #.LBB0_5; nopv
@@ -296,7 +297,8 @@ define void @invariant_guard_single_loop(ptr %out, i32 %n, i32 %k) {
 ; CHECK-AIE2PS:       // %bb.0: // %entry
 ; CHECK-AIE2PS-NEXT:    mova r2, #0; nopb ; nops ; movxm p1, #.LBB1_1; nopv
 ; CHECK-AIE2PS-NEXT:    mova r6, #2; nopb ; nops ; ge r4, r2, r1; addm.nc r0, r0, #-1; nopv
-; CHECK-AIE2PS-NEXT:  .LBB1_1: // %loop
+; CHECK-AIE2PS-NEXT:  .LBB1_1: // Block address taken
+; CHECK-AIE2PS-NEXT:    // %loop
 ; CHECK-AIE2PS-NEXT:    // =>This Inner Loop Header: Depth=1
 ; CHECK-AIE2PS-NEXT:    nopa ; jnz r4, #.LBB1_3
 ; CHECK-AIE2PS-NEXT:    nop // Delay Slot 5
