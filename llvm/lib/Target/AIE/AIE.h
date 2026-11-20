@@ -104,6 +104,14 @@ extern char &AIEUnallocatedSuperRegRewriterID;
 void initializeAIEUnallocatedSuperRegRewriterPass(PassRegistry &);
 extern char &AIESpillSlotOptimizationID;
 void initializeAIESpillSlotOptimizationPass(PassRegistry &);
+
+extern char &AIETailDuplicateLateID;
+extern char &AIETailDuplicateEarlyID;
+FunctionPass *createAIETailDuplicateEarlyPass();
+FunctionPass *createAIETailDuplicateLatePass();
+void initializeAIETailDuplicateLatePass(PassRegistry &);
+void initializeAIETailDuplicateEarlyPass(PassRegistry &);
+
 extern char &AIEOutlineMemoryGEPID;
 void initializeAIEOutlineMemoryGEPPass(PassRegistry &);
 

@@ -170,7 +170,7 @@
 ; AIE-O0123-NEXT:      Finalize ISel and expand pseudo-instructions
 
 ; AIE-O123-NEXT:      Lazy Machine Block Frequency Analysis
-; AIE-O123-NEXT:      Early Tail Duplication
+; AIE-O123-NEXT:      AIE Early Tail Duplication
 ; AIE-O123-NEXT:      Optimize machine instruction PHIs
 ; AIE-O123-NEXT:      Slot index numbering
 ; AIE-O123-NEXT:      Merge disjoint stack slots
@@ -270,7 +270,7 @@
 ; AIE-O123-NEXT:      Machine Late Instructions Cleanup Pass
 ; AIE-O123-NEXT:      Control Flow Optimizer
 ; AIE-O123-NEXT:      Lazy Machine Block Frequency Analysis
-; AIE-O123-NEXT:      Tail Duplication
+; AIE-O123-NEXT:      AIE Tail Duplication
 ; AIE-O123-NEXT:      Machine Copy Propagation Pass
 ; AIE-O123-NEXT:      Machine Copy Propagation Pass
 
