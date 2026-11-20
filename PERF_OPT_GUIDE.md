@@ -1,6 +1,6 @@
 ---
 name: aie-kernel-perf-optimization
-description: "Performance optimization guide for custom AIE kernel development with Peano. Covers restrict pointers, DM bank annotations, loop pragmas, loop hints, software pipelining (pre-RA vs post-RA), loop versioning, function structure, pointer increments, sub-32-bit limitations, vector alignment, type conversion chains, and reading backend optimization hints from the compiler (remarks via -Rpass*/-fsave-optimization-record and warnings such as -Wpass-failed and the aie-multi-slot-pseudo missing-memory-bank hint). Consult when writing or reviewing AIE kernel C++ code for throughput, when diagnosing pipelining failures or high II, or when interpreting build-log warnings and missed-opportunity remarks from the AIE backend."
+description: "Performance optimization guide for custom AIE kernel development with Peano. Covers restrict pointers, DM bank annotations, loop pragmas, loop hints, software pipelining (pre-RA vs post-RA), loop versioning, outer loop pipelining, function structure, pointer increments, sub-32-bit limitations, vector alignment, type conversion chains, and reading backend optimization hints from the compiler (remarks via -Rpass*/-fsave-optimization-record and warnings such as -Wpass-failed and the aie-multi-slot-pseudo missing-memory-bank hint). Consult when writing or reviewing AIE kernel C++ code for throughput, when diagnosing pipelining failures or high II, or when interpreting build-log warnings and missed-opportunity remarks from the AIE backend."
 ---
 
 <!--
@@ -323,7 +323,7 @@ it has to fall back to a bank-blind heuristic. The chosen slot is
 often suboptimal and can prevent the pipeliner from finding the best II.
 The compiler reports this as a missed-opportunity hint -- a stderr 
 warning plus an `-Rpass-missed=aie-multi-slot-pseudo` remark. See 
-Section 14 for how to read these hints.
+Section 15 for how to read these hints.
 
 
 ## 4. Store Width and Layout
@@ -397,7 +397,7 @@ This is a **tradeoff, not a rule** -- it swaps shuffle work for store work.
 Dropping the shuffle wins when the write-out path is shuffle-bound; keeping
 it wins when stores are the bottleneck, since direct storing issues *more,
 narrower* stores in place of *fewer, wider* ones. There is no layout-
-independent answer -- measure both versions' `BundleCount` (Section 14) and
+independent answer -- measure both versions' `BundleCount` (Section 15) and
 achieved II on the actual target and memory layout.
 
 Two constraints gate whether the direct-store form is worth measuring:
@@ -914,7 +914,169 @@ VERSIONED_LOOP(6, count, body);
 ```
 
 
-## 9. Function Structure for Pipelining
+## 9. Outer Loop Pipelining
+
+### The problem
+In a loop nest, each outer iteration runs a top block (loads and address
+setup that feed the inner loop), the software-pipelined inner loop, and a
+bottom block (typically the stores of the inner loop's results). The
+inner loop cannot start until the top block's loads arrive, so their
+latency is paid once per outer iteration. When the inner loop is short,
+that latency is a large share of the run time, and the inner pipeliner
+cannot hide it: it only overlaps iterations of the inner loop.
+
+### What the compiler does
+The outer loop pipeliner prefetches the next outer iteration's loads,
+called stage 0, in the bottom block of the current one, so they are in
+flight while the current iteration finishes. The rest of the top block
+(stage 1) stays where it was:
+
+```cpp
+// As written                  // After outer loop pipelining
+for (o = 0; o < N; o++) {      stage0(0);                       // before the loop
+    top(o);                    for (o = 0; o < N - 1; o++) {
+    inner_loop(o);                 stage1(o);
+    bottom(o);                     inner_loop(o);
+}                                  bottom(o); stage0(o + 1);    // prefetch
+                               }
+                               stage1(N - 1); inner_loop(N - 1); bottom(N - 1);
+```
+
+The last iteration has no next iteration to prefetch, so it is peeled
+off after the loop. The peeled copy duplicates the inner loop, with its
+prologue and epilogue, in program memory.
+
+### Enabling it
+Outer loop pipelining is off by default. Enable it on the outer loop, and
+declare that the outer loop runs at least twice:
+
+```cpp
+AIE_LOOP_HINT(aie-enable-outer-loop-pipelining, 1)
+AIE_LOOP_RANGE(2,)
+for (int o = 0; o < param.outer_count; o++) {
+    // top: loads and address setup that feed the inner loop
+    AIE_PREPARE_FOR_PIPELINING
+    AIE_LOOP_RANGE(4,)
+    for (int i = 0; i < param.inner_count; i++) {
+        // inner loop
+    }
+    // bottom: stores of the inner loop's results
+}
+```
+
+`--aie-enable-outer-loop-pipelining` turns it on for every eligible loop
+of the compilation, which is useful to find candidates but not as a
+kernel setting.
+
+The compiler declines a loop without a diagnostic unless all of the
+following hold:
+- The outer loop contains exactly one inner loop, and nothing else but
+  one top block that falls straight into it and one bottom block after
+  it: no `if` in the outer body and no second inner loop.
+- The inner loop is a zero-overhead loop. A loop that opted out with
+  `AIE_LOOP_HINT(enable-aie-hardware-loops, 0)` is not taken.
+- The outer loop is known to run at least twice: `AIE_LOOP_RANGE(2,)` on
+  the outer loop, or a constant trip count.
+- The outer loop counts with a counter compared against a fixed bound.
+- No `volatile` or atomic access in the top or bottom block.
+- With the default partitioning (below), either the top block contains a
+  2048-bit accumulator-producing call, or nothing in it has side effects:
+  a stream write in the top block, for example, makes the compiler
+  decline the loop.
+
+### Options
+Each key is set per loop with `AIE_LOOP_HINT(key, value)` on the outer
+loop, or for the whole compilation with `--key=value` (see
+[Section 6](#6-loop-hints) for the precedence):
+
+| Key                                         | Type                  | Default | Effect                                                    |
+|---------------------------------------------|-----------------------|---------|-----------------------------------------------------------|
+| `aie-enable-outer-loop-pipelining`          | 0/1                   | 0       | Pipeline this outer loop                                  |
+| `aie-outer-loop-pipelining-lean-stage0`     | 0/1                   | 0       | Prefetch only loads and their address computations       |
+| `aie-outer-loop-pipelining-speculative`     | 0/1                   | 0       | Keep the last iteration in the loop instead of peeling it |
+| `aie-outer-loop-pipelining-split-prologue`  | 0/1                   | 1       | Keep 2048-bit accumulator calls and their users in stage 1 |
+| `aie-outer-loop-pipelining-min-trip-count`  | int                   | 2       | Minimum outer trip count                                  |
+| `aie-outer-loop-type`                       | `auto`, `hw`, `soft`  | `auto`  | Whether the outer loop becomes a JNZD hardware loop       |
+
+The subsections below cover the three choices these keys make, each set
+on its own: what is prefetched, how the last iteration is handled, and
+the outer loop type.
+
+### Choosing what is prefetched
+Every prefetched value stays in a register through the whole inner loop
+of the current iteration, so stage 0 trades registers for latency.
+
+- **Default partitioning**: if the top block contains a call that
+  produces a 2048-bit vector, typically an accumulator initialized by a
+  multiply, that call and everything computed from it stay in stage 1,
+  and the rest of the top block is prefetched. Without such a call,
+  everything in the top block that the inner loop reads is prefetched.
+- **Lean stage 0** (`AIE_LOOP_HINT(aie-outer-loop-pipelining-lean-stage0, 1)`):
+  only the top block's loads (FIFO loads included), their address
+  computations and a few target-selected intrinsics are prefetched. Any
+  other computation on the loaded data, such as a shuffle, stays in
+  stage 1.
+
+Try lean stage 0 when enabling outer loop pipelining raises the inner
+loop's II or adds spill code: it holds fewer registers across the inner
+loop.
+
+### Speculating the last iteration
+`AIE_LOOP_HINT(aie-outer-loop-pipelining-speculative, 1)` keeps the last
+iteration in the loop instead of peeling it. The loop runs all N
+iterations, and the last one prefetches data for an iteration that does
+not exist, which is then dropped. That saves the program memory of the
+peeled copy.
+
+Only use it when reading one outer iteration past the end of every input
+is safe. With the default partitioning, the compiler peels the last
+iteration anyway if the prefetched code has side effects; with lean
+stage 0 it speculates regardless, so that check is yours to make.
+
+Lean stage 0 does not imply speculation: without the speculative hint,
+the last iteration is peeled.
+
+### Outer loop type
+With `auto`, the pipelined outer loop becomes a JNZD hardware loop when
+it advances fewer than 6 pointers; `--aie-outer-loop-pointer-threshold=N`
+moves that limit for the whole compilation. On AIE2PS a JNZD holds its
+branch target in a pointer register for the whole loop, which is what
+the limit protects. `hw` asks for a JNZD regardless and also stops the
+backend from turning an expensive JNZD back into a plain branch; `soft`
+keeps a software loop. A JNZD also needs a counter the compiler can turn
+into a down-count, so check the assembly for the `jnzd` at the end of the
+outer loop.
+
+### Checking the result
+The pass emits no remark of its own. It renames the blocks of the loop
+it pipelines, and the postpipeliner remarks (see
+[Section 15](#15-reading-optimization-hints-remarks-and-warnings)) show
+those names: `steady.*` for the pipelined loop and `lastiter.*` for the
+peeled last iteration, which is absent when speculating.
+
+```yaml
+  - Loop:            bb.3.steady.stage1.inner.inner.header
+  - Prologue:        bb.2.steady.stage1.top
+  - Epilogue:        bb.4.steady.stage1.bottom.and.stage0.top
+...
+  - Loop:            bb.6.lastiter.stage1.inner.inner.header
+  - Prologue:        bb.5.lastiter.stage1.top
+  - Epilogue:        bb.7.lastiter.stage1.bottom
+```
+
+If these names do not appear, the loop was not pipelined; check the
+requirements above. Remove the hint from such a loop: on AIE2PS, a loop
+the pipeliner is enabled for is not turned into a JNZD hardware loop
+beforehand, so a loop it declines ends up a software loop.
+
+When it is pipelined, compare the cost both ways. The saving shows in
+the `PrologueBundles` of `steady.stage1.top` against those of the
+original loop's prologue, since the loads it waited for now arrive from
+the previous iteration. The cost is the program memory of the peeled
+copy, visible in the `aie-asm-printer` remarks.
+
+
+## 10. Function Structure for Pipelining
 
 ### NOINLINE core, INLINE wrapper
 
@@ -929,7 +1091,7 @@ The core function containing the hot loop must be `NOINLINE`. The
 public API function should be a thin `INLINE` wrapper that casts
 pointers and forwards them to the core.
 
-## 10. Pointer Increment Patterns
+## 11. Pointer Increment Patterns
 
 ### Post-increment vs indexed access
 Post-increment addressing maps directly to AIE hardware addressing
@@ -973,7 +1135,7 @@ FIFO operations manage alignment internally and map to efficient
 hardware primitives.
 
 
-## 11. Vector Load/Store Alignment
+## 12. Vector Load/Store Alignment
 
 Vector loads and stores require the address to be aligned to the
 vector width. Misaligned accesses cause undefined behavior or
@@ -1008,7 +1170,7 @@ incorrect data (silent corruption). If a kernel produces wrong results
 only for certain parameter combinations, check whether the failing
 cases produce misaligned pointers.
 
-## 12. Advanced Loop Optimization Techniques
+## 13. Advanced Loop Optimization Techniques
 
 ### Prefer compiler pipelining over manual unrolling
 Manual loop unrolling (duplicating the loop body N times, reducing the
@@ -1071,8 +1233,11 @@ software-pipelined loop's prologue/epilogue is too short to hide a
 long-latency instruction in the *outer* loop, peeling a few inner iterations
 up into the outer loop lets them run in parallel with that outer-loop latency.
 This is a deliberate scheduling trade, not accidental duplication -- justify it
-with a measured II/latency improvement (Section 14), since the default guidance
-above still holds for the common single-loop case.
+with a measured II/latency improvement (Section 15), since the default guidance
+above still holds for the common single-loop case. When the outer-loop latency
+comes from the loads that feed the inner loop, try outer loop pipelining first
+(see [Section 9](#9-outer-loop-pipelining)): it overlaps those loads with the
+end of the previous outer iteration without changing the source.
 
 ### AIE_LOOP_UNROLL for controlled unrolling
 When the loop body is too small for the pipeliner to fill all VLIW
@@ -1163,7 +1328,7 @@ This avoids unnecessary prologue/epilogue execution and simplifies
 the compiler's analysis.
 
 
-## 13. Coding for Peano
+## 14. Coding for Peano
 
 ### Always use AIE_* macros
 Never use raw `#pragma clang loop` directives in kernel code. Use the
@@ -1205,7 +1370,7 @@ v16accfloat __aie_dm_resource_b *pB = ...;
 ```
 
 
-## 14. Reading Optimization Hints (Remarks and Warnings)
+## 15. Reading Optimization Hints (Remarks and Warnings)
 
 Optimization remarks and warnings are the primary tool for evaluating
 how well the compiler pipelined a loop and for diagnosing performance
@@ -1520,7 +1685,7 @@ choice typically shows up later as a higher achieved II in the
 resource MII reported by `aie-asm-printer`.
 
 
-## 15. Optimization Checklist
+## 16. Optimization Checklist
 
 Use this checklist when writing or reviewing kernel code:
 
@@ -1549,10 +1714,20 @@ Use this checklist when writing or reviewing kernel code:
     deduction is ambiguous
 14. `AIE_LOOP_HINT` used for per-loop compiler tuning when global
     defaults are suboptimal
+15. Loop nests whose short inner loop waits on the outer loop's loads
+    tried with `AIE_LOOP_HINT(aie-enable-outer-loop-pipelining, 1)` and
+    `AIE_LOOP_RANGE(2,)` on the outer loop, with `steady.*` blocks
+    confirmed in the remarks
 
-## 16. Changes
+## 17. Changes
 
 - A declared minimum trip count of 0 or 1 (`AIE_LOOP_RANGE(0,)`,
   `AIE_LOOP_RANGE(1,)`) no longer keeps a loop out of hardware loops.
   Use `AIE_LOOP_HINT(enable-aie-hardware-loops, 0)` for that instead; see
   [Turning hardware loops off or on for one loop](#turning-hardware-loops-off-or-on-for-one-loop).
+- `AIE_LOOP_HINT(aie-outer-loop-pipelining-lean-stage0, 1)` no longer
+  turns on speculation of the last outer iteration: the last iteration is
+  now peeled, which costs program memory. Add
+  `AIE_LOOP_HINT(aie-outer-loop-pipelining-speculative, 1)` to keep the
+  previous code; see [Speculating the last
+  iteration](#speculating-the-last-iteration).

@@ -104,12 +104,13 @@ TEST_F(AIEOuterLoopPipelinerTest,
       ret void
     }
 
-    !0 = distinct !{!0, !2, !3, !4, !5}
+    !0 = distinct !{!0, !2, !3, !4, !5, !6}
     !1 = distinct !{!1, !2}
     !2 = !{!"llvm.loop.mustprogress"}
     !3 = !{!"llvm.loop.itercount.range", i32 2}
     !4 = !{!"llvm.loop.hint.aie-enable-outer-loop-pipelining", i64 1}
     !5 = !{!"llvm.loop.hint.aie-outer-loop-pipelining-lean-stage0", i64 1}
+    !6 = !{!"llvm.loop.hint.aie-outer-loop-pipelining-speculative", i64 1}
   )IR",
                                                   Error, Context);
   ASSERT_TRUE(M) << Error.getMessage().str();

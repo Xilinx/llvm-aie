@@ -8,6 +8,7 @@
 ; RUN: llc -mtriple=aie2p -O2 -aie-enable-outer-loop-pipelining \
 ; RUN:     -aie-enable-outer-loop-pointer-opt=false \
 ; RUN:     -aie-outer-loop-pipelining-lean-stage0 \
+; RUN:     -aie-outer-loop-pipelining-speculative \
 ; RUN:     -stop-after=aie-outer-loop-pipeliner \
 ; RUN:     -o - %s | sed 's/^  //' | FileCheck %s
 ;

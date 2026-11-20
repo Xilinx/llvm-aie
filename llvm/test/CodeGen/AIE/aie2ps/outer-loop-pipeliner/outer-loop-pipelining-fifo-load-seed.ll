@@ -6,6 +6,7 @@
 ;
 ; RUN: llc -mtriple=aie2ps -O2 -aie-enable-outer-loop-pointer-opt=false -aie-enable-outer-loop-pipelining \
 ; RUN:     -aie-outer-loop-pipelining-lean-stage0 \
+; RUN:     -aie-outer-loop-pipelining-speculative \
 ; RUN:     -stop-after=aie-outer-loop-pipeliner -o - %s | FileCheck %s
 
 ; The top block has no plain load: the data comes from a FIFO load intrinsic

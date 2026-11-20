@@ -167,10 +167,7 @@ struct OLPOpts {
         MinTripCount(Overrides.get(OuterLoopPipeliningMinTripCount)),
         SplitStagesEnabled(Overrides.get(SplitStages)),
         UseLeanStage0(Overrides.get(LeanStage0Mode)),
-        EnableSpeculativeLastIteration(
-            Overrides.hasOverride(SpeculativeLastIteration)
-                ? Overrides.get(SpeculativeLastIteration)
-                : UseLeanStage0),
+        EnableSpeculativeLastIteration(Overrides.get(SpeculativeLastIteration)),
         LoopType(Overrides.get(OuterLoopTypeOpt)) {}
 
   /// Determine whether to use hardware loop based on loop type and pointer
@@ -2159,9 +2156,8 @@ bool AIEOuterLoopPipeliner::performTransformation(OrigLoopStructure &OrigLS,
     return false;
   }
 
-  // Lean stage-0 defaults to speculation, regardless of side effects in that
-  // stage. Non-lean speculation still requires a side-effect-free stage-0
-  // chain.
+  // Lean stage-0 speculates regardless of side effects in that stage.
+  // Non-lean speculation requires a side-effect-free stage-0 chain.
   const bool Stage0IsSideEffectFree = !hasSideEffects(OrigLS.stage0Insts());
   const bool UseSpeculativeLastIteration =
       Opts.EnableSpeculativeLastIteration &&
