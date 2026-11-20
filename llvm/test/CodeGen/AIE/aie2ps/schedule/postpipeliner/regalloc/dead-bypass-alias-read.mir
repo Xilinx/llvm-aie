@@ -7,7 +7,7 @@
 
 # A dead VMIN/VMAX vector destination still writes the MV_Bypass one cycle
 # before the register-file write. The next instruction's vector source is
-# read through that same bypass on the RF-write cycle. buildLiveLanes keeps
+# read through that same bypass on the RF-write cycle. buildLiveness keeps
 # that early lane when an aliasing bypass reader is present, so post-regalloc
 # cannot reuse the dead destination as the next clip's source.
 #

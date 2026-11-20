@@ -75,9 +75,12 @@ class AIEScheduleInterpreter {
 public:
   explicit AIEScheduleInterpreter(const MachineFunction &MF);
 
-  /// Return the absolute cycle at which operand \p OpIdx of \p MI is
-  /// accessed when the instruction is issued at \p IssueCycle.
-  int getOperandAccessCycle(const MachineInstr &MI, int IssueCycle,
+  /// Return the absolute cycle at which operand \p OpIdx of an instruction
+  /// with scheduling class \p SchedClass is accessed when the instruction is
+  /// issued at \p IssueCycle.  The scheduling class is resolved by the caller
+  /// (see AIEBaseInstrInfo::getSchedClass) so it can be shared across all
+  /// operands of an instruction.
+  int getOperandAccessCycle(unsigned SchedClass, int IssueCycle,
                             unsigned OpIdx) const;
 
   /// Add events for a single instruction to the event schedule.
@@ -110,7 +113,7 @@ public:
   ///
   /// Uses a backward scan to compute which lanes of each live range are live
   /// at each modulo-II offset. The result is a map from LRIndex to a
-  /// LivenessVector, where LiveLanesByLRIndex[LRIndex][t] indicates which
+  /// LivenessVector, where LivenessByLRIndex[LRIndex][t] indicates which
   /// lanes are live at offset t (0 <= t < II).
   ///
   /// \param Schedule The event schedule to analyze
@@ -118,17 +121,17 @@ public:
   /// \param Tracker The live range tracker used to look up register classes
   /// \return Map of LRIndex to per-offset lane masks
   DenseMap<unsigned, AIE::LivenessVector>
-  buildLiveLanes(const EventSchedule &Schedule, int II,
-                 const RegLiveRangeTracker &Tracker) const;
+  buildLiveness(const EventSchedule &Schedule, int II,
+                const RegLiveRangeTracker &Tracker) const;
 
   /// Dump the live lanes in a readable format
   ///
-  /// \param LiveLanesByLRIndex The live lanes data to dump
+  /// \param LivenessByLRIndex The live lanes data to dump
   /// \param II The initiation interval
   /// \param OS Output stream to write to
-  void dumpLiveLanes(
-      const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex, int II,
-      raw_ostream &OS) const;
+  void
+  dumpLiveness(const DenseMap<unsigned, AIE::LivenessVector> &LivenessByLRIndex,
+               int II, raw_ostream &OS) const;
 };
 
 } // end namespace llvm
