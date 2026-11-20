@@ -2161,4 +2161,25 @@ bool AIELegalizerHelper::legalizeG_ICMP(LegalizerHelper &Helper,
   return true;
 }
 
+bool AIELegalizerHelper::legalizeG_PTRMASK(LegalizerHelper &Helper,
+                                           MachineInstr &MI) const {
+  MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
+
+  const auto [DstReg, DstTy, PtrReg, PtrTy] = MI.getFirst2RegLLTs();
+  const Register MaskReg = MI.getOperand(2).getReg();
+  assert(DstTy == P0_20 && PtrTy == P0_20 &&
+         MIRBuilder.getMRI()->getType(MaskReg) == S20 &&
+         "Expected a 20-bit pointer and mask");
+
+  // Pointers live in 20-bit registers, but the only legal bitwise operation is
+  // 32 bits wide. Express the mask as 20-bit integer arithmetic and let the
+  // legalizer widen the G_AND.
+  auto PtrInt = MIRBuilder.buildPtrToInt(S20, PtrReg);
+  auto Masked = MIRBuilder.buildAnd(S20, PtrInt, MaskReg);
+  MIRBuilder.buildIntToPtr(DstReg, Masked);
+
+  MI.eraseFromParent();
+  return true;
+}
+
 } // namespace llvm
