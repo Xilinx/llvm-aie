@@ -72,6 +72,26 @@ constexpr StringLiteral LoopVersionFallbackHintKey =
 /// marker, not the LoopVersioningHintKey request the IR pass consumes.
 bool isLoopVersioned(const MachineBasicBlock &LoopBlock);
 
+/// Loop-hint key that forces the pre-RA MachinePipeliner on a loop when
+/// -aie-enable-prepipeliner is false. Does not override pipeline(disable) or
+/// -aie-force-postpipeliner.
+constexpr StringLiteral ForcePrePipelinerHintKey{
+    "llvm.loop.hint.aie-force-prepipeliner"};
+
+/// True when \p LoopBlock carries ForcePrePipelinerHintKey with a non-zero
+/// integer.
+bool isPrePipelinerForced(const MachineBasicBlock &LoopBlock);
+
+/// Loop-hint key that always skips the pre-RA MachineScheduler on a
+/// single-block loop. Independent of -aie-presched-follows-skip-pipeliner and
+/// of either pipeliner.
+constexpr StringLiteral DisablePreSchedulerHintKey{
+    "llvm.loop.hint.aie-disable-prescheduler"};
+
+/// True when \p LoopBlock carries DisablePreSchedulerHintKey with a non-zero
+/// integer.
+bool isPreSchedulerDisabled(const MachineBasicBlock &LoopBlock);
+
 /// Returns true if this is a loop latch that has a pipeliner disable pragma,
 /// none otherwise.
 std::optional<bool> getPipelinerDisabled(const MachineBasicBlock &LoopBlock);

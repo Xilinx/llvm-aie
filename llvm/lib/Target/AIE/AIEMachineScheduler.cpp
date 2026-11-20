@@ -1524,17 +1524,22 @@ void AIEPreRASchedStrategy::initialize(ScheduleDAGMI *DAG) {
 MachineBasicBlock *AIEPreRASchedStrategy::nextBlock() {
   MachineBasicBlock *Next = nullptr;
 
-  // The pipeliner is usually disabled to give the postpipeliner a chance.
-  // The prescheduler also clutters the view of the postpipeliner, so we skip
-  // such blocks here.
+  // Two independent skip reasons for single-block loops:
+  // 1. aie-disable-prescheduler hint (always skips; does not touch either
+  //    pipeliner).
+  // 2. If PreSchedFollowsSkipPipeliner: the pre-RA pipeliner is disabled for
+  //    this block (pipeline(disable) / force-postpipeliner), so leave the
+  //    schedule uncluttered for the postpipeliner.
   auto Skip = [](MachineBasicBlock *Block) {
-    if (!Block)
+    if (!Block || !AIELoopUtils::isSingleMBBLoop(Block))
       return false;
+    if (AIELoopUtils::isPreSchedulerDisabled(*Block))
+      return true;
+
     bool PrePipelinerDisabled =
         AIELoopUtils::getPipelinerDisabled(*Block) ||
         !Block->getParent()->getSubtarget().enableMachinePipeliner();
-    return PreSchedFollowsSkipPipeliner &&
-           AIELoopUtils::isSingleMBBLoop(Block) && PrePipelinerDisabled;
+    return PreSchedFollowsSkipPipeliner && PrePipelinerDisabled;
   };
 
   do {
