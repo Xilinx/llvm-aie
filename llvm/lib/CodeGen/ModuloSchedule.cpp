@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// Modifications (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its
 // affiliates
 //
 //===----------------------------------------------------------------------===//
@@ -512,9 +512,17 @@ void ModuloScheduleExpander::generateExistingPhis(
                  VRMap[PrevStage - np + 1].count(Def))
           PhiOp2 = VRMap[PrevStage - np + 1][Def];
         // Use the loop value defined in the kernel.
-        else if (static_cast<unsigned>(LoopValStage) > PrologStage + 1 &&
+        else if (LoopValStage != -1 &&
+                 static_cast<unsigned>(LoopValStage) > PrologStage + 1 &&
                  VRMap[PrevStage - StageDiffAdj - np].count(LoopVal))
           PhiOp2 = VRMap[PrevStage - StageDiffAdj - np][LoopVal];
+        // The loop value is not defined in the loop, so no stage produces a
+        // new version of it. A Phi scheduled after stage 0 is consumed by an
+        // iteration that follows the iterations that came out of the
+        // prolog, so it takes the loop value rather than the Phi value of the
+        // previous block.
+        else if (np == 0 && LoopValStage == -1 && StageScheduled > 0)
+          PhiOp2 = LoopVal;
         // Use the value defined by the Phi, unless we're generating the first
         // epilog and the Phi refers to a Phi in a different stage.
         else if (VRMap[PrevStage - np].count(Def) &&
