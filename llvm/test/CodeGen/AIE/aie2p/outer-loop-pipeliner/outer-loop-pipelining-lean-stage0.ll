@@ -11,8 +11,8 @@
 ; RUN:     -stop-after=aie-outer-loop-pipeliner -o - %s | FileCheck %s --check-prefix=LEAN
 ; RUN: llc -mtriple=aie2p -O2 -aie-enable-outer-loop-pointer-opt=false -aie-enable-outer-loop-pipelining \
 ; RUN:     -aie-outer-loop-pipelining-lean-stage0 \
-; RUN:     -aie-outer-loop-pipelining-speculative=false \
-; RUN:     -stop-after=aie-outer-loop-pipeliner -o - %s | FileCheck %s --check-prefix=LEAN-NOSPEC
+; RUN:     -aie-outer-loop-pipelining-speculative \
+; RUN:     -stop-after=aie-outer-loop-pipeliner -o - %s | FileCheck %s --check-prefix=LEAN-SPEC
 
 ; The shuffle feeds the 2048-bit split point. Default anchored collection puts
 ; it in stage 0, while lean stage-0 collection keeps it in stage 1 because it
@@ -83,10 +83,12 @@ exit:
 ; LEAN-LABEL: steady.stage1.top:
 ; LEAN:       shufflevector <16 x i32>
 ; LEAN:       @llvm.aie2p.I512.I512.ACC2048.mul.conf
-; LEAN-NOT:   lastiter.stage1.top
+; LEAN:       lastiter.stage1.top:
 
-; An explicit speculative setting overrides lean mode's speculative default.
-; LEAN-NOSPEC: lastiter.stage1.top:
+; Lean stage 0 does not imply speculation: only an explicit speculative
+; setting drops the last-iteration region.
+; LEAN-SPEC-LABEL: steady.stage1.top:
+; LEAN-SPEC-NOT:   lastiter.stage1.top
 
 attributes #0 = { nocallback nofree nosync nounwind willreturn memory(none) }
 
