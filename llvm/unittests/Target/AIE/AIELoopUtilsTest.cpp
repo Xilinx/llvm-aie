@@ -365,6 +365,29 @@ TEST_F(AIELoopUtilsTest, OuterLoopStructure_BuildFromNonSpeculative) {
   EXPECT_TRUE(OLS->hasPeeledIterRegion());
 }
 
+TEST_F(AIELoopUtilsTest, OuterLoopStructure_AmbiguousPreheader) {
+  // The entry block also branches straight to the steady top: SteadyTop has
+  // two predecessors besides the back edge, so there is no single preheader.
+  std::string MIR = NonSpeculativeMIR;
+  const std::string Entry = "  bb.0.entry:\n    successors: %bb.1\n";
+  MIR.replace(MIR.find(Entry), Entry.size(),
+              "  bb.0.entry:\n    successors: %bb.1, %bb.2\n"
+              "    liveins: $r0\n    PseudoJNZ $r0, %bb.2\n");
+  parseMIR(MIR.c_str());
+  MachineFunction *MF = getMachineFunction("olp_non_speculative");
+
+  MachineBasicBlock *OuterLatch = getMBB(MF, 4);
+  ASSERT_NE(OuterLatch, nullptr);
+  ASSERT_EQ(getMBB(MF, 2)->pred_size(), 3u);
+
+  auto OLS = OuterLoopStructure::tryBuildFrom(*OuterLatch);
+  ASSERT_TRUE(OLS.has_value());
+  EXPECT_EQ(OLS->OuterPreheader, nullptr);
+  EXPECT_EQ(OLS->SteadyTop, getMBB(MF, 2));
+  EXPECT_EQ(OLS->PeeledIterTop, getMBB(MF, 5));
+  EXPECT_FALSE(OLS->isSafeForSiblingMerge());
+}
+
 TEST_F(AIELoopUtilsTest, OuterLoopStructure_BuildFromSpeculative) {
   parseMIR(SpeculativeMIR);
   MachineFunction *MF = getMachineFunction("olp_speculative");

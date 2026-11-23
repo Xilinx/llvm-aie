@@ -214,6 +214,10 @@
 
 ; AIE-O0123-NEXT:      Eliminate PHI nodes for register allocation
 ; AIE-O0123-NEXT:      AIE sub-reg constrainer
+
+; AIE-O0-NEXT:      MachineDominator Tree Construction
+; AIE-O1-NEXT:      MachineDominator Tree Construction
+
 ; AIE-O0123-NEXT:      AIE sibling loop vreg merger
 ; AIE-O0123-NEXT:      Two-Address instruction pass
 
@@ -223,7 +227,6 @@
 ; AIE-O0-NEXT:      Lazy Machine Block Frequency Analysis
 ; AIE-O0-NEXT:      Machine Optimization Remark Emitter
 
-; AIE-O1-NEXT:      MachineDominator Tree Construction
 ; AIE-O123-NEXT:      Slot index numbering
 ; AIE-O123-NEXT:      Live Interval Analysis
 ; AIE-O123-NEXT:      Register Coalescer

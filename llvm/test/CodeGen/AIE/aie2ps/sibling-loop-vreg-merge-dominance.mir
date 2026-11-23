@@ -1,0 +1,176 @@
+# RUN: llc -mtriple=aie2ps -run-pass=aie-sibling-loop-vreg-merge -verify-machineinstrs \
+# RUN:   %s -o - | FileCheck %s
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# An invariant copy in an inner loop is only replaced by an equivalent copy
+# from a block that dominates both inner loops.
+
+# The steady top is the entry block, so there is no outer preheader. The copy in
+# the steady top dominates both inner loops and still replaces theirs.
+# CHECK-LABEL: name: no_preheader
+# CHECK-LABEL: bb.0.steady.top:
+# CHECK:       [[TOP:%[0-9]+]]:er = COPY [[SRC:%[0-9]+]]
+# CHECK-LABEL: bb.1.steady.inner:
+# CHECK-NOT:   COPY [[SRC]]
+# CHECK:       PseudoJNZ
+# CHECK-LABEL: bb.4.lastiter.inner:
+# CHECK-NOT:   COPY [[SRC]]
+# CHECK:       PseudoJNZ
+# CHECK-LABEL: bb.5.lastiter.bottom:
+# CHECK:       PseudoRET implicit $lr, implicit [[TOP]], implicit [[TOP]]
+
+# The steady top is entered from two blocks. The copy in one of them does not
+# dominate the inner loops and must not replace theirs.
+# CHECK-LABEL: name: two_entries
+# CHECK-LABEL: bb.1.side.a:
+# CHECK:       {{%[0-9]+}}:er = COPY [[SRC:%[0-9]+]]
+# CHECK-LABEL: bb.4.steady.inner:
+# CHECK:       [[SI:%[0-9]+]]:er = COPY [[SRC]]
+# CHECK-LABEL: bb.7.lastiter.inner:
+# CHECK:       [[LI:%[0-9]+]]:er = COPY [[SRC]]
+# CHECK-LABEL: bb.8.lastiter.bottom:
+# CHECK:       PseudoRET implicit $lr, implicit [[SI]], implicit [[LI]]
+
+--- |
+  define void @no_preheader() {
+  steady.top:
+    br label %steady.inner
+  steady.inner:
+    br i1 undef, label %steady.inner, label %steady.bottom
+  steady.bottom:
+    br i1 undef, label %lastiter.top, label %lastiter.top, !llvm.loop !0
+  lastiter.top:
+    br label %lastiter.inner
+  lastiter.inner:
+    br i1 undef, label %lastiter.inner, label %lastiter.bottom
+  lastiter.bottom:
+    ret void
+  }
+
+  define void @two_entries() {
+  entry:
+    br label %side.a
+  side.a:
+    br label %side.b
+  side.b:
+    br label %steady.top
+  steady.top:
+    br label %steady.inner
+  steady.inner:
+    br i1 undef, label %steady.inner, label %steady.bottom
+  steady.bottom:
+    br i1 undef, label %steady.top, label %lastiter.top, !llvm.loop !0
+  lastiter.top:
+    br label %lastiter.inner
+  lastiter.inner:
+    br i1 undef, label %lastiter.inner, label %lastiter.bottom
+  lastiter.bottom:
+    ret void
+  }
+
+  !0 = distinct !{!0, !1}
+  !1 = !{!"llvm.loop.hint.aie_outerloop_pipeliner_success"}
+...
+---
+name: no_preheader
+tracksRegLiveness: true
+body: |
+  bb.0.steady.top:
+    successors: %bb.1
+    liveins: $r0, $r1
+
+    %0:er = COPY $r0
+    %1:er = COPY $r1
+    %2:er = COPY %1
+    PseudoJ_jump_imm %bb.1
+
+  bb.1.steady.inner:
+    successors: %bb.1, %bb.2
+
+    %3:er = COPY %1
+    PseudoJNZ %0, %bb.1
+    PseudoJ_jump_imm %bb.2
+
+  bb.2.steady.bottom:
+    successors: %bb.0, %bb.3
+
+    PseudoJNZ %0, %bb.0
+    PseudoJ_jump_imm %bb.3
+
+  bb.3.lastiter.top:
+    successors: %bb.4
+
+    PseudoJ_jump_imm %bb.4
+
+  bb.4.lastiter.inner:
+    successors: %bb.4, %bb.5
+
+    %4:er = COPY %1
+    PseudoJNZ %0, %bb.4
+    PseudoJ_jump_imm %bb.5
+
+  bb.5.lastiter.bottom:
+    PseudoRET implicit $lr, implicit %3, implicit %4
+...
+---
+name: two_entries
+tracksRegLiveness: true
+body: |
+  bb.0.entry:
+    successors: %bb.1, %bb.2
+    liveins: $r0, $r1
+
+    %0:er = COPY $r0
+    %1:er = COPY $r1
+    PseudoJNZ %0, %bb.2
+    PseudoJ_jump_imm %bb.1
+
+  bb.1.side.a:
+    successors: %bb.3
+
+    %2:er = COPY %1
+    PseudoJ_jump_imm %bb.3
+
+  bb.2.side.b:
+    successors: %bb.3
+
+    PseudoJ_jump_imm %bb.3
+
+  bb.3.steady.top:
+    successors: %bb.4
+
+    PseudoJ_jump_imm %bb.4
+
+  bb.4.steady.inner:
+    successors: %bb.4, %bb.5
+
+    %3:er = COPY %1
+    PseudoJNZ %0, %bb.4
+    PseudoJ_jump_imm %bb.5
+
+  bb.5.steady.bottom:
+    successors: %bb.3, %bb.6
+
+    PseudoJNZ %0, %bb.3
+    PseudoJ_jump_imm %bb.6
+
+  bb.6.lastiter.top:
+    successors: %bb.7
+
+    PseudoJ_jump_imm %bb.7
+
+  bb.7.lastiter.inner:
+    successors: %bb.7, %bb.8
+
+    %4:er = COPY %1
+    PseudoJNZ %0, %bb.7
+    PseudoJ_jump_imm %bb.8
+
+  bb.8.lastiter.bottom:
+    PseudoRET implicit $lr, implicit %3, implicit %4
+...
