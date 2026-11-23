@@ -1,0 +1,108 @@
+# RUN: llc -mtriple=aie2ps -run-pass=aie-olp-mov-rotation \
+# RUN:     -verify-machineinstrs %s -o - | FileCheck %s
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# Case 1: Matched MOV pair in both SteadyTop and PeeledTop.
+# The same MOV_OR_pseudo $r2, $r1 appears in both top blocks.
+# After rotation:
+#   - MOV moves from SteadyTop to Preheader (bb.0)
+#   - MOV moves from PeeledTop to SteadyBottom (bb.3)
+#   - Both top blocks become MOV-free.
+
+# CHECK-LABEL: name: case1_matched_pair
+#
+# Preheader gets the MOV:
+# CHECK:      bb.0.entry:
+# CHECK:        $r2 = MOV_OR_pseudo $r1
+# CHECK-NEXT:   PseudoJ_jump_imm %bb.1
+#
+# SteadyTop is now MOV-free:
+# CHECK:      bb.1.steady.top:
+# CHECK-NOT:    MOV_OR_pseudo
+# CHECK:      bb.2.steady.inner:
+#
+# SteadyBottom gets the MOV before the branch:
+# CHECK:      bb.3.steady.bottom:
+# CHECK:        $r2 = MOV_OR_pseudo $r1
+# CHECK-NEXT:   PseudoJNZ $r0, %bb.1
+#
+# PeeledTop is now MOV-free:
+# CHECK:      bb.4.peeled.top:
+# CHECK-NOT:    MOV_OR_pseudo
+# CHECK:      bb.5.peeled.inner:
+
+--- |
+  define void @case1_matched_pair() {
+  entry:
+    br label %steady.top
+  steady.top:
+    br label %steady.inner
+  steady.inner:
+    br i1 undef, label %steady.inner, label %steady.bottom
+  steady.bottom:
+    br i1 undef, label %steady.top, label %peeled.top, !llvm.loop !0
+  peeled.top:
+    br label %peeled.inner
+  peeled.inner:
+    br i1 undef, label %peeled.inner, label %peeled.bottom
+  peeled.bottom:
+    ret void
+  }
+
+  !0 = distinct !{!0, !1}
+  !1 = !{!"llvm.loop.hint.aie_outerloop_pipeliner_success", i64 1}
+...
+---
+name:            case1_matched_pair
+tracksRegLiveness: true
+noPhis:          true
+isSSA:           false
+noVRegs:         true
+body:             |
+  bb.0.entry:
+    successors: %bb.1
+    liveins: $r0, $r1
+
+    PseudoJ_jump_imm %bb.1
+
+  bb.1.steady.top:
+    successors: %bb.2
+    liveins: $r0, $r1
+
+    $r2 = MOV_OR_pseudo $r1
+
+  bb.2.steady.inner:
+    successors: %bb.2, %bb.3
+    liveins: $r0, $r2
+
+    NOP
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2
+
+  bb.3.steady.bottom:
+    successors: %bb.1, %bb.4
+    liveins: $r0, $r1
+
+    PseudoJNZ $r0, %bb.1
+
+  bb.4.peeled.top:
+    successors: %bb.5
+    liveins: $r0, $r1
+
+    $r2 = MOV_OR_pseudo $r1
+
+  bb.5.peeled.inner:
+    successors: %bb.5, %bb.6
+    liveins: $r0, $r2
+
+    NOP
+    PseudoLoopEnd <mcsymbol .L_LEnd1>, %bb.5
+
+  bb.6.peeled.bottom:
+
+    PseudoRET implicit $lr
+...

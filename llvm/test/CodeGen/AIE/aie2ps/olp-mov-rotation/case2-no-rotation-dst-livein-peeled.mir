@@ -1,0 +1,90 @@
+# RUN: llc -mtriple=aie2ps -run-pass=aie-olp-mov-rotation \
+# RUN:     -verify-machineinstrs %s -o - | FileCheck %s
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# Case 2 blocked: MOV only in SteadyTop, but DstReg ($r2) IS live-in to
+# PeeledTop. Inserting a def of $r2 at the end of SteadyBottom would
+# clobber the value PeeledTop expects. MOV must stay.
+
+# CHECK-LABEL: name: case2_no_rotation_dst_livein_peeled
+#
+# SteadyTop still has the MOV:
+# CHECK:      bb.1.steady.top:
+# CHECK:        $r2 = MOV_OR_pseudo $r1
+
+--- |
+  define void @case2_no_rotation_dst_livein_peeled() {
+  entry:
+    br label %steady.top
+  steady.top:
+    br label %steady.inner
+  steady.inner:
+    br i1 undef, label %steady.inner, label %steady.bottom
+  steady.bottom:
+    br i1 undef, label %steady.top, label %peeled.top, !llvm.loop !0
+  peeled.top:
+    br label %peeled.inner
+  peeled.inner:
+    br i1 undef, label %peeled.inner, label %peeled.bottom
+  peeled.bottom:
+    ret void
+  }
+
+  !0 = distinct !{!0, !1}
+  !1 = !{!"llvm.loop.hint.aie_outerloop_pipeliner_success", i64 1}
+...
+---
+name:            case2_no_rotation_dst_livein_peeled
+tracksRegLiveness: true
+noPhis:          true
+isSSA:           false
+noVRegs:         true
+body:             |
+  bb.0.entry:
+    successors: %bb.1
+    liveins: $r0, $r1, $r2
+
+    PseudoJ_jump_imm %bb.1
+
+  bb.1.steady.top:
+    successors: %bb.2
+    liveins: $r0, $r1
+
+    $r2 = MOV_OR_pseudo $r1
+
+  bb.2.steady.inner:
+    successors: %bb.2, %bb.3
+    liveins: $r0, $r2
+
+    NOP
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2
+
+  bb.3.steady.bottom:
+    successors: %bb.1, %bb.4
+    liveins: $r0, $r1, $r2
+
+    PseudoJNZ $r0, %bb.1
+
+  bb.4.peeled.top:
+    successors: %bb.5
+    liveins: $r0, $r2
+
+    ; No MOV here, but $r2 IS live-in (used in peeled.inner).
+    ; Case 2 rotation would clobber this value.
+
+  bb.5.peeled.inner:
+    successors: %bb.5, %bb.6
+    liveins: $r0, $r2
+
+    NOP
+    PseudoLoopEnd <mcsymbol .L_LEnd1>, %bb.5
+
+  bb.6.peeled.bottom:
+
+    PseudoRET implicit $lr
+...

@@ -272,6 +272,10 @@ void AIE2PassConfig::addPreSched2() {
   addPass(createAIEPseudoBranchExpansion());
   if (AIEDumpArtifacts)
     addPass(createMachineFunctionDumperPass(/*Suffix=*/"before-post-ra-sched"));
+  // Rotate MOV instructions out of OLP top blocks to improve sibling
+  // loop optimization in the post-machine scheduler.
+  if (TM->getOptLevel() != CodeGenOptLevel::None)
+    addPass(createAIEOLPMovRotation());
   // PostRAScheduler is required to insert NoOps for correctness.
   // We always run it, independently of the Opt level.
   addPass(&PostMachineSchedulerID);

@@ -321,6 +321,7 @@
 ; AIE-O1-NEXT:      Machine Optimization Remark Emitter
 ; AIE-O1-NEXT:      AIE Hardware Loops pass
 ; AIE-O1-NEXT:      AIE pseudo branch expansion
+; AIE-O1-NEXT:      AIE OLP MOV rotation for sibling optimization
 ; AIE-O1-NEXT:      MachineDominator Tree Construction
 ; AIE-O1-NEXT:      Machine Natural Loop Construction
 ; AIE-O1-NEXT:      PostRA Machine Instruction Scheduler
@@ -572,6 +573,7 @@
 ; AIE-O23-NEXT:      Machine Optimization Remark Emitter
 ; AIE-O23-NEXT:      AIE Hardware Loops pass
 ; AIE-O23-NEXT:      AIE pseudo branch expansion
+; AIE-O23-NEXT:      AIE OLP MOV rotation for sibling optimization
 ; AIE-O23-NEXT:      MachineDominator Tree Construction
 ; AIE-O23-NEXT:      Machine Natural Loop Construction
 ; AIE-O23-NEXT:      PostRA Machine Instruction Scheduler
