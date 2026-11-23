@@ -112,6 +112,13 @@ public:
   /// Reset the node to the values computed statically
   /// If FullReset is true, also reset the accumulated dynamic data.
   void reset(bool FullReset);
+
+  /// Update the tweaked bounds. Return true if the value actually changed.
+  bool setTweakedEarliest(std::optional<int> Value);
+  bool setTweakedLatest(std::optional<int> Value);
+
+  /// Drop both tweaked bounds. Return true if there was anything to drop.
+  bool clearTweaks();
 };
 
 class ScheduleInfo {
@@ -162,14 +169,31 @@ public:
 class PostPipelinerStrategy {
   MemoryBankPolicy BankPolicy;
 
+public:
+  /// The kinds of scheduling data that persist across runs of a strategy and
+  /// can change during a run. A rerun after a failure is only worthwhile if
+  /// a kind that the strategy depends on has changed, see
+  /// changeDependencies().
+  enum ChangeKind : unsigned {
+    NoChange = 0,
+    // TweakedEarliest / TweakedLatest of some node. These feed the bounds of
+    // every strategy.
+    TweakedBounds = 1 << 0,
+    // NumPushedEarliest of some node.
+    EarliestPushers = 1 << 1,
+    // NumPushedLatest of some node.
+    LatestPushers = 1 << 2,
+    AllChanges = TweakedBounds | EarliestPushers | LatestPushers
+  };
+
 protected:
   ScheduleDAGInstrs &DAG;
   ScheduleInfo &Info;
   int LatestBias = 0;
 
-  // Report change to the scheduling data. This can be used for iterative
-  // refinement
-  bool Changed = false;
+  // The kinds of change to the cross-run scheduling data since the last
+  // checkAndResetChanged(). This can be used for iterative refinement.
+  unsigned PendingChanges = NoChange;
 
 public:
   void setEarliest(int Index, int Value) { Info[Index].Earliest = Value; }
@@ -177,14 +201,12 @@ public:
     Info[Index].Latest = Value - LatestBias;
   }
 
-  // Register a change
-  void setChanged() { Changed = true; }
-  // Return changed and reset it
-  bool checkAndResetChanged() {
-    bool Old = Changed;
-    Changed = false;
-    return Old;
-  }
+  // Register a change of the given ChangeKind(s).
+  void setChanged(unsigned Kinds) { PendingChanges |= Kinds; }
+  // Return whether a change this strategy depends on was registered, see
+  // changeDependencies(). All registered changes are cleared. This is called
+  // between runs, so strategies override it to reset their per-run state.
+  virtual bool checkAndResetChanged();
 
 public:
   PostPipelinerStrategy(
@@ -195,6 +217,8 @@ public:
   // Provide a name for logging purposes
   virtual std::string name() { return "PostPipelinerStrategy"; }
   MemoryBankPolicy getBankPolicy() const { return BankPolicy; }
+  // The ChangeKinds this strategy depends on. The default is conservative.
+  virtual unsigned changeDependencies() const { return AllChanges; }
   // Returns false if the strategy is disabled by a command line option.
   bool isEnabled();
   // Choose among available alternatives
