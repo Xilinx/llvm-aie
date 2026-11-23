@@ -376,14 +376,19 @@ OuterLoopStructure::tryBuildFrom(MachineBasicBlock &OuterLatch) {
   if (!isOuterLoopPipelined(OuterLatch))
     return std::nullopt;
 
-  // Helper to find the first predecessor/successor that isn't the excluded one.
+  // Helper to find the only predecessor/successor that isn't the excluded one.
+  // Returns nullptr when there are several, rather than picking one of them.
   auto FindOther = [](auto &&Range,
                       MachineBasicBlock *Exclude) -> MachineBasicBlock * {
+    MachineBasicBlock *Found = nullptr;
     for (MachineBasicBlock *MBB : Range) {
-      if (MBB != Exclude)
-        return MBB;
+      if (MBB == Exclude || MBB == Found)
+        continue;
+      if (Found)
+        return nullptr;
+      Found = MBB;
     }
-    return nullptr;
+    return Found;
   };
 
   OuterLoopStructure OLS;
@@ -404,10 +409,10 @@ OuterLoopStructure::tryBuildFrom(MachineBasicBlock &OuterLatch) {
          "SteadyTop must have OuterLatch as back-edge predecessor");
 
   // Find OuterPreheader: predecessor of SteadyTop that is not SteadyBottom
-  // (the back-edge). This is the entry block to the outer loop.
+  // (the back-edge). This is the entry block to the outer loop. It is left
+  // null when SteadyTop has no such predecessor or several of them.
   OLS.OuterPreheader =
       FindOther(OLS.SteadyTop->predecessors(), OLS.SteadyBottom);
-  // OuterPreheader is optional - don't fail if not found
 
   // For speculative loops, we're done - no peeled iteration region exists
   if (OLS.Speculative) {

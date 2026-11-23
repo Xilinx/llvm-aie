@@ -33,6 +33,7 @@
 #include "AIE.h"
 #include "Utils/AIELoopUtils.h"
 
+#include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/InitializePasses.h"
@@ -61,6 +62,7 @@ public:
   }
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
+    AU.addRequired<MachineDominatorTreeWrapperPass>();
     AU.setPreservesCFG();
     MachineFunctionPass::getAnalysisUsage(AU);
   }
@@ -68,6 +70,8 @@ public:
   bool runOnMachineFunction(MachineFunction &MF) override;
 
 private:
+  const MachineDominatorTree *MDT = nullptr;
+
   /// Returns true if VReg is defined in DefMBB and all uses are within
   /// {DefMBB, ExtraMBB} (ExtraMBB may be null).
   bool isDefinedAndUsedOnlyIn(Register VReg, const MachineBasicBlock *DefMBB,
@@ -439,10 +443,15 @@ unsigned AIESiblingLoopVRegMerger::alignInnerRegs(
     const AIELoopUtils::OuterLoopStructure &OLS, MachineRegisterInfo &MRI,
     bool &Modified) const {
   // Normalise both inner loops by substituting invariant COPYs with already-
-  // computed equivalents from a dominating block (outer preheader first, then
-  // SteadyTop). This ensures hasMatchingInnerLoops() can succeed and that both
-  // loops reference the same vreg for loop-invariant values.
-  for (MachineBasicBlock *Dom : {OLS.OuterPreheader, OLS.SteadyTop}) {
+  // computed equivalents from a block that dominates both of them (outer
+  // preheader first, then the top blocks). This ensures
+  // hasMatchingInnerLoops() can succeed and that both loops reference the same
+  // vreg for loop-invariant values.
+  for (MachineBasicBlock *Dom :
+       {OLS.OuterPreheader, OLS.SteadyTop, OLS.PeeledIterTop}) {
+    if (!Dom || !MDT->dominates(Dom, OLS.SteadyInner) ||
+        !MDT->dominates(Dom, OLS.PeeledIterInner))
+      continue;
     Modified |= substituteEquivalentDefs(OLS.SteadyInner, Dom, MRI);
     Modified |= substituteEquivalentDefs(OLS.PeeledIterInner, Dom, MRI);
   }
@@ -470,8 +479,10 @@ unsigned AIESiblingLoopVRegMerger::alignTopRegs(
   // Normalise the peeled Top block by substituting constants already
   // available from the outer preheader. LICM handles the steady side
   // automatically; the peeled copy may still have redundant materializers.
-  Modified |=
-      substituteEquivalentDefs(OLS.PeeledIterTop, OLS.OuterPreheader, MRI);
+  if (OLS.OuterPreheader &&
+      MDT->dominates(OLS.OuterPreheader, OLS.PeeledIterTop))
+    Modified |=
+        substituteEquivalentDefs(OLS.PeeledIterTop, OLS.OuterPreheader, MRI);
 
   // Use LCS (Longest Common Subsequence) matching rather than a simple
   // lockstep walk because the two Top blocks may have different instruction
@@ -497,6 +508,7 @@ bool AIESiblingLoopVRegMerger::runOnMachineFunction(MachineFunction &MF) {
                     << MF.getName() << " ***\n");
 
   MachineRegisterInfo &MRI = MF.getRegInfo();
+  MDT = &getAnalysis<MachineDominatorTreeWrapperPass>().getDomTree();
   bool Modified = false;
 
   for (MachineBasicBlock &MBB : MF) {
@@ -535,8 +547,11 @@ bool AIESiblingLoopVRegMerger::runOnMachineFunction(MachineFunction &MF) {
 
 char &llvm::AIESiblingLoopVRegMergerID = AIESiblingLoopVRegMerger::ID;
 
-INITIALIZE_PASS(AIESiblingLoopVRegMerger, DEBUG_TYPE,
-                "AIE sibling loop vreg merger", false, false)
+INITIALIZE_PASS_BEGIN(AIESiblingLoopVRegMerger, DEBUG_TYPE,
+                      "AIE sibling loop vreg merger", false, false)
+INITIALIZE_PASS_DEPENDENCY(MachineDominatorTreeWrapperPass)
+INITIALIZE_PASS_END(AIESiblingLoopVRegMerger, DEBUG_TYPE,
+                    "AIE sibling loop vreg merger", false, false)
 
 FunctionPass *llvm::createAIESiblingLoopVRegMerger() {
   return new AIESiblingLoopVRegMerger();

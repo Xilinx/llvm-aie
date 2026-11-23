@@ -63,6 +63,7 @@
 ; AIE-O0-NEXT:      Local Stack Slot Allocation
 ; AIE-O0-NEXT:      Eliminate PHI nodes for register allocation
 ; AIE-O0-NEXT:      AIE sub-reg constrainer
+; AIE-O0-NEXT:      MachineDominator Tree Construction
 ; AIE-O0-NEXT:      AIE sibling loop vreg merger
 ; AIE-O0-NEXT:      Two-Address instruction pass
 ; AIE-O0-NEXT:      Fast Register Allocator
@@ -251,9 +252,9 @@
 ; AIE-O1-NEXT:      Live Variable Analysis
 ; AIE-O1-NEXT:      Eliminate PHI nodes for register allocation
 ; AIE-O1-NEXT:      AIE sub-reg constrainer
+; AIE-O1-NEXT:      MachineDominator Tree Construction
 ; AIE-O1-NEXT:      AIE sibling loop vreg merger
 ; AIE-O1-NEXT:      Two-Address instruction pass
-; AIE-O1-NEXT:      MachineDominator Tree Construction
 ; AIE-O1-NEXT:      Slot index numbering
 ; AIE-O1-NEXT:      Live Interval Analysis
 ; AIE-O1-NEXT:      Register Coalescer
