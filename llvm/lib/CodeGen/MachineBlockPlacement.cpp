@@ -457,13 +457,11 @@ class MachineBlockPlacement {
   /// between basic blocks.
   DenseMap<const MachineBasicBlock *, BlockChain *> BlockToChain;
 
-#ifndef NDEBUG
   /// The set of basic blocks that have terminators that cannot be fully
   /// analyzed.  These basic blocks cannot be re-ordered safely by
   /// MachineBlockPlacement, and we must preserve physical layout of these
   /// blocks and their successors through the pass.
-  SmallPtrSet<MachineBasicBlock *, 4> BlocksWithUnanalyzableExits;
-#endif
+  SmallPtrSet<const MachineBasicBlock *, 4> BlocksWithUnanalyzableExits;
 
   /// Get block profile count or frequency according to UseProfileCount.
   /// The return value is used to model tail duplication cost.
@@ -2428,6 +2426,11 @@ void MachineBlockPlacement::rotateLoop(BlockChain &LoopChain,
   if (!ExitingBB)
     return;
 
+  // Rotating cuts the chain right after ExitingBB, which would separate it
+  // from the layout successor it must fall through to.
+  if (BlocksWithUnanalyzableExits.count(ExitingBB))
+    return;
+
   MachineBasicBlock *Top = *LoopChain.begin();
   MachineBasicBlock *Bottom = *std::prev(LoopChain.end());
 
@@ -2643,6 +2646,11 @@ void MachineBlockPlacement::rotateLoopWithProfile(
       TailIter = LoopChain.begin();
 
     auto TailBB = *TailIter;
+
+    // Making Iter the top cuts the chain between TailBB and Iter, which would
+    // separate TailBB from the layout successor it must fall through to.
+    if (BlocksWithUnanalyzableExits.count(TailBB))
+      continue;
 
     // Calculate the cost by putting this BB to the top.
     BlockFrequency Cost = BlockFrequency(0);
@@ -2870,6 +2878,7 @@ void MachineBlockPlacement::buildCFGChains() {
   // Ensure that every BB in the function has an associated chain to simplify
   // the assumptions of the remaining algorithm.
   SmallVector<MachineOperand, 4> Cond; // For analyzeBranch.
+  BlocksWithUnanalyzableExits.clear();
   for (MachineFunction::iterator FI = F->begin(), FE = F->end(); FI != FE;
        ++FI) {
     MachineBasicBlock *BB = &*FI;
@@ -2892,9 +2901,7 @@ void MachineBlockPlacement::buildCFGChains() {
                         << getBlockName(BB) << " -> " << getBlockName(NextBB)
                         << "\n");
       Chain->merge(NextBB, nullptr);
-#ifndef NDEBUG
       BlocksWithUnanalyzableExits.insert(&*BB);
-#endif
       FI = NextFI;
       BB = NextBB;
     }
