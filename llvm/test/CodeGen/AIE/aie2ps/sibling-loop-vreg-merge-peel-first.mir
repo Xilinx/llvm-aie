@@ -1,0 +1,109 @@
+# RUN: llc -mtriple=aie2ps -run-pass=aie-sibling-loop-vreg-merge -verify-machineinstrs \
+# RUN:   %s -o - | FileCheck %s
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# Peel-first OLP: the first iteration runs before the steady loop, so only the
+# outer preheader and the first-iteration top dominate both inner loops. An
+# invariant copy in an inner loop may be replaced by an equivalent copy from
+# those blocks, never by one from the steady top.
+
+# CHECK-LABEL: name: peel_first
+# CHECK-LABEL: bb.1.firstiter.top:
+# CHECK:       [[FT_COPY:%[0-9]+]]:er = COPY [[SRC_B:%[0-9]+]]
+# CHECK-LABEL: bb.2.firstiter.inner:
+# CHECK:       [[FI_COPY:%[0-9]+]]:er = COPY [[SRC_A:%[0-9]+]]
+# CHECK-NEXT:  [[FI_ADD:%[0-9]+]]:er = COPY [[FI_COPY]]
+# CHECK-NOT:   COPY [[SRC_B]]
+# CHECK:       PseudoJNZ
+# CHECK-LABEL: bb.4.steady.top:
+# CHECK:       [[ST_COPY:%[0-9]+]]:er = COPY [[SRC_A]]
+# CHECK-LABEL: bb.5.steady.inner:
+# CHECK-NOT:   COPY [[SRC_B]]
+# CHECK:       PseudoJNZ
+# CHECK-LABEL: bb.7.epilogue:
+# CHECK:       PseudoRET implicit $lr, implicit [[FI_ADD]], implicit [[FT_COPY]], implicit [[FT_COPY]], implicit [[ST_COPY]]
+
+--- |
+  define void @peel_first() {
+  entry:
+    br label %firstiter.top
+  firstiter.top:
+    br label %firstiter.inner
+  firstiter.inner:
+    br i1 undef, label %firstiter.inner, label %firstiter.bottom
+  firstiter.bottom:
+    br label %steady.top
+  steady.top:
+    br label %steady.inner
+  steady.inner:
+    br i1 undef, label %steady.inner, label %steady.bottom
+  steady.bottom:
+    br i1 undef, label %steady.top, label %epilogue, !llvm.loop !0
+  epilogue:
+    ret void
+  }
+
+  !0 = distinct !{!0, !1, !2}
+  !1 = !{!"llvm.loop.hint.aie_outerloop_pipeliner_success", i64 1}
+  !2 = !{!"llvm.loop.hint.aie_outerloop_pipeliner_peel_mode", !"first"}
+...
+---
+name: peel_first
+tracksRegLiveness: true
+body: |
+  bb.0.entry:
+    successors: %bb.1
+    liveins: $r0, $r1, $r2
+
+    %0:er = COPY $r0
+    %1:er = COPY $r1
+    %2:er = COPY $r2
+    PseudoJ_jump_imm %bb.1
+
+  bb.1.firstiter.top:
+    successors: %bb.2
+
+    %3:er = COPY %2
+    PseudoJ_jump_imm %bb.2
+
+  bb.2.firstiter.inner:
+    successors: %bb.2, %bb.3
+
+    %4:er = COPY %1
+    %8:er = COPY %4
+    %5:er = COPY %2
+    PseudoJNZ %0, %bb.2
+    PseudoJ_jump_imm %bb.3
+
+  bb.3.firstiter.bottom:
+    successors: %bb.4
+
+    PseudoJ_jump_imm %bb.4
+
+  bb.4.steady.top:
+    successors: %bb.5
+
+    %6:er = COPY %1
+    PseudoJ_jump_imm %bb.5
+
+  bb.5.steady.inner:
+    successors: %bb.5, %bb.6
+
+    %7:er = COPY %2
+    PseudoJNZ %0, %bb.5
+    PseudoJ_jump_imm %bb.6
+
+  bb.6.steady.bottom:
+    successors: %bb.4, %bb.7
+
+    PseudoJNZ %0, %bb.4
+    PseudoJ_jump_imm %bb.7
+
+  bb.7.epilogue:
+    PseudoRET implicit $lr, implicit %8, implicit %5, implicit %7, implicit %6
+...
