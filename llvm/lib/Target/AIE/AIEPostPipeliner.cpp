@@ -53,7 +53,7 @@ static cl::opt<int>
 static cl::opt<int>
     HeuristicRuns("aie-postpipeliner-heuristic-runs",
                   cl::desc("Number of runs for heuristics that converge"),
-                  cl::init(20), cl::Hidden);
+                  cl::init(11), cl::Hidden);
 static cl::opt<std::string>
     DisabledStrategyPrefix("aie-postpipeliner-disable-strategy",
                            cl::desc("Disable all post-pipeliner strategies"
@@ -1530,44 +1530,49 @@ public:
 
 using Prio = ConfigStrategy::PriorityComponent;
 using Plc = ConfigStrategy::PlacementModifier;
-static const ConfigStrategy::Configuration Heuristics[] = {
-    // Loosely speaking, a lower value of the first parameter targets
-    // a lower stage count, which benefits code size.
-    // Runs>1 is only useful for heuristics that use it, e.g. Critical
-    // {ExtraStages, TopDown, Alternate, Runs, PriorityComponents, Modifiers}
-    {1, true, false, 1, {Prio::NodeNum}, {}},
-    // Tight schedule window: ExtraStages=0 keeps NS low, which is needed
-    // when MinTripCount barely exceeds RecMII.
-    {0, true, false, HeuristicRuns, {Prio::NodeNum}, {}},
-    {1, true, false, HeuristicRuns, {Prio::Latest}, {}},
-    {1, true, false, HeuristicRuns, {Prio::Critical}, {}},
-    {1, true, false, HeuristicRuns, {Prio::Latest, Prio::Sibling}, {}},
-    {1, true, false, HeuristicRuns, {Prio::DepLength, Prio::Latest}, {}},
-    {1, true, false, HeuristicRuns, {Prio::Critical, Prio::LCDLatest}, {}},
-    {1, true, false, HeuristicRuns, {Prio::Liveness, Prio::Latest}, {}},
-    {1, true, false, HeuristicRuns, {Prio::Latest, Prio::Liveness}, {}},
-    // EffectiveHeight: prefer nodes with more critical path below them.
-    // DeferNonCritical defers non-critical nodes (EH=0) to leave early
-    // modulo cycles free for the critical path.
-    {1,
-     true,
-     false,
-     HeuristicRuns,
-     {Prio::EffHeight, Prio::Latest},
-     {Plc::DeferNonCritical}},
-    {1,
-     true,
-     false,
-     HeuristicRuns,
-     {Prio::EffHeight, Prio::Critical},
-     {Plc::DeferNonCritical}},
-    {1, true, false, HeuristicRuns, {Prio::EffHeight, Prio::Latest}, {}},
-    {1, true, false, HeuristicRuns, {Prio::EffHeight, Prio::Critical}, {}},
-    // Bottom-up strategies
-    {0, false, false, 2, {Prio::Critical, Prio::LCDLatest}, {}},
-    {1, false, false, 2, {Prio::Critical, Prio::LCDLatest}, {}},
-    {1, false, false, 1, {Prio::NodeNum}, {}}, // pure bottom up
-};
+
+// Built on first use, after command-line parsing, so HeuristicRuns is live.
+static ArrayRef<ConfigStrategy::Configuration> getHeuristics() {
+  static const ConfigStrategy::Configuration Heuristics[] = {
+      // Loosely speaking, a lower value of the first parameter targets
+      // a lower stage count, which benefits code size.
+      // Runs>1 is only useful for heuristics that use it, e.g. Critical
+      // {ExtraStages, TopDown, Alternate, Runs, PriorityComponents, Modifiers}
+      {1, true, false, 1, {Prio::NodeNum}, {}},
+      // Tight schedule window: ExtraStages=0 keeps NS low, which is needed
+      // when MinTripCount barely exceeds RecMII.
+      {0, true, false, HeuristicRuns, {Prio::NodeNum}, {}},
+      {1, true, false, HeuristicRuns, {Prio::Latest}, {}},
+      {1, true, false, HeuristicRuns, {Prio::Critical}, {}},
+      {1, true, false, HeuristicRuns, {Prio::Latest, Prio::Sibling}, {}},
+      {1, true, false, HeuristicRuns, {Prio::DepLength, Prio::Latest}, {}},
+      {1, true, false, HeuristicRuns, {Prio::Critical, Prio::LCDLatest}, {}},
+      {1, true, false, HeuristicRuns, {Prio::Liveness, Prio::Latest}, {}},
+      {1, true, false, HeuristicRuns, {Prio::Latest, Prio::Liveness}, {}},
+      // EffectiveHeight: prefer nodes with more critical path below them.
+      // DeferNonCritical defers non-critical nodes (EH=0) to leave early
+      // modulo cycles free for the critical path.
+      {1,
+       true,
+       false,
+       HeuristicRuns,
+       {Prio::EffHeight, Prio::Latest},
+       {Plc::DeferNonCritical}},
+      {1,
+       true,
+       false,
+       HeuristicRuns,
+       {Prio::EffHeight, Prio::Critical},
+       {Plc::DeferNonCritical}},
+      {1, true, false, HeuristicRuns, {Prio::EffHeight, Prio::Latest}, {}},
+      {1, true, false, HeuristicRuns, {Prio::EffHeight, Prio::Critical}, {}},
+      // Bottom-up strategies
+      {0, false, false, 2, {Prio::Critical, Prio::LCDLatest}, {}},
+      {1, false, false, 2, {Prio::Critical, Prio::LCDLatest}, {}},
+      {1, false, false, 1, {Prio::NodeNum}, {}}, // pure bottom up
+  };
+  return Heuristics;
+}
 
 // Place data sinks first, then pull producers ALAP toward them to shorten
 // live ranges under modulo pressure.
@@ -1802,7 +1807,7 @@ bool PostPipeliner::tryApproaches() {
   }
 
   int HeuristicIndex = 0;
-  for (const auto &Config : Heuristics) {
+  for (const auto &Config : getHeuristics()) {
     if (Heuristic >= 0 && Heuristic != HeuristicIndex++) {
       continue;
     }
@@ -1813,7 +1818,7 @@ bool PostPipeliner::tryApproaches() {
       continue;
     }
     resetSchedule(/*FullReset=*/true);
-    for (int Run = 0; Run < Config.Runs && Run < HeuristicRuns; Run++) {
+    for (int Run = 0; Run < Config.Runs; Run++) {
       DEBUG_SUMMARY(dbgs() << "--- Strategy " << S.name() << " run=" << Run
                            << " trying II=" << II << "\n");
       if (scheduleWithStrategy(S)) {
@@ -1859,7 +1864,7 @@ bool PostPipeliner::tryApproaches() {
   // IterCountSlackStrategy to avoid short-circuiting them.
   {
     DeferNthNodeStrategy S(*DAG, Info, MinLength + II, NInstr);
-    if (S.isEnabled() && S.scheduleAllRuns(*this, HeuristicRuns))
+    if (S.isEnabled() && S.scheduleAllRuns(*this, 60))
       return true;
   }
 

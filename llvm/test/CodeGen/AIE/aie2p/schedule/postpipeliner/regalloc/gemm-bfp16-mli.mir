@@ -13,6 +13,7 @@
 # RUN:   --aie-postpipeliner-vreg-mode=1 \
 # RUN:   --aie-postpipeliner-phys-mode=0 \
 # RUN:   --aie-postpipeliner-maxii=7 \
+# RUN:   --aie-postpipeliner-heuristic-runs=15 \
 # RUN:   -o - --debug-only=aie-postregalloc %s 2>&1 | FileCheck %s
 # REQUIRES: asserts
 
