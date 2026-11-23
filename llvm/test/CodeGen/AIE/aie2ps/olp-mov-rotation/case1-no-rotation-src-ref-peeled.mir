@@ -1,0 +1,98 @@
+# RUN: llc -mtriple=aie2ps -run-pass=aie-olp-mov-rotation \
+# RUN:     -verify-machineinstrs %s -o - | FileCheck %s
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# Case 1 blocked: matched MOV pair exists, but SrcReg ($r1) is referenced
+# before the MOV in PeeledTop (by an instruction that defines $r1).
+# Moving PeeledMI to SteadyBottom would read a stale $r1 value.
+# Both MOVs must stay in place.
+
+# CHECK-LABEL: name: case1_no_rotation_src_ref_peeled
+#
+# SteadyTop still has the MOV:
+# CHECK:      bb.1.steady.top:
+# CHECK:        $r2 = MOV_OR_pseudo $r1
+#
+# PeeledTop still has both instructions:
+# CHECK:      bb.4.peeled.top:
+# CHECK:        $r1 = MOV_OR_pseudo $r3
+# CHECK:        $r2 = MOV_OR_pseudo $r1
+
+--- |
+  define void @case1_no_rotation_src_ref_peeled() {
+  entry:
+    br label %steady.top
+  steady.top:
+    br label %steady.inner
+  steady.inner:
+    br i1 undef, label %steady.inner, label %steady.bottom
+  steady.bottom:
+    br i1 undef, label %steady.top, label %peeled.top, !llvm.loop !0
+  peeled.top:
+    br label %peeled.inner
+  peeled.inner:
+    br i1 undef, label %peeled.inner, label %peeled.bottom
+  peeled.bottom:
+    ret void
+  }
+
+  !0 = distinct !{!0, !1}
+  !1 = !{!"llvm.loop.hint.aie_outerloop_pipeliner_success", i64 1}
+...
+---
+name:            case1_no_rotation_src_ref_peeled
+tracksRegLiveness: true
+noPhis:          true
+isSSA:           false
+noVRegs:         true
+body:             |
+  bb.0.entry:
+    successors: %bb.1
+    liveins: $r0, $r1, $r3
+
+    PseudoJ_jump_imm %bb.1
+
+  bb.1.steady.top:
+    successors: %bb.2
+    liveins: $r0, $r1
+
+    $r2 = MOV_OR_pseudo $r1
+
+  bb.2.steady.inner:
+    successors: %bb.2, %bb.3
+    liveins: $r0, $r2
+
+    NOP
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2
+
+  bb.3.steady.bottom:
+    successors: %bb.1, %bb.4
+    liveins: $r0, $r1, $r3
+
+    PseudoJNZ $r0, %bb.1
+
+  bb.4.peeled.top:
+    successors: %bb.5
+    liveins: $r0, $r3
+
+    ; $r1 is defined here before the MOV, so the matched pair's SrcReg
+    ; is "referenced before MOV in PeeledTop". Rotation must be blocked.
+    $r1 = MOV_OR_pseudo $r3
+    $r2 = MOV_OR_pseudo $r1
+
+  bb.5.peeled.inner:
+    successors: %bb.5, %bb.6
+    liveins: $r0, $r2
+
+    NOP
+    PseudoLoopEnd <mcsymbol .L_LEnd1>, %bb.5
+
+  bb.6.peeled.bottom:
+
+    PseudoRET implicit $lr
+...

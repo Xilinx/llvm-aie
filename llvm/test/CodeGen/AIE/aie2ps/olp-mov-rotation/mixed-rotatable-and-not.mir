@@ -1,0 +1,107 @@
+# RUN: llc -mtriple=aie2ps -run-pass=aie-olp-mov-rotation \
+# RUN:     -verify-machineinstrs %s -o - | FileCheck %s
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# Two MOVs in SteadyTop: the first ($r2 = MOV $r1) is safe to rotate
+# (Case 2), the second ($r0 = MOV $r3) is blocked because DstReg ($r0)
+# is used by the PseudoJNZ branch in SteadyBottom. Only the first MOV
+# should be rotated.
+
+# CHECK-LABEL: name: mixed_rotatable_and_not
+#
+# Preheader gets only the first MOV:
+# CHECK:      bb.0.entry:
+# CHECK:        $r2 = MOV_OR_pseudo $r1
+# CHECK-NOT:    MOV_OR_pseudo $r3
+# CHECK:        PseudoJ_jump_imm %bb.1
+#
+# SteadyTop keeps only the second MOV (blocked):
+# CHECK:      bb.1.steady.top:
+# CHECK-NOT:    $r2 = MOV_OR_pseudo
+# CHECK:        $r0 = MOV_OR_pseudo $r3
+# CHECK:      bb.2.steady.inner:
+#
+# SteadyBottom gets only the first MOV clone:
+# CHECK:      bb.3.steady.bottom:
+# CHECK:        $r2 = MOV_OR_pseudo $r1
+# CHECK-NOT:    MOV_OR_pseudo $r3
+# CHECK:        PseudoJNZ $r0, %bb.1
+
+--- |
+  define void @mixed_rotatable_and_not() {
+  entry:
+    br label %steady.top
+  steady.top:
+    br label %steady.inner
+  steady.inner:
+    br i1 undef, label %steady.inner, label %steady.bottom
+  steady.bottom:
+    br i1 undef, label %steady.top, label %peeled.top, !llvm.loop !0
+  peeled.top:
+    br label %peeled.inner
+  peeled.inner:
+    br i1 undef, label %peeled.inner, label %peeled.bottom
+  peeled.bottom:
+    ret void
+  }
+
+  !0 = distinct !{!0, !1}
+  !1 = !{!"llvm.loop.hint.aie_outerloop_pipeliner_success", i64 1}
+...
+---
+name:            mixed_rotatable_and_not
+tracksRegLiveness: true
+noPhis:          true
+isSSA:           false
+noVRegs:         true
+body:             |
+  bb.0.entry:
+    successors: %bb.1
+    liveins: $r0, $r1
+
+    PseudoJ_jump_imm %bb.1
+
+  bb.1.steady.top:
+    successors: %bb.2
+    liveins: $r0, $r1, $r3
+
+    ; First MOV: $r1 is live through predecessors, safe to rotate (Case 2).
+    $r2 = MOV_OR_pseudo $r1
+    ; Second MOV: DstReg $r0 is used by PseudoJNZ in SteadyBottom,
+    ; so canRotateMov rejects it ("dst used by tail instrs in bottom").
+    $r0 = MOV_OR_pseudo $r3
+
+  bb.2.steady.inner:
+    successors: %bb.2, %bb.3
+    liveins: $r0, $r2
+
+    NOP
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2
+
+  bb.3.steady.bottom:
+    successors: %bb.1, %bb.4
+    liveins: $r0, $r1
+
+    ; Note: $r3 is NOT live-in here, so not live-out from this block.
+    PseudoJNZ $r0, %bb.1
+
+  bb.4.peeled.top:
+    successors: %bb.5
+    liveins: $r0
+
+  bb.5.peeled.inner:
+    successors: %bb.5, %bb.6
+    liveins: $r0
+
+    NOP
+    PseudoLoopEnd <mcsymbol .L_LEnd1>, %bb.5
+
+  bb.6.peeled.bottom:
+
+    PseudoRET implicit $lr
+...

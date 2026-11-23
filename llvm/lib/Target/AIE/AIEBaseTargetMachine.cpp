@@ -205,6 +205,7 @@ extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeAIETarget() {
   initializeAIEOuterLoopPipelinerPass(*PR);
   initializeAIEInnerLoopVersioningPass(*PR);
   initializeAIESpillSlotOptimizationPass(*PR);
+  initializeAIEOLPMovRotationPass(*PR);
 }
 
 static Reloc::Model getEffectiveRelocModel(const Triple &TT,

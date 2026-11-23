@@ -291,6 +291,7 @@
 ; AIE-O123-NEXT:      AIE Hardware Loops pass
 
 ; AIE-O0123-NEXT:      AIE pseudo branch expansion
+; AIE-O123-NEXT:      AIE OLP MOV rotation for sibling optimization
 ; AIE-O0123-NEXT:      MachineDominator Tree Construction
 ; AIE-O0123-NEXT:      Machine Natural Loop Construction
 
