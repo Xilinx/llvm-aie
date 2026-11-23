@@ -374,6 +374,10 @@ struct SelectToClampOptimization : public OpRewritePattern<tosa::SelectOp> {
                                          "Predicate is not a GreaterEqualOp");
     }
 
+    if (isa<FloatType>(geq.getInput1().getType().getElementType()))
+      return rewriter.notifyMatchFailure(
+          op, "Floating-point select and clamp have different NaN semantics");
+
     DenseElementsAttr geqIn2Attr;
     if (!matchPattern(geq.getInput2(), m_Constant(&geqIn2Attr))) {
       return rewriter.notifyMatchFailure(
