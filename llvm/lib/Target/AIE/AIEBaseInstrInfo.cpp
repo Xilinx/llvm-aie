@@ -1767,6 +1767,10 @@ AIEBaseInstrInfo::isCopyInstrImpl(const MachineInstr &MI) const {
 
 std::unique_ptr<TargetInstrInfo::PipelinerLoopInfo>
 AIEBaseInstrInfo::analyzeLoopForPipelining(MachineBasicBlock *LoopBB) const {
+  // Policy for -aie-enable-prepipeliner, force-prepipeliner, pipeline(disable),
+  // and -aie-force-postpipeliner lives in isPrePipeliningAllowed.
+  if (!AIELoopUtils::isPrePipeliningAllowed(*LoopBB))
+    return nullptr;
   // Lock instructions require special scheduling constraints (core stall/resume
   // cycles) that are not implemented for software pipelined loops.
   if (hasLockInstruction(*LoopBB))
