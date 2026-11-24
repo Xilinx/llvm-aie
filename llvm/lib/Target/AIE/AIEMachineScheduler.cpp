@@ -108,10 +108,6 @@ static cl::opt<bool> UseLoopHeuristics(
     "aie-loop-sched-heuristics", cl::init(true),
     cl::desc("Use special picking heuristics when scheduling a loop region"));
 
-static cl::opt<bool> PreSchedFollowsSkipPipeliner(
-    "aie-presched-follows-skip-pipeliner", cl::init(true),
-    cl::desc("Don't run the prescheduler if the pipeliner is skipped"));
-
 static cl::opt<bool> IncomingLatencyBias(
     "aie-incoming-latency-bias", cl::init(true),
     cl::desc("[AIE] Account for the latency produced in predecessor blocks "
@@ -1524,17 +1520,8 @@ void AIEPreRASchedStrategy::initialize(ScheduleDAGMI *DAG) {
 MachineBasicBlock *AIEPreRASchedStrategy::nextBlock() {
   MachineBasicBlock *Next = nullptr;
 
-  // The pipeliner is usually disabled to give the postpipeliner a chance.
-  // The prescheduler also clutters the view of the postpipeliner, so we skip
-  // such blocks here.
   auto Skip = [](MachineBasicBlock *Block) {
-    if (!Block)
-      return false;
-    bool PrePipelinerDisabled =
-        AIELoopUtils::getPipelinerDisabled(*Block) ||
-        !Block->getParent()->getSubtarget().enableMachinePipeliner();
-    return PreSchedFollowsSkipPipeliner &&
-           AIELoopUtils::isSingleMBBLoop(Block) && PrePipelinerDisabled;
+    return Block && AIELoopUtils::shouldSkipPreScheduling(*Block);
   };
 
   do {
