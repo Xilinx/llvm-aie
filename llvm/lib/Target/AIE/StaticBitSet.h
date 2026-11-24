@@ -95,6 +95,18 @@ public:
     return Result;
   }
 
+  // Set difference: the elements of this set that are not in Other.
+  StaticBitSet operator-(const StaticBitSet &Other) const {
+    StaticBitSet Result(*this);
+    Result &= ~Other;
+    return Result;
+  }
+
+  StaticBitSet &operator-=(const StaticBitSet &Other) {
+    *this &= ~Other;
+    return *this;
+  }
+
   void clear() { this->reset(); }
   bool contains(int BitNo) const { return this->test(BitNo); }
   bool overlap(const StaticBitSet &Other) const {
@@ -103,7 +115,7 @@ public:
   bool empty() const { return this->none(); }
   // Return true if every element of Other is also in this set.
   bool covers(const StaticBitSet &Other) const {
-    return (Other & ~*this).none();
+    return (Other - *this).none();
   }
 };
 
