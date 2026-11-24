@@ -82,6 +82,15 @@ constexpr StringLiteral ForcePrePipelinerHintKey{
 /// integer.
 bool isPrePipelinerForced(const MachineBasicBlock &LoopBlock);
 
+/// Loop-hint key that always skips the pre-RA MachineScheduler on a
+/// single-block loop, regardless of -aie-presched-follows-skip-pipeliner.
+constexpr StringLiteral DisablePreSchedulerHintKey{
+    "llvm.loop.hint.aie-disable-prescheduler"};
+
+/// True when \p LoopBlock carries DisablePreSchedulerHintKey with a non-zero
+/// integer.
+bool isPreSchedulerDisabled(const MachineBasicBlock &LoopBlock);
+
 /// Returns true if this is a loop latch that has a pipeliner disable pragma,
 /// none otherwise.
 std::optional<bool> getPipelinerDisabled(const MachineBasicBlock &LoopBlock);
@@ -91,6 +100,12 @@ std::optional<bool> getPipelinerDisabled(const MachineBasicBlock &LoopBlock);
 /// -aie-enable-prepipeliner is false without ForcePrePipelinerHintKey.
 /// pipeline(disable) and -aie-force-postpipeliner win over the force hint.
 bool isPrePipeliningAllowed(const MachineBasicBlock &LoopBlock);
+
+/// True when the pre-RA MachineScheduler should skip \p MBB.
+/// Only single-block loops are ever skipped. True for
+/// DisablePreSchedulerHintKey, or when -aie-presched-follows-skip-pipeliner is
+/// on and pre-pipelining is not allowed.
+bool shouldSkipPreScheduling(const MachineBasicBlock &MBB);
 
 /// Check that the single block loop represented by LoopBlock has a fallthrough
 /// preheader. Return the preheader if true, nullptr otherwise

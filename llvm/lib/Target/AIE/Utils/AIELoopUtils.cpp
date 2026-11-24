@@ -40,6 +40,10 @@ static cl::opt<bool> EnableAIEPrePipeliner(
              "only loops with llvm.loop.hint.aie-force-prepipeliner are "
              "pipelined"));
 
+static cl::opt<bool> PreSchedFollowsSkipPipeliner(
+    "aie-presched-follows-skip-pipeliner", cl::init(true),
+    cl::desc("Don't run the prescheduler if the pipeliner is skipped"));
+
 const MDNode *getLoopID(const MachineBasicBlock &LoopBlock) {
   const BasicBlock *BBLK = LoopBlock.getBasicBlock();
   if (!BBLK)
@@ -87,6 +91,10 @@ bool isPrePipelinerForced(const MachineBasicBlock &LoopBlock) {
   return getLoopHintBool(LoopBlock, ForcePrePipelinerHintKey).value_or(false);
 }
 
+bool isPreSchedulerDisabled(const MachineBasicBlock &LoopBlock) {
+  return getLoopHintBool(LoopBlock, DisablePreSchedulerHintKey).value_or(false);
+}
+
 std::optional<bool> getPipelinerDisabled(const MachineBasicBlock &LoopBlock) {
   if (getLoopMetadata(getLoopID(LoopBlock), "llvm.loop.pipeline.disable"))
     return true;
@@ -102,6 +110,14 @@ bool isPrePipeliningAllowed(const MachineBasicBlock &LoopBlock) {
   if (!EnableAIEPrePipeliner && !isPrePipelinerForced(LoopBlock))
     return false;
   return true;
+}
+
+bool shouldSkipPreScheduling(const MachineBasicBlock &MBB) {
+  if (!isSingleMBBLoop(&MBB))
+    return false;
+  if (isPreSchedulerDisabled(MBB))
+    return true;
+  return PreSchedFollowsSkipPipeliner && !isPrePipeliningAllowed(MBB);
 }
 
 MachineBasicBlock *
