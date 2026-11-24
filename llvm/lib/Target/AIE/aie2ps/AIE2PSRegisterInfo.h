@@ -106,6 +106,8 @@ struct AIE2PSRegisterInfo : public AIE2PSGenRegisterInfo {
 
   bool isSimplifiableReservedReg(MCRegister PhysReg) const override;
 
+  float getSpillWeightScaleFactor(const TargetRegisterClass *RC) const override;
+
   bool hasPhysRegProperty(MCRegister PhysReg,
                           PhysRegProperty Prop) const override;
 };
