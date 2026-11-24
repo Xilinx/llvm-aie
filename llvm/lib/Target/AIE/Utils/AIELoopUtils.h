@@ -72,9 +72,25 @@ constexpr StringLiteral LoopVersionFallbackHintKey =
 /// marker, not the LoopVersioningHintKey request the IR pass consumes.
 bool isLoopVersioned(const MachineBasicBlock &LoopBlock);
 
+/// Loop-hint key that forces the pre-RA MachinePipeliner on a loop when
+/// -aie-enable-prepipeliner is false. Does not override pipeline(disable) or
+/// -aie-force-postpipeliner.
+constexpr StringLiteral ForcePrePipelinerHintKey{
+    "llvm.loop.hint.aie-force-prepipeliner"};
+
+/// True when \p LoopBlock carries ForcePrePipelinerHintKey with a non-zero
+/// integer.
+bool isPrePipelinerForced(const MachineBasicBlock &LoopBlock);
+
 /// Returns true if this is a loop latch that has a pipeliner disable pragma,
 /// none otherwise.
 std::optional<bool> getPipelinerDisabled(const MachineBasicBlock &LoopBlock);
+
+/// True when the pre-RA MachinePipeliner is allowed for \p LoopBlock.
+/// False when pipeline(disable) is set, -aie-force-postpipeliner is on, or
+/// -aie-enable-prepipeliner is false without ForcePrePipelinerHintKey.
+/// pipeline(disable) and -aie-force-postpipeliner win over the force hint.
+bool isPrePipeliningAllowed(const MachineBasicBlock &LoopBlock);
 
 /// Check that the single block loop represented by LoopBlock has a fallthrough
 /// preheader. Return the preheader if true, nullptr otherwise

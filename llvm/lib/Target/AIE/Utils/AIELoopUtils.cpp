@@ -29,6 +29,17 @@ cl::opt<int> LoopMinTripCount(
 } // namespace llvm
 
 namespace llvm::AIELoopUtils {
+
+/// When false, only loops with llvm.loop.hint.aie-force-prepipeliner are
+/// considered by the pre-RA MachinePipeliner. Default true preserves today's
+/// schedules. Does not override -enable-pipeliner=false or
+/// -aie-force-postpipeliner.
+static cl::opt<bool> EnableAIEPrePipeliner(
+    "aie-enable-prepipeliner", cl::Hidden, cl::init(true),
+    cl::desc("Enable the pre-RA MachinePipeliner for AIE loops; when false, "
+             "only loops with llvm.loop.hint.aie-force-prepipeliner are "
+             "pipelined"));
+
 const MDNode *getLoopID(const MachineBasicBlock &LoopBlock) {
   const BasicBlock *BBLK = LoopBlock.getBasicBlock();
   if (!BBLK)
@@ -72,10 +83,25 @@ bool isLoopVersioned(const MachineBasicBlock &LoopBlock) {
   return Marker && *Marker > 0;
 }
 
+bool isPrePipelinerForced(const MachineBasicBlock &LoopBlock) {
+  return getLoopHintBool(LoopBlock, ForcePrePipelinerHintKey).value_or(false);
+}
+
 std::optional<bool> getPipelinerDisabled(const MachineBasicBlock &LoopBlock) {
   if (getLoopMetadata(getLoopID(LoopBlock), "llvm.loop.pipeline.disable"))
     return true;
   return std::nullopt;
+}
+
+bool isPrePipeliningAllowed(const MachineBasicBlock &LoopBlock) {
+  // pipeline(disable) and -aie-force-postpipeliner win over force-prepipeliner.
+  if (getPipelinerDisabled(LoopBlock))
+    return false;
+  if (!LoopBlock.getParent()->getSubtarget().enableMachinePipeliner())
+    return false;
+  if (!EnableAIEPrePipeliner && !isPrePipelinerForced(LoopBlock))
+    return false;
+  return true;
 }
 
 MachineBasicBlock *
