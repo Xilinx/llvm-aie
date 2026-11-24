@@ -35,6 +35,11 @@ using namespace llvm;
 
 #define DEBUG_TYPE "aie-reg-info"
 
+static cl::opt<float> FifoSpillWeightScale(
+    "aie-fifo-spill-weight-scale", cl::Hidden, cl::init(6.0f),
+    cl::desc("Spill weight scale for ePSRFLdF FIFO composite registers. "
+             "1.0 disables the boost."));
+
 extern cl::opt<bool> SimplifyCRSRRegs;
 extern llvm::cl::opt<unsigned> ReservedGPRs;
 
@@ -786,6 +791,14 @@ bool AIE2PSRegisterInfo::isSimplifiableReservedReg(MCRegister PhysReg) const {
   return SimplifyCRSRRegs && !isReservedStickyReg(PhysReg) &&
          (AIE2PS::mSCmRegClass.contains(PhysReg) ||
           AIE2PS::mCRm_fileRegClass.contains(PhysReg));
+}
+
+float AIE2PSRegisterInfo::getSpillWeightScaleFactor(
+    const TargetRegisterClass *RC) const {
+  float Scale = AIE2PSGenRegisterInfo::getSpillWeightScaleFactor(RC);
+  if (AIE2PS::ePSRFLdFRegClass.hasSubClassEq(RC))
+    Scale *= FifoSpillWeightScale;
+  return Scale;
 }
 
 bool AIE2PSRegisterInfo::hasPhysRegProperty(MCRegister PhysReg,
