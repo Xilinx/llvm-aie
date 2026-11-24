@@ -56,119 +56,136 @@ static MCRegister mapRegister(MCRegister OpReg, MCRegister OldSuperReg,
   return TRI.getSubReg(NewSuperReg, SubIdx);
 }
 
-bool OLPWARSolver::isCompletelyRedefinedLater(
-    MCRegister Reg, const MachineInstr *StoreMI,
-    ArrayRef<MachineInstr *> FreeInstrs) const {
-  // Collect all register units that make up Reg.
-  SmallDenseSet<MCRegUnit, 8> RequiredUnits;
-  for (MCRegUnit Unit : TRI.regunits(Reg))
-    RequiredUnits.insert(Unit);
+DenseMap<MCRegister, MachineOperand *>
+OLPWARSolver::findLastDefsInClones(const BlockState &BS) const {
+  DenseMap<MCRegister, MachineOperand *> LastDefs;
 
-  // Walk free instructions after StoreMI and track which units are defined.
-  SmallDenseSet<MCRegUnit, 8> DefinedUnits;
-  bool PastStore = false;
-  for (const MachineInstr *MI : FreeInstrs) {
-    if (MI == StoreMI) {
-      PastStore = true;
-      continue;
-    }
-    if (!PastStore)
-      continue;
-
-    for (const MachineOperand &MO : MI->all_defs()) {
+  // Collect all defs from TopInsert clones.
+  for (MachineInstr *Clone : BS.TopInsert.Clones) {
+    for (MachineOperand &MO : Clone->all_defs()) {
       if (!MO.isReg() || !MO.getReg().isPhysical())
         continue;
-      for (MCRegUnit Unit : TRI.regunits(MO.getReg().asMCReg()))
-        DefinedUnits.insert(Unit);
+      LastDefs[MO.getReg().asMCReg()] = &MO;
     }
   }
 
-  // Check that every unit of Reg is covered by a later definition.
-  for (MCRegUnit Unit : RequiredUnits) {
-    if (!DefinedUnits.count(Unit))
-      return false;
-  }
-  return true;
-}
-
-DenseMap<MCRegister, MachineOperand *>
-OLPWARSolver::buildLastDefMap(const BlockState &BS) const {
-  DenseMap<MCRegister, MachineOperand *> LastDefByReg;
-  for (auto &Bundle : BS.TopInsert.Bundles)
-    for (MachineInstr *MI : Bundle.getInstrs())
-      for (MachineOperand &MO : MI->all_defs())
-        if (MO.getReg().isPhysical())
-          LastDefByReg[MO.getReg().asMCReg()] = &MO;
-  return LastDefByReg;
-}
-
-std::pair<MCRegister, MachineOperand *> OLPWARSolver::findTopInsertDef(
-    MCRegister UseReg,
-    const DenseMap<MCRegister, MachineOperand *> &LastDefByReg) const {
-  // Try exact match first.
-  if (auto It = LastDefByReg.find(UseReg); It != LastDefByReg.end())
-    return {UseReg, It->second};
-
-  // Walk super-registers looking for a matching def.
-  for (MCRegister Super : TRI.superregs(UseReg)) {
-    if (auto It = LastDefByReg.find(Super); It != LastDefByReg.end())
-      return {Super, It->second};
-  }
-
-  return {MCRegister(), nullptr};
-}
-
-bool OLPWARSolver::hasPostDefUseInFixed(MCRegister DefReg,
-                                        const MachineOperand *LastDef,
-                                        const BlockState &BS) const {
-  bool PastLastDef = false;
-  for (auto &Bundle : BS.TopInsert.Bundles) {
-    for (MachineInstr *MI : Bundle.getInstrs()) {
-      if (MI == LastDef->getParent()) {
-        PastLastDef = true;
+  // Validate each def: it must come from a single defining clone,
+  // and no other clone may read the register. The only allowed reader
+  // of the register is the defining instruction itself (e.g. for tied
+  // operands or implicit sub-register modeling).
+  auto IsInvalidDef = [&](MCRegister DefReg,
+                          const MachineInstr *DefMI) -> bool {
+    for (MachineInstr *Clone : BS.TopInsert.Clones) {
+      if (Clone == DefMI)
         continue;
+      // Another clone defines an overlapping register — multiple writers.
+      for (const MachineOperand &MO : Clone->all_defs()) {
+        if (MO.isReg() && MO.getReg().isPhysical() &&
+            TRI.regsOverlap(MO.getReg(), DefReg))
+          return true;
       }
-      if (!PastLastDef)
-        continue;
-
-      for (const MachineOperand &MO : MI->all_uses()) {
+      // Another clone reads an overlapping register — other reader.
+      for (const MachineOperand &MO : Clone->all_uses()) {
         if (MO.isReg() && MO.getReg().isPhysical() &&
             TRI.regsOverlap(MO.getReg(), DefReg))
           return true;
       }
     }
+    return false;
+  };
+
+  SmallVector<MCRegister, 4> ToRemove;
+  for (auto &[DefReg, DefOp] : LastDefs) {
+    if (IsInvalidDef(DefReg, DefOp->getParent())) {
+      LLVM_DEBUG(dbgs() << "  Skip " << printReg(DefReg, &TRI)
+                        << ": multiple writers or other reader in clones\n");
+      ToRemove.push_back(DefReg);
+    }
   }
-  return false;
+  for (MCRegister Reg : ToRemove)
+    LastDefs.erase(Reg);
+
+  return LastDefs;
 }
 
-OLPWARSolver::UsesAndLoads OLPWARSolver::collectFreeUsesAndConflictingLoads(
-    MCRegister DefReg, ArrayRef<MachineInstr *> FreeInstrs) const {
-  UsesAndLoads Result;
+SmallVector<MachineOperand *, 4>
+OLPWARSolver::collectFreeStoreUses(MCRegister DefReg,
+                                   ArrayRef<MachineInstr *> FreeInstrs) const {
+  SmallVector<MachineOperand *, 4> FreeUses;
+  SmallDenseSet<MCRegUnit, 8> DefinedUnits;
   bool SeenRedef = false;
 
   for (MachineInstr *MI : FreeInstrs) {
-    // Check if this instruction redefines DefReg (a conflicting load).
-    bool IsRedef = false;
-    for (const MachineOperand &MO : MI->all_defs()) {
-      if (MO.getReg().isPhysical() && TRI.regsOverlap(MO.getReg(), DefReg)) {
-        Result.ConflictingLoads.push_back(MI);
-        IsRedef = true;
+    bool ReadsReg = false;
+    for (const MachineOperand &MO : MI->all_uses())
+      if (MO.isReg() && MO.getReg().isPhysical() &&
+          TRI.regsOverlap(MO.getReg(), DefReg)) {
+        ReadsReg = true;
         break;
       }
-    }
-    if (IsRedef)
-      SeenRedef = true;
 
-    // Only collect uses before the first redefinition — those are
-    // the ones reading the TopInsert value.
+    bool WritesReg = false;
+    for (const MachineOperand &MO : MI->all_defs())
+      if (MO.isReg() && MO.getReg().isPhysical() &&
+          TRI.regsOverlap(MO.getReg(), DefReg)) {
+        WritesReg = true;
+        break;
+      }
+
+    if (!ReadsReg && !WritesReg)
+      continue;
+
     if (!SeenRedef) {
+      // Phase 1: expecting stores that read DefReg.
+      if (WritesReg) {
+        // Transition to Phase 2: this is the first redefinition.
+        // It must be a load instruction; any other writer type
+        // (e.g. vmac, vaddmac) is not safe to rename around.
+        if (!MI->mayLoad())
+          return {};
+        for (const MachineOperand &MO : MI->all_defs())
+          if (MO.isReg() && MO.getReg().isPhysical())
+            for (MCRegUnit Unit : TRI.regunits(MO.getReg().asMCReg()))
+              DefinedUnits.insert(Unit);
+        SeenRedef = true;
+        continue;
+      }
+      // A reader in Phase 1 must be a store instruction.
+      if (!MI->mayStore())
+        return {};
       for (MachineOperand &MO : MI->all_uses())
-        if (MO.getReg().isPhysical() && TRI.regsOverlap(MO.getReg(), DefReg))
-          Result.FreeUses.push_back(&MO);
+        if (MO.isReg() && MO.getReg().isPhysical() &&
+            TRI.regsOverlap(MO.getReg(), DefReg))
+          FreeUses.push_back(&MO);
+    } else {
+      // Phase 2: expecting loads that redefine DefReg.
+      // A reader after the first redefinition is invalid — all stores
+      // must come before all loads. The redefining load itself may
+      // read the register (tied input / sub-register modeling), so
+      // only reject non-redefining readers.
+      if (ReadsReg && !WritesReg)
+        return {};
+      if (WritesReg) {
+        if (!MI->mayLoad())
+          return {};
+        for (const MachineOperand &MO : MI->all_defs())
+          if (MO.isReg() && MO.getReg().isPhysical())
+            for (MCRegUnit Unit : TRI.regunits(MO.getReg().asMCReg()))
+              DefinedUnits.insert(Unit);
+      }
     }
   }
 
-  return Result;
+  // Verify that the loads completely redefine DefReg by checking
+  // that every register unit is covered.
+  if (FreeUses.empty() || DefinedUnits.empty())
+    return {};
+
+  for (MCRegUnit Unit : TRI.regunits(DefReg))
+    if (!DefinedUnits.count(Unit))
+      return {};
+
+  return FreeUses;
 }
 
 const TargetRegisterClass *
@@ -192,12 +209,18 @@ OLPWARSolver::collectCandidates(BlockState &BS) const {
 
   const auto &FreeInstrs = BS.getTop().getFreeInstructions();
 
-  DenseMap<MCRegister, MachineOperand *> LastDefByReg = buildLastDefMap(BS);
+  // Find defs in TopInsert clones that are valid renaming candidates:
+  // each register must have a single defining clone and no other clone
+  // may read it (except the defining instruction itself).
+  DenseMap<MCRegister, MachineOperand *> LastDefByReg =
+      findLastDefsInClones(BS);
   if (LastDefByReg.empty())
     return Candidates;
 
-  // Walk free instructions top-down. For each store use whose value comes
-  // from TopInsert, check if the register is completely redefined later.
+  // Walk free instructions top-down in program order to discover
+  // candidates deterministically. The iteration order matters because
+  // earlier candidates claim registers that become unavailable for
+  // later ones.
   DenseSet<MCRegister> ProcessedRegs;
 
   for (MachineInstr *StoreMI : FreeInstrs) {
@@ -206,44 +229,37 @@ OLPWARSolver::collectCandidates(BlockState &BS) const {
         continue;
       const MCRegister UseReg = StoreUse.getReg().asMCReg();
 
-      // The stored value must come from TopInsert.
-      const auto [DefReg, LastDef] = findTopInsertDef(UseReg, LastDefByReg);
+      // Look up in the clone-derived map: exact match first, then
+      // super-registers.
+      MCRegister DefReg;
+      MachineOperand *LastDef = nullptr;
+      if (auto It = LastDefByReg.find(UseReg); It != LastDefByReg.end()) {
+        DefReg = UseReg;
+        LastDef = It->second;
+      } else {
+        for (MCRegister Super : TRI.superregs(UseReg)) {
+          if (auto It = LastDefByReg.find(Super); It != LastDefByReg.end()) {
+            DefReg = Super;
+            LastDef = It->second;
+            break;
+          }
+        }
+      }
       if (!LastDef || !ProcessedRegs.insert(DefReg).second)
         continue;
 
-      // The register must be completely redefined by later free
-      // instructions — either the register itself directly, or all
-      // its sub-registers covering every register unit.
-      if (!isCompletelyRedefinedLater(DefReg, StoreMI, FreeInstrs)) {
-        LLVM_DEBUG(dbgs() << "  Skip " << printReg(DefReg, &TRI)
-                          << ": not completely redefined later\n");
-        continue;
-      }
-
-      // Verify that no TopInsert instruction after the last def reads
-      // DefReg. Renaming the last def would leave those consumers with
-      // a stale value, breaking the data flow within the fixed region.
-      if (hasPostDefUseInFixed(DefReg, LastDef, BS)) {
-        LLVM_DEBUG(
-            dbgs() << "  Skip " << printReg(DefReg, &TRI)
-                   << ": TopInsert instruction after last def reads it\n");
-        continue;
-      }
-
-      // Collect free uses that consume the TopInsert value and conflicting
-      // loads that redefine the register.
-      auto [FreeUses, ConflictingLoads] =
-          collectFreeUsesAndConflictingLoads(DefReg, FreeInstrs);
-
-      if (FreeUses.empty() || ConflictingLoads.empty())
+      // Collect free store uses that consume the TopInsert value.
+      // This validates store-then-load ordering and that the loads
+      // completely redefine the register.
+      auto FreeUses = collectFreeStoreUses(DefReg, FreeInstrs);
+      if (FreeUses.empty())
         continue;
 
       const TargetRegisterClass *RC = getRegClassForDef(LastDef, DefReg);
       if (!RC)
         continue;
 
-      Candidates.emplace_back(DefReg, RC, LastDef, std::move(FreeUses),
-                              std::move(ConflictingLoads));
+      Candidates.emplace_back(DefReg, RC, LastDef, std::move(FreeUses));
     }
   }
 
@@ -258,18 +274,33 @@ bool OLPWARSolver::canRename(const WARCandidate &C) const {
   if (MI->isRegTiedToUseOperand(DefOpIdx))
     return false;
 
+  // Never rename implicit operands — their register is fixed by the
+  // instruction encoding and cannot be changed.
+  if (C.LastDefInFixed->isImplicit())
+    return false;
+
   return true;
 }
 
 DenseSet<MCRegister> OLPWARSolver::computeAvailableRegs(
     const BlockState &BS, const TargetRegisterClass *RC,
     const AIELoopUtils::OuterLoopStructure &OLP) const {
-  const MachineRegisterInfo &MRI = BS.TheBlock->getParent()->getRegInfo();
+  const MachineFunction &MF = *BS.TheBlock->getParent();
+  const MachineRegisterInfo &MRI = MF.getRegInfo();
 
-  // Start with all non-reserved registers in the class.
+  // Build a set of callee-saved registers for quick lookup.
+  DenseSet<MCRegister> CalleeSaved;
+  if (const MCPhysReg *CSRegs = TRI.getCalleeSavedRegs(&MF))
+    for (unsigned I = 0; CSRegs[I]; ++I)
+      CalleeSaved.insert(CSRegs[I]);
+
+  // Start with allocatable, non-reserved, non-callee-saved registers
+  // in the class. Using a callee-saved register would require the
+  // function to save and restore it, which is not worth the rename.
   DenseSet<MCRegister> Available;
   for (MCRegister Reg : *RC)
-    if (!MRI.isReserved(Reg))
+    if (!MRI.isReserved(Reg) && MRI.isAllocatable(Reg) &&
+        !CalleeSaved.count(Reg))
       Available.insert(Reg);
 
   // Helper to exclude a register and all its aliases.
@@ -392,8 +423,7 @@ bool OLPWARSolver::tryResolve(BlockState &BS) const {
   bool Changed = false;
   for (auto &C : Candidates) {
     LLVM_DEBUG(dbgs() << "  Candidate: " << printReg(C.ConflictReg, &TRI)
-                      << " (" << C.FreeUses.size() << " free uses, "
-                      << C.ConflictingLoads.size() << " conflicting loads)\n");
+                      << " (" << C.FreeUses.size() << " free uses)\n");
 
     if (!canRename(C)) {
       LLVM_DEBUG(dbgs() << "  Skip: last def operand is tied\n");

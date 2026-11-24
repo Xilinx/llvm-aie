@@ -79,50 +79,16 @@ class OLPWARSolver {
     /// The last definition of ConflictReg in TopInsert (output operand).
     MachineOperand *LastDefInFixed;
 
-    /// Free operands that read ConflictReg or its sub-registers before
-    /// the first redefinition (loads, stores, or other consumers).
+    /// Free store operands that read ConflictReg or its sub-registers
+    /// before the first load redefinition.
     SmallVector<MachineOperand *, 4> FreeUses;
-
-    /// Free load instructions that write to sub-registers of ConflictReg.
-    SmallVector<MachineInstr *, 4> ConflictingLoads;
 
     WARCandidate(MCRegister ConflictReg, const TargetRegisterClass *RC,
                  MachineOperand *LastDefInFixed,
-                 SmallVector<MachineOperand *, 4> FreeUses,
-                 SmallVector<MachineInstr *, 4> ConflictingLoads)
+                 SmallVector<MachineOperand *, 4> FreeUses)
         : ConflictReg(ConflictReg), RC(RC), LastDefInFixed(LastDefInFixed),
-          FreeUses(std::move(FreeUses)),
-          ConflictingLoads(std::move(ConflictingLoads)) {}
+          FreeUses(std::move(FreeUses)) {}
   };
-
-  /// Result type for collectFreeUsesAndConflictingLoads().
-  struct UsesAndLoads {
-    SmallVector<MachineOperand *, 4> FreeUses;
-    SmallVector<MachineInstr *, 4> ConflictingLoads;
-  };
-
-  /// Build a map from each physical register to its last definition
-  /// operand across all TopInsert bundles.
-  DenseMap<MCRegister, MachineOperand *>
-  buildLastDefMap(const BlockState &BS) const;
-
-  /// Find the TopInsert def that provides the value for \p UseReg.
-  /// Checks for an exact match first, then walks super-registers.
-  /// Returns {DefReg, LastDef} or {NoRegister, nullptr} if not found.
-  std::pair<MCRegister, MachineOperand *> findTopInsertDef(
-      MCRegister UseReg,
-      const DenseMap<MCRegister, MachineOperand *> &LastDefByReg) const;
-
-  /// Check whether any TopInsert instruction after \p LastDef reads
-  /// \p DefReg. If so, renaming the last def would break the data flow.
-  bool hasPostDefUseInFixed(MCRegister DefReg, const MachineOperand *LastDef,
-                            const BlockState &BS) const;
-
-  /// Walk free instructions and separate uses (before the first
-  /// redefinition of \p DefReg) from conflicting loads (redefinitions).
-  UsesAndLoads
-  collectFreeUsesAndConflictingLoads(MCRegister DefReg,
-                                     ArrayRef<MachineInstr *> FreeInstrs) const;
 
   /// Determine the register class for a def operand, falling back to
   /// getMinimalPhysRegClass if the instruction descriptor doesn't
@@ -134,12 +100,6 @@ class OLPWARSolver {
   /// Walks free stores top-down and checks whether the stored value comes
   /// from TopInsert and is completely redefined by later free instructions.
   SmallVector<WARCandidate, 4> collectCandidates(BlockState &BS) const;
-
-  /// Check whether \p Reg is completely redefined by free instructions
-  /// that appear after \p StoreMI. Uses register units to verify that
-  /// every bit of \p Reg is written by a later definition.
-  bool isCompletelyRedefinedLater(MCRegister Reg, const MachineInstr *StoreMI,
-                                  ArrayRef<MachineInstr *> FreeInstrs) const;
 
   /// Check if the last def operand can be renamed (not tied).
   bool canRename(const WARCandidate &C) const;
@@ -162,6 +122,23 @@ public:
   /// Try to resolve WAR dependencies in a single OLP epilogue block.
   /// Returns true if any renaming was performed.
   bool tryResolve(BlockState &BS) const;
+
+  /// Find TopInsert definitions that are valid renaming candidates by
+  /// walking TopInsert.Clones directly. Returns a map from each
+  /// physical register to its definition operand. A register is only
+  /// included if exactly one clone defines it and no other clone reads
+  /// it (the only allowed reader is the defining instruction itself).
+  DenseMap<MCRegister, MachineOperand *>
+  findLastDefsInClones(const BlockState &BS) const;
+
+  /// Walk free instructions and collect store uses of \p DefReg before
+  /// the first load redefinition. Validates that all stores come before
+  /// all loads, that redefinitions are load instructions, and that the
+  /// loads completely redefine \p DefReg (all register units covered).
+  /// Returns empty on any unexpected pattern.
+  SmallVector<MachineOperand *, 4>
+  collectFreeStoreUses(MCRegister DefReg,
+                       ArrayRef<MachineInstr *> FreeInstrs) const;
 };
 
 } // end namespace llvm::AIE
