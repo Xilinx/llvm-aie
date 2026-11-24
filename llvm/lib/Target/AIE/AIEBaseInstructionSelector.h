@@ -218,6 +218,9 @@ protected:
   bool selectG_AIE_LOAD_CONV(MachineInstr &CONVI, MachineRegisterInfo &MRI);
   bool selectVCONV(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectStartLoop(MachineInstr &I, MachineRegisterInfo &MRI);
+  /// JNZD counts backedges, while the intrinsic receives the trip count. When
+  /// that trip count is an add of one, use the other operand as the counter.
+  bool foldJNZDTripPlusOne(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectLockPtrIntrinsic(MachineInstr &I);
   bool selectSetControlRegister(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectGetControlRegister(MachineInstr &I, MachineRegisterInfo &MRI);
