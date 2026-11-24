@@ -8,35 +8,36 @@
 
 declare i32 @llvm.start.loop.iterations.i32(i32)
 
-; JNZD wants the backedge-taken count, but llvm.start.loop.iterations receives
-; the trip count. When that trip count is an add of 1, instruction selection
-; still emits the add and a compensating subtract. A follow-up can use the
-; other operand of the add as the counter and drop the subtract.
+; JNZD wants the backedge-taken count, while llvm.start.loop.iterations
+; receives the trip count. When that trip count is an add of 1, the counter is
+; the other operand and the compensating subtract is not emitted. An add of any
+; other constant still gets the subtract.
 
 define i32 @fold_dead_add(i32 %backedge) {
 ; AIE2PS-LABEL: fold_dead_add:
+; AIE2PS:       // %bb.0:
+; AIE2PS-NEXT:    ret lr
+; AIE2PS-NEXT:    nop // Delay Slot 5
+; AIE2PS-NEXT:    nop // Delay Slot 4
+; AIE2PS-NEXT:    nop // Delay Slot 3
+; AIE2PS-NEXT:    nop // Delay Slot 2
+; AIE2PS-NEXT:    mov r0, r1 // Delay Slot 1
+  %trip = add i32 %backedge, 1
+  %cnt = call i32 @llvm.start.loop.iterations.i32(i32 %trip)
+  ret i32 %cnt
+}
+
+; The incremented value is still used, so the add stays and only the subtract
+; is dropped. The counter is the value before the add.
+define i32 @fold_live_add(i32 %backedge) {
+; AIE2PS-LABEL: fold_live_add:
 ; AIE2PS:       // %bb.0:
 ; AIE2PS-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; AIE2PS-NEXT:    nopx // Delay Slot 5
 ; AIE2PS-NEXT:    nop // Delay Slot 4
 ; AIE2PS-NEXT:    nop // Delay Slot 3
 ; AIE2PS-NEXT:    add r0, r1, #1 // Delay Slot 2
-; AIE2PS-NEXT:    addm.nc r0, r0, #-1 // Delay Slot 1
-  %trip = add i32 %backedge, 1
-  %cnt = call i32 @llvm.start.loop.iterations.i32(i32 %trip)
-  ret i32 %cnt
-}
-
-; The incremented value is still used, so both the add and the subtract remain.
-define i32 @fold_live_add(i32 %backedge) {
-; AIE2PS-LABEL: fold_live_add:
-; AIE2PS:       // %bb.0:
-; AIE2PS-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
-; AIE2PS-NEXT:    nop // Delay Slot 5
-; AIE2PS-NEXT:    nop // Delay Slot 4
-; AIE2PS-NEXT:    add r0, r1, #1 // Delay Slot 3
-; AIE2PS-NEXT:    addm.nc r2, r0, #-1 // Delay Slot 2
-; AIE2PS-NEXT:    add r0, r2, r0 // Delay Slot 1
+; AIE2PS-NEXT:    add r0, r1, r0 // Delay Slot 1
   %trip = add i32 %backedge, 1
   %cnt = call i32 @llvm.start.loop.iterations.i32(i32 %trip)
   %sum = add i32 %cnt, %trip

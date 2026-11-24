@@ -1107,6 +1107,43 @@ void AIEBaseInstructionSelector::insertPtrAddForOffset(MachineRegisterInfo &MRI,
   MemI.getOperand(PointerRegIndex).setReg(NewPtrReg);
 }
 
+bool AIEBaseInstructionSelector::foldJNZDTripPlusOne(MachineInstr &I,
+                                                     MachineRegisterInfo &MRI) {
+  MachineInstr *Add = MRI.getVRegDef(I.getOperand(2).getReg());
+  if (!Add || Add->getOpcode() != TargetOpcode::G_ADD)
+    return false;
+  if (!Add->getOperand(1).isReg() || !Add->getOperand(2).isReg())
+    return false;
+
+  auto IsOne = [&MRI](Register Reg) {
+    auto Const = getIConstantVRegValWithLookThrough(Reg, MRI);
+    return Const && Const->Value == 1;
+  };
+  Register LHS = Add->getOperand(1).getReg();
+  Register RHS = Add->getOperand(2).getReg();
+  Register Backedge;
+  if (IsOne(RHS))
+    Backedge = LHS;
+  else if (IsOne(LHS))
+    Backedge = RHS;
+  else
+    return false;
+
+  // Place the copy next to the backedge count so an otherwise empty preheader
+  // can be removed.
+  if (MachineInstr *SrcDef = MRI.getVRegDef(Backedge);
+      SrcDef && SrcDef->getParent() != I.getParent()) {
+    MachineBasicBlock *DefMBB = SrcDef->getParent();
+    MIB.setInsertPt(*DefMBB, SrcDef->isPHI()
+                                 ? DefMBB->getFirstNonPHI()
+                                 : std::next(SrcDef->getIterator()));
+  }
+  auto Copy = MIB.buildInstr(TargetOpcode::COPY, {I.getOperand(0).getReg()},
+                             {Backedge});
+  I.eraseFromParent();
+  return selectCopy(*Copy, MRI);
+}
+
 bool AIEBaseInstructionSelector::selectStartLoop(MachineInstr &I,
                                                  MachineRegisterInfo &MRI) {
 
@@ -1121,6 +1158,9 @@ bool AIEBaseInstructionSelector::selectStartLoop(MachineInstr &I,
   // The first argument to start_loop_iterations is the loop trip count.
   // We need to pre-adjust that number to receive the proper backedge-taken
   // count
+  if (foldJNZDTripPlusOne(I, MRI))
+    return true;
+
   if (auto Const =
           getIConstantVRegValWithLookThrough(I.getOperand(2).getReg(), MRI)) {
     auto OpCode = TII.getConstantMovOpcode(MRI, DstReg, Const->Value);
