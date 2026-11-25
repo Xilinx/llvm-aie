@@ -7,16 +7,35 @@
 #
 # (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
 #
-# Negative: SrcReg ($r1) is defined inside SteadyTop before the MOV,
-# so canRotateMov rejects: "src referenced before MOV".
-# The MOV stays in its original block.
+# Positive: MOV chain ($r1 = MOV $r3; $r2 = MOV $r1) in both top blocks.
+# The first MOV rotates because $r3 is not referenced before it. Then
+# on the next iteration, $r2 = MOV $r1 becomes the first instruction
+# and $r1 is no longer referenced before it, so it rotates too.
+# Both top blocks become MOV-free.
 
 # CHECK-LABEL: name: no_rotation_src_ref_before
 #
-# SteadyTop still has the MOV:
-# CHECK:      bb.1.steady.top:
+# Preheader gets both MOVs (chain order preserved):
+# CHECK:      bb.0.entry:
 # CHECK:        $r1 = MOV_OR_pseudo $r3
 # CHECK:        $r2 = MOV_OR_pseudo $r1
+# CHECK-NEXT:   PseudoJ_jump_imm %bb.1
+#
+# SteadyTop is now MOV-free:
+# CHECK:      bb.1.steady.top:
+# CHECK-NOT:    MOV_OR_pseudo
+# CHECK:      bb.2.steady.inner:
+#
+# SteadyBottom gets both MOVs before the branch:
+# CHECK:      bb.3.steady.bottom:
+# CHECK:        $r1 = MOV_OR_pseudo $r3
+# CHECK:        $r2 = MOV_OR_pseudo $r1
+# CHECK-NEXT:   PseudoJNZ $r0, %bb.1
+#
+# PeeledTop is now MOV-free:
+# CHECK:      bb.4.peeled.top:
+# CHECK-NOT:    MOV_OR_pseudo
+# CHECK:      bb.5.peeled.inner:
 
 --- |
   define void @no_rotation_src_ref_before() {
