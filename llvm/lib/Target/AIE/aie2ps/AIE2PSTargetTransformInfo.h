@@ -55,6 +55,9 @@ public:
   bool isHardwareLoopProfitable(Loop *L, ScalarEvolution &SE,
                                 AssumptionCache &AC, TargetLibraryInfo *LibInfo,
                                 HardwareLoopInfo &HWLoopInfo) const override;
+  bool canSaveCmp(Loop *L, BranchInst **BI, ScalarEvolution *SE, LoopInfo *LI,
+                  DominatorTree *DT, AssumptionCache *AC,
+                  TargetLibraryInfo *LibInfo) const override;
   bool isProfitableOuterLSR(const Loop &L) const override;
 
   InstructionCost getMemoryOpCost(
