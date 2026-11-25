@@ -82,7 +82,8 @@ static bool isRegLiveIn(MCRegister Reg, const MachineBasicBlock &MBB,
 }
 
 /// Check if \p Reg (or any overlapping register) is referenced (used or
-/// defined) before \p TargetMI in the same block.
+/// defined) before \p TargetMI in the same block.  Debug instructions are
+/// skipped because they do not affect execution semantics.
 static bool isRegReferencedBeforeMI(const MachineInstr &TargetMI,
                                     MCRegister Reg,
                                     const TargetRegisterInfo &TRI) {
@@ -90,6 +91,8 @@ static bool isRegReferencedBeforeMI(const MachineInstr &TargetMI,
   for (const MachineInstr &MI : *MBB) {
     if (&MI == &TargetMI)
       return false;
+    if (MI.isDebugInstr())
+      continue;
     for (const MachineOperand &MO : MI.operands()) {
       if (!MO.isReg() || !MO.getReg().isPhysical())
         continue;
@@ -291,6 +294,26 @@ static void recomputeAllLiveIns(ArrayRef<MachineBasicBlock *> Blocks) {
     recomputeLiveIns(*MBB);
 }
 
+/// Undef any DBG_VALUE instructions in \p MBB that reference \p Reg.
+/// Called before erasing a MOV so that debug info referencing the MOV's
+/// result becomes explicitly undefined rather than dangling.
+static void undefDebugValuesForReg(MachineBasicBlock &MBB, MCRegister Reg,
+                                   const TargetRegisterInfo &TRI) {
+  for (MachineInstr &MI : MBB) {
+    if (!MI.isDebugValue())
+      continue;
+    for (MachineOperand &MO : MI.debug_operands()) {
+      if (!MO.isReg() || !MO.getReg().isPhysical())
+        continue;
+      if (TRI.regsOverlap(MO.getReg(), Reg)) {
+        LLVM_DEBUG(dbgs() << "  Undef debug value: " << MI);
+        MI.setDebugValueUndef();
+        break;
+      }
+    }
+  }
+}
+
 // ===--------------------------------------------------------------------=== //
 // Case 1 & Case 2 rotation logic
 // ===--------------------------------------------------------------------=== //
@@ -322,9 +345,12 @@ static bool rotateMatchedPair(MachineInstr &SteadyMI, MachineInstr &PeeledMI,
 
   LLVM_DEBUG(dbgs() << "  Case 1 (matched pair): " << SteadyMI);
 
+  const MCRegister SteadyDst = SteadyMI.getOperand(0).getReg().asMCReg();
+  undefDebugValuesForReg(*SteadyMI.getParent(), SteadyDst, TRI);
   insertMovBeforeTerminator(Preheader, SteadyMI, TII);
   SteadyMI.eraseFromParent();
 
+  undefDebugValuesForReg(*PeeledMI.getParent(), DstReg, TRI);
   insertMovBeforeTerminator(SteadyBottom, PeeledMI, TII);
   llvm::erase(PeeledMovs, &PeeledMI);
   PeeledMI.eraseFromParent();
@@ -352,6 +378,7 @@ static bool rotateSteadyOnly(MachineInstr &SteadyMI,
 
   LLVM_DEBUG(dbgs() << "  Case 2 (steady-only): " << SteadyMI);
 
+  undefDebugValuesForReg(*SteadyMI.getParent(), DstReg, TRI);
   insertMovBeforeTerminator(Preheader, SteadyMI, TII);
   insertMovBeforeTerminator(SteadyBottom, SteadyMI, TII);
   SteadyMI.eraseFromParent();
