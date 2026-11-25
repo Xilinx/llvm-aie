@@ -17,8 +17,8 @@
 #define LLVM_LIB_TARGET_AIE_AIELIVENESSVECTOR_H
 
 #include "AIEMaxNumRegUnits.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/MC/LaneBitmask.h"
 
 namespace llvm {
 
@@ -27,11 +27,10 @@ class raw_ostream;
 namespace AIE {
 
 /// Liveness information for a single cycle/offset.
-/// Tracks both register file lanes and bypass usage to detect conflicts.
+/// Tracks both occupied register units and bypass usage to detect conflicts.
 class Liveness {
-  LaneBitmask Lanes;
   // RegUnits occupied at this cycle, expressed relative to the admissible
-  // registers of the live range. Redundant with Lanes during migration.
+  // registers of the live range.
   PartSet Units;
   // Set of bypass classes being read from at this cycle.
   SmallVector<unsigned, 2> BypassReads;
@@ -39,23 +38,14 @@ class Liveness {
   SmallVector<unsigned, 2> BypassWrites;
 
 public:
-  /// Construct with no lanes live.
-  Liveness() : Lanes(LaneBitmask::getNone()) {}
-
-  /// Construct with specific lane mask.
-  Liveness(LaneBitmask L) : Lanes(L) {}
-
-  /// Get the lane mask.
-  LaneBitmask getLanes() const { return Lanes; }
-
-  /// Set the lane mask.
-  void setLanes(LaneBitmask L) { Lanes = L; }
+  /// Construct with no RegUnits occupied.
+  Liveness() = default;
 
   /// Get the occupied RegUnits.
   const PartSet &getUnits() const { return Units; }
 
-  /// Add lanes together with the RegUnits they cover.
-  void addLanes(LaneBitmask L, const PartSet &U);
+  /// Mark the RegUnits \p U as occupied.
+  void addUnits(const PartSet &U);
 
   /// Add a bypass read for a specific forwarding class.
   void addBypassRead(unsigned ForwardingClass);
@@ -71,9 +61,9 @@ public:
 
   /// Check if this liveness conflicts with another.
   /// Conflicts occur when:
-  /// 1. Register file lanes overlap, OR
+  /// 1. Occupied register units overlap, OR
   /// 2. A bypass read and bypass write use the same forwarding class, OR
-  /// 3. One has bypass activity and the other has register lanes
+  /// 3. One has bypass activity and the other has occupied register units
   ///    (they share the same register address)
   bool conflictsWith(const Liveness &Other) const;
 
@@ -86,17 +76,11 @@ public:
   /// Difference with another liveness.
   Liveness &operator-=(const Liveness &Other);
 
-  /// Check if any lanes are live or any bypasses are active.
+  /// Check if any RegUnits are occupied or any bypasses are active.
   bool any() const;
 
-  /// Check if no lanes are live and no bypasses are active.
+  /// Check if no RegUnits are occupied and no bypasses are active.
   bool none() const;
-
-  /// Get the number of lanes set.
-  unsigned getNumLanes() const { return Lanes.getNumLanes(); }
-
-  /// Implicit conversion to LaneBitmask for compatibility.
-  operator LaneBitmask() const { return Lanes; }
 };
 
 /// A vector-like container for liveness information that provides safe
@@ -107,9 +91,6 @@ class LivenessVector {
 public:
   /// Construct with given size, all elements initialized to no liveness.
   explicit LivenessVector(size_t Size = 0);
-
-  /// Construct with given size and initial lane mask.
-  LivenessVector(size_t Size, LaneBitmask InitialValue);
 
   /// Get the size of the vector.
   size_t size() const;
@@ -146,7 +127,7 @@ public:
   LivenessVector operator-(const LivenessVector &Other) const;
 
   /// True when any same-index pair conflicts via Liveness::conflictsWith
-  /// (lane intersection, bypass R/W same class, or bypass vs RF lanes).
+  /// (unit intersection, bypass R/W same class, or bypass vs RF units).
   bool overlaps(const LivenessVector &Other) const;
 
   /// Check if any element has liveness.

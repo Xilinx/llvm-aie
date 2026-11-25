@@ -109,24 +109,26 @@ public:
                          const RegLiveRangeTracker &Tracker,
                          raw_ostream &OS) const;
 
-  /// Build per-lane modulo-II live range masks from an event schedule
+  /// Build per-cycle modulo-II liveness of the live ranges from an event
+  /// schedule
   ///
   /// Uses a backward scan to compute which lanes of each live range are live
-  /// at each modulo-II offset. The result is a map from LRIndex to a
-  /// LivenessVector, where LivenessByLRIndex[LRIndex][t] indicates which
-  /// lanes are live at offset t (0 <= t < II).
+  /// at each modulo-II offset, together with the RegUnits they occupy. The
+  /// result is a map from LRIndex to a LivenessVector, where
+  /// LivenessByLRIndex[LRIndex][t] describes the liveness at offset t
+  /// (0 <= t < II).
   ///
   /// \param Schedule The event schedule to analyze
   /// \param II The initiation interval for modulo scheduling
   /// \param Tracker The live range tracker used to look up register classes
-  /// \return Map of LRIndex to per-offset lane masks
+  /// \return Map of LRIndex to per-offset liveness
   DenseMap<unsigned, AIE::LivenessVector>
   buildLiveness(const EventSchedule &Schedule, int II,
                 const RegLiveRangeTracker &Tracker) const;
 
-  /// Dump the live lanes in a readable format
+  /// Dump the liveness in a readable format
   ///
-  /// \param LivenessByLRIndex The live lanes data to dump
+  /// \param LivenessByLRIndex The liveness data to dump
   /// \param II The initiation interval
   /// \param OS Output stream to write to
   void

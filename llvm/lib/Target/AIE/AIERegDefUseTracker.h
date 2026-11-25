@@ -302,6 +302,9 @@ class RegLiveRangeTracker {
   /// Return the set of register units of \p Reg.
   PartSet getRegUnits(MCRegister Reg) const;
 
+  /// Return the union of the register units of all registers in \p Regs.
+  PartSet getRegUnits(const DenseSet<MCRegister> &Regs) const;
+
   /// Return the set of register units of \p Reg that are covered by \p Lanes.
   /// Units without lane information are always included.
   PartSet getRegUnits(MCRegister Reg, LaneBitmask Lanes) const;
@@ -310,9 +313,9 @@ class RegLiveRangeTracker {
   /// \p MBB, respecting their lane masks.
   PartSet getLiveInUnits(const MachineBasicBlock &MBB) const;
 
-  /// Check if a register overlaps with any register in a set
-  bool overlapsAnyInSet(MCRegister Reg,
-                        const DenseSet<MCRegister> &RegSet) const;
+  /// Return the union of the register units covered by the live-out entries of
+  /// \p MBB, respecting their lane masks.
+  PartSet getLiveOutUnits(const MachineBasicBlock &MBB) const;
 
   /// Compute the register class for a live range based on all its operands
   void computeRegisterClass(RegLiveRange &LR) const;
@@ -330,8 +333,20 @@ class RegLiveRangeTracker {
   static bool isFullyDefined(const PartSet &TopLiveUnits,
                              const PartSet &LiveInUnits);
 
+  /// Return the union of the register units of all operands of \p LR.
+  PartSet getOperandUnits(const RegLiveRange &LR) const;
+
   /// Second-stage full coverage pruning
   void pruneByFullCoverage();
+
+  /// Return true if no physical register operand that is not held by a live
+  /// range shares register units with the operands of any live range.
+  bool isFullyCovered() const;
+
+  /// Return true if the register units of all operands of every live range
+  /// are covered by the units of the range's base register. This is the
+  /// invariant that merging and base expansion must maintain.
+  bool isBaseCoveringOperands() const;
 
   //===--------------------------------------------------------------------===//
   // Analyze helper methods (decomposition of analyze())
@@ -350,17 +365,19 @@ class RegLiveRangeTracker {
     /// units of discarded ranges. They are only ever killed by defs, never
     /// merged, and make the ranges they overlap reserved. They may overlap
     /// the units of live ranges.
-    PartSet Barrier;
+    PartSet OutLive;
 
-    /// Set of registers used implicitly (invalidates explicit ranges).
-    DenseSet<MCRegister> ImplicitRegs;
+    /// Register units of the registers used implicitly.
+    PartSet ImplicitUnits;
 
     /// Instructions in semantic order, indexed by InstrOrder.
     ArrayRef<MachineInstr *> SemanticOrder;
   };
 
-  /// Merge aliasing live ranges when a definition is encountered.
-  void mergeAliasingLiveRanges(unsigned DefLRIdx, MCRegister DefReg,
+  /// Merge the live ranges aliasing the access \p MO into \p LRIdx and update
+  /// the live units: a def kills its units, a use makes them live. This is
+  /// the single merge step shared by defs and uses.
+  void mergeAliasingLiveRanges(unsigned LRIdx, const MachineOperand &MO,
                                LivenessScanState &State);
 
   /// Helper to find the most promising scarce range set.
@@ -381,12 +398,12 @@ class RegLiveRangeTracker {
 
   /// Add caller-saved registers that are completely unused in the block.
   /// Uses AllPhysRegOperands member for used registers, and iterates
-  /// MBB.liveins() and MBB.liveouts() directly (with lane mask support).
+  /// MBB.liveins() and MBB.liveouts() directly.
   /// @param MBB The machine basic block (for live-in/out iteration).
-  /// @param ImplicitRegs Registers used implicitly.
+  /// @param ImplicitUnits Register units of the registers used implicitly.
   /// @param ReservedRegs Reserved base registers.
   void addUnusedCallerSavedRegs(MachineBasicBlock &MBB,
-                                const DenseSet<MCRegister> &ImplicitRegs,
+                                const PartSet &ImplicitUnits,
                                 const DenseSet<MCRegister> &ReservedRegs);
 
   /// Mark live ranges as scarce if they have exactly 1 available register.
@@ -398,13 +415,12 @@ class RegLiveRangeTracker {
                              const LivenessScanState &State) const;
 
   /// Build instruction order map and collect physical register operands.
-  /// Also populates ImplicitRegs.
+  /// Also populates ImplicitUnits.
   void buildInstructionOrderAndCollectOperands(
       ArrayRef<MachineInstr *> SemanticOrder, LivenessScanState &State);
 
-  /// Initialize the barrier from the live-out registers.
-  void initLiveOutBarrier(const MachineBasicBlock &MBB,
-                          LivenessScanState &State);
+  /// Initialize the out-live units from the live-out registers.
+  void initOutLive(const MachineBasicBlock &MBB, LivenessScanState &State);
 
   /// Return true if the live units of all live ranges are pairwise disjoint
   /// and discarded or absorbed ranges hold no units.
@@ -435,13 +451,8 @@ class RegLiveRangeTracker {
   bool absorbLiveRanges(unsigned TargetIdx, ArrayRef<unsigned> SrcIdxs,
                         LivenessScanState &State);
 
-  /// Make \p Units live in \p TargetIdx for the access \p MO. Overlapping
-  /// ranges that belong to the access are absorbed, the others lose the units.
-  void claimLiveUnits(unsigned TargetIdx, const PartSet &Units,
-                      const MachineOperand &MO, LivenessScanState &State);
-
-  /// Return the units that are still live, in any live range or the barrier,
-  /// at the top of the block once the scan is complete.
+  /// Return the units that are still live, in any live range or the out-live
+  /// units, at the top of the block once the scan is complete.
   PartSet getTopLiveUnits(const LivenessScanState &State) const;
 
   /// Expand the base of \p LRIdx if \p Reg is a strict super-register of it.
@@ -452,13 +463,17 @@ class RegLiveRangeTracker {
   void expandBaseWithin(RegLiveRange &LR, const PartSet &Live) const;
 
   /// Create a live range for an access to \p Reg that joins no existing range.
-  unsigned createLiveRange(MCRegister Reg, const PartSet &RegUnits,
-                           const MachineOperand &MO, LivenessScanState &State);
+  unsigned createLiveRange(MCRegister Reg, const MachineOperand &MO,
+                           LivenessScanState &State);
 
   /// Get or create a live range for a register operand.
   /// Returns the live range index.
   unsigned getOrCreateLiveRangeForOperand(MCRegister Reg, MachineOperand *MO,
                                           LivenessScanState &State);
+
+  /// Process a single register operand: attach it to a live range, merge the
+  /// aliasing ranges and update the live units.
+  void processOperand(MachineOperand &MO, LivenessScanState &State);
 
   /// Process def operands for a single instruction (reverse pass).
   void processDefsInInstruction(MachineInstr &MI, LivenessScanState &State);
@@ -478,7 +493,7 @@ class RegLiveRangeTracker {
                        LivenessScanState &State);
 
   /// Drop a live range that could not be merged with an overlapping one. Its
-  /// live units join the barrier.
+  /// live units join the out-live units.
   void discardLiveRange(unsigned LRIdx, LivenessScanState &State);
 
   /// Merge the per-sub-register live ranges of a composite physical register

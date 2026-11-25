@@ -39,8 +39,8 @@
 # CHECK-NEXT:      [0] Register: dm1 renamable $dm1 = VADD_f_vacc_fp renamable $dm3, renamable $dm4, renamable $r8, implicit-def dead $srfpflags, implicit $crfpmask
 # CHECK-NEXT:    Uses (3):
 # CHECK-NEXT:      [0] Register: cmh1 (SubRegIdx: 9) $x3 = VSRS_2x_mv_x_srs_cm_srsSign1 $cmh1, $s1, implicit-def dead $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
-# CHECK-NEXT:      [1] Register: cml1 (SubRegIdx: 10) $x2 = VSRS_2x_mv_x_srs_cm_srsSign1 $cml1, $s1, implicit-def dead $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
-# CHECK-NEXT:      [2] Register: dm1 renamable $dm5 = VADD_f_vacc_fp renamable $dm1, renamable $dm4, renamable $r8, implicit-def dead $srfpflags, implicit $crfpmask
+# CHECK-NEXT:      [1] Register: dm1 renamable $dm5 = VADD_f_vacc_fp renamable $dm1, renamable $dm4, renamable $r8, implicit-def dead $srfpflags, implicit $crfpmask
+# CHECK-NEXT:      [2] Register: cml1 (SubRegIdx: 10) $x2 = VSRS_2x_mv_x_srs_cm_srsSign1 $cml1, $s1, implicit-def dead $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
 # CHECK-EMPTY:
 # (B) is not merged into (A) because it kills every lane. It has no uses
 # because nothing uses it afterwards.

@@ -314,8 +314,8 @@ DenseMap<unsigned, AIE::LivenessVector> AIEScheduleInterpreter::buildLiveness(
       if (Mask.any()) {
         if (!LivenessByLRIndex.count(LRIndex))
           LivenessByLRIndex[LRIndex] = AIE::LivenessVector(II);
-        LivenessByLRIndex[LRIndex][ModuloCycle].addLanes(
-            Mask, UnitsFor(LRIndex, Mask));
+        LivenessByLRIndex[LRIndex][ModuloCycle].addUnits(
+            UnitsFor(LRIndex, Mask));
 
         LLVM_DEBUG(dbgs() << "    Lanes " << PrintLaneMask(Mask) << " for LR#"
                           << LRIndex << " live entering cycle " << C
@@ -335,7 +335,7 @@ DenseMap<unsigned, AIE::LivenessVector> AIEScheduleInterpreter::buildLiveness(
 
         // RF write occupies register file at ModuloCycle.
         const PartSet &MUnits = UnitsFor(Event.LRIndex, M);
-        LivenessByLRIndex[Event.LRIndex][ModuloCycle].addLanes(M, MUnits);
+        LivenessByLRIndex[Event.LRIndex][ModuloCycle].addUnits(MUnits);
 
         // Forwarding write: also occupy one cycle earlier. Skip that for a
         // dead def unless a same-class bypass read may share its phys reg
@@ -349,10 +349,10 @@ DenseMap<unsigned, AIE::LivenessVector> AIEScheduleInterpreter::buildLiveness(
             const int BypassModuloCycle = BypassWriteCycle % II;
             LivenessByLRIndex[Event.LRIndex][BypassModuloCycle].addBypassWrite(
                 Event.ForwardingClass);
-            // Record the same lane mask as the RF write: bypass and RF share
+            // Record the same RegUnits as the RF write: bypass and RF share
             // the same def and the same register address.
-            LivenessByLRIndex[Event.LRIndex][BypassModuloCycle].addLanes(
-                M, MUnits);
+            LivenessByLRIndex[Event.LRIndex][BypassModuloCycle].addUnits(
+                MUnits);
 
             LLVM_DEBUG(dbgs()
                        << "    Bypass write of class " << Event.ForwardingClass
@@ -453,15 +453,15 @@ void AIEScheduleInterpreter::dumpLiveness(
     for (int T = 0; T < II; ++T) {
       const AIE::Liveness &L = LanesByOffset[T];
       if (L.any()) {
-        // Build indicator showing lanes and bypass classes.
+        // Build indicator showing occupied RegUnits and bypass classes.
         // Format examples:
-        //   "##    " = lanes only
-        //   "#R1   " = lanes + bypass read class 1
-        //   "#W2   " = lanes + bypass write class 2
+        //   "#     " = RegUnits only
+        //   "#R1   " = RegUnits + bypass read class 1
+        //   "#W2   " = RegUnits + bypass write class 2
         //   "R1W2  " = bypass read class 1 + bypass write class 2
-        //   "#R1W2 " = lanes + bypass read class 1 + bypass write class 2
+        //   "#R1W2 " = RegUnits + bypass read class 1 + bypass write class 2
         std::string Indicator;
-        if (L.getLanes().any())
+        if (L.getUnits().any())
           Indicator = "#";
 
         // Add bypass read classes.

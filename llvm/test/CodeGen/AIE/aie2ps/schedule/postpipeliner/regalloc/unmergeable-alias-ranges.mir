@@ -34,7 +34,7 @@
 # CHECK-NEXT: Discard LR#[[R24]] (no common base register)
 # CHECK-NEXT: Discard LR#[[L12]] (no common base register)
 # CHECK: LR#{{[0-9]+}} Use r25
-# CHECK: Base=r25 defs=0 uses=1 [RESERVED]
+# CHECK: Base=r25 defs=0 uses=1{{$}}
 # CHECK: FINAL LIVE RANGES
 
 --- |

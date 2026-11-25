@@ -40,15 +40,6 @@ using namespace llvm;
 
 namespace {
 
-/// Check if a register overlaps with a RegisterMaskPair (live-in/out entry).
-/// Currently uses conservative full-register overlap; lane mask support can
-/// be added later.
-bool overlapsRegMaskPair(MCRegister Reg,
-                         const MachineBasicBlock::RegisterMaskPair &RMP,
-                         const TargetRegisterInfo *TRI) {
-  return TRI->regsOverlap(Reg, RMP.PhysReg);
-}
-
 /// Return the sub-register index of AccessReg within BaseReg, or 0 if
 /// AccessReg equals BaseReg or is not a sub-register of BaseReg.
 unsigned getSubRegIdx(MCRegister AccessReg, MCRegister BaseReg,
@@ -313,6 +304,14 @@ PartSet RegLiveRangeTracker::getRegUnits(MCRegister Reg) const {
   return Units;
 }
 
+PartSet
+RegLiveRangeTracker::getRegUnits(const DenseSet<MCRegister> &Regs) const {
+  PartSet Units;
+  for (const MCRegister Reg : Regs)
+    Units |= getRegUnits(Reg);
+  return Units;
+}
+
 PartSet RegLiveRangeTracker::getRegUnits(MCRegister Reg,
                                          LaneBitmask Lanes) const {
   PartSet Units;
@@ -332,18 +331,17 @@ RegLiveRangeTracker::getLiveInUnits(const MachineBasicBlock &MBB) const {
   return Units;
 }
 
-bool RegLiveRangeTracker::overlapsAnyInSet(
-    MCRegister Reg, const DenseSet<MCRegister> &RegSet) const {
-  for (MCRegister R : RegSet) {
-    if (TRI->regsOverlap(Reg, R))
-      return true;
-  }
-  return false;
+PartSet
+RegLiveRangeTracker::getLiveOutUnits(const MachineBasicBlock &MBB) const {
+  PartSet Units;
+  for (const auto &LiveOut : MBB.liveouts())
+    Units |= getRegUnits(LiveOut.PhysReg, LiveOut.LaneMask);
+  return Units;
 }
 
 PartSet
 RegLiveRangeTracker::getTopLiveUnits(const LivenessScanState &State) const {
-  PartSet Units = State.Barrier;
+  PartSet Units = State.OutLive;
   for (const PartSet &LiveUnits : State.LiveUnits)
     Units |= LiveUnits;
   return Units;
@@ -450,20 +448,17 @@ void RegLiveRangeTracker::pruneByFullCoverage() {
 
     // Check if there are any uncovered operands that alias with this LR's
     // registers
-    auto HasUncoveredAlias = [&](const DenseSet<MCRegister> &LRRegs,
+    auto HasUncoveredAlias = [&](const PartSet &LRUnits,
                                  MCRegister *SampleUncovered = nullptr) {
       for (MachineOperand *MO : AllPhysRegOperands) {
-        if (!CoveredOps.contains(MO)) {
-          MCRegister UncoveredReg = MO->getReg().asMCReg();
-          // Check if this uncovered operand aliases with any register in this
-          // LR
-          for (const MCRegister LRReg : LRRegs) {
-            if (TRI->regsOverlap(UncoveredReg, LRReg)) {
-              if (SampleUncovered)
-                *SampleUncovered = UncoveredReg;
-              return true;
-            }
-          }
+        if (CoveredOps.contains(MO))
+          continue;
+        // Check if this uncovered operand shares units with this LR.
+        const MCRegister UncoveredReg = MO->getReg().asMCReg();
+        if (getRegUnits(UncoveredReg).overlap(LRUnits)) {
+          if (SampleUncovered)
+            *SampleUncovered = UncoveredReg;
+          return true;
         }
       }
       return false;
@@ -473,14 +468,8 @@ void RegLiveRangeTracker::pruneByFullCoverage() {
     // covered
     SmallVector<RegLiveRange, 16> NewLiveRanges;
     for (const RegLiveRange &LR : LiveRanges) {
-      // Collect all registers used in this live range
-      DenseSet<MCRegister> LRRegs;
-      for (const auto &R : LR.operands()) {
-        LRRegs.insert(R.getOperand()->getReg().asMCReg());
-      }
-
       MCRegister SampleUncovered = MCRegister::NoRegister;
-      if (!HasUncoveredAlias(LRRegs, &SampleUncovered)) {
+      if (!HasUncoveredAlias(getOperandUnits(LR), &SampleUncovered)) {
         NewLiveRanges.push_back(LR);
       } else {
         LLVM_DEBUG({
@@ -500,28 +489,37 @@ void RegLiveRangeTracker::pruneByFullCoverage() {
 
   LLVM_DEBUG(dbgs() << "After pruning: " << LiveRanges.size() << " ranges\n");
 
-#ifndef NDEBUG
-  // Verify that all remaining operands are covered
-  DenseSet<MachineOperand *> FinalCoveredOps;
-  for (const RegLiveRange &LR : LiveRanges) {
-    for (const auto &R : LR.operands()) {
-      FinalCoveredOps.insert(R.getOperand());
-    }
-  }
+  assert(isFullyCovered() &&
+         "Uncovered operand overlaps with kept live range!");
+  assert(isBaseCoveringOperands() &&
+         "Operands of a live range exceed its base register!");
+}
 
-  for (MachineOperand *MO : AllPhysRegOperands) {
-    if (!FinalCoveredOps.contains(MO)) {
-      const MCRegister U = MO->getReg().asMCReg();
-      // Verify no LR overlaps with this uncovered operand
-      for (const RegLiveRange &LR : LiveRanges) {
-        for (const auto &R : LR.operands()) {
-          assert(!TRI->regsOverlap(U, R.getOperand()->getReg().asMCReg()) &&
-                 "Uncovered operand overlaps with kept live range!");
-        }
-      }
-    }
+PartSet RegLiveRangeTracker::getOperandUnits(const RegLiveRange &LR) const {
+  PartSet Units;
+  for (const RegOperandInfo &Op : LR.operands())
+    Units |= getRegUnits(Op.getOperand()->getReg().asMCReg());
+  return Units;
+}
+
+bool RegLiveRangeTracker::isFullyCovered() const {
+  PartSet KeptUnits;
+  DenseSet<const MachineOperand *> CoveredOps;
+  for (const RegLiveRange &LR : LiveRanges) {
+    KeptUnits |= getOperandUnits(LR);
+    for (const RegOperandInfo &Op : LR.operands())
+      CoveredOps.insert(Op.getOperand());
   }
-#endif
+  return llvm::all_of(AllPhysRegOperands, [&](const MachineOperand *MO) {
+    return CoveredOps.contains(MO) ||
+           !getRegUnits(MO->getReg().asMCReg()).overlap(KeptUnits);
+  });
+}
+
+bool RegLiveRangeTracker::isBaseCoveringOperands() const {
+  return llvm::all_of(LiveRanges, [&](const RegLiveRange &LR) {
+    return getRegUnits(LR.getBaseReg()).covers(getOperandUnits(LR));
+  });
 }
 
 std::optional<unsigned>
@@ -569,7 +567,7 @@ void RegLiveRangeTracker::discardLiveRange(unsigned LRIdx,
   LLVM_DEBUG(dbgs() << "Discard LR#" << LiveRanges[LRIdx].getID()
                     << " (no common base register)\n");
 
-  State.Barrier |= State.LiveUnits[LRIdx];
+  State.OutLive |= State.LiveUnits[LRIdx];
   State.LiveUnits[LRIdx].clear();
   LiveRanges[LRIdx].clear();
 }
@@ -591,29 +589,45 @@ bool RegLiveRangeTracker::areLiveUnitsDisjoint(
   return true;
 }
 
-void RegLiveRangeTracker::mergeAliasingLiveRanges(unsigned DefLRIdx,
-                                                  MCRegister DefReg,
+void RegLiveRangeTracker::mergeAliasingLiveRanges(unsigned LRIdx,
+                                                  const MachineOperand &MO,
                                                   LivenessScanState &State) {
-  const PartSet DefUnits = getRegUnits(DefReg);
-  RegLiveRange &TargetLR = LiveRanges[DefLRIdx];
+  const PartSet Units = getRegUnits(MO.getReg().asMCReg());
+  RegLiveRange &TargetLR = LiveRanges[LRIdx];
 
-  // Live-out units and units of discarded ranges that the def overlaps
-  // reserve the range and widen its base register.
-  if (State.Barrier.overlap(DefUnits)) {
+  // Live-out units and units of discarded ranges that a def overlaps reserve
+  // the range and widen its base register over the units that stay live. A
+  // read does not interact with the out-live units: without a covering def its
+  // units are live-in, and the def clashes with the out-live units.
+  if (MO.isDef() && State.OutLive.overlap(Units)) {
     TargetLR.setIsReserved(true);
-    expandBaseWithin(TargetLR, State.Barrier);
+    expandBaseWithin(TargetLR, State.OutLive);
   }
 
-  const SmallVector<unsigned, 4> ToMerge =
-      findOverlappingLiveRanges(DefLRIdx, DefUnits, State);
-  if (!absorbLiveRanges(DefLRIdx, ToMerge, State))
+  // Overlapping ranges that observe the same value as the access are merged,
+  // the others only lose the units of the access.
+  SmallVector<unsigned, 4> ToMerge;
+  for (const unsigned OtherIdx :
+       findOverlappingLiveRanges(LRIdx, Units, State)) {
+    if (isJoinableAccess(OtherIdx, Units, MO, State))
+      ToMerge.push_back(OtherIdx);
+    else
+      State.LiveUnits[OtherIdx] -= Units;
+  }
+  if (!absorbLiveRanges(LRIdx, ToMerge, State))
     return;
+
+  // A read makes all units of its register live.
+  if (!MO.isDef()) {
+    State.LiveUnits[LRIdx] |= Units;
+    return;
+  }
 
   // The def kills its units. This is critical for separating live ranges:
   // after x10 is defined, any y5 (containing x10) should only have x11's
   // units live, and a subsequent x10 def should NOT merge into that y5 range.
-  State.LiveUnits[DefLRIdx] -= DefUnits;
-  State.Barrier -= DefUnits;
+  State.LiveUnits[LRIdx] -= Units;
+  State.OutLive -= Units;
 }
 
 DenseSet<MCRegister> RegLiveRangeTracker::collectReservedBaseRegs() const {
@@ -629,12 +643,7 @@ DenseSet<MCRegister> RegLiveRangeTracker::collectReservedBaseRegs() const {
 void RegLiveRangeTracker::computeAvailablePhysRegs(
     const DenseSet<MCRegister> &ReservedRegs) {
 
-  // Lambda to check if a register overlaps with any reserved register.
-  auto OverlapsReserved = [&](MCRegister Reg) {
-    return llvm::any_of(ReservedRegs, [&](MCRegister Reserved) {
-      return TRI->regsOverlap(Reg, Reserved);
-    });
-  };
+  const PartSet ReservedUnits = getRegUnits(ReservedRegs);
 
   // Build AvailablePhysRegs from non-reserved ranges, excluding any
   // register that overlaps with a reserved register.
@@ -657,7 +666,7 @@ void RegLiveRangeTracker::computeAvailablePhysRegs(
     // Skip if base register overlaps with any reserved register.
     // Sub-registers are contained within the base, so if the base doesn't
     // overlap with reserved, neither will any sub-register.
-    if (OverlapsReserved(LR.getBaseReg())) {
+    if (getRegUnits(LR.getBaseReg()).overlap(ReservedUnits)) {
       continue;
     }
 
@@ -706,7 +715,7 @@ void RegLiveRangeTracker::deriveSuperRegsFromSubRegs() {
 }
 
 void RegLiveRangeTracker::addUnusedCallerSavedRegs(
-    MachineBasicBlock &MBB, const DenseSet<MCRegister> &ImplicitRegs,
+    MachineBasicBlock &MBB, const PartSet &ImplicitUnits,
     const DenseSet<MCRegister> &ReservedRegs) {
 
   // This feature is controlled by a command-line option because it changes
@@ -723,8 +732,8 @@ void RegLiveRangeTracker::addUnusedCallerSavedRegs(
   // 2. It belongs to a register class used by at least one live range
   // 3. It does not overlap with any register used in the block (explicit ops)
   // 4. It does not overlap with any register used implicitly
-  // 5. It does not overlap with any live-in register (respecting lane masks)
-  // 6. It does not overlap with any live-out register (respecting lane masks)
+  // 5. It does not overlap with any live-in register
+  // 6. It does not overlap with any live-out register
   // 7. It does not overlap with any reserved live range
 
   // Collect the set of register classes used by live ranges.
@@ -747,29 +756,18 @@ void RegLiveRangeTracker::addUnusedCallerSavedRegs(
       AIERII->getCallPreservedMask(*MF, MF->getFunction().getCallingConv());
   const BitVector AllocatableRegs = TRI->getAllocatableSet(*MF);
 
-  // Generic lambda to check if a register overlaps with any register in a
-  // range. Works with any range that yields MCRegister.
-  auto OverlapsAny = [this](MCRegister Reg, auto &&Range) {
-    return llvm::any_of(Range,
-                        [&](MCRegister R) { return TRI->regsOverlap(Reg, R); });
-  };
-
-  // Generic lambda to check if a register overlaps with any RegisterMaskPair
-  // in a range. Works with MBB.liveins() and MBB.liveouts().
-  auto OverlapsAnyRMP = [this](MCRegister Reg, auto &&Range) {
-    return llvm::any_of(Range,
-                        [&](const MachineBasicBlock::RegisterMaskPair &RMP) {
-                          return overlapsRegMaskPair(Reg, RMP, TRI);
-                        });
-  };
-
   // Helper to check if Reg is caller-saved (clobbered by calls).
   auto IsCallerSaved = [PreservedMask](MCRegister Reg) {
     return MachineOperand::clobbersPhysReg(PreservedMask, Reg);
   };
 
-  // Transformer for AllPhysRegOperands to yield MCRegister.
-  auto ToReg = [](const MachineOperand *MO) { return MO->getReg().asMCReg(); };
+  // The units that make a register unusable: those of the explicit operands,
+  // the implicit registers, the live-ins, the live-outs and the reserved base
+  // registers.
+  PartSet UsedUnits = ImplicitUnits | getLiveInUnits(MBB) |
+                      getLiveOutUnits(MBB) | getRegUnits(ReservedRegs);
+  for (const MachineOperand *MO : AllPhysRegOperands)
+    UsedUnits |= getRegUnits(MO->getReg().asMCReg());
 
   // Iterate over allocatable registers and add unused caller-saved ones.
   unsigned NumUnusedCallerSavedAdded = 0;
@@ -794,24 +792,9 @@ void RegLiveRangeTracker::addUnusedCallerSavedRegs(
     if (!BelongsToUsedClass)
       continue;
 
-    // Must not overlap with any explicitly used register in the block.
-    if (OverlapsAny(Reg, llvm::map_range(AllPhysRegOperands, ToReg)))
-      continue;
-
-    // Must not overlap with any implicit register.
-    if (OverlapsAny(Reg, ImplicitRegs))
-      continue;
-
-    // Must not overlap with any live-in register (respecting lane masks).
-    if (OverlapsAnyRMP(Reg, MBB.liveins()))
-      continue;
-
-    // Must not overlap with any live-out register (respecting lane masks).
-    if (OverlapsAnyRMP(Reg, MBB.liveouts()))
-      continue;
-
-    // Must not overlap with any reserved base register.
-    if (OverlapsAny(Reg, ReservedRegs))
+    // Must not overlap with any explicit, implicit, live-in, live-out or
+    // reserved register.
+    if (getRegUnits(Reg).overlap(UsedUnits))
       continue;
 
     // This register is safe to use as an additional allocation candidate.
@@ -865,18 +848,12 @@ void RegLiveRangeTracker::buildInstructionOrderAndCollectOperands(
         continue;
       }
       if (MO.isImplicit()) {
-        // Track implicit registers in ImplicitRegs so that
+        // Track the units of implicit registers so that
         // addUnusedCallerSavedRegs can exclude them from the unused
         // caller-saved register pool. Implicit operands are not added to
         // AllPhysRegOperands because full-coverage pruning applies only to
         // explicit operands.
-        const MCRegister Reg = MO.getReg().asMCReg();
-
-        // Add all aliases.
-        for (MCRegAliasIterator AI(Reg, TRI, /*IncludeSelf=*/true);
-             AI.isValid(); ++AI) {
-          State.ImplicitRegs.insert(*AI);
-        }
+        State.ImplicitUnits |= getRegUnits(MO.getReg().asMCReg());
       } else {
         AllPhysRegOperands.push_back(&MO);
       }
@@ -884,10 +861,9 @@ void RegLiveRangeTracker::buildInstructionOrderAndCollectOperands(
   }
 }
 
-void RegLiveRangeTracker::initLiveOutBarrier(const MachineBasicBlock &MBB,
-                                             LivenessScanState &State) {
-  for (const auto &RMP : MBB.liveouts())
-    State.Barrier |= getRegUnits(RMP.PhysReg, RMP.LaneMask);
+void RegLiveRangeTracker::initOutLive(const MachineBasicBlock &MBB,
+                                      LivenessScanState &State) {
+  State.OutLive |= getLiveOutUnits(MBB);
 }
 
 bool RegLiveRangeTracker::isJoinableAccess(
@@ -927,24 +903,6 @@ SmallVector<unsigned, 4> RegLiveRangeTracker::findOverlappingLiveRanges(
   return Overlapping;
 }
 
-void RegLiveRangeTracker::claimLiveUnits(unsigned TargetIdx,
-                                         const PartSet &Units,
-                                         const MachineOperand &MO,
-                                         LivenessScanState &State) {
-  for (const unsigned OtherIdx :
-       findOverlappingLiveRanges(TargetIdx, Units, State)) {
-    if (isJoinableAccess(OtherIdx, Units, MO, State)) {
-      LLVM_DEBUG(dbgs() << "LR#" << LiveRanges[TargetIdx].getID() << " + LR#"
-                        << LiveRanges[OtherIdx].getID() << " -> LR#"
-                        << LiveRanges[TargetIdx].getID() << "\n");
-      if (absorbLiveRange(TargetIdx, OtherIdx, State))
-        continue;
-    }
-    State.LiveUnits[OtherIdx] -= Units;
-  }
-  State.LiveUnits[TargetIdx] |= Units;
-}
-
 void RegLiveRangeTracker::expandBaseForAccess(unsigned LRIdx, MCRegister Reg) {
   const MCRegister CurrentBase = LiveRanges[LRIdx].getBaseReg();
   assert(CurrentBase.isPhysical() && "CurrentBase must be physical");
@@ -967,12 +925,10 @@ void RegLiveRangeTracker::expandBaseWithin(RegLiveRange &LR,
 }
 
 unsigned RegLiveRangeTracker::createLiveRange(MCRegister Reg,
-                                              const PartSet &RegUnits,
                                               const MachineOperand &MO,
                                               LivenessScanState &State) {
-  const bool IsReserved = State.Barrier.overlap(RegUnits);
   const unsigned NewLRIdx = LiveRanges.size();
-  LiveRanges.emplace_back(NextLiveRangeID++, Reg, IsReserved);
+  LiveRanges.emplace_back(NextLiveRangeID++, Reg, /*IsReserved=*/false);
   State.LiveUnits.emplace_back();
   LLVM_DEBUG(dbgs() << "LR#" << LiveRanges[NewLRIdx].getID()
                     << (MO.isDef() ? " Def " : " Use ") << TRI->getName(Reg)
@@ -989,25 +945,16 @@ unsigned RegLiveRangeTracker::getOrCreateLiveRangeForOperand(
   // access should NOT merge into that y5 range.
   const PartSet RegUnits = getRegUnits(Reg);
 
-  // A def that overlaps the barrier starts a fresh range. The merge of the
-  // aliasing ranges then widens it before absorbing the overlapping ranges.
+  // A def that overlaps the out-live units starts a fresh range. The merge of
+  // the aliasing ranges then widens it before absorbing the overlapping ranges.
   std::optional<unsigned> Join;
-  if (!MO->isDef() || !State.Barrier.overlap(RegUnits))
+  if (!MO->isDef() || !State.OutLive.overlap(RegUnits))
     Join = selectLiveRangeToJoin(RegUnits, *MO, State);
 
-  unsigned LRIdx;
-  if (Join) {
-    LRIdx = *Join;
-    expandBaseForAccess(LRIdx, Reg);
-  } else {
-    LRIdx = createLiveRange(Reg, RegUnits, *MO, State);
-  }
-
-  // A def only kills units, which the merge of the aliasing ranges takes care
-  // of. Reads make all units of their register live.
-  if (!MO->isDef())
-    claimLiveUnits(LRIdx, RegUnits, *MO, State);
-  return LRIdx;
+  if (!Join)
+    return createLiveRange(Reg, *MO, State);
+  expandBaseForAccess(*Join, Reg);
+  return *Join;
 }
 
 bool RegLiveRangeTracker::areUnitsDefinedBefore(
@@ -1022,51 +969,41 @@ bool RegLiveRangeTracker::areUnitsDefinedBefore(
   return false;
 }
 
+void RegLiveRangeTracker::processOperand(MachineOperand &MO,
+                                         LivenessScanState &State) {
+  const MCRegister Reg = MO.getReg().asMCReg();
+  const unsigned LRIdx = getOrCreateLiveRangeForOperand(Reg, &MO, State);
+
+  // Add the operand to the live range with SubRegIdx relative to base.
+  const MCRegister CurrentBase = LiveRanges[LRIdx].getBaseReg();
+  const unsigned SubRegIdx = getSubRegIndex(Reg, CurrentBase);
+  if (MO.isDef())
+    LiveRanges[LRIdx].addDef(&MO, SubRegIdx);
+  else
+    LiveRanges[LRIdx].addUse(&MO, SubRegIdx);
+
+  // Merge with any aliasing live ranges and update the live units.
+  mergeAliasingLiveRanges(LRIdx, MO, State);
+  assert(areLiveUnitsDisjoint(State) &&
+         "Live units of live ranges must be disjoint after an access");
+}
+
 void RegLiveRangeTracker::processDefsInInstruction(MachineInstr &MI,
                                                    LivenessScanState &State) {
   // Process all def operands — both explicit and implicit. Implicit defs
   // produce non-virtualizable live ranges used for scheduling relaxation.
-  for (MachineOperand &MO : MI.operands()) {
-    if (!MO.isReg() || !MO.getReg().isPhysical())
-      continue;
-    if (!MO.isDef())
-      continue;
-
-    const MCRegister Reg = MO.getReg().asMCReg();
-    const unsigned DefLRIdx = getOrCreateLiveRangeForOperand(Reg, &MO, State);
-
-    // Add def to the live range with SubRegIdx relative to base.
-    const MCRegister CurrentBase = LiveRanges[DefLRIdx].getBaseReg();
-    const unsigned SubRegIdx = getSubRegIndex(Reg, CurrentBase);
-    LiveRanges[DefLRIdx].addDef(&MO, SubRegIdx);
-
-    // Merge with any aliasing live ranges.
-    mergeAliasingLiveRanges(DefLRIdx, Reg, State);
-    assert(areLiveUnitsDisjoint(State) &&
-           "Live units of live ranges must be disjoint after a def");
-  }
+  for (MachineOperand &MO : MI.operands())
+    if (MO.isReg() && MO.getReg().isPhysical() && MO.isDef())
+      processOperand(MO, State);
 }
 
 void RegLiveRangeTracker::processUsesInInstruction(MachineInstr &MI,
                                                    LivenessScanState &State) {
   // Process all use operands — both explicit and implicit. Implicit uses
   // produce non-virtualizable live ranges used for scheduling relaxation.
-  for (MachineOperand &MO : MI.operands()) {
-    if (!MO.isReg() || !MO.getReg().isPhysical())
-      continue;
-    if (MO.isDef())
-      continue;
-
-    const MCRegister Reg = MO.getReg().asMCReg();
-    const unsigned LRIdx = getOrCreateLiveRangeForOperand(Reg, &MO, State);
-
-    // Add use to the live range with SubRegIdx relative to base.
-    const MCRegister CurrentBase = LiveRanges[LRIdx].getBaseReg();
-    const unsigned SubRegIdx = getSubRegIndex(Reg, CurrentBase);
-    LiveRanges[LRIdx].addUse(&MO, SubRegIdx);
-    assert(areLiveUnitsDisjoint(State) &&
-           "Live units of live ranges must be disjoint after a use");
-  }
+  for (MachineOperand &MO : MI.operands())
+    if (MO.isReg() && MO.getReg().isPhysical() && !MO.isDef())
+      processOperand(MO, State);
   // Merge composite sub-register LRs: use-use tied groups encode sub-registers
   // of the same composite physical register that must be allocated together.
   mergeCompositeSubregLRs(MI, State);
@@ -1450,7 +1387,7 @@ void RegLiveRangeTracker::finalizeAvailabilityAndScarcity(
   computeAvailablePhysRegs(ReservedRegs);
   deriveSuperRegsFromSubRegs();
 
-  addUnusedCallerSavedRegs(MBB, State.ImplicitRegs, ReservedRegs);
+  addUnusedCallerSavedRegs(MBB, State.ImplicitUnits, ReservedRegs);
   markScarceRanges();
 
   // Compute and cache the most promising scarce range set.
@@ -1472,8 +1409,8 @@ void RegLiveRangeTracker::analyze(MachineBasicBlock &MBB,
   // Build instruction order map and collect operands.
   buildInstructionOrderAndCollectOperands(SemanticOrder, State);
 
-  // Initialize the barrier from live-outs.
-  initLiveOutBarrier(MBB, State);
+  // Initialize the out-live units from live-outs.
+  initOutLive(MBB, State);
 
   // Perform the liveness scan to build live ranges.
   performLivenessScan(SemanticOrder, State);
@@ -1715,13 +1652,8 @@ void RegLiveRangeTracker::virtualizeFilteredPhysRegs(OverlapPolicy Policy) {
   // Clear the NoVRegs property.
   MF->getProperties().reset(MachineFunctionProperties::Property::NoVRegs);
 
-  // Build the set of RESERVED base registers.
-  DenseSet<MCRegister> ReservedBases;
-  for (const RegLiveRange &LR : LiveRanges) {
-    if (LR.isReserved()) {
-      ReservedBases.insert(LR.getBaseReg());
-    }
-  }
+  // Build the set of units of the RESERVED base registers.
+  const PartSet ReservedUnits = getRegUnits(collectReservedBaseRegs());
 
   // Create and rewrite virtual registers. Live ranges are created in reverse,
   // so we run this loop in reverse order to make the dumps more intuitive.
@@ -1746,18 +1678,10 @@ void RegLiveRangeTracker::virtualizeFilteredPhysRegs(OverlapPolicy Policy) {
 
     // Apply the overlap policy.
     if (Policy == OverlapPolicy::DisallowOverlapWithReservedBase) {
-      // Check if this LR's base register overlaps any RESERVED base.
-      bool OverlapsReserved = false;
-      for (MCRegister ReservedBase : ReservedBases) {
-        if (TRI->regsOverlap(LR.getBaseReg(), ReservedBase)) {
-          OverlapsReserved = true;
-          break;
-        }
-      }
-      if (OverlapsReserved) {
-        // Skip virtualization for this range.
+      // Skip virtualization if this LR's base register overlaps any RESERVED
+      // base.
+      if (getRegUnits(LR.getBaseReg()).overlap(ReservedUnits))
         continue;
-      }
     }
     // If Policy == AllowOverlapWithReservedBase, we proceed to virtualize.
 

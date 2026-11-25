@@ -25,8 +25,7 @@
 template <const int NumBits, typename Elem = unsigned>
 class StaticBitSet : public std::bitset<NumBits> {
 public:
-  // Input iterator over the elements of the set. It yields elements by value,
-  // so it cannot claim to be a forward iterator.
+  // Forward iterator over the indices of the elements in the set.
   class const_iterator {
     const StaticBitSet *Set;
     std::size_t Pos;
@@ -47,7 +46,7 @@ public:
         : Set(Set), Pos(Pos) {
       skipToElement();
     }
-    Elem operator*() const { return Elem(static_cast<unsigned>(Pos)); }
+    unsigned operator*() const { return static_cast<unsigned>(Pos); }
     const_iterator &operator++() {
       ++Pos;
       skipToElement();

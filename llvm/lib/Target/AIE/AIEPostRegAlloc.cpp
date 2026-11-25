@@ -73,14 +73,14 @@ void AIEPostRegAlloc::AllocState::init(
     auto It = LivenessByLRIndex.find(LRIndex);
     if (It == LivenessByLRIndex.end())
       continue;
-    const AIE::LivenessVector &Masks = It->second;
+    const AIE::LivenessVector &LRLiveness = It->second;
     AllMetrics[LRIndex] = AIEPostRegAlloc::computeMetrics(
-        LR, Masks, VRegInterferenceGraph, LivenessByLRIndex,
+        LR, LRLiveness, VRegInterferenceGraph, LivenessByLRIndex,
         RCInterferenceGraph, AvailableRegs, *RegTracker, *InTRI);
   }
 }
 
-// Call Fn(C, Units) for each cycle C at which VRegMasks occupies RegUnits,
+// Call Fn(C, Units) for each cycle C at which VRegLiveness occupies RegUnits,
 // with Units the occupied RegUnits restricted to those of PhysReg. Only the
 // units whose coverage is live are included, so non-overlapping sub-registers
 // of a composite can be co-allocated. Stop and return false as soon as Fn
@@ -90,10 +90,10 @@ void AIEPostRegAlloc::AllocState::init(
 // restriction to PhysReg is exact.
 template <typename FnT>
 static bool
-forEachLiveCycle(Register PhysReg, const AIE::LivenessVector &VRegMasks,
+forEachLiveCycle(Register PhysReg, const AIE::LivenessVector &VRegLiveness,
                  const DenseMap<MCRegister, PartSet> &UnitSets, FnT Fn) {
   const PartSet &RegUnits = UnitSets.find(PhysReg.asMCReg())->second;
-  const auto &Elements = VRegMasks.getElements();
+  const auto &Elements = VRegLiveness.getElements();
   for (size_t C = 0, E = Elements.size(); C != E; ++C) {
     if (Elements[C].getUnits().empty())
       continue;
@@ -103,19 +103,19 @@ forEachLiveCycle(Register PhysReg, const AIE::LivenessVector &VRegMasks,
   return true;
 }
 
-// Check if PhysReg can accommodate VRegMasks without conflicts.
+// Check if PhysReg can accommodate VRegLiveness without conflicts.
 bool AIEPostRegAlloc::AllocState::canPlace(
-    Register PhysReg, const AIE::LivenessVector &VRegMasks) const {
-  return forEachLiveCycle(PhysReg, VRegMasks, *PhysRegUnitSets,
+    Register PhysReg, const AIE::LivenessVector &VRegLiveness) const {
+  return forEachLiveCycle(PhysReg, VRegLiveness, *PhysRegUnitSets,
                           [&](size_t C, const PartSet &Active) {
                             return !Active.overlap(CycleOccupancy[C]);
                           });
 }
 
-// Mark PhysReg's lane-accurate RegUnits occupied per cycle.
-void AIEPostRegAlloc::AllocState::place(Register PhysReg,
-                                        const AIE::LivenessVector &VRegMasks) {
-  forEachLiveCycle(PhysReg, VRegMasks, *PhysRegUnitSets,
+// Mark the RegUnits of PhysReg occupied per cycle.
+void AIEPostRegAlloc::AllocState::place(
+    Register PhysReg, const AIE::LivenessVector &VRegLiveness) {
+  forEachLiveCycle(PhysReg, VRegLiveness, *PhysRegUnitSets,
                    [&](size_t C, const PartSet &Active) {
                      CycleOccupancy[C] |= Active;
                      return true;
@@ -124,10 +124,10 @@ void AIEPostRegAlloc::AllocState::place(Register PhysReg,
   LLVM_DEBUG(dbgs() << "  Occupied " << printReg(PhysReg, TRI) << "\n");
 }
 
-// Clear the RegUnits place() occupied for VRegMasks.
+// Clear the RegUnits place() occupied for VRegLiveness.
 void AIEPostRegAlloc::AllocState::unplace(
-    Register PhysReg, const AIE::LivenessVector &VRegMasks) {
-  forEachLiveCycle(PhysReg, VRegMasks, *PhysRegUnitSets,
+    Register PhysReg, const AIE::LivenessVector &VRegLiveness) {
+  forEachLiveCycle(PhysReg, VRegLiveness, *PhysRegUnitSets,
                    [&](size_t C, const PartSet &Active) {
                      CycleOccupancy[C] &= ~Active;
                      return true;
@@ -237,17 +237,17 @@ AIEPostRegAlloc::buildVRegInterferenceGraph(
   // Check all pairs of live ranges.
   // Use symmetry: only check pairs where I < J.
   for (size_t I = 0; I < Candidates.size(); ++I) {
-    const auto &[LR1, Masks1] = Candidates[I];
+    const auto &[LR1, Live1] = Candidates[I];
 
     for (size_t J = I + 1; J < Candidates.size(); ++J) {
-      const auto &[LR2, Masks2] = Candidates[J];
+      const auto &[LR2, Live2] = Candidates[J];
 
       // First check if their admissible RegUnit sets overlap.
       if (!LR1->getAdmissibleRegUnits().overlap(LR2->getAdmissibleRegUnits()))
         continue;
 
       // Then check temporal concurrency: are they live at the same cycle?
-      if (Masks1->overlaps(*Masks2))
+      if (Live1->overlaps(*Live2))
         Graph.addInterference(LR1->getIndex(), LR2->getIndex());
     }
   }
@@ -271,12 +271,12 @@ getCandidatePhysRegs(const DenseSet<MCRegister> &AdmissibleRegs,
 } // namespace
 
 AIEPostRegAlloc::Placement::Placement(
-    const DenseMap<unsigned, AIE::LivenessVector> &Lanes,
+    const DenseMap<unsigned, AIE::LivenessVector> &LivenessByLRIndex,
     const RegLiveRangeTracker &Tracker, AllocState &InState,
     DenseMap<Register, MCRegister> &InAssign)
-    : Liveness(Lanes), AvailableRegs(Tracker.getAvailablePhysRegs()),
-      State(InState), OutAssign(InAssign),
-      Placed(Tracker.getLiveRanges().size()),
+    : Liveness(LivenessByLRIndex),
+      AvailableRegs(Tracker.getAvailablePhysRegs()), State(InState),
+      OutAssign(InAssign), Placed(Tracker.getLiveRanges().size()),
       AllCands(Tracker.getLiveRanges().size()),
       Cands(Tracker.getLiveRanges().size()),
       NumCands(Tracker.getLiveRanges().size()),
@@ -291,7 +291,7 @@ AIEPostRegAlloc::Placement::Placement(
     AllCands[Index] =
         getCandidatePhysRegs(LR.getAdmissibleRegs(), AvailableRegs);
     Cands[Index].resize(AllCands[Index].size());
-    const auto &Elements = masks(LR).getElements();
+    const auto &Elements = livenessOf(LR).getElements();
     LiveCycles[Index].resize(Elements.size());
     for (size_t C = 0, E = Elements.size(); C != E; ++C)
       if (Elements[C].getUnits().any())
@@ -301,7 +301,7 @@ AIEPostRegAlloc::Placement::Placement(
 }
 
 const AIE::LivenessVector &
-AIEPostRegAlloc::Placement::masks(const RegLiveRange &LR) const {
+AIEPostRegAlloc::Placement::livenessOf(const RegLiveRange &LR) const {
   return Liveness.find(LR.getIndex())->second;
 }
 
@@ -333,7 +333,7 @@ void AIEPostRegAlloc::Placement::refresh(const RegLiveRange &LR) {
   Admitted.reset();
   Count = 0;
   for (unsigned I = 0, E = Regs.size(); I != E; ++I)
-    if (State.canPlace(Regs[I], masks(LR))) {
+    if (State.canPlace(Regs[I], livenessOf(LR))) {
       Admitted.set(I);
       ++Count;
     }
@@ -342,7 +342,7 @@ void AIEPostRegAlloc::Placement::refresh(const RegLiveRange &LR) {
 void AIEPostRegAlloc::Placement::place(const RegLiveRange &LR,
                                        Register PhysReg) {
   assert(LR.getVReg().isValid() && "Only virtualized ranges are assigned");
-  State.place(PhysReg, masks(LR));
+  State.place(PhysReg, livenessOf(LR));
   OutAssign[LR.getVReg()] = PhysReg.asMCReg();
   Placed.set(LR.getIndex());
 
@@ -359,7 +359,7 @@ void AIEPostRegAlloc::Placement::place(const RegLiveRange &LR,
     unsigned &Count = NumCands[Other->getIndex()];
     for (int I = Admitted.find_first(); I >= 0; I = Admitted.find_next(I))
       if (State.PhysRegUnitSets->find(Regs[I])->second.overlap(Units) &&
-          !State.canPlace(Regs[I], masks(*Other))) {
+          !State.canPlace(Regs[I], livenessOf(*Other))) {
         Admitted.reset(I);
         --Count;
       }
@@ -369,7 +369,7 @@ void AIEPostRegAlloc::Placement::place(const RegLiveRange &LR,
 void AIEPostRegAlloc::Placement::unplace(const RegLiveRange &LR) {
   assert(Placed.test(LR.getIndex()) && "Live range is not placed");
   const Register PhysReg(OutAssign.lookup(LR.getVReg()));
-  State.unplace(PhysReg, masks(LR));
+  State.unplace(PhysReg, livenessOf(LR));
   OutAssign.erase(LR.getVReg());
   Placed.reset(LR.getIndex());
 
@@ -383,7 +383,7 @@ void AIEPostRegAlloc::Placement::unplace(const RegLiveRange &LR) {
 
 // Compute metrics for a live range.
 AIEPostRegAlloc::VRegMetrics AIEPostRegAlloc::computeMetrics(
-    const RegLiveRange &LR, const AIE::LivenessVector &Masks,
+    const RegLiveRange &LR, const AIE::LivenessVector &LRLiveness,
     const WeightedSymmetricGraph &VRegInterferenceGraph,
     const DenseMap<unsigned, AIE::LivenessVector> &LivenessByLRIndex,
     const WeightedAsymmetricGraph &RCInterferenceGraph,
@@ -401,14 +401,12 @@ AIEPostRegAlloc::VRegMetrics AIEPostRegAlloc::computeMetrics(
   assert(AdmissibleUnits > 0 && "Virtualized range must have RegUnits");
 
   // Compute basic metrics.
-  for (const auto &Live : Masks.getElements()) {
+  for (const auto &Live : LRLiveness.getElements()) {
     if (Live.any()) {
       const unsigned UnitsInCycle = Live.getUnits().count();
       assert((UnitsInCycle * ClassLanes) % AdmissibleUnits == 0 &&
              "Occupied units must be proportional to lanes");
       const unsigned LanesInCycle = UnitsInCycle * ClassLanes / AdmissibleUnits;
-      assert(LanesInCycle == Live.getNumLanes() &&
-             "Unit-derived lane count must match the lane mask");
       Metrics.TotalLanes += LanesInCycle;
       Metrics.MaxWidth = std::max(Metrics.MaxWidth, LanesInCycle);
       Metrics.Duration++;
