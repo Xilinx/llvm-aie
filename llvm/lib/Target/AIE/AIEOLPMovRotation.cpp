@@ -117,18 +117,22 @@ static bool isBlockTailInstr(const MachineInstr &MI,
          TII.isSchedBarrier(MI) || TII.isDelayedSchedBarrier(MI);
 }
 
-/// Check if \p Reg (or any overlapping register) is used by any tail
-/// instruction (branches, terminators, barriers) in \p MBB.  Inserting a
-/// definition of \p Reg before those instructions would clobber the value
-/// they expect.
-static bool isRegUsedByTailInstrs(MCRegister Reg, const MachineBasicBlock &MBB,
-                                  const AIEBaseInstrInfo &TII,
-                                  const TargetRegisterInfo &TRI) {
+/// Check if \p Reg (or any overlapping register) is referenced (used or
+/// defined) by any tail instruction (branches, terminators, barriers) in
+/// \p MBB.  Inserting a MOV before those instructions is unsafe when:
+///  - A tail instr uses \p Reg: the MOV would clobber the value it reads.
+///  - A tail instr defines \p Reg: the tail's def would overwrite the MOV's
+///    result, so the successor would see the tail's value instead of the
+///    MOV's.
+static bool isRegReferencedByTailInstrs(MCRegister Reg,
+                                        const MachineBasicBlock &MBB,
+                                        const AIEBaseInstrInfo &TII,
+                                        const TargetRegisterInfo &TRI) {
   for (const MachineInstr &MI : MBB) {
     if (!isBlockTailInstr(MI, TII))
       continue;
     for (const MachineOperand &MO : MI.operands()) {
-      if (!MO.isReg() || !MO.isUse() || !MO.getReg().isPhysical())
+      if (!MO.isReg() || !MO.getReg().isPhysical())
         continue;
       if (TRI.regsOverlap(MO.getReg(), Reg))
         return true;
@@ -145,9 +149,11 @@ static bool isRegUsedByTailInstrs(MCRegister Reg, const MachineBasicBlock &MBB,
 ///    \p MovMI in its block (a prior reference to SrcReg would mean the
 ///    MOV captures a value produced inside the block, so moving it to a
 ///    predecessor would capture a stale value instead).
-///  - The destination register is not used by tail instructions in either
-///    \p Preheader or \p SteadyBottom (the MOV would be inserted right
-///    before them, clobbering a value they read).
+///  - Neither the destination nor the source register is referenced by tail
+///    instructions in either \p Preheader or \p SteadyBottom.  A tail use
+///    of DstReg would be clobbered by the MOV; a tail def of DstReg would
+///    overwrite the MOV's result; a tail def of SrcReg means the MOV would
+///    capture a stale value that the tail is about to redefine.
 static bool canRotateMov(const MachineInstr &MovMI,
                          const MachineBasicBlock &Preheader,
                          const MachineBasicBlock &SteadyBottom,
@@ -172,13 +178,23 @@ static bool canRotateMov(const MachineInstr &MovMI,
     LLVM_DEBUG(dbgs() << "  Skip (src referenced before MOV): " << MovMI);
     return false;
   }
-  if (isRegUsedByTailInstrs(DstReg, Preheader, TII, TRI)) {
-    LLVM_DEBUG(dbgs() << "  Skip (dst used by tail instrs in preheader): "
+  if (isRegReferencedByTailInstrs(DstReg, Preheader, TII, TRI)) {
+    LLVM_DEBUG(dbgs() << "  Skip (dst referenced by tail instrs in preheader): "
                       << MovMI);
     return false;
   }
-  if (isRegUsedByTailInstrs(DstReg, SteadyBottom, TII, TRI)) {
-    LLVM_DEBUG(dbgs() << "  Skip (dst used by tail instrs in bottom): "
+  if (isRegReferencedByTailInstrs(DstReg, SteadyBottom, TII, TRI)) {
+    LLVM_DEBUG(dbgs() << "  Skip (dst referenced by tail instrs in bottom): "
+                      << MovMI);
+    return false;
+  }
+  if (isRegReferencedByTailInstrs(SrcReg, Preheader, TII, TRI)) {
+    LLVM_DEBUG(dbgs() << "  Skip (src referenced by tail instrs in preheader): "
+                      << MovMI);
+    return false;
+  }
+  if (isRegReferencedByTailInstrs(SrcReg, SteadyBottom, TII, TRI)) {
+    LLVM_DEBUG(dbgs() << "  Skip (src referenced by tail instrs in bottom): "
                       << MovMI);
     return false;
   }
