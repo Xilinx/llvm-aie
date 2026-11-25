@@ -205,11 +205,25 @@ static bool canRotateMov(const MachineInstr &MovMI,
 // MOV collection and matching
 // ===--------------------------------------------------------------------=== //
 
-/// Collect all MOV (isMoveReg) instructions from a block.
+/// Return true if \p MI is a plain register-to-register move with no
+/// implicit operands.  MOVs with implicit defs (e.g. status flags) or
+/// implicit uses are not safe to rotate because those side-effects may
+/// depend on or affect block-local state.
+static bool isPlainMoveReg(const MachineInstr &MI) {
+  if (!MI.isMoveReg())
+    return false;
+  for (const MachineOperand &MO : MI.operands())
+    if (MO.isReg() && MO.isImplicit())
+      return false;
+  return true;
+}
+
+/// Collect all plain MOV (isMoveReg, no implicit operands) instructions
+/// from a block.
 static SmallVector<MachineInstr *, 4> collectMovInstrs(MachineBasicBlock &MBB) {
   SmallVector<MachineInstr *, 4> Movs;
   for (MachineInstr &MI : MBB)
-    if (MI.isMoveReg())
+    if (isPlainMoveReg(MI))
       Movs.push_back(&MI);
   return Movs;
 }
