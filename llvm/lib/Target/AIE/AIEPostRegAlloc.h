@@ -199,7 +199,7 @@ private:
 
     /// Initialize occupancy and compute interference graphs.
     /// The RegTracker provides the problem description (LiveRanges,
-    /// AvailableRegs, AdmissibleRegs per LR). LivenessByLRIndex provides the
+    /// AvailableUnits, AdmissibleRegs per LR). LivenessByLRIndex provides the
     /// temporal liveness data computed during scheduling.
     void init(const TargetRegisterInfo *TRI,
               const DenseMap<unsigned, AIE::LivenessVector> &LivenessByLRIndex,
@@ -235,7 +235,6 @@ private:
   /// the heuristic and the exact search.
   struct Placement {
     const DenseMap<unsigned, AIE::LivenessVector> &Liveness;
-    const DenseSet<MCRegister> &AvailableRegs;
     AllocState &State;
     DenseMap<Register, MCRegister> &OutAssign;
     SmallBitVector Placed;
@@ -303,7 +302,7 @@ private:
   /// Returns AllocResult which implicitly converts to bool (true = success).
   /// On success, OutAssign contains the virtual to physical register mapping.
   /// The RegTracker provides the problem description (LiveRanges,
-  /// AvailableRegs, AdmissibleRegs per LR). The next live range is selected by
+  /// AvailableUnits, AdmissibleRegs per LR). The next live range is selected by
   /// Minimum Remaining Values (fewest effective physical-register candidates),
   /// with OrderFn as tie-break.
   static AllocResult
@@ -337,15 +336,14 @@ private:
   /// \param LivenessByLRIndex All live ranges' liveness data.
   /// \param RCInterferenceGraph Register class interference graph with
   ///                            weights.
-  /// \param AvailableRegs Available physical registers.
-  /// \param RegTracker Tracker for looking up live range register classes.
+  /// \param RegTracker Tracker for looking up live range register classes and
+  ///                   the available register units.
   /// \param TRI Target register info.
   static VRegMetrics computeMetrics(
       const RegLiveRange &LR, const AIE::LivenessVector &LRLiveness,
       const WeightedSymmetricGraph &VRegInterferenceGraph,
       const DenseMap<unsigned, AIE::LivenessVector> &LivenessByLRIndex,
       const WeightedAsymmetricGraph &RCInterferenceGraph,
-      const DenseSet<MCRegister> &AvailableRegs,
       const RegLiveRangeTracker &RegTracker, const TargetRegisterInfo &TRI);
 
   /// Build register class interference graph with asymmetric weights.

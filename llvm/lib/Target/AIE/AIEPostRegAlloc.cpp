@@ -47,8 +47,6 @@ void AIEPostRegAlloc::AllocState::init(
   // Point at the tracker's per-physreg PartSet cache.
   this->PhysRegUnitSets = &RegTracker->getPhysRegUnitSets();
 
-  const auto &AvailableRegs = RegTracker->getAvailablePhysRegs();
-
   // Build register class interference graph once.
   DenseSet<unsigned> UsedRCIds;
   for (const RegLiveRange &LR : RegTracker->getLiveRanges()) {
@@ -76,7 +74,7 @@ void AIEPostRegAlloc::AllocState::init(
     const AIE::LivenessVector &LRLiveness = It->second;
     AllMetrics[LRIndex] = AIEPostRegAlloc::computeMetrics(
         LR, LRLiveness, VRegInterferenceGraph, LivenessByLRIndex,
-        RCInterferenceGraph, AvailableRegs, *RegTracker, *InTRI);
+        RCInterferenceGraph, *RegTracker, *InTRI);
   }
 }
 
@@ -257,13 +255,14 @@ AIEPostRegAlloc::buildVRegInterferenceGraph(
 
 namespace {
 
-// Intersection of a live range's admissible registers and the allocatable pool.
-std::vector<Register>
-getCandidatePhysRegs(const DenseSet<MCRegister> &AdmissibleRegs,
-                     const DenseSet<MCRegister> &AvailableRegs) {
+// The admissible registers of a live range whose units are all available.
+std::vector<Register> getCandidatePhysRegs(const RegLiveRange &LR,
+                                           const RegLiveRangeTracker &Tracker) {
+  const PartSet &AvailableUnits = Tracker.getAvailableUnits();
+  const auto &UnitSets = Tracker.getPhysRegUnitSets();
   std::vector<Register> Candidates;
-  for (MCRegister PhysReg : AdmissibleRegs)
-    if (AvailableRegs.count(PhysReg))
+  for (MCRegister PhysReg : LR.getAdmissibleRegs())
+    if (AvailableUnits.covers(UnitSets.find(PhysReg)->second))
       Candidates.push_back(PhysReg);
   return Candidates;
 }
@@ -274,9 +273,8 @@ AIEPostRegAlloc::Placement::Placement(
     const DenseMap<unsigned, AIE::LivenessVector> &LivenessByLRIndex,
     const RegLiveRangeTracker &Tracker, AllocState &InState,
     DenseMap<Register, MCRegister> &InAssign)
-    : Liveness(LivenessByLRIndex),
-      AvailableRegs(Tracker.getAvailablePhysRegs()), State(InState),
-      OutAssign(InAssign), Placed(Tracker.getLiveRanges().size()),
+    : Liveness(LivenessByLRIndex), State(InState), OutAssign(InAssign),
+      Placed(Tracker.getLiveRanges().size()),
       AllCands(Tracker.getLiveRanges().size()),
       Cands(Tracker.getLiveRanges().size()),
       NumCands(Tracker.getLiveRanges().size()),
@@ -288,8 +286,7 @@ AIEPostRegAlloc::Placement::Placement(
       continue;
     Ranges.push_back(&LR);
     const unsigned Index = LR.getIndex();
-    AllCands[Index] =
-        getCandidatePhysRegs(LR.getAdmissibleRegs(), AvailableRegs);
+    AllCands[Index] = getCandidatePhysRegs(LR, Tracker);
     Cands[Index].resize(AllCands[Index].size());
     const auto &Elements = livenessOf(LR).getElements();
     LiveCycles[Index].resize(Elements.size());
@@ -387,7 +384,6 @@ AIEPostRegAlloc::VRegMetrics AIEPostRegAlloc::computeMetrics(
     const WeightedSymmetricGraph &VRegInterferenceGraph,
     const DenseMap<unsigned, AIE::LivenessVector> &LivenessByLRIndex,
     const WeightedAsymmetricGraph &RCInterferenceGraph,
-    const DenseSet<MCRegister> &AvailableRegs,
     const RegLiveRangeTracker &RegTracker, const TargetRegisterInfo &TRI) {
   VRegMetrics Metrics = {0, 0, 0, 0, 0, 0};
 
@@ -439,8 +435,7 @@ AIEPostRegAlloc::VRegMetrics AIEPostRegAlloc::computeMetrics(
   }
 
   // Count available registers using per-LR AdmissibleRegs.
-  const std::vector<Register> Candidates =
-      getCandidatePhysRegs(LR.getAdmissibleRegs(), AvailableRegs);
+  const std::vector<Register> Candidates = getCandidatePhysRegs(LR, RegTracker);
   Metrics.NumAvailableRegs = Candidates.size();
 
   return Metrics;
@@ -733,8 +728,8 @@ PostRegAllocResult AIEPostRegAlloc::allocate(
     return PostRegAllocResult("Trivial", std::move(Assignments));
   }
 
-  LLVM_DEBUG(dbgs() << "Available " << RegTracker.getAvailablePhysRegs().size()
-                    << " physical registers\n");
+  LLVM_DEBUG(dbgs() << "Available " << RegTracker.getAvailableUnits().count()
+                    << " register units\n");
 
   // Initialize allocation state with interference graphs computed once.
   AllocState State;

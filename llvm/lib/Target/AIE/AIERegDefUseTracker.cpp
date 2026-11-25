@@ -640,14 +640,14 @@ DenseSet<MCRegister> RegLiveRangeTracker::collectReservedBaseRegs() const {
   return ReservedRegs;
 }
 
-void RegLiveRangeTracker::computeAvailablePhysRegs(
+void RegLiveRangeTracker::computeAvailableUnits(
     const DenseSet<MCRegister> &ReservedRegs) {
 
   const PartSet ReservedUnits = getRegUnits(ReservedRegs);
 
-  // Build AvailablePhysRegs from non-reserved ranges, excluding any
-  // register that overlaps with a reserved register.
-  AvailablePhysRegs.clear();
+  // Build AvailableUnits from non-reserved ranges, excluding any range whose
+  // base register overlaps with a reserved register.
+  AvailableUnits.clear();
   for (const RegLiveRange &LR : LiveRanges) {
     // Virtualizable ranges must have an RC; non-virtualizable ranges
     // intentionally bypass RC computation and have null RC.
@@ -670,48 +670,14 @@ void RegLiveRangeTracker::computeAvailablePhysRegs(
       continue;
     }
 
-    // Add base register and all its sub-registers.
-    AvailablePhysRegs.insert(LR.getBaseReg());
-    for (MCSubRegIterator SubIt(LR.getBaseReg(), TRI, /*IncludeSelf=*/false);
-         SubIt.isValid(); ++SubIt) {
-      AvailablePhysRegs.insert(*SubIt);
-    }
+    // The units of the base register cover those of all its sub-registers.
+    AvailableUnits |= getRegUnits(LR.getBaseReg());
   }
 }
 
-void RegLiveRangeTracker::deriveSuperRegsFromSubRegs() {
-  // If all sub-registers of a super-register are available, add the
-  // super-register as well. This avoids repeated computation in PostRegAlloc.
-  SmallVector<MCRegister, 32> RegsToCheck(AvailablePhysRegs.begin(),
-                                          AvailablePhysRegs.end());
-  for (MCRegister AvailReg : RegsToCheck) {
-    for (MCSuperRegIterator SuperIt(AvailReg, TRI, /*IncludeSelf=*/false);
-         SuperIt.isValid(); ++SuperIt) {
-      const MCRegister SuperReg = *SuperIt;
-
-      // Skip if already available.
-      if (AvailablePhysRegs.count(SuperReg))
-        continue;
-
-      // Check if all sub-registers of SuperReg are available.
-      bool AllSubregsAvailable = true;
-      unsigned SubregCount = 0;
-      for (MCSubRegIterator SubIt(SuperReg, TRI, /*IncludeSelf=*/false);
-           SubIt.isValid(); ++SubIt) {
-        ++SubregCount;
-        if (!AvailablePhysRegs.count(*SubIt)) {
-          AllSubregsAvailable = false;
-          break;
-        }
-      }
-
-      // If we have at least 2 sub-registers and all are available,
-      // add this super-register.
-      if (AllSubregsAvailable && SubregCount >= 2) {
-        AvailablePhysRegs.insert(SuperReg);
-      }
-    }
-  }
+bool RegLiveRangeTracker::isAvailable(MCRegister Reg) const {
+  const PartSet Units = getRegUnits(Reg);
+  return Units.any() && AvailableUnits.covers(Units);
 }
 
 void RegLiveRangeTracker::addUnusedCallerSavedRegs(
@@ -723,7 +689,7 @@ void RegLiveRangeTracker::addUnusedCallerSavedRegs(
   if (!AddUnusedCallerSavedRegs)
     return;
 
-  // Augment AvailablePhysRegs with caller-saved registers that are completely
+  // Augment AvailableUnits with caller-saved registers that are completely
   // unused in this block. Since pipelining excludes loops with calls, these
   // registers are safe to use as additional allocation candidates.
   //
@@ -775,7 +741,7 @@ void RegLiveRangeTracker::addUnusedCallerSavedRegs(
     const MCRegister Reg = MCRegister::from(RegIdx);
 
     // Skip if already available.
-    if (AvailablePhysRegs.count(Reg))
+    if (isAvailable(Reg))
       continue;
 
     // Must be allocatable.
@@ -798,7 +764,7 @@ void RegLiveRangeTracker::addUnusedCallerSavedRegs(
       continue;
 
     // This register is safe to use as an additional allocation candidate.
-    AvailablePhysRegs.insert(Reg);
+    AvailableUnits |= getRegUnits(Reg);
     ++NumUnusedCallerSavedAdded;
 
     LLVM_DEBUG(dbgs() << "Added unused caller-saved register: "
@@ -821,7 +787,7 @@ void RegLiveRangeTracker::markScarceRanges() {
     // postpipeliner, in order to be able to reorder these live ranges.
     unsigned AvailableCount = 0;
     for (MCPhysReg PhysReg : *RC) {
-      if (AvailablePhysRegs.count(PhysReg)) {
+      if (isAvailable(PhysReg)) {
         ++AvailableCount;
         if (AvailableCount > 1) {
           break;
@@ -1382,16 +1348,15 @@ void RegLiveRangeTracker::finalizeAvailabilityAndScarcity(
     LR.fillAdmissibleRegUnits(TRI, PhysRegUnitSets);
   }
 
-  // Compute and cache available physical registers.
+  // Compute the register units available for reallocation.
   const DenseSet<MCRegister> ReservedRegs = collectReservedBaseRegs();
-  computeAvailablePhysRegs(ReservedRegs);
-  deriveSuperRegsFromSubRegs();
+  computeAvailableUnits(ReservedRegs);
 
   addUnusedCallerSavedRegs(MBB, State.ImplicitUnits, ReservedRegs);
   markScarceRanges();
 
   // Compute and cache the most promising scarce range set.
-  MostPromisingScarceRanges = findMostPromisingScarceRanges(AvailablePhysRegs);
+  MostPromisingScarceRanges = findMostPromisingScarceRanges();
 }
 
 void RegLiveRangeTracker::analyze(MachineBasicBlock &MBB,
@@ -1438,7 +1403,7 @@ void RegLiveRangeTracker::analyze(MachineBasicBlock &MBB,
 
   // Discard non-virtualizable ranges unless their base register has the
   // configured property. Ranges without the property are dropped so they
-  // neither appear in the live range list nor inflate AvailablePhysRegs.
+  // neither appear in the live range list nor inflate AvailableUnits.
   {
     SmallVector<RegLiveRange, 16> Filtered;
     for (RegLiveRange &LR : LiveRanges) {
@@ -1451,7 +1416,7 @@ void RegLiveRangeTracker::analyze(MachineBasicBlock &MBB,
   }
 
   // Finalize availability and scarcity.  Must run after any filtering so that
-  // discarded ranges do not inflate AvailablePhysRegs.
+  // discarded ranges do not inflate AvailableUnits.
   finalizeAvailabilityAndScarcity(MBB, State);
 }
 
@@ -1895,16 +1860,15 @@ void RegLiveRangeTracker::dump(const char *Header,
   if (ShowAvailableRegs) {
     dbgs() << "Available Physical Registers for Reallocation:\n";
     dbgs() << "==============================================\n";
-    SmallVector<MCRegister, 32> SortedRegs(AvailablePhysRegs.begin(),
-                                           AvailablePhysRegs.end());
-    llvm::sort(SortedRegs);
-    for (MCRegister Reg : SortedRegs) {
-      // MCRegister should always be physical, but check to be safe.
-      if (Reg.isPhysical()) {
-        dbgs() << "  " << TRI->getName(Reg) << "\n";
-      }
+    unsigned NumAvailable = 0;
+    for (unsigned RegIdx = 1, E = TRI->getNumRegs(); RegIdx < E; ++RegIdx) {
+      const MCRegister Reg = MCRegister::from(RegIdx);
+      if (!isAvailable(Reg))
+        continue;
+      ++NumAvailable;
+      dbgs() << "  " << TRI->getName(Reg) << "\n";
     }
-    dbgs() << "Total: " << AvailablePhysRegs.size() << " registers\n\n";
+    dbgs() << "Total: " << NumAvailable << " registers\n\n";
   }
 
   // Emit end marker if header was provided
@@ -1914,8 +1878,7 @@ void RegLiveRangeTracker::dump(const char *Header,
 }
 
 std::vector<const RegLiveRange *>
-RegLiveRangeTracker::findMostPromisingScarceRanges(
-    const DenseSet<MCRegister> &AvailablePhysRegs) const {
+RegLiveRangeTracker::findMostPromisingScarceRanges() const {
 
   const unsigned MaxCandidates = MaxScarceRangeCandidates;
 

@@ -272,8 +272,9 @@ class RegLiveRangeTracker {
   // Track whether registers have been virtualized
   bool RegistersVirtualized = false;
 
-  // Cached available physical registers (computed during analyze)
-  DenseSet<MCRegister> AvailablePhysRegs;
+  // Register units available for reallocation (computed during analyze). A
+  // register is available if all its units are in this set.
+  PartSet AvailableUnits;
 
   // Cached RegUnit set per admissible physical register (computed during
   // analyze). Built while filling each live range's AdmissibleRegUnits.
@@ -382,19 +383,17 @@ class RegLiveRangeTracker {
 
   /// Helper to find the most promising scarce range set.
   /// Called by analyze() to populate MostPromisingScarceRanges.
-  std::vector<const RegLiveRange *> findMostPromisingScarceRanges(
-      const DenseSet<MCRegister> &AvailablePhysRegs) const;
+  std::vector<const RegLiveRange *> findMostPromisingScarceRanges() const;
 
   /// Collect base registers from RESERVED live ranges.
   DenseSet<MCRegister> collectReservedBaseRegs() const;
 
-  /// Populate AvailablePhysRegs from non-reserved live ranges.
-  /// Adds base registers and sub-registers that don't overlap with reserved.
-  void computeAvailablePhysRegs(const DenseSet<MCRegister> &ReservedRegs);
+  /// Populate AvailableUnits from non-reserved live ranges: the units of the
+  /// base registers that don't overlap with reserved.
+  void computeAvailableUnits(const DenseSet<MCRegister> &ReservedRegs);
 
-  /// Extend AvailablePhysRegs with super-registers whose sub-regs are all
-  /// available.
-  void deriveSuperRegsFromSubRegs();
+  /// Return true if all units of \p Reg are available for reallocation.
+  bool isAvailable(MCRegister Reg) const;
 
   /// Add caller-saved registers that are completely unused in the block.
   /// Uses AllPhysRegOperands member for used registers, and iterates
@@ -603,11 +602,9 @@ public:
   void virtualizeFilteredPhysRegs(
       OverlapPolicy Policy = OverlapPolicy::DisallowOverlapWithReservedBase);
 
-  /// Get the set of physical registers that would be available for reallocation
-  /// Returns the cached value computed during analyze()
-  const DenseSet<MCRegister> &getAvailablePhysRegs() const {
-    return AvailablePhysRegs;
-  }
+  /// Get the register units available for reallocation.
+  /// Valid after analyze().
+  const PartSet &getAvailableUnits() const { return AvailableUnits; }
 
   /// Get the cached RegUnit set per admissible physical register.
   /// Valid after analyze().
