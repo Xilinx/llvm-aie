@@ -363,23 +363,26 @@ bool AIEOLPMovRotation::runOnMachineFunction(MachineFunction &MF) {
     if (!AIELoopUtils::isOuterLoopPipelined(MBB))
       continue;
 
-    const auto OLS = AIELoopUtils::OuterLoopStructure::tryBuildFrom(MBB);
-    if (!OLS || !OLS->hasPeeledIterRegion())
+    auto OLS = AIELoopUtils::OuterLoopStructure::tryBuildFrom(MBB);
+    if (!OLS)
       continue;
+
+    // isSafeForSiblingMerge() validates the full OLP preconditions:
+    // peeled iteration exists, OuterPreheader has exactly one successor,
+    // SteadyTop predecessors are {P, SB}, PeeledIterTop's predecessor is
+    // SB, and all blocks are laid out consecutively.  If the structure
+    // doesn't satisfy these, the sibling optimizer cannot run, so there
+    // is no point in rotating MOVs.
+    if (!OLS->isSafeForSiblingMerge()) {
+      LLVM_DEBUG(dbgs() << "AIEOLPMovRotation: Skipping BB#" << MBB.getNumber()
+                        << " -- OLP structure not safe for sibling merge\n");
+      continue;
+    }
 
     MachineBasicBlock *const SteadyTop = OLS->SteadyTop;
     MachineBasicBlock *const PeeledTop = OLS->PeeledIterTop;
     MachineBasicBlock *const Preheader = OLS->OuterPreheader;
     MachineBasicBlock *const SteadyBottom = OLS->SteadyBottom;
-
-    if (!SteadyTop || !PeeledTop || !Preheader || !SteadyBottom)
-      continue;
-
-    // Preheader must have exactly one successor (SteadyTop). If it branches
-    // to multiple targets, inserting a def of DstReg could affect other
-    // control-flow paths that expect the original value.
-    if (Preheader->succ_size() != 1)
-      continue;
 
     LLVM_DEBUG(dbgs() << "AIEOLPMovRotation: Processing OLP structure:\n"
                       << "  Preheader: BB#" << Preheader->getNumber() << "\n"
