@@ -68,6 +68,21 @@ static cl::opt<bool>
     ConsiderLSROuterLoops("aie-lsr-consider-outer", cl::Hidden, cl::init(false),
                           cl::desc("Whether to consider outer loops for LSR"));
 
+namespace {
+enum class LSRSaveHWLoopCmpMode { None, JNZD, All };
+} // namespace
+
+static cl::opt<LSRSaveHWLoopCmpMode> LSRSaveHWLoopCmp(
+    "aie-lsr-save-hwloop-cmp", cl::Hidden, cl::init(LSRSaveHWLoopCmpMode::JNZD),
+    cl::desc("Keep LSR from rewriting the exit compare of a loop that will "
+             "become a hardware loop (TTI::canSaveCmp)"),
+    cl::values(clEnumValN(LSRSaveHWLoopCmpMode::None, "none",
+                          "LSR optimizes every exit compare"),
+               clEnumValN(LSRSaveHWLoopCmpMode::JNZD, "jnzd",
+                          "Only for hardware loops that end on a JNZD"),
+               clEnumValN(LSRSaveHWLoopCmpMode::All, "all",
+                          "For all hardware loops, ZOL included")));
+
 static cl::opt<bool>
     EnablePartialUnroll("aie-unroll-partial", cl::Hidden, cl::init(true),
                         cl::desc("Whether to partially unroll loops"));
@@ -431,6 +446,37 @@ bool AIETTICommon::isHardwareLoopProfitable(
   HWLoopInfo.CounterInReg = !UseZOL;
   LLVM_DEBUG(dbgs() << "AIE Loops: Loop is " << (UseZOL ? "ZOL" : "JNZD")
                     << " candidate\n");
+  return true;
+}
+
+bool AIETTICommon::canSaveCmp(Loop *L, BranchInst **BI, ScalarEvolution *SE,
+                              LoopInfo *LI, DominatorTree *DT,
+                              AssumptionCache *AC,
+                              TargetLibraryInfo *LibInfo) const {
+  // HardwareLoops replaces the exit compare of a hardware loop by a counter
+  // whose trip count it derives from that compare. Once LSR has rewritten the
+  // compare onto a strided IV (e.g. 448 * N == {448,+,448}), the trip count
+  // becomes ((448 * N - 448) /u 448) + 1, which SCEV cannot fold back to N
+  // and which is expanded as a division in the preheader. Leaving the compare
+  // alone keeps the original IV's trip count. Mirror the checks HardwareLoops
+  // makes later, so that only compares it is going to replace are skipped.
+  if (LSRSaveHWLoopCmp == LSRSaveHWLoopCmpMode::None)
+    return false;
+
+  HardwareLoopInfo HWLoopInfo(L);
+  if (!HWLoopInfo.canAnalyze(*LI))
+    return false;
+  if (!isHardwareLoopProfitable(L, *SE, *AC, LibInfo, HWLoopInfo))
+    return false;
+  if (LSRSaveHWLoopCmp == LSRSaveHWLoopCmpMode::JNZD &&
+      !HWLoopInfo.CounterInReg)
+    return false;
+  if (!HWLoopInfo.isHardwareLoopCandidate(*SE, *LI, *DT))
+    return false;
+
+  LLVM_DEBUG(dbgs() << "AIE Loops: LSR keeps the exit compare of "
+                    << L->getHeader()->getName() << "\n");
+  *BI = HWLoopInfo.ExitBranch;
   return true;
 }
 

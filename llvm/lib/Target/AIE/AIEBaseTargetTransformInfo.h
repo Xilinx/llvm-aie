@@ -69,6 +69,11 @@ public:
   bool isHardwareLoopProfitable(Loop *L, ScalarEvolution &SE,
                                 AssumptionCache &AC, TargetLibraryInfo *LibInfo,
                                 HardwareLoopInfo &HWLoopInfo) const;
+  /// Whether LSR should leave the exit compare of \p L alone, because
+  /// HardwareLoops is going to replace it. Sets \p BI to that exit branch.
+  bool canSaveCmp(Loop *L, BranchInst **BI, ScalarEvolution *SE, LoopInfo *LI,
+                  DominatorTree *DT, AssumptionCache *AC,
+                  TargetLibraryInfo *LibInfo) const;
   bool isProfitableOuterLSR(const Loop &L) const;
 
   InstructionCost getMemoryOpCost(unsigned Opcode, Type *Src, Align Alignment,

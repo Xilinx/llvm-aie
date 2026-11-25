@@ -12,27 +12,25 @@
 ; in between, hence the invalidate<scalar-evolution>.
 ;
 ; The loop below spans several blocks, so on AIE2PS it becomes a JNZD
-; hardware loop. Its trip count is %n. LSR rewrites the exit compare onto the IV
-; that steps by 448 (%n * 448 == {448,+,448}), and HardwareLoops then derives
-; the trip count from that compare as ((%n * 448 - 448) /u 448) + 1, which SCEV
-; cannot fold back to %n. The udiv is expanded in the preheader.
+; hardware loop. Its trip count is %n. If LSR rewrote the exit compare onto the
+; IV that steps by 448 (%n * 448 == {448,+,448}), HardwareLoops would derive the
+; trip count from that compare as ((%n * 448 - 448) /u 448) + 1, which SCEV
+; cannot fold back to %n, and expand a udiv in the preheader. canSaveCmp tells
+; LSR that HardwareLoops replaces this compare, so LSR leaves it alone and the
+; trip count is %n itself.
 
 define void @multiblock_strided(ptr %x, ptr %out, i1 %c) {
 ; CHECK-LABEL: define void @multiblock_strided(
 ; CHECK-SAME: ptr [[X:%.*]], ptr [[OUT:%.*]], i1 [[C:%.*]]) {
 ; CHECK-NEXT:  [[ENTRY:.*]]:
 ; CHECK-NEXT:    [[N:%.*]] = select i1 [[C]], i32 5, i32 4
-; CHECK-NEXT:    [[TMP0:%.*]] = mul nuw nsw i32 [[N]], 448
-; CHECK-NEXT:    [[TMP1:%.*]] = add nsw i32 [[TMP0]], -448
-; CHECK-NEXT:    [[TMP2:%.*]] = udiv i32 [[TMP1]], 448
-; CHECK-NEXT:    [[TMP3:%.*]] = add nuw nsw i32 [[TMP2]], 1
-; CHECK-NEXT:    [[TMP4:%.*]] = call i32 @llvm.start.loop.iterations.i32(i32 [[TMP3]])
+; CHECK-NEXT:    [[TMP0:%.*]] = call i32 @llvm.start.loop.iterations.i32(i32 [[N]])
 ; CHECK-NEXT:    br label %[[HEADER:.*]]
 ; CHECK:       [[HEADER]]:
 ; CHECK-NEXT:    [[LSR_IV3:%.*]] = phi i32 [ [[LSR_IV_NEXT4:%.*]], %[[LATCH:.*]] ], [ 0, %[[ENTRY]] ]
 ; CHECK-NEXT:    [[LSR_IV1:%.*]] = phi i32 [ [[LSR_IV_NEXT2:%.*]], %[[LATCH]] ], [ 1, %[[ENTRY]] ]
 ; CHECK-NEXT:    [[LSR_IV:%.*]] = phi i32 [ [[LSR_IV_NEXT:%.*]], %[[LATCH]] ], [ 0, %[[ENTRY]] ]
-; CHECK-NEXT:    [[TMP5:%.*]] = phi i32 [ [[TMP4]], %[[ENTRY]] ], [ [[TMP6:%.*]], %[[LATCH]] ]
+; CHECK-NEXT:    [[TMP5:%.*]] = phi i32 [ [[TMP0]], %[[ENTRY]] ], [ [[TMP6:%.*]], %[[LATCH]] ]
 ; CHECK-NEXT:    [[PX:%.*]] = getelementptr inbounds i8, ptr [[X]], i32 [[LSR_IV3]]
 ; CHECK-NEXT:    [[V:%.*]] = load i32, ptr [[PX]], align 4
 ; CHECK-NEXT:    [[MORE:%.*]] = icmp ult i32 [[LSR_IV1]], [[N]]

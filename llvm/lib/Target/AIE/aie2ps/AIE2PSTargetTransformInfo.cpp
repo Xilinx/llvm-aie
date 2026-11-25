@@ -42,6 +42,13 @@ bool AIE2PSTTIImpl::isHardwareLoopProfitable(Loop *L, ScalarEvolution &SE,
   return Common.isHardwareLoopProfitable(L, SE, AC, LibInfo, HWLoopInfo);
 }
 
+bool AIE2PSTTIImpl::canSaveCmp(Loop *L, BranchInst **BI, ScalarEvolution *SE,
+                               LoopInfo *LI, DominatorTree *DT,
+                               AssumptionCache *AC,
+                               TargetLibraryInfo *LibInfo) const {
+  return Common.canSaveCmp(L, BI, SE, LI, DT, AC, LibInfo);
+}
+
 bool AIE2PSTTIImpl::isProfitableOuterLSR(const Loop &L) const {
   return Common.isProfitableOuterLSR(L);
 }
