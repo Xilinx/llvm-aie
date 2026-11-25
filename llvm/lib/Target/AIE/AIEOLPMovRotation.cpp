@@ -35,6 +35,7 @@
 #include "llvm/CodeGen/LivePhysRegs.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/Support/Debug.h"
 
@@ -103,15 +104,6 @@ static bool isRegReferencedBeforeMI(const MachineInstr &TargetMI,
   return false;
 }
 
-/// Check if \p SrcReg is live at the end of \p PredMBB using LivePhysRegs.
-static bool isSrcAvailableInPred(MCRegister SrcReg,
-                                 const MachineBasicBlock &PredMBB,
-                                 const TargetRegisterInfo &TRI) {
-  LivePhysRegs LiveOut(TRI);
-  LiveOut.addLiveOuts(PredMBB);
-  return LiveOut.contains(SrcReg);
-}
-
 /// Check if \p MI is part of the block "tail" that must stay at the end:
 /// branches, terminators, barriers, and scheduling barrier pseudos.
 static bool isBlockTailInstr(const MachineInstr &MI,
@@ -146,31 +138,34 @@ static bool isRegReferencedByTailInstrs(MCRegister Reg,
 
 /// Return true when it is safe to rotate \p MovMI out of its top block.
 /// Checks that:
-///  - The source register is live-out from both \p Preheader and
-///    \p SteadyBottom (the two blocks where copies will be inserted).
+///  - Neither SrcReg nor DstReg is a reserved register (reserved registers
+///    are invisible to live-in lists and must not be rotated).
 ///  - Neither the destination nor the source register is referenced before
 ///    \p MovMI in its block (a prior reference to SrcReg would mean the
 ///    MOV captures a value produced inside the block, so moving it to a
-///    predecessor would capture a stale value instead).
+///    predecessor would capture a stale value instead).  Note: if SrcReg
+///    is NOT referenced before the MOV it must be live-in to the top block,
+///    hence live-out from both predecessors (Preheader and SteadyBottom).
 ///  - Neither the destination nor the source register is referenced by tail
 ///    instructions in either \p Preheader or \p SteadyBottom.  A tail use
 ///    of DstReg would be clobbered by the MOV; a tail def of DstReg would
 ///    overwrite the MOV's result; a tail def of SrcReg means the MOV would
 ///    capture a stale value that the tail is about to redefine.
-static bool canRotateMov(const MachineInstr &MovMI,
-                         const MachineBasicBlock &Preheader,
-                         const MachineBasicBlock &SteadyBottom,
-                         const AIEBaseInstrInfo &TII,
-                         const TargetRegisterInfo &TRI) {
+static bool
+canRotateMov(const MachineInstr &MovMI, const MachineBasicBlock &Preheader,
+             const MachineBasicBlock &SteadyBottom, const AIEBaseInstrInfo &TII,
+             const TargetRegisterInfo &TRI, const MachineRegisterInfo &MRI) {
   const MCRegister DstReg = MovMI.getOperand(0).getReg().asMCReg();
   const MCRegister SrcReg = MovMI.getOperand(1).getReg().asMCReg();
 
-  if (!isSrcAvailableInPred(SrcReg, Preheader, TRI)) {
-    LLVM_DEBUG(dbgs() << "  Skip (src not available in preheader): " << MovMI);
+  // Reserved registers (lr, sp, lc, ...) never appear in live-in lists
+  // and must not be moved across block boundaries.
+  if (MRI.isReserved(DstReg)) {
+    LLVM_DEBUG(dbgs() << "  Skip (dst is reserved): " << MovMI);
     return false;
   }
-  if (!isSrcAvailableInPred(SrcReg, SteadyBottom, TRI)) {
-    LLVM_DEBUG(dbgs() << "  Skip (src not available in bottom): " << MovMI);
+  if (MRI.isReserved(SrcReg)) {
+    LLVM_DEBUG(dbgs() << "  Skip (src is reserved): " << MovMI);
     return false;
   }
   if (isRegReferencedBeforeMI(MovMI, DstReg, TRI)) {
@@ -286,12 +281,6 @@ static void insertMovBeforeTerminator(MachineBasicBlock &DestMBB,
 
   LLVM_DEBUG(dbgs() << "  Inserted into BB#" << DestMBB.getNumber() << ": "
                     << *NewMI);
-}
-
-/// Recalculate live-ins for a set of blocks.
-static void recomputeAllLiveIns(ArrayRef<MachineBasicBlock *> Blocks) {
-  for (MachineBasicBlock *MBB : Blocks)
-    recomputeLiveIns(*MBB);
 }
 
 /// Undef any DBG_VALUE instructions in \p MBB that reference \p Reg.
@@ -435,33 +424,53 @@ bool AIEOLPMovRotation::runOnMachineFunction(MachineFunction &MF) {
                       << "\n"
                       << "  PeeledTop: BB#" << PeeledTop->getNumber() << "\n");
 
-    SmallVector<MachineInstr *, 4> SteadyMovs = collectMovInstrs(*SteadyTop);
-    if (SteadyMovs.empty())
-      continue;
+    const MachineRegisterInfo &MRI = MF.getRegInfo();
+    SmallVector<MachineBasicBlock *, 4> AffectedBlocks = {
+        SteadyTop, PeeledTop, Preheader, SteadyBottom};
 
-    // Only SteadyTop MOVs are processed: either they have a matching MOV in
-    // PeeledTop (Case 1) or they are unique to SteadyTop (Case 2). MOVs that
-    // exist only in PeeledTop are not handled for now.
-    SmallVector<MachineInstr *, 4> PeeledMovs = collectMovInstrs(*PeeledTop);
+    // Iterate to a fixpoint so that MOV chains (e.g.
+    //   $r1 = MOV $r3; $r2 = MOV $r1) can rotate as a whole. The first
+    // MOV rotates out, then on the next iteration the second MOV's SrcReg
+    // is no longer referenced before it and becomes rotatable. A limit of
+    // 16 prevents pathological cases.
+    static constexpr unsigned MaxIterations = 16;
     bool LocalChanged = false;
 
-    for (MachineInstr *SteadyMI : SteadyMovs) {
-      if (!canRotateMov(*SteadyMI, *Preheader, *SteadyBottom, *TII, *TRI))
-        continue;
+    for (unsigned Iter = 0; Iter < MaxIterations; ++Iter) {
+      SmallVector<MachineInstr *, 4> SteadyMovs = collectMovInstrs(*SteadyTop);
+      if (SteadyMovs.empty())
+        break;
 
-      if (MachineInstr *PeeledMI = findMatchingMov(*SteadyMI, PeeledMovs))
-        LocalChanged |=
-            rotateMatchedPair(*SteadyMI, *PeeledMI, *Preheader, *SteadyBottom,
-                              PeeledMovs, *TII, *TRI);
-      else
-        LocalChanged |= rotateSteadyOnly(*SteadyMI, *Preheader, *SteadyBottom,
-                                         *PeeledTop, *TII, *TRI);
+      SmallVector<MachineInstr *, 4> PeeledMovs = collectMovInstrs(*PeeledTop);
+      bool IterChanged = false;
+
+      for (MachineInstr *SteadyMI : SteadyMovs) {
+        if (!canRotateMov(*SteadyMI, *Preheader, *SteadyBottom, *TII, *TRI,
+                          MRI))
+          continue;
+
+        if (MachineInstr *PeeledMI = findMatchingMov(*SteadyMI, PeeledMovs))
+          IterChanged |=
+              rotateMatchedPair(*SteadyMI, *PeeledMI, *Preheader, *SteadyBottom,
+                                PeeledMovs, *TII, *TRI);
+        else
+          IterChanged |= rotateSteadyOnly(*SteadyMI, *Preheader, *SteadyBottom,
+                                          *PeeledTop, *TII, *TRI);
+      }
+
+      if (!IterChanged)
+        break;
+
+      // Recompute live-ins after each iteration so the next round sees
+      // accurate liveness (critical for Case 2's isRegLiveIn check and
+      // for chain rotation where a newly-exposed MOV's SrcReg must be
+      // recognized as live-in).
+      fullyRecomputeLiveIns(AffectedBlocks);
+      LocalChanged = true;
     }
 
-    if (LocalChanged) {
-      recomputeAllLiveIns({SteadyTop, PeeledTop, Preheader, SteadyBottom});
+    if (LocalChanged)
       Changed = true;
-    }
   }
 
   return Changed;
