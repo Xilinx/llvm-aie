@@ -408,15 +408,18 @@ bool AIEOLPMovRotation::runOnMachineFunction(MachineFunction &MF) {
     if (!OLS)
       continue;
 
-    // isSafeForSiblingMerge() validates the full OLP preconditions:
-    // peeled iteration exists, OuterPreheader has exactly one successor,
-    // SteadyTop predecessors are {P, SB}, PeeledIterTop's predecessor is
-    // SB, and all blocks are laid out consecutively.  If the structure
-    // doesn't satisfy these, the sibling optimizer cannot run, so there
-    // is no point in rotating MOVs.
+    // Rotation is only profitable when the downstream sibling optimizer
+    // can actually run.  Check its structural preconditions first (layout
+    // order, predecessor/successor shapes), then verify the inner loops
+    // have matching instruction structure.
     if (!OLS->isSafeForSiblingMerge()) {
       LLVM_DEBUG(dbgs() << "AIEOLPMovRotation: Skipping BB#" << MBB.getNumber()
                         << " -- OLP structure not safe for sibling merge\n");
+      continue;
+    }
+    if (!OLS->hasMatchingInnerLoops()) {
+      LLVM_DEBUG(dbgs() << "AIEOLPMovRotation: Skipping BB#" << MBB.getNumber()
+                        << " -- inner loops do not match\n");
       continue;
     }
 
