@@ -283,20 +283,24 @@ static void insertMovBeforeTerminator(MachineBasicBlock &DestMBB,
                     << *NewMI);
 }
 
-/// Undef any DBG_VALUE instructions in \p MBB that reference \p Reg.
-/// Called before erasing a MOV so that debug info referencing the MOV's
-/// result becomes explicitly undefined rather than dangling.
-static void undefDebugValuesForReg(MachineBasicBlock &MBB, MCRegister Reg,
+/// Undef any DBG_VALUE instructions that appear *before* \p MovMI in its
+/// block and reference \p Reg.  Debug values after the MOV still describe
+/// the correct value (the MOV's result, now defined in a predecessor)
+/// and must not be touched.
+static void undefDebugValuesBefore(const MachineInstr &MovMI, MCRegister Reg,
                                    const TargetRegisterInfo &TRI) {
-  for (MachineInstr &MI : MBB) {
+  const MachineBasicBlock *MBB = MovMI.getParent();
+  for (const MachineInstr &MI : *MBB) {
+    if (&MI == &MovMI)
+      return;
     if (!MI.isDebugValue())
       continue;
-    for (MachineOperand &MO : MI.debug_operands()) {
+    for (MachineOperand &MO : const_cast<MachineInstr &>(MI).debug_operands()) {
       if (!MO.isReg() || !MO.getReg().isPhysical())
         continue;
       if (TRI.regsOverlap(MO.getReg(), Reg)) {
         LLVM_DEBUG(dbgs() << "  Undef debug value: " << MI);
-        MI.setDebugValueUndef();
+        const_cast<MachineInstr &>(MI).setDebugValueUndef();
         break;
       }
     }
@@ -335,11 +339,11 @@ static bool rotateMatchedPair(MachineInstr &SteadyMI, MachineInstr &PeeledMI,
   LLVM_DEBUG(dbgs() << "  Case 1 (matched pair): " << SteadyMI);
 
   const MCRegister SteadyDst = SteadyMI.getOperand(0).getReg().asMCReg();
-  undefDebugValuesForReg(*SteadyMI.getParent(), SteadyDst, TRI);
+  undefDebugValuesBefore(SteadyMI, SteadyDst, TRI);
   insertMovBeforeTerminator(Preheader, SteadyMI, TII);
   SteadyMI.eraseFromParent();
 
-  undefDebugValuesForReg(*PeeledMI.getParent(), DstReg, TRI);
+  undefDebugValuesBefore(PeeledMI, DstReg, TRI);
   insertMovBeforeTerminator(SteadyBottom, PeeledMI, TII);
   llvm::erase(PeeledMovs, &PeeledMI);
   PeeledMI.eraseFromParent();
@@ -367,7 +371,7 @@ static bool rotateSteadyOnly(MachineInstr &SteadyMI,
 
   LLVM_DEBUG(dbgs() << "  Case 2 (steady-only): " << SteadyMI);
 
-  undefDebugValuesForReg(*SteadyMI.getParent(), DstReg, TRI);
+  undefDebugValuesBefore(SteadyMI, DstReg, TRI);
   insertMovBeforeTerminator(Preheader, SteadyMI, TII);
   insertMovBeforeTerminator(SteadyBottom, SteadyMI, TII);
   SteadyMI.eraseFromParent();
