@@ -114,7 +114,6 @@
 
 #include <memory>
 #include <optional>
-#include <vector>
 
 using namespace llvm;
 
@@ -434,8 +433,8 @@ class OrigLoopStructure : public LoopStructure {
 
   // The stage-0 / stage-1 split of the top-block instructions, in program
   // order.
-  std::vector<Instruction *> Stage0Insts;
-  std::vector<Instruction *> Stage1Insts;
+  SmallVector<Instruction *, 16> Stage0Insts;
+  SmallVector<Instruction *, 16> Stage1Insts;
 
   // Stage1Insts as a set, for the membership queries of peel-first; filled
   // by collectFirstIterStages().
@@ -552,8 +551,8 @@ public:
     return OuterLoop->getLoopPreheader();
   }
 
-  const std::vector<Instruction *> &stage0Insts() const { return Stage0Insts; }
-  const std::vector<Instruction *> &stage1Insts() const { return Stage1Insts; }
+  ArrayRef<Instruction *> stage0Insts() const { return Stage0Insts; }
+  ArrayRef<Instruction *> stage1Insts() const { return Stage1Insts; }
   void clearStages() {
     Stage0Insts.clear();
     Stage1Insts.clear();
@@ -1336,8 +1335,8 @@ void OrigLoopStructure::collectDerivedPointerUpdates(
 
   // Move promoted instructions from Stage1Insts to Stage0Insts, preserving
   // program order.
-  std::vector<Instruction *> NewStage0Insts;
-  std::vector<Instruction *> NewStage1Insts;
+  SmallVector<Instruction *, 16> NewStage0Insts;
+  SmallVector<Instruction *, 16> NewStage1Insts;
 
   // We need to rebuild both lists in program order.
   topRegion().forEachInstruction([&](Instruction *I) {
