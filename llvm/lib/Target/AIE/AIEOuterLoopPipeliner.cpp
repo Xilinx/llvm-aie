@@ -1743,6 +1743,32 @@ void AIEOuterLoopPipeliner::cloneStage0IntoBottom(
   LLVM_DEBUG(dbgs() << "    Cloned stage-0 into bottom block\n");
 }
 
+// What eraseClones requires of the clones it erases.
+enum class CloneErasePolicy {
+  // Every clone is dead once the others are erased: each user is one of the
+  // clones. Any other user would read a deleted value, so it is a fatal error.
+  RequireDead,
+  // Erase only the clones that have no users left; keep the others.
+  KeepIfUsed,
+};
+
+// Erase Clones in reverse program order, so that users go before the values
+// they read.
+static void eraseClones(ArrayRef<Instruction *> Clones,
+                        CloneErasePolicy Policy) {
+  if (Policy == CloneErasePolicy::RequireDead) {
+    SmallPtrSet<Instruction *, 16> Erased(Clones.begin(), Clones.end());
+    for (Instruction *I : Clones)
+      for (User *U : I->users())
+        if (!Erased.contains(cast<Instruction>(U)))
+          reportFatalInternalError("AIE outer loop pipeliner: an erased "
+                                   "stage-1 instruction still has a user");
+  }
+  for (Instruction *I : reverse(Clones))
+    if (Policy == CloneErasePolicy::RequireDead || I->use_empty())
+      I->eraseFromParent();
+}
+
 void AIEOuterLoopPipeliner::createPipelinedPHIs(const OrigLoopStructure &OrigLS,
                                                 CloneLoopStructure &SteadyLS,
                                                 const RemapTable &PreheaderVMap,
@@ -1781,10 +1807,11 @@ void AIEOuterLoopPipeliner::createPipelinedPHIs(const OrigLoopStructure &OrigLS,
       AggregatePHIs.push_back(PHI);
   }
 
-  // Erase the now-dead steady stage-0 clones (reverse order).
-  for (Instruction *I : reverse(SteadyClones))
-    if (I->use_empty())
-      I->eraseFromParent();
+  // Erase the now-dead steady stage-0 clones. The merge PHIs took over the
+  // uses of the non-void clones, and the void ones run on the preheader and
+  // bottom paths instead, so a clone that is still used is only kept as a
+  // safeguard.
+  eraseClones(SteadyClones, CloneErasePolicy::KeepIfUsed);
 
   // getUnderlyingObject looks through an extractvalue only when the aggregate
   // is the producing intrinsic call, not a PHI of such calls. Give each field
@@ -2754,20 +2781,6 @@ void AIEOuterLoopPipeliner::convertOuterLoopToHardwareLoop(
 
 // --- Peel-first step helpers ------------------------------------------------
 
-// Erase the clones of stage-1 in one bottom block, in reverse program order.
-// Stage-1 is closed under its bottom-block users, so the clones may only use
-// each other; any other user would read a deleted value.
-static void eraseStage1Clones(ArrayRef<Instruction *> Clones) {
-  SmallPtrSet<Instruction *, 16> Erased(Clones.begin(), Clones.end());
-  for (Instruction *I : Clones)
-    for (User *U : I->users())
-      if (!Erased.contains(cast<Instruction>(U)))
-        reportFatalInternalError("AIE outer loop pipeliner: an erased stage-1 "
-                                 "instruction still has a user");
-  for (Instruction *I : reverse(Clones))
-    I->eraseFromParent();
-}
-
 // The values stage-1 reads from the rest of the outer loop, in a stable order:
 // inner-loop results (bottom LCSSA PHIs), then top-region values (header PHIs
 // first), then bottom values outside stage-1.
@@ -2829,7 +2842,9 @@ void AIEOuterLoopPipeliner::peelFirstIteration(
     if (OrigLS.isInStage1(&OrigI))
       ToErase.push_back(FirstIterLS.cloneInst(&OrigI));
   }
-  eraseStage1Clones(ToErase);
+  // Stage-1 is closed under its bottom-block users, so the clones may only use
+  // each other.
+  eraseClones(ToErase, CloneErasePolicy::RequireDead);
 
   // Replace the conditional latch branch with an unconditional branch to the
   // steady loop header. The firstiter always falls through.
@@ -2913,7 +2928,7 @@ void AIEOuterLoopPipeliner::cloneStage1IntoTop(
   SmallVector<Instruction *, 16> SteadyBottomStage1;
   for (Instruction *OrigI : OrigLS.stage1Insts())
     SteadyBottomStage1.push_back(SteadyLS.cloneInst(OrigI));
-  eraseStage1Clones(SteadyBottomStage1);
+  eraseClones(SteadyBottomStage1, CloneErasePolicy::RequireDead);
 
   LLVM_DEBUG(dbgs() << "    Erased stage-1 clones from steady bottom\n");
 }
