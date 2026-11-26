@@ -13,7 +13,7 @@
 # and $r1 is no longer referenced before it, so it rotates too.
 # Both top blocks become MOV-free.
 
-# CHECK-LABEL: name: no_rotation_src_ref_before
+# CHECK-LABEL: name: case1_chain_rotation
 #
 # Preheader gets both MOVs (chain order preserved):
 # CHECK:      bb.0.entry:
@@ -38,7 +38,7 @@
 # CHECK:      bb.5.peeled.inner:
 
 --- |
-  define void @no_rotation_src_ref_before() {
+  define void @case1_chain_rotation() {
   entry:
     br label %steady.top
   steady.top:
@@ -59,7 +59,7 @@
   !1 = !{!"llvm.loop.hint.aie_outerloop_pipeliner_success", i64 1}
 ...
 ---
-name:            no_rotation_src_ref_before
+name:            case1_chain_rotation
 tracksRegLiveness: true
 noPhis:          true
 isSSA:           false
