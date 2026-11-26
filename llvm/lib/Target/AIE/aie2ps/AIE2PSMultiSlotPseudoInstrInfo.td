@@ -65,7 +65,7 @@ let isMoveImm = 1, Itinerary = II_MOVX_mvx_cr_r, hasSideEffects = 1,
                          [MOVA, MOV_alu_mv_mv_mv_cg_or, MOVXM_lng_cg]>;
 
 // Pseudo Scalar MOV. The MOVS register set is a strict subset
-let Itinerary = II_MOVS, hasSideEffects = false, mayLoad = false, mayStore = false in {
+let Itinerary = II_MOVS, isMoveReg = 1, hasSideEffects = false, mayLoad = false, mayStore = false in {
   def MOV_scalar_pseudo : MultiSlot_Pseudo< (outs OP_mAguDst:$dst), (ins OP_mAguSrc:$src),
       "MOV_scalar_pseudo", "$dst, $src", [MOV_alu_mv_mv_mv_scl, MOVS] >;
 }

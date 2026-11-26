@@ -100,8 +100,8 @@ define dso_local void @gemm_mx9(ptr noalias %matA, ptr noalias %matB, ptr noalia
 ; REMARKS-NEXT: ...
 ; ASM-LABEL: gemm_mx9:
 ; ASM:       // %bb.0: // %entry
-; ASM-NEXT:    paddxm [sp], #64; nopx
-; ASM-NEXT:    st p6, [sp, #-64] // 4-byte Folded Spill
+; ASM-NEXT:    paddxm [sp], #64; nopb ; nops ; nopxm ; nopv
+; ASM-NEXT:    st p6, [sp, #-64]; nopx // 4-byte Folded Spill
 ; ASM-NEXT:    mova m0, #-68; mov p6, sp
 ; ASM-NEXT:    paddb [p6], m0
 ; ASM-NEXT:    lda p6, [p6, #0]
@@ -149,12 +149,12 @@ define dso_local void @gemm_mx9(ptr noalias %matA, ptr noalias %matB, ptr noalia
 ; ASM-NEXT:    vlda bmll1, [p3], m2
 ; ASM-NEXT:    vlda bmhh4, [p2, #192]
 ; ASM-NEXT:    vlda bmhl4, [p2, #128]
-; ASM-NEXT:    vlda bmlh4, [p2, #64]; mov r5, r8
-; ASM-NEXT:    vlda bmll4, [p2], m2; movx r4, #22; mov r2, #106
-; ASM-NEXT:    vlda bmhh0, [p3, #192]; movx r20, #972; mov r6, #23
+; ASM-NEXT:    vlda bmlh4, [p2, #64]; movx r2, #106; mov r5, r8
+; ASM-NEXT:    vlda bmll4, [p2], m2; movx r6, #23; mov r4, #22
+; ASM-NEXT:    vlda bmhh0, [p3, #192]; movx r20, #972; mov r18, #1
 ; ASM-NEXT:    vlda bmhl0, [p3, #128]; or r0, r0, r20; mov r3, #0
-; ASM-NEXT:    vlda bmlh0, [p3, #64]; or r25, r3, r3; mov r18, #1
-; ASM-NEXT:    vlda bmll0, [p3], m2; or r24, r3, r3; mov m3, #-288
+; ASM-NEXT:    vlda bmlh0, [p3, #64]; or r24, r3, r3; mov r25, r3
+; ASM-NEXT:    vlda bmll0, [p3], m2; or r8, r0, r0; mov m3, #-288
 ; ASM-NEXT:    vlda.fill [p1, lf1, r25]
 ; ASM-NEXT:    vlda.pop ex9, [p1, lf1, r25]
 ; ASM-NEXT:    vlda.pop ex11, [p1, lf1, r25]
@@ -162,7 +162,7 @@ define dso_local void @gemm_mx9(ptr noalias %matA, ptr noalias %matB, ptr noalia
 ; ASM-NEXT:  .LBB0_1: // %steady.stage1.top
 ; ASM-NEXT:    // =>This Loop Header: Depth=1
 ; ASM-NEXT:    // Child Loop BB0_2 Depth 2
-; ASM-NEXT:    vlda.pop ex10, [p1, lf1, r25]; nopb ; nopxm
+; ASM-NEXT:    vlda.pop ex10, [p1, lf1, r25]; nopb ; nops ; nopxm ; nopv
 ; ASM-NEXT:    padds [p1], m3; or r25, r3, r3
 ; ASM-NEXT:    vlda.fill [p1, lf1, r25]; vldb.fill [p0, lf0, r24]
 ; ASM-NEXT:    vlda.pop ex8, [p1, lf1, r25]; vldb.pop ex10, [p0, lf0, r24]
@@ -173,7 +173,7 @@ define dso_local void @gemm_mx9(ptr noalias %matA, ptr noalias %matB, ptr noalia
 ; ASM-NEXT:    vshuffle ex7, ex5, ex10, r6
 ; ASM-NEXT:    vldb.pop ex2, [p0, lf0, r24]; vshuffle ex5, ex5, ex10, r4
 ; ASM-NEXT:    vldb.fill [p0, lf0, r24]; vshuffle ex4, ex9, ex11, r4
-; ASM-NEXT:    vldb.pop ex2, [p0, lf0, r24]; or r8, r0, r0; vshuffle ex0, ex10, ex10, r2
+; ASM-NEXT:    vldb.pop ex2, [p0, lf0, r24]; vshuffle ex0, ex10, ex10, r2
 ; ASM-NEXT:    vlda.fill [p1, lf1, r25]; vldb.pop ex5, [p0, lf0, r24]; add.nc lc, r1, #-2; vshuffle ex6, ex9, ex11, r6
 ; ASM-NEXT:    vlda.pop ex9, [p1, lf1, r25]; vldb.pop ex10, [p0, lf0, r24]; add.nc ls, pc, #.LBB0_2; vshuffle ex2, ex2, ex2, r2; vmac.f dm7, dm7, ex0, ey2, ey3, r8
 ; ASM-NEXT:    vlda.pop ex11, [p1, lf1, r25]; vldb.pop.3d ex6, [p0, lf0, r24, d0]; add.nc le, pc, #.L_LEnd1; vshuffle ex3, ex11, ex1, r6
@@ -199,9 +199,9 @@ define dso_local void @gemm_mx9(ptr noalias %matA, ptr noalias %matB, ptr noalia
 ; ASM-NEXT:    vlda.pop ex11, [p1, lf1, r25]; vldb.pop.3d ex6, [p0, lf0, r24, d0]; nops ; nopx ; vshuffle ex3, ex11, ex1, r6; nopv
 ; ASM-NEXT:  // %bb.3: // %steady.stage1.bottom.and.stage0.top
 ; ASM-NEXT:    // in Loop: Header=BB0_1 Depth=1
-; ASM-NEXT:    vlda.pop ex5, [p1, lf1, r25]; add r16, r16, #-1; vshuffle ex9, ex9, ex9, r2; vmac.f dm6, dm6, ex2, ey2, ey3, r8
-; ASM-NEXT:    vlda.pop ex10, [p1, lf1, r25]; eq r20, r16, r18; vshuffle ex1, ex11, ex1, r4
-; ASM-NEXT:    padds [p1], m3; or r25, r3, r3; vshuffle ex11, ex2, ex2, r2; vmac.f dm5, dm5, ex9, ey2, ey3, r8
+; ASM-NEXT:    vlda.pop ex5, [p1, lf1, r25]; nopb ; nops ; add r16, r16, #-1; vshuffle ex9, ex9, ex9, r2; vmac.f dm6, dm6, ex2, ey2, ey3, r8
+; ASM-NEXT:    vlda.pop ex10, [p1, lf1, r25]; nopb ; nops ; eq r20, r16, r18; vshuffle ex1, ex11, ex1, r4; nopv
+; ASM-NEXT:    nopa ; nopb ; padds [p1], m3; or r25, r3, r3; vshuffle ex11, ex2, ex2, r2; vmac.f dm5, dm5, ex9, ey2, ey3, r8
 ; ASM-NEXT:    vlda.fill [p1, lf1, r25]; vldb.fill [p0, lf0, r24]; vshuffle ex0, ex8, ex10, r4
 ; ASM-NEXT:    vlda.pop ex8, [p1, lf1, r25]; vldb.pop ex10, [p0, lf0, r24]; vshuffle ex4, ex2, ex2, r2; vmac.f dm4, dm4, ex11, ey2, ey3, r8
 ; ASM-NEXT:    vlda.pop ex10, [p1, lf1, r25]; vshuffle ex2, ex8, ex10, r6
@@ -229,7 +229,7 @@ define dso_local void @gemm_mx9(ptr noalias %matA, ptr noalias %matB, ptr noalia
 ; ASM-NEXT:    vlda bmhh2, [p3, #192]; vst bmlh6, [p4, #64]
 ; ASM-NEXT:    vlda bmhl2, [p3, #128]; vst bmll6, [p4], m2; vmac.f dm0, dm0, ex6, ey0, ey1, r8
 ; ASM-NEXT:    vlda bmlh2, [p3, #64]; vst bmhh3, [p5, #192]; movx r8, #972
-; ASM-NEXT:    vlda bmll2, [p3], m2; vst bmhl3, [p5, #128]
+; ASM-NEXT:    vlda bmll2, [p3], m2; vst bmhl3, [p5, #128]; mov r8, r0
 ; ASM-NEXT:    vlda bmhh5, [p2, #192]; vst bmlh3, [p5, #64]
 ; ASM-NEXT:    vlda bmhl5, [p2, #128]; vst bmll3, [p5], m2
 ; ASM-NEXT:    vlda bmlh5, [p2, #64]; vst bmhh2, [p5, #192]
@@ -265,7 +265,7 @@ define dso_local void @gemm_mx9(ptr noalias %matA, ptr noalias %matB, ptr noalia
 ; ASM-NEXT:    vldb.pop ex2, [p0, lf0, r24]; vshuffle ex5, ex5, ex10, r4
 ; ASM-NEXT:    vldb.fill [p0, lf0, r24]; vshuffle ex4, ex9, ex11, r4
 ; ASM-NEXT:    vldb.pop ex2, [p0, lf0, r24]; vshuffle ex0, ex10, ex10, r2
-; ASM-NEXT:    vlda.fill [p1, lf1, r25]; vldb.pop ex5, [p0, lf0, r24]; or r8, r0, r0; vshuffle ex6, ex9, ex11, r6
+; ASM-NEXT:    vlda.fill [p1, lf1, r25]; vldb.pop ex5, [p0, lf0, r24]; vshuffle ex6, ex9, ex11, r6
 ; ASM-NEXT:    vlda.pop ex9, [p1, lf1, r25]; vldb.pop ex10, [p0, lf0, r24]; add.nc ls, pc, #.LBB0_5; vshuffle ex2, ex2, ex2, r2; vmac.f dm7, dm7, ex0, ey2, ey3, r8
 ; ASM-NEXT:    vlda.pop ex11, [p1, lf1, r25]; vldb.pop.3d ex6, [p0, lf0, r24, d0]; add.nc le, pc, #.L_LEnd0; vshuffle ex3, ex11, ex1, r6
 ; ASM-NEXT:  .LBB0_5: // %lastiter.stage1.inner.for.body27

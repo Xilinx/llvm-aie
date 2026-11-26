@@ -2340,7 +2340,7 @@ bits<5> src;
 let mv = {dst, dontcare{1}, src, 0b1011001111};
 }
 
-let Itinerary = II_MOV_alu_mv_mv_mv_scl, ItineraryRegPairs = [
+let Itinerary = II_MOV_alu_mv_mv_mv_scl, isMoveReg = 1, ItineraryRegPairs = [
 ItinRegClassPair<II_MOV_alu_mv_mv_mv_scl_eDJ_mLEm, [OperandRegClass<0, eDJ>, OperandRegClass<1, mLEm>]>,
 ItinRegClassPair<II_MOV_alu_mv_mv_mv_scl_mLRm_mLEm, [OperandRegClass<0, mLRm>, OperandRegClass<1, mLEm>]>,
 ItinRegClassPair<II_MOV_alu_mv_mv_mv_scl_eDC_mLEm, [OperandRegClass<0, eDC>, OperandRegClass<1, mLEm>]>,

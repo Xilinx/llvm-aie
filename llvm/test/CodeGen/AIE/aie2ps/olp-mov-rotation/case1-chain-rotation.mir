@@ -1,0 +1,111 @@
+# RUN: llc -mtriple=aie2ps -run-pass=aie-olp-mov-rotation \
+# RUN:     -verify-machineinstrs %s -o - | FileCheck %s
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# Positive: MOV chain ($r1 = MOV $r3; $r2 = MOV $r1) in both top blocks.
+# The first MOV rotates because $r3 is not referenced before it. Then
+# on the next iteration, $r2 = MOV $r1 becomes the first instruction
+# and $r1 is no longer referenced before it, so it rotates too.
+# Both top blocks become MOV-free.
+
+# CHECK-LABEL: name: case1_chain_rotation
+#
+# Preheader gets both MOVs (chain order preserved):
+# CHECK:      bb.0.entry:
+# CHECK:        $r1 = MOV_OR_pseudo $r3
+# CHECK:        $r2 = MOV_OR_pseudo $r1
+# CHECK-NEXT:   PseudoJ_jump_imm %bb.1
+#
+# SteadyTop is now MOV-free:
+# CHECK:      bb.1.steady.top:
+# CHECK-NOT:    MOV_OR_pseudo
+# CHECK:      bb.2.steady.inner:
+#
+# SteadyBottom gets both MOVs before the branch:
+# CHECK:      bb.3.steady.bottom:
+# CHECK:        $r1 = MOV_OR_pseudo $r3
+# CHECK:        $r2 = MOV_OR_pseudo $r1
+# CHECK-NEXT:   PseudoJNZ $r0, %bb.1
+#
+# PeeledTop is now MOV-free:
+# CHECK:      bb.4.peeled.top:
+# CHECK-NOT:    MOV_OR_pseudo
+# CHECK:      bb.5.peeled.inner:
+
+--- |
+  define void @case1_chain_rotation() {
+  entry:
+    br label %steady.top
+  steady.top:
+    br label %steady.inner
+  steady.inner:
+    br i1 undef, label %steady.inner, label %steady.bottom
+  steady.bottom:
+    br i1 undef, label %steady.top, label %peeled.top, !llvm.loop !0
+  peeled.top:
+    br label %peeled.inner
+  peeled.inner:
+    br i1 undef, label %peeled.inner, label %peeled.bottom
+  peeled.bottom:
+    ret void
+  }
+
+  !0 = distinct !{!0, !1}
+  !1 = !{!"llvm.loop.hint.aie_outerloop_pipeliner_success", i64 1}
+...
+---
+name:            case1_chain_rotation
+tracksRegLiveness: true
+noPhis:          true
+isSSA:           false
+noVRegs:         true
+body:             |
+  bb.0.entry:
+    successors: %bb.1
+    liveins: $r0, $r3
+
+    PseudoJ_jump_imm %bb.1
+
+  bb.1.steady.top:
+    successors: %bb.2
+    liveins: $r0, $r3
+
+    $r1 = MOV_OR_pseudo $r3
+    $r2 = MOV_OR_pseudo $r1
+
+  bb.2.steady.inner:
+    successors: %bb.2, %bb.3
+    liveins: $r0, $r2
+
+    NOP
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2
+
+  bb.3.steady.bottom:
+    successors: %bb.1, %bb.4
+    liveins: $r0, $r3
+
+    PseudoJNZ $r0, %bb.1
+
+  bb.4.peeled.top:
+    successors: %bb.5
+    liveins: $r0, $r3
+
+    $r1 = MOV_OR_pseudo $r3
+    $r2 = MOV_OR_pseudo $r1
+
+  bb.5.peeled.inner:
+    successors: %bb.5, %bb.6
+    liveins: $r0, $r2
+
+    NOP
+    PseudoLoopEnd <mcsymbol .L_LEnd1>, %bb.5
+
+  bb.6.peeled.bottom:
+
+    PseudoRET implicit $lr
+...
