@@ -641,6 +641,10 @@ public:
     auto It = CloneMap.find(V);
     return It != CloneMap.end() ? static_cast<Value *>(It->second) : V;
   }
+  // Clone of instruction I in this LS, where that clone is an instruction.
+  Instruction *cloneInst(Instruction *I) const {
+    return cast<Instruction>(cloneOf(I));
+  }
   // Clone of block BB in this LS. BB must have been cloned into this LS.
   BasicBlock *clonedBlock(BasicBlock *BB) const {
     return cast<BasicBlock>(cloneOf(BB));
@@ -1724,7 +1728,7 @@ void AIEOuterLoopPipeliner::createPipelinedPHIs(const OrigLoopStructure &OrigLS,
   SmallVector<Instruction *, 16> SteadyClones;
   SmallVector<PHINode *, 4> AggregatePHIs;
   for (Instruction *OrigI : OrigLS.stage0Insts()) {
-    Instruction *I = cast<Instruction>(SteadyLS.cloneOf(OrigI));
+    Instruction *I = SteadyLS.cloneInst(OrigI);
     SteadyClones.push_back(I);
     // Void-typed instructions produce no value to merge; each path runs its
     // own clone.
@@ -2772,7 +2776,7 @@ void AIEOuterLoopPipeliner::peelFirstIteration(
     if (OrigI.isTerminator() || isa<PHINode>(&OrigI))
       continue;
     if (OrigLS.isInStage1(&OrigI))
-      ToErase.push_back(cast<Instruction>(FirstIterLS.cloneOf(&OrigI)));
+      ToErase.push_back(FirstIterLS.cloneInst(&OrigI));
   }
   eraseStage1Clones(ToErase);
 
@@ -2857,7 +2861,7 @@ void AIEOuterLoopPipeliner::cloneStage1IntoTop(
   // dead — their role is taken by the clones in the steady top.
   SmallVector<Instruction *, 16> SteadyBottomStage1;
   for (Instruction *OrigI : OrigLS.stage1Insts())
-    SteadyBottomStage1.push_back(cast<Instruction>(SteadyLS.cloneOf(OrigI)));
+    SteadyBottomStage1.push_back(SteadyLS.cloneInst(OrigI));
   eraseStage1Clones(SteadyBottomStage1);
 
   LLVM_DEBUG(dbgs() << "    Erased stage-1 clones from steady bottom\n");
