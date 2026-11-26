@@ -433,10 +433,11 @@ bool AIEOLPMovRotation::runOnMachineFunction(MachineFunction &MF) {
         SteadyTop, PeeledTop, Preheader, SteadyBottom};
 
     // Iterate to a fixpoint so that MOV chains (e.g.
-    //   $r1 = MOV $r3; $r2 = MOV $r1) can rotate as a whole. The first
-    // MOV rotates out, then on the next iteration the second MOV's SrcReg
-    // is no longer referenced before it and becomes rotatable. A limit of
-    // 16 prevents pathological cases.
+    //   $r1 = MOV $r3; $r2 = MOV $r1) can rotate as a whole.  Each
+    // iteration rotates one MOV and recomputes live-ins; the next
+    // iteration exposes the successor in the chain.  In practice
+    // register-allocation chains are 2-3 MOVs long; 16 is a safety
+    // bound to guarantee termination.
     static constexpr unsigned MaxIterations = 16;
     bool LocalChanged = false;
 
