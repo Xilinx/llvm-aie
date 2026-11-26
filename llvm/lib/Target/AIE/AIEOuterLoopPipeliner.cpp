@@ -518,6 +518,17 @@ class OrigLoopStructure : public LoopStructure {
                              const SmallPtrSetImpl<Instruction *> &Stage0Set,
                              SmallPtrSetImpl<Instruction *> &ToPromote) const;
 
+  // Peel-first: the bottom-block instructions that stay in stage-0, the values
+  // the next iteration needs and everything they are computed from.
+  SmallPtrSet<Instruction *, 32> computeStage0Pinned() const;
+
+  // Peel-first: the stage-1 set, grown from the users of the inner-loop
+  // results outside Stage0Pinned. Sets IsClosed to false if it reaches a
+  // bottom-block instruction that cannot move.
+  SmallPtrSet<Instruction *, 32>
+  growStage1Set(const SmallPtrSetImpl<Instruction *> &Stage0Pinned,
+                bool &IsClosed) const;
+
 public:
   // Peel-first: partition the bottom-block pipeline candidates into stage-1
   // (the consumers of the inner-loop results, deferred to the next iteration)
@@ -1379,7 +1390,7 @@ void OrigLoopStructure::collectLeanStage0(const AIEOLPTargetConfig &Config) {
                 /*PopulateStage1=*/true);
 }
 
-void OrigLoopStructure::collectFirstIterStages() {
+SmallPtrSet<Instruction *, 32> OrigLoopStructure::computeStage0Pinned() const {
   // Values the next iteration needs from this bottom block stay in stage-0
   // with everything they are computed from: the header PHIs' back-edge values
   // and the latch counter and compare. Stage-1 reads them through its input
@@ -1396,9 +1407,12 @@ void OrigLoopStructure::collectFirstIterStages() {
         cast_or_null<Instruction>(Bound.LoopDecInReg)})
     if (I && isInBottom(I))
       Stage0Roots.push_back(I);
-  const SmallPtrSet<Instruction *, 32> Stage0Pinned = collectClosure(
-      Stage0Roots, /*TraverseUsers=*/false, /*IncludeBottom=*/true);
+  return collectClosure(Stage0Roots, /*TraverseUsers=*/false,
+                        /*IncludeBottom=*/true);
+}
 
+SmallPtrSet<Instruction *, 32> OrigLoopStructure::growStage1Set(
+    const SmallPtrSetImpl<Instruction *> &Stage0Pinned, bool &IsClosed) const {
   // Stage-1 starts from the bottom-block instructions computed from the
   // inner-loop results (LCSSA PHIs), possibly through stage-0 values, and is
   // closed under bottom-block users and operands outside stage-0: the stores,
@@ -1420,7 +1434,7 @@ void OrigLoopStructure::collectFirstIterStages() {
   }
 
   SmallPtrSet<Instruction *, 32> Stage1Set;
-  bool IsClosed = true;
+  IsClosed = true;
   auto Enqueue = [&](Value *V) {
     auto *I = dyn_cast<Instruction>(V);
     if (!I || !isInBottom(I) || isa<PHINode>(I) || Stage0Pinned.contains(I))
@@ -1441,6 +1455,14 @@ void OrigLoopStructure::collectFirstIterStages() {
     for (Value *Op : I->operands())
       Enqueue(Op);
   }
+  return Stage1Set;
+}
+
+void OrigLoopStructure::collectFirstIterStages() {
+  const SmallPtrSet<Instruction *, 32> Stage0Pinned = computeStage0Pinned();
+  bool IsClosed = true;
+  const SmallPtrSet<Instruction *, 32> Stage1Set =
+      growStage1Set(Stage0Pinned, IsClosed);
   if (!IsClosed) {
     LLVM_DEBUG(dbgs() << "    Peel-first: stage-1 reaches a bottom-block "
                          "instruction that cannot move\n");
