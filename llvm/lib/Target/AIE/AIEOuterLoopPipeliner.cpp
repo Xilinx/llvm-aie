@@ -1769,6 +1769,19 @@ static void eraseClones(ArrayRef<Instruction *> Clones,
       I->eraseFromParent();
 }
 
+// Create a PHI before InsertPt that merges EntryVal, incoming from EntryBB, and
+// BackVal, incoming from the back edge BackBB.
+static PHINode *createMergePHI(Type *Ty, const Twine &Name,
+                               BasicBlock::iterator InsertPt, Value *EntryVal,
+                               BasicBlock *EntryBB, Value *BackVal,
+                               BasicBlock *BackBB) {
+  PHINode *PHI = PHINode::Create(Ty, 2, Name);
+  PHI->insertBefore(InsertPt);
+  PHI->addIncoming(EntryVal, EntryBB);
+  PHI->addIncoming(BackVal, BackBB);
+  return PHI;
+}
+
 void AIEOuterLoopPipeliner::createPipelinedPHIs(const OrigLoopStructure &OrigLS,
                                                 CloneLoopStructure &SteadyLS,
                                                 const RemapTable &PreheaderVMap,
@@ -1794,10 +1807,9 @@ void AIEOuterLoopPipeliner::createPipelinedPHIs(const OrigLoopStructure &OrigLS,
     assert(
         PreheaderIt != PreheaderVMap.end() && BottomIt != BottomVMap.end() &&
         "Stage-0 instruction must be in both the preheader and bottom VMaps");
-    PHINode *PHI = PHINode::Create(I->getType(), 2, I->getName() + ".phi");
-    PHI->insertBefore(InsertPt->getIterator());
-    PHI->addIncoming(PreheaderIt->second, Preheader);
-    PHI->addIncoming(BottomIt->second, SteadyLS.getBottom());
+    PHINode *PHI = createMergePHI(
+        I->getType(), I->getName() + ".phi", InsertPt->getIterator(),
+        PreheaderIt->second, Preheader, BottomIt->second, SteadyLS.getBottom());
 
     // The inner-loop and intra-top uses now read the merge PHI; the preheader /
     // bottom clones keep using their own mapped values.
@@ -1823,16 +1835,17 @@ void AIEOuterLoopPipeliner::createPipelinedPHIs(const OrigLoopStructure &OrigLS,
       auto *EV = dyn_cast<ExtractValueInst>(U);
       if (!EV)
         continue;
-      PHINode *FieldPHI =
-          PHINode::Create(EV->getType(), 2, EV->getName() + ".phi");
-      FieldPHI->insertBefore(PHI->getParent()->getFirstNonPHIIt());
-      for (BasicBlock *Pred : {Preheader, SteadyLS.getBottom()}) {
-        Value *Field = ExtractValueInst::Create(
+      auto ExtractOnEdge = [&](BasicBlock *Pred, StringRef Suffix) -> Value * {
+        return ExtractValueInst::Create(
             PHI->getIncomingValueForBlock(Pred), EV->getIndices(),
-            EV->getName() + (Pred == Preheader ? ".top" : ".bottom"),
-            Pred->getTerminator()->getIterator());
-        FieldPHI->addIncoming(Field, Pred);
-      }
+            EV->getName() + Suffix, Pred->getTerminator()->getIterator());
+      };
+      Value *TopField = ExtractOnEdge(Preheader, ".top");
+      Value *BottomField = ExtractOnEdge(SteadyLS.getBottom(), ".bottom");
+      PHINode *FieldPHI =
+          createMergePHI(EV->getType(), EV->getName() + ".phi",
+                         PHI->getParent()->getFirstNonPHIIt(), TopField,
+                         Preheader, BottomField, SteadyLS.getBottom());
       EV->replaceAllUsesWith(FieldPHI);
       EV->eraseFromParent();
     }
@@ -2902,12 +2915,11 @@ void AIEOuterLoopPipeliner::cloneStage1IntoTop(
   BasicBlock::iterator FirstNonPHI = SteadyTop->getFirstNonPHIIt();
   for (Instruction *Input : Stage1Inputs) {
     const bool IsInnerResult = isa<PHINode>(Input) && OrigLS.isInBottom(Input);
-    PHINode *PrevPHI = PHINode::Create(
-        Input->getType(), 2,
-        Input->getName() + (IsInnerResult ? ".inner.result.phi" : ".prev"));
-    PrevPHI->insertBefore(FirstNonPHI);
-    PrevPHI->addIncoming(FirstIterLS.cloneOf(Input), FirstIterBottom);
-    PrevPHI->addIncoming(SteadyLS.cloneOf(Input), SteadyBottom);
+    PHINode *PrevPHI = createMergePHI(
+        Input->getType(),
+        Input->getName() + (IsInnerResult ? ".inner.result.phi" : ".prev"),
+        FirstNonPHI, FirstIterLS.cloneOf(Input), FirstIterBottom,
+        SteadyLS.cloneOf(Input), SteadyBottom);
     TopVMap[Input] = PrevPHI;
     LLVM_DEBUG(dbgs() << "    Created stage-1 input PHI: " << *PrevPHI << "\n");
   }
