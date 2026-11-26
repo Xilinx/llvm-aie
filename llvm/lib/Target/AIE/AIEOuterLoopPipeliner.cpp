@@ -2392,8 +2392,9 @@ collectStage1Inputs(const OrigLoopStructure &OrigLS);
 // into the steady top, placing them ahead of the next iteration's loads. Peel
 // the first iteration as prologue and add a single-block epilogue for the last
 // steady iteration's deferred stores.
-bool AIEOuterLoopPipeliner::performPeelFirst(OrigLoopStructure &OrigLS,
-                                             const OLPOpts &Opts) {
+// Whether peel-first can handle the latch of OrigLS. Checked before the bottom
+// block is partitioned.
+static bool isPeelFirstLatchSupported(const OrigLoopStructure &OrigLS) {
   // A JNZD hardware-loop input keeps its trip count in start.loop.iterations,
   // which peeling lowers by one. Any other reader of the counter would see the
   // lowered count.
@@ -2403,7 +2404,12 @@ bool AIEOuterLoopPipeliner::performPeelFirst(OrigLoopStructure &OrigLS,
                          "users; skipping\n");
     return false;
   }
-  OrigLS.collectFirstIterStages();
+  return true;
+}
+
+// Whether peel-first applies to OrigLS, given the partitioning of its bottom
+// block by collectFirstIterStages.
+static bool isPeelFirstLegal(const OrigLoopStructure &OrigLS) {
   if (OrigLS.stage1Insts().empty()) {
     LLVM_DEBUG(dbgs() << "    Peel-first: no stage-1 instructions found; "
                          "skipping\n");
@@ -2415,6 +2421,7 @@ bool AIEOuterLoopPipeliner::performPeelFirst(OrigLoopStructure &OrigLS,
   // accesses memory nor has other side effects.
   // The latch control is exempt: a hardware-loop decrement is modeled as
   // touching memory but only counts the loop.
+  const LatchConditionInfo &Bound = OrigLS.latchCondition();
   const auto HasMemoryOrSideEffects = [&Bound](const Instruction *I) {
     return !Bound.isLatchControl(I) &&
            (I->mayReadOrWriteMemory() || I->mayHaveSideEffects());
@@ -2425,6 +2432,18 @@ bool AIEOuterLoopPipeliner::performPeelFirst(OrigLoopStructure &OrigLS,
                          "side effects; skipping\n");
     return false;
   }
+  return true;
+}
+
+bool AIEOuterLoopPipeliner::performPeelFirst(OrigLoopStructure &OrigLS,
+                                             const OLPOpts &Opts) {
+  if (!isPeelFirstLatchSupported(OrigLS))
+    return false;
+  OrigLS.collectFirstIterStages();
+  if (!isPeelFirstLegal(OrigLS))
+    return false;
+
+  const LatchConditionInfo &Bound = OrigLS.latchCondition();
 
   LLVM_DEBUG({
     for (StringRef Opt : Opts.PeelLastOnlyOverrides)
