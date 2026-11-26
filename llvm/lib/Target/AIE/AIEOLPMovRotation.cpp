@@ -9,21 +9,23 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// In Outer Loop Pipelined (OLP) code, the steady-state top and last-iteration
-// top blocks should be sibling blocks with identical instructions so the
-// post-machine scheduler's sibling loop optimizer can merge them. However,
-// Register allocation often introduces register MOV instructions (e.g. pointer
-// copies) in the top blocks that differ between steady and peeled, preventing
-// sibling matching.
+// In Outer Loop Pipelined (OLP) code the sibling loop optimizer merges
+// matching leading prologue bundles from SteadyTop and PeeledIterTop into
+// the epilogue (SteadyBottom).  Register allocation may introduce register
+// MOV instructions (e.g. pointer copies) in those top blocks.  Whether the
+// MOVs are identical (Case 1) or unique to SteadyTop (Case 2), they anchor
+// the prologue and prevent the sibling optimizer from merging bundles past
+// them.
 //
-// This pass rotates such MOV instructions from the top blocks into their
-// predecessor blocks:
+// This pass rotates such MOVs out of the top blocks into their predecessor
+// blocks, shortening the prologue so the sibling optimizer has more bundles
+// to merge:
 //   - From SteadyTop -> OuterPreheader (and/or SteadyBottom for backedge)
 //   - From PeeledIterTop -> SteadyBottom
 //
 // Two cases are handled:
-//   Case 1: Matched MOV pair in both top blocks -> rotate both out
-//   Case 2: MOV only in SteadyTop -> rotate to preheader, clone to bottom
+//   Case 1: Identical MOV in both top blocks -> rotate both out.
+//   Case 2: MOV only in SteadyTop -> rotate to preheader, clone to bottom.
 //
 // After rotation, live-ins are recalculated for all affected blocks.
 //
