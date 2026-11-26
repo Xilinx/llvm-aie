@@ -306,6 +306,32 @@ unsigned RegLiveRangeTracker::getSubRegIndex(MCRegister AccessReg,
   return ::getSubRegIdx(AccessReg, BaseReg, TRI);
 }
 
+PartSet RegLiveRangeTracker::getRegUnits(MCRegister Reg) const {
+  PartSet Units;
+  for (MCRegUnitIterator UI(Reg, TRI); UI.isValid(); ++UI)
+    Units.set(RegUnit(*UI));
+  return Units;
+}
+
+PartSet RegLiveRangeTracker::getRegUnits(MCRegister Reg,
+                                         LaneBitmask Lanes) const {
+  PartSet Units;
+  for (MCRegUnitMaskIterator UI(Reg, TRI); UI.isValid(); ++UI) {
+    const auto [Unit, UnitMask] = *UI;
+    if (UnitMask.none() || (UnitMask & Lanes).any())
+      Units.set(RegUnit(Unit));
+  }
+  return Units;
+}
+
+PartSet
+RegLiveRangeTracker::getLiveInUnits(const MachineBasicBlock &MBB) const {
+  PartSet Units;
+  for (const auto &LiveIn : MBB.liveins())
+    Units |= getRegUnits(LiveIn.PhysReg, LiveIn.LaneMask);
+  return Units;
+}
+
 bool RegLiveRangeTracker::overlapsAnyInSet(
     MCRegister Reg, const DenseSet<MCRegister> &RegSet) const {
   for (MCRegister R : RegSet) {
@@ -1705,7 +1731,7 @@ void RegLiveRange::fillAdmissibleRegUnits(
     PartSet &RegUnits = PhysRegUnits[Reg];
     if (RegUnits.empty())
       for (MCRegUnitIterator UI(Reg, TRI); UI.isValid(); ++UI)
-        RegUnits.set(static_cast<unsigned>(*UI));
+        RegUnits.set(RegUnit(*UI));
 
     // Admissible registers must not share register units. Lane-derived units
     // of a live range are only equivalent to the per-register lane-derived
