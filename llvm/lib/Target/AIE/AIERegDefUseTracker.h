@@ -304,6 +304,17 @@ class RegLiveRangeTracker {
   /// Returns 0 if AccessReg is not a sub-register of BaseReg
   unsigned getSubRegIndex(MCRegister AccessReg, MCRegister BaseReg) const;
 
+  /// Return the set of register units of \p Reg.
+  PartSet getRegUnits(MCRegister Reg) const;
+
+  /// Return the set of register units of \p Reg that are covered by \p Lanes.
+  /// Units without lane information are always included.
+  PartSet getRegUnits(MCRegister Reg, LaneBitmask Lanes) const;
+
+  /// Return the union of the register units covered by the live-in entries of
+  /// \p MBB, respecting their lane masks.
+  PartSet getLiveInUnits(const MachineBasicBlock &MBB) const;
+
   /// Check if a register overlaps with any register in a set
   bool overlapsAnyInSet(MCRegister Reg,
                         const DenseSet<MCRegister> &RegSet) const;
