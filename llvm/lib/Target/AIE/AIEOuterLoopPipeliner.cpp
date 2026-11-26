@@ -210,8 +210,6 @@ struct OLPOpts {
   bool EnableSpeculativeLastIteration;
   PipeliningMode Mode;
   OuterLoopType LoopType;
-  // Explicitly set options that only apply to peel-last mode.
-  SmallVector<StringRef, 3> PeelLastOnlyOverrides;
 
   explicit OLPOpts(const AIE::LoopOptionOverrides &Overrides)
       : Enabled(Overrides.get(EnableOuterLoopPipelining)),
@@ -220,12 +218,7 @@ struct OLPOpts {
         UseLeanStage0(Overrides.get(LeanStage0Mode)),
         EnableSpeculativeLastIteration(Overrides.get(SpeculativeLastIteration)),
         Mode(Overrides.get(PipeliningModeOpt)),
-        LoopType(Overrides.get(OuterLoopTypeOpt)) {
-    for (const cl::opt<bool> *Opt :
-         {&SplitStages, &SpeculativeLastIteration, &LeanStage0Mode})
-      if (Overrides.hasOverride(*Opt))
-        PeelLastOnlyOverrides.push_back(Opt->ArgStr);
-  }
+        LoopType(Overrides.get(OuterLoopTypeOpt)) {}
 
   /// Determine whether to use hardware loop based on loop type and pointer
   /// pressure. In auto mode, use hw loop if pointers < threshold.
@@ -2445,10 +2438,15 @@ bool AIEOuterLoopPipeliner::performPeelFirst(OrigLoopStructure &OrigLS,
 
   const LatchConditionInfo &Bound = OrigLS.latchCondition();
 
+  // Report the explicitly set options that only apply to peel-last mode.
   LLVM_DEBUG({
-    for (StringRef Opt : Opts.PeelLastOnlyOverrides)
-      dbgs() << "    Peel-first: ignoring -" << Opt
-             << ", which only applies to peel-last mode\n";
+    const AIE::LoopOptionOverrides Overrides(
+        OrigLS.getOuterLoop()->getLoopID());
+    for (const cl::opt<bool> *Opt :
+         {&SplitStages, &SpeculativeLastIteration, &LeanStage0Mode})
+      if (Overrides.hasOverride(*Opt))
+        dbgs() << "    Peel-first: ignoring -" << Opt->ArgStr
+               << ", which only applies to peel-last mode\n";
   });
 
   // Clone the LS into a steady-state copy and swap it into the original's
