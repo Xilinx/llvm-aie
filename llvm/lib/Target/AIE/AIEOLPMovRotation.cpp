@@ -226,27 +226,12 @@ static SmallVector<MachineInstr *, 4> collectMovInstrs(MachineBasicBlock &MBB) {
   return Movs;
 }
 
-/// Try to find a MOV in \p OtherMovs with the same opcode and identical
-/// operands as \p MI.
+/// Try to find a MOV in \p OtherMovs that is identical to \p MI
+/// (same opcode and operands).
 static MachineInstr *findMatchingMov(const MachineInstr &MI,
                                      ArrayRef<MachineInstr *> OtherMovs) {
   for (MachineInstr *Other : OtherMovs) {
-    if (!Other)
-      continue;
-    if (Other->getOpcode() != MI.getOpcode())
-      continue;
-    if (Other->getNumOperands() != MI.getNumOperands())
-      continue;
-    bool Match = true;
-    for (unsigned I = 0, E = MI.getNumOperands(); I != E; ++I) {
-      const MachineOperand &A = MI.getOperand(I);
-      const MachineOperand &B = Other->getOperand(I);
-      if (!A.isIdenticalTo(B)) {
-        Match = false;
-        break;
-      }
-    }
-    if (Match)
+    if (Other->isIdenticalTo(MI))
       return Other;
   }
   return nullptr;
