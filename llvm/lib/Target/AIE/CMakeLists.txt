@@ -205,6 +205,7 @@ add_llvm_target(AIECodeGen
    AIEInnerLoopPointerOptimizer.cpp
    AIEOuterLoopPointerOptimizer.cpp
    AIEOLPMovRotation.cpp
+   AIEOLPWARSolver.cpp
    AIEOuterLoopPipeliner.cpp
    AIEOutlineMemoryGEP.cpp
    AIESiblingLoopVRegMerger.cpp

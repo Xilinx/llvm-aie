@@ -20,6 +20,7 @@
 #include "AIEMachineScheduler.h"
 #include "AIEMaxLatencyFinder.h"
 #include "AIEMultiSlotInstrMaterializer.h"
+#include "AIEOLPWARSolver.h"
 #include "AIERegDefUseTracker.h"
 #include "AIESiblingLoopOptimizer.h"
 #include "Utils/AIELoopOptionOverrides.h"
@@ -775,6 +776,12 @@ bool InterBlockScheduling::leaveBlock() {
       if (Blocks.count(SuccBB))
         updatePerSuccEdges(BS.TheBlock, /*For=*/SuccBB);
     }
+    // Renaming in the epilogue changes the dependences on the loop exit edge,
+    // which no one has used since the refresh above.
+    const TargetRegisterInfo &TRI =
+        *BS.TheBlock->getParent()->getSubtarget().getRegisterInfo();
+    if (MachineBasicBlock *ExitMBB = OLPWARSolver(*this, TRI).run(BS))
+      updatePerSuccEdges(BS.TheBlock, /*For=*/ExitMBB);
     break;
   }
   case SchedulingStage::SchedulingDone:

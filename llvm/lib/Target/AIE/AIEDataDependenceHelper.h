@@ -398,6 +398,11 @@ public:
   /// PreFree.End and still before the CFG boundary. These carry PreDepth.
   bool isFixedPreBoundaryNode(const SUnit *SU) const;
 
+  /// True when SU is a TopFixed post-boundary node: at or after the CFG
+  /// boundary and before PostFree.Begin. These are the successor's epilogue
+  /// clones and carry PostDepth.
+  bool isFixedPostBoundaryNode(const SUnit *SU) const;
+
   /// True when SU lies outside the free range of its side.
   bool isFixedNode(const SUnit &SU) const override;
 
