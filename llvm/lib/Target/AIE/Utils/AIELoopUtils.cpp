@@ -444,7 +444,7 @@ OuterLoopStructure::tryBuildFrom(MachineBasicBlock &OuterLatch) {
   return OLS;
 }
 
-bool OuterLoopStructure::isSafeForSiblingMerge() const {
+bool OuterLoopStructure::isSafeToRotate() const {
   // Sibling merge requires a peeled iteration region.
   if (!hasPeeledIterRegion())
     return false;

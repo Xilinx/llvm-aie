@@ -405,7 +405,7 @@ bool AIEOLPMovRotation::runOnMachineFunction(MachineFunction &MF) {
     // can actually run.  Check its structural preconditions first (layout
     // order, predecessor/successor shapes), then verify the inner loops
     // have matching instruction structure.
-    if (!OLS->isSafeForSiblingMerge()) {
+    if (!OLS->isSafeToRotate()) {
       LLVM_DEBUG(dbgs() << "AIEOLPMovRotation: Skipping BB#" << MBB.getNumber()
                         << " -- OLP structure not safe for sibling merge\n");
       continue;
