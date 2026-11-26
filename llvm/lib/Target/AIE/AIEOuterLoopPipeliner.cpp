@@ -505,6 +505,16 @@ class OrigLoopStructure : public LoopStructure {
   void seedFromLoads(SmallVectorImpl<Instruction *> &Seeds,
                      const AIEOLPTargetConfig &Config);
 
+  // Append the pipeline candidates of Region to the stage lists in program
+  // order: to Stage1Insts if IsStage1 holds, otherwise to Stage0Insts. Stage-1
+  // candidates are dropped unless PopulateStage1. IncludeBottom is passed to
+  // isPipelineCandidate.
+  void
+  appendStagesInProgramOrder(const BlockRegion &Region,
+                             function_ref<bool(const Instruction *)> IsStage1,
+                             bool IncludeBottom = false,
+                             bool PopulateStage1 = true);
+
   // Unified stage-0 collection via backward closure from seeds.
   // PopulateStage1 controls whether remaining candidates go to Stage1Insts.
   void collectStage0(
@@ -1224,6 +1234,19 @@ void OrigLoopStructure::seedFromLoads(SmallVectorImpl<Instruction *> &Seeds,
   });
 }
 
+void OrigLoopStructure::appendStagesInProgramOrder(
+    const BlockRegion &Region, function_ref<bool(const Instruction *)> IsStage1,
+    bool IncludeBottom, bool PopulateStage1) {
+  Region.forEachInstruction([&](Instruction *I) {
+    if (!isPipelineCandidate(I, IncludeBottom))
+      return;
+    if (!IsStage1(I))
+      Stage0Insts.push_back(I);
+    else if (PopulateStage1)
+      Stage1Insts.push_back(I);
+  });
+}
+
 void OrigLoopStructure::collectStage0(
     function_ref<void(SmallVectorImpl<Instruction *> &)> SeedCollector,
     bool PopulateStage1) {
@@ -1234,14 +1257,9 @@ void OrigLoopStructure::collectStage0(
       collectClosure(Seeds, /*TraverseUsers=*/false);
 
   // Emit stage-0 and (optionally) stage-1 candidates in region program order.
-  topRegion().forEachInstruction([&](Instruction *I) {
-    if (!isPipelineCandidate(I))
-      return;
-    if (Stage0Set.count(I))
-      Stage0Insts.push_back(I);
-    else if (PopulateStage1)
-      Stage1Insts.push_back(I);
-  });
+  appendStagesInProgramOrder(
+      topRegion(), [&](const Instruction *I) { return !Stage0Set.count(I); },
+      /*IncludeBottom=*/false, PopulateStage1);
 
   LLVM_DEBUG(dbgs() << "    Stages: " << stage0Insts().size() << " stage-0, "
                     << stage1Insts().size() << " stage-1 instructions\n");
@@ -1334,22 +1352,12 @@ void OrigLoopStructure::collectDerivedPointerUpdates(
     return;
 
   // Move promoted instructions from Stage1Insts to Stage0Insts, preserving
-  // program order.
-  SmallVector<Instruction *, 16> NewStage0Insts;
-  SmallVector<Instruction *, 16> NewStage1Insts;
-
-  // We need to rebuild both lists in program order.
-  topRegion().forEachInstruction([&](Instruction *I) {
-    if (!isPipelineCandidate(I))
-      return;
-    if (Stage0Set.count(I) || ToPromote.count(I))
-      NewStage0Insts.push_back(I);
-    else
-      NewStage1Insts.push_back(I);
+  // program order: rebuild both lists.
+  Stage0Insts.clear();
+  Stage1Insts.clear();
+  appendStagesInProgramOrder(topRegion(), [&](const Instruction *I) {
+    return !Stage0Set.count(I) && !ToPromote.count(I);
   });
-
-  Stage0Insts = std::move(NewStage0Insts);
-  Stage1Insts = std::move(NewStage1Insts);
 
   LLVM_DEBUG(dbgs() << "    After collectDerivedPointerUpdates: "
                     << stage0Insts().size() << " stage-0, "
@@ -1378,11 +1386,8 @@ void OrigLoopStructure::collectStages(
   }
 
   // Stage 0 is every other pipeline candidate (the load/address chain).
-  topRegion().forEachInstruction([&](Instruction *I) {
-    if (!isPipelineCandidate(I))
-      return;
-    (Stage1Set.count(I) ? Stage1Insts : Stage0Insts).push_back(I);
-  });
+  appendStagesInProgramOrder(
+      topRegion(), [&](const Instruction *I) { return Stage1Set.count(I); });
 
   LLVM_DEBUG(dbgs() << "    Stages: " << stage0Insts().size() << " stage-0, "
                     << stage1Insts().size() << " stage-1 instructions\n");
@@ -1476,11 +1481,10 @@ void OrigLoopStructure::collectFirstIterStages() {
   // (ptr-updates, stationary) candidates from the bottom region in program
   // order. As in peel-last, stage-0 is the part of an iteration that runs
   // first and stage-1 the part that runs later.
-  bottomRegion().forEachInstruction([&](Instruction *I) {
-    if (!isPipelineCandidate(I, /*IncludeBottom=*/true))
-      return;
-    (Stage1Set.contains(I) ? Stage1Insts : Stage0Insts).push_back(I);
-  });
+  appendStagesInProgramOrder(
+      bottomRegion(),
+      [&](const Instruction *I) { return Stage1Set.contains(I); },
+      /*IncludeBottom=*/true);
   Stage1Lookup.insert(Stage1Insts.begin(), Stage1Insts.end());
 
   LLVM_DEBUG({
