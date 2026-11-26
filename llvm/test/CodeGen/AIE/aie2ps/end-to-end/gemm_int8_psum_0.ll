@@ -172,13 +172,13 @@ define dso_local void @gemm_int8_psum_0(
 ; CHECK-NEXT:    vlda bmhl5, [p4], #64; vldb.3d x8, [p0], d0; vshuffle x9, x7, x7, r6; vmac dm3, dm3, x8, x5, r8
 ; CHECK-NEXT:    vlda bmhh5, [p4], #64; mov srssign0, r16; vmac dm2, dm2, x6, x5, r8
 ; CHECK-NEXT:    vlda bmll6, [p4], #64; vsel.32 x4, x4, x10, r17; vmac dm1, dm1, x8, x9, r8
-; CHECK-NEXT:    vlda bmlh6, [p4], #64; vshuffle x10, x3, x3, r20; vmac dm0, dm0, x6, x9, r8
+; CHECK-NEXT:    vlda bmlh6, [p4], #64; vshuffle x10, x3, x3, r20; vmac dm7, dm0, x6, x9, r8
 ; CHECK-NEXT:    vlda bmhl6, [p4], #64; jnzd r30, r30, p5; vsel.32 x2, x2, x1, r17; vmov.d dm3, dm4
 ; CHECK-NEXT:    vlda bmhh6, [p4], #64; vshuffle x1, x5, x5, r24; vmov.d dm2, dm5 // Delay Slot 5
 ; CHECK-NEXT:    vlda bmll0, [p4], #64; vst.srs.4x dm3, s0, srssign0, [p2], #64; vshuffle x10, x10, x10, r22 // Delay Slot 4
 ; CHECK-NEXT:    vlda bmlh0, [p4], #64; vst.srs.4x dm2, s0, srssign0, [p2], m5; vshuffle x1, x1, x1, r26 // Delay Slot 3
 ; CHECK-NEXT:    vlda bmhl0, [p4], #64; vst.srs.4x dm1, s0, srssign0, [p2], #64 // Delay Slot 2
-; CHECK-NEXT:    vlda bmhh0, [p4], #64; vst.2d.srs.4x dm0, s0, srssign0, [p2], d2; movx srssign0, #0; vmov.d dm1, dm6 // Delay Slot 1
+; CHECK-NEXT:    vlda bmhh0, [p4], #64; vst.2d.srs.4x dm7, s0, srssign0, [p2], d2; movx srssign0, #0; vmov.d dm1, dm6 // Delay Slot 1
 ; CHECK-NEXT:  // %bb.4: // %lastiter.stage1.top
 ; CHECK-NEXT:    vldb x1, [p1], m4; vmul dm4, x0, x4, r12
 ; CHECK-NEXT:    vlda.3d x10, [p1], d1

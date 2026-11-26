@@ -20,6 +20,7 @@
 #include "AIEMachineScheduler.h"
 #include "AIEMaxLatencyFinder.h"
 #include "AIEMultiSlotInstrMaterializer.h"
+#include "AIEOLPWARSolver.h"
 #include "AIERegDefUseTracker.h"
 #include "AIESiblingLoopOptimizer.h"
 #include "Utils/AIELoopOptionOverrides.h"
@@ -565,6 +566,22 @@ void InterBlockScheduling::enterBlock(MachineBasicBlock *BB) {
   // blocks, in particular the pipeliner's prologue and epilogue.
   emitInterBlockTop(*CurrentBlockState);
   emitInterBlockBottom(*CurrentBlockState);
+
+  // Resolve WAR register dependencies in OLP SteadyBottom blocks before
+  // scheduling, so the scheduler can take advantage of broken WAR deps.
+  // The solver checks internally whether this block is a SteadyBottom.
+  {
+    const auto *RegInfo = BB->getParent()->getSubtarget().getRegisterInfo();
+    OLPWARSolver WARSolver(*this, *TII, *RegInfo);
+
+    if (WARSolver.tryResolve(*CurrentBlockState)) {
+      // Rebuild predecessor edges to reflect renamed registers
+      for (MachineBasicBlock *PredBB : BB->predecessors()) {
+        if (Blocks.count(PredBB))
+          updatePerSuccEdges(PredBB, /*For=*/BB);
+      }
+    }
+  }
 
   // PipeliningDone already refreshed pred->loop and loop->succ. Rebuild this
   // block's outgoing edges only when TopInsert must appear on them (epilogue

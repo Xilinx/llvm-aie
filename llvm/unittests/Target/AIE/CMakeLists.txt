@@ -36,6 +36,7 @@ add_llvm_target_unittest(AIETests
   BundleTest.cpp
   BlockStateInsertMapsTest.cpp
   HazardRecognizerTest.cpp
+  OLPWARSolverTest.cpp
   InterBlockEdgesTest.cpp
   StaticBitSetTest.cpp
   SlotCountsTest.cpp
