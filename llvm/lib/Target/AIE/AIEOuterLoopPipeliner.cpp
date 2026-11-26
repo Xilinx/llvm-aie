@@ -589,12 +589,30 @@ public:
 
 // Which copy of the loop a CloneLoopStructure is; selects its block names.
 enum class CloneRole {
-  PeelLastSteady,  // <name>.stage1.top / stage1.inner.* /
-                   // stage1.bottom.and.stage0.top
-  PeelFirstSteady, // <name>.stage1.bottom.and.stage0.top / stage0.inner.* /
-                   // stage0.bottom
-  FirstIteration,  // <name>.stage0.top / stage0.inner.* / stage0.bottom
+  PeelLastSteady,  // The steady loop of peel-last mode.
+  PeelFirstSteady, // The steady loop of peel-first mode.
+  FirstIteration,  // The peeled first iteration of peel-first mode.
 };
+
+// Block name suffixes of a clone, after <name>.: the stage each position
+// holds. A peel-last steady bottom also prefetches the next iteration's
+// stage-0; a peel-first steady top also runs the previous iteration's deferred
+// stage-1. The inner suffix is followed by the original inner block's name.
+struct CloneRoleNames {
+  StringRef Top, Inner, Bottom;
+};
+
+static CloneRoleNames roleNames(CloneRole Role) {
+  switch (Role) {
+  case CloneRole::PeelLastSteady:
+    return {"stage1.top", "stage1.inner.", "stage1.bottom.and.stage0.top"};
+  case CloneRole::PeelFirstSteady:
+    return {"stage1.bottom.and.stage0.top", "stage0.inner.", "stage0.bottom"};
+  case CloneRole::FirstIteration:
+    return {"stage0.top", "stage0.inner.", "stage0.bottom"};
+  }
+  llvm_unreachable("Unknown CloneRole");
+}
 
 // A steady-state or last-iteration clone. Owns its source->clone CloneMap and a
 // stored outer preheader.
@@ -1558,34 +1576,11 @@ CloneLoopStructure::CloneLoopStructure(const LoopStructure &Src,
   // until remapBoundThroughCloneMap retargets them to this clone.
   OuterLoopCondition = Src.latchCondition();
 
-  // Compute block names based on pipelining mode. Peel-last and peel-first
-  // use different naming to reflect which stage occupies each position.
-  // The block of each stage that a position holds. A peel-last steady bottom
-  // also prefetches the next iteration's stage-0; a peel-first steady top also
-  // runs the previous iteration's deferred stage-1.
-  StringRef TopName, InnerName, BottomName;
-  switch (Role) {
-  case CloneRole::PeelLastSteady:
-    TopName = "stage1.top";
-    InnerName = "stage1.inner.";
-    BottomName = "stage1.bottom.and.stage0.top";
-    break;
-  case CloneRole::PeelFirstSteady:
-    TopName = "stage1.bottom.and.stage0.top";
-    InnerName = "stage0.inner.";
-    BottomName = "stage0.bottom";
-    break;
-  case CloneRole::FirstIteration:
-    TopName = "stage0.top";
-    InnerName = "stage0.inner.";
-    BottomName = "stage0.bottom";
-    break;
-  }
-
-  getTop()->setName(SuffixStr + "." + TopName);
-  getBottom()->setName(SuffixStr + "." + BottomName);
+  const CloneRoleNames Names = roleNames(Role);
+  getTop()->setName(SuffixStr + "." + Names.Top);
+  getBottom()->setName(SuffixStr + "." + Names.Bottom);
   for (auto [Orig, Clone] : zip(Src.getInnerBlocks(), getInnerBlocks()))
-    Clone->setName(SuffixStr + "." + InnerName + Orig->getName());
+    Clone->setName(SuffixStr + "." + Names.Inner + Orig->getName());
 }
 
 CloneLoopStructure::CloneLoopStructure(const LoopStructure &Src) {
