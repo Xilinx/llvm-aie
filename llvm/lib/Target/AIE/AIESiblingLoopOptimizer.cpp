@@ -615,7 +615,7 @@ void SiblingLoopOptimizer::run() {
     if (OLS.Speculative)
       continue;
 
-    if (!OLS.isSafeForSiblingMerge()) {
+    if (!OLS.isSafeToRotate()) {
       DEBUG_BLOCKS(dbgs() << "  Skipping: OLP blocks are not in linear "
                              "layout order\n");
       continue;

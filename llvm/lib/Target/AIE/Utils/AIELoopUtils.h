@@ -257,7 +257,7 @@ struct OuterLoopStructure {
   ///  - PT's only predecessor is SB.
   ///  - All blocks are laid out consecutively (each is the layout successor
   ///    of the previous one).
-  bool isSafeForSiblingMerge() const;
+  bool isSafeToRotate() const;
 
   /// Try to build the structure from an outer loop latch that has OLP metadata.
   /// For speculative loops, only the steady-state region is populated and
