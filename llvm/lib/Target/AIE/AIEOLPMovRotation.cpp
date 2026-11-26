@@ -62,6 +62,16 @@ public:
     return "AIE OLP MOV rotation for sibling optimization";
   }
 
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
+    AU.setPreservesCFG();
+    MachineFunctionPass::getAnalysisUsage(AU);
+  }
+
+  MachineFunctionProperties getRequiredProperties() const override {
+    return MachineFunctionProperties().set(
+        MachineFunctionProperties::Property::NoVRegs);
+  }
+
   bool runOnMachineFunction(MachineFunction &MF) override;
 };
 
@@ -370,6 +380,9 @@ static bool rotateSteadyOnly(MachineInstr &SteadyMI,
 
 bool AIEOLPMovRotation::runOnMachineFunction(MachineFunction &MF) {
   if (!EnableOLPMovRotation)
+    return false;
+
+  if (!MF.getRegInfo().tracksLiveness())
     return false;
 
   const auto *TII =
