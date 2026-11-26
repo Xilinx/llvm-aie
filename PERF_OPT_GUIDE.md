@@ -997,10 +997,12 @@ loop, or for the whole compilation with `--key=value` (see
 | `aie-outer-loop-pipelining-split-prologue`  | 0/1                   | 1       | Keep 2048-bit accumulator calls and their users in stage 1 |
 | `aie-outer-loop-pipelining-min-trip-count`  | int                   | 2       | Minimum outer trip count                                  |
 | `aie-outer-loop-type`                       | `auto`, `hw`, `soft`  | `auto`  | Whether the outer loop becomes a JNZD hardware loop       |
+| `aie-outer-loop-pipelining-mode`            | `last`, `first`       | `last`  | Peel the last iteration (prefetch loads) or the first one (defer stores) |
 
 The subsections below cover the three choices these keys make, each set
 on its own: what is prefetched, how the last iteration is handled, and
-the outer loop type.
+the outer loop type. The last subsection covers the peel-first mode,
+which pipelines the loop the other way around.
 
 ### Choosing what is prefetched
 Every prefetched value stays in a register through the whole inner loop
@@ -1074,6 +1076,70 @@ the `PrologueBundles` of `steady.stage1.top` against those of the
 original loop's prologue, since the loads it waited for now arrive from
 the previous iteration. The cost is the program memory of the peeled
 copy, visible in the `aie-asm-printer` remarks.
+
+### Peeling the first iteration instead
+The default mode, `last`, moves the top block's loads back into the
+previous iteration. The `first` mode moves the other end of the
+iteration forward: the bottom block's stores of the inner loop's
+results, with their address computations, run at the start of the next
+iteration, overlapping its loads and its inner loop's prologue. The
+first iteration is peeled off before the loop, and the stores of the
+last iteration run after it:
+
+```cpp
+// As written                  // After peel-first pipelining
+for (o = 0; o < N; o++) {      top(0); inner_loop(0); bottom_rest(0); // peeled
+    top(o);                    for (o = 1; o < N; o++) {
+    inner_loop(o);                 stores(o - 1); top(o);          // deferred
+    bottom(o);                     inner_loop(o); bottom_rest(o);
+}                              }
+                               stores(N - 1);
+```
+
+`bottom_rest` is what the bottom block computes for the next iteration,
+such as pointer updates, which stays in place. Select the mode on the
+outer loop, next to the enabling hint:
+
+```cpp
+AIE_LOOP_HINT(aie-enable-outer-loop-pipelining, 1)
+AIE_LOOP_HINT(aie-outer-loop-pipelining-mode, first)
+AIE_LOOP_RANGE(2,)
+for (int o = 0; o < param.outer_count; o++) {
+```
+
+The requirements of the default mode apply. In addition, peel-first
+moves the deferred stores past the rest of the bottom block without
+alias information, so it only applies when either the deferred part or
+the part of the bottom block that stays in place neither accesses memory
+nor has other side effects; the usual pointer increments do not count.
+When peel-first does not apply, the compiler uses the default mode for
+that loop instead:
+- The bottom block has no stores or other users of the inner loop's
+  results to defer.
+- Both parts of the bottom block access memory or have side effects, for
+  example a load, store or call in the bottom block that does not depend
+  on the inner loop's results.
+- The outer loop is already a JNZD hardware loop whose counter is read
+  by anything other than the loop control.
+
+The speculative, lean stage 0 and split-prologue options shape the
+default mode only and are ignored by peel-first.
+
+The remarks show `firstiter.*` blocks for the peeled first iteration and
+`steady.*` blocks for the pipelined loop:
+
+```yaml
+  - Loop:            bb.1.firstiter.stage0.inner.for.body
+  - Epilogue:        bb.2.firstiter.stage0.bottom
+...
+  - Loop:            bb.4.steady.stage0.inner.for.body
+  - Prologue:        bb.3.steady.stage1.bottom.and.stage0.top
+  - Epilogue:        bb.5.steady.stage0.bottom
+```
+
+A `lastiter.*` inner loop instead means the compiler used the default
+mode. Like the default mode, peel-first duplicates the inner loop in
+program memory, here for the first iteration.
 
 
 ## 10. Function Structure for Pipelining
@@ -1731,3 +1797,7 @@ Use this checklist when writing or reviewing kernel code:
   `AIE_LOOP_HINT(aie-outer-loop-pipelining-speculative, 1)` to keep the
   previous code; see [Speculating the last
   iteration](#speculating-the-last-iteration).
+- `AIE_LOOP_HINT(aie-outer-loop-pipelining-mode, first)` selects a new
+  outer loop pipelining mode that defers the bottom block's stores to the
+  next iteration and peels the first iteration; see [Peeling the first
+  iteration instead](#peeling-the-first-iteration-instead).

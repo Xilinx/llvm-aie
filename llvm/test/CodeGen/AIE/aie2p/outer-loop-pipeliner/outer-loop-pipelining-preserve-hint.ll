@@ -13,10 +13,11 @@
 ; Epilogue outer loop ID: self-ref + three surviving entries. mustprogress is
 ; uniqued and shared with the inner loop, so it reuses the earlier !1 node.
 ; CHECK:   !1 = !{!"llvm.loop.mustprogress"}
-; CHECK-NEXT:   !2 = distinct !{!2, !1, !3, !4, !5}
+; CHECK-NEXT:   !2 = distinct !{!2, !1, !3, !4, !5, !6}
 ; CHECK-NEXT:  !3 = !{!"llvm.loop.hint.aie-test-extra-loop-hint", i64 42}
 ; CHECK-NEXT:  !4 = !{!"llvm.loop.itercount.range", i32 1}
 ; CHECK-NEXT:  !5 = !{!"llvm.loop.hint.aie_outerloop_pipeliner_success", i64 1}
+; CHECK-NEXT:  !6 = !{!"llvm.loop.hint.aie_outerloop_pipeliner_peel_mode", !"last"}
 
 ; Consumed enable hint must be dropped.
 ; CHECK-NOT: "llvm.loop.hint.aie-enable-outer-loop-pipelining", i64 1

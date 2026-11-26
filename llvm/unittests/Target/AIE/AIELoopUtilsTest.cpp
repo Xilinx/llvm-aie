@@ -262,6 +262,101 @@ body:             |
 ...
 )MIR";
 
+// MIR with peel-first OLP structure:
+// OuterPreheader -> PeeledIterTop -> PeeledIterInner -> PeeledIterBottom
+//                                                          |
+//                   SteadyTop -> SteadyInner -> SteadyBottom (latch)
+//                        ^                          |
+//                        |__________________________|
+//                                   |
+//                                   v
+//                              ExitBlock (epilogue)
+// The outer latch (bb.7) has OLP success + peel_mode=first metadata.
+const char *PeelFirstMIR = R"MIR(
+--- |
+  define void @olp_peel_first() {
+  entry:
+    br label %outer.preheader
+
+  outer.preheader:
+    br label %peeled.top
+
+  peeled.top:
+    br label %peeled.inner
+
+  peeled.inner:
+    br i1 true, label %peeled.inner, label %peeled.bottom, !llvm.loop !0
+
+  peeled.bottom:
+    br label %steady.top
+
+  steady.top:
+    br label %steady.inner
+
+  steady.inner:
+    br i1 true, label %steady.inner, label %steady.bottom, !llvm.loop !1
+
+  steady.bottom:
+    br i1 true, label %steady.top, label %epilogue, !llvm.loop !2
+
+  epilogue:
+    ret void
+  }
+
+  !0 = distinct !{!0}
+  !1 = distinct !{!1}
+  !2 = distinct !{!2, !3, !4}
+  !3 = !{!"llvm.loop.hint.aie_outerloop_pipeliner_success", i64 1}
+  !4 = !{!"llvm.loop.hint.aie_outerloop_pipeliner_peel_mode", !"first"}
+
+...
+---
+name:            olp_peel_first
+tracksRegLiveness: true
+body:             |
+  bb.0.entry:
+    successors: %bb.1
+
+  bb.1.outer.preheader:
+    successors: %bb.2
+
+  bb.2.peeled.top:
+    successors: %bb.3
+
+  bb.3.peeled.inner:
+    successors: %bb.3, %bb.4
+    liveins: $r0, $r3
+    $r1 = ADD_add_r_ri $r0, 1, implicit-def $srcarry
+    $r2 = ADD_add_r_ri $r1, 2, implicit-def $srcarry
+    $r3 = ADD_add_r_ri $r3, -1, implicit-def $srcarry
+    PseudoJNZ $r3, %bb.3
+
+  bb.4.peeled.bottom:
+    successors: %bb.5
+
+  bb.5.steady.top:
+    successors: %bb.6
+
+  bb.6.steady.inner:
+    successors: %bb.6, %bb.7
+    liveins: $r0, $r3
+    $r1 = ADD_add_r_ri $r0, 1, implicit-def $srcarry
+    $r2 = ADD_add_r_ri $r1, 2, implicit-def $srcarry
+    $r3 = ADD_add_r_ri $r3, -1, implicit-def $srcarry
+    PseudoJNZ $r3, %bb.6
+
+  bb.7.steady.bottom:
+    successors: %bb.5, %bb.8
+    liveins: $r0
+    PseudoJNZ $r0, %bb.5
+
+  bb.8.epilogue:
+    RET implicit $lr
+    DelayedSchedBarrier
+
+...
+)MIR";
+
 // MIR with mismatched inner loops (different opcodes)
 const char *MismatchedInnerLoopsMIR = R"MIR(
 --- |
@@ -363,6 +458,11 @@ TEST_F(AIELoopUtilsTest, OuterLoopStructure_BuildFromNonSpeculative) {
 
   EXPECT_FALSE(OLS->Speculative);
   EXPECT_TRUE(OLS->hasPeeledIterRegion());
+  EXPECT_FALSE(OLS->isFirstIterationPeeled());
+  EXPECT_EQ(OLS->PeelMode, OLPPeelMode::PeelLast);
+  // bb.7 (peeled.bottom) has no MBB successors (it ends with RET),
+  // so ExitBlock is nullptr.
+  EXPECT_EQ(OLS->ExitBlock, nullptr);
 }
 
 TEST_F(AIELoopUtilsTest, OuterLoopStructure_AmbiguousPreheader) {
@@ -385,7 +485,7 @@ TEST_F(AIELoopUtilsTest, OuterLoopStructure_AmbiguousPreheader) {
   EXPECT_EQ(OLS->OuterPreheader, nullptr);
   EXPECT_EQ(OLS->SteadyTop, getMBB(MF, 2));
   EXPECT_EQ(OLS->PeeledIterTop, getMBB(MF, 5));
-  EXPECT_FALSE(OLS->isSafeForSiblingMerge());
+  EXPECT_FALSE(OLS->isSafeToRotate());
 }
 
 TEST_F(AIELoopUtilsTest, OuterLoopStructure_BuildFromSpeculative) {
@@ -412,6 +512,127 @@ TEST_F(AIELoopUtilsTest, OuterLoopStructure_BuildFromSpeculative) {
 
   EXPECT_TRUE(OLS->Speculative);
   EXPECT_FALSE(OLS->hasPeeledIterRegion());
+  EXPECT_FALSE(OLS->isFirstIterationPeeled());
+  EXPECT_EQ(OLS->ExitBlock, nullptr);
+}
+
+TEST_F(AIELoopUtilsTest, OuterLoopStructure_BuildFromPeelFirst) {
+  parseMIR(PeelFirstMIR);
+  MachineFunction *MF = getMachineFunction("olp_peel_first");
+
+  // bb.7 is the outer latch (steady.bottom) with peel_mode=first metadata
+  MachineBasicBlock *OuterLatch = getMBB(MF, 7);
+  ASSERT_NE(OuterLatch, nullptr);
+
+  auto OLS = OuterLoopStructure::tryBuildFrom(*OuterLatch);
+  ASSERT_TRUE(OLS.has_value());
+
+  // In peel-first, OuterPreheader is before the first peeled iteration
+  EXPECT_EQ(OLS->OuterPreheader, getMBB(MF, 1)); // outer.preheader
+
+  // Steady-state region
+  EXPECT_EQ(OLS->SteadyTop, getMBB(MF, 5));    // steady.top
+  EXPECT_EQ(OLS->SteadyInner, getMBB(MF, 6));  // steady.inner
+  EXPECT_EQ(OLS->SteadyBottom, getMBB(MF, 7)); // steady.bottom
+
+  // Peeled iteration region (first iteration, before the steady loop)
+  EXPECT_EQ(OLS->PeeledIterTop, getMBB(MF, 2));    // peeled.top
+  EXPECT_EQ(OLS->PeeledIterInner, getMBB(MF, 3));  // peeled.inner
+  EXPECT_EQ(OLS->PeeledIterBottom, getMBB(MF, 4)); // peeled.bottom
+
+  // ExitBlock is the epilogue after the steady latch
+  EXPECT_EQ(OLS->ExitBlock, getMBB(MF, 8)); // epilogue
+
+  EXPECT_FALSE(OLS->Speculative);
+  EXPECT_TRUE(OLS->hasPeeledIterRegion());
+  EXPECT_TRUE(OLS->isFirstIterationPeeled());
+  EXPECT_EQ(OLS->PeelMode, OLPPeelMode::PeelFirst);
+
+  // Inner loops should also match in the peel-first case
+  EXPECT_TRUE(OLS->hasMatchingInnerLoops());
+}
+
+TEST_F(AIELoopUtilsTest, OuterLoopStructure_PeelFirstAmbiguousPreheader) {
+  // The peel-first CFG where the entry block also branches straight to the
+  // first-iteration top: PeeledIterTop has two predecessors, so there is no
+  // single block before the prologue.
+  std::string MIR = PeelFirstMIR;
+  const std::string Entry = "  bb.0.entry:\n    successors: %bb.1\n";
+  MIR.replace(MIR.find(Entry), Entry.size(),
+              "  bb.0.entry:\n    successors: %bb.1, %bb.2\n"
+              "    liveins: $r0\n    PseudoJNZ $r0, %bb.2\n");
+  parseMIR(MIR.c_str());
+  MachineFunction *MF = getMachineFunction("olp_peel_first");
+
+  MachineBasicBlock *OuterLatch = getMBB(MF, 7);
+  ASSERT_NE(OuterLatch, nullptr);
+  ASSERT_EQ(getMBB(MF, 2)->pred_size(), 2u);
+
+  auto OLS = OuterLoopStructure::tryBuildFrom(*OuterLatch);
+  ASSERT_TRUE(OLS.has_value());
+  EXPECT_EQ(OLS->OuterPreheader, nullptr);
+  EXPECT_EQ(OLS->PeeledIterTop, getMBB(MF, 2));
+  EXPECT_EQ(OLS->SteadyTop, getMBB(MF, 5));
+  EXPECT_TRUE(OLS->isFirstIterationPeeled());
+}
+
+TEST_F(AIELoopUtilsTest, OuterLoopStructure_UnknownPeelModeReturnsNullopt) {
+  // The peel-first CFG with a peel mode this code does not know: it must not
+  // be read as peel-last.
+  std::string MIR = PeelFirstMIR;
+  const std::string Mode = "!\"first\"";
+  MIR.replace(MIR.find(Mode), Mode.size(), "!\"middle\"");
+  parseMIR(MIR.c_str());
+  MachineFunction *MF = getMachineFunction("olp_peel_first");
+
+  MachineBasicBlock *OuterLatch = getMBB(MF, 7);
+  ASSERT_NE(OuterLatch, nullptr);
+
+  EXPECT_EQ(getOuterLoopPeelMode(*OuterLatch), std::nullopt);
+  EXPECT_FALSE(OuterLoopStructure::tryBuildFrom(*OuterLatch).has_value());
+}
+
+TEST_F(AIELoopUtilsTest, OuterLoopStructure_PeelFirstMarkerOnPeelLastCFG) {
+  // The peel-last CFG with a peel-first marker: there is no peeled iteration
+  // before the steady loop, so the structure is not recognized.
+  std::string MIR = NonSpeculativeMIR;
+  const std::string LoopID = "  !1 = distinct !{!1, !3}\n";
+  MIR.replace(MIR.find(LoopID), LoopID.size(),
+              "  !1 = distinct !{!1, !3, !4}\n"
+              "  !4 = !{!\"llvm.loop.hint.aie_outerloop_pipeliner_peel_mode\", "
+              "!\"first\"}\n");
+  parseMIR(MIR.c_str());
+  MachineFunction *MF = getMachineFunction("olp_non_speculative");
+
+  MachineBasicBlock *OuterLatch = getMBB(MF, 4);
+  ASSERT_NE(OuterLatch, nullptr);
+
+  EXPECT_EQ(getOuterLoopPeelMode(*OuterLatch), OLPPeelMode::PeelFirst);
+  EXPECT_FALSE(OuterLoopStructure::tryBuildFrom(*OuterLatch).has_value());
+}
+
+TEST_F(AIELoopUtilsTest, OuterLoopStructure_SpeculativeIgnoresPeelMode) {
+  // A speculative loop peels no iteration; a peel-mode marker on it does not
+  // change the structure.
+  std::string MIR = SpeculativeMIR;
+  const std::string LoopID = "  !1 = distinct !{!1, !2, !3}\n";
+  MIR.replace(MIR.find(LoopID), LoopID.size(),
+              "  !1 = distinct !{!1, !2, !3, !4}\n"
+              "  !4 = !{!\"llvm.loop.hint.aie_outerloop_pipeliner_peel_mode\", "
+              "!\"first\"}\n");
+  parseMIR(MIR.c_str());
+  MachineFunction *MF = getMachineFunction("olp_speculative");
+
+  MachineBasicBlock *OuterLatch = getMBB(MF, 4);
+  ASSERT_NE(OuterLatch, nullptr);
+
+  auto OLS = OuterLoopStructure::tryBuildFrom(*OuterLatch);
+  ASSERT_TRUE(OLS.has_value());
+  EXPECT_TRUE(OLS->Speculative);
+  EXPECT_FALSE(OLS->hasPeeledIterRegion());
+  EXPECT_FALSE(OLS->isFirstIterationPeeled());
+  EXPECT_EQ(OLS->SteadyTop, getMBB(MF, 2));
+  EXPECT_EQ(OLS->PeeledIterTop, nullptr);
 }
 
 TEST_F(AIELoopUtilsTest, OuterLoopStructure_NonOLPReturnsNullopt) {
