@@ -21,6 +21,12 @@
 //             the last-iteration top. May be empty, in which case the whole top
 //             is stage 0.
 //
+// Peel-first mode partitions the bottom block instead (collectFirstIterStages):
+//   Stage 0 = what the next iteration needs (pointer updates, latch control):
+//             stays in the bottom block.
+//   Stage 1 = the users of the inner-loop results (stores and their address
+//             computations): deferred to the start of the next iteration's top.
+//
 // Original CFG:
 //
 //   [preheader]
@@ -2379,7 +2385,7 @@ bool AIEOuterLoopPipeliner::liftBottomPointerUpdatesToTop(
 }
 
 // Peel-first mode: displace bottom-block stage-1 (stores + inner-result users)
-// into the steady top, interleaving them with the next iteration's loads. Peel
+// into the steady top, placing them ahead of the next iteration's loads. Peel
 // the first iteration as prologue and add a single-block epilogue for the last
 // steady iteration's deferred stores.
 bool AIEOuterLoopPipeliner::performPeelFirst(OrigLoopStructure &OrigLS,
@@ -2754,9 +2760,9 @@ void AIEOuterLoopPipeliner::peelFirstIteration(
   // Strip stage-1 instructions from firstiter.bottom; they are deferred to the
   // steady top by cloneStage1IntoTop(). Stage-0 (ptr-updates and the latch
   // control) survive: the steady header PHIs start from their results, and
-  // stage-1 may read them. The latch compare is left for performTransformation
-  // to delete once it is known to be dead. LCSSA PHIs are preserved --
-  // cloneStage1IntoTop() needs them to build the inner_result_phi merge nodes.
+  // stage-1 may read them. The latch compare is left for performPeelFirst to
+  // delete once it is known to be dead. LCSSA PHIs are preserved --
+  // cloneStage1IntoTop() needs them to build the .inner.result.phi merge nodes.
   SmallVector<Instruction *, 16> ToErase;
   for (Instruction &OrigI : *OrigLS.getBottom()) {
     if (OrigI.isTerminator() || isa<PHINode>(&OrigI))
@@ -2811,11 +2817,11 @@ void AIEOuterLoopPipeliner::cloneStage1IntoTop(
   BasicBlock *SteadyBottom = SteadyLS.getBottom();
   BasicBlock *FirstIterBottom = FirstIterLS.getBottom();
 
-  // Steps 1-3: Stage-1 runs one iteration late in the steady top, so every
+  // Stage-1 runs one iteration late in the steady top, so every
   // value it reads from the rest of the loop must be the previous iteration's.
   // Give each such input a PHI at the top of the steady header carrying the
   // first iteration's value on entry and the steady loop's own value on the
-  // back edge. Inner-loop results (bottom LCSSA PHIs) become inner_result_phi
+  // back edge. Inner-loop results (bottom LCSSA PHIs) become .inner.result.phi
   // nodes; header PHIs and top or bottom values become .prev PHIs.
   RemapTable TopVMap;
   BasicBlock::iterator FirstNonPHI = SteadyTop->getFirstNonPHIIt();
@@ -2831,7 +2837,7 @@ void AIEOuterLoopPipeliner::cloneStage1IntoTop(
     LLVM_DEBUG(dbgs() << "    Created stage-1 input PHI: " << *PrevPHI << "\n");
   }
 
-  // Step 4: Clone stage-1 instructions into the beginning of the steady top,
+  // Clone stage-1 instructions into the beginning of the steady top,
   // after the PHI nodes (including the new input PHIs) and before
   // the existing top instructions (loads, address computations, etc.).
   // The insertion point is the first non-PHI instruction.
@@ -2842,7 +2848,7 @@ void AIEOuterLoopPipeliner::cloneStage1IntoTop(
   LLVM_DEBUG(dbgs() << "    Cloned " << Clones.size()
                     << " stage-1 instructions into steady top\n");
 
-  // Step 5: Erase stage-1 clones from steady.stage0.bottom. These are now
+  // Erase stage-1 clones from steady.stage0.bottom. These are now
   // dead — their role is taken by the clones in the steady top.
   SmallVector<Instruction *, 16> SteadyBottomStage1;
   for (Instruction *OrigI : OrigLS.stage1Insts())
@@ -2858,28 +2864,28 @@ void AIEOuterLoopPipeliner::createStage1Epilogue(
   BasicBlock *OrigExit = OrigLS.getExitBlock();
   Function *F = SteadyBottom->getParent();
 
-  // Step 1: Create the lastiter.stage1.bottom epilogue block, inserted between
+  // Create the lastiter.stage1.bottom epilogue block, inserted between
   // the steady exit edge and the original exit block.
   BasicBlock *EpilogueBlock = BasicBlock::Create(
       F->getContext(), "lastiter.stage1.bottom", F, OrigExit);
 
-  // Step 2: Build the epilogue remap table. The epilogue runs the last steady
+  // Build the epilogue remap table. The epilogue runs the last steady
   // iteration's stage-1 after the loop exits, where the steady clone of each
   // stage-1 input holds that iteration's value.
   RemapTable EpilogueVMap;
   for (Instruction *Input : collectStage1Inputs(OrigLS))
     EpilogueVMap[Input] = SteadyLS.cloneOf(Input);
 
-  // Step 3: Clone stage-1 instructions into the epilogue block (in program
+  // Clone stage-1 instructions into the epilogue block (in program
   // order), remapping via EpilogueVMap. Stage-1 operands that are themselves
   // stage-1 resolve to their epilogue clones.
   cloneAndRemapInsts(OrigLS.stage1Insts(), *EpilogueBlock, EpilogueBlock->end(),
                      EpilogueVMap, ".epilogue");
 
-  // Step 4: Add unconditional branch: lastiter.stage1.bottom -> original exit.
+  // Add unconditional branch: lastiter.stage1.bottom -> original exit.
   BranchInst::Create(OrigExit, EpilogueBlock);
 
-  // Step 5: Rewire CFG.
+  // Rewire CFG.
   // (a) Steady bottom exit branch: change target from original exit to the
   //     epilogue block.
   SteadyLS.getLatchBranch()->replaceSuccessorWith(OrigExit, EpilogueBlock);
