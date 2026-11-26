@@ -814,12 +814,14 @@ private:
   // values through merge PHIs. Erases stage-1 clones from steady.stage0.bottom.
   void cloneStage1IntoTop(const OrigLoopStructure &OrigLS,
                           CloneLoopStructure &SteadyLS,
-                          const CloneLoopStructure &FirstIterLS);
+                          const CloneLoopStructure &FirstIterLS,
+                          ArrayRef<Instruction *> Stage1Inputs);
 
   // Create the single-block epilogue (lastiter.stage1.bottom) after the steady
   // loop exit, containing the last steady iteration's stage-1 instructions.
   void createStage1Epilogue(const OrigLoopStructure &OrigLS,
-                            const CloneLoopStructure &SteadyLS);
+                            const CloneLoopStructure &SteadyLS,
+                            ArrayRef<Instruction *> Stage1Inputs);
 };
 
 } // end anonymous namespace
@@ -2384,6 +2386,9 @@ bool AIEOuterLoopPipeliner::liftBottomPointerUpdatesToTop(
   return true;
 }
 
+static SmallVector<Instruction *, 16>
+collectStage1Inputs(const OrigLoopStructure &OrigLS);
+
 // Peel-first mode: displace bottom-block stage-1 (stores + inner-result users)
 // into the steady top, placing them ahead of the next iteration's loads. Peel
 // the first iteration as prologue and add a single-block epilogue for the last
@@ -2440,14 +2445,18 @@ bool AIEOuterLoopPipeliner::performPeelFirst(OrigLoopStructure &OrigLS,
                                  CloneRole::FirstIteration);
   peelFirstIteration(OrigLS, SteadyLS, FirstIterLS);
 
+  // The steady top and the epilogue read the same stage-1 inputs.
+  const SmallVector<Instruction *, 16> Stage1Inputs =
+      collectStage1Inputs(OrigLS);
+
   // Clone stage-1 instructions into the beginning of the steady top,
   // creating merge PHIs for their inputs and erasing stage-1 from the
   // steady bottom.
-  cloneStage1IntoTop(OrigLS, SteadyLS, FirstIterLS);
+  cloneStage1IntoTop(OrigLS, SteadyLS, FirstIterLS, Stage1Inputs);
 
   // Create the single-block epilogue after the steady exit for the last
   // steady iteration's deferred stage-1 instructions.
-  createStage1Epilogue(OrigLS, SteadyLS);
+  createStage1Epilogue(OrigLS, SteadyLS, Stage1Inputs);
 
   // The first iteration falls through into the steady loop, so its latch
   // control is dead unless stage-1 reads it. A hardware-loop decrement is not
@@ -2812,7 +2821,8 @@ void AIEOuterLoopPipeliner::peelFirstIteration(
 
 void AIEOuterLoopPipeliner::cloneStage1IntoTop(
     const OrigLoopStructure &OrigLS, CloneLoopStructure &SteadyLS,
-    const CloneLoopStructure &FirstIterLS) {
+    const CloneLoopStructure &FirstIterLS,
+    ArrayRef<Instruction *> Stage1Inputs) {
   BasicBlock *SteadyTop = SteadyLS.getTop();
   BasicBlock *SteadyBottom = SteadyLS.getBottom();
   BasicBlock *FirstIterBottom = FirstIterLS.getBottom();
@@ -2825,7 +2835,7 @@ void AIEOuterLoopPipeliner::cloneStage1IntoTop(
   // nodes; header PHIs and top or bottom values become .prev PHIs.
   RemapTable TopVMap;
   BasicBlock::iterator FirstNonPHI = SteadyTop->getFirstNonPHIIt();
-  for (Instruction *Input : collectStage1Inputs(OrigLS)) {
+  for (Instruction *Input : Stage1Inputs) {
     const bool IsInnerResult = isa<PHINode>(Input) && OrigLS.isInBottom(Input);
     PHINode *PrevPHI = PHINode::Create(
         Input->getType(), 2,
@@ -2859,7 +2869,8 @@ void AIEOuterLoopPipeliner::cloneStage1IntoTop(
 }
 
 void AIEOuterLoopPipeliner::createStage1Epilogue(
-    const OrigLoopStructure &OrigLS, const CloneLoopStructure &SteadyLS) {
+    const OrigLoopStructure &OrigLS, const CloneLoopStructure &SteadyLS,
+    ArrayRef<Instruction *> Stage1Inputs) {
   BasicBlock *SteadyBottom = SteadyLS.getBottom();
   BasicBlock *OrigExit = OrigLS.getExitBlock();
   Function *F = SteadyBottom->getParent();
@@ -2873,7 +2884,7 @@ void AIEOuterLoopPipeliner::createStage1Epilogue(
   // iteration's stage-1 after the loop exits, where the steady clone of each
   // stage-1 input holds that iteration's value.
   RemapTable EpilogueVMap;
-  for (Instruction *Input : collectStage1Inputs(OrigLS))
+  for (Instruction *Input : Stage1Inputs)
     EpilogueVMap[Input] = SteadyLS.cloneOf(Input);
 
   // Clone stage-1 instructions into the epilogue block (in program
