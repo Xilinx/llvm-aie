@@ -1094,9 +1094,15 @@ static bool anyVolatileOrAtomic(ArrayRef<MemInstT *> MemOps) {
   });
 }
 
+// Whether any of Insts has side effects. Reading memory is not a side effect.
 static bool hasSideEffects(ArrayRef<Instruction *> Insts) {
   return llvm::any_of(
       Insts, [](const Instruction *I) { return I->mayHaveSideEffects(); });
+}
+
+// Whether I accesses memory, reads included, or has other side effects.
+static bool accessesMemoryOrHasSideEffects(const Instruction &I) {
+  return I.mayReadOrWriteMemory() || I.mayHaveSideEffects();
 }
 
 bool OrigLoopStructure::isSafeToReorderMemoryOps() const {
@@ -2415,12 +2421,11 @@ static bool isPeelFirstLegal(const OrigLoopStructure &OrigLS) {
   // The latch control is exempt: a hardware-loop decrement is modeled as
   // touching memory but only counts the loop.
   const LatchConditionInfo &Bound = OrigLS.latchCondition();
-  const auto HasMemoryOrSideEffects = [&Bound](const Instruction *I) {
-    return !Bound.isLatchControl(I) &&
-           (I->mayReadOrWriteMemory() || I->mayHaveSideEffects());
+  const auto IsOrderSensitive = [&Bound](const Instruction *I) {
+    return !Bound.isLatchControl(I) && accessesMemoryOrHasSideEffects(*I);
   };
-  if (any_of(OrigLS.stage1Insts(), HasMemoryOrSideEffects) &&
-      any_of(OrigLS.stage0Insts(), HasMemoryOrSideEffects)) {
+  if (any_of(OrigLS.stage1Insts(), IsOrderSensitive) &&
+      any_of(OrigLS.stage0Insts(), IsOrderSensitive)) {
     LLVM_DEBUG(dbgs() << "    Peel-first: stage-0 accesses memory or has "
                          "side effects; skipping\n");
     return false;
