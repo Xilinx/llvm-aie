@@ -444,6 +444,14 @@ OuterLoopStructure::tryBuildFrom(MachineBasicBlock &OuterLatch) {
     return Found;
   };
 
+  // Helper to find the first single-block loop among the given blocks.
+  auto FindSingleBlockLoop = [](auto &&Range) -> MachineBasicBlock * {
+    for (MachineBasicBlock *MBB : Range)
+      if (isSingleMBBLoop(MBB))
+        return MBB;
+    return nullptr;
+  };
+
   OuterLoopStructure OLS;
   OLS.SteadyBottom = &OuterLatch;
   OLS.Speculative = isOuterLoopSpeculative(OuterLatch);
@@ -490,12 +498,7 @@ OuterLoopStructure::tryBuildFrom(MachineBasicBlock &OuterLatch) {
     OLS.PeeledIterBottom = PeeledBottom;
 
     // PeeledIterInner: the single-block-loop predecessor of PeeledIterBottom.
-    for (MachineBasicBlock *Pred : PeeledBottom->predecessors()) {
-      if (isSingleMBBLoop(Pred)) {
-        OLS.PeeledIterInner = Pred;
-        break;
-      }
-    }
+    OLS.PeeledIterInner = FindSingleBlockLoop(PeeledBottom->predecessors());
     if (!OLS.PeeledIterInner)
       return false;
 
@@ -511,12 +514,7 @@ OuterLoopStructure::tryBuildFrom(MachineBasicBlock &OuterLatch) {
     OLS.PeeledIterTop = PeeledTop;
 
     // PeeledIterInner: successor of PeeledIterTop that is a single-block loop.
-    for (MachineBasicBlock *Succ : PeeledTop->successors()) {
-      if (isSingleMBBLoop(Succ)) {
-        OLS.PeeledIterInner = Succ;
-        break;
-      }
-    }
+    OLS.PeeledIterInner = FindSingleBlockLoop(PeeledTop->successors());
     if (!OLS.PeeledIterInner)
       return false;
 
