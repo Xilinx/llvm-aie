@@ -805,13 +805,21 @@ void RegLiveRangeTracker::markScarceRanges() {
 
 void RegLiveRangeTracker::buildInstructionOrderAndCollectOperands(
     ArrayRef<MachineInstr *> SemanticOrder, LivenessScanState &State) {
+  State.FirstDefOrder.assign(TotalNumRegUnits, LivenessScanState::NotDefined);
   unsigned InstrIdx = 0;
   for (MachineInstr *MI : SemanticOrder) {
-    InstrOrder[MI] = InstrIdx++;
+    const unsigned Order = InstrIdx++;
+    InstrOrder[MI] = Order;
 
     for (MachineOperand &MO : MI->operands()) {
       if (!MO.isReg() || !MO.getReg().isPhysical()) {
         continue;
+      }
+      if (MO.isDef()) {
+        for (const RegUnit Unit : getRegUnits(MO.getReg().asMCReg())) {
+          unsigned &FirstDef = State.FirstDefOrder[Unit];
+          FirstDef = std::min(FirstDef, Order);
+        }
       }
       if (MO.isImplicit()) {
         // Track the units of implicit registers so that
@@ -926,12 +934,10 @@ unsigned RegLiveRangeTracker::getOrCreateLiveRangeForOperand(
 bool RegLiveRangeTracker::areUnitsDefinedBefore(
     const PartSet &Units, const MachineInstr &MI,
     const LivenessScanState &State) const {
-  for (const MachineInstr *Prev :
-       State.SemanticOrder.take_front(InstrOrder.lookup(&MI)))
-    for (const MachineOperand &PrevMO : Prev->operands())
-      if (PrevMO.isReg() && PrevMO.isDef() && PrevMO.getReg().isPhysical() &&
-          getRegUnits(PrevMO.getReg().asMCReg()).overlap(Units))
-        return true;
+  const unsigned Order = InstrOrder.lookup(&MI);
+  for (const RegUnit Unit : Units)
+    if (State.FirstDefOrder[Unit] < Order)
+      return true;
   return false;
 }
 

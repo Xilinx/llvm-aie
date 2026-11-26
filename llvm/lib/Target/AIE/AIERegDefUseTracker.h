@@ -32,6 +32,7 @@
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/CodeGen/Register.h"
 #include "llvm/MC/MCRegister.h"
+#include <limits>
 
 namespace llvm {
 
@@ -373,6 +374,15 @@ class RegLiveRangeTracker {
 
     /// Instructions in semantic order, indexed by InstrOrder.
     ArrayRef<MachineInstr *> SemanticOrder;
+
+    /// Value of FirstDefOrder for a register unit that is not defined in the
+    /// block. It compares greater than any semantic order.
+    static constexpr unsigned NotDefined = std::numeric_limits<unsigned>::max();
+
+    /// For each register unit, indexed by RegUnit, the semantic order of the
+    /// first instruction that defines it, or NotDefined. Sized and filled by
+    /// buildInstructionOrderAndCollectOperands.
+    SmallVector<unsigned, TotalNumRegUnits> FirstDefOrder;
   };
 
   /// Merge the live ranges aliasing the access \p MO into \p LRIdx and update
@@ -409,7 +419,8 @@ class RegLiveRangeTracker {
   void markScarceRanges();
 
   /// Return true if an instruction before \p MI in semantic order defines any
-  /// of the register units in \p Units.
+  /// of the register units in \p Units. Answered from FirstDefOrder, so the
+  /// cost is linear in the number of units, not in the number of instructions.
   bool areUnitsDefinedBefore(const PartSet &Units, const MachineInstr &MI,
                              const LivenessScanState &State) const;
 
