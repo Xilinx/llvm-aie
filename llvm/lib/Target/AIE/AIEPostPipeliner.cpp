@@ -2071,7 +2071,7 @@ bool PostPipeliner::tryAllocateRegisters() {
 
   const auto *TRI = DAG->MF.getSubtarget().getRegisterInfo();
 
-  // Compute modulo live lanes from the event schedule populated during
+  // Compute modulo liveness from the event schedule populated during
   // scheduling, keyed by RegLiveRange::getIndex().
   auto LivenessByLRIndex =
       Interpreter.buildLiveness(EventSched, II, RegTracker);

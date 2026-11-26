@@ -112,10 +112,10 @@ public:
   /// Build per-cycle modulo-II liveness of the live ranges from an event
   /// schedule
   ///
-  /// Uses a backward scan to compute which lanes of each live range are live
-  /// at each modulo-II offset, together with the RegUnits they occupy. The
-  /// result is a map from LRIndex to a LivenessVector, where
-  /// LivenessByLRIndex[LRIndex][t] describes the liveness at offset t
+  /// Uses a backward scan to compute which RegUnits of each live range are
+  /// live at each modulo-II offset, together with the bypass classes that are
+  /// read or written. The result is a map from LRIndex to a LivenessVector,
+  /// where LivenessByLRIndex[LRIndex][t] describes the liveness at offset t
   /// (0 <= t < II).
   ///
   /// \param Schedule The event schedule to analyze

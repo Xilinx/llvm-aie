@@ -238,7 +238,7 @@ static LaneBitmask getLaneMaskFor(const TargetRegisterInfo &TRI,
 
 // True when a same-class bypass read at WriteOffset may share a phys reg with
 // Writer. That read is live on the early bypass-publish cycle, which the
-// write's RF lane alone does not cover. Scan every cycle with that offset:
+// write's RF occupancy alone does not cover. Scan every cycle with that offset:
 // the event schedule has one iteration across stages.
 static bool hasSharedRegBypassRead(const EventSchedule &Schedule,
                                    int WriteOffset, int II,
@@ -259,11 +259,11 @@ static bool hasSharedRegBypassRead(const EventSchedule &Schedule,
   return false;
 }
 
-// Return the subset of the admissible register units of LR covered by the
-// lanes in Mask, taken over all admissible registers. The mapping from lanes
-// to register units depends on the register, so it is only defined relative to
-// the admissible registers of the live range.
-static PartSet getLaneUnits(const RegLiveRange &LR, LaneBitmask Mask,
+// Return the set of RegUnits of the admissible registers of LR that are
+// covered by the lane mask Mask, taken over all admissible registers. The
+// mapping from a lane mask to RegUnits depends on the register, so it is only
+// defined relative to the admissible registers of the live range.
+static PartSet getMaskUnits(const RegLiveRange &LR, LaneBitmask Mask,
                             const TargetRegisterInfo &TRI) {
   PartSet Units;
   if (Mask.none())
@@ -291,7 +291,7 @@ DenseMap<unsigned, AIE::LivenessVector> AIEScheduleInterpreter::buildLiveness(
   // State: tracks which lanes are currently live when scanning backward.
   DenseMap<unsigned, LaneBitmask> ActiveMask;
 
-  // The lane-to-RegUnit mapping depends on the registers admissible for the
+  // The mask-to-RegUnit mapping depends on the registers admissible for the
   // live range, so cache it per (live range, mask).
   DenseMap<std::pair<unsigned, uint64_t>, PartSet> UnitsCache;
   const auto UnitsFor = [&](unsigned LRIndex,
@@ -299,7 +299,7 @@ DenseMap<unsigned, AIE::LivenessVector> AIEScheduleInterpreter::buildLiveness(
     const auto [It, Inserted] =
         UnitsCache.try_emplace({LRIndex, M.getAsInteger()});
     if (Inserted)
-      It->second = getLaneUnits(Tracker[LRIndex], M, TRI);
+      It->second = getMaskUnits(Tracker[LRIndex], M, TRI);
     return It->second;
   };
 
@@ -425,7 +425,7 @@ void AIEScheduleInterpreter::dumpLiveness(
     raw_ostream &OS) const {
 
   if (LivenessByLRIndex.empty()) {
-    OS << "No live lanes data\n";
+    OS << "No liveness data\n";
     return;
   }
 
@@ -435,7 +435,7 @@ void AIEScheduleInterpreter::dumpLiveness(
     LRIndices.push_back(LRIndex);
   llvm::sort(LRIndices);
 
-  OS << "Live Lanes (II=" << II << "):\n";
+  OS << "Liveness (II=" << II << "):\n";
   OS << "LRIdx  | ";
   for (int T = 0; T < II; ++T)
     OS << format("t%-6d ", T);
@@ -449,9 +449,9 @@ void AIEScheduleInterpreter::dumpLiveness(
   for (unsigned LRIndex : LRIndices) {
     OS << format("%-6u | ", LRIndex);
 
-    const auto &LanesByOffset = LivenessByLRIndex.lookup(LRIndex);
+    const auto &LivenessByOffset = LivenessByLRIndex.lookup(LRIndex);
     for (int T = 0; T < II; ++T) {
-      const AIE::Liveness &L = LanesByOffset[T];
+      const AIE::Liveness &L = LivenessByOffset[T];
       if (L.any()) {
         // Build indicator showing occupied RegUnits and bypass classes.
         // Format examples:
