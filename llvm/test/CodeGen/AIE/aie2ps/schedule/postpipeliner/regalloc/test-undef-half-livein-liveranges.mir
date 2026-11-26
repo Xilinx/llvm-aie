@@ -1,0 +1,100 @@
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+
+# RUN: llc -verify-machineinstrs --mtriple=aie2ps -O2 \
+# RUN:   --start-before=postmisched %s \
+# RUN:   --aie-postpipeliner-vreg-mode=1 \
+# RUN:   --aie-postpipeliner-phys-mode=0 \
+# RUN:   --debug-only=aie-reg-liverange \
+# RUN:   --aie-test-regdefuse-tracker \
+# RUN:   -o /dev/null 2>&1 | FileCheck %s
+# REQUIRES: asserts
+
+# COMPANION TEST: test-undef-half-livein-alloc.mir
+#
+# That test starts from pre-regalloc MIR (a REG_SEQUENCE of a loaded value and
+# an IMPLICIT_DEF feeding a VSEL_8) and checks the allocation and liveness that
+# the regular pipeline produces. This test takes that output as its input and
+# checks the live ranges the tracker builds for the loop. The input is
+# intentionally hand-maintained post-RA MIR, so that this test does not depend
+# on the register allocator.
+#
+# What we expect, and why:
+#  - The loop reads l0 = r0:r1 in VSEL_8, but only r0 is defined in the loop.
+#    The IMPLICIT_DEF that defined r1 has evaporated: no undef flag, no
+#    implicit operand remains.
+#  - The preheader defines r0 and r1 and kills l0 in its own VSEL_8. So r1 has
+#    a reaching def, but its value is dead at the loop entry and the live-in
+#    set of the loop block (p0, x1, x2, x4) does not contain l0 or r1.
+#  - The backward scan leaves the r1 half live at the top of the loop, but the
+#    range for l0 must be kept: it is the only range that survives filtering.
+#
+# The intent of the pair of tests is that the loop and the preheader share the
+# same register pair l0, giving a dead reaching def for the undefined half. If
+# the register allocator ever assigns disjoint pairs in the companion test, the
+# companion's checks fail on the allocation. That means the scenario is no
+# longer covered; fix the input of the companion (for example by steering the
+# allocation again) and do not just update the expected registers.
+#
+# CHECK: FINAL LIVE RANGES
+# CHECK-NEXT: ================================
+# CHECK-NEXT: Total live ranges: 1
+# CHECK-EMPTY:
+# CHECK-NEXT: Live Range #3 for l0:
+# CHECK-NEXT:   Definitions (1):
+# CHECK-NEXT:     [0] Register: r0 (SubRegIdx: {{[0-9]+}}) renamable $r0, renamable $p0 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p0(tied-def 1), 4 :: (load (s32))
+# CHECK-NEXT:   Uses (1):
+# CHECK-NEXT:     [0] Register: l0 renamable $x0 = VSEL_8 renamable $x2, renamable $x4, renamable $l0, implicit $crbf8conf, implicit $crfp8conf
+# CHECK-EMPTY:
+# CHECK-NEXT: Available Physical Registers for Reallocation:
+# CHECK-NEXT: ==============================================
+# CHECK-NEXT:   l0
+# CHECK-NEXT:   r0
+# CHECK-NEXT:   r1
+# CHECK-NEXT: Total: 3 registers
+# CHECK-EMPTY:
+# CHECK-NEXT: === END FINAL LIVE RANGES
+
+--- |
+  define void @test_undef_half_livein() {
+  entry:
+    br label %loop
+  loop:
+    br i1 undef, label %loop, label %exit
+  exit:
+    ret void
+  }
+...
+---
+name:            test_undef_half_livein
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  bb.0.entry:
+    successors: %bb.1
+    liveins: $p0, $r5, $x2, $x4, $crbf8conf, $crfp8conf
+
+    renamable $r0 = MOV_RLC_imm11_pseudo 7
+    renamable $r1 = MOV_RLC_imm11_pseudo 9
+    renamable $x1 = VSEL_8 renamable $x2, renamable $x4, killed renamable $l0, implicit $crbf8conf, implicit $crfp8conf
+    $lc = ADD_NC_add_lc_ri $r5, 0
+    MOVXM_lng_cg_ls_abs %bb.1, implicit-def $ls
+    MOVXM_lng_cg_le_abs <mcsymbol .L_LEnd0>, implicit-def $le
+
+  bb.1.loop (align 16):
+    successors: %bb.1, %bb.2
+    liveins: $p0, $x1, $x2, $x4, $crbf8conf, $crfp8conf
+
+    renamable $r0, renamable $p0 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p0, 4 :: (load (s32))
+    renamable $x0 = VSEL_8 renamable $x2, renamable $x4, renamable $l0, implicit $crbf8conf, implicit $crfp8conf
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+
+  bb.2.exit:
+    liveins: $x0, $x1
+
+    RET implicit $lr
+    DelayedSchedBarrier implicit $x0, implicit $x1
+...
