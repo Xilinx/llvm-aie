@@ -460,6 +460,12 @@ bool AIEOLPMovRotation::runOnMachineFunction(MachineFunction &MF) {
         else
           IterChanged |= rotateSteadyOnly(*SteadyMI, *Preheader, *SteadyBottom,
                                           *PeeledTop, *TII, *TRI);
+
+        // A rotation may have changed PeeledTop's live-ins (Case 1
+        // removes a MOV from PT).  Break so the outer fixpoint loop
+        // recomputes live-ins before the next MOV is considered.
+        if (IterChanged)
+          break;
       }
 
       if (!IterChanged)
