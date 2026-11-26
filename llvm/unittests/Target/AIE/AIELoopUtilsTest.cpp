@@ -385,7 +385,7 @@ TEST_F(AIELoopUtilsTest, OuterLoopStructure_AmbiguousPreheader) {
   EXPECT_EQ(OLS->OuterPreheader, nullptr);
   EXPECT_EQ(OLS->SteadyTop, getMBB(MF, 2));
   EXPECT_EQ(OLS->PeeledIterTop, getMBB(MF, 5));
-  EXPECT_FALSE(OLS->isSafeForSiblingMerge());
+  EXPECT_FALSE(OLS->isSafeToRotate());
 }
 
 TEST_F(AIELoopUtilsTest, OuterLoopStructure_BuildFromSpeculative) {
