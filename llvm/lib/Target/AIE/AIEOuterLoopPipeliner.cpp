@@ -369,7 +369,11 @@ protected:
   // The top region in program order; its entry is the top block.
   BlockRegion TopRegion;
 
-  // The bottom region in program order; its exit is the bottom block.
+  // The bottom region in program order; its exit is the bottom block. In a
+  // supported loop it is that single block (analyzeLoopStructure requires the
+  // inner exit to be the latch), so getBottom() and bottomRegion() name the
+  // same block. Code that walks the block itself uses getBottom(); code that
+  // also walks the top region uses the region.
   BlockRegion BottomRegion;
 
   std::optional<LatchConditionInfo> OuterLoopCondition;
