@@ -123,6 +123,8 @@ StringRef Triple::getArchName(ArchType Kind, SubArchType SubArch) {
       return "arm64ec";
     if (SubArch == AArch64SubArch_arm64e)
       return "arm64e";
+    if (SubArch == AArch64SubArch_lfi)
+      return "aarch64_lfi";
     break;
   case Triple::spirv:
     switch (SubArch) {
@@ -336,6 +338,12 @@ StringRef Triple::getOSTypeName(OSType Kind) {
   case TvOS: return "tvos";
   case UEFI: return "uefi";
   case WASI: return "wasi";
+  case WASIp1:
+    return "wasip1";
+  case WASIp2:
+    return "wasip2";
+  case WASIp3:
+    return "wasip3";
   case WatchOS: return "watchos";
   case Win32: return "windows";
   case ZOS: return "zos";
@@ -610,6 +618,7 @@ static Triple::ArchType parseArch(StringRef ArchName) {
           .Case("aarch64", Triple::aarch64)
           .Case("aarch64_be", Triple::aarch64_be)
           .Case("aarch64_32", Triple::aarch64_32)
+          .Case("aarch64_lfi", Triple::aarch64)
           .Case("aie", Triple::aie)
           .Case("aie2", Triple::aie2)
           .Case("aie2p", Triple::aie2p)
@@ -755,6 +764,9 @@ static Triple::OSType parseOS(StringRef OSName) {
       .StartsWith("amdpal", Triple::AMDPAL)
       .StartsWith("hermit", Triple::HermitCore)
       .StartsWith("hurd", Triple::Hurd)
+      .StartsWith("wasip1", Triple::WASIp1)
+      .StartsWith("wasip2", Triple::WASIp2)
+      .StartsWith("wasip3", Triple::WASIp3)
       .StartsWith("wasi", Triple::WASI)
       .StartsWith("emscripten", Triple::Emscripten)
       .StartsWith("shadermodel", Triple::ShaderModel)
@@ -851,6 +863,9 @@ static Triple::SubArchType parseSubArch(StringRef SubArchName) {
 
   if (SubArchName == "arm64ec")
     return Triple::AArch64SubArch_arm64ec;
+
+  if (SubArchName == "aarch64_lfi")
+    return Triple::AArch64SubArch_lfi;
 
   if (SubArchName.starts_with("spirv"))
     return StringSwitch<Triple::SubArchType>(SubArchName)

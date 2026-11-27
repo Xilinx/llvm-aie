@@ -213,7 +213,6 @@ v64float8 test_insert (v64float8 a, int idx, v32float8 b) { return insert(a, idx
 // CHECK-NEXT:    ret [[STRUCT_V64FLOAT8]] [[DOTFCA_0_INSERT_I]]
 //
 v64float8 test_set_v64float8 (int idx, v32float8 b) { return set_v64float8(idx, b); }
-//
 // CHECK-LABEL: @_Z11test_concat9v32float8S_(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V32FLOAT8:%.*]] [[A0_COERCE:%.*]], 0
@@ -345,6 +344,7 @@ v64float16 test_concat (v16float16 a0, v16float16 a1, v16float16 a2, v16float16 
 // CHECK-NEXT:    ret <32 x half> [[TMP2]]
 //
 v32float16 test_extract_v32float16 (v64float16 a, int idx) { return extract_v32float16(a, idx); }
+//
 // CHECK-LABEL: @_Z11test_insertDv64_7float16iDv32_S_(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <64 x half> [[A:%.*]] to <32 x i32>
@@ -422,6 +422,7 @@ v64float16 test_concat (v32float16 a0, v32float16 a1) { return concat(a0, a1); }
 // CHECK-NEXT:    ret [[STRUCT_V32BFLOAT8]] [[DOTFCA_0_INSERT_I]]
 //
 v32bfloat8 test_extract_v32bfloat8 (v128bfloat8 a, int idx) { return extract_v32bfloat8(a, idx); }
+//
 // CHECK-LABEL: @_Z11test_insert11v128bfloat8i10v32bfloat8(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V128BFLOAT8:%.*]] [[A_COERCE:%.*]], 0
@@ -1148,7 +1149,6 @@ v32float8 test_set_v32float8 (int idx, v16float8 a ) { return set_v32float8(idx,
 
 
 
-//
 // CHECK-LABEL: @_Z11test_insert10v64bfloat8i10v16bfloat8(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64BFLOAT8:%.*]] [[V_COERCE:%.*]], 0
@@ -1512,7 +1512,6 @@ v128mx9 test_concat (v64mx9 v0, v64mx9 v1) { return concat(v0, v1); }
 // CHECK-NEXT:    ret [[STRUCT_V128MX9]] [[CALL6_PN_I]]
 //
 v128mx9 test_insert (v128mx9 m, int idx, int exp) { return insert(m, idx, exp); }
-//
 // CHECK-LABEL: @_Z11test_insert7v128mx9iDv4_a(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[CMP_I:%.*]] = icmp slt i32 [[IDX:%.*]], 2
@@ -1806,7 +1805,7 @@ v64mx4 test_insert (v64mx4 m, int idx, int expo) { return insert(m, idx, expo); 
 // CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V256MX6]] [[M_COERCE]], 7
 // CHECK-NEXT:    br label [[_ZL20EXTRACT_MSB_V16UINT47V256MX6I_EXIT]]
 // CHECK:       _ZL20extract_msb_v16uint47v256mx6i.exit:
-// CHECK-NEXT:    [[TEMP_0_I:%.*]] = phi <2 x i32> [ [[TMP1]], [[IF_THEN_I]] ], [ [[TMP2]], [[IF_THEN5_I]] ], [ [[TMP3]], [[IF_ELSE6_I]] ], [ [[TMP0]], [[ENTRY:%.*]] ]
+// CHECK-NEXT:    [[TEMP_0_I:%.*]] = phi <2 x i32> [ [[TMP1]], [[IF_THEN_I]] ], [ [[TMP3]], [[IF_ELSE6_I]] ], [ [[TMP2]], [[IF_THEN5_I]] ], [ [[TMP0]], [[ENTRY:%.*]] ]
 // CHECK-NEXT:    [[TMP4:%.*]] = bitcast <2 x i32> [[TEMP_0_I]] to <8 x i8>
 // CHECK-NEXT:    ret <8 x i8> [[TMP4]]
 //
@@ -1852,10 +1851,10 @@ v32uint4 test_extract_msb_v32uint4 (v256mx6 m, int idx) { return extract_msb_v32
 // CHECK:       if.else6.i:
 // CHECK-NEXT:    br label [[_ZL6UPDATE7V256MX6IDV8_DU8__EXIT]]
 // CHECK:       _ZL6update7v256mx6iDv8_DU8_.exit:
-// CHECK-NEXT:    [[S_SROA_5_0_I:%.*]] = phi <2 x i32> [ [[TMP0]], [[IF_THEN2_I]] ], [ [[TMP0]], [[IF_THEN5_I]] ], [ [[TMP0]], [[IF_ELSE6_I]] ], [ [[TMP4]], [[ENTRY:%.*]] ]
-// CHECK-NEXT:    [[S_SROA_7_0_I:%.*]] = phi <2 x i32> [ [[TMP4]], [[IF_THEN2_I]] ], [ [[TMP1]], [[IF_THEN5_I]] ], [ [[TMP1]], [[IF_ELSE6_I]] ], [ [[TMP1]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_9_0_I:%.*]] = phi <2 x i32> [ [[TMP2]], [[IF_THEN2_I]] ], [ [[TMP4]], [[IF_THEN5_I]] ], [ [[TMP2]], [[IF_ELSE6_I]] ], [ [[TMP2]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_11_0_I:%.*]] = phi <2 x i32> [ [[TMP3]], [[IF_THEN2_I]] ], [ [[TMP3]], [[IF_THEN5_I]] ], [ [[TMP4]], [[IF_ELSE6_I]] ], [ [[TMP3]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_5_0_I:%.*]] = phi <2 x i32> [ [[TMP0]], [[IF_ELSE6_I]] ], [ [[TMP0]], [[IF_THEN2_I]] ], [ [[TMP0]], [[IF_THEN5_I]] ], [ [[TMP4]], [[ENTRY:%.*]] ]
+// CHECK-NEXT:    [[S_SROA_7_0_I:%.*]] = phi <2 x i32> [ [[TMP1]], [[IF_ELSE6_I]] ], [ [[TMP4]], [[IF_THEN2_I]] ], [ [[TMP1]], [[IF_THEN5_I]] ], [ [[TMP1]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_9_0_I:%.*]] = phi <2 x i32> [ [[TMP2]], [[IF_ELSE6_I]] ], [ [[TMP2]], [[IF_THEN2_I]] ], [ [[TMP4]], [[IF_THEN5_I]] ], [ [[TMP2]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_11_0_I:%.*]] = phi <2 x i32> [ [[TMP4]], [[IF_ELSE6_I]] ], [ [[TMP3]], [[IF_THEN2_I]] ], [ [[TMP3]], [[IF_THEN5_I]] ], [ [[TMP3]], [[ENTRY]] ]
 // CHECK-NEXT:    [[TMP5:%.*]] = extractvalue [[STRUCT_V256MX6]] [[S_COERCE]], 15
 // CHECK-NEXT:    [[TMP6:%.*]] = extractvalue [[STRUCT_V256MX6]] [[S_COERCE]], 14
 // CHECK-NEXT:    [[TMP7:%.*]] = extractvalue [[STRUCT_V256MX6]] [[S_COERCE]], 13
@@ -2029,14 +2028,14 @@ v8int8 test_extract_expo_v8int8 (v256mx6 m, int idx) { return extract_expo_v8int
 // CHECK:       sw.default.i:
 // CHECK-NEXT:    br label [[_ZL6UPDATE7V256MX6II_EXIT]]
 // CHECK:       _ZL6update7v256mx6ii.exit:
-// CHECK-NEXT:    [[S_SROA_9_0_I:%.*]] = phi i32 [ [[TMP0]], [[SW_DEFAULT_I]] ], [ [[TMP0]], [[SW_BB1_I]] ], [ [[TMP0]], [[SW_BB2_I]] ], [ [[TMP0]], [[SW_BB3_I]] ], [ [[M:%.*]], [[SW_BB4_I]] ], [ [[TMP0]], [[SW_BB5_I]] ], [ [[TMP0]], [[SW_BB6_I]] ], [ [[TMP0]], [[ENTRY:%.*]] ]
-// CHECK-NEXT:    [[S_SROA_11_0_I:%.*]] = phi i32 [ [[TMP1]], [[SW_DEFAULT_I]] ], [ [[TMP1]], [[SW_BB1_I]] ], [ [[TMP1]], [[SW_BB2_I]] ], [ [[TMP1]], [[SW_BB3_I]] ], [ [[TMP1]], [[SW_BB4_I]] ], [ [[M]], [[SW_BB5_I]] ], [ [[TMP1]], [[SW_BB6_I]] ], [ [[TMP1]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_13_0_I:%.*]] = phi i32 [ [[TMP2]], [[SW_DEFAULT_I]] ], [ [[TMP2]], [[SW_BB1_I]] ], [ [[TMP2]], [[SW_BB2_I]] ], [ [[TMP2]], [[SW_BB3_I]] ], [ [[TMP2]], [[SW_BB4_I]] ], [ [[TMP2]], [[SW_BB5_I]] ], [ [[M]], [[SW_BB6_I]] ], [ [[TMP2]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_15_0_I:%.*]] = phi i32 [ [[M]], [[SW_DEFAULT_I]] ], [ [[TMP3]], [[SW_BB1_I]] ], [ [[TMP3]], [[SW_BB2_I]] ], [ [[TMP3]], [[SW_BB3_I]] ], [ [[TMP3]], [[SW_BB4_I]] ], [ [[TMP3]], [[SW_BB5_I]] ], [ [[TMP3]], [[SW_BB6_I]] ], [ [[TMP3]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_17_0_I:%.*]] = phi i32 [ [[TMP4]], [[SW_DEFAULT_I]] ], [ [[TMP4]], [[SW_BB1_I]] ], [ [[TMP4]], [[SW_BB2_I]] ], [ [[TMP4]], [[SW_BB3_I]] ], [ [[TMP4]], [[SW_BB4_I]] ], [ [[TMP4]], [[SW_BB5_I]] ], [ [[TMP4]], [[SW_BB6_I]] ], [ [[M]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_19_0_I:%.*]] = phi i32 [ [[TMP5]], [[SW_DEFAULT_I]] ], [ [[M]], [[SW_BB1_I]] ], [ [[TMP5]], [[SW_BB2_I]] ], [ [[TMP5]], [[SW_BB3_I]] ], [ [[TMP5]], [[SW_BB4_I]] ], [ [[TMP5]], [[SW_BB5_I]] ], [ [[TMP5]], [[SW_BB6_I]] ], [ [[TMP5]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_21_0_I:%.*]] = phi i32 [ [[TMP6]], [[SW_DEFAULT_I]] ], [ [[TMP6]], [[SW_BB1_I]] ], [ [[M]], [[SW_BB2_I]] ], [ [[TMP6]], [[SW_BB3_I]] ], [ [[TMP6]], [[SW_BB4_I]] ], [ [[TMP6]], [[SW_BB5_I]] ], [ [[TMP6]], [[SW_BB6_I]] ], [ [[TMP6]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_23_0_I:%.*]] = phi i32 [ [[TMP7]], [[SW_DEFAULT_I]] ], [ [[TMP7]], [[SW_BB1_I]] ], [ [[TMP7]], [[SW_BB2_I]] ], [ [[M]], [[SW_BB3_I]] ], [ [[TMP7]], [[SW_BB4_I]] ], [ [[TMP7]], [[SW_BB5_I]] ], [ [[TMP7]], [[SW_BB6_I]] ], [ [[TMP7]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_9_0_I:%.*]] = phi i32 [ [[TMP0]], [[SW_DEFAULT_I]] ], [ [[TMP0]], [[SW_BB6_I]] ], [ [[TMP0]], [[SW_BB1_I]] ], [ [[TMP0]], [[SW_BB2_I]] ], [ [[TMP0]], [[SW_BB3_I]] ], [ [[M:%.*]], [[SW_BB4_I]] ], [ [[TMP0]], [[SW_BB5_I]] ], [ [[TMP0]], [[ENTRY:%.*]] ]
+// CHECK-NEXT:    [[S_SROA_11_0_I:%.*]] = phi i32 [ [[TMP1]], [[SW_DEFAULT_I]] ], [ [[TMP1]], [[SW_BB6_I]] ], [ [[TMP1]], [[SW_BB1_I]] ], [ [[TMP1]], [[SW_BB2_I]] ], [ [[TMP1]], [[SW_BB3_I]] ], [ [[TMP1]], [[SW_BB4_I]] ], [ [[M]], [[SW_BB5_I]] ], [ [[TMP1]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_13_0_I:%.*]] = phi i32 [ [[TMP2]], [[SW_DEFAULT_I]] ], [ [[M]], [[SW_BB6_I]] ], [ [[TMP2]], [[SW_BB1_I]] ], [ [[TMP2]], [[SW_BB2_I]] ], [ [[TMP2]], [[SW_BB3_I]] ], [ [[TMP2]], [[SW_BB4_I]] ], [ [[TMP2]], [[SW_BB5_I]] ], [ [[TMP2]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_15_0_I:%.*]] = phi i32 [ [[M]], [[SW_DEFAULT_I]] ], [ [[TMP3]], [[SW_BB6_I]] ], [ [[TMP3]], [[SW_BB1_I]] ], [ [[TMP3]], [[SW_BB2_I]] ], [ [[TMP3]], [[SW_BB3_I]] ], [ [[TMP3]], [[SW_BB4_I]] ], [ [[TMP3]], [[SW_BB5_I]] ], [ [[TMP3]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_17_0_I:%.*]] = phi i32 [ [[TMP4]], [[SW_DEFAULT_I]] ], [ [[TMP4]], [[SW_BB6_I]] ], [ [[TMP4]], [[SW_BB1_I]] ], [ [[TMP4]], [[SW_BB2_I]] ], [ [[TMP4]], [[SW_BB3_I]] ], [ [[TMP4]], [[SW_BB4_I]] ], [ [[TMP4]], [[SW_BB5_I]] ], [ [[M]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_19_0_I:%.*]] = phi i32 [ [[TMP5]], [[SW_DEFAULT_I]] ], [ [[TMP5]], [[SW_BB6_I]] ], [ [[M]], [[SW_BB1_I]] ], [ [[TMP5]], [[SW_BB2_I]] ], [ [[TMP5]], [[SW_BB3_I]] ], [ [[TMP5]], [[SW_BB4_I]] ], [ [[TMP5]], [[SW_BB5_I]] ], [ [[TMP5]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_21_0_I:%.*]] = phi i32 [ [[TMP6]], [[SW_DEFAULT_I]] ], [ [[TMP6]], [[SW_BB6_I]] ], [ [[TMP6]], [[SW_BB1_I]] ], [ [[M]], [[SW_BB2_I]] ], [ [[TMP6]], [[SW_BB3_I]] ], [ [[TMP6]], [[SW_BB4_I]] ], [ [[TMP6]], [[SW_BB5_I]] ], [ [[TMP6]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_23_0_I:%.*]] = phi i32 [ [[TMP7]], [[SW_DEFAULT_I]] ], [ [[TMP7]], [[SW_BB6_I]] ], [ [[TMP7]], [[SW_BB1_I]] ], [ [[TMP7]], [[SW_BB2_I]] ], [ [[M]], [[SW_BB3_I]] ], [ [[TMP7]], [[SW_BB4_I]] ], [ [[TMP7]], [[SW_BB5_I]] ], [ [[TMP7]], [[ENTRY]] ]
 // CHECK-NEXT:    [[DOTFCA_8_INSERT_I:%.*]] = insertvalue [[STRUCT_V256MX6]] [[S_COERCE]], i32 [[S_SROA_9_0_I]], 8
 // CHECK-NEXT:    [[DOTFCA_9_INSERT_I:%.*]] = insertvalue [[STRUCT_V256MX6]] [[DOTFCA_8_INSERT_I]], i32 [[S_SROA_11_0_I]], 9
 // CHECK-NEXT:    [[DOTFCA_10_INSERT_I:%.*]] = insertvalue [[STRUCT_V256MX6]] [[DOTFCA_9_INSERT_I]], i32 [[S_SROA_13_0_I]], 10
@@ -2073,14 +2072,14 @@ v256mx6 test_update (v256mx6 s, int idx, int m) { return update(s, idx, m); }
 // CHECK:       sw.default.i:
 // CHECK-NEXT:    br label [[_ZL6UPDATE7V256MX6IDV8_A_EXIT]]
 // CHECK:       _ZL6update7v256mx6iDv8_a.exit:
-// CHECK-NEXT:    [[S_SROA_9_0_I:%.*]] = phi i32 [ [[TMP0]], [[SW_DEFAULT_I]] ], [ [[TMP0]], [[SW_BB3_I]] ], [ [[VECEXT14_I]], [[SW_BB8_I]] ], [ [[TMP0]], [[ENTRY:%.*]] ]
-// CHECK-NEXT:    [[S_SROA_11_0_I:%.*]] = phi i32 [ [[TMP1]], [[SW_DEFAULT_I]] ], [ [[TMP1]], [[SW_BB3_I]] ], [ [[VECEXT16_I]], [[SW_BB8_I]] ], [ [[TMP1]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_13_0_I:%.*]] = phi i32 [ [[VECEXT14_I]], [[SW_DEFAULT_I]] ], [ [[TMP2]], [[SW_BB3_I]] ], [ [[TMP2]], [[SW_BB8_I]] ], [ [[TMP2]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_15_0_I:%.*]] = phi i32 [ [[VECEXT16_I]], [[SW_DEFAULT_I]] ], [ [[TMP3]], [[SW_BB3_I]] ], [ [[TMP3]], [[SW_BB8_I]] ], [ [[TMP3]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_17_0_I:%.*]] = phi i32 [ [[TMP4]], [[SW_DEFAULT_I]] ], [ [[TMP4]], [[SW_BB3_I]] ], [ [[TMP4]], [[SW_BB8_I]] ], [ [[VECEXT14_I]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_19_0_I:%.*]] = phi i32 [ [[TMP5]], [[SW_DEFAULT_I]] ], [ [[TMP5]], [[SW_BB3_I]] ], [ [[TMP5]], [[SW_BB8_I]] ], [ [[VECEXT16_I]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_21_0_I:%.*]] = phi i32 [ [[TMP6]], [[SW_DEFAULT_I]] ], [ [[VECEXT14_I]], [[SW_BB3_I]] ], [ [[TMP6]], [[SW_BB8_I]] ], [ [[TMP6]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_23_0_I:%.*]] = phi i32 [ [[TMP7]], [[SW_DEFAULT_I]] ], [ [[VECEXT16_I]], [[SW_BB3_I]] ], [ [[TMP7]], [[SW_BB8_I]] ], [ [[TMP7]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_9_0_I:%.*]] = phi i32 [ [[TMP0]], [[SW_DEFAULT_I]] ], [ [[VECEXT14_I]], [[SW_BB8_I]] ], [ [[TMP0]], [[SW_BB3_I]] ], [ [[TMP0]], [[ENTRY:%.*]] ]
+// CHECK-NEXT:    [[S_SROA_11_0_I:%.*]] = phi i32 [ [[TMP1]], [[SW_DEFAULT_I]] ], [ [[VECEXT16_I]], [[SW_BB8_I]] ], [ [[TMP1]], [[SW_BB3_I]] ], [ [[TMP1]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_13_0_I:%.*]] = phi i32 [ [[VECEXT14_I]], [[SW_DEFAULT_I]] ], [ [[TMP2]], [[SW_BB8_I]] ], [ [[TMP2]], [[SW_BB3_I]] ], [ [[TMP2]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_15_0_I:%.*]] = phi i32 [ [[VECEXT16_I]], [[SW_DEFAULT_I]] ], [ [[TMP3]], [[SW_BB8_I]] ], [ [[TMP3]], [[SW_BB3_I]] ], [ [[TMP3]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_17_0_I:%.*]] = phi i32 [ [[TMP4]], [[SW_DEFAULT_I]] ], [ [[TMP4]], [[SW_BB8_I]] ], [ [[TMP4]], [[SW_BB3_I]] ], [ [[VECEXT14_I]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_19_0_I:%.*]] = phi i32 [ [[TMP5]], [[SW_DEFAULT_I]] ], [ [[TMP5]], [[SW_BB8_I]] ], [ [[TMP5]], [[SW_BB3_I]] ], [ [[VECEXT16_I]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_21_0_I:%.*]] = phi i32 [ [[TMP6]], [[SW_DEFAULT_I]] ], [ [[TMP6]], [[SW_BB8_I]] ], [ [[VECEXT14_I]], [[SW_BB3_I]] ], [ [[TMP6]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_23_0_I:%.*]] = phi i32 [ [[TMP7]], [[SW_DEFAULT_I]] ], [ [[TMP7]], [[SW_BB8_I]] ], [ [[VECEXT16_I]], [[SW_BB3_I]] ], [ [[TMP7]], [[ENTRY]] ]
 // CHECK-NEXT:    [[DOTFCA_8_INSERT_I:%.*]] = insertvalue [[STRUCT_V256MX6]] [[S_COERCE]], i32 [[S_SROA_9_0_I]], 8
 // CHECK-NEXT:    [[DOTFCA_9_INSERT_I:%.*]] = insertvalue [[STRUCT_V256MX6]] [[DOTFCA_8_INSERT_I]], i32 [[S_SROA_11_0_I]], 9
 // CHECK-NEXT:    [[DOTFCA_10_INSERT_I:%.*]] = insertvalue [[STRUCT_V256MX6]] [[DOTFCA_9_INSERT_I]], i32 [[S_SROA_13_0_I]], 10
@@ -2110,7 +2109,7 @@ v256mx6 test_update (v256mx6 s, int idx, v8int8 m) { return update(s, idx, m); }
 // CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V256MX6]] [[M_COERCE]], 3
 // CHECK-NEXT:    br label [[_ZL16EXTRACT_V64UINT47V256MX6I_EXIT]]
 // CHECK:       _ZL16extract_v64uint47v256mx6i.exit:
-// CHECK-NEXT:    [[TEMP_0_I:%.*]] = phi <8 x i32> [ [[TMP1]], [[IF_THEN_I]] ], [ [[TMP2]], [[IF_THEN5_I]] ], [ [[TMP3]], [[IF_ELSE6_I]] ], [ [[TMP0]], [[ENTRY:%.*]] ]
+// CHECK-NEXT:    [[TEMP_0_I:%.*]] = phi <8 x i32> [ [[TMP1]], [[IF_THEN_I]] ], [ [[TMP3]], [[IF_ELSE6_I]] ], [ [[TMP2]], [[IF_THEN5_I]] ], [ [[TMP0]], [[ENTRY:%.*]] ]
 // CHECK-NEXT:    [[TMP4:%.*]] = bitcast <8 x i32> [[TEMP_0_I]] to <32 x i8>
 // CHECK-NEXT:    ret <32 x i8> [[TMP4]]
 //
@@ -2148,10 +2147,10 @@ v128uint4 test_extract_v128uint4 (v256mx6 m, int idx) { return extract_v128uint4
 // CHECK:       if.else6.i:
 // CHECK-NEXT:    br label [[_ZL6UPDATE7V256MX6IDV32_DU8__EXIT]]
 // CHECK:       _ZL6update7v256mx6iDv32_DU8_.exit:
-// CHECK-NEXT:    [[S_SROA_3_0_I:%.*]] = phi <8 x i32> [ [[TMP4]], [[IF_THEN2_I]] ], [ [[TMP1]], [[IF_THEN5_I]] ], [ [[TMP1]], [[IF_ELSE6_I]] ], [ [[TMP1]], [[ENTRY:%.*]] ]
-// CHECK-NEXT:    [[S_SROA_0_0_I:%.*]] = phi <8 x i32> [ [[TMP0]], [[IF_THEN2_I]] ], [ [[TMP0]], [[IF_THEN5_I]] ], [ [[TMP0]], [[IF_ELSE6_I]] ], [ [[TMP4]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_5_0_I:%.*]] = phi <8 x i32> [ [[TMP2]], [[IF_THEN2_I]] ], [ [[TMP4]], [[IF_THEN5_I]] ], [ [[TMP2]], [[IF_ELSE6_I]] ], [ [[TMP2]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_7_0_I:%.*]] = phi <8 x i32> [ [[TMP3]], [[IF_THEN2_I]] ], [ [[TMP3]], [[IF_THEN5_I]] ], [ [[TMP4]], [[IF_ELSE6_I]] ], [ [[TMP3]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_3_0_I:%.*]] = phi <8 x i32> [ [[TMP1]], [[IF_ELSE6_I]] ], [ [[TMP4]], [[IF_THEN2_I]] ], [ [[TMP1]], [[IF_THEN5_I]] ], [ [[TMP1]], [[ENTRY:%.*]] ]
+// CHECK-NEXT:    [[S_SROA_0_0_I:%.*]] = phi <8 x i32> [ [[TMP0]], [[IF_ELSE6_I]] ], [ [[TMP0]], [[IF_THEN2_I]] ], [ [[TMP0]], [[IF_THEN5_I]] ], [ [[TMP4]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_5_0_I:%.*]] = phi <8 x i32> [ [[TMP2]], [[IF_ELSE6_I]] ], [ [[TMP2]], [[IF_THEN2_I]] ], [ [[TMP4]], [[IF_THEN5_I]] ], [ [[TMP2]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_7_0_I:%.*]] = phi <8 x i32> [ [[TMP4]], [[IF_ELSE6_I]] ], [ [[TMP3]], [[IF_THEN2_I]] ], [ [[TMP3]], [[IF_THEN5_I]] ], [ [[TMP3]], [[ENTRY]] ]
 // CHECK-NEXT:    [[TMP5:%.*]] = extractvalue [[STRUCT_V256MX6]] [[S_COERCE]], 15
 // CHECK-NEXT:    [[TMP6:%.*]] = extractvalue [[STRUCT_V256MX6]] [[S_COERCE]], 14
 // CHECK-NEXT:    [[TMP7:%.*]] = extractvalue [[STRUCT_V256MX6]] [[S_COERCE]], 13
@@ -2258,10 +2257,10 @@ v256mx6 test_update (v256mx6 s, int idx, v128uint4 m) { return update(s, idx, m)
 // CHECK-NEXT:    [[TMP15:%.*]] = extractvalue [[STRUCT_V256MX6]] [[M_COERCE]], 3
 // CHECK-NEXT:    br label [[_ZL14EXTRACT_V64MX67V256MX6I_EXIT]]
 // CHECK:       _ZL14extract_v64mx67v256mx6i.exit:
-// CHECK-NEXT:    [[RETVAL_SROA_0_0_I:%.*]] = phi <8 x i32> [ [[TMP7]], [[IF_THEN_I]] ], [ [[TMP11]], [[IF_THEN9_I]] ], [ [[TMP15]], [[IF_ELSE14_I]] ], [ [[TMP0]], [[ENTRY:%.*]] ]
-// CHECK-NEXT:    [[RETVAL_SROA_5_0_I:%.*]] = phi <2 x i32> [ [[TMP6]], [[IF_THEN_I]] ], [ [[TMP10]], [[IF_THEN9_I]] ], [ [[TMP14]], [[IF_ELSE14_I]] ], [ [[TMP1]], [[ENTRY]] ]
-// CHECK-NEXT:    [[RETVAL_SROA_10_0_I:%.*]] = phi i32 [ [[TMP5]], [[IF_THEN_I]] ], [ [[TMP9]], [[IF_THEN9_I]] ], [ [[TMP13]], [[IF_ELSE14_I]] ], [ [[TMP2]], [[ENTRY]] ]
-// CHECK-NEXT:    [[RETVAL_SROA_15_0_I:%.*]] = phi i32 [ [[TMP4]], [[IF_THEN_I]] ], [ [[TMP8]], [[IF_THEN9_I]] ], [ [[TMP12]], [[IF_ELSE14_I]] ], [ [[TMP3]], [[ENTRY]] ]
+// CHECK-NEXT:    [[RETVAL_SROA_0_0_I:%.*]] = phi <8 x i32> [ [[TMP7]], [[IF_THEN_I]] ], [ [[TMP15]], [[IF_ELSE14_I]] ], [ [[TMP11]], [[IF_THEN9_I]] ], [ [[TMP0]], [[ENTRY:%.*]] ]
+// CHECK-NEXT:    [[RETVAL_SROA_5_0_I:%.*]] = phi <2 x i32> [ [[TMP6]], [[IF_THEN_I]] ], [ [[TMP14]], [[IF_ELSE14_I]] ], [ [[TMP10]], [[IF_THEN9_I]] ], [ [[TMP1]], [[ENTRY]] ]
+// CHECK-NEXT:    [[RETVAL_SROA_10_0_I:%.*]] = phi i32 [ [[TMP5]], [[IF_THEN_I]] ], [ [[TMP13]], [[IF_ELSE14_I]] ], [ [[TMP9]], [[IF_THEN9_I]] ], [ [[TMP2]], [[ENTRY]] ]
+// CHECK-NEXT:    [[RETVAL_SROA_15_0_I:%.*]] = phi i32 [ [[TMP4]], [[IF_THEN_I]] ], [ [[TMP12]], [[IF_ELSE14_I]] ], [ [[TMP8]], [[IF_THEN9_I]] ], [ [[TMP3]], [[ENTRY]] ]
 // CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V64MX6:%.*]] poison, <8 x i32> [[RETVAL_SROA_0_0_I]], 0
 // CHECK-NEXT:    [[DOTFCA_1_INSERT_I:%.*]] = insertvalue [[STRUCT_V64MX6]] [[DOTFCA_0_INSERT_I]], <2 x i32> [[RETVAL_SROA_5_0_I]], 1
 // CHECK-NEXT:    [[DOTFCA_2_INSERT_I:%.*]] = insertvalue [[STRUCT_V64MX6]] [[DOTFCA_1_INSERT_I]], i32 [[RETVAL_SROA_10_0_I]], 2
@@ -2299,10 +2298,10 @@ v64mx6 test_extract_v64mx6 (v256mx6 m, int idx) { return extract_v64mx6(m, idx);
 // CHECK-NEXT:    [[TMP15:%.*]] = extractvalue [[STRUCT_V256MX6]] [[M_COERCE]], 3
 // CHECK-NEXT:    br label [[_ZL17EXTRACT_V64BFP13P7V256MX6I_EXIT]]
 // CHECK:       _ZL17extract_v64bfp13p7v256mx6i.exit:
-// CHECK-NEXT:    [[RETVAL_SROA_0_0_I_I:%.*]] = phi <8 x i32> [ [[TMP7]], [[IF_THEN_I_I]] ], [ [[TMP11]], [[IF_THEN9_I_I]] ], [ [[TMP15]], [[IF_ELSE14_I_I]] ], [ [[TMP0]], [[ENTRY:%.*]] ]
-// CHECK-NEXT:    [[RETVAL_SROA_5_0_I_I:%.*]] = phi <2 x i32> [ [[TMP6]], [[IF_THEN_I_I]] ], [ [[TMP10]], [[IF_THEN9_I_I]] ], [ [[TMP14]], [[IF_ELSE14_I_I]] ], [ [[TMP1]], [[ENTRY]] ]
-// CHECK-NEXT:    [[RETVAL_SROA_10_0_I_I:%.*]] = phi i32 [ [[TMP5]], [[IF_THEN_I_I]] ], [ [[TMP9]], [[IF_THEN9_I_I]] ], [ [[TMP13]], [[IF_ELSE14_I_I]] ], [ [[TMP2]], [[ENTRY]] ]
-// CHECK-NEXT:    [[RETVAL_SROA_15_0_I_I:%.*]] = phi i32 [ [[TMP4]], [[IF_THEN_I_I]] ], [ [[TMP8]], [[IF_THEN9_I_I]] ], [ [[TMP12]], [[IF_ELSE14_I_I]] ], [ [[TMP3]], [[ENTRY]] ]
+// CHECK-NEXT:    [[RETVAL_SROA_0_0_I_I:%.*]] = phi <8 x i32> [ [[TMP7]], [[IF_THEN_I_I]] ], [ [[TMP15]], [[IF_ELSE14_I_I]] ], [ [[TMP11]], [[IF_THEN9_I_I]] ], [ [[TMP0]], [[ENTRY:%.*]] ]
+// CHECK-NEXT:    [[RETVAL_SROA_5_0_I_I:%.*]] = phi <2 x i32> [ [[TMP6]], [[IF_THEN_I_I]] ], [ [[TMP14]], [[IF_ELSE14_I_I]] ], [ [[TMP10]], [[IF_THEN9_I_I]] ], [ [[TMP1]], [[ENTRY]] ]
+// CHECK-NEXT:    [[RETVAL_SROA_10_0_I_I:%.*]] = phi i32 [ [[TMP5]], [[IF_THEN_I_I]] ], [ [[TMP13]], [[IF_ELSE14_I_I]] ], [ [[TMP9]], [[IF_THEN9_I_I]] ], [ [[TMP2]], [[ENTRY]] ]
+// CHECK-NEXT:    [[RETVAL_SROA_15_0_I_I:%.*]] = phi i32 [ [[TMP4]], [[IF_THEN_I_I]] ], [ [[TMP12]], [[IF_ELSE14_I_I]] ], [ [[TMP8]], [[IF_THEN9_I_I]] ], [ [[TMP3]], [[ENTRY]] ]
 // CHECK-NEXT:    [[DOTFCA_0_INSERT_I_I:%.*]] = insertvalue [[STRUCT_V64MX6:%.*]] poison, <8 x i32> [[RETVAL_SROA_0_0_I_I]], 0
 // CHECK-NEXT:    [[DOTFCA_1_INSERT_I_I:%.*]] = insertvalue [[STRUCT_V64MX6]] [[DOTFCA_0_INSERT_I_I]], <2 x i32> [[RETVAL_SROA_5_0_I_I]], 1
 // CHECK-NEXT:    [[DOTFCA_2_INSERT_I_I:%.*]] = insertvalue [[STRUCT_V64MX6]] [[DOTFCA_1_INSERT_I_I]], i32 [[RETVAL_SROA_10_0_I_I]], 2
@@ -2344,22 +2343,22 @@ v64bfp13p test_extract_v64bfp13p (v256bfp13p m, int idx) { return extract_v64bfp
 // CHECK:       if.else14.i:
 // CHECK-NEXT:    br label [[_ZL6UPDATE7V256MX6I6V64MX6_EXIT]]
 // CHECK:       _ZL6update7v256mx6i6v64mx6.exit:
-// CHECK-NEXT:    [[S_SROA_21_0_I:%.*]] = phi i32 [ [[TMP10]], [[IF_THEN2_I]] ], [ [[TMP18]], [[IF_THEN9_I]] ], [ [[TMP10]], [[IF_ELSE14_I]] ], [ [[TMP10]], [[ENTRY:%.*]] ]
-// CHECK-NEXT:    [[S_SROA_19_0_I:%.*]] = phi i32 [ [[TMP18]], [[IF_THEN2_I]] ], [ [[TMP9]], [[IF_THEN9_I]] ], [ [[TMP9]], [[IF_ELSE14_I]] ], [ [[TMP9]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_17_0_I:%.*]] = phi i32 [ [[TMP8]], [[IF_THEN2_I]] ], [ [[TMP8]], [[IF_THEN9_I]] ], [ [[TMP8]], [[IF_ELSE14_I]] ], [ [[TMP18]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_15_0_I:%.*]] = phi <2 x i32> [ [[TMP7]], [[IF_THEN2_I]] ], [ [[TMP7]], [[IF_THEN9_I]] ], [ [[TMP17]], [[IF_ELSE14_I]] ], [ [[TMP7]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_13_0_I:%.*]] = phi <2 x i32> [ [[TMP6]], [[IF_THEN2_I]] ], [ [[TMP17]], [[IF_THEN9_I]] ], [ [[TMP6]], [[IF_ELSE14_I]] ], [ [[TMP6]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_11_0_I:%.*]] = phi <2 x i32> [ [[TMP17]], [[IF_THEN2_I]] ], [ [[TMP5]], [[IF_THEN9_I]] ], [ [[TMP5]], [[IF_ELSE14_I]] ], [ [[TMP5]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_9_0_I:%.*]] = phi <2 x i32> [ [[TMP4]], [[IF_THEN2_I]] ], [ [[TMP4]], [[IF_THEN9_I]] ], [ [[TMP4]], [[IF_ELSE14_I]] ], [ [[TMP17]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_7_0_I:%.*]] = phi <8 x i32> [ [[TMP3]], [[IF_THEN2_I]] ], [ [[TMP3]], [[IF_THEN9_I]] ], [ [[TMP16]], [[IF_ELSE14_I]] ], [ [[TMP3]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_5_0_I:%.*]] = phi <8 x i32> [ [[TMP2]], [[IF_THEN2_I]] ], [ [[TMP16]], [[IF_THEN9_I]] ], [ [[TMP2]], [[IF_ELSE14_I]] ], [ [[TMP2]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_3_0_I:%.*]] = phi <8 x i32> [ [[TMP16]], [[IF_THEN2_I]] ], [ [[TMP1]], [[IF_THEN9_I]] ], [ [[TMP1]], [[IF_ELSE14_I]] ], [ [[TMP1]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_0_0_I:%.*]] = phi <8 x i32> [ [[TMP0]], [[IF_THEN2_I]] ], [ [[TMP0]], [[IF_THEN9_I]] ], [ [[TMP0]], [[IF_ELSE14_I]] ], [ [[TMP16]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_23_0_I:%.*]] = phi i32 [ [[TMP11]], [[IF_THEN2_I]] ], [ [[TMP11]], [[IF_THEN9_I]] ], [ [[TMP18]], [[IF_ELSE14_I]] ], [ [[TMP11]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_25_0_I:%.*]] = phi i32 [ [[TMP12]], [[IF_THEN2_I]] ], [ [[TMP12]], [[IF_THEN9_I]] ], [ [[TMP12]], [[IF_ELSE14_I]] ], [ [[TMP19]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_27_0_I:%.*]] = phi i32 [ [[TMP19]], [[IF_THEN2_I]] ], [ [[TMP13]], [[IF_THEN9_I]] ], [ [[TMP13]], [[IF_ELSE14_I]] ], [ [[TMP13]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_29_0_I:%.*]] = phi i32 [ [[TMP14]], [[IF_THEN2_I]] ], [ [[TMP19]], [[IF_THEN9_I]] ], [ [[TMP14]], [[IF_ELSE14_I]] ], [ [[TMP14]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_31_0_I:%.*]] = phi i32 [ [[TMP15]], [[IF_THEN2_I]] ], [ [[TMP15]], [[IF_THEN9_I]] ], [ [[TMP19]], [[IF_ELSE14_I]] ], [ [[TMP15]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_21_0_I:%.*]] = phi i32 [ [[TMP10]], [[IF_ELSE14_I]] ], [ [[TMP10]], [[IF_THEN2_I]] ], [ [[TMP18]], [[IF_THEN9_I]] ], [ [[TMP10]], [[ENTRY:%.*]] ]
+// CHECK-NEXT:    [[S_SROA_19_0_I:%.*]] = phi i32 [ [[TMP9]], [[IF_ELSE14_I]] ], [ [[TMP18]], [[IF_THEN2_I]] ], [ [[TMP9]], [[IF_THEN9_I]] ], [ [[TMP9]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_17_0_I:%.*]] = phi i32 [ [[TMP8]], [[IF_ELSE14_I]] ], [ [[TMP8]], [[IF_THEN2_I]] ], [ [[TMP8]], [[IF_THEN9_I]] ], [ [[TMP18]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_15_0_I:%.*]] = phi <2 x i32> [ [[TMP17]], [[IF_ELSE14_I]] ], [ [[TMP7]], [[IF_THEN2_I]] ], [ [[TMP7]], [[IF_THEN9_I]] ], [ [[TMP7]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_13_0_I:%.*]] = phi <2 x i32> [ [[TMP6]], [[IF_ELSE14_I]] ], [ [[TMP6]], [[IF_THEN2_I]] ], [ [[TMP17]], [[IF_THEN9_I]] ], [ [[TMP6]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_11_0_I:%.*]] = phi <2 x i32> [ [[TMP5]], [[IF_ELSE14_I]] ], [ [[TMP17]], [[IF_THEN2_I]] ], [ [[TMP5]], [[IF_THEN9_I]] ], [ [[TMP5]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_9_0_I:%.*]] = phi <2 x i32> [ [[TMP4]], [[IF_ELSE14_I]] ], [ [[TMP4]], [[IF_THEN2_I]] ], [ [[TMP4]], [[IF_THEN9_I]] ], [ [[TMP17]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_7_0_I:%.*]] = phi <8 x i32> [ [[TMP16]], [[IF_ELSE14_I]] ], [ [[TMP3]], [[IF_THEN2_I]] ], [ [[TMP3]], [[IF_THEN9_I]] ], [ [[TMP3]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_5_0_I:%.*]] = phi <8 x i32> [ [[TMP2]], [[IF_ELSE14_I]] ], [ [[TMP2]], [[IF_THEN2_I]] ], [ [[TMP16]], [[IF_THEN9_I]] ], [ [[TMP2]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_3_0_I:%.*]] = phi <8 x i32> [ [[TMP1]], [[IF_ELSE14_I]] ], [ [[TMP16]], [[IF_THEN2_I]] ], [ [[TMP1]], [[IF_THEN9_I]] ], [ [[TMP1]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_0_0_I:%.*]] = phi <8 x i32> [ [[TMP0]], [[IF_ELSE14_I]] ], [ [[TMP0]], [[IF_THEN2_I]] ], [ [[TMP0]], [[IF_THEN9_I]] ], [ [[TMP16]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_23_0_I:%.*]] = phi i32 [ [[TMP18]], [[IF_ELSE14_I]] ], [ [[TMP11]], [[IF_THEN2_I]] ], [ [[TMP11]], [[IF_THEN9_I]] ], [ [[TMP11]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_25_0_I:%.*]] = phi i32 [ [[TMP12]], [[IF_ELSE14_I]] ], [ [[TMP12]], [[IF_THEN2_I]] ], [ [[TMP12]], [[IF_THEN9_I]] ], [ [[TMP19]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_27_0_I:%.*]] = phi i32 [ [[TMP13]], [[IF_ELSE14_I]] ], [ [[TMP19]], [[IF_THEN2_I]] ], [ [[TMP13]], [[IF_THEN9_I]] ], [ [[TMP13]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_29_0_I:%.*]] = phi i32 [ [[TMP14]], [[IF_ELSE14_I]] ], [ [[TMP14]], [[IF_THEN2_I]] ], [ [[TMP19]], [[IF_THEN9_I]] ], [ [[TMP14]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_31_0_I:%.*]] = phi i32 [ [[TMP19]], [[IF_ELSE14_I]] ], [ [[TMP15]], [[IF_THEN2_I]] ], [ [[TMP15]], [[IF_THEN9_I]] ], [ [[TMP15]], [[ENTRY]] ]
 // CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V256MX6]] poison, <8 x i32> [[S_SROA_0_0_I]], 0
 // CHECK-NEXT:    [[DOTFCA_1_INSERT_I:%.*]] = insertvalue [[STRUCT_V256MX6]] [[DOTFCA_0_INSERT_I]], <8 x i32> [[S_SROA_3_0_I]], 1
 // CHECK-NEXT:    [[DOTFCA_2_INSERT_I:%.*]] = insertvalue [[STRUCT_V256MX6]] [[DOTFCA_1_INSERT_I]], <8 x i32> [[S_SROA_5_0_I]], 2
@@ -2506,22 +2505,22 @@ v128bfp13p test_extract_v128bfp13p (v256bfp13p m, int idx) { return extract_v128
 // CHECK:       if.end19.fold.split.i:
 // CHECK-NEXT:    br label [[_ZL6UPDATE7V256MX6I7V128MX6_EXIT]]
 // CHECK:       _ZL6update7v256mx6i7v128mx6.exit:
-// CHECK-NEXT:    [[S_SROA_13_0_I:%.*]] = phi <2 x i32> [ [[TMP18]], [[IF_THEN10_I]] ], [ [[TMP6]], [[ENTRY:%.*]] ], [ [[TMP6]], [[IF_END19_FOLD_SPLIT_I]] ]
-// CHECK-NEXT:    [[S_SROA_11_0_I:%.*]] = phi <2 x i32> [ [[TMP5]], [[IF_THEN10_I]] ], [ [[TMP19]], [[ENTRY]] ], [ [[TMP5]], [[IF_END19_FOLD_SPLIT_I]] ]
-// CHECK-NEXT:    [[S_SROA_9_0_I:%.*]] = phi <2 x i32> [ [[TMP4]], [[IF_THEN10_I]] ], [ [[TMP18]], [[ENTRY]] ], [ [[TMP4]], [[IF_END19_FOLD_SPLIT_I]] ]
-// CHECK-NEXT:    [[S_SROA_7_0_I:%.*]] = phi <8 x i32> [ [[TMP17]], [[IF_THEN10_I]] ], [ [[TMP3]], [[ENTRY]] ], [ [[TMP3]], [[IF_END19_FOLD_SPLIT_I]] ]
-// CHECK-NEXT:    [[S_SROA_5_0_I:%.*]] = phi <8 x i32> [ [[TMP16]], [[IF_THEN10_I]] ], [ [[TMP2]], [[ENTRY]] ], [ [[TMP2]], [[IF_END19_FOLD_SPLIT_I]] ]
-// CHECK-NEXT:    [[S_SROA_3_0_I:%.*]] = phi <8 x i32> [ [[TMP1]], [[IF_THEN10_I]] ], [ [[TMP17]], [[ENTRY]] ], [ [[TMP1]], [[IF_END19_FOLD_SPLIT_I]] ]
-// CHECK-NEXT:    [[S_SROA_0_0_I:%.*]] = phi <8 x i32> [ [[TMP0]], [[IF_THEN10_I]] ], [ [[TMP16]], [[ENTRY]] ], [ [[TMP0]], [[IF_END19_FOLD_SPLIT_I]] ]
-// CHECK-NEXT:    [[S_SROA_15_0_I:%.*]] = phi <2 x i32> [ [[TMP19]], [[IF_THEN10_I]] ], [ [[TMP7]], [[ENTRY]] ], [ [[TMP7]], [[IF_END19_FOLD_SPLIT_I]] ]
-// CHECK-NEXT:    [[S_SROA_17_0_I:%.*]] = phi i32 [ [[TMP8]], [[IF_THEN10_I]] ], [ [[TMP20]], [[ENTRY]] ], [ [[TMP8]], [[IF_END19_FOLD_SPLIT_I]] ]
-// CHECK-NEXT:    [[S_SROA_19_0_I:%.*]] = phi i32 [ [[TMP9]], [[IF_THEN10_I]] ], [ [[TMP21]], [[ENTRY]] ], [ [[TMP9]], [[IF_END19_FOLD_SPLIT_I]] ]
-// CHECK-NEXT:    [[S_SROA_21_0_I:%.*]] = phi i32 [ [[TMP20]], [[IF_THEN10_I]] ], [ [[TMP10]], [[ENTRY]] ], [ [[TMP10]], [[IF_END19_FOLD_SPLIT_I]] ]
-// CHECK-NEXT:    [[S_SROA_23_0_I:%.*]] = phi i32 [ [[TMP21]], [[IF_THEN10_I]] ], [ [[TMP11]], [[ENTRY]] ], [ [[TMP11]], [[IF_END19_FOLD_SPLIT_I]] ]
-// CHECK-NEXT:    [[S_SROA_25_0_I:%.*]] = phi i32 [ [[TMP12]], [[IF_THEN10_I]] ], [ [[TMP22]], [[ENTRY]] ], [ [[TMP12]], [[IF_END19_FOLD_SPLIT_I]] ]
-// CHECK-NEXT:    [[S_SROA_27_0_I:%.*]] = phi i32 [ [[TMP13]], [[IF_THEN10_I]] ], [ [[TMP23]], [[ENTRY]] ], [ [[TMP13]], [[IF_END19_FOLD_SPLIT_I]] ]
-// CHECK-NEXT:    [[S_SROA_29_0_I:%.*]] = phi i32 [ [[TMP22]], [[IF_THEN10_I]] ], [ [[TMP14]], [[ENTRY]] ], [ [[TMP14]], [[IF_END19_FOLD_SPLIT_I]] ]
-// CHECK-NEXT:    [[S_SROA_31_0_I:%.*]] = phi i32 [ [[TMP23]], [[IF_THEN10_I]] ], [ [[TMP15]], [[ENTRY]] ], [ [[TMP15]], [[IF_END19_FOLD_SPLIT_I]] ]
+// CHECK-NEXT:    [[S_SROA_13_0_I:%.*]] = phi <2 x i32> [ [[TMP6]], [[ENTRY:%.*]] ], [ [[TMP18]], [[IF_THEN10_I]] ], [ [[TMP6]], [[IF_END19_FOLD_SPLIT_I]] ]
+// CHECK-NEXT:    [[S_SROA_11_0_I:%.*]] = phi <2 x i32> [ [[TMP19]], [[ENTRY]] ], [ [[TMP5]], [[IF_THEN10_I]] ], [ [[TMP5]], [[IF_END19_FOLD_SPLIT_I]] ]
+// CHECK-NEXT:    [[S_SROA_9_0_I:%.*]] = phi <2 x i32> [ [[TMP18]], [[ENTRY]] ], [ [[TMP4]], [[IF_THEN10_I]] ], [ [[TMP4]], [[IF_END19_FOLD_SPLIT_I]] ]
+// CHECK-NEXT:    [[S_SROA_7_0_I:%.*]] = phi <8 x i32> [ [[TMP3]], [[ENTRY]] ], [ [[TMP17]], [[IF_THEN10_I]] ], [ [[TMP3]], [[IF_END19_FOLD_SPLIT_I]] ]
+// CHECK-NEXT:    [[S_SROA_5_0_I:%.*]] = phi <8 x i32> [ [[TMP2]], [[ENTRY]] ], [ [[TMP16]], [[IF_THEN10_I]] ], [ [[TMP2]], [[IF_END19_FOLD_SPLIT_I]] ]
+// CHECK-NEXT:    [[S_SROA_3_0_I:%.*]] = phi <8 x i32> [ [[TMP17]], [[ENTRY]] ], [ [[TMP1]], [[IF_THEN10_I]] ], [ [[TMP1]], [[IF_END19_FOLD_SPLIT_I]] ]
+// CHECK-NEXT:    [[S_SROA_0_0_I:%.*]] = phi <8 x i32> [ [[TMP16]], [[ENTRY]] ], [ [[TMP0]], [[IF_THEN10_I]] ], [ [[TMP0]], [[IF_END19_FOLD_SPLIT_I]] ]
+// CHECK-NEXT:    [[S_SROA_15_0_I:%.*]] = phi <2 x i32> [ [[TMP7]], [[ENTRY]] ], [ [[TMP19]], [[IF_THEN10_I]] ], [ [[TMP7]], [[IF_END19_FOLD_SPLIT_I]] ]
+// CHECK-NEXT:    [[S_SROA_17_0_I:%.*]] = phi i32 [ [[TMP20]], [[ENTRY]] ], [ [[TMP8]], [[IF_THEN10_I]] ], [ [[TMP8]], [[IF_END19_FOLD_SPLIT_I]] ]
+// CHECK-NEXT:    [[S_SROA_19_0_I:%.*]] = phi i32 [ [[TMP21]], [[ENTRY]] ], [ [[TMP9]], [[IF_THEN10_I]] ], [ [[TMP9]], [[IF_END19_FOLD_SPLIT_I]] ]
+// CHECK-NEXT:    [[S_SROA_21_0_I:%.*]] = phi i32 [ [[TMP10]], [[ENTRY]] ], [ [[TMP20]], [[IF_THEN10_I]] ], [ [[TMP10]], [[IF_END19_FOLD_SPLIT_I]] ]
+// CHECK-NEXT:    [[S_SROA_23_0_I:%.*]] = phi i32 [ [[TMP11]], [[ENTRY]] ], [ [[TMP21]], [[IF_THEN10_I]] ], [ [[TMP11]], [[IF_END19_FOLD_SPLIT_I]] ]
+// CHECK-NEXT:    [[S_SROA_25_0_I:%.*]] = phi i32 [ [[TMP22]], [[ENTRY]] ], [ [[TMP12]], [[IF_THEN10_I]] ], [ [[TMP12]], [[IF_END19_FOLD_SPLIT_I]] ]
+// CHECK-NEXT:    [[S_SROA_27_0_I:%.*]] = phi i32 [ [[TMP23]], [[ENTRY]] ], [ [[TMP13]], [[IF_THEN10_I]] ], [ [[TMP13]], [[IF_END19_FOLD_SPLIT_I]] ]
+// CHECK-NEXT:    [[S_SROA_29_0_I:%.*]] = phi i32 [ [[TMP14]], [[ENTRY]] ], [ [[TMP22]], [[IF_THEN10_I]] ], [ [[TMP14]], [[IF_END19_FOLD_SPLIT_I]] ]
+// CHECK-NEXT:    [[S_SROA_31_0_I:%.*]] = phi i32 [ [[TMP15]], [[ENTRY]] ], [ [[TMP23]], [[IF_THEN10_I]] ], [ [[TMP15]], [[IF_END19_FOLD_SPLIT_I]] ]
 // CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V256MX6]] poison, <8 x i32> [[S_SROA_0_0_I]], 0
 // CHECK-NEXT:    [[DOTFCA_1_INSERT_I:%.*]] = insertvalue [[STRUCT_V256MX6]] [[DOTFCA_0_INSERT_I]], <8 x i32> [[S_SROA_3_0_I]], 1
 // CHECK-NEXT:    [[DOTFCA_2_INSERT_I:%.*]] = insertvalue [[STRUCT_V256MX6]] [[DOTFCA_1_INSERT_I]], <8 x i32> [[S_SROA_5_0_I]], 2
@@ -2655,7 +2654,7 @@ v256mx6             test_concat (v128mx6 v0, v128mx6 v1) { return concat(v0, v1)
 // CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V256MX4]] [[M_COERCE]], 7
 // CHECK-NEXT:    br label [[_ZL20EXTRACT_MSB_V16UINT47V256MX4I_EXIT]]
 // CHECK:       _ZL20extract_msb_v16uint47v256mx4i.exit:
-// CHECK-NEXT:    [[TEMP_0_I:%.*]] = phi <2 x i32> [ [[TMP1]], [[IF_THEN_I]] ], [ [[TMP2]], [[IF_THEN5_I]] ], [ [[TMP3]], [[IF_ELSE6_I]] ], [ [[TMP0]], [[ENTRY:%.*]] ]
+// CHECK-NEXT:    [[TEMP_0_I:%.*]] = phi <2 x i32> [ [[TMP1]], [[IF_THEN_I]] ], [ [[TMP3]], [[IF_ELSE6_I]] ], [ [[TMP2]], [[IF_THEN5_I]] ], [ [[TMP0]], [[ENTRY:%.*]] ]
 // CHECK-NEXT:    [[TMP4:%.*]] = bitcast <2 x i32> [[TEMP_0_I]] to <8 x i8>
 // CHECK-NEXT:    ret <8 x i8> [[TMP4]]
 //
@@ -2701,10 +2700,10 @@ v32uint4 test_extract_msb_v32uint4 (v256mx4 m, int idx) { return extract_msb_v32
 // CHECK:       if.else6.i:
 // CHECK-NEXT:    br label [[_ZL6UPDATE7V256MX4IDV8_DU8__EXIT]]
 // CHECK:       _ZL6update7v256mx4iDv8_DU8_.exit:
-// CHECK-NEXT:    [[S_SROA_5_0_I:%.*]] = phi <2 x i32> [ [[TMP0]], [[IF_THEN2_I]] ], [ [[TMP0]], [[IF_THEN5_I]] ], [ [[TMP0]], [[IF_ELSE6_I]] ], [ [[TMP4]], [[ENTRY:%.*]] ]
-// CHECK-NEXT:    [[S_SROA_7_0_I:%.*]] = phi <2 x i32> [ [[TMP4]], [[IF_THEN2_I]] ], [ [[TMP1]], [[IF_THEN5_I]] ], [ [[TMP1]], [[IF_ELSE6_I]] ], [ [[TMP1]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_9_0_I:%.*]] = phi <2 x i32> [ [[TMP2]], [[IF_THEN2_I]] ], [ [[TMP4]], [[IF_THEN5_I]] ], [ [[TMP2]], [[IF_ELSE6_I]] ], [ [[TMP2]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_11_0_I:%.*]] = phi <2 x i32> [ [[TMP3]], [[IF_THEN2_I]] ], [ [[TMP3]], [[IF_THEN5_I]] ], [ [[TMP4]], [[IF_ELSE6_I]] ], [ [[TMP3]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_5_0_I:%.*]] = phi <2 x i32> [ [[TMP0]], [[IF_ELSE6_I]] ], [ [[TMP0]], [[IF_THEN2_I]] ], [ [[TMP0]], [[IF_THEN5_I]] ], [ [[TMP4]], [[ENTRY:%.*]] ]
+// CHECK-NEXT:    [[S_SROA_7_0_I:%.*]] = phi <2 x i32> [ [[TMP1]], [[IF_ELSE6_I]] ], [ [[TMP4]], [[IF_THEN2_I]] ], [ [[TMP1]], [[IF_THEN5_I]] ], [ [[TMP1]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_9_0_I:%.*]] = phi <2 x i32> [ [[TMP2]], [[IF_ELSE6_I]] ], [ [[TMP2]], [[IF_THEN2_I]] ], [ [[TMP4]], [[IF_THEN5_I]] ], [ [[TMP2]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_11_0_I:%.*]] = phi <2 x i32> [ [[TMP4]], [[IF_ELSE6_I]] ], [ [[TMP3]], [[IF_THEN2_I]] ], [ [[TMP3]], [[IF_THEN5_I]] ], [ [[TMP3]], [[ENTRY]] ]
 // CHECK-NEXT:    [[TMP5:%.*]] = extractvalue [[STRUCT_V256MX4]] [[S_COERCE]], 15
 // CHECK-NEXT:    [[TMP6:%.*]] = extractvalue [[STRUCT_V256MX4]] [[S_COERCE]], 14
 // CHECK-NEXT:    [[TMP7:%.*]] = extractvalue [[STRUCT_V256MX4]] [[S_COERCE]], 13
@@ -2728,7 +2727,6 @@ v32uint4 test_extract_msb_v32uint4 (v256mx4 m, int idx) { return extract_msb_v32
 // CHECK-NEXT:    ret [[STRUCT_V256MX4]] [[DOTFCA_15_INSERT_I]]
 //
 v256mx4 test_update (v256mx4 s, int idx, v16uint4 m) { return update(s, idx, m); }
-//
 // CHECK-LABEL: @_Z11test_update7v256mx4iDv16_DU8_(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <16 x i8> [[M:%.*]] to <4 x i32>
@@ -2879,14 +2877,14 @@ v8int8 test_extract_expo_v8int8 (v256mx4 m, int idx) { return extract_expo_v8int
 // CHECK:       sw.default.i:
 // CHECK-NEXT:    br label [[_ZL6UPDATE7V256MX4II_EXIT]]
 // CHECK:       _ZL6update7v256mx4ii.exit:
-// CHECK-NEXT:    [[S_SROA_9_0_I:%.*]] = phi i32 [ [[TMP0]], [[SW_DEFAULT_I]] ], [ [[TMP0]], [[SW_BB1_I]] ], [ [[TMP0]], [[SW_BB2_I]] ], [ [[TMP0]], [[SW_BB3_I]] ], [ [[M:%.*]], [[SW_BB4_I]] ], [ [[TMP0]], [[SW_BB5_I]] ], [ [[TMP0]], [[SW_BB6_I]] ], [ [[TMP0]], [[ENTRY:%.*]] ]
-// CHECK-NEXT:    [[S_SROA_11_0_I:%.*]] = phi i32 [ [[TMP1]], [[SW_DEFAULT_I]] ], [ [[TMP1]], [[SW_BB1_I]] ], [ [[TMP1]], [[SW_BB2_I]] ], [ [[TMP1]], [[SW_BB3_I]] ], [ [[TMP1]], [[SW_BB4_I]] ], [ [[M]], [[SW_BB5_I]] ], [ [[TMP1]], [[SW_BB6_I]] ], [ [[TMP1]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_13_0_I:%.*]] = phi i32 [ [[TMP2]], [[SW_DEFAULT_I]] ], [ [[TMP2]], [[SW_BB1_I]] ], [ [[TMP2]], [[SW_BB2_I]] ], [ [[TMP2]], [[SW_BB3_I]] ], [ [[TMP2]], [[SW_BB4_I]] ], [ [[TMP2]], [[SW_BB5_I]] ], [ [[M]], [[SW_BB6_I]] ], [ [[TMP2]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_15_0_I:%.*]] = phi i32 [ [[M]], [[SW_DEFAULT_I]] ], [ [[TMP3]], [[SW_BB1_I]] ], [ [[TMP3]], [[SW_BB2_I]] ], [ [[TMP3]], [[SW_BB3_I]] ], [ [[TMP3]], [[SW_BB4_I]] ], [ [[TMP3]], [[SW_BB5_I]] ], [ [[TMP3]], [[SW_BB6_I]] ], [ [[TMP3]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_17_0_I:%.*]] = phi i32 [ [[TMP4]], [[SW_DEFAULT_I]] ], [ [[TMP4]], [[SW_BB1_I]] ], [ [[TMP4]], [[SW_BB2_I]] ], [ [[TMP4]], [[SW_BB3_I]] ], [ [[TMP4]], [[SW_BB4_I]] ], [ [[TMP4]], [[SW_BB5_I]] ], [ [[TMP4]], [[SW_BB6_I]] ], [ [[M]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_19_0_I:%.*]] = phi i32 [ [[TMP5]], [[SW_DEFAULT_I]] ], [ [[M]], [[SW_BB1_I]] ], [ [[TMP5]], [[SW_BB2_I]] ], [ [[TMP5]], [[SW_BB3_I]] ], [ [[TMP5]], [[SW_BB4_I]] ], [ [[TMP5]], [[SW_BB5_I]] ], [ [[TMP5]], [[SW_BB6_I]] ], [ [[TMP5]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_21_0_I:%.*]] = phi i32 [ [[TMP6]], [[SW_DEFAULT_I]] ], [ [[TMP6]], [[SW_BB1_I]] ], [ [[M]], [[SW_BB2_I]] ], [ [[TMP6]], [[SW_BB3_I]] ], [ [[TMP6]], [[SW_BB4_I]] ], [ [[TMP6]], [[SW_BB5_I]] ], [ [[TMP6]], [[SW_BB6_I]] ], [ [[TMP6]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_23_0_I:%.*]] = phi i32 [ [[TMP7]], [[SW_DEFAULT_I]] ], [ [[TMP7]], [[SW_BB1_I]] ], [ [[TMP7]], [[SW_BB2_I]] ], [ [[M]], [[SW_BB3_I]] ], [ [[TMP7]], [[SW_BB4_I]] ], [ [[TMP7]], [[SW_BB5_I]] ], [ [[TMP7]], [[SW_BB6_I]] ], [ [[TMP7]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_9_0_I:%.*]] = phi i32 [ [[TMP0]], [[SW_DEFAULT_I]] ], [ [[TMP0]], [[SW_BB6_I]] ], [ [[TMP0]], [[SW_BB1_I]] ], [ [[TMP0]], [[SW_BB2_I]] ], [ [[TMP0]], [[SW_BB3_I]] ], [ [[M:%.*]], [[SW_BB4_I]] ], [ [[TMP0]], [[SW_BB5_I]] ], [ [[TMP0]], [[ENTRY:%.*]] ]
+// CHECK-NEXT:    [[S_SROA_11_0_I:%.*]] = phi i32 [ [[TMP1]], [[SW_DEFAULT_I]] ], [ [[TMP1]], [[SW_BB6_I]] ], [ [[TMP1]], [[SW_BB1_I]] ], [ [[TMP1]], [[SW_BB2_I]] ], [ [[TMP1]], [[SW_BB3_I]] ], [ [[TMP1]], [[SW_BB4_I]] ], [ [[M]], [[SW_BB5_I]] ], [ [[TMP1]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_13_0_I:%.*]] = phi i32 [ [[TMP2]], [[SW_DEFAULT_I]] ], [ [[M]], [[SW_BB6_I]] ], [ [[TMP2]], [[SW_BB1_I]] ], [ [[TMP2]], [[SW_BB2_I]] ], [ [[TMP2]], [[SW_BB3_I]] ], [ [[TMP2]], [[SW_BB4_I]] ], [ [[TMP2]], [[SW_BB5_I]] ], [ [[TMP2]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_15_0_I:%.*]] = phi i32 [ [[M]], [[SW_DEFAULT_I]] ], [ [[TMP3]], [[SW_BB6_I]] ], [ [[TMP3]], [[SW_BB1_I]] ], [ [[TMP3]], [[SW_BB2_I]] ], [ [[TMP3]], [[SW_BB3_I]] ], [ [[TMP3]], [[SW_BB4_I]] ], [ [[TMP3]], [[SW_BB5_I]] ], [ [[TMP3]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_17_0_I:%.*]] = phi i32 [ [[TMP4]], [[SW_DEFAULT_I]] ], [ [[TMP4]], [[SW_BB6_I]] ], [ [[TMP4]], [[SW_BB1_I]] ], [ [[TMP4]], [[SW_BB2_I]] ], [ [[TMP4]], [[SW_BB3_I]] ], [ [[TMP4]], [[SW_BB4_I]] ], [ [[TMP4]], [[SW_BB5_I]] ], [ [[M]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_19_0_I:%.*]] = phi i32 [ [[TMP5]], [[SW_DEFAULT_I]] ], [ [[TMP5]], [[SW_BB6_I]] ], [ [[M]], [[SW_BB1_I]] ], [ [[TMP5]], [[SW_BB2_I]] ], [ [[TMP5]], [[SW_BB3_I]] ], [ [[TMP5]], [[SW_BB4_I]] ], [ [[TMP5]], [[SW_BB5_I]] ], [ [[TMP5]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_21_0_I:%.*]] = phi i32 [ [[TMP6]], [[SW_DEFAULT_I]] ], [ [[TMP6]], [[SW_BB6_I]] ], [ [[TMP6]], [[SW_BB1_I]] ], [ [[M]], [[SW_BB2_I]] ], [ [[TMP6]], [[SW_BB3_I]] ], [ [[TMP6]], [[SW_BB4_I]] ], [ [[TMP6]], [[SW_BB5_I]] ], [ [[TMP6]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_23_0_I:%.*]] = phi i32 [ [[TMP7]], [[SW_DEFAULT_I]] ], [ [[TMP7]], [[SW_BB6_I]] ], [ [[TMP7]], [[SW_BB1_I]] ], [ [[TMP7]], [[SW_BB2_I]] ], [ [[M]], [[SW_BB3_I]] ], [ [[TMP7]], [[SW_BB4_I]] ], [ [[TMP7]], [[SW_BB5_I]] ], [ [[TMP7]], [[ENTRY]] ]
 // CHECK-NEXT:    [[DOTFCA_8_INSERT_I:%.*]] = insertvalue [[STRUCT_V256MX4]] [[S_COERCE]], i32 [[S_SROA_9_0_I]], 8
 // CHECK-NEXT:    [[DOTFCA_9_INSERT_I:%.*]] = insertvalue [[STRUCT_V256MX4]] [[DOTFCA_8_INSERT_I]], i32 [[S_SROA_11_0_I]], 9
 // CHECK-NEXT:    [[DOTFCA_10_INSERT_I:%.*]] = insertvalue [[STRUCT_V256MX4]] [[DOTFCA_9_INSERT_I]], i32 [[S_SROA_13_0_I]], 10
@@ -2923,14 +2921,14 @@ v256mx4 test_update (v256mx4 s, int idx, int m) { return update(s, idx, m); }
 // CHECK:       sw.default.i:
 // CHECK-NEXT:    br label [[_ZL6UPDATE7V256MX4IDV8_A_EXIT]]
 // CHECK:       _ZL6update7v256mx4iDv8_a.exit:
-// CHECK-NEXT:    [[S_SROA_9_0_I:%.*]] = phi i32 [ [[TMP0]], [[SW_DEFAULT_I]] ], [ [[TMP0]], [[SW_BB3_I]] ], [ [[VECEXT14_I]], [[SW_BB8_I]] ], [ [[TMP0]], [[ENTRY:%.*]] ]
-// CHECK-NEXT:    [[S_SROA_11_0_I:%.*]] = phi i32 [ [[TMP1]], [[SW_DEFAULT_I]] ], [ [[TMP1]], [[SW_BB3_I]] ], [ [[VECEXT16_I]], [[SW_BB8_I]] ], [ [[TMP1]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_13_0_I:%.*]] = phi i32 [ [[VECEXT14_I]], [[SW_DEFAULT_I]] ], [ [[TMP2]], [[SW_BB3_I]] ], [ [[TMP2]], [[SW_BB8_I]] ], [ [[TMP2]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_15_0_I:%.*]] = phi i32 [ [[VECEXT16_I]], [[SW_DEFAULT_I]] ], [ [[TMP3]], [[SW_BB3_I]] ], [ [[TMP3]], [[SW_BB8_I]] ], [ [[TMP3]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_17_0_I:%.*]] = phi i32 [ [[TMP4]], [[SW_DEFAULT_I]] ], [ [[TMP4]], [[SW_BB3_I]] ], [ [[TMP4]], [[SW_BB8_I]] ], [ [[VECEXT14_I]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_19_0_I:%.*]] = phi i32 [ [[TMP5]], [[SW_DEFAULT_I]] ], [ [[TMP5]], [[SW_BB3_I]] ], [ [[TMP5]], [[SW_BB8_I]] ], [ [[VECEXT16_I]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_21_0_I:%.*]] = phi i32 [ [[TMP6]], [[SW_DEFAULT_I]] ], [ [[VECEXT14_I]], [[SW_BB3_I]] ], [ [[TMP6]], [[SW_BB8_I]] ], [ [[TMP6]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_23_0_I:%.*]] = phi i32 [ [[TMP7]], [[SW_DEFAULT_I]] ], [ [[VECEXT16_I]], [[SW_BB3_I]] ], [ [[TMP7]], [[SW_BB8_I]] ], [ [[TMP7]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_9_0_I:%.*]] = phi i32 [ [[TMP0]], [[SW_DEFAULT_I]] ], [ [[VECEXT14_I]], [[SW_BB8_I]] ], [ [[TMP0]], [[SW_BB3_I]] ], [ [[TMP0]], [[ENTRY:%.*]] ]
+// CHECK-NEXT:    [[S_SROA_11_0_I:%.*]] = phi i32 [ [[TMP1]], [[SW_DEFAULT_I]] ], [ [[VECEXT16_I]], [[SW_BB8_I]] ], [ [[TMP1]], [[SW_BB3_I]] ], [ [[TMP1]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_13_0_I:%.*]] = phi i32 [ [[VECEXT14_I]], [[SW_DEFAULT_I]] ], [ [[TMP2]], [[SW_BB8_I]] ], [ [[TMP2]], [[SW_BB3_I]] ], [ [[TMP2]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_15_0_I:%.*]] = phi i32 [ [[VECEXT16_I]], [[SW_DEFAULT_I]] ], [ [[TMP3]], [[SW_BB8_I]] ], [ [[TMP3]], [[SW_BB3_I]] ], [ [[TMP3]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_17_0_I:%.*]] = phi i32 [ [[TMP4]], [[SW_DEFAULT_I]] ], [ [[TMP4]], [[SW_BB8_I]] ], [ [[TMP4]], [[SW_BB3_I]] ], [ [[VECEXT14_I]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_19_0_I:%.*]] = phi i32 [ [[TMP5]], [[SW_DEFAULT_I]] ], [ [[TMP5]], [[SW_BB8_I]] ], [ [[TMP5]], [[SW_BB3_I]] ], [ [[VECEXT16_I]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_21_0_I:%.*]] = phi i32 [ [[TMP6]], [[SW_DEFAULT_I]] ], [ [[TMP6]], [[SW_BB8_I]] ], [ [[VECEXT14_I]], [[SW_BB3_I]] ], [ [[TMP6]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_23_0_I:%.*]] = phi i32 [ [[TMP7]], [[SW_DEFAULT_I]] ], [ [[TMP7]], [[SW_BB8_I]] ], [ [[VECEXT16_I]], [[SW_BB3_I]] ], [ [[TMP7]], [[ENTRY]] ]
 // CHECK-NEXT:    [[DOTFCA_8_INSERT_I:%.*]] = insertvalue [[STRUCT_V256MX4]] [[S_COERCE]], i32 [[S_SROA_9_0_I]], 8
 // CHECK-NEXT:    [[DOTFCA_9_INSERT_I:%.*]] = insertvalue [[STRUCT_V256MX4]] [[DOTFCA_8_INSERT_I]], i32 [[S_SROA_11_0_I]], 9
 // CHECK-NEXT:    [[DOTFCA_10_INSERT_I:%.*]] = insertvalue [[STRUCT_V256MX4]] [[DOTFCA_9_INSERT_I]], i32 [[S_SROA_13_0_I]], 10
@@ -2960,7 +2958,7 @@ v256mx4 test_update (v256mx4 s, int idx, v8int8 m) { return update(s, idx, m); }
 // CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V256MX4]] [[M_COERCE]], 3
 // CHECK-NEXT:    br label [[_ZL16EXTRACT_V64UINT47V256MX4I_EXIT]]
 // CHECK:       _ZL16extract_v64uint47v256mx4i.exit:
-// CHECK-NEXT:    [[TEMP_0_I:%.*]] = phi <8 x i32> [ [[TMP1]], [[IF_THEN_I]] ], [ [[TMP2]], [[IF_THEN5_I]] ], [ [[TMP3]], [[IF_ELSE6_I]] ], [ [[TMP0]], [[ENTRY:%.*]] ]
+// CHECK-NEXT:    [[TEMP_0_I:%.*]] = phi <8 x i32> [ [[TMP1]], [[IF_THEN_I]] ], [ [[TMP3]], [[IF_ELSE6_I]] ], [ [[TMP2]], [[IF_THEN5_I]] ], [ [[TMP0]], [[ENTRY:%.*]] ]
 // CHECK-NEXT:    [[TMP4:%.*]] = bitcast <8 x i32> [[TEMP_0_I]] to <32 x i8>
 // CHECK-NEXT:    ret <32 x i8> [[TMP4]]
 //
@@ -2998,10 +2996,10 @@ v128uint4 test_extract_v128uint4 (v256mx4 m, int idx) { return extract_v128uint4
 // CHECK:       if.else6.i:
 // CHECK-NEXT:    br label [[_ZL6UPDATE7V256MX4IDV32_DU8__EXIT]]
 // CHECK:       _ZL6update7v256mx4iDv32_DU8_.exit:
-// CHECK-NEXT:    [[S_SROA_3_0_I:%.*]] = phi <8 x i32> [ [[TMP4]], [[IF_THEN2_I]] ], [ [[TMP1]], [[IF_THEN5_I]] ], [ [[TMP1]], [[IF_ELSE6_I]] ], [ [[TMP1]], [[ENTRY:%.*]] ]
-// CHECK-NEXT:    [[S_SROA_0_0_I:%.*]] = phi <8 x i32> [ [[TMP0]], [[IF_THEN2_I]] ], [ [[TMP0]], [[IF_THEN5_I]] ], [ [[TMP0]], [[IF_ELSE6_I]] ], [ [[TMP4]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_5_0_I:%.*]] = phi <8 x i32> [ [[TMP2]], [[IF_THEN2_I]] ], [ [[TMP4]], [[IF_THEN5_I]] ], [ [[TMP2]], [[IF_ELSE6_I]] ], [ [[TMP2]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_7_0_I:%.*]] = phi <8 x i32> [ [[TMP3]], [[IF_THEN2_I]] ], [ [[TMP3]], [[IF_THEN5_I]] ], [ [[TMP4]], [[IF_ELSE6_I]] ], [ [[TMP3]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_3_0_I:%.*]] = phi <8 x i32> [ [[TMP1]], [[IF_ELSE6_I]] ], [ [[TMP4]], [[IF_THEN2_I]] ], [ [[TMP1]], [[IF_THEN5_I]] ], [ [[TMP1]], [[ENTRY:%.*]] ]
+// CHECK-NEXT:    [[S_SROA_0_0_I:%.*]] = phi <8 x i32> [ [[TMP0]], [[IF_ELSE6_I]] ], [ [[TMP0]], [[IF_THEN2_I]] ], [ [[TMP0]], [[IF_THEN5_I]] ], [ [[TMP4]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_5_0_I:%.*]] = phi <8 x i32> [ [[TMP2]], [[IF_ELSE6_I]] ], [ [[TMP2]], [[IF_THEN2_I]] ], [ [[TMP4]], [[IF_THEN5_I]] ], [ [[TMP2]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_7_0_I:%.*]] = phi <8 x i32> [ [[TMP4]], [[IF_ELSE6_I]] ], [ [[TMP3]], [[IF_THEN2_I]] ], [ [[TMP3]], [[IF_THEN5_I]] ], [ [[TMP3]], [[ENTRY]] ]
 // CHECK-NEXT:    [[TMP5:%.*]] = extractvalue [[STRUCT_V256MX4]] [[S_COERCE]], 15
 // CHECK-NEXT:    [[TMP6:%.*]] = extractvalue [[STRUCT_V256MX4]] [[S_COERCE]], 14
 // CHECK-NEXT:    [[TMP7:%.*]] = extractvalue [[STRUCT_V256MX4]] [[S_COERCE]], 13
@@ -3108,10 +3106,10 @@ v256mx4 test_update (v256mx4 s, int idx, v128uint4 m) { return update(s, idx, m)
 // CHECK-NEXT:    [[TMP15:%.*]] = extractvalue [[STRUCT_V256MX4]] [[M_COERCE]], 3
 // CHECK-NEXT:    br label [[_ZL14EXTRACT_V64MX47V256MX4I_EXIT]]
 // CHECK:       _ZL14extract_v64mx47v256mx4i.exit:
-// CHECK-NEXT:    [[RETVAL_SROA_0_0_I:%.*]] = phi <8 x i32> [ [[TMP7]], [[IF_THEN_I]] ], [ [[TMP11]], [[IF_THEN9_I]] ], [ [[TMP15]], [[IF_ELSE14_I]] ], [ [[TMP0]], [[ENTRY:%.*]] ]
-// CHECK-NEXT:    [[RETVAL_SROA_5_0_I:%.*]] = phi <2 x i32> [ [[TMP6]], [[IF_THEN_I]] ], [ [[TMP10]], [[IF_THEN9_I]] ], [ [[TMP14]], [[IF_ELSE14_I]] ], [ [[TMP1]], [[ENTRY]] ]
-// CHECK-NEXT:    [[RETVAL_SROA_10_0_I:%.*]] = phi i32 [ [[TMP5]], [[IF_THEN_I]] ], [ [[TMP9]], [[IF_THEN9_I]] ], [ [[TMP13]], [[IF_ELSE14_I]] ], [ [[TMP2]], [[ENTRY]] ]
-// CHECK-NEXT:    [[RETVAL_SROA_15_0_I:%.*]] = phi i32 [ [[TMP4]], [[IF_THEN_I]] ], [ [[TMP8]], [[IF_THEN9_I]] ], [ [[TMP12]], [[IF_ELSE14_I]] ], [ [[TMP3]], [[ENTRY]] ]
+// CHECK-NEXT:    [[RETVAL_SROA_0_0_I:%.*]] = phi <8 x i32> [ [[TMP7]], [[IF_THEN_I]] ], [ [[TMP15]], [[IF_ELSE14_I]] ], [ [[TMP11]], [[IF_THEN9_I]] ], [ [[TMP0]], [[ENTRY:%.*]] ]
+// CHECK-NEXT:    [[RETVAL_SROA_5_0_I:%.*]] = phi <2 x i32> [ [[TMP6]], [[IF_THEN_I]] ], [ [[TMP14]], [[IF_ELSE14_I]] ], [ [[TMP10]], [[IF_THEN9_I]] ], [ [[TMP1]], [[ENTRY]] ]
+// CHECK-NEXT:    [[RETVAL_SROA_10_0_I:%.*]] = phi i32 [ [[TMP5]], [[IF_THEN_I]] ], [ [[TMP13]], [[IF_ELSE14_I]] ], [ [[TMP9]], [[IF_THEN9_I]] ], [ [[TMP2]], [[ENTRY]] ]
+// CHECK-NEXT:    [[RETVAL_SROA_15_0_I:%.*]] = phi i32 [ [[TMP4]], [[IF_THEN_I]] ], [ [[TMP12]], [[IF_ELSE14_I]] ], [ [[TMP8]], [[IF_THEN9_I]] ], [ [[TMP3]], [[ENTRY]] ]
 // CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V64MX4:%.*]] poison, <8 x i32> [[RETVAL_SROA_0_0_I]], 0
 // CHECK-NEXT:    [[DOTFCA_1_INSERT_I:%.*]] = insertvalue [[STRUCT_V64MX4]] [[DOTFCA_0_INSERT_I]], <2 x i32> [[RETVAL_SROA_5_0_I]], 1
 // CHECK-NEXT:    [[DOTFCA_2_INSERT_I:%.*]] = insertvalue [[STRUCT_V64MX4]] [[DOTFCA_1_INSERT_I]], i32 [[RETVAL_SROA_10_0_I]], 2
@@ -3149,10 +3147,10 @@ v64mx4 test_extract_v64mx4 (v256mx4 m, int idx) { return extract_v64mx4(m, idx);
 // CHECK-NEXT:    [[TMP15:%.*]] = extractvalue [[STRUCT_V256MX4]] [[M_COERCE]], 3
 // CHECK-NEXT:    br label [[_ZL17EXTRACT_V64BFP11P7V256MX4I_EXIT]]
 // CHECK:       _ZL17extract_v64bfp11p7v256mx4i.exit:
-// CHECK-NEXT:    [[RETVAL_SROA_0_0_I_I:%.*]] = phi <8 x i32> [ [[TMP7]], [[IF_THEN_I_I]] ], [ [[TMP11]], [[IF_THEN9_I_I]] ], [ [[TMP15]], [[IF_ELSE14_I_I]] ], [ [[TMP0]], [[ENTRY:%.*]] ]
-// CHECK-NEXT:    [[RETVAL_SROA_5_0_I_I:%.*]] = phi <2 x i32> [ [[TMP6]], [[IF_THEN_I_I]] ], [ [[TMP10]], [[IF_THEN9_I_I]] ], [ [[TMP14]], [[IF_ELSE14_I_I]] ], [ [[TMP1]], [[ENTRY]] ]
-// CHECK-NEXT:    [[RETVAL_SROA_10_0_I_I:%.*]] = phi i32 [ [[TMP5]], [[IF_THEN_I_I]] ], [ [[TMP9]], [[IF_THEN9_I_I]] ], [ [[TMP13]], [[IF_ELSE14_I_I]] ], [ [[TMP2]], [[ENTRY]] ]
-// CHECK-NEXT:    [[RETVAL_SROA_15_0_I_I:%.*]] = phi i32 [ [[TMP4]], [[IF_THEN_I_I]] ], [ [[TMP8]], [[IF_THEN9_I_I]] ], [ [[TMP12]], [[IF_ELSE14_I_I]] ], [ [[TMP3]], [[ENTRY]] ]
+// CHECK-NEXT:    [[RETVAL_SROA_0_0_I_I:%.*]] = phi <8 x i32> [ [[TMP7]], [[IF_THEN_I_I]] ], [ [[TMP15]], [[IF_ELSE14_I_I]] ], [ [[TMP11]], [[IF_THEN9_I_I]] ], [ [[TMP0]], [[ENTRY:%.*]] ]
+// CHECK-NEXT:    [[RETVAL_SROA_5_0_I_I:%.*]] = phi <2 x i32> [ [[TMP6]], [[IF_THEN_I_I]] ], [ [[TMP14]], [[IF_ELSE14_I_I]] ], [ [[TMP10]], [[IF_THEN9_I_I]] ], [ [[TMP1]], [[ENTRY]] ]
+// CHECK-NEXT:    [[RETVAL_SROA_10_0_I_I:%.*]] = phi i32 [ [[TMP5]], [[IF_THEN_I_I]] ], [ [[TMP13]], [[IF_ELSE14_I_I]] ], [ [[TMP9]], [[IF_THEN9_I_I]] ], [ [[TMP2]], [[ENTRY]] ]
+// CHECK-NEXT:    [[RETVAL_SROA_15_0_I_I:%.*]] = phi i32 [ [[TMP4]], [[IF_THEN_I_I]] ], [ [[TMP12]], [[IF_ELSE14_I_I]] ], [ [[TMP8]], [[IF_THEN9_I_I]] ], [ [[TMP3]], [[ENTRY]] ]
 // CHECK-NEXT:    [[DOTFCA_0_INSERT_I_I:%.*]] = insertvalue [[STRUCT_V64MX4:%.*]] poison, <8 x i32> [[RETVAL_SROA_0_0_I_I]], 0
 // CHECK-NEXT:    [[DOTFCA_1_INSERT_I_I:%.*]] = insertvalue [[STRUCT_V64MX4]] [[DOTFCA_0_INSERT_I_I]], <2 x i32> [[RETVAL_SROA_5_0_I_I]], 1
 // CHECK-NEXT:    [[DOTFCA_2_INSERT_I_I:%.*]] = insertvalue [[STRUCT_V64MX4]] [[DOTFCA_1_INSERT_I_I]], i32 [[RETVAL_SROA_10_0_I_I]], 2
@@ -3194,22 +3192,22 @@ v64bfp11p test_extract_v64bfp11p (v256bfp11p m, int idx) { return extract_v64bfp
 // CHECK:       if.else14.i:
 // CHECK-NEXT:    br label [[_ZL6UPDATE7V256MX4I6V64MX4_EXIT]]
 // CHECK:       _ZL6update7v256mx4i6v64mx4.exit:
-// CHECK-NEXT:    [[S_SROA_21_0_I:%.*]] = phi i32 [ [[TMP10]], [[IF_THEN2_I]] ], [ [[TMP18]], [[IF_THEN9_I]] ], [ [[TMP10]], [[IF_ELSE14_I]] ], [ [[TMP10]], [[ENTRY:%.*]] ]
-// CHECK-NEXT:    [[S_SROA_19_0_I:%.*]] = phi i32 [ [[TMP18]], [[IF_THEN2_I]] ], [ [[TMP9]], [[IF_THEN9_I]] ], [ [[TMP9]], [[IF_ELSE14_I]] ], [ [[TMP9]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_17_0_I:%.*]] = phi i32 [ [[TMP8]], [[IF_THEN2_I]] ], [ [[TMP8]], [[IF_THEN9_I]] ], [ [[TMP8]], [[IF_ELSE14_I]] ], [ [[TMP18]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_15_0_I:%.*]] = phi <2 x i32> [ [[TMP7]], [[IF_THEN2_I]] ], [ [[TMP7]], [[IF_THEN9_I]] ], [ [[TMP17]], [[IF_ELSE14_I]] ], [ [[TMP7]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_13_0_I:%.*]] = phi <2 x i32> [ [[TMP6]], [[IF_THEN2_I]] ], [ [[TMP17]], [[IF_THEN9_I]] ], [ [[TMP6]], [[IF_ELSE14_I]] ], [ [[TMP6]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_11_0_I:%.*]] = phi <2 x i32> [ [[TMP17]], [[IF_THEN2_I]] ], [ [[TMP5]], [[IF_THEN9_I]] ], [ [[TMP5]], [[IF_ELSE14_I]] ], [ [[TMP5]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_9_0_I:%.*]] = phi <2 x i32> [ [[TMP4]], [[IF_THEN2_I]] ], [ [[TMP4]], [[IF_THEN9_I]] ], [ [[TMP4]], [[IF_ELSE14_I]] ], [ [[TMP17]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_7_0_I:%.*]] = phi <8 x i32> [ [[TMP3]], [[IF_THEN2_I]] ], [ [[TMP3]], [[IF_THEN9_I]] ], [ [[TMP16]], [[IF_ELSE14_I]] ], [ [[TMP3]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_5_0_I:%.*]] = phi <8 x i32> [ [[TMP2]], [[IF_THEN2_I]] ], [ [[TMP16]], [[IF_THEN9_I]] ], [ [[TMP2]], [[IF_ELSE14_I]] ], [ [[TMP2]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_3_0_I:%.*]] = phi <8 x i32> [ [[TMP16]], [[IF_THEN2_I]] ], [ [[TMP1]], [[IF_THEN9_I]] ], [ [[TMP1]], [[IF_ELSE14_I]] ], [ [[TMP1]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_0_0_I:%.*]] = phi <8 x i32> [ [[TMP0]], [[IF_THEN2_I]] ], [ [[TMP0]], [[IF_THEN9_I]] ], [ [[TMP0]], [[IF_ELSE14_I]] ], [ [[TMP16]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_23_0_I:%.*]] = phi i32 [ [[TMP11]], [[IF_THEN2_I]] ], [ [[TMP11]], [[IF_THEN9_I]] ], [ [[TMP18]], [[IF_ELSE14_I]] ], [ [[TMP11]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_25_0_I:%.*]] = phi i32 [ [[TMP12]], [[IF_THEN2_I]] ], [ [[TMP12]], [[IF_THEN9_I]] ], [ [[TMP12]], [[IF_ELSE14_I]] ], [ [[TMP19]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_27_0_I:%.*]] = phi i32 [ [[TMP19]], [[IF_THEN2_I]] ], [ [[TMP13]], [[IF_THEN9_I]] ], [ [[TMP13]], [[IF_ELSE14_I]] ], [ [[TMP13]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_29_0_I:%.*]] = phi i32 [ [[TMP14]], [[IF_THEN2_I]] ], [ [[TMP19]], [[IF_THEN9_I]] ], [ [[TMP14]], [[IF_ELSE14_I]] ], [ [[TMP14]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_31_0_I:%.*]] = phi i32 [ [[TMP15]], [[IF_THEN2_I]] ], [ [[TMP15]], [[IF_THEN9_I]] ], [ [[TMP19]], [[IF_ELSE14_I]] ], [ [[TMP15]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_21_0_I:%.*]] = phi i32 [ [[TMP10]], [[IF_ELSE14_I]] ], [ [[TMP10]], [[IF_THEN2_I]] ], [ [[TMP18]], [[IF_THEN9_I]] ], [ [[TMP10]], [[ENTRY:%.*]] ]
+// CHECK-NEXT:    [[S_SROA_19_0_I:%.*]] = phi i32 [ [[TMP9]], [[IF_ELSE14_I]] ], [ [[TMP18]], [[IF_THEN2_I]] ], [ [[TMP9]], [[IF_THEN9_I]] ], [ [[TMP9]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_17_0_I:%.*]] = phi i32 [ [[TMP8]], [[IF_ELSE14_I]] ], [ [[TMP8]], [[IF_THEN2_I]] ], [ [[TMP8]], [[IF_THEN9_I]] ], [ [[TMP18]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_15_0_I:%.*]] = phi <2 x i32> [ [[TMP17]], [[IF_ELSE14_I]] ], [ [[TMP7]], [[IF_THEN2_I]] ], [ [[TMP7]], [[IF_THEN9_I]] ], [ [[TMP7]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_13_0_I:%.*]] = phi <2 x i32> [ [[TMP6]], [[IF_ELSE14_I]] ], [ [[TMP6]], [[IF_THEN2_I]] ], [ [[TMP17]], [[IF_THEN9_I]] ], [ [[TMP6]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_11_0_I:%.*]] = phi <2 x i32> [ [[TMP5]], [[IF_ELSE14_I]] ], [ [[TMP17]], [[IF_THEN2_I]] ], [ [[TMP5]], [[IF_THEN9_I]] ], [ [[TMP5]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_9_0_I:%.*]] = phi <2 x i32> [ [[TMP4]], [[IF_ELSE14_I]] ], [ [[TMP4]], [[IF_THEN2_I]] ], [ [[TMP4]], [[IF_THEN9_I]] ], [ [[TMP17]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_7_0_I:%.*]] = phi <8 x i32> [ [[TMP16]], [[IF_ELSE14_I]] ], [ [[TMP3]], [[IF_THEN2_I]] ], [ [[TMP3]], [[IF_THEN9_I]] ], [ [[TMP3]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_5_0_I:%.*]] = phi <8 x i32> [ [[TMP2]], [[IF_ELSE14_I]] ], [ [[TMP2]], [[IF_THEN2_I]] ], [ [[TMP16]], [[IF_THEN9_I]] ], [ [[TMP2]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_3_0_I:%.*]] = phi <8 x i32> [ [[TMP1]], [[IF_ELSE14_I]] ], [ [[TMP16]], [[IF_THEN2_I]] ], [ [[TMP1]], [[IF_THEN9_I]] ], [ [[TMP1]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_0_0_I:%.*]] = phi <8 x i32> [ [[TMP0]], [[IF_ELSE14_I]] ], [ [[TMP0]], [[IF_THEN2_I]] ], [ [[TMP0]], [[IF_THEN9_I]] ], [ [[TMP16]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_23_0_I:%.*]] = phi i32 [ [[TMP18]], [[IF_ELSE14_I]] ], [ [[TMP11]], [[IF_THEN2_I]] ], [ [[TMP11]], [[IF_THEN9_I]] ], [ [[TMP11]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_25_0_I:%.*]] = phi i32 [ [[TMP12]], [[IF_ELSE14_I]] ], [ [[TMP12]], [[IF_THEN2_I]] ], [ [[TMP12]], [[IF_THEN9_I]] ], [ [[TMP19]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_27_0_I:%.*]] = phi i32 [ [[TMP13]], [[IF_ELSE14_I]] ], [ [[TMP19]], [[IF_THEN2_I]] ], [ [[TMP13]], [[IF_THEN9_I]] ], [ [[TMP13]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_29_0_I:%.*]] = phi i32 [ [[TMP14]], [[IF_ELSE14_I]] ], [ [[TMP14]], [[IF_THEN2_I]] ], [ [[TMP19]], [[IF_THEN9_I]] ], [ [[TMP14]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_31_0_I:%.*]] = phi i32 [ [[TMP19]], [[IF_ELSE14_I]] ], [ [[TMP15]], [[IF_THEN2_I]] ], [ [[TMP15]], [[IF_THEN9_I]] ], [ [[TMP15]], [[ENTRY]] ]
 // CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V256MX4]] poison, <8 x i32> [[S_SROA_0_0_I]], 0
 // CHECK-NEXT:    [[DOTFCA_1_INSERT_I:%.*]] = insertvalue [[STRUCT_V256MX4]] [[DOTFCA_0_INSERT_I]], <8 x i32> [[S_SROA_3_0_I]], 1
 // CHECK-NEXT:    [[DOTFCA_2_INSERT_I:%.*]] = insertvalue [[STRUCT_V256MX4]] [[DOTFCA_1_INSERT_I]], <8 x i32> [[S_SROA_5_0_I]], 2
@@ -3356,22 +3354,22 @@ v128bfp11p test_extract_v128bfp11p (v256bfp11p m, int idx) { return extract_v128
 // CHECK:       if.end19.fold.split.i:
 // CHECK-NEXT:    br label [[_ZL6UPDATE7V256MX4I7V128MX4_EXIT]]
 // CHECK:       _ZL6update7v256mx4i7v128mx4.exit:
-// CHECK-NEXT:    [[S_SROA_13_0_I:%.*]] = phi <2 x i32> [ [[TMP18]], [[IF_THEN10_I]] ], [ [[TMP6]], [[ENTRY:%.*]] ], [ [[TMP6]], [[IF_END19_FOLD_SPLIT_I]] ]
-// CHECK-NEXT:    [[S_SROA_11_0_I:%.*]] = phi <2 x i32> [ [[TMP5]], [[IF_THEN10_I]] ], [ [[TMP19]], [[ENTRY]] ], [ [[TMP5]], [[IF_END19_FOLD_SPLIT_I]] ]
-// CHECK-NEXT:    [[S_SROA_9_0_I:%.*]] = phi <2 x i32> [ [[TMP4]], [[IF_THEN10_I]] ], [ [[TMP18]], [[ENTRY]] ], [ [[TMP4]], [[IF_END19_FOLD_SPLIT_I]] ]
-// CHECK-NEXT:    [[S_SROA_7_0_I:%.*]] = phi <8 x i32> [ [[TMP17]], [[IF_THEN10_I]] ], [ [[TMP3]], [[ENTRY]] ], [ [[TMP3]], [[IF_END19_FOLD_SPLIT_I]] ]
-// CHECK-NEXT:    [[S_SROA_5_0_I:%.*]] = phi <8 x i32> [ [[TMP16]], [[IF_THEN10_I]] ], [ [[TMP2]], [[ENTRY]] ], [ [[TMP2]], [[IF_END19_FOLD_SPLIT_I]] ]
-// CHECK-NEXT:    [[S_SROA_3_0_I:%.*]] = phi <8 x i32> [ [[TMP1]], [[IF_THEN10_I]] ], [ [[TMP17]], [[ENTRY]] ], [ [[TMP1]], [[IF_END19_FOLD_SPLIT_I]] ]
-// CHECK-NEXT:    [[S_SROA_0_0_I:%.*]] = phi <8 x i32> [ [[TMP0]], [[IF_THEN10_I]] ], [ [[TMP16]], [[ENTRY]] ], [ [[TMP0]], [[IF_END19_FOLD_SPLIT_I]] ]
-// CHECK-NEXT:    [[S_SROA_15_0_I:%.*]] = phi <2 x i32> [ [[TMP19]], [[IF_THEN10_I]] ], [ [[TMP7]], [[ENTRY]] ], [ [[TMP7]], [[IF_END19_FOLD_SPLIT_I]] ]
-// CHECK-NEXT:    [[S_SROA_17_0_I:%.*]] = phi i32 [ [[TMP8]], [[IF_THEN10_I]] ], [ [[TMP20]], [[ENTRY]] ], [ [[TMP8]], [[IF_END19_FOLD_SPLIT_I]] ]
-// CHECK-NEXT:    [[S_SROA_19_0_I:%.*]] = phi i32 [ [[TMP9]], [[IF_THEN10_I]] ], [ [[TMP21]], [[ENTRY]] ], [ [[TMP9]], [[IF_END19_FOLD_SPLIT_I]] ]
-// CHECK-NEXT:    [[S_SROA_21_0_I:%.*]] = phi i32 [ [[TMP20]], [[IF_THEN10_I]] ], [ [[TMP10]], [[ENTRY]] ], [ [[TMP10]], [[IF_END19_FOLD_SPLIT_I]] ]
-// CHECK-NEXT:    [[S_SROA_23_0_I:%.*]] = phi i32 [ [[TMP21]], [[IF_THEN10_I]] ], [ [[TMP11]], [[ENTRY]] ], [ [[TMP11]], [[IF_END19_FOLD_SPLIT_I]] ]
-// CHECK-NEXT:    [[S_SROA_25_0_I:%.*]] = phi i32 [ [[TMP12]], [[IF_THEN10_I]] ], [ [[TMP22]], [[ENTRY]] ], [ [[TMP12]], [[IF_END19_FOLD_SPLIT_I]] ]
-// CHECK-NEXT:    [[S_SROA_27_0_I:%.*]] = phi i32 [ [[TMP13]], [[IF_THEN10_I]] ], [ [[TMP23]], [[ENTRY]] ], [ [[TMP13]], [[IF_END19_FOLD_SPLIT_I]] ]
-// CHECK-NEXT:    [[S_SROA_29_0_I:%.*]] = phi i32 [ [[TMP22]], [[IF_THEN10_I]] ], [ [[TMP14]], [[ENTRY]] ], [ [[TMP14]], [[IF_END19_FOLD_SPLIT_I]] ]
-// CHECK-NEXT:    [[S_SROA_31_0_I:%.*]] = phi i32 [ [[TMP23]], [[IF_THEN10_I]] ], [ [[TMP15]], [[ENTRY]] ], [ [[TMP15]], [[IF_END19_FOLD_SPLIT_I]] ]
+// CHECK-NEXT:    [[S_SROA_13_0_I:%.*]] = phi <2 x i32> [ [[TMP6]], [[ENTRY:%.*]] ], [ [[TMP18]], [[IF_THEN10_I]] ], [ [[TMP6]], [[IF_END19_FOLD_SPLIT_I]] ]
+// CHECK-NEXT:    [[S_SROA_11_0_I:%.*]] = phi <2 x i32> [ [[TMP19]], [[ENTRY]] ], [ [[TMP5]], [[IF_THEN10_I]] ], [ [[TMP5]], [[IF_END19_FOLD_SPLIT_I]] ]
+// CHECK-NEXT:    [[S_SROA_9_0_I:%.*]] = phi <2 x i32> [ [[TMP18]], [[ENTRY]] ], [ [[TMP4]], [[IF_THEN10_I]] ], [ [[TMP4]], [[IF_END19_FOLD_SPLIT_I]] ]
+// CHECK-NEXT:    [[S_SROA_7_0_I:%.*]] = phi <8 x i32> [ [[TMP3]], [[ENTRY]] ], [ [[TMP17]], [[IF_THEN10_I]] ], [ [[TMP3]], [[IF_END19_FOLD_SPLIT_I]] ]
+// CHECK-NEXT:    [[S_SROA_5_0_I:%.*]] = phi <8 x i32> [ [[TMP2]], [[ENTRY]] ], [ [[TMP16]], [[IF_THEN10_I]] ], [ [[TMP2]], [[IF_END19_FOLD_SPLIT_I]] ]
+// CHECK-NEXT:    [[S_SROA_3_0_I:%.*]] = phi <8 x i32> [ [[TMP17]], [[ENTRY]] ], [ [[TMP1]], [[IF_THEN10_I]] ], [ [[TMP1]], [[IF_END19_FOLD_SPLIT_I]] ]
+// CHECK-NEXT:    [[S_SROA_0_0_I:%.*]] = phi <8 x i32> [ [[TMP16]], [[ENTRY]] ], [ [[TMP0]], [[IF_THEN10_I]] ], [ [[TMP0]], [[IF_END19_FOLD_SPLIT_I]] ]
+// CHECK-NEXT:    [[S_SROA_15_0_I:%.*]] = phi <2 x i32> [ [[TMP7]], [[ENTRY]] ], [ [[TMP19]], [[IF_THEN10_I]] ], [ [[TMP7]], [[IF_END19_FOLD_SPLIT_I]] ]
+// CHECK-NEXT:    [[S_SROA_17_0_I:%.*]] = phi i32 [ [[TMP20]], [[ENTRY]] ], [ [[TMP8]], [[IF_THEN10_I]] ], [ [[TMP8]], [[IF_END19_FOLD_SPLIT_I]] ]
+// CHECK-NEXT:    [[S_SROA_19_0_I:%.*]] = phi i32 [ [[TMP21]], [[ENTRY]] ], [ [[TMP9]], [[IF_THEN10_I]] ], [ [[TMP9]], [[IF_END19_FOLD_SPLIT_I]] ]
+// CHECK-NEXT:    [[S_SROA_21_0_I:%.*]] = phi i32 [ [[TMP10]], [[ENTRY]] ], [ [[TMP20]], [[IF_THEN10_I]] ], [ [[TMP10]], [[IF_END19_FOLD_SPLIT_I]] ]
+// CHECK-NEXT:    [[S_SROA_23_0_I:%.*]] = phi i32 [ [[TMP11]], [[ENTRY]] ], [ [[TMP21]], [[IF_THEN10_I]] ], [ [[TMP11]], [[IF_END19_FOLD_SPLIT_I]] ]
+// CHECK-NEXT:    [[S_SROA_25_0_I:%.*]] = phi i32 [ [[TMP22]], [[ENTRY]] ], [ [[TMP12]], [[IF_THEN10_I]] ], [ [[TMP12]], [[IF_END19_FOLD_SPLIT_I]] ]
+// CHECK-NEXT:    [[S_SROA_27_0_I:%.*]] = phi i32 [ [[TMP23]], [[ENTRY]] ], [ [[TMP13]], [[IF_THEN10_I]] ], [ [[TMP13]], [[IF_END19_FOLD_SPLIT_I]] ]
+// CHECK-NEXT:    [[S_SROA_29_0_I:%.*]] = phi i32 [ [[TMP14]], [[ENTRY]] ], [ [[TMP22]], [[IF_THEN10_I]] ], [ [[TMP14]], [[IF_END19_FOLD_SPLIT_I]] ]
+// CHECK-NEXT:    [[S_SROA_31_0_I:%.*]] = phi i32 [ [[TMP15]], [[ENTRY]] ], [ [[TMP23]], [[IF_THEN10_I]] ], [ [[TMP15]], [[IF_END19_FOLD_SPLIT_I]] ]
 // CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V256MX4]] poison, <8 x i32> [[S_SROA_0_0_I]], 0
 // CHECK-NEXT:    [[DOTFCA_1_INSERT_I:%.*]] = insertvalue [[STRUCT_V256MX4]] [[DOTFCA_0_INSERT_I]], <8 x i32> [[S_SROA_3_0_I]], 1
 // CHECK-NEXT:    [[DOTFCA_2_INSERT_I:%.*]] = insertvalue [[STRUCT_V256MX4]] [[DOTFCA_1_INSERT_I]], <8 x i32> [[S_SROA_5_0_I]], 2

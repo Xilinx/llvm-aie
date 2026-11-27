@@ -119,7 +119,7 @@ void transform::AlternativesOp::getSuccessorRegions(
                                            : Block::BlockArgListType());
   }
   if (!point.isParent())
-    regions.emplace_back(getOperation(), getOperation()->getResults());
+    regions.push_back(RegionSuccessor::parent(getResults()));
 }
 
 void transform::AlternativesOp::getRegionInvocationBounds(
@@ -171,7 +171,7 @@ transform::AlternativesOp::apply(transform::TransformRewriter &rewriter,
     auto scope = state.make_region_scope(reg);
     auto clones = llvm::to_vector(
         llvm::map_range(originals, [](Operation *op) { return op->clone(); }));
-    auto deleteClones = llvm::make_scope_exit([&] {
+    llvm::scope_exit deleteClones([&] {
       for (Operation *clone : clones)
         clone->erase();
     });
@@ -1709,7 +1709,7 @@ void transform::ForeachOp::getSuccessorRegions(
              &getBody() &&
          "unexpected region index");
   regions.emplace_back(bodyRegion, bodyRegion->getArguments());
-  regions.emplace_back(getOperation(), getOperation()->getResults());
+  regions.push_back(RegionSuccessor::parent(getResults()));
 }
 
 OperandRange
@@ -2940,7 +2940,7 @@ void transform::SequenceOp::getSuccessorRegions(
   assert(point.getTerminatorPredecessorOrNull()->getParentRegion() ==
              &getBody() &&
          "unexpected region index");
-  regions.emplace_back(getOperation(), getOperation()->getResults());
+  regions.push_back(RegionSuccessor::parent(getResults()));
 }
 
 void transform::SequenceOp::getRegionInvocationBounds(

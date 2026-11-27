@@ -29,8 +29,7 @@
 ; AIE-O0-NEXT:  ModulePass Manager
 ; AIE-O0-NEXT:    Pre-ISel Intrinsic Lowering
 ; AIE-O0-NEXT:    FunctionPass Manager
-; AIE-O0-NEXT:      Expand large div/rem
-; AIE-O0-NEXT:      Expand fp
+; AIE-O0-NEXT:      Expand IR instructions
 ; AIE-O0-NEXT:      Expand Atomic instructions
 ; AIE-O0-NEXT:      Lower Garbage Collection Instructions
 ; AIE-O0-NEXT:      Shadow Stack GC Lowering
@@ -117,8 +116,7 @@
 ; AIE-O1-NEXT:  ModulePass Manager
 ; AIE-O1-NEXT:    Pre-ISel Intrinsic Lowering
 ; AIE-O1-NEXT:    FunctionPass Manager
-; AIE-O1-NEXT:      Expand large div/rem
-; AIE-O1-NEXT:      Expand fp
+; AIE-O1-NEXT:      Expand IR instructions
 ; AIE-O1-NEXT:      Expand Atomic instructions
 ; AIE-O1-NEXT:      Infer address spaces
 ; AIE-O1-NEXT:      Dominator Tree Construction
@@ -261,7 +259,6 @@
 ; AIE-O1-NEXT:      Machine Instruction Scheduler
 ; AIE-O1-NEXT:      Register Coalescer
 ; AIE-O1-NEXT:      AIE 2D/3D operand splitter
-; AIE-O1-NEXT:      Machine Block Frequency Analysis
 ; AIE-O1-NEXT:      Live Interval Analysis
 ; AIE-O1-NEXT:      Debug Variable Analysis
 ; AIE-O1-NEXT:      Live Stack Slot Analysis
@@ -356,8 +353,7 @@
 ; AIE-O23-NEXT:  ModulePass Manager
 ; AIE-O23-NEXT:    Pre-ISel Intrinsic Lowering
 ; AIE-O23-NEXT:    FunctionPass Manager
-; AIE-O23-NEXT:      Expand large div/rem
-; AIE-O23-NEXT:      Expand fp
+; AIE-O23-NEXT:      Expand IR instructions
 ; AIE-O23-NEXT:      Expand Atomic instructions
 ; AIE-O23-NEXT:      Infer address spaces
 ; AIE-O23-NEXT:      Dominator Tree Construction
@@ -508,10 +504,10 @@
 ; AIE-O23-NEXT:      Slot index numbering
 ; AIE-O23-NEXT:      Live Interval Analysis
 ; AIE-O23-NEXT:      Register Coalescer
+; AIE-O23-NEXT:      Machine Block Frequency Analysis
 ; AIE-O23-NEXT:      Machine Instruction Scheduler
 ; AIE-O23-NEXT:      Register Coalescer
 ; AIE-O23-NEXT:      AIE 2D/3D operand splitter
-; AIE-O23-NEXT:      Machine Block Frequency Analysis
 ; AIE-O23-NEXT:      Live Interval Analysis
 ; AIE-O23-NEXT:      Debug Variable Analysis
 ; AIE-O23-NEXT:      Live Stack Slot Analysis

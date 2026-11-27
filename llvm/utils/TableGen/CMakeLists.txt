@@ -52,6 +52,7 @@ add_tablegen(llvm-tblgen LLVM
   CompressInstEmitter.cpp
   CTagsEmitter.cpp
   DAGISelEmitter.cpp
+  DAGISelMatcher.cpp
   DAGISelMatcherEmitter.cpp
   DAGISelMatcherGen.cpp
   DAGISelMatcherOpt.cpp

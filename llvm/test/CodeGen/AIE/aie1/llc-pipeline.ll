@@ -48,8 +48,7 @@
 ; AIE-O0123-NEXT:  ModulePass Manager
 ; AIE-O0123-NEXT:    Pre-ISel Intrinsic Lowering
 ; AIE-O0123-NEXT:    FunctionPass Manager
-; AIE-O0123-NEXT:      Expand large div/rem
-; AIE-O0123-NEXT:      Expand fp
+; AIE-O0123-NEXT:      Expand IR instructions
 ; AIE-O0123-NEXT:      Expand Atomic instructions
 ; AIE-O123-NEXT:      Infer address spaces
 ; AIE-O123-NEXT:      Dominator Tree Construction
@@ -157,7 +156,6 @@
 ; AIE-O123-NEXT:      Register Coalescer
 ; AIE-O123-NEXT:      Rename Disconnected Subregister Components
 ; AIE-O123-NEXT:      Machine Instruction Scheduler
-; AIE-O123-NEXT:      Machine Block Frequency Analysis
 ; AIE-O123-NEXT:      Debug Variable Analysis
 ; AIE-O123-NEXT:      Live Stack Slot Analysis
 ; AIE-O123-NEXT:      Virtual Register Map

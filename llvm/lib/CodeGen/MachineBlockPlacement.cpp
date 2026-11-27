@@ -703,7 +703,6 @@ static std::string getBlockName(const MachineBasicBlock *BB) {
   raw_string_ostream OS(Result);
   OS << printMBBReference(*BB);
   OS << " ('" << BB->getName() << "')";
-  OS.flush();
   return Result;
 }
 #endif
