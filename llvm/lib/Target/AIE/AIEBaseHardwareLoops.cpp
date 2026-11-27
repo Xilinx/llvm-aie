@@ -398,10 +398,11 @@ bool AIEBaseHardwareLoops::processLoop(MachineLoop *ML) {
     return nullptr;
   };
 
-  if (!LoLoop.Preheader)
-    return Changed;
-
-  LoLoop.Start = FindLoopStart(LoLoop.Preheader);
+  // Only the ZOL LoopStart search needs a preheader. A JNZD is built from its
+  // LoopDec and LoopJNZ alone, and the JNZ fallback checks for a preheader
+  // itself.
+  if (LoLoop.Preheader)
+    LoLoop.Start = FindLoopStart(LoLoop.Preheader);
   // Find the low-overhead loop components
   for (auto *MBB : reverse(ML->getBlocks())) {
     for (auto &MI : *MBB) {
