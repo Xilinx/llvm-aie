@@ -239,14 +239,6 @@ bool AIEBaseInstrInfo::analyzeBranch(MachineBasicBlock &MBB,
     return Success;
   }
 
-  if (AllowModify && I->getDesc().isUnconditionalBranch() &&
-      isHardwareLoopJNZ(std::prev(I)->getOpcode())) {
-
-    MachineBasicBlock *UncondDest = I->getOperand(0).getMBB();
-    if (MBB.isLayoutSuccessor(UncondDest))
-      removeBranch(MBB);
-  }
-
   // Otherwise, we can't handle this.
   return Unhandled;
 }
