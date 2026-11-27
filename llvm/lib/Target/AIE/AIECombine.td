@@ -409,6 +409,12 @@ def combine_load_inttoptr_fold : GICombineRule<
   (apply [{ Helper.applyBuildFnNoErase(*${root}, ${matchinfo}); }])>;
 
 // AIE-specifc combines (currently shared by AIE2 and AIE2P).
+def combine_ptrmask_of_ptradd : GICombineRule<
+  (defs root:$root, build_fn_matchinfo:$matchinfo),
+  (match (wip_match_opcode G_PTRMASK): $root,
+         [{ return matchPtrMaskOfPtrAdd(*${root}, MRI, ${matchinfo}); }]),
+  (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])>;
+
 def aie_additional_combines : GICombineGroup<[
   combine_unpad_vector,
   combine_pad_vector,
@@ -437,7 +443,8 @@ def aie_additional_combines : GICombineGroup<[
   combine_peel_memset,
   combine_pack_stores_into_memset,
   combine_trunc_load,
-  combine_load_inttoptr_fold
+  combine_load_inttoptr_fold,
+  combine_ptrmask_of_ptradd
 ]>;
 
 // AIE2P-specific combines.
