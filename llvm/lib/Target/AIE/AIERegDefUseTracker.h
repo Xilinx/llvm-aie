@@ -32,6 +32,7 @@
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/CodeGen/Register.h"
 #include "llvm/MC/MCRegister.h"
+#include <limits>
 
 namespace llvm {
 
@@ -62,11 +63,6 @@ public:
 /// A live range can have multiple definitions (e.g., when different
 /// sub-registers are defined separately) and multiple uses
 class RegLiveRange {
-public:
-  // Sentinel value for live-out registers not yet associated with a live range
-  static constexpr int NoLiveRange = -1;
-
-private:
   // All definitions that contribute to this live range
   SmallVector<RegOperandInfo, 4> Defs;
 
@@ -277,8 +273,9 @@ class RegLiveRangeTracker {
   // Track whether registers have been virtualized
   bool RegistersVirtualized = false;
 
-  // Cached available physical registers (computed during analyze)
-  DenseSet<MCRegister> AvailablePhysRegs;
+  // Register units available for reallocation (computed during analyze). A
+  // register is available if all its units are in this set.
+  PartSet AvailableUnits;
 
   // Cached RegUnit set per admissible physical register (computed during
   // analyze). Built while filling each live range's AdmissibleRegUnits.
@@ -304,9 +301,23 @@ class RegLiveRangeTracker {
   /// Returns 0 if AccessReg is not a sub-register of BaseReg
   unsigned getSubRegIndex(MCRegister AccessReg, MCRegister BaseReg) const;
 
-  /// Check if a register overlaps with any register in a set
-  bool overlapsAnyInSet(MCRegister Reg,
-                        const DenseSet<MCRegister> &RegSet) const;
+  /// Return the set of register units of \p Reg.
+  PartSet getRegUnits(MCRegister Reg) const;
+
+  /// Return the union of the register units of all registers in \p Regs.
+  PartSet getRegUnits(const DenseSet<MCRegister> &Regs) const;
+
+  /// Return the set of register units of \p Reg that are covered by \p Lanes.
+  /// Units without lane information are always included.
+  PartSet getRegUnits(MCRegister Reg, LaneBitmask Lanes) const;
+
+  /// Return the union of the register units covered by the live-in entries of
+  /// \p MBB, respecting their lane masks.
+  PartSet getLiveInUnits(const MachineBasicBlock &MBB) const;
+
+  /// Return the union of the register units covered by the live-out entries of
+  /// \p MBB, respecting their lane masks.
+  PartSet getLiveOutUnits(const MachineBasicBlock &MBB) const;
 
   /// Compute the register class for a live range based on all its operands
   void computeRegisterClass(RegLiveRange &LR) const;
@@ -314,19 +325,30 @@ class RegLiveRangeTracker {
   /// First-stage safety filtering.
   bool hasTiedOperands(const RegLiveRange &LR) const;
 
-  /// Check if a live range's base register is fully defined in the block.
-  /// Uses lane mask intersection with the block's live-in set to determine
-  /// if the register is truly defined within the block or comes from outside.
+  /// Check if a live range is fully defined in the block, given the register
+  /// units \p TopLiveUnits of the range that are still live at the top of the
+  /// block. Intersects them with the block's live-in units to determine if the
+  /// register is truly defined within the block or comes from outside.
   /// This can discriminate between a truly undefined register (not in live-in,
   /// safe to virtualize) and a register defined outside the loop (in live-in,
   /// should be rejected to preserve loop-carried values).
-  bool
-  isFullyDefined(const RegLiveRange &LR,
-                 const DenseMap<MCRegister, LaneBitmask> &LocalLiveLaneMasks,
-                 const MachineBasicBlock &MBB) const;
+  static bool isFullyDefined(const PartSet &TopLiveUnits,
+                             const PartSet &LiveInUnits);
+
+  /// Return the union of the register units of all operands of \p LR.
+  PartSet getOperandUnits(const RegLiveRange &LR) const;
 
   /// Second-stage full coverage pruning
   void pruneByFullCoverage();
+
+  /// Return true if no physical register operand that is not held by a live
+  /// range shares register units with the operands of any live range.
+  bool isFullyCovered() const;
+
+  /// Return true if the register units of all operands of every live range
+  /// are covered by the units of the range's base register. This is the
+  /// invariant that merging and base expansion must maintain.
+  bool isBaseCoveringOperands() const;
 
   //===--------------------------------------------------------------------===//
   // Analyze helper methods (decomposition of analyze())
@@ -335,73 +357,133 @@ class RegLiveRangeTracker {
   /// State passed through the liveness scan.
   /// Groups the mutable state that is threaded through the backward scan.
   struct LivenessScanState {
-    /// Map from register to its current live range index (signed) and lane
-    /// mask. Use NoLiveRange as sentinel for live-out registers not yet
-    /// associated with a range.
-    DenseMap<MCRegister, std::pair<int, LaneBitmask>> LiveRegs;
+    /// The register units that are still live above the current scan point,
+    /// per live range, indexed like LiveRanges. Absorbed and discarded ranges
+    /// hold no units. After every merge step the sets of all live ranges are
+    /// pairwise disjoint.
+    SmallVector<PartSet, 16> LiveUnits;
 
-    /// Map from operand to live range index.
-    DenseMap<MachineOperand *, unsigned> OperandToLiveRange;
+    /// Live units that belong to no live range: the live-out units and the
+    /// units of discarded ranges. They are only ever killed by defs, never
+    /// merged, and make the ranges they overlap reserved. They may overlap
+    /// the units of live ranges.
+    PartSet OutLive;
 
-    /// Set of registers used implicitly (invalidates explicit ranges).
-    DenseSet<MCRegister> ImplicitRegs;
+    /// Register units of the registers used implicitly.
+    PartSet ImplicitUnits;
 
     /// Instructions in semantic order, indexed by InstrOrder.
     ArrayRef<MachineInstr *> SemanticOrder;
+
+    /// Value of FirstDefOrder for a register unit that is not defined in the
+    /// block. It compares greater than any semantic order.
+    static constexpr unsigned NotDefined = std::numeric_limits<unsigned>::max();
+
+    /// For each register unit, indexed by RegUnit, the semantic order of the
+    /// first instruction that defines it, or NotDefined. Sized and filled by
+    /// buildInstructionOrderAndCollectOperands.
+    SmallVector<unsigned, TotalNumRegUnits> FirstDefOrder;
   };
 
-  /// Merge aliasing live ranges when a definition is encountered.
-  void mergeAliasingLiveRanges(unsigned DefLRIdx, MCRegister DefReg,
+  /// Merge the live ranges aliasing the access \p MO into \p LRIdx and update
+  /// the live units: a def kills its units, a use makes them live. This is
+  /// the single merge step shared by defs and uses.
+  void mergeAliasingLiveRanges(unsigned LRIdx, const MachineOperand &MO,
                                LivenessScanState &State);
 
   /// Helper to find the most promising scarce range set.
   /// Called by analyze() to populate MostPromisingScarceRanges.
-  std::vector<const RegLiveRange *> findMostPromisingScarceRanges(
-      const DenseSet<MCRegister> &AvailablePhysRegs) const;
+  std::vector<const RegLiveRange *> findMostPromisingScarceRanges() const;
 
   /// Collect base registers from RESERVED live ranges.
   DenseSet<MCRegister> collectReservedBaseRegs() const;
 
-  /// Populate AvailablePhysRegs from non-reserved live ranges.
-  /// Adds base registers and sub-registers that don't overlap with reserved.
-  void computeAvailablePhysRegs(const DenseSet<MCRegister> &ReservedRegs);
+  /// Populate AvailableUnits from non-reserved live ranges: the units of the
+  /// base registers that don't overlap with reserved.
+  void computeAvailableUnits(const DenseSet<MCRegister> &ReservedRegs);
 
-  /// Extend AvailablePhysRegs with super-registers whose sub-regs are all
-  /// available.
-  void deriveSuperRegsFromSubRegs();
+  /// Return true if all units of \p Reg are available for reallocation.
+  bool isAvailable(MCRegister Reg) const;
 
   /// Add caller-saved registers that are completely unused in the block.
   /// Uses AllPhysRegOperands member for used registers, and iterates
-  /// MBB.liveins() and MBB.liveouts() directly (with lane mask support).
+  /// MBB.liveins() and MBB.liveouts() directly.
   /// @param MBB The machine basic block (for live-in/out iteration).
-  /// @param ImplicitRegs Registers used implicitly.
+  /// @param ImplicitUnits Register units of the registers used implicitly.
   /// @param ReservedRegs Reserved base registers.
   void addUnusedCallerSavedRegs(MachineBasicBlock &MBB,
-                                const DenseSet<MCRegister> &ImplicitRegs,
+                                const PartSet &ImplicitUnits,
                                 const DenseSet<MCRegister> &ReservedRegs);
 
   /// Mark live ranges as scarce if they have exactly 1 available register.
   void markScarceRanges();
 
   /// Return true if an instruction before \p MI in semantic order defines any
-  /// of the \p Lanes of \p Reg.
-  bool areLanesDefinedBefore(MCRegister Reg, LaneBitmask Lanes,
-                             const MachineInstr &MI,
+  /// of the register units in \p Units. Answered from FirstDefOrder, so the
+  /// cost is linear in the number of units, not in the number of instructions.
+  bool areUnitsDefinedBefore(const PartSet &Units, const MachineInstr &MI,
                              const LivenessScanState &State) const;
 
   /// Build instruction order map and collect physical register operands.
-  /// Also populates ImplicitRegs.
+  /// Also populates ImplicitUnits.
   void buildInstructionOrderAndCollectOperands(
       ArrayRef<MachineInstr *> SemanticOrder, LivenessScanState &State);
 
-  /// Initialize LiveRegs from live-out registers.
-  void initLiveRegsFromLiveOuts(const MachineBasicBlock &MBB,
-                                LivenessScanState &State);
+  /// Initialize the out-live units from the live-out registers.
+  void initOutLive(const MachineBasicBlock &MBB, LivenessScanState &State);
+
+  /// Return true if the live units of all live ranges are pairwise disjoint
+  /// and discarded or absorbed ranges hold no units.
+  bool areLiveUnitsDisjoint(const LivenessScanState &State) const;
+
+  /// Return true if the access \p MO to the registers with units \p RegUnits
+  /// belongs to the live range \p LRIdx, whose live units overlap \p RegUnits.
+  /// A read of the register a range is based on does not belong to it if the
+  /// range's units were partially redefined and have no producer above: the
+  /// read then starts a new range that takes over those units.
+  bool isJoinableAccess(unsigned LRIdx, const PartSet &RegUnits,
+                        const MachineOperand &MO,
+                        const LivenessScanState &State) const;
+
+  /// Select the first live range an access to \p RegUnits joins.
+  std::optional<unsigned>
+  selectLiveRangeToJoin(const PartSet &RegUnits, const MachineOperand &MO,
+                        const LivenessScanState &State) const;
+
+  /// Return the live ranges other than \p ExceptIdx whose live units overlap
+  /// \p Units.
+  SmallVector<unsigned, 4>
+  findOverlappingLiveRanges(unsigned ExceptIdx, const PartSet &Units,
+                            const LivenessScanState &State) const;
+
+  /// Absorb the live ranges \p SrcIdxs into \p TargetIdx. Returns false if a
+  /// merge fails, in which case both ranges are discarded.
+  bool absorbLiveRanges(unsigned TargetIdx, ArrayRef<unsigned> SrcIdxs,
+                        LivenessScanState &State);
+
+  /// Return the units that are still live, in any live range or the out-live
+  /// units, at the top of the block once the scan is complete.
+  PartSet getTopLiveUnits(const LivenessScanState &State) const;
+
+  /// Expand the base of \p LRIdx if \p Reg is a strict super-register of it.
+  void expandBaseForAccess(unsigned LRIdx, MCRegister Reg);
+
+  /// Expand the base of \p LR to the widest super-register of it whose units
+  /// are all live, given the live units \p Live and the units of the base.
+  void expandBaseWithin(RegLiveRange &LR, const PartSet &Live) const;
+
+  /// Create a live range for an access to \p Reg that joins no existing range.
+  unsigned createLiveRange(MCRegister Reg, const MachineOperand &MO,
+                           LivenessScanState &State);
 
   /// Get or create a live range for a register operand.
   /// Returns the live range index.
   unsigned getOrCreateLiveRangeForOperand(MCRegister Reg, MachineOperand *MO,
                                           LivenessScanState &State);
+
+  /// Process a single register operand: attach it to a live range, merge the
+  /// aliasing ranges and update the live units.
+  void processOperand(MachineOperand &MO, LivenessScanState &State);
 
   /// Process def operands for a single instruction (reverse pass).
   void processDefsInInstruction(MachineInstr &MI, LivenessScanState &State);
@@ -409,15 +491,19 @@ class RegLiveRangeTracker {
   /// Process use operands for a single instruction (reverse pass).
   void processUsesInInstruction(MachineInstr &MI, LivenessScanState &State);
 
-  /// Absorb SrcIdx into TargetIdx: merge the two live ranges and redirect
-  /// all OperandToLiveRange and LiveRegs entries from SrcIdx to TargetIdx.
-  /// Clears LR[SrcIdx] on success.  Returns false if the merge fails, in
-  /// which case neither range is modified.
+  /// Return the index in LiveRanges of the range that holds \p MO as a def or
+  /// use, or std::nullopt if no range holds it.
+  std::optional<unsigned>
+  findLiveRangeOfOperand(const MachineOperand *MO) const;
+
+  /// Absorb SrcIdx into TargetIdx: merge the two live ranges and their live
+  /// units. Clears LR[SrcIdx] on success.  Returns false if the merge fails,
+  /// in which case neither range is modified.
   bool absorbLiveRange(unsigned TargetIdx, unsigned SrcIdx,
                        LivenessScanState &State);
 
-  /// Drop a live range that could not be merged with an overlapping one,
-  /// together with every reference to it.
+  /// Drop a live range that could not be merged with an overlapping one. Its
+  /// live units join the out-live units.
   void discardLiveRange(unsigned LRIdx, LivenessScanState &State);
 
   /// Merge the per-sub-register live ranges of a composite physical register
@@ -434,9 +520,8 @@ class RegLiveRangeTracker {
                            LivenessScanState &State);
 
   /// Apply first-stage safety filtering to live ranges.
-  void applySafetyFiltering(
-      const MachineBasicBlock &MBB, const LivenessScanState &State,
-      const DenseMap<MCRegister, LaneBitmask> &LocalLiveLaneMasks);
+  void applySafetyFiltering(const MachineBasicBlock &MBB,
+                            const LivenessScanState &State);
 
   /// Compute register classes and apply register class filtering.
   void computeRegisterClassesAndFilter();
@@ -528,11 +613,9 @@ public:
   void virtualizeFilteredPhysRegs(
       OverlapPolicy Policy = OverlapPolicy::DisallowOverlapWithReservedBase);
 
-  /// Get the set of physical registers that would be available for reallocation
-  /// Returns the cached value computed during analyze()
-  const DenseSet<MCRegister> &getAvailablePhysRegs() const {
-    return AvailablePhysRegs;
-  }
+  /// Get the register units available for reallocation.
+  /// Valid after analyze().
+  const PartSet &getAvailableUnits() const { return AvailableUnits; }
 
   /// Get the cached RegUnit set per admissible physical register.
   /// Valid after analyze().

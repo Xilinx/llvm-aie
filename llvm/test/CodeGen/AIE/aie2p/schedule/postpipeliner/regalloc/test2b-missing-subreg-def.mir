@@ -16,7 +16,31 @@
 # Test 2b: def(cml4) use(dm4) with cmh4 as livein - should filter out dm4 live range
 # Since cmh4 is not defined in the block but is live-in, the dm4 live range
 # should be filtered out as it's not fully defined
-# CHECK-NOT: Live Range {{.*}} for dm4:
+# Only the ex2 range survives. All lines up to the END marker are checked, so
+# any dm4 range showing up in the final dump is caught.
+# CHECK-LABEL: FINAL LIVE RANGES
+# CHECK-NEXT:  ================================
+# CHECK-NEXT:  Total live ranges: 1
+# CHECK-EMPTY:
+# CHECK-NEXT:  Live Range #{{[0-9]+}} for ex2:
+# CHECK-NEXT:    Definitions (1):
+# CHECK-NEXT:      [0] Register: ex2 $ex2 = VCONV_bfp16ebs8_fp32 $dm4, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+# CHECK-NEXT:    Uses (0):
+# CHECK-EMPTY:
+# CHECK-NEXT:  Available Physical Registers for Reallocation:
+# CHECK-NEXT:  ==============================================
+# CHECK-NEXT:    e2
+# CHECK-NEXT:    eh2
+# CHECK-NEXT:    el2
+# CHECK-NEXT:    ewh2
+# CHECK-NEXT:    ewl2
+# CHECK-NEXT:    ex2
+# CHECK-NEXT:    wh2
+# CHECK-NEXT:    wl2
+# CHECK-NEXT:    x2
+# CHECK-NEXT:  Total: 9 registers
+# CHECK-EMPTY:
+# CHECK-NEXT:  === END FINAL LIVE RANGES
 
 --- |
   define void @test_missing_subreg_def() {

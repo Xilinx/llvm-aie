@@ -1,0 +1,107 @@
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+
+# RUN: llc -verify-machineinstrs --mtriple=aie2ps -O2 \
+# RUN:   --start-before=processimpdefs --stop-before=postmisched %s \
+# RUN:   -o - | FileCheck %s
+
+# COMPANION TEST: test-undef-half-livein-liveranges.mir
+#
+# This test starts from pre-regalloc MIR and checks the allocation and liveness
+# information that the regular pipeline produces for a register pair of which
+# only one half is defined in the loop. The companion test takes the output
+# below as its (hand-maintained) input and checks the live ranges that the
+# tracker builds for it.
+#
+# Input:
+#  - The loop builds a pair with a REG_SEQUENCE of a loaded value (even half)
+#    and an IMPLICIT_DEF (odd half), and uses it as the select of a VSEL_8.
+#  - The preheader builds a pair from two constants and uses it in a VSEL_8 as
+#    well.
+#
+# What we expect:
+#  - The IMPLICIT_DEF and the REG_SEQUENCEs evaporate. The loop reads l0 = r0:r1
+#    in VSEL_8 while it only defines r0. Nothing marks r1 as undefined: no
+#    undef flag and no implicit operand.
+#  - The pair of the preheader and the pair of the loop are allocated to the
+#    same register pair l0. The preheader defines r1 and kills l0, so r1 has a
+#    reaching def that is dead at the loop entry. This is the scenario that the
+#    tracker has to handle: the odd half has a def, but must not be live.
+#  - The live-in set of the loop block is lane-precise and contains neither l0
+#    nor r1.
+#
+# IMPORTANT NOTE:
+# If the register allocator assigns disjoint pairs to the preheader and the
+# loop, this test fails and the scenario is no longer covered. In that case do
+# not just update the CHECK lines. Change the input so that the pairs coincide
+# again, and keep the companion test consistent with the new output.
+
+# CHECK-LABEL: name: test_undef_half_livein
+# CHECK: bb.0.entry:
+# CHECK-NEXT: successors: %bb.1(0x80000000)
+# CHECK-NEXT: liveins: $p0, $r5, $x2, $x4, $crbf8conf, $crfp8conf
+# CHECK: renamable $r0 = MOV_RLC_imm11_pseudo 7
+# CHECK-NEXT: renamable $r1 = MOV_RLC_imm11_pseudo 9
+# CHECK-NEXT: renamable $x1 = VSEL_8 renamable $x2, renamable $x4, killed renamable $l0, implicit $crbf8conf, implicit $crfp8conf
+# CHECK-NEXT: $lc = ADD_NC_add_lc_ri $r5, 0
+# CHECK-NEXT: MOVXM_lng_cg_ls_abs %bb.1, implicit-def $ls
+# CHECK-NEXT: MOVXM_lng_cg_le_abs <mcsymbol .L_LEnd0>, implicit-def $le
+# CHECK: bb.1.loop (align 16):
+# CHECK-NEXT: successors: %bb.1(0x40000000), %bb.2(0x40000000)
+# CHECK-NEXT: liveins: $p0, $x1, $x2, $x4
+# CHECK: renamable $r0, renamable $p0 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed renamable $p0, 4 :: (load (s32))
+# CHECK-NEXT: renamable $x0 = VSEL_8 renamable $x2, renamable $x4, renamable $l0, implicit $crbf8conf, implicit $crfp8conf
+# CHECK-NEXT: PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+# CHECK: bb.2.exit:
+# CHECK-NEXT: liveins: $x0, $x1
+# CHECK: RET implicit $lr
+# CHECK-NEXT: DelayedSchedBarrier implicit $x0, implicit $x1
+
+--- |
+  define void @test_undef_half_livein() {
+  entry:
+    br label %loop
+  loop:
+    br i1 undef, label %loop, label %exit
+  exit:
+    ret void
+  }
+...
+---
+name:            test_undef_half_livein
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  bb.0.entry:
+    successors: %bb.1
+    liveins: $r5, $p0, $x2, $x4, $crbf8conf, $crfp8conf
+
+    $lc = ADD_NC_add_lc_ri $r5, 0
+    MOVXM_lng_cg_ls_abs %bb.1, implicit-def $ls
+    MOVXM_lng_cg_le_abs <mcsymbol .L_LEnd0>, implicit-def $le
+    %4:vec512 = COPY $x2
+    %5:vec512 = COPY $x4
+    %7:ep = COPY $p0
+    %9:er = MOV_RLC_imm11_pseudo 7
+    %10:er = MOV_RLC_imm11_pseudo 9
+    %11:el = REG_SEQUENCE %9, %subreg.sub_l_even, %10, %subreg.sub_l_odd
+    %12:vec512 = VSEL_8 %4, %5, %11, implicit $crbf8conf, implicit $crfp8conf
+    %0:er = IMPLICIT_DEF
+
+  bb.1.loop (align 16):
+    successors: %bb.1, %bb.2
+
+    %6:ep = PHI %7, %bb.0, %8, %bb.1
+    %1:er, %8:ep = LDA_dms_lda_scalar_ld_pstm_nrm_imm %6, 4 :: (load (s32))
+    %2:el = REG_SEQUENCE %1, %subreg.sub_l_even, %0, %subreg.sub_l_odd
+    %3:vec512 = VSEL_8 %4, %5, %2, implicit $crbf8conf, implicit $crfp8conf
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+
+  bb.2.exit:
+    $x1 = COPY %12
+    $x0 = COPY %3
+    PseudoRET implicit $lr, implicit $x0, implicit $x1
+...

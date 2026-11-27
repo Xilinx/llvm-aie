@@ -27,7 +27,7 @@
 
 # NOTE: Status quo - II=6
 # METRICS: AIEPostRegAlloc::allocate for 14 live ranges, II=6
-# METRICS-NEXT: Available 54 physical registers
+# METRICS-NEXT: Available 26 register units
 # METRICS-NEXT: RC interference: VEC512 -> VEC1024 weight=200 (avg 12/6)
 # METRICS-NEXT: RC interference: VEC512 -> VEC576 weight=100 (avg 12/12)
 # METRICS-NEXT: RC interference: VEC1024 -> VEC512 weight=100 (avg 12/12)

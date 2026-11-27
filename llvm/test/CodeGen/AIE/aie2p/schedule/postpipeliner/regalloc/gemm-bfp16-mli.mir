@@ -19,7 +19,7 @@
 
 # derived from GEMM_Bfp16_opt_0
 
-# CHECK: Live Lanes (II=6):
+# CHECK: Liveness (II=6):
 # CHECK-NEXT: LRIdx  | t0      t1      t2      t3      t4      t5
 # CHECK-NEXT: -------+------------------------------------------------
 # CHECK-NEXT: 0      |  #       #       #       #       #       #

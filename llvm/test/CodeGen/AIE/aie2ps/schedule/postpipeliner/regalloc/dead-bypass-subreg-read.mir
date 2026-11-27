@@ -8,7 +8,7 @@
 # A dead e destination still writes MV_Bypass one cycle before the register-file
 # write. The next mov reads el through that bypass on the RF-write cycle. mEEa
 # and mEla share no register: e4 overlaps el4 only because el4 is its low half,
-# so the admissible regunit sets overlap without being equal. buildLiveLanes
+# so the admissible regunit sets overlap without being equal. buildLiveness
 # keeps that early lane for the partial overlap, so post-regalloc keeps the el
 # read on el5 instead of the low half of the dead e4.
 #

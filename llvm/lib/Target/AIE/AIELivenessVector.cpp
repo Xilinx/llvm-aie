@@ -27,6 +27,8 @@ using namespace llvm;
 namespace llvm {
 namespace AIE {
 
+void Liveness::addUnits(const PartSet &U) { Units |= U; }
+
 void Liveness::addBypassRead(unsigned ForwardingClass) {
   if (ForwardingClass != 0 &&
       !llvm::is_contained(BypassReads, ForwardingClass)) {
@@ -42,8 +44,8 @@ void Liveness::addBypassWrite(unsigned ForwardingClass) {
 }
 
 bool Liveness::conflictsWith(const Liveness &Other) const {
-  // Check register file lane conflicts.
-  if ((Lanes & Other.Lanes).any()) {
+  // Check register file conflicts on RegUnits.
+  if (Units.overlap(Other.Units)) {
     return true;
   }
 
@@ -60,16 +62,16 @@ bool Liveness::conflictsWith(const Liveness &Other) const {
   }
 
   // Check bypass vs register file conflicts.
-  // If one has bypass activity and the other has register lanes, they
+  // If one has bypass activity and the other has occupied units, they
   // conflict because they share the same register address.
   const bool ThisHasBypass = !BypassReads.empty() || !BypassWrites.empty();
   const bool OtherHasBypass =
       !Other.BypassReads.empty() || !Other.BypassWrites.empty();
 
-  if (ThisHasBypass && Other.Lanes.any()) {
+  if (ThisHasBypass && Other.Units.any()) {
     return true;
   }
-  if (OtherHasBypass && Lanes.any()) {
+  if (OtherHasBypass && Units.any()) {
     return true;
   }
 
@@ -77,7 +79,7 @@ bool Liveness::conflictsWith(const Liveness &Other) const {
 }
 
 Liveness &Liveness::operator|=(const Liveness &Other) {
-  Lanes |= Other.Lanes;
+  addUnits(Other.Units);
   // Merge bypass reads.
   for (unsigned FC : Other.BypassReads) {
     addBypassRead(FC);
@@ -90,7 +92,7 @@ Liveness &Liveness::operator|=(const Liveness &Other) {
 }
 
 Liveness &Liveness::operator&=(const Liveness &Other) {
-  Lanes &= Other.Lanes;
+  Units &= Other.Units;
   // For intersection, keep only bypass classes present in both.
   SmallVector<unsigned, 2> NewBypassReads;
   for (unsigned FC : BypassReads) {
@@ -111,7 +113,7 @@ Liveness &Liveness::operator&=(const Liveness &Other) {
 }
 
 Liveness &Liveness::operator-=(const Liveness &Other) {
-  Lanes &= ~Other.Lanes;
+  Units -= Other.Units;
   // For difference, remove bypass classes present in Other.
   SmallVector<unsigned, 2> NewBypassReads;
   for (unsigned FC : BypassReads) {
@@ -132,17 +134,14 @@ Liveness &Liveness::operator-=(const Liveness &Other) {
 }
 
 bool Liveness::any() const {
-  return Lanes.any() || !BypassReads.empty() || !BypassWrites.empty();
+  return Units.any() || !BypassReads.empty() || !BypassWrites.empty();
 }
 
 bool Liveness::none() const {
-  return Lanes.none() && BypassReads.empty() && BypassWrites.empty();
+  return Units.none() && BypassReads.empty() && BypassWrites.empty();
 }
 
 LivenessVector::LivenessVector(size_t Size) : Elements(Size) {}
-
-LivenessVector::LivenessVector(size_t Size, LaneBitmask InitialValue)
-    : Elements(Size, Liveness(InitialValue)) {}
 
 size_t LivenessVector::size() const { return Elements.size(); }
 
@@ -220,7 +219,7 @@ LivenessVector LivenessVector::operator-(const LivenessVector &Other) const {
 }
 
 bool LivenessVector::overlaps(const LivenessVector &Other) const {
-  // True when any same-index pair conflicts (lanes / bypass).
+  // True when any same-index pair conflicts (units / bypass).
   const size_t MinSize = std::min(Elements.size(), Other.Elements.size());
   for (size_t I = 0; I < MinSize; ++I) {
     if (Elements[I].conflictsWith(Other.Elements[I]))
@@ -247,7 +246,13 @@ void LivenessVector::print(raw_ostream &OS) const {
   for (size_t I = 0; I < Elements.size(); ++I) {
     if (I > 0)
       OS << ", ";
-    OS << PrintLaneMask(Elements[I].getLanes());
+    OS << '{';
+    const char *Sep = "";
+    for (const unsigned Unit : Elements[I].getUnits()) {
+      OS << Sep << Unit;
+      Sep = " ";
+    }
+    OS << '}';
   }
   OS << "]";
 }

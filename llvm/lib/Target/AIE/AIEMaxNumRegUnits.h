@@ -11,6 +11,7 @@
 #ifndef LLVM_LIB_TARGET_AIE_AIEMAXNUMREGUNITS_H
 #define LLVM_LIB_TARGET_AIE_AIEMAXNUMREGUNITS_H
 
+#include "llvm/MC/MCRegister.h"
 #include <algorithm>
 
 #define GET_NUM_REGUNITS
@@ -31,8 +32,23 @@ constexpr const int TotalNumRegUnits =
     std::max({AIE2PSRegInfo::NumRegUnits, AIE2PRegInfo::NumRegUnits,
               AIE2RegInfo::NumRegUnits, AIERegInfo::NumRegUnits});
 
+/// RegUnit: a register unit, as an index into a PartSet. MCRegUnit is opaque so
+/// that TableGen can emit tables for unknown targets. PartSet is specific to
+/// the union of the AIE targets, so here the index can be exposed. Building a
+/// RegUnit from a raw index is explicit, an MCRegUnit converts implicitly, and
+/// it converts back to unsigned to index a PartSet.
+class RegUnit {
+  unsigned Idx;
+
+public:
+  RegUnit() : Idx(0) {}
+  explicit RegUnit(unsigned Idx) : Idx(Idx) {}
+  RegUnit(llvm::MCRegUnit Unit) : Idx(static_cast<unsigned>(Unit)) {}
+  operator unsigned() const { return Idx; }
+};
+
 /// PartSet: a bit set sized to hold one bit per register unit.
 /// Used as the occupancy representation in Liveness, replacing LaneBitmask.
-using PartSet = StaticBitSet<TotalNumRegUnits>;
+using PartSet = StaticBitSet<TotalNumRegUnits, RegUnit>;
 
 #endif // LLVM_LIB_TARGET_AIE_AIEMAXNUMREGUNITS_H
