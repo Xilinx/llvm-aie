@@ -82,8 +82,7 @@ body:             |
 
 # The same loop, with the header marked machine-block-address-taken, as
 # instruction selection marks every JNZD target. The speculative preheader
-# lookup rejects address-taken headers.
-# FIXME: The loop keeps its LoopDec and LoopJNZ pseudos.
+# lookup rejects address-taken headers, and the loop is lowered anyway.
 ---
 name:            address_taken
 alignment:       16
@@ -101,8 +100,7 @@ body:             |
   ; CHECK-NEXT:   successors: %bb.1(0x7c000000), %bb.2(0x04000000)
   ; CHECK-NEXT:   liveins: $p4, $r13
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   renamable $r13 = LoopDec $r13, implicit-def $srcarry
-  ; CHECK-NEXT:   LoopJNZ renamable $r13, renamable $p4
+  ; CHECK-NEXT:   $r13 = PseudoJNZD $r13, $p4, implicit-def $srcarry
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2 (align 16):
@@ -128,8 +126,8 @@ body:             |
 
 # An address-taken header entered from two blocks: the entry block and the
 # block it otherwise branches to. The speculative preheader lookup needs
-# exactly two header predecessors, the latch included.
-# FIXME: The loop keeps its LoopDec and LoopJNZ pseudos.
+# exactly two header predecessors, the latch included, and the loop is lowered
+# anyway.
 ---
 name:            address_taken_three_preds
 alignment:       16
@@ -153,8 +151,7 @@ body:             |
   ; CHECK-NEXT:   successors: %bb.2(0x7c000000), %bb.3(0x04000000)
   ; CHECK-NEXT:   liveins: $p4, $r13
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   renamable $r13 = LoopDec $r13, implicit-def $srcarry
-  ; CHECK-NEXT:   LoopJNZ renamable $r13, renamable $p4
+  ; CHECK-NEXT:   $r13 = PseudoJNZD $r13, $p4, implicit-def $srcarry
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.3
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3 (align 16):
@@ -185,8 +182,7 @@ body:             |
 ...
 
 # A header that is an IR blockaddress. The speculative preheader lookup rejects
-# it too.
-# FIXME: The loop keeps its LoopDec and LoopJNZ pseudos.
+# it too, and the loop is lowered anyway.
 ---
 name:            ir_block_address
 alignment:       16
@@ -204,8 +200,7 @@ body:             |
   ; CHECK-NEXT:   successors: %bb.1(0x7c000000), %bb.2(0x04000000)
   ; CHECK-NEXT:   liveins: $p4, $r13
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   renamable $r13 = LoopDec $r13, implicit-def $srcarry
-  ; CHECK-NEXT:   LoopJNZ renamable $r13, renamable $p4
+  ; CHECK-NEXT:   $r13 = PseudoJNZD $r13, $p4, implicit-def $srcarry
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2 (align 16):
