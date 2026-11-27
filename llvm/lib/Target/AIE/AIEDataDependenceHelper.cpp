@@ -803,6 +803,11 @@ bool InterBlockEdges::isFixedPreBoundaryNode(const SUnit *SU) const {
   return PreFree.End && SU->NodeNum >= *PreFree.End && isPredecessorNode(SU);
 }
 
+bool InterBlockEdges::isFixedPostBoundaryNode(const SUnit *SU) const {
+  return PostFree.Begin && SU->NodeNum < *PostFree.Begin &&
+         isPostBoundaryNode(SU);
+}
+
 bool InterBlockEdges::isPostBoundaryNode(const SUnit *SU) const {
   return Boundary ? SU->NodeNum >= *Boundary : false;
 }
