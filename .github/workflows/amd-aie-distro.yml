@@ -302,27 +302,20 @@ jobs:
         ccache --print-stats
         find $HOST_CCACHE_DIR -exec touch -a -m -t 197001010000 {} \;
 
-      # git-bash doesn't have rename
-    - name: rename non-windows
-      if: contains(matrix.OS, 'ubuntu') || contains(matrix.OS, 'macos')
+    # The wheels hold no Python extension modules: tag them py3-none. `wheel tags` rewrites the tags in the file name
+    # and in dist-info/WHEEL (which installers check against the interpreter) together.
+    - name: Retag wheels
       working-directory: ${{ steps.setup_base.outputs.WORKSPACE_ROOT }}
       run: |
-        
-        rename 's/cp310-cp310/py3-none/' wheelhouse/llvm_aie-*whl
-        rename 's/cp311-cp311/py3-none/' wheelhouse/llvm_aie-*whl
-        
+
+        pip install wheel
+        for whl in wheelhouse/llvm_aie-*.whl; do
+          python -m wheel tags --python-tag py3 --abi-tag none --remove "$whl"
+        done
+
         if [[ ${{ matrix.OS }} == *"ubuntu"* ]] && [ x"${{ matrix.ARCH }}" == x"aarch64" ]; then
           rename 's/x86_64/aarch64/' wheelhouse/llvm_aie-*whl
         fi
-
-    - name: rename windows
-      if: contains(matrix.OS, 'windows')
-      shell: pwsh
-      working-directory: ${{ steps.setup_base.outputs.WORKSPACE_ROOT }}
-      run: |
-        
-        ls wheelhouse/llvm_aie-*whl | Rename-Item -NewName {$_ -replace 'cp310-cp310', 'py3-none' }
-        ls wheelhouse/llvm_aie-*whl | Rename-Item -NewName {$_ -replace 'cp311-cp311', 'py3-none' }
 
     # done
 
