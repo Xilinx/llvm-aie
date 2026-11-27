@@ -12,7 +12,7 @@
 # Test sibling loop optimization: skip when preheader has a conditional branch.
 #
 # The outer preheader (bb.0) has 2 successors (a conditional branch to both
-# steady_top and exit). isSafeForSiblingMerge() requires the preheader to
+# steady_top and exit). isSafeToRotate() requires the preheader to
 # have exactly 1 successor, so the optimizer skips this loop.
 #
 # DBG: Skipping: OLP blocks are not in linear layout order

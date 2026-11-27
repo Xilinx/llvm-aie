@@ -9,11 +9,11 @@
 #
 # Negative: SteadyTop has 3 predecessors instead of the expected 2
 # (OuterPreheader + SteadyBottom). The extra predecessor (bb.7) makes
-# isSafeForSiblingMerge() return false, so rotation is skipped.
+# isSafeToRotate() return false, so rotation is skipped.
 
 # CHECK-LABEL: name: no_rotation_extra_pred
 #
-# SteadyTop still has the MOV because isSafeForSiblingMerge fails:
+# SteadyTop still has the MOV because isSafeToRotate fails:
 # CHECK:      bb.1.steady.top:
 # CHECK:        $r2 = MOV_OR_pseudo $r1
 
