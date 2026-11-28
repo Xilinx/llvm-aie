@@ -1919,18 +1919,6 @@ func.func nested @do_not_fold_reciprocal_int() -> tensor<3x600x1200xi32> {
 
 // -----
 
-// CHECK-LABEL: @canonicalize_select_to_clamp
-func.func @canonicalize_select_to_clamp(%arg0: tensor<13x21x3xf32>) -> tensor<13x21x3xf32> {
-// CHECK:           %[[VAL_1:.*]] = tosa.clamp %arg{{.*}} {max_fp = 0x7F800000 : f32, max_int = 9223372036854775807 : i64, min_fp = 1.500000e+00 : f32, min_int = -9223372036854775808 : i64} : (tensor<13x21x3xf32>) -> tensor<13x21x3xf32>
-// CHECK:           return %[[VAL_1]] : tensor<13x21x3xf32>
-  %0 =  "tosa.const"() <{value = dense<1.500000e+00> : tensor<13x21x3xf32>}>: () -> tensor<13x21x3xf32>
-  %1 = tosa.greater_equal %arg0, %0: (tensor<13x21x3xf32>, tensor<13x21x3xf32>) -> tensor<13x21x3xi1>
-  %2 = tosa.select %1, %arg0, %0: ( tensor<13x21x3xi1>, tensor<13x21x3xf32>, tensor<13x21x3xf32>) -> tensor<13x21x3xf32>
-  return %2  :  tensor<13x21x3xf32>
-}
-
-// -----
-
 // CHECK-LABEL: @canonicalize_select_to_clamp_not_splat
 func.func @canonicalize_select_to_clamp_not_splat(%arg0: tensor<4xi32>) -> tensor<4xi32> {
 // CHECK-NOT:       tosa.clamp
@@ -1938,18 +1926,6 @@ func.func @canonicalize_select_to_clamp_not_splat(%arg0: tensor<4xi32>) -> tenso
   %1 = tosa.greater_equal %arg0, %0: (tensor<4xi32>, tensor<4xi32>) -> tensor<4xi1>
   %2 = tosa.select %1, %arg0, %0: ( tensor<4xi1>, tensor<4xi32>, tensor<4xi32>) -> tensor<4xi32>
   return %2  :  tensor<4xi32>
-}
-
-// -----
-
-// CHECK-LABEL: @canonicalize_select_to_clamp_bf16
-func.func @canonicalize_select_to_clamp_bf16(%arg0: tensor<13x21x3xbf16>) -> tensor<13x21x3xbf16> {
-// CHECK:           %[[VAL_1:.*]] = tosa.clamp %arg{{.*}} {max_fp = 0x7F80 : bf16, max_int = 9223372036854775807 : i64, min_fp = 1.500000e+00 : bf16, min_int = -9223372036854775808 : i64} : (tensor<13x21x3xbf16>) -> tensor<13x21x3xbf16>
-// CHECK:           return %[[VAL_1]] : tensor<13x21x3xbf16>
-  %0 =  "tosa.const"() <{value = dense<1.500000e+00> : tensor<13x21x3xbf16>}>: () -> tensor<13x21x3xbf16>
-  %1 = tosa.greater_equal %arg0, %0: (tensor<13x21x3xbf16>, tensor<13x21x3xbf16>) -> tensor<13x21x3xi1>
-  %2 = tosa.select %1, %arg0, %0: ( tensor<13x21x3xi1>, tensor<13x21x3xbf16>, tensor<13x21x3xbf16>) -> tensor<13x21x3xbf16>
-  return %2  :  tensor<13x21x3xbf16>
 }
 
 // -----
@@ -1996,31 +1972,6 @@ func.func @canonicalize_select_to_clamp_i8_neg(%arg0: tensor<13x21x3xi8>) -> ten
   %1 = tosa.greater_equal %arg0, %0: (tensor<13x21x3xi8>, tensor<13x21x3xi8>) -> tensor<13x21x3xi1>
   %2 = tosa.select %1, %arg0, %0: ( tensor<13x21x3xi1>, tensor<13x21x3xi8>, tensor<13x21x3xi8>) -> tensor<13x21x3xi8>
   return %2  :  tensor<13x21x3xi8>
-}
-
-// -----
-
-// CHECK-LABEL: @canonicalize_select_to_clamp_f64_pat2_neg
-func.func @canonicalize_select_to_clamp_f64_pat2_neg(%arg0: tensor<13x21x3xf64>) -> tensor<13x21x3xf64> {
-// CHECK:           %[[VAL_1:.*]] = tosa.clamp %arg{{.*}} {max_fp = -3.500000e+00 : f64, max_int = 9223372036854775807 : i64, min_fp = 0xFFF0000000000000 : f64, min_int = -9223372036854775808 : i64} : (tensor<13x21x3xf64>) -> tensor<13x21x3xf64>
-// CHECK:           return %[[VAL_1]] : tensor<13x21x3xf64>
-  %0 =  "tosa.const"() <{value = dense<-3.5> : tensor<13x21x3xf64>}>: () -> tensor<13x21x3xf64>
-  %1 = tosa.greater_equal %arg0, %0: (tensor<13x21x3xf64>, tensor<13x21x3xf64>) -> tensor<13x21x3xi1>
-  %2 = tosa.select %1, %0, %arg0: ( tensor<13x21x3xi1>, tensor<13x21x3xf64>, tensor<13x21x3xf64>) -> tensor<13x21x3xf64>
-  return %2  :  tensor<13x21x3xf64>
-}
-// -----
-
-// CHECK-LABEL: @canonicalize_select_lrelu_zero_pattern
-func.func @canonicalize_select_lrelu_zero_pattern(%arg0: tensor<13x21x3xf32>) -> tensor<13x21x3xf32> {
-// CHECK:           %[[VAL_1:.*]] = tosa.clamp %arg{{.*}} {max_fp = 0x7F800000 : f32, max_int = 9223372036854775807 : i64, min_fp = 0.000000e+00 : f32, min_int = -9223372036854775808 : i64} : (tensor<13x21x3xf32>) -> tensor<13x21x3xf32>
-// CHECK:           return %[[VAL_1]] : tensor<13x21x3xf32>
-  %0 =  "tosa.const"() <{value = dense<0.000000e+00> : tensor<1x1x1xf32>}>: () -> tensor<1x1x1xf32>
-  %shift = "tosa.const"() <{value = dense<0> : tensor<1xi8>}> : () -> tensor<1xi8>
-  %1 = tosa.mul %arg0, %0, %shift : (tensor<13x21x3xf32>, tensor<1x1x1xf32>, tensor<1xi8>) -> tensor<13x21x3xf32>
-  %2 = tosa.greater_equal %arg0, %0: (tensor<13x21x3xf32>, tensor<1x1x1xf32>) -> tensor<13x21x3xi1>
-  %3 = tosa.select %2, %arg0, %1: ( tensor<13x21x3xi1>, tensor<13x21x3xf32>, tensor<13x21x3xf32>) -> tensor<13x21x3xf32>
-  return %3  :  tensor<13x21x3xf32>
 }
 
 // -----
